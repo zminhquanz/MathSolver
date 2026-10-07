@@ -1,5 +1,10 @@
 # Math puzzle checks
 
+Generators read language-specific wording and context lists from the bundled
+[quiz JSON content](../../MathSolver/QUIZ_CONTENT_AUTHORING.md). This suite checks
+their generated problems and independent answers after content changes. The bank
+harness also provides `--quiz-content` and author-file validation commands.
+
 The practice page uses the C# algorithm on Windows and Android. The previous
 AI implementation, model management, prompts, response validation, hardware AI
 benchmark, live-model harness and captured model fixtures have been removed.

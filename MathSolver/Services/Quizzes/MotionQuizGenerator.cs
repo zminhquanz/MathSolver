@@ -32,68 +32,16 @@ public sealed class MotionQuizGenerator
         Runner
     }
 
-    private sealed record MotionUnitProfile(
-        MotionUnitKind Kind,
-        string SpeedUnitVi,
-        string SpeedUnitEn,
-        string TimeUnitVi,
-        string TimeUnitEn,
-        string DistanceUnitVi,
-        string DistanceUnitEn,
-        int DistanceScale,
-        int TimeDivisor,
-        bool EnglishOnly = false);
+    private sealed record MotionUnitProfile(MotionUnitKind Kind, string SpeedUnit, string TimeUnit, string DistanceUnit, int DistanceScale, int TimeDivisor, bool EnglishOnly = false);
 
-    private sealed record MovingSubject(
-        string Vietnamese,
-        string English,
-        MotionSubjectKind Kind);
+    private sealed record MovingSubject(string Name, MotionSubjectKind Kind);
 
     // Đơn vị được chia thành các profile thực tế. Không random độc lập đơn vị
     // với đối tượng: ô tô/xe buýt không bao giờ nhận cm/mm; rùa/rùa cạn mới
     // có thể dùng cm hoặc mm với tốc độ tương ứng cm/s, mm/s.
-    private static readonly MotionUnitProfile[] UnitProfiles =
-    [
-        new(MotionUnitKind.RoadKmHour, "km/h", "km/h", "giờ", "hours", "km", "km", 1, 1),
-        new(MotionUnitKind.RoadKmMinute, "km/h", "km/h", "phút", "minutes", "km", "km", 1, 60),
-        new(MotionUnitKind.MeterSecond, "m/s", "m/s", "giây", "seconds", "m", "m", 1, 1),
-        new(MotionUnitKind.CentimeterSecond, "cm/s", "cm/s", "giây", "seconds", "cm", "cm", 1, 1),
-        new(MotionUnitKind.MillimeterSecond, "mm/s", "mm/s", "giây", "seconds", "mm", "mm", 1, 1),
-        new(MotionUnitKind.MilesHour, "mph", "mph", "giờ", "hours", "dặm", "miles", 1, 1, EnglishOnly: true)
-    ];
+    private static IReadOnlyList<MotionUnitProfile> UnitProfiles(AppLanguage language) => QuizContentCatalog.LoadList<MotionUnitProfile>("MotionQuizGenerator.UnitProfiles", QuizContentCatalog.Culture(language));
 
-    private static readonly MovingSubject[] MovingSubjects =
-    [
-        new("một ô tô", "a car", MotionSubjectKind.MotorVehicle),
-        new("một xe máy", "a motorcycle", MotionSubjectKind.MotorVehicle),
-        new("một xe buýt", "a bus", MotionSubjectKind.MotorVehicle),
-        new("một tàu hỏa", "a train", MotionSubjectKind.Train),
-        new("một xe đạp", "a bicycle", MotionSubjectKind.Bicycle),
-        new("một con ngựa", "a horse", MotionSubjectKind.FastAnimal),
-        new("một con nai", "a deer", MotionSubjectKind.FastAnimal),
-        new("một con chó", "a dog", MotionSubjectKind.MediumAnimal),
-        new("một con thỏ", "a rabbit", MotionSubjectKind.MediumAnimal),
-        new("một con rùa", "a turtle", MotionSubjectKind.TinyAnimal),
-        new("một con rùa cạn", "a tortoise", MotionSubjectKind.TinyAnimal),
-        new("một người đi bộ", "a pedestrian", MotionSubjectKind.Pedestrian),
-        new("một học sinh đi bộ", "a student walking", MotionSubjectKind.Pedestrian),
-        new("một vận động viên chạy bộ", "a runner", MotionSubjectKind.Runner),
-        new("một người chạy bộ", "a jogger", MotionSubjectKind.Runner)
-    ];
-
-    // These speed ranges describe powered boats. A paddle canoe would make
-    // the same numeric facts physically implausible.
-    private static readonly string[] WatercraftVi =
-    [
-        "một ca nô",
-        "một xuồng máy"
-    ];
-
-    private static readonly string[] WatercraftEn =
-    [
-        "a motorboat",
-        "a speedboat"
-    ];
+    private static IReadOnlyList<MovingSubject> MovingSubjects(AppLanguage language) => QuizContentCatalog.LoadList<MovingSubject>("MotionQuizGenerator.MovingSubjects", QuizContentCatalog.Culture(language));
 
     private readonly Random _random;
 
@@ -194,18 +142,14 @@ public sealed class MotionQuizGenerator
             int restTime = _random.Next(1, travelTime + 1);
             int totalElapsed = travelTime + restTime;
 
-            string problem = language == AppLanguage.Vietnamese
-                ? $"{Capitalize(subject)} đi với vận tốc {speed} {speedUnit}. Tổng thời gian từ lúc xuất phát đến lúc đến nơi là {totalElapsed} {timeUnit}, trong đó nghỉ {restTime} {timeUnit}. Hỏi {subject} đi được quãng đường bao nhiêu {distanceUnit}?"
-                : $"{Capitalize(subject)} travels at {speed} {speedUnit}. The total elapsed time is {totalElapsed} {timeUnit}, including a rest of {restTime} {timeUnit}. How far does {subject} actually travel in {distanceUnit}?";
+            string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.001", ("Capitalize_subject", $"{Capitalize(subject)}"), ("speed", $"{speed}"), ("speedUnit", $"{speedUnit}"), ("totalElapsed", $"{totalElapsed}"), ("timeUnit", $"{timeUnit}"), ("restTime", $"{restTime}"), ("subject", $"{subject}"), ("distanceUnit", $"{distanceUnit}"));
 
             string calculation = MultiplyIfNeeded(
                 $"({totalElapsed} - {restTime}) × {speed}",
                 profile.DistanceScale);
             calculation = DivideIfNeeded(calculation, profile.TimeDivisor);
             string equation = $"{calculation} = {distance}";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"{Capitalize(subject)} đi được quãng đường là:{Environment.NewLine}{equation} {distanceUnit}"
-                : $"The distance traveled by {subject} is:{Environment.NewLine}{equation} {distanceUnit}";
+            string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.015", ("Capitalize_subject", $"{Capitalize(subject)}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("distanceUnit", $"{distanceUnit}"), ("subject", $"{subject}"));
 
             return new(
                 MotionQuizType.Basic,
@@ -213,7 +157,7 @@ public sealed class MotionQuizGenerator
                 [speed, totalElapsed, restTime],
                 distance,
                 distanceUnit,
-                language == AppLanguage.Vietnamese ? "quãng đường" : "distance",
+                QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.002"),
                 problem,
                 equation,
                 solution,
@@ -226,16 +170,12 @@ public sealed class MotionQuizGenerator
         if (kind == MotionQuestionKind.BasicDistance)
         {
             (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
-            string problem = language == AppLanguage.Vietnamese
-                ? $"{Capitalize(subject)} đi đều với vận tốc {speed} {speedUnit} trong {time} {timeUnit}. Hỏi quãng đường đi được là bao nhiêu {distanceUnit}?"
-                : $"{Capitalize(subject)} moves at a constant speed of {speed} {speedUnit} for {time} {timeUnit}. How far does it travel in {distanceUnit}?";
+            string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.003", ("Capitalize_subject", $"{Capitalize(subject)}"), ("speed", $"{speed}"), ("speedUnit", $"{speedUnit}"), ("time", $"{time}"), ("timeUnit", $"{timeUnit}"), ("distanceUnit", $"{distanceUnit}"));
             string calculation = MultiplyIfNeeded(
                 DivideIfNeeded($"{speed} × {time}", profile.TimeDivisor),
                 profile.DistanceScale);
             string equation = $"{calculation} = {distance}";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"{Capitalize(subject)} đi được quãng đường là:{Environment.NewLine}{equation} {distanceUnit}"
-                : $"The distance traveled by {subject} is:{Environment.NewLine}{equation} {distanceUnit}";
+            string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.016", ("Capitalize_subject", $"{Capitalize(subject)}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("distanceUnit", $"{distanceUnit}"), ("subject", $"{subject}"));
 
             return new(
                 MotionQuizType.Basic,
@@ -243,7 +183,7 @@ public sealed class MotionQuizGenerator
                 [speed, time],
                 distance,
                 distanceUnit,
-                language == AppLanguage.Vietnamese ? "quãng đường" : "distance",
+                QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.004"),
                 problem,
                 equation,
                 solution,
@@ -256,18 +196,14 @@ public sealed class MotionQuizGenerator
         if (kind == MotionQuestionKind.BasicSpeed)
         {
             (int speed, int time, int distance) = CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
-            string problem = language == AppLanguage.Vietnamese
-                ? $"{Capitalize(subject)} đi được {distance} {distanceUnit} trong {time} {timeUnit}. Hỏi vận tốc của {subject} là bao nhiêu {speedUnit}?"
-                : $"{Capitalize(subject)} travels {distance} {distanceUnit} in {time} {timeUnit}. What is its speed in {speedUnit}?";
+            string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.017", ("Capitalize_subject", $"{Capitalize(subject)}"), ("distance", $"{distance}"), ("distanceUnit", $"{distanceUnit}"), ("time", $"{time}"), ("timeUnit", $"{timeUnit}"), ("subject", $"{subject}"), ("speedUnit", $"{speedUnit}"));
             int normalizedDistance = distance / profile.DistanceScale;
             int numerator = checked(normalizedDistance * profile.TimeDivisor);
             string calculation = MultiplyIfNeeded(
                 $"{DivideIfNeeded(distance.ToString(CultureInfo.InvariantCulture), profile.DistanceScale)} ÷ {time}",
                 profile.TimeDivisor);
             string equation = $"{calculation} = {speed}";
-            string solution = language == AppLanguage.Vietnamese
-                ? $"Vận tốc của {subject} là:{Environment.NewLine}{equation} {speedUnit}"
-                : $"The speed of {subject} is:{Environment.NewLine}{equation} {speedUnit}";
+            string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.005", ("subject", $"{subject}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("speedUnit", $"{speedUnit}"));
 
             return new(
                 MotionQuizType.Basic,
@@ -275,7 +211,7 @@ public sealed class MotionQuizGenerator
                 [distance, time],
                 speed,
                 speedUnit,
-                language == AppLanguage.Vietnamese ? "vận tốc" : "speed",
+                QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.006"),
                 problem,
                 equation,
                 solution,
@@ -288,18 +224,14 @@ public sealed class MotionQuizGenerator
         // BasicTime
         (int targetSpeed, int targetTime, int targetDistance) =
             CreateSpeedTimeDistance(profile, movingSubject.Kind, level);
-        string timeProblem = language == AppLanguage.Vietnamese
-            ? $"{Capitalize(subject)} đi đều với vận tốc {targetSpeed} {speedUnit} và đi được {targetDistance} {distanceUnit}. Hỏi {subject} đi trong bao nhiêu {timeUnit}?"
-            : $"{Capitalize(subject)} moves at {targetSpeed} {speedUnit} and covers {targetDistance} {distanceUnit}. How many {timeUnit} does it travel?";
+        string timeProblem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.018", ("Capitalize_subject", $"{Capitalize(subject)}"), ("targetSpeed", $"{targetSpeed}"), ("speedUnit", $"{speedUnit}"), ("targetDistance", $"{targetDistance}"), ("distanceUnit", $"{distanceUnit}"), ("subject", $"{subject}"), ("timeUnit", $"{timeUnit}"));
         int normalizedTargetDistance = targetDistance / profile.DistanceScale;
         int timeNumerator = checked(normalizedTargetDistance * profile.TimeDivisor);
         string timeCalculation = MultiplyIfNeeded(
             $"{DivideIfNeeded(targetDistance.ToString(CultureInfo.InvariantCulture), profile.DistanceScale)} ÷ {targetSpeed}",
             profile.TimeDivisor);
         string timeEquation = $"{timeCalculation} = {targetTime}";
-        string timeSolution = language == AppLanguage.Vietnamese
-            ? $"Thời gian {subject} di chuyển là:{Environment.NewLine}{timeEquation} {timeUnit}"
-            : $"The travel time of {subject} is:{Environment.NewLine}{timeEquation} {timeUnit}";
+        string timeSolution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.007", ("subject", $"{subject}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("timeEquation", $"{timeEquation}"), ("timeUnit", $"{timeUnit}"));
 
         return new(
             MotionQuizType.Basic,
@@ -307,7 +239,7 @@ public sealed class MotionQuizGenerator
             [targetSpeed, targetDistance],
             targetTime,
             timeUnit,
-            language == AppLanguage.Vietnamese ? "thời gian" : "time",
+            QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.008"),
             timeProblem,
             timeEquation,
             timeSolution,
@@ -331,18 +263,14 @@ public sealed class MotionQuizGenerator
         (int slowSpeed, int fastSpeed, int time, int gap) =
             CreateChasingNumbers(profile, slowMovingSubject.Kind, level);
 
-        string problem = language == AppLanguage.Vietnamese
-            ? $"{Capitalize(slowSubject)} đi trước và đang cách {fastSubject} {gap} {distanceUnit}. {Capitalize(slowSubject)} đi với vận tốc {slowSpeed} {speedUnit}, còn {fastSubject} đi cùng chiều với vận tốc {fastSpeed} {speedUnit}. Hỏi sau bao nhiêu {timeUnit} thì {fastSubject} đuổi kịp?"
-            : $"{Capitalize(slowSubject)} is {gap} {distanceUnit} ahead of {fastSubject}. {Capitalize(slowSubject)} moves at {slowSpeed} {speedUnit}, while {fastSubject} moves in the same direction at {fastSpeed} {speedUnit}. After how many {timeUnit} will the faster one catch up?";
+        string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateChasingContract.009", ("Capitalize_slowSubject", $"{Capitalize(slowSubject)}"), ("fastSubject", $"{fastSubject}"), ("gap", $"{gap}"), ("distanceUnit", $"{distanceUnit}"), ("slowSpeed", $"{slowSpeed}"), ("speedUnit", $"{speedUnit}"), ("fastSpeed", $"{fastSpeed}"), ("timeUnit", $"{timeUnit}"));
 
         int relativeSpeed = fastSpeed - slowSpeed;
         string calculation = MultiplyIfNeeded(
             $"{DivideIfNeeded(gap.ToString(CultureInfo.InvariantCulture), profile.DistanceScale)} ÷ ({fastSpeed} - {slowSpeed})",
             profile.TimeDivisor);
         string equation = $"{calculation} = {time}";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Thời gian {fastSubject} đuổi kịp {slowSubject} là:{Environment.NewLine}{equation} {timeUnit}"
-            : $"The time for {fastSubject} to catch up to {slowSubject} is:{Environment.NewLine}{equation} {timeUnit}";
+        string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateChasingContract.010", ("fastSubject", $"{fastSubject}"), ("slowSubject", $"{slowSubject}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("timeUnit", $"{timeUnit}"));
 
         BigInteger numerator = profile.TimeDivisor == 1
             ? gap / profile.DistanceScale
@@ -354,7 +282,7 @@ public sealed class MotionQuizGenerator
             [gap, slowSpeed, fastSpeed],
             time,
             timeUnit,
-            language == AppLanguage.Vietnamese ? "thời gian đuổi kịp" : "catch-up time",
+            QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateChasingContract.011"),
             problem,
             equation,
             solution,
@@ -378,18 +306,14 @@ public sealed class MotionQuizGenerator
         (int speed1, int speed2, int time, int distance) =
             CreateMeetingNumbers(profile, movingSubject1.Kind, level);
 
-        string problem = language == AppLanguage.Vietnamese
-            ? $"{Capitalize(subject1)} và {subject2} ở hai điểm cách nhau {distance} {distanceUnit}, cùng lúc đi ngược chiều về phía nhau. Vận tốc lần lượt là {speed1} {speedUnit} và {speed2} {speedUnit}. Hỏi sau bao nhiêu {timeUnit} thì hai bên gặp nhau?"
-            : $"{Capitalize(subject1)} and {subject2} start {distance} {distanceUnit} apart and move toward each other at the same time. Their speeds are {speed1} {speedUnit} and {speed2} {speedUnit}. After how many {timeUnit} will they meet?";
+        string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateMeetingContract.012", ("Capitalize_subject1", $"{Capitalize(subject1)}"), ("subject2", $"{subject2}"), ("distance", $"{distance}"), ("distanceUnit", $"{distanceUnit}"), ("speed1", $"{speed1}"), ("speedUnit", $"{speedUnit}"), ("speed2", $"{speed2}"), ("timeUnit", $"{timeUnit}"));
 
         int relativeSpeed = speed1 + speed2;
         string calculation = MultiplyIfNeeded(
             $"{DivideIfNeeded(distance.ToString(CultureInfo.InvariantCulture), profile.DistanceScale)} ÷ ({speed1} + {speed2})",
             profile.TimeDivisor);
         string equation = $"{calculation} = {time}";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Thời gian {subject1} và {subject2} gặp nhau là:{Environment.NewLine}{equation} {timeUnit}"
-            : $"The time for {subject1} and {subject2} to meet is:{Environment.NewLine}{equation} {timeUnit}";
+        string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateMeetingContract.013", ("subject1", $"{subject1}"), ("subject2", $"{subject2}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("timeUnit", $"{timeUnit}"));
 
         BigInteger numerator = profile.TimeDivisor == 1
             ? distance / profile.DistanceScale
@@ -401,7 +325,7 @@ public sealed class MotionQuizGenerator
             [distance, speed1, speed2],
             time,
             timeUnit,
-            language == AppLanguage.Vietnamese ? "thời gian gặp nhau" : "meeting time",
+            QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateMeetingContract.014"),
             problem,
             equation,
             solution,
@@ -430,12 +354,12 @@ public sealed class MotionQuizGenerator
         MotionUnitProfile profile = PickRiverProfile(language);
         string craft = PickWatercraft(language);
         string speedUnit = GetSpeedUnit(profile, language);
-        int boatSpeed = profile.SpeedUnitEn == "m/s"
+        int boatSpeed = profile.SpeedUnit == "m/s"
             ? _random.Next(5, 16)
-            : profile.SpeedUnitEn == "mph"
+            : profile.SpeedUnit == "mph"
                 ? _random.Next(15, 41)
                 : _random.Next(18, 46);
-        int currentSpeed = profile.SpeedUnitEn == "m/s"
+        int currentSpeed = profile.SpeedUnit == "m/s"
             ? _random.Next(1, Math.Min(3, boatSpeed))
             : _random.Next(1, Math.Min(6, boatSpeed));
         int downstream = boatSpeed + currentSpeed;
@@ -496,15 +420,11 @@ public sealed class MotionQuizGenerator
         string speedUnit,
         bool isDownstream)
     {
-        string problem = language == AppLanguage.Vietnamese
-            ? $"{Capitalize(craft)} có vận tốc khi nước yên là {boatSpeed} {speedUnit}, vận tốc dòng nước là {currentSpeed} {speedUnit}. Hỏi vận tốc {(isDownstream ? "xuôi dòng" : "ngược dòng")} của {craft} là bao nhiêu {speedUnit}?"
-            : $"{Capitalize(craft)} moves at {boatSpeed} {speedUnit} in still water, and the current speed is {currentSpeed} {speedUnit}. What is its {(isDownstream ? "downstream" : "upstream")} speed in {speedUnit}?";
+        string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.019", ("Capitalize_craft", $"{Capitalize(craft)}"), ("boatSpeed", $"{boatSpeed}"), ("speedUnit", $"{speedUnit}"), ("currentSpeed", $"{currentSpeed}"), ("isDownstream_xu_i_d_ng_ng_c_d_ng", $"{(isDownstream ? "xuôi dòng" : "ngược dòng")}"), ("craft", $"{craft}"), ("isDownstream_downstream_upstream", $"{(isDownstream ? "downstream" : "upstream")}"));
         string equation = isDownstream
             ? $"{boatSpeed} + {currentSpeed} = {answer}"
             : $"{boatSpeed} - {currentSpeed} = {answer}";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"Vận tốc {(isDownstream ? "xuôi dòng" : "ngược dòng")} của {craft} là:{Environment.NewLine}{equation} {speedUnit}"
-            : $"The {(isDownstream ? "downstream" : "upstream")} speed of {craft} is:{Environment.NewLine}{equation} {speedUnit}";
+        string solution = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.020", ("isDownstream_xu_i_d_ng_ng_c_d_ng", $"{(isDownstream ? "xuôi dòng" : "ngược dòng")}"), ("craft", $"{craft}"), ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("speedUnit", $"{speedUnit}"), ("isDownstream_downstream_upstream", $"{(isDownstream ? "downstream" : "upstream")}"));
 
         return new(
             MotionQuizType.River,
@@ -512,9 +432,7 @@ public sealed class MotionQuizGenerator
             [boatSpeed, currentSpeed],
             answer,
             speedUnit,
-            language == AppLanguage.Vietnamese
-                ? isDownstream ? "vận tốc xuôi dòng" : "vận tốc ngược dòng"
-                : isDownstream ? "downstream speed" : "upstream speed",
+            (isDownstream ? QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.022") : QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.023")),
             problem,
             equation,
             solution,
@@ -534,18 +452,14 @@ public sealed class MotionQuizGenerator
         string speedUnit,
         bool findBoat)
     {
-        string problem = language == AppLanguage.Vietnamese
-            ? $"{Capitalize(craft)} có vận tốc xuôi dòng {downstream} {speedUnit} và vận tốc ngược dòng {upstream} {speedUnit}. Hỏi {(findBoat ? "vận tốc của thuyền khi nước yên" : "vận tốc dòng nước")} là bao nhiêu {speedUnit}?"
-            : $"{Capitalize(craft)} has a downstream speed of {downstream} {speedUnit} and an upstream speed of {upstream} {speedUnit}. What is the {(findBoat ? "speed in still water" : "current speed")} in {speedUnit}?";
+        string problem = QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.021", ("Capitalize_craft", $"{Capitalize(craft)}"), ("downstream", $"{downstream}"), ("speedUnit", $"{speedUnit}"), ("upstream", $"{upstream}"), ("value4", $"{(findBoat ? "vận tốc của thuyền khi nước yên" : "vận tốc dòng nước")}"), ("findBoat_speed_in_still_water_current_speed", $"{(findBoat ? "speed in still water" : "current speed")}"));
         int numerator = findBoat
             ? downstream + upstream
             : downstream - upstream;
         string equation = findBoat
             ? $"({downstream} + {upstream}) ÷ 2 = {answer}"
             : $"({downstream} - {upstream}) ÷ 2 = {answer}";
-        string solution = language == AppLanguage.Vietnamese
-            ? $"{(findBoat ? $"Vận tốc của {craft} khi nước yên" : "Vận tốc dòng nước")} là:{Environment.NewLine}{equation} {speedUnit}"
-            : $"The {(findBoat ? $"speed of {craft} in still water" : "current speed")} is:{Environment.NewLine}{equation} {speedUnit}";
+        string solution = (findBoat ? QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.024", ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("speedUnit", $"{speedUnit}"), ("craft", $"{craft}")) : QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.025", ("Environment_NewLine", $"{Environment.NewLine}"), ("equation", $"{equation}"), ("speedUnit", $"{speedUnit}")));
 
         return new(
             MotionQuizType.River,
@@ -553,9 +467,7 @@ public sealed class MotionQuizGenerator
             [downstream, upstream],
             answer,
             speedUnit,
-            language == AppLanguage.Vietnamese
-                ? findBoat ? "vận tốc thuyền" : "vận tốc dòng nước"
-                : findBoat ? "boat speed" : "current speed",
+            (findBoat ? QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.026") : QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.027")),
             problem,
             equation,
             solution,
@@ -678,7 +590,7 @@ public sealed class MotionQuizGenerator
             int time = profile.TimeDivisor switch
             {
                 60 => PickMinuteDuration(level),
-                _ when profile.TimeUnitEn == "seconds" => _random.Next(5, level.HasValue ? 6 + 10 * level.Value : 61),
+                _ when profile.Kind is MotionUnitKind.MeterSecond or MotionUnitKind.CentimeterSecond or MotionUnitKind.MillimeterSecond => _random.Next(5, level.HasValue ? 6 + 10 * level.Value : 61),
                 _ => _random.Next(2, level.HasValue ? level.Value + 3 : 6)
             };
 
@@ -792,7 +704,7 @@ public sealed class MotionQuizGenerator
     private int PickTimeForRelativeProfile(MotionUnitProfile profile, int? level) =>
         profile.TimeDivisor == 60
             ? PickMinuteDuration(level)
-            : profile.TimeUnitEn == "seconds"
+            : profile.Kind is MotionUnitKind.MeterSecond or MotionUnitKind.CentimeterSecond or MotionUnitKind.MillimeterSecond
                 ? _random.Next(5, level.HasValue ? 6 + 10 * level.Value : 61)
                 : _random.Next(1, level.HasValue ? level.Value + 2 : 5);
 
@@ -802,8 +714,8 @@ public sealed class MotionQuizGenerator
             bool restOnly, int? level)
     {
         MovingSubject[] subjects = level is >= 4
-            ? MovingSubjects.Where(subject => subject.Kind is MotionSubjectKind.MotorVehicle or MotionSubjectKind.Train).ToArray()
-            : MovingSubjects;
+            ? MovingSubjects(language).Where(subject => subject.Kind is MotionSubjectKind.MotorVehicle or MotionSubjectKind.Train).ToArray()
+            : MovingSubjects(language).ToArray();
         MovingSubject subject = Pick(subjects);
         MotionUnitProfile profile = PickProfileForSubject(
             subject.Kind,
@@ -815,14 +727,14 @@ public sealed class MotionQuizGenerator
     private (MovingSubject First, MovingSubject Second, MotionUnitProfile Profile)
         PickMovingSubjectPairAndProfile(AppLanguage language, int? level)
     {
-        MotionSubjectKind[] pairKinds = MovingSubjects
+        MotionSubjectKind[] pairKinds = MovingSubjects(language)
             .GroupBy(subject => subject.Kind)
             .Where(group => group.Count() >= 2 && (level is not >= 4 || group.Key == MotionSubjectKind.MotorVehicle))
             .Select(group => group.Key)
             .ToArray();
 
         MotionSubjectKind kind = Pick(pairKinds);
-        MovingSubject[] candidates = MovingSubjects
+        MovingSubject[] candidates = MovingSubjects(language)
             .Where(subject => subject.Kind == kind)
             .ToArray();
 
@@ -876,7 +788,7 @@ public sealed class MotionQuizGenerator
             _ => [MotionUnitKind.MeterSecond]
         };
 
-        MotionUnitProfile[] candidates = UnitProfiles
+        MotionUnitProfile[] candidates = UnitProfiles(language)
             .Where(profile =>
                 allowedKinds.Contains(profile.Kind) &&
                 (!profile.EnglishOnly || language == AppLanguage.English) &&
@@ -894,7 +806,7 @@ public sealed class MotionQuizGenerator
             ? [MotionUnitKind.RoadKmHour, MotionUnitKind.MeterSecond, MotionUnitKind.MilesHour]
             : [MotionUnitKind.RoadKmHour, MotionUnitKind.MeterSecond];
 
-        MotionUnitProfile[] candidates = UnitProfiles
+        MotionUnitProfile[] candidates = UnitProfiles(language)
             .Where(profile =>
                 allowedKinds.Contains(profile.Kind) &&
                 (!profile.EnglishOnly || language == AppLanguage.English) &&
@@ -938,14 +850,9 @@ public sealed class MotionQuizGenerator
     private static string GetSubjectText(
         MovingSubject subject,
         AppLanguage language) =>
-        language == AppLanguage.Vietnamese
-            ? subject.Vietnamese
-            : subject.English;
+        subject.Name;
 
-    private string PickWatercraft(AppLanguage language) =>
-        language == AppLanguage.Vietnamese
-            ? Pick(WatercraftVi)
-            : Pick(WatercraftEn);
+    private string PickWatercraft(AppLanguage language) => Pick(QuizContentCatalog.LoadList<string>("MotionQuizGenerator.Watercraft", QuizContentCatalog.Culture(language)));
 
     private T Pick<T>(IReadOnlyList<T> values) =>
         values[_random.Next(values.Count)];
@@ -963,13 +870,13 @@ public sealed class MotionQuizGenerator
             .ToArray();
 
     private static string GetSpeedUnit(MotionUnitProfile profile, AppLanguage language) =>
-        language == AppLanguage.Vietnamese ? profile.SpeedUnitVi : profile.SpeedUnitEn;
+        profile.SpeedUnit;
 
     private static string GetTimeUnit(MotionUnitProfile profile, AppLanguage language) =>
-        language == AppLanguage.Vietnamese ? profile.TimeUnitVi : profile.TimeUnitEn;
+        profile.TimeUnit;
 
     private static string GetDistanceUnit(MotionUnitProfile profile, AppLanguage language) =>
-        language == AppLanguage.Vietnamese ? profile.DistanceUnitVi : profile.DistanceUnitEn;
+        profile.DistanceUnit;
 
     private static string Capitalize(string value) =>
         string.IsNullOrEmpty(value)

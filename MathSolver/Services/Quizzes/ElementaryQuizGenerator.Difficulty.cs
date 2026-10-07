@@ -121,7 +121,7 @@ public sealed partial class ElementaryQuizGenerator
             string twice = t.Given("double-quantity", 2 * given);
             quantity = $"({twice}/2)";
 
-            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity, unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.001"), quantity, unit);
             scenario = "infer-half-quantity";
         }
         else if (level == 3)
@@ -130,7 +130,7 @@ public sealed partial class ElementaryQuizGenerator
             string first = t.Given("quantity-first", x), second = t.Given("quantity-second", given - x);
             quantity = $"({first}+{second})";
 
-            t.Step(t.L("Dữ kiện cần dùng", "Required quantity"), quantity, unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.002"), quantity, unit);
             scenario = "infer-quantity";
         }
         else
@@ -145,11 +145,11 @@ public sealed partial class ElementaryQuizGenerator
                 string removed = t.Given("previous-reduction", reduction);
 
                 restored = $"({after}+{removed})";
-                t.Step(t.L("Khôi phục trước lần giảm", "Undo the decrease"), restored, unit);
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.003"), restored, unit);
             }
 
             quantity = sum ? $"({restored}-2*{added})" : $"({restored}-{added})";
-            t.Step(t.L("Dữ kiện ban đầu", "Original quantity"), quantity, unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.004"), quantity, unit);
             scenario = level == 5 ? "two-changes" : "reverse-change";
         }
 
@@ -166,7 +166,7 @@ public sealed partial class ElementaryQuizGenerator
                 string remaining = t.Given("remaining-difference", difference - 2 * int.Parse(transfer));
                 differenceExpression = $"({remaining}+2*{transfer})";
 
-                t.Step(t.L("Hiệu ban đầu", "Original difference"), differenceExpression, unit);
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.005"), differenceExpression, unit);
             }
             t.Answer(smallLabel, $"({quantity}-{differenceExpression})/2", unit);
             t.Answer(largeLabel, $"({quantity}+{differenceExpression})/2", unit);
@@ -185,11 +185,11 @@ public sealed partial class ElementaryQuizGenerator
                 string delta = t.Given("ratio-extra", largeParts - smallParts);
 
                 r2 = $"({r1}+{delta})";
-                t.Step(t.L("Số phần của số lớn", "Parts in the larger number"), r2, t.L("phần", "parts"));
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.006"), r2, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.007"));
                 ratioExpression = sum ? $"({r1}+{r2})" : $"({r2}-{r1})";
                 scenario = "change-and-inferred-ratio";
             }
-            t.Step(t.L("Giá trị một phần", "Value of one part"), $"{quantity}/{ratioExpression}", unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.008"), $"{quantity}/{ratioExpression}", unit);
             t.Answer(smallLabel, $"{quantity}/{ratioExpression}*{r1}", unit);
             t.Answer(largeLabel, $"{quantity}/{ratioExpression}*{r2}", unit);
         }
@@ -204,7 +204,7 @@ public sealed partial class ElementaryQuizGenerator
             rows = [new(smallLabel, [new("?", 2)]), new(largeLabel,
                 [new("?", 2), new(level <= 3 ? differenceExpression : "?", Highlight: true)])];
         else rows = [new(smallLabel, [new("?")]), new(largeLabel, [new("?")])];
-        var diagram = new QuizDiagram("bars", t.L("Sơ đồ hai số ban đầu (minh họa)", "Original numbers (schematic)"), rows);
+        var diagram = new QuizDiagram("bars", QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.009"), rows);
         // Prose is built from semantic fact roles, never by replacing mathematical nouns.
         string text = TwoNumberStory(t, context, smallLabel, largeLabel, sum, level);
         return t.Build(scenario, text, diagram: diagram) with { StoryContextId = context.Id };

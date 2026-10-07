@@ -181,8 +181,7 @@ public static class ArithmeticQuestionCatalogue
         if (c.Structure == BasicQuestionStructure.Remaining)
         {
             var action = Removal(c);
-            draft = draft with { GivenB = c.Language == AppLanguage.Vietnamese
-                ? $"{{name}} {action.Vi} {{b}} {{unit}}." : $"{{name}} {action.En} {{b}} {{unit}}." };
+            draft = draft with { GivenB = QuizContentCatalog.Text(c.Language, "ArithmeticQuestionCatalogue.Example.001", ("action_Vi", $"{action.Vi}"), ("action_En", $"{action.En}")) };
         }
         bool living = QuestionUnits.Find(c)!.Id is "chickens" or "ducks" or "fish" or "cows" or "trees" or "seedlings";
         if (living)

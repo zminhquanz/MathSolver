@@ -28,9 +28,7 @@ public static class ProportionQuizSolutionFormatter
             calculation += $" − {a}";
         }
 
-        string answerLabel = language == AppLanguage.Vietnamese
-            ? "Đáp số"
-            : "Answer";
+        string answerLabel = QuizContentCatalog.Text(language, "ProportionQuizSolutionFormatter.Format.001");
         return $"{GetSolutionLead(contract, language, unit)}{Environment.NewLine}" +
                $"{calculation} = {answer} {unit}{Environment.NewLine}" +
                $"{answerLabel}: {answer} {unit}";

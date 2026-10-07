@@ -43,12 +43,8 @@ public static class EssayFeedbackFormatter
             bool missingSolution = validation.SolutionError == EssayAnswerError.MissingSolution ||
                                    string.IsNullOrWhiteSpace(solutionText);
             messages.Add(missingSolution
-                ? vietnamese
-                    ? $"Lời giải: em chưa viết câu lời giải; {guidance}."
-                    : $"Solution: no solution sentence was entered; {guidance}."
-                : vietnamese
-                    ? $"Lời giải: câu em viết chưa nêu đúng đại lượng cần tìm; {guidance}."
-                    : $"Solution: the sentence does not name the requested quantity; {guidance}.");
+                ? QuizContentCatalog.Text(language, "EssayFeedbackFormatter.Format.001", ("guidance", $"{guidance}"))
+                : QuizContentCatalog.Text(language, "EssayFeedbackFormatter.Format.002", ("guidance", $"{guidance}")));
         }
 
         if (!validation.EquationIsCorrect)
@@ -74,26 +70,15 @@ public static class EssayFeedbackFormatter
     private static string DescribeStep(EssayStepValidationResult step, string expectedUnit,
         string expectedAnswer, bool vi)
     {
-        string prefix = vi ? $"Bước {step.Number}: " : $"Step {step.Number}: ";
+        string prefix = QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.003", ("step_Number", $"{step.Number}"));
         return prefix + (step.Error switch
         {
-            EssayAnswerError.WrongEquationResult when step.ComputedValue != step.WrittenValue => vi
-                ? $"vế trái tính được {step.ComputedValue}, nhưng em ghi {step.WrittenValue}."
-                : $"the left side evaluates to {step.ComputedValue}, but you wrote {step.WrittenValue}.",
-            EssayAnswerError.WrongEquationResult => vi
-                ? $"kết quả cuối là {step.ComputedValue}, nhưng bài toán cần {expectedAnswer}."
-                : $"the final result is {step.ComputedValue}, but the problem needs {expectedAnswer}.",
-            EssayAnswerError.WrongEquationUnit when string.IsNullOrWhiteSpace(step.EnteredUnit) => vi
-                ? $"phép tính cuối thiếu đơn vị “{expectedUnit}”."
-                : $"the final calculation is missing the unit “{expectedUnit}”.",
-            EssayAnswerError.WrongEquationUnit => vi
-                ? $"đơn vị “{step.EnteredUnit}” chưa đúng; cần “{expectedUnit}”."
-                : $"the unit “{step.EnteredUnit}” is incorrect; use “{expectedUnit}”.",
-            EssayAnswerError.WrongOperandsOrOperation => vi
-                ? "dữ kiện hoặc quan hệ tính chưa khớp đề bài. Dùng dữ kiện trong đề hoặc kết quả đã tính đúng ở bước trước; phép tính cuối cần tìm trung bình cộng."
-                : "the facts or calculation relationships do not match the problem. Use the given facts or a correctly derived earlier result; the final calculation must find the average.",
-            _ => vi ? "không đọc được phép tính; hãy ghi đầy đủ biểu thức = kết quả."
-                : "the calculation cannot be read; write a complete expression = result."
+            EssayAnswerError.WrongEquationResult when step.ComputedValue != step.WrittenValue => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.004", ("step_ComputedValue", $"{step.ComputedValue}"), ("step_WrittenValue", $"{step.WrittenValue}")),
+            EssayAnswerError.WrongEquationResult => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.005", ("step_ComputedValue", $"{step.ComputedValue}"), ("expectedAnswer", $"{expectedAnswer}")),
+            EssayAnswerError.WrongEquationUnit when string.IsNullOrWhiteSpace(step.EnteredUnit) => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.006", ("expectedUnit", $"{expectedUnit}")),
+            EssayAnswerError.WrongEquationUnit => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.007", ("step_EnteredUnit", $"{step.EnteredUnit}"), ("expectedUnit", $"{expectedUnit}")),
+            EssayAnswerError.WrongOperandsOrOperation => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.008"),
+            _ => QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.009")
         });
     }
 
@@ -111,29 +96,21 @@ public static class EssayFeedbackFormatter
 
         if (expectedUnit == "%")
         {
-            return vietnamese
-                ? $"hãy nêu đối tượng “{subject ?? "cần tính tỉ lệ"}” hoặc tỉ lệ phần trăm (%)"
-                : $"name “{subject ?? "the requested share"}” or use percent (%)";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetSolutionGuidance.032", ("subject_c_n_t_nh_t_l", $"{subject ?? "cần tính tỉ lệ"}"), ("subject_the_requested_share", $"{subject ?? "the requested share"}"));
         }
 
         if (!string.IsNullOrWhiteSpace(subject) &&
             !string.IsNullOrWhiteSpace(expectedUnit))
         {
-            return vietnamese
-                ? $"hãy nêu “{subject}” hoặc đơn vị “{expectedUnit}”"
-                : $"name “{subject}” or its unit “{expectedUnit}”";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetSolutionGuidance.010", ("subject", $"{subject}"), ("expectedUnit", $"{expectedUnit}"));
         }
 
         if (!string.IsNullOrWhiteSpace(expectedUnit))
         {
-            return vietnamese
-                ? $"hãy nêu đơn vị “{expectedUnit}”"
-                : $"include the unit “{expectedUnit}”";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetSolutionGuidance.011", ("expectedUnit", $"{expectedUnit}"));
         }
 
-        return vietnamese
-            ? $"hãy nêu đại lượng “{subject ?? "cần tìm"}”"
-            : $"name the requested quantity “{subject ?? "answer"}”";
+        return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetSolutionGuidance.033", ("subject_c_n_t_m", $"{subject ?? "cần tìm"}"), ("subject_answer", $"{subject ?? "answer"}"));
     }
 
     private static string DescribeEquation(
@@ -157,32 +134,22 @@ public static class EssayFeedbackFormatter
         if (error == EssayAnswerError.WrongEquationUnit)
         {
             string unitProblem = string.IsNullOrWhiteSpace(enteredUnit)
-                ? vietnamese
-                    ? $"thiếu đơn vị “{expectedUnit}” sau kết quả"
-                    : $"the result is missing the unit “{expectedUnit}”"
-                : vietnamese
-                    ? $"đơn vị em ghi là “{enteredUnit}”, cần “{expectedUnit}”"
-                    : $"the unit is “{enteredUnit}”, but “{expectedUnit}” is required";
-            return vietnamese ? $"Phép tính: {unitProblem}." : $"Calculation: {unitProblem}.";
+                ? QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.012", ("expectedUnit", $"{expectedUnit}"))
+                : QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.013", ("enteredUnit", $"{enteredUnit}"), ("expectedUnit", $"{expectedUnit}"));
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.014", ("unitProblem", $"{unitProblem}"));
         }
 
         if (error == EssayAnswerError.InvalidEquationFormat)
         {
             string detail = string.IsNullOrWhiteSpace(equationText)
-                ? vietnamese ? "chưa nhập phép tính" : "no calculation was entered"
-                : vietnamese
-                    ? "không đọc được biểu thức hoặc thiếu dấu “=” và kết quả"
-                    : "the expression cannot be read, or “=” and a result are missing";
-            return vietnamese
-                ? $"Phép tính: {detail}. Ví dụ đúng: {sample}."
-                : $"Calculation: {detail}. One valid form is {sample}.";
+                ? QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.015")
+                : QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.016");
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.017", ("detail", $"{detail}"), ("sample", $"{sample}"));
         }
 
         if (error == EssayAnswerError.WrongOperandsOrOperation)
         {
-            return vietnamese
-                ? $"Phép tính: dữ kiện hoặc phép toán chưa khớp đề bài. Một cách tính đúng: {sample}."
-                : $"Calculation: the numbers or operation do not match the problem. One valid calculation is {sample}.";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.018", ("sample", $"{sample}"));
         }
 
         string expectedValue = GetExpectedValue(question, culture);
@@ -205,19 +172,13 @@ public static class EssayFeedbackFormatter
                     out EssayCalculationEvaluator.Value writtenValue, out _) &&
                 writtenValue != leftValue)
             {
-                return vietnamese
-                    ? $"Phép tính: vế trái tính được {computed}, nhưng em ghi {enteredResult}; bài toán cần {expectedAnswer}.{unitNote}"
-                    : $"Calculation: the left side evaluates to {computed}, but you wrote {enteredResult}; this problem needs {expectedAnswer}.{unitNote}";
+                return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.019", ("computed", $"{computed}"), ("enteredResult", $"{enteredResult}"), ("expectedAnswer", $"{expectedAnswer}"), ("unitNote", $"{unitNote}"));
             }
 
-            return vietnamese
-                ? $"Phép tính: cách tính em viết ra {computed}, nhưng bài toán cần {expectedValue}; hãy kiểm tra dữ kiện hoặc phép toán. Một cách tính đúng: {sample}.{unitNote}"
-                : $"Calculation: your expression evaluates to {computed}, but the problem needs {expectedValue}; check the numbers or operation. One valid calculation is {sample}.{unitNote}";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.020", ("computed", $"{computed}"), ("expectedValue", $"{expectedValue}"), ("sample", $"{sample}"), ("unitNote", $"{unitNote}"));
         }
 
-        return vietnamese
-            ? $"Phép tính: kết quả chưa đúng; bài toán cần {expectedAnswer}. Một cách tính đúng: {sample}.{unitNote}"
-            : $"Calculation: the result is incorrect; the problem needs {expectedAnswer}. One valid calculation is {sample}.{unitNote}";
+        return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeEquation.021", ("expectedAnswer", $"{expectedAnswer}"), ("sample", $"{sample}"), ("unitNote", $"{unitNote}"));
     }
 
     private static string DescribeAnswer(
@@ -235,37 +196,27 @@ public static class EssayFeedbackFormatter
         if (error == EssayAnswerError.WrongAnswerUnit)
         {
             string unitProblem = string.IsNullOrWhiteSpace(enteredUnit)
-                ? vietnamese
-                    ? $"thiếu đơn vị “{expectedUnit}”"
-                    : $"the unit “{expectedUnit}” is missing"
-                : vietnamese
-                    ? $"em ghi đơn vị “{enteredUnit}”, cần “{expectedUnit}”"
-                    : $"you wrote the unit “{enteredUnit}”, but “{expectedUnit}” is required";
-            return vietnamese ? $"Đáp số: {unitProblem}." : $"Answer: {unitProblem}.";
+                ? QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.022", ("expectedUnit", $"{expectedUnit}"))
+                : QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.023", ("enteredUnit", $"{enteredUnit}"), ("expectedUnit", $"{expectedUnit}"));
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.024", ("unitProblem", $"{unitProblem}"));
         }
 
         if (error == EssayAnswerError.InvalidAnswerFormat)
         {
             string detail = string.IsNullOrWhiteSpace(answerText)
-                ? vietnamese ? "chưa nhập đáp số" : "no answer was entered"
-                : vietnamese ? "không đọc được giá trị số" : "the numeric value cannot be read";
-            return vietnamese
-                ? $"Đáp số: {detail}; cần ghi {expectedAnswer}."
-                : $"Answer: {detail}; write {expectedAnswer}.";
+                ? QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.025")
+                : QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.026");
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.027", ("detail", $"{detail}"), ("expectedAnswer", $"{expectedAnswer}"));
         }
 
         if (hasValue)
         {
             string unitNote = GetAdditionalUnitIssue(
                 question, enteredUnit, expectedUnit, vietnamese);
-            return vietnamese
-                ? $"Đáp số: em ghi {enteredValue}, kết quả đúng là {expectedAnswer}.{unitNote}"
-                : $"Answer: you wrote {enteredValue}, but the correct answer is {expectedAnswer}.{unitNote}";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.028", ("enteredValue", $"{enteredValue}"), ("expectedAnswer", $"{expectedAnswer}"), ("unitNote", $"{unitNote}"));
         }
 
-        return vietnamese
-            ? $"Đáp số: chưa đúng; kết quả đúng là {expectedAnswer}."
-            : $"Answer: incorrect; the correct answer is {expectedAnswer}.";
+        return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.DescribeAnswer.029", ("expectedAnswer", $"{expectedAnswer}"));
     }
 
     private static string GetExpectedAnswer(
@@ -289,14 +240,10 @@ public static class EssayFeedbackFormatter
 
         if (enteredUnit.Length == 0)
         {
-            return vietnamese
-                ? $" Đồng thời thiếu đơn vị “{expectedUnit}”."
-                : $" The unit “{expectedUnit}” is also missing.";
+            return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetAdditionalUnitIssue.030", ("expectedUnit", $"{expectedUnit}"));
         }
 
-        return vietnamese
-            ? $" Đồng thời đơn vị “{enteredUnit}” chưa đúng; cần “{expectedUnit}”."
-            : $" The unit “{enteredUnit}” is also incorrect; use “{expectedUnit}”.";
+        return QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vietnamese), "EssayFeedbackFormatter.GetAdditionalUnitIssue.031", ("enteredUnit", $"{enteredUnit}"), ("expectedUnit", $"{expectedUnit}"));
     }
 
     private static string GetExpectedValue(

@@ -25,7 +25,7 @@ public static class ElementaryWordProblemSolutionFormatter
 
         if (question.ExpressionProblem is ExpressionQuizContract expression)
         {
-            string label = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+            string label = QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.Format.001");
             return NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead) + Environment.NewLine +
                 $"{expression.ExpressionText} = {expression.CorrectAnswer} {wordProblem.AnswerUnit}".TrimEnd() + Environment.NewLine +
                 $"{label}: {expression.CorrectAnswer} {wordProblem.AnswerUnit}".TrimEnd();
@@ -77,7 +77,7 @@ public static class ElementaryWordProblemSolutionFormatter
                 return AverageIndirectSolutionFormatter.Format(average, language, wordProblem.SolutionLead);
             string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
             string averageAnswer = average.CorrectAnswer.ToString("N0", culture);
-            string averageAnswerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+            string averageAnswerLabel = QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.Format.002");
             return $"{lead}{Environment.NewLine}" +
                    $"{average.EquationText} {wordProblem.AnswerUnit}{Environment.NewLine}" +
                    $"{averageAnswerLabel}: {averageAnswer} {wordProblem.AnswerUnit}";
@@ -108,9 +108,7 @@ public static class ElementaryWordProblemSolutionFormatter
                 question.Expression.Operation);
 
         string answerLabel =
-            language == AppLanguage.Vietnamese
-                ? "Đáp số"
-                : "Answer";
+            QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.Format.003");
 
         string solutionLead =
             NormalizeSolutionLeadPunctuation(
@@ -131,7 +129,7 @@ public static class ElementaryWordProblemSolutionFormatter
     {
         string lead = NormalizeSolutionLeadPunctuation(wordProblem.SolutionLead);
         string answer = contract.CorrectAnswer.ToString("N0", culture);
-        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        string answerLabel = QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.FormatMotion.004");
         return $"{lead}{Environment.NewLine}" +
                $"{contract.EquationText} {wordProblem.AnswerUnit}{Environment.NewLine}" +
                $"{answerLabel}: {answer} {wordProblem.AnswerUnit}";
@@ -159,9 +157,7 @@ public static class ElementaryWordProblemSolutionFormatter
             BasicArithmeticEngine.GetSymbol(
                 findX.SolutionExpression.Operation);
         string answerLabel =
-            language == AppLanguage.Vietnamese
-                ? "Đáp số"
-                : "Answer";
+            QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.FormatFindX.005");
         string solutionLead =
             NormalizeSolutionLeadPunctuation(
                 wordProblem.SolutionLead);
@@ -181,9 +177,7 @@ public static class ElementaryWordProblemSolutionFormatter
         AppLanguage language)
     {
         string answerLabel =
-            language == AppLanguage.Vietnamese
-                ? "Đáp số"
-                : "Answer";
+            QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.FormatFraction.006");
         string solutionLead =
             NormalizeSolutionLeadPunctuation(
                 wordProblem.SolutionLead);
@@ -220,9 +214,7 @@ public static class ElementaryWordProblemSolutionFormatter
         }
 
         string answerLabel =
-            language == AppLanguage.Vietnamese
-                ? "Đáp số"
-                : "Answer";
+            QuizContentCatalog.Text(language, "ElementaryWordProblemSolutionFormatter.FormatGeometry.007");
 
         string solutionLead =
             NormalizeSolutionLeadPunctuation(

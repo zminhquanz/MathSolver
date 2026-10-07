@@ -1,5 +1,10 @@
 # Local AI question templates
 
+Reviewed story wording and scene metadata are loaded from the bundled quiz JSON
+catalogue. See the [authoring guide](../../QUIZ_CONTENT_AUTHORING.md) for language
+packs, context lists, placeholders and validation commands. Arithmetic rules and
+AI grammar validation remain in C#.
+
 The practice engine owns arithmetic, random operands, answer choices and grading. Local AI supplies reusable prose templates and a prose solution lead. For a selected arithmetic, Find X or fraction family, the practice-style picker chooses numeric exercises (the default) or word problems. Numeric mode retains the original C# generator and does not read SQLite or use a knowledge group. Word mode shows all nine knowledge groups and independently selects reviewed C# stories or optional SQLite templates 50/50; empty, inaccessible or invalid bank entries fall back to C# stories, never numeric exercises. Neither practice source runs model inference. The global mixed-topic option keeps its previous random numeric/story behaviour.
 
 ## Choosing a practice style

@@ -25,8 +25,8 @@ public sealed partial class PercentageQuizGenerator
         }
         parts[^1] = remaining;
         bool vi = language == AppLanguage.Vietnamese;
-        string list = string.Join(vi ? " và " : " and ", parts);
-        string prefix = vi ? $"Các nhóm có lần lượt {list}" : $"The groups have {list}";
+        string list = string.Join(QuizContentCatalog.Text(language, "PercentageQuizGenerator.Difficulty.CombineKnownQuantity.001"), parts);
+        string prefix = QuizContentCatalog.Text(language, "PercentageQuizGenerator.Difficulty.CombineKnownQuantity.002", ("list", $"{list}"));
         // Replace only the supplied quantity; inferred totals never become extra facts.
         int quantityPosition = contract.ProblemText.IndexOf(quantity.ToString(), StringComparison.Ordinal);
         int suffixPosition = quantityPosition + quantity.ToString().Length;

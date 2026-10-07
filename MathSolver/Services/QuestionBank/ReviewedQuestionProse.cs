@@ -12,49 +12,9 @@ internal sealed record ReviewedQuestionProse(string[] GivenA, string[] GivenB, s
 {
     public static ReviewedQuestionProse? For(BasicQuestionContract c)
     {
-        if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prose(c);
         if (c.Version == FindXQuestionCatalogue.Version) c = FindXQuestionCatalogue.AsApplied(c);
-        if (c.Version != AppliedQuestionCatalogue.Version) return null;
-        var d = AppliedQuestionCatalogue.Draft(c); var e = AppliedQuestionCatalogue.Draft(c, 1);
-        bool vi = c.Language == AppLanguage.Vietnamese;
-        static string[] Unique(IEnumerable<string> values) => values.Distinct(StringComparer.Ordinal).ToArray();
-        string[] Given(string first, string second)
-        {
-            // These replacements bind the complete actor/verb phrase. They never
-            // rewrite comparison direction, conversions, price or grouping roles.
-            (string From, string To)[] phrases = vi
-                ? [("{name} có ", "{name} đang có "), ("{other} có ", "{other} đang có "),
-                    ("còn lại {", "còn {"), ("thu hoạch được", "thu được sau khi thu hoạch"),
-                    (" chứa ", " đựng "), (" chở ", " vận chuyển "), ("chia đều", "phân chia đều"),
-                    ("xếp đều", "sắp xếp đều"), ("{name} mua vở hết {a} {unit}", "Số tiền {name} chi để mua vở là {a} {unit}"),
-                    ("{name} mua bút hết {b} {unit}", "tiền mua bút của {name} là {b} {unit}"),
-                    ("dùng {b} {unit} mua đồ dùng học tập", "chi {b} {unit} cho đồ dùng học tập")]
-                : [("{name} has ", "{name} currently has "), ("{other} has ", "{other} currently has "),
-                    ("previously spent", "had already spent"), (" contains ", " holds "), (" carries ", " transports "),
-                    (" buys ", " purchases "), ("divided equally", "split equally"),
-                    ("spends {a} {unit} on", "pays {a} {unit} for"), ("spends {b} {unit} on", "pays {b} {unit} for")];
-            return Unique(new[] { first, second }.SelectMany(text => new[] { text }
-                .Concat(phrases.Select(phrase => text.Replace(phrase.From, phrase.To))))).Take(8).ToArray();
-        }
-        var result = new ReviewedQuestionProse(Given(d.GivenA, e.GivenA), Given(d.GivenB, e.GivenB),
-            Unique([d.Question, e.Question]), Unique([d.SolutionLead!, e.SolutionLead!]), d.UnitId!);
-        if (c.SceneId != "saving-total") return result;
-        // The old savings grammar only varied 'tất cả/tổng cộng', so the model
-        // could never produce another factual sentence even with a retry prompt.
-        return result with {
-            GivenA = vi ? [d.GivenA, "Số tiền {name} đã tiết kiệm được là {a} {unit},",
-                "{name} có khoản tiết kiệm {a} {unit},", "Khoản tiền tiết kiệm của {name} hiện là {a} {unit},"]
-                : [d.GivenA, "The amount {name} has saved is {a} {unit},",
-                    "{name}'s savings amount to {a} {unit},", "{name} has {a} {unit} in savings,"],
-            GivenB = vi ? [d.GivenB, "sau đó {name} để dành thêm {b} {unit}.",
-                "{name} bổ sung {b} {unit} vào khoản tiết kiệm.", "khoản tiết kiệm của {name} tăng thêm {b} {unit}."]
-                : [d.GivenB, "then {name} puts aside another {b} {unit}.",
-                    "{name} adds {b} {unit} to these savings.", "these savings increase by {b} {unit}."],
-            Questions = vi ? [d.Question, e.Question, "Khoản tiết kiệm của {name} sau đó là bao nhiêu {unit}?",
-                "Sau khi tiết kiệm thêm, {name} có bao nhiêu {unit} trong khoản tiết kiệm?"]
-                : [d.Question, e.Question, "What is the total amount of {name}'s savings in {unit}?",
-                    "How many {unit} are in {name}'s savings after this addition?"]
-        };
+        return c.Version is AppliedQuestionCatalogue.Version or FractionQuestionCatalogue.Version
+            ? QuizStoryTemplates.For(c).Prose : null;
     }
 
     public IEnumerable<BasicQuestionDraft> Stories()

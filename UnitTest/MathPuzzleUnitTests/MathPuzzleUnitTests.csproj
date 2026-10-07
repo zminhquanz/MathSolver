@@ -7,6 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="../../MathSolver/Resources/Raw/QuizContent/*.json" LogicalName="QuizContent.%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/vi-VN.json" LogicalName="QuizLocalization.vi-VN.json" />
     <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/en-US.json" LogicalName="QuizLocalization.en-US.json" />
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml" LogicalName="QuizLocalization.MathPuzzlePage.xaml" />

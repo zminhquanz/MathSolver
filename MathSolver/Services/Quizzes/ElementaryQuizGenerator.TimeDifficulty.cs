@@ -8,7 +8,7 @@ public sealed partial class ElementaryQuizGenerator
     {
         var t = new DifficultyBuilder(QuizProblemKind.Time, type, language, tier);
         int level = (int)tier;
-        string min = t.L("phút", "minutes"), hours = t.L("giờ", "hours"), days = t.L("ngày", "days");
+        string min = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.001"), hours = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.002"), days = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.003");
         t.Constant(60, 24);
         if (type == ElementaryQuizType.Calendar)
         {
@@ -27,27 +27,25 @@ public sealed partial class ElementaryQuizGenerator
                 int length = DateTime.DaysInMonth(year, month);
                 t.Constant(length);
                 expression = $"({length}-{start})";
-                t.Step(t.L("Số ngày còn lại trong tháng đầu", "Remaining days in the starting month"), expression, days);
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.004"), expression, days);
                 for (int current = month + 1; current < endMonth; current++)
                 {
                     int fullMonth = DateTime.DaysInMonth(year, current);
                     t.Constant(fullMonth);
                     expression += $"+{fullMonth}";
-                    t.Step(t.L("Cộng tháng trọn vẹn", "Include the full month"), expression, days);
+                    t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.005"), expression, days);
                 }
                 expression += $"+{end}";
             }
-            string text = t.L($"Từ đầu ngày {from:dd/MM/yyyy} đến đầu ngày {to:dd/MM/yyyy} có bao nhiêu ngày?",
-                $"How many days pass from the start of {from:yyyy-MM-dd} to the start of {to:yyyy-MM-dd}?");
+            string text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.034", ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
             if (level == 5)
             {
                 string paused = t.Given("paused-days", _random.Next(2, 7), days);
-                t.Step(t.L("Toàn bộ khoảng thời gian", "Full date interval"), expression, days);
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.006"), expression, days);
                 expression = $"({expression})-{paused}";
-                text = t.L($"Một hoạt động diễn ra từ đầu ngày {from:dd/MM/yyyy} đến đầu ngày {to:dd/MM/yyyy}, có {paused} ngày tạm dừng trong khoảng này. Có bao nhiêu ngày hoạt động?",
-                    $"An activity runs from the start of {from:yyyy-MM-dd} to the start of {to:yyyy-MM-dd}, with {paused} paused days within that interval. How many days are active?");
+                text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.035", ("paused", $"{paused}"), ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
             }
-            t.Answer(t.L("Số ngày", "Days elapsed"), expression, days);
+            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.007"), expression, days);
             return t.Build(level switch { 1 => "same-month", 2 => "adjacent-months", 3 => "multiple-months", 4 => "leap-february", _ => "leap-interval-minus-pauses" }, text);
         }
         if (type == ElementaryQuizType.ReadClock)
@@ -56,11 +54,11 @@ public sealed partial class ElementaryQuizGenerator
             int minute = level switch { 1 => 0, 2 => _random.Next(1, 4) * 15, 3 => _random.Next(12) * 5, 4 => _random.Next(45, 60), _ => _random.Next(40, 60) };
             string h = t.Given("start-hour", hour), m = t.Given("start-minute", minute);
             var clock = new QuizVisualData("clock", [], [hour, minute], "", ScenarioId: "starting-clock");
-            string problem = t.L("Đồng hồ chỉ mấy giờ, bao nhiêu phút?", "What hour and minute does the clock show?");
+            string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.008");
             if (level <= 3)
             {
-                t.Answer(t.L("Giờ", "Hour"), h);
-                t.Answer(t.L("Phút", "Minute"), m);
+                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.009"), h);
+                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.010"), m);
                 t.RequiresSolution = false;
             }
             else
@@ -71,21 +69,19 @@ public sealed partial class ElementaryQuizGenerator
                 if (level == 4)
                 {
                     elapsed = t.Given("advance-minutes", 15, min);
-                    problem = t.L($"Đồng hồ chỉ giờ bắt đầu. Sau {elapsed} phút, đồng hồ chỉ mấy giờ, bao nhiêu phút?",
-                        $"The clock shows the start time. What hour and minute will it show {elapsed} minutes later?");
+                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.011", ("elapsed", $"{elapsed}"));
                 }
                 else
                 {
                     string hourPart = t.Given("advance-hours", 1, hours), minutePart = t.Given("advance-minutes", 30, min);
                     string reduction = t.Given("subtract-minutes", 10, min);
                     elapsed = $"({hourPart}*60+{minutePart}-{reduction})";
-                    problem = t.L($"Đồng hồ chỉ giờ bắt đầu. Thời gian trôi qua bằng {hourPart} giờ {minutePart} phút bớt {reduction} phút. Sau đó đồng hồ chỉ mấy giờ, bao nhiêu phút?",
-                        $"The clock shows the start time. The elapsed interval is {hourPart} hour {minutePart} minutes minus {reduction} minutes. What hour and minute will it show afterwards?");
-                    t.Step(t.L("Thời gian trôi qua", "Elapsed interval"), elapsed, min);
+                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.012", ("hourPart", $"{hourPart}"), ("minutePart", $"{minutePart}"), ("reduction", $"{reduction}"));
+                    t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.013"), elapsed, min);
                 }
-                t.Step(t.L("Tổng phút trước khi chuyển giờ", "Minutes before carrying into hours"), $"{m}+{elapsed}", min);
-                t.Answer(t.L("Giờ", "Hour"), $"{h}+{carry}/60");
-                t.Answer(t.L("Phút", "Minute"), $"{m}+{elapsed}-{carry}");
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.014"), $"{m}+{elapsed}", min);
+                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.015"), $"{h}+{carry}/60");
+                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.016"), $"{m}+{elapsed}-{carry}");
             }
             return t.Build(level <= 3 ? "read-clock-precision-" + level : "clock-after-interval-" + level, problem, clock);
         }
@@ -93,36 +89,36 @@ public sealed partial class ElementaryQuizGenerator
         {
             string h = t.Given("first-hours", _random.Next(1, 4), hours), m = t.Given("first-minutes", _random.Next(1, 5) * 10, min);
             string expression = $"{h}*60+{m}";
-            string problem = t.L($"Khoảng đầu kéo dài {h} giờ {m} phút. ", $"The first interval lasts {h} hours {m} minutes. ");
-            t.Step(t.L("Đổi khoảng đầu ra phút", "First interval in minutes"), expression, min);
+            string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.017", ("h", $"{h}"), ("m", $"{m}"));
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.018"), expression, min);
             if (level >= 2)
             {
                 string extra = t.Given("extra-minutes", _random.Next(1, 5) * 10, min);
                 expression = $"({expression})+{extra}";
-                problem += t.L($"Tiếp theo là {extra} phút. ", $"Then another {extra} minutes follow. ");
+                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.019", ("extra", $"{extra}"));
             }
             if (level >= 4)
             {
                 string other = t.Given("second-hours", _random.Next(1, 3), hours);
                 expression = $"({expression})+{other}*60";
-                problem += t.L($"Khoảng cuối kéo dài {other} giờ. ", $"The last interval lasts {other} hours. ");
-                t.Step(t.L("Tổng các khoảng", "Sum of the intervals"), expression, min);
+                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.020", ("other", $"{other}"));
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.021"), expression, min);
             }
             if (level >= 3)
             {
                 string pause = t.Given("pause-minutes", _random.Next(1, 4) * 5, min);
                 expression = $"({expression})-{pause}";
-                problem += t.L($"Trong các khoảng trên có tổng cộng {pause} phút nghỉ cần loại ra. ", $"The intervals include {pause} minutes of rest to exclude. ");
+                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.022", ("pause", $"{pause}"));
             }
             string unit = level == 5 ? hours : min;
             if (level == 5)
             {
-                t.Step(t.L("Thời gian hoạt động theo phút", "Active time in minutes"), expression, min);
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.023"), expression, min);
                 expression = $"({expression})/60";
             }
-            t.Answer(t.L("Thời gian hoạt động", "Active time"), expression, unit);
+            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.024"), expression, unit);
             return t.Build("intervals-and-conversion-" + level,
-                problem + t.L($"Thời gian cần tính là bao nhiêu {unit}?", $"What is the requested duration in {unit}?"));
+                problem + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.025", ("unit", $"{unit}")));
         }
         // Elapsed time uses explicit next-day wording, then excludes pauses or combines sessions.
         int startHour = level <= 2 ? _random.Next(7, 10) : _random.Next(21, 24);
@@ -135,25 +131,24 @@ public sealed partial class ElementaryQuizGenerator
         string endExpression = $"{eh}*60+{em}";
         if (ending >= 24 * 60) endExpression = $"24*60+{endExpression}";
         string elapsedExpression = $"({endExpression})-({sh}*60+{sm})";
-        string wording = t.L($"Bắt đầu lúc {startHour}:{startMinute:00}, kết thúc lúc {endHour}:{endMinute:00} {(ending >= 24 * 60 ? "ngày hôm sau" : "cùng ngày")}. ",
-            $"Start at {startHour}:{startMinute:00} and finish at {endHour}:{endMinute:00} {(ending >= 24 * 60 ? "the next day" : "on the same day")}. ");
-        t.Step(t.L("Mốc bắt đầu theo phút", "Start time in minutes"), $"{sh}*60+{sm}", min);
-        t.Step(t.L("Mốc kết thúc theo phút", "End time in minutes"), endExpression, min);
+        string wording = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.036", ("startHour", $"{startHour}"), ("endHour", $"{endHour}"), ("ending_24_60_ng_y_h_m_sau_c_ng_ng_y", $"{(ending >= 24 * 60 ? "ngày hôm sau" : "cùng ngày")}"), ("ending_24_60_the_next_day_on_the_same_day", $"{(ending >= 24 * 60 ? "the next day" : "on the same day")}"), ("startMinute_00", $"{startMinute:00}"), ("endMinute_00", $"{endMinute:00}"));
+        t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.026"), $"{sh}*60+{sm}", min);
+        t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.027"), endExpression, min);
         if (level >= 4)
         {
-            t.Step(t.L("Thời gian từ đầu đến cuối", "Elapsed duration"), elapsedExpression, min);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.028"), elapsedExpression, min);
             string pause = t.Given("pause-minutes", _random.Next(10, 31), min);
             elapsedExpression = $"({elapsedExpression})-{pause}";
-            wording += t.L($"Có {pause} phút nghỉ trong khoảng này. ", $"This interval includes {pause} minutes of rest. ");
+            wording += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.029", ("pause", $"{pause}"));
         }
         if (level == 5)
         {
             string second = t.Given("second-session", _random.Next(20, 61), min);
-            t.Step(t.L("Thời gian hoạt động buổi đầu", "Active time in the first session"), elapsedExpression, min);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.030"), elapsedExpression, min);
             elapsedExpression = $"({elapsedExpression})+{second}";
-            wording += t.L($"Sau đó có buổi khác hoạt động thêm {second} phút, không nghỉ. ", $"A later session adds {second} active minutes without rest. ");
+            wording += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.031", ("second", $"{second}"));
         }
-        t.Answer(t.L("Thời gian hoạt động", "Active duration"), elapsedExpression, min);
-        return t.Build("elapsed-" + level, wording + t.L("Tổng thời gian hoạt động là bao nhiêu phút?", "How many active minutes are there in total?"));
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.032"), elapsedExpression, min);
+        return t.Build("elapsed-" + level, wording + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.033"));
     }
 }

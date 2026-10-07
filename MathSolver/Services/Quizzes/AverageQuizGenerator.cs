@@ -6,43 +6,17 @@ namespace MathSolver.Services;
 /// <summary>C# math puzzle data and rules.</summary>
 public sealed partial class AverageQuizGenerator
 {
-    private sealed record DirectContext(
-        string ViAction, string EnAction,
-        string ViUnit, string EnUnit,
-        string ViSubject, string EnSubject, string Id, string ViPeriod, string EnPeriod, int Capacity);
+    private sealed record DirectContext(string Action, string Unit, string Subject, string Id, string Period, int Capacity);
 
-    private sealed record DistributionContext(
-        string ViGroup, string EnGroup,
-        string ViUnit, string EnUnit,
-        string ViSubject, string EnSubject);
+    private sealed record DistributionContext(string Group, string Unit, string Subject);
 
-    private sealed record TwoGroupContext(
-        string ViMember, string EnMember,
-        string ViUnit, string EnUnit,
-        string ViSubject, string EnSubject);
+    private sealed record TwoGroupContext(string Member, string Unit, string Subject);
 
-    private static readonly DirectContext[] DirectContexts = QuizStoryContextCatalog.AverageContexts.Select(c =>
-        new DirectContext(c.ViAction, c.EnAction, c.ViUnit, c.EnUnit,
-            $"lượng {c.ViUnit} trung bình mỗi {c.ViPeriod}", $"average {c.EnUnit} per {c.EnPeriod}",
-            c.Id, c.ViPeriod, c.EnPeriod, c.MaximumPerPeriod)).ToArray();
+    private static IReadOnlyList<DirectContext> DirectContexts(AppLanguage language) => QuizContentCatalog.LoadList<DirectContext>("AverageQuizGenerator.DirectContexts", QuizContentCatalog.Culture(language));
 
-    private static readonly DistributionContext[] DistributionContexts =
-    [
-        new("lớp", "classes", "cây", "trees", "số cây trung bình mỗi lớp", "average trees per class"),
-        new("hộp", "boxes", "chiếc bút", "pens", "số bút trung bình mỗi hộp", "average pens per box"),
-        new("kệ", "shelves", "quyển sách", "books", "số sách trung bình mỗi kệ", "average books per shelf"),
-        new("đội", "teams", "kg giấy", "kg of paper", "khối lượng giấy trung bình mỗi đội", "average kilograms of paper per team"),
-        new("bếp ăn", "kitchens", "suất ăn", "meals", "số suất ăn trung bình mỗi bếp", "average meals per kitchen"),
-        new("đoàn", "tour groups", "người", "people", "số người trung bình mỗi đoàn", "average people per tour group"),
-        new("đợt", "sessions", "chai nhựa", "plastic bottles", "số chai trung bình mỗi đợt", "average bottles per session")
-    ];
+    private static IReadOnlyList<DistributionContext> DistributionContexts(AppLanguage language) => QuizContentCatalog.LoadList<DistributionContext>("AverageQuizGenerator.DistributionContexts", QuizContentCatalog.Culture(language));
 
-    private static readonly TwoGroupContext[] TwoGroupContexts =
-    [
-        new("bạn", "students", "điểm", "points", "điểm trung bình chung", "combined average score"),
-        new("bạn", "readers", "trang sách", "pages", "số trang trung bình chung", "combined average pages"),
-        new("thành viên", "members", "viên bi", "marbles", "số viên bi trung bình chung", "combined average marbles")
-    ];
+    private static IReadOnlyList<TwoGroupContext> TwoGroupContexts(AppLanguage language) => QuizContentCatalog.LoadList<TwoGroupContext>("AverageQuizGenerator.TwoGroupContexts", QuizContentCatalog.Culture(language));
 
     private readonly Random _random;
 
@@ -118,7 +92,7 @@ public sealed partial class AverageQuizGenerator
 
     private AverageQuizContract CreateDirect(AppLanguage language, int? level)
     {
-        DirectContext context = DirectContexts[_random.Next(DirectContexts.Length)];
+        DirectContext context = DirectContexts(language)[_random.Next(DirectContexts(language).Count)];
         int count = level.HasValue ? level.Value + 1 : _random.Next(3, 6);
         int ceiling = Math.Min(context.Capacity, level.HasValue ? 15 * level.Value : 80);
         int average = _random.Next(Math.Min(ceiling, level.HasValue ? 5 * level.Value : 20), ceiling + 1);
@@ -126,16 +100,12 @@ public sealed partial class AverageQuizGenerator
         int total = values.Sum();
         string list = JoinValues(values);
 
-        string problem = language == AppLanguage.Vietnamese
-            ? $"Trong {count} {context.ViPeriod}, {context.ViAction} lần lượt {list} {context.ViUnit}. Trung bình mỗi {context.ViPeriod} là bao nhiêu {context.ViUnit}?"
-            : $"Across {count} separate {QuizStoryContextCatalog.PluralPeriod(context.EnPeriod)}, {context.EnAction} {list} {context.EnUnit}, respectively. What is the average in {context.EnUnit} per {context.EnPeriod}?";
+        string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateDirect.013", ("count", $"{count}"), ("context_ViPeriod", $"{context.Period}"), ("context_ViAction", $"{context.Action}"), ("list", $"{list}"), ("context_ViUnit", $"{context.Unit}"), ("value1", $"{QuizStoryContextCatalog.PluralPeriod(context.Period)}"), ("context_EnAction", $"{context.Action}"), ("context_EnUnit", $"{context.Unit}"), ("context_EnPeriod", $"{context.Period}"));
         string equation = $"({string.Join(" + ", values)}) ÷ {count} = {average}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Trung bình mỗi {context.ViPeriod} ({context.ViUnit}) là:"
-                : $"The average per {context.EnPeriod} ({context.EnUnit}) is:",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateDirect.014", ("context_ViPeriod", $"{context.Period}"), ("context_ViUnit", $"{context.Unit}"), ("context_EnPeriod", $"{context.Period}"), ("context_EnUnit", $"{context.Unit}")),
             equation,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            context.Unit,
             average,
             language);
 
@@ -143,8 +113,8 @@ public sealed partial class AverageQuizGenerator
             AverageQuizType.Direct,
             [count, .. values],
             average,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-            language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
+            context.Unit,
+            context.Subject,
             problem,
             equation,
             solution,
@@ -158,17 +128,13 @@ public sealed partial class AverageQuizGenerator
         int count = level.HasValue ? _random.Next(2 + level.Value, 4 + 2 * level.Value) : _random.Next(3, 9);
         int average = level.HasValue ? _random.Next(3 * level.Value, 12 * level.Value + 1) : _random.Next(12, 51);
         int total = count * average;
-        DistributionContext context = DistributionContexts[_random.Next(DistributionContexts.Length)];
-        string problem = language == AppLanguage.Vietnamese
-            ? $"{count} {context.ViGroup} có tổng cộng {total} {context.ViUnit}. Trung bình mỗi {context.ViGroup} có bao nhiêu {context.ViUnit}?"
-            : $"{count} {context.EnGroup} have {total} {context.EnUnit} in total. How many {context.EnUnit} are there per group on average?";
+        DistributionContext context = DistributionContexts(language)[_random.Next(DistributionContexts(language).Count)];
+        string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTotalToAverage.015", ("count", $"{count}"), ("context_ViGroup", $"{context.Group}"), ("total", $"{total}"), ("context_ViUnit", $"{context.Unit}"), ("context_EnGroup", $"{context.Group}"), ("context_EnUnit", $"{context.Unit}"));
         string equation = $"{total} ÷ {count} = {average}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Trung bình mỗi {context.ViGroup} ({context.ViUnit}) là:"
-                : $"The average per group ({context.EnUnit}) is:",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTotalToAverage.016", ("context_ViGroup", $"{context.Group}"), ("context_ViUnit", $"{context.Unit}"), ("context_EnUnit", $"{context.Unit}")),
             equation,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            context.Unit,
             average,
             language);
 
@@ -176,8 +142,8 @@ public sealed partial class AverageQuizGenerator
             AverageQuizType.TotalToAverage,
             [count, total],
             average,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-            language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
+            context.Unit,
+            context.Subject,
             problem,
             equation,
             solution,
@@ -191,17 +157,13 @@ public sealed partial class AverageQuizGenerator
         int count = level.HasValue ? _random.Next(2 + level.Value, 4 + 2 * level.Value) : _random.Next(3, 9);
         int average = level.HasValue ? _random.Next(3 * level.Value, 10 * level.Value + 1) : _random.Next(8, 31);
         int total = count * average;
-        DistributionContext context = DistributionContexts[_random.Next(DistributionContexts.Length)];
-        string problem = language == AppLanguage.Vietnamese
-            ? $"Có {count} {context.ViGroup}, trung bình mỗi {context.ViGroup} có {average} {context.ViUnit}. Tất cả có bao nhiêu {context.ViUnit}?"
-            : $"There are {count} {context.EnGroup}, with an average of {average} {context.EnUnit} per group. How many {context.EnUnit} are there altogether?";
+        DistributionContext context = DistributionContexts(language)[_random.Next(DistributionContexts(language).Count)];
+        string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateAverageToTotal.017", ("count", $"{count}"), ("context_ViGroup", $"{context.Group}"), ("average", $"{average}"), ("context_ViUnit", $"{context.Unit}"), ("context_EnGroup", $"{context.Group}"), ("context_EnUnit", $"{context.Unit}"));
         string equation = $"{average} × {count} = {total}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Tổng số {context.ViUnit} là:"
-                : $"The total number of {context.EnUnit} is:",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateAverageToTotal.018", ("context_ViUnit", $"{context.Unit}"), ("context_EnUnit", $"{context.Unit}")),
             equation,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+            context.Unit,
             total,
             language);
 
@@ -209,8 +171,8 @@ public sealed partial class AverageQuizGenerator
             AverageQuizType.AverageToTotal,
             [count, average],
             total,
-            language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-            language == AppLanguage.Vietnamese ? $"tổng {context.ViSubject}" : $"total {context.EnSubject}",
+            context.Unit,
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateAverageToTotal.019", ("context_ViSubject", $"{context.Subject}"), ("context_EnSubject", $"{context.Subject}")),
             problem,
             equation,
             solution,
@@ -244,16 +206,12 @@ public sealed partial class AverageQuizGenerator
             string name = language == AppLanguage.Vietnamese
                 ? viNames[_random.Next(viNames.Length)]
                 : enNames[_random.Next(enNames.Length)];
-            string problem = language == AppLanguage.Vietnamese
-                ? $"{name} có điểm của 3 bài đầu lần lượt là {a}, {b}, {c}. Bài thứ {count} {name} cần bao nhiêu điểm để điểm trung bình của {count} bài là {targetAverage}?"
-                : $"{name} scores {a}, {b}, and {c} on the first 3 tests. What score is needed on test {count} for an average of {targetAverage} across {count} tests?";
+            string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateMissingValue.001", ("name", $"{name}"), ("a", $"{a}"), ("b", $"{b}"), ("c", $"{c}"), ("count", $"{count}"), ("targetAverage", $"{targetAverage}"));
             string equation = $"{targetAverage} × {count} − ({a} + {b} + {c}) = {missing}";
             string solution = FormatSolution(
-                language == AppLanguage.Vietnamese
-                    ? $"Điểm bài thứ {count} cần có là:"
-                    : $"The score needed on test {count} is:",
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateMissingValue.002", ("count", $"{count}")),
                 equation,
-                language == AppLanguage.Vietnamese ? "điểm" : "points",
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateMissingValue.003"),
                 missing,
                 language);
 
@@ -265,8 +223,8 @@ public sealed partial class AverageQuizGenerator
                 AverageQuizType.MissingValue,
                 facts,
                 missing,
-                language == AppLanguage.Vietnamese ? "điểm" : "points",
-                language == AppLanguage.Vietnamese ? "điểm bài còn thiếu" : "missing test score",
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateMissingValue.004"),
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateMissingValue.005"),
                 problem,
                 equation,
                 solution,
@@ -295,18 +253,16 @@ public sealed partial class AverageQuizGenerator
             }
 
             int average = total / 3;
-            DirectContext context = DirectContexts[_random.Next(DirectContexts.Length)];
-            string problem = language == AppLanguage.Vietnamese
-                ? $"Lan có {lan} {context.ViUnit}, Mai nhiều hơn Lan {more} {context.ViUnit}, Hoa ít hơn Mai {less} {context.ViUnit}. Trung bình mỗi bạn có bao nhiêu {context.ViUnit}?"
-                : $"Lan has {lan} {context.EnUnit}. Mai has {more} more {context.EnUnit} than Lan, and Hoa has {less} fewer {context.EnUnit} than Mai. How many {context.EnUnit} does each person have on average?";
+            DirectContext context = DirectContexts(language)[_random.Next(DirectContexts(language).Count)];
+            string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateIndirectData.020", ("lan", $"{lan}"), ("context_ViUnit", $"{context.Unit}"), ("more", $"{more}"), ("less", $"{less}"), ("context_EnUnit", $"{context.Unit}"));
             string equation =
                 $"({lan} + ({lan} + {more}) + ({lan} + {more} − {less})) ÷ 3 = {average}";
             var contract = new AverageQuizContract(
                 AverageQuizType.IndirectData,
                 [lan, more, less],
                 average,
-                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-                language == AppLanguage.Vietnamese ? $"{context.ViSubject} mỗi bạn" : $"{context.EnSubject} per person",
+                context.Unit,
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateIndirectData.021", ("context_ViSubject", $"{context.Subject}"), ("context_EnSubject", $"{context.Subject}")),
                 problem,
                 equation,
                 string.Empty,
@@ -338,18 +294,14 @@ public sealed partial class AverageQuizGenerator
             }
 
             int average = totalPoints / totalCount;
-            TwoGroupContext context = TwoGroupContexts[_random.Next(TwoGroupContexts.Length)];
-            string problem = language == AppLanguage.Vietnamese
-                ? $"Nhóm A có {countA} {context.ViMember}, trung bình mỗi người có {averageA} {context.ViUnit}. Nhóm B có {countB} {context.ViMember}, trung bình mỗi người có {averageB} {context.ViUnit}. Trung bình chung của cả hai nhóm là bao nhiêu {context.ViUnit}?"
-                : $"Group A has {countA} {context.EnMember}, averaging {averageA} {context.EnUnit} each. Group B has {countB} {context.EnMember}, averaging {averageB} {context.EnUnit} each. What is the combined average in {context.EnUnit}?";
+            TwoGroupContext context = TwoGroupContexts(language)[_random.Next(TwoGroupContexts(language).Count)];
+            string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.022", ("countA", $"{countA}"), ("context_ViMember", $"{context.Member}"), ("averageA", $"{averageA}"), ("context_ViUnit", $"{context.Unit}"), ("countB", $"{countB}"), ("averageB", $"{averageB}"), ("context_EnMember", $"{context.Member}"), ("context_EnUnit", $"{context.Unit}"));
             string equation =
                 $"({countA} × {averageA} + {countB} × {averageB}) ÷ ({countA} + {countB}) = {average}";
             string solution = FormatSolution(
-                language == AppLanguage.Vietnamese
-                    ? $"Trung bình chung ({context.ViUnit}) là:"
-                    : $"The combined average ({context.EnUnit}) is:",
+                QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.023", ("context_ViUnit", $"{context.Unit}"), ("context_EnUnit", $"{context.Unit}")),
                 equation,
-                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
+                context.Unit,
                 average,
                 language);
 
@@ -357,8 +309,8 @@ public sealed partial class AverageQuizGenerator
                 AverageQuizType.TwoGroups,
                 [countA, averageA, countB, averageB],
                 average,
-                language == AppLanguage.Vietnamese ? context.ViUnit : context.EnUnit,
-                language == AppLanguage.Vietnamese ? context.ViSubject : context.EnSubject,
+                context.Unit,
+                context.Subject,
                 problem,
                 equation,
                 solution,
@@ -369,24 +321,20 @@ public sealed partial class AverageQuizGenerator
 
         // Fallback deterministic and integer.
         int ca = 4, aa = 8, cb = 4, ab = 6, answer = 7;
-        string fallbackProblem = language == AppLanguage.Vietnamese
-            ? "Nhóm A có 4 bạn, điểm trung bình là 8. Nhóm B có 4 bạn, điểm trung bình là 6. Điểm trung bình chung của cả hai nhóm là bao nhiêu?"
-            : "Group A has 4 students with an average score of 8. Group B has 4 students with an average score of 6. What is the combined average score?";
+        string fallbackProblem = QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.006");
         string fallbackEquation = "(4 × 8 + 4 × 6) ÷ (4 + 4) = 7";
         string fallbackSolution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? "Điểm trung bình chung là:"
-                : "The combined average score is:",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.007"),
             fallbackEquation,
-            language == AppLanguage.Vietnamese ? "điểm" : "points",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.008"),
             answer,
             language);
         return new(
             AverageQuizType.TwoGroups,
             [ca, aa, cb, ab],
             answer,
-            language == AppLanguage.Vietnamese ? "điểm" : "points",
-            language == AppLanguage.Vietnamese ? "điểm trung bình chung" : "combined average score",
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.009"),
+            QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.010"),
             fallbackProblem,
             fallbackEquation,
             fallbackSolution,
@@ -521,16 +469,14 @@ public sealed partial class AverageQuizGenerator
         int answer,
         AppLanguage language)
     {
-        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        string answerLabel = QuizContentCatalog.Text(language, "AverageQuizGenerator.FormatSolution.011");
         return $"{lead}{Environment.NewLine}" +
                $"{equation} {unit}{Environment.NewLine}" +
                $"{answerLabel}: {answer} {unit}";
     }
 
     private static string BuildSolutionLead(AverageQuizContract contract) =>
-        AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
-            ? $"{contract.SubjectName} là:"
-            : $"The {contract.SubjectName} is:";
+        QuizContentCatalog.Text(AppLanguageManager.CurrentLanguage, "AverageQuizGenerator.BuildSolutionLead.012", ("contract_SubjectName", $"{contract.SubjectName}"));
 
     private void Shuffle<T>(IList<T> values)
     {

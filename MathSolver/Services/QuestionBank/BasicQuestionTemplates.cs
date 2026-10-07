@@ -98,51 +98,21 @@ public static class BasicQuestionTemplates
         bool vi = c.Language == AppLanguage.Vietnamese;
         var clauses = c.Structure switch
         {
-            BasicQuestionStructure.SubComparisonLess => vi
-                ? ("{other} có {a} {unit}.", "{name} có ít hơn {other} là {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
-                : ("{other} has {a} {unit}.", "{name} has {b} fewer {unit} than {other}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
-            BasicQuestionStructure.SubComparisonInverse => vi
-                ? ("{other} có {a} {unit}.", "{other} có nhiều hơn {name} là {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
-                : ("{other} has {a} {unit}.", "{other} has {b} more {unit} than {name}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
-            BasicQuestionStructure.FindPart => vi
-                ? ("{name} và {other} có tổng cộng {a} {unit}.", "{other} có {b} {unit}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
-                : ("{name} and {other} have a total of {a} {unit}.", "{other} has {b} {unit}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
-            BasicQuestionStructure.CompareFactor => vi
-                ? ("{other} có {a} {unit}.", "{name} có {b} {unit}.", "Hỏi số {unit} của {other} gấp mấy lần số {unit} của {name}?", "Số lần lượng của {other} gấp lượng của {name} là:")
-                : ("{other} has {a} {unit}.", "{name} has {b} {unit}.", "How many times as many {unit} does {other} have as {name}?", "The number of times the amount of {other} is that of {name} is:"),
-            BasicQuestionStructure.Increase => vi
-                ? ("{name} có {a} {unit}.", "{name} nhận thêm {b} {unit}.", "Hỏi {name} có tất cả bao nhiêu {unit}?", "Số {unit} mà {name} có tất cả là:")
-                : ("{name} has {a} {unit}.", "{name} receives {b} more {unit}.", "How many {unit} does {name} have in total?", "The total number of {unit} that {name} has is:"),
-            BasicQuestionStructure.Combine => vi
-                ? ("{name} có {a} {unit}.", "{other} có {b} {unit}.", "Hỏi cả {name} và {other} có tổng cộng bao nhiêu {unit}?", "Tổng số {unit} của {name} và {other} là:")
-                : ("{name} has {a} {unit}.", "{other} has {b} {unit}.", "How many {unit} do {name} and {other} have altogether?", "The total number of {unit} they have is:"),
-            BasicQuestionStructure.RecoverInitial => vi
-                ? ("{name} còn lại {a} {unit}.", "Trước đó, {name} đã cho đi {b} {unit}.", "Hỏi lúc đầu {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có lúc đầu là:")
-                : ("{name} has {a} {unit} left.", "Earlier, {name} gave away {b} {unit}.", "How many {unit} did {name} have originally?", "The original number of {unit} that {name} had is:"),
-            BasicQuestionStructure.Remaining => vi
-                ? ("{name} có {a} {unit}.", "{name} cho đi {b} {unit}.", "Hỏi {name} còn lại bao nhiêu {unit}?", "Số {unit} mà {name} còn lại là:")
-                : ("{name} has {a} {unit}.", "{name} gives away {b} {unit}.", "How many {unit} does {name} have left?", "The number of {unit} remaining is:"),
-            BasicQuestionStructure.Difference => vi
-                ? ("{name} có {a} {unit}.", "{other} có {b} {unit}.", "Hỏi {name} có nhiều hơn {other} bao nhiêu {unit}?", "Số {unit} mà {name} có nhiều hơn {other} là:")
-                : ("{name} has {a} {unit}.", "{other} has {b} {unit}.", "How many more {unit} does {name} have than {other}?", "The difference in their numbers of {unit} is:"),
-            BasicQuestionStructure.MissingPart => vi
-                ? ("{name} cần {a} {unit}.", "{name} đã có {b} {unit}.", "Hỏi {name} cần thêm bao nhiêu {unit} cho đủ?", "Số {unit} mà {name} cần thêm là:")
-                : ("{name} needs {a} {unit}.", "{name} already has {b} {unit}.", "How many more {unit} does {name} need?", "The number of additional {unit} needed is:"),
-            BasicQuestionStructure.EqualGroups => vi
-                ? ("Mỗi {group_one} chứa {a} {unit}.", "{name} có {b} {group} như nhau.", "Hỏi {name} có tất cả bao nhiêu {unit}?", "Tổng số {unit} trong các {group} là:")
-                : ("Each {group_one} holds {a} {unit}.", "{name} has {b} identical {group}.", "How many {unit} does {name} have altogether?", "The total number of {unit} in the {group} is:"),
-            BasicQuestionStructure.TimesAsMany => vi
-                ? ("{other} có {a} {unit}.", "{name} có số {unit} gấp {b} lần số {unit} của {other}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
-                : ("{other} has {a} {unit}.", "{name} has {b} times as many {unit} as {other}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:"),
-            BasicQuestionStructure.EqualShare => vi
-                ? ("{name} có {a} {unit}.", "{name} xếp đều vào {b} {group}.", "Hỏi mỗi {group_one} chứa bao nhiêu {unit}?", "Số {unit} trong mỗi {group_one} là:")
-                : ("{name} has {a} {unit}.", "{name} packs them equally into {b} {group}.", "How many {unit} are in each {group_one}?", "The number of {unit} in each {group_one} is:"),
-            BasicQuestionStructure.CountGroups => vi
-                ? ("{name} có {a} {unit}.", "{name} xếp vào các {group}, mỗi {group_one} chứa {b} {unit}.", "Hỏi {name} xếp được bao nhiêu {group}?", "Số {group} mà {name} xếp được là:")
-                : ("{name} has {a} {unit}.", "{name} packs them in {group}, with {b} {unit} in each {group_one}.", "How many {group} can {name} fill?", "The number of {group} filled is:"),
-            _ => vi
-                ? ("{other} có {a} {unit}.", "{other} có số {unit} gấp {b} lần số {unit} của {name}.", "Hỏi {name} có bao nhiêu {unit}?", "Số {unit} mà {name} có là:")
-                : ("{other} has {a} {unit}.", "{other} has {b} times as many {unit} as {name}.", "How many {unit} does {name} have?", "The number of {unit} that {name} has is:")
+            BasicQuestionStructure.SubComparisonLess => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.001"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.002"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.003"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.004")),
+            BasicQuestionStructure.SubComparisonInverse => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.005"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.006"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.007"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.008")),
+            BasicQuestionStructure.FindPart => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.009"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.010"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.011"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.012")),
+            BasicQuestionStructure.CompareFactor => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.013"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.014"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.015"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.016")),
+            BasicQuestionStructure.Increase => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.017"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.018"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.019"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.020")),
+            BasicQuestionStructure.Combine => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.021"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.022"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.023"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.024")),
+            BasicQuestionStructure.RecoverInitial => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.025"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.026"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.027"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.028")),
+            BasicQuestionStructure.Remaining => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.029"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.030"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.031"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.032")),
+            BasicQuestionStructure.Difference => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.033"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.034"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.035"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.036")),
+            BasicQuestionStructure.MissingPart => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.037"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.038"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.039"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.040")),
+            BasicQuestionStructure.EqualGroups => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.041"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.042"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.043"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.044")),
+            BasicQuestionStructure.TimesAsMany => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.045"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.046"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.047"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.048")),
+            BasicQuestionStructure.EqualShare => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.049"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.050"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.051"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.052")),
+            BasicQuestionStructure.CountGroups => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.053"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.054"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.055"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.056")),
+            _ => (QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.057"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.058"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.059"), QuizContentCatalog.Text(c.Language, "BasicQuestionTemplates.Example.060"))
         };
         return new(clauses.Item1.TrimEnd('.') + ",", char.ToLowerInvariant(clauses.Item2[0]) + clauses.Item2[1..], clauses.Item3, clauses.Item4,
             unitId ?? QuestionUnits.Find(c)?.Id ?? "books");

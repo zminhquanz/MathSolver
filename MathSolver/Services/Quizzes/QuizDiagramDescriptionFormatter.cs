@@ -10,7 +10,6 @@ internal static class QuizDiagramDescriptionFormatter
     {
         var parts = new List<string>();
         bool vi = language == AppLanguage.Vietnamese;
-        string L(string vietnamese, string english) => vi ? vietnamese : english;
         if (visual is not null)
         {
             parts.AddRange(visual.Labels);
@@ -26,32 +25,32 @@ internal static class QuizDiagramDescriptionFormatter
             }
             if (visual.Kind == "pictograph" && visual.PictographKey is > 0)
             {
-                parts.Add(L("Mỗi hình tròn biểu thị ", "Each circle represents ") + visual.PictographKey + " " + visual.Unit);
+                parts.Add(QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.001") + visual.PictographKey + " " + visual.Unit);
                 for (int row = 0; row < visual.Labels.Count; row++)
-                    parts.Add(visual.Labels[row] + ": " + visual.Values[row] / visual.PictographKey + L(" hình tròn", " circles"));
+                    parts.Add(visual.Labels[row] + ": " + visual.Values[row] / visual.PictographKey + QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.002"));
             }
             if (visual.Kind == "shape")
                 parts.Add(visual.ScenarioId switch
                 {
-                    "circle" => L("Đường cong kín tròn đều, hình phẳng.", "A round closed curve, a plane figure."),
-                    "triangle" => L("Hình phẳng có ba cạnh thẳng.", "A plane figure with three straight sides."),
-                    "square" => L("Hình phẳng có bốn cạnh bằng nhau và bốn góc vuông.", "A plane figure with four equal sides and four right angles."),
-                    "rectangle" => L("Hình phẳng có bốn góc vuông, chiều dài lớn hơn chiều rộng.", "A plane figure with four right angles, longer than it is wide."),
-                    "trapezoid" => L("Hình phẳng có một cặp cạnh đối song song, cạnh trên ngắn hơn cạnh dưới.", "A plane figure with one parallel pair, its top side shorter than its bottom side."),
-                    "parallelogram" => L("Hình phẳng có hai cặp cạnh đối song song, các góc không vuông, các cạnh kề không bằng nhau.", "A plane figure with two parallel pairs, no right angles, and unequal adjacent sides."),
-                    "rhombus" => L("Hình phẳng có bốn cạnh bằng nhau, hai góc nhọn và hai góc tù.", "A plane figure with four equal sides, two acute and two obtuse angles."),
-                    "cube" => L("Hình khối có sáu mặt vuông bằng nhau.", "A solid with six equal square faces."),
-                    "cuboid" => L("Hình khối có sáu mặt chữ nhật, chiều dài lớn hơn chiều rộng và chiều cao.", "A solid with six rectangular faces, longer than it is wide or tall."),
-                    "cylinder" => L("Hình khối có hai đáy tròn bằng nhau và mặt bên cong.", "A solid with two equal circular bases and a curved side."),
-                    _ => L("Hình khối tròn đều, không có cạnh và đỉnh.", "A round solid with no edges or vertices.")
+                    "circle" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.003"),
+                    "triangle" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.004"),
+                    "square" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.005"),
+                    "rectangle" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.006"),
+                    "trapezoid" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.007"),
+                    "parallelogram" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.008"),
+                    "rhombus" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.009"),
+                    "cube" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.010"),
+                    "cuboid" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.011"),
+                    "cylinder" => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.012"),
+                    _ => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.013")
                 });
             if (visual.Annotations is { } annotations) parts.AddRange(annotations.Select(item => item.Text));
             if (visual.Polygons is { } polygons)
                 parts.AddRange(polygons.Select(polygon => polygon.Label + " " + string.Join("–", polygon.Vertices.Select(point => point.Label))));
             if (visual.Lines is { } lines)
-                parts.AddRange(lines.Select(line => L("Đường", "Line") + $" {line.Label}: " +
+                parts.AddRange(lines.Select(line => QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.014") + $" {line.Label}: " +
                     line.DirectionDegrees.ToString(CultureInfo.CurrentCulture) + " " +
-                    L("độ so với phương ngang", "degrees from horizontal")));
+                    QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.015")));
             if (visual.Kind == "clock" && visual.Values.Count >= 2)
             {
                 if (!revealSolution && visual.HiddenValueIndices is { Count: > 0 }) parts.Add("?");
@@ -66,11 +65,11 @@ internal static class QuizDiagramDescriptionFormatter
                         int upper = (lower + 1) % 12;
                         string first = (lower == 0 ? 12 : lower).ToString(CultureInfo.CurrentCulture);
                         string second = (upper == 0 ? 12 : upper).ToString(CultureInfo.CurrentCulture);
-                        return position == decimal.Floor(position) ? L("chỉ số ", "points to ") + first
-                            : L("nằm giữa số ", "is between ") + first + L(" và ", " and ") + second;
+                        return position == decimal.Floor(position) ? QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.016") + first
+                            : QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.017") + first + QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.018") + second;
                     }
-                    parts.Add(L("Kim giờ ", "The hour hand ") + Position(hourPosition));
-                    parts.Add(L("Kim phút ", "The minute hand ") + Position(minutePosition));
+                    parts.Add(QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.019") + Position(hourPosition));
+                    parts.Add(QuizContentCatalog.Text(language, "QuizDiagramDescriptionFormatter.Format.020") + Position(minutePosition));
                 }
             }
         }

@@ -10,16 +10,16 @@ internal static class GeometryReasoningText
         bool vi = language == AppLanguage.Vietnamese;
         return (shape, key) switch
         {
-            ("rectangle" or "rectangular_prism", "a") => vi ? "chiều dài" : "length",
-            ("rectangle" or "rectangular_prism", "b") => vi ? "chiều rộng" : "width",
-            ("triangle" or "parallelogram", "a") => vi ? "đáy a" : "base a",
-            ("trapezoid", "a") => vi ? "đáy lớn" : "longer base",
-            ("trapezoid", "b") => vi ? "đáy nhỏ" : "shorter base",
-            (_, "h") => vi ? "chiều cao" : "height",
-            (_, "r") => vi ? "bán kính" : "radius",
-            (_, "d1") => vi ? "đường chéo lớn" : "longer diagonal",
-            (_, "d2") => vi ? "đường chéo nhỏ" : "shorter diagonal",
-            _ => (vi ? "cạnh " : "side ") + key
+            ("rectangle" or "rectangular_prism", "a") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.001"),
+            ("rectangle" or "rectangular_prism", "b") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.002"),
+            ("triangle" or "parallelogram", "a") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.003"),
+            ("trapezoid", "a") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.004"),
+            ("trapezoid", "b") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.005"),
+            (_, "h") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.006"),
+            (_, "r") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.007"),
+            (_, "d1") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.008"),
+            (_, "d2") => QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.009"),
+            _ => (QuizContentCatalog.Text(language, "GeometryReasoningText.DimensionName.010")) + key
         };
     }
 
@@ -39,16 +39,14 @@ internal static class GeometryReasoningText
         };
 
     internal static string SolutionLead(GeometryQuizContract contract, AppLanguage language) =>
-        language == AppLanguage.Vietnamese
-            ? $"{MeasurementName(contract.Measurement, language)} của {contract.ObjectName} là:"
-            : $"The {MeasurementName(contract.Measurement, language)} of {contract.ObjectName} is:";
+        QuizContentCatalog.Text(language, "GeometryReasoningText.SolutionLead.011", ("MeasurementName_contract_Measurement_language", $"{MeasurementName(contract.Measurement, language)}"), ("contract_ObjectName", $"{contract.ObjectName}"));
 
     internal static string FormatSolution(GeometryQuizContract contract, string? lead = null, CultureInfo? culture = null)
     {
         var reasoning = contract.Reasoning!;
         string lines = string.Join(Environment.NewLine, reasoning.Steps.Select(step =>
             $"{step.Label}: {QuizMathExpressionFormatter.Format(step.Expression)} = {step.Value} {step.Unit}"));
-        string answer = reasoning.Language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        string answer = QuizContentCatalog.Text(reasoning.Language, "GeometryReasoningText.FormatSolution.012");
         string formattedAnswer = contract.CorrectAnswer.ToString("N0", culture ?? CultureInfo.InvariantCulture);
         return (lines.Length == 0 ? "" : lines + Environment.NewLine) +
             (lead ?? SolutionLead(contract, reasoning.Language)) + Environment.NewLine +

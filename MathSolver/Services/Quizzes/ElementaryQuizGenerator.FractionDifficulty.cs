@@ -39,24 +39,17 @@ public sealed partial class ElementaryQuizGenerator
                 int first = supplied / 2;
                 string a = t.Given("quantity-first", first, unit), b = t.Given("quantity-second", supplied - first, unit);
                 wholeExpression = $"({a}+{b})";
-                problem = t.L($"Lượng đã cho bằng tổng hai phần {a} và {b} {unit}. ",
-                    $"The supplied quantity is the sum of {a} and {b} {unit}. ");
+                problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"));
                 if (level == 4)
                 {
                     string removed = t.Given("removed", _random.Next(2, 6), unit);
                     t.Givens.RemoveAll(given => given.Role == "quantity-first");
                     a = t.Given("quantity-first", first + int.Parse(removed), unit);
                     wholeExpression = $"({a}+{b}-{removed})";
-                    problem = t.L($"Hai phần có {a} và {b} {unit}; bớt {removed} {unit} trước khi xét phân số. ",
-                        $"Two portions contain {a} and {b} {unit}; remove {removed} {unit} before considering the fraction. ");
+                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"), ("removed", $"{removed}"));
                 }
-                t.Step(t.L("Lượng dùng để xét phân số", "Quantity used for the fraction"), wholeExpression, unit);
-                problem += t.L(findPart
-                    ? $"{context.PartLabel} bằng {fraction} lượng trên. Hỏi {context.PartLabel.ToLowerInvariant()} là bao nhiêu {unit}?"
-                    : $"Lượng trên là {context.PartLabel.ToLowerInvariant()}, bằng {fraction} của {context.WholeLabel.ToLowerInvariant()}. Hỏi {context.WholeLabel.ToLowerInvariant()} là bao nhiêu {unit}?",
-                    findPart
-                    ? $"{context.PartLabel} is {fraction} of this quantity. What is {context.PartLabel.ToLowerInvariant()} in {unit}?"
-                    : $"This quantity is {context.PartLabel.ToLowerInvariant()}, representing {fraction} of {context.WholeLabel.ToLowerInvariant()}. What is {context.WholeLabel.ToLowerInvariant()} in {unit}?");
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.003"), wholeExpression, unit);
+                problem += (findPart ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.017", ("context_PartLabel", $"{context.PartLabel}"), ("fraction", $"{fraction}"), ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}"), ("unit", $"{unit}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.018", ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}"), ("fraction", $"{fraction}"), ("context_WholeLabel_ToLowerInvariant", $"{context.WholeLabel.ToLowerInvariant()}"), ("unit", $"{unit}")));
                 t.Answer(findPart ? context.PartLabel : context.WholeLabel,
                     findPart ? $"{wholeExpression}*{n}/{d}" : $"{wholeExpression}/{n}*{d}", unit);
             }
@@ -66,15 +59,10 @@ public sealed partial class ElementaryQuizGenerator
                 int supplied = findPart ? whole : whole * 3 / 4 * numerator / denominator;
                 string quantity = t.Given("quantity", supplied, unit);
                 string retained = $"(1-{removedNumerator}/{removedDenominator})";
-                problem = t.L(findPart
-                        ? $"{context.WholeLabel} là {quantity} {unit}. Phần thứ nhất chiếm {removedNumerator}/{removedDenominator} lượng ban đầu. {context.PartLabel} chiếm {n}/{d} lượng còn lại. Hỏi {context.PartLabel.ToLowerInvariant()} là bao nhiêu {unit}?"
-                        : $"Phần thứ nhất chiếm {removedNumerator}/{removedDenominator} của {context.WholeLabel.ToLowerInvariant()}. {context.PartLabel} chiếm {n}/{d} lượng còn lại và có {quantity} {unit}. Hỏi {context.WholeLabel.ToLowerInvariant()} là bao nhiêu {unit}?",
-                    findPart
-                        ? $"{context.WholeLabel} is {quantity} {unit}. A first portion accounts for {removedNumerator}/{removedDenominator} of the initial quantity. {context.PartLabel} accounts for {n}/{d} of the remainder. What is {context.PartLabel.ToLowerInvariant()} in {unit}?"
-                        : $"A first portion accounts for {removedNumerator}/{removedDenominator} of {context.WholeLabel.ToLowerInvariant()}. {context.PartLabel} accounts for {n}/{d} of the remainder and contains {quantity} {unit}. What is {context.WholeLabel.ToLowerInvariant()} in {unit}?");
-                t.Step(t.L("Phân số còn lại sau phần đầu", "Fraction remaining after the first portion"), retained);
-                if (findPart) t.Step(t.L("Lượng còn lại", "Remaining quantity"), $"{quantity}*{retained}", unit);
-                else t.Step(t.L("Phần lượng ban đầu được dùng lần sau", "Fraction of the initial quantity used the second time"), $"{retained}*{n}/{d}");
+                problem = (findPart ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019", ("context_WholeLabel", $"{context.WholeLabel}"), ("quantity", $"{quantity}"), ("unit", $"{unit}"), ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020", ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_WholeLabel_ToLowerInvariant", $"{context.WholeLabel.ToLowerInvariant()}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("quantity", $"{quantity}"), ("unit", $"{unit}")));
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.004"), retained);
+                if (findPart) t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.005"), $"{quantity}*{retained}", unit);
+                else t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.006"), $"{retained}*{n}/{d}");
                 t.Answer(findPart ? context.PartLabel : context.WholeLabel,
                     findPart ? $"{quantity}*{retained}*{n}/{d}" : $"{quantity}/({retained}*{n}/{d})", unit);
             }
@@ -88,7 +76,7 @@ public sealed partial class ElementaryQuizGenerator
             if (level <= 3)
             {
                 nExpression = t.Given("numerator", baseN * gcd); dExpression = t.Given("denominator", baseD * gcd);
-                problem = t.L($"Rút gọn {nExpression}/{dExpression} đến tối giản.", $"Reduce {nExpression}/{dExpression} to lowest terms.");
+                problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.007", ("nExpression", $"{nExpression}"), ("dExpression", $"{dExpression}"));
             }
             else
             {
@@ -99,13 +87,12 @@ public sealed partial class ElementaryQuizGenerator
                 {
                     string upper = t.Given("denominator-before", baseD * gcd + 3), removed = t.Given("denominator-removed", 3);
                     dExpression = $"({upper}-{removed})";
-                    t.Step(t.L("Mẫu số", "Denominator"), dExpression);
+                    t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.008"), dExpression);
                 }
-                t.Step(t.L("Tử số", "Numerator"), nExpression);
-                problem = t.L($"Phân số có tử số bằng {first} + {second}, mẫu số bằng {dExpression}. Viết phân số tối giản.",
-                    $"A fraction has numerator {first} + {second} and denominator {dExpression}. Write it in lowest terms.");
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.009"), nExpression);
+                problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.010", ("first", $"{first}"), ("second", $"{second}"), ("dExpression", $"{dExpression}"));
             }
-            t.Answer(t.L("Phân số tối giản", "Reduced fraction"), $"{nExpression}/{dExpression}", reduced: true);
+            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.011"), $"{nExpression}/{dExpression}", reduced: true);
             return t.Build("reduce-inferred-components-" + level, problem);
         }
         if (type == ElementaryQuizType.CommonDenominator)
@@ -119,12 +106,12 @@ public sealed partial class ElementaryQuizGenerator
                 string n = t.Given("numerator-" + index, _random.Next(1, denominators[index]));
                 string d = t.Given("denominator-" + index, denominators[index]);
                 fractionTexts.Add($"{n}/{d}");
-                t.Answer(t.L($"Phân số thứ {index + 1}", $"Fraction {index + 1}"), $"{n}/{d}", denominator: common);
+                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.012", ("index_1", $"{index + 1}")), $"{n}/{d}", denominator: common);
             }
             // The required common denominator is the LCM, so the instruction has one definite target.
             string problem = level <= 2
-                ? t.L($"Quy đồng {string.Join("; ", fractionTexts)} về mẫu số {common}.", $"Express {string.Join("; ", fractionTexts)} with denominator {common}.")
-                : t.L($"Quy đồng {string.Join("; ", fractionTexts)} với mẫu chung nhỏ nhất.", $"Express {string.Join("; ", fractionTexts)} using the least common denominator.");
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.013", ("string_Join_fractionTexts", $"{string.Join("; ", fractionTexts)}"), ("common", $"{common}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.014", ("string_Join_fractionTexts", $"{string.Join("; ", fractionTexts)}"));
             t.RequiresSolution = false;
             return t.Build("common-denominator-" + level, problem);
         }
@@ -142,8 +129,8 @@ public sealed partial class ElementaryQuizGenerator
                 mixedExpression = $"({mixedExpression}-{sub}/{subD})";
             }
         }
-        t.Answer(t.L("Hỗn số", "Mixed number"), mixedExpression, mixed: true);
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.015"), mixedExpression, mixed: true);
         return t.Build("mixed-number-relations-" + level,
-            t.L($"Tính {mixedExpression} và viết kết quả dưới dạng hỗn số tối giản.", $"Calculate {mixedExpression} and write the result as a reduced mixed number."));
+            QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.016", ("mixedExpression", $"{mixedExpression}")));
     }
 }

@@ -176,9 +176,7 @@ public static class FindXQuestionCatalogue
         var s = Find(c.SceneId)!;
         var source = AsApplied(c);
         var units = AppliedQuestionCatalogue.InputUnits(source);
-        return (c.Language == AppLanguage.Vietnamese
-            ? "Viết mẫu toán đố Tìm X bằng tiếng Việt. Chỉ viết lời văn và câu dẫn lời giải, không giải bài hay tiết lộ đáp án. Giữ nguyên biến, vai trò, đơn vị và câu hỏi. given_a kết thúc dấu phẩy, given_b nối tiếp câu."
-            : "Write an English missing-quantity story template and solution lead. No answers, numbers or extra facts. Preserve placeholders, roles, units and target. Join the givens as clauses.")
+        return (QuizContentCatalog.Text(c.Language, "FindXQuestionCatalogue.Prompt.001"))
             + $"\nScene={s.SourceScene.Id}; group={s.Group}; stars={(int)c.Tier}; unknown={s.Role}."
             + $"\nGiven A: {s.KnownARole} [{units.A}]; given B: {s.KnownBRole} [{units.B}]; target: {s.TargetRole} [{c.AnswerUnit}]."
             + "\nUse only the placeholders and roles of this selected example; keep its target and affirmative facts:\n"

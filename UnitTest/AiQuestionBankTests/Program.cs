@@ -36,6 +36,25 @@ if (args is ["--prose-model", var proseModelPath])
     catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
     return;
 }
+
+if (args is ["--validate-quiz-content", var contentFile])
+{
+    try { var pack = QuizContentTests.Read(contentFile); Console.WriteLine($"Valid quiz content: {pack.Culture}, {pack.Texts.Count} texts, {pack.Lists.Count} lists."); }
+    catch (Exception error) { Console.Error.WriteLine(error.Message); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--check-quiz-translation", var translatedFile, var referenceFile])
+{
+    try { QuizContentValidation.CheckTranslation(QuizContentTests.Read(translatedFile), QuizContentTests.Read(referenceFile)); Console.WriteLine("Quiz translation structure passed. Review the meaning of mathematical relations before publishing."); }
+    catch (Exception error) { Console.Error.WriteLine(error.Message); Environment.ExitCode = 1; }
+    return;
+}
+if (args is ["--quiz-content"])
+{
+    try { QuizContentTests.Run(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
 if (args is ["--arithmetic-context-model", var arithmeticModelPath])
 {
     try { await ArithmeticContextTests.RunModelAsync(arithmeticModelPath); }
@@ -278,6 +297,7 @@ string directory = Path.Combine(Path.GetTempPath(), "MathSolver-AiBank-" + Guid.
 Directory.CreateDirectory(directory);
 try
 {
+    QuizContentTests.Run();
     var store = new QuestionBankStore(Path.Combine(directory, "bank.db3"));
     var validated = new ValidatedBankQuestion(addition, addDraft, Draft(addition), "test-model", DateTime.UtcNow);
     Check(await store.InsertAsync(validated), "Initial insert failed.");

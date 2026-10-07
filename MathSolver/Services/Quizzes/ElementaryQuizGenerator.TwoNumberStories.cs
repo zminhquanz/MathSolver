@@ -8,38 +8,29 @@ public sealed partial class ElementaryQuizGenerator
     {
         string F(string role) => t.Givens.Single(g => g.Role == role).Value;
         string unit = c.Unit(t.Language);
-        string pair = t.L($"{first.ToLowerInvariant()} và {second.ToLowerInvariant()}", $"{first.ToLowerInvariant()} and {second.ToLowerInvariant()}");
-        string relation = t.L(sum ? $"tổng số {unit} của {pair}" : $"số {unit} mà {second.ToLowerInvariant()} nhiều hơn {first.ToLowerInvariant()}",
-            sum ? $"the combined quantity for {pair}" : $"the excess quantity in {second.ToLowerInvariant()} over {first.ToLowerInvariant()}");
-        string text = t.L($"Trong hoạt động {c.ViSetting}, xét {pair}. ", $"For {c.EnSetting}, consider {pair}. ");
+        string pair = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.001", ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}"), ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"));
+        string relation = (sum ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.013", ("unit", $"{unit}"), ("pair", $"{pair}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.014", ("unit", $"{unit}"), ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"), ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}")));
+        string text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.012", ("c_ViSetting", $"{c.ViSetting}"), ("pair", $"{pair}"), ("c_EnSetting", $"{c.EnSetting}"));
         if (level == 1)
-            text += t.L($"Biết {relation} là {F("quantity")} {unit}. ", $"We know that {relation} is {F("quantity")} {unit}. ");
+            text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.002", ("relation", $"{relation}"), ("F_quantity", $"{F("quantity")}"), ("unit", $"{unit}"));
         else if (level == 2)
-            text += t.L($"Nếu nhân đôi {relation} thì được {F("double-quantity")} {unit}. ",
-                $"Doubling {relation} gives {F("double-quantity")} {unit}. ");
+            text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.003", ("relation", $"{relation}"), ("F_double_quantity", $"{F("double-quantity")}"), ("unit", $"{unit}"));
         else if (level == 3)
-            text += t.L($"Theo bản ghi, {relation} bằng {F("quantity-first")} {unit} cộng với {F("quantity-second")} {unit}. ",
-                $"The record shows that {relation} equals {F("quantity-first")} {unit} plus {F("quantity-second")} {unit}. ");
+            text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.004", ("relation", $"{relation}"), ("F_quantity_first", $"{F("quantity-first")}"), ("unit", $"{unit}"), ("F_quantity_second", $"{F("quantity-second")}"));
         else
         {
-            text += t.L(sum ? $"Mỗi bên được bổ sung {F("added")} {unit}. " : $"Riêng {second.ToLowerInvariant()} được bổ sung {F("added")} {unit}, bên kia giữ nguyên. ",
-                sum ? $"Each receives {F("added")} additional {unit}. " : $"Only {second.ToLowerInvariant()} receives {F("added")} additional {unit}; the other is unchanged. ");
-            if (level == 5) text += t.L($"Sau đó {second.ToLowerInvariant()} chuyển ra ngoài {F("previous-reduction")} {unit}. ",
-                $"Then {second.ToLowerInvariant()} sends {F("previous-reduction")} {unit} elsewhere. ");
-            text += t.L($"Lúc này {relation} là {F("after")} {unit}. ", $"After these changes, {relation} is {F("after")} {unit}. ");
+            text += (sum ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.015", ("F_added", $"{F("added")}"), ("unit", $"{unit}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.016", ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"), ("F_added", $"{F("added")}"), ("unit", $"{unit}")));
+            if (level == 5) text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.005", ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"), ("F_previous_reduction", $"{F("previous-reduction")}"), ("unit", $"{unit}"));
+            text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.006", ("relation", $"{relation}"), ("F_after", $"{F("after")}"), ("unit", $"{unit}"));
         }
         if (t.Type == ElementaryQuizType.SumDifference)
             text += level <= 3
-                ? t.L($"{second} nhiều hơn {first.ToLowerInvariant()} {F("difference")} {unit}. ",
-                    $"{second} has {F("difference")} more {unit} than {first.ToLowerInvariant()}. ")
-                : t.L($"Xét riêng số lượng ban đầu: nếu chuyển {F("transfer")} {unit} từ {second.ToLowerInvariant()} sang {first.ToLowerInvariant()} thì bên thứ hai còn nhiều hơn bên thứ nhất {F("remaining-difference")} {unit}. ",
-                    $"For the original quantities separately, transferring {F("transfer")} {unit} from {second.ToLowerInvariant()} to {first.ToLowerInvariant()} leaves the second with {F("remaining-difference")} more {unit} than the first. ");
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.007", ("second", $"{second}"), ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}"), ("F_difference", $"{F("difference")}"), ("unit", $"{unit}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.008", ("F_transfer", $"{F("transfer")}"), ("unit", $"{unit}"), ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"), ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}"), ("F_remaining_difference", $"{F("remaining-difference")}"));
         else
             text += level < 5
-                ? t.L($"Ban đầu, tỉ số số lượng của {pair} là {F("ratio-small")}/{F("ratio-large")}. ",
-                    $"Originally, the ratio of quantities in {pair} is {F("ratio-small")}/{F("ratio-large")}. ")
-                : t.L($"Ban đầu, khi số lượng bên thứ nhất biểu diễn bằng {F("ratio-small")} phần bằng nhau thì bên thứ hai có nhiều hơn {F("ratio-extra")} phần cùng cỡ. ",
-                    $"Originally, when the first quantity is represented by {F("ratio-small")} equal parts, the second has {F("ratio-extra")} more parts of the same size. ");
-        return text + t.L("Hỏi ban đầu mỗi bên có bao nhiêu?", "What was each original quantity?");
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.009", ("pair", $"{pair}"), ("F_ratio_small", $"{F("ratio-small")}"), ("F_ratio_large", $"{F("ratio-large")}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.010", ("F_ratio_small", $"{F("ratio-small")}"), ("F_ratio_extra", $"{F("ratio-extra")}"));
+        return text + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.011");
     }
 }

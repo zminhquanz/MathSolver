@@ -19,34 +19,33 @@ public sealed partial class ElementaryQuizGenerator
             string next = t.Given("actual-m", _random.Next(2, 8) * 100, "m");
             t.Constant(1000, 100_000);
             string km = $"{first}+{next}/1000";
-            t.Step(t.L("Đổi độ dài chặng sau sang km", "Convert the second leg to km"), $"{next}/1000", "km");
-            t.Step(t.L("Tổng quãng đường thực tế", "Total actual distance"), km, "km");
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.001"), $"{next}/1000", "km");
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.002"), km, "km");
             expression = $"({km})*100000/{scale}"; unit = "cm";
-            problem = t.L($"Bản đồ có tỉ lệ 1 : {scale}. Đoàn tham quan đi hai chặng liên tiếp dài {first} km và {next} m. Hỏi cả tuyến đường dài bao nhiêu cm trên bản đồ?",
-                $"A map has scale 1 : {scale}. A tour follows two consecutive legs of {first} km and {next} m. How long is the whole route in cm on the map?");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.003", ("scale", $"{scale}"), ("first", $"{first}"), ("next", $"{next}"));
         }
         else
         {
             string length = first;
-            problem = t.L($"Bản đồ có tỉ lệ 1 : {scale}. ", $"A map has scale 1 : {scale}. ");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.004", ("scale", $"{scale}"));
             if (level == 4)
             {
                 string second = t.Given("second-map-cm", _random.Next(1, 5), "cm");
                 length = $"({first}+{second})";
-                t.Step(t.L("Độ dài cả tuyến trên bản đồ", "Whole route on the map"), length, "cm");
-                problem += t.L($"Hai chặng liên tiếp đo trên bản đồ dài {first} cm và {second} cm. ", $"Two consecutive legs measure {first} cm and {second} cm on the map. ");
+                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.005"), length, "cm");
+                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.006", ("first", $"{first}"), ("second", $"{second}"));
             }
             else problem += level <= 2
-                ? t.L($"Đoạn đường từ cổng vườn đến ghế nghỉ dài {first} cm trên bản đồ. ", $"The path from the garden gate to a bench measures {first} cm on the map. ")
-                : t.L($"Đoạn đường từ trường đến công viên dài {first} cm trên bản đồ. ", $"The route from the school to the park measures {first} cm on the map. ");
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.007", ("first", $"{first}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.008", ("first", $"{first}"));
             unit = level <= 2 ? "m" : "km";
             int factor = level <= 2 ? 100 : 100_000;
             t.Constant(factor);
-            t.Step(t.L("Độ dài thực tế theo cm", "Actual length in cm"), $"{length}*{scale}", "cm");
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.009"), $"{length}*{scale}", "cm");
             expression = $"{length}*{scale}/{factor}";
-            problem += t.L($"Hỏi quãng đường thực tế dài bao nhiêu {unit}?", $"What is the actual distance in {unit}?");
+            problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.010", ("unit", $"{unit}"));
         }
-        t.Answer(t.L("Độ dài cần tìm", "Required length"), expression, unit);
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.011"), expression, unit);
         return t.Build("map-scale-" + level, problem) with { StoryContextId = "tourism" };
     }
 
@@ -59,28 +58,27 @@ public sealed partial class ElementaryQuizGenerator
         string unit = context.Unit(language);
         int key = new[] { 1, 2, 5, 10, 20 }[level - 1];
         int[] counts = [_random.Next(3, 8), _random.Next(3, 8), _random.Next(2, 5)];
-        string[] labels = language == AppLanguage.Vietnamese ? ["Đợt đầu", "Đợt giữa", "Đợt cuối"] : ["First batch", "Middle batch", "Last batch"];
+        string[] labels = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.022"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.023"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.024") };
         string[] symbols = counts.Select((count, i) => t.Given("icons-" + i, count)).ToArray();
         string multiplier = t.Given("key", key, unit);
         string expression, question;
         if (level <= 2)
         {
             expression = $"{symbols[0]}*{multiplier}";
-            question = t.L($"Đợt đầu có bao nhiêu {unit}?", $"How many {unit} are in the first batch?");
+            question = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.012", ("unit", $"{unit}"));
         }
         else
         {
             string total = level == 3 ? $"{symbols[0]}+{symbols[1]}" : $"{symbols[0]}+{symbols[1]}+{symbols[2]}";
             if (level == 5) total = $"({symbols[0]}+{symbols[1]})-{symbols[2]}";
-            t.Step(t.L(level == 5 ? "Chênh lệch số hình" : "Tổng số hình cần đọc", level == 5 ? "Difference in symbols" : "Total relevant symbols"), total);
+            t.Step((level == 5 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.036") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.037")), total);
             expression = $"({total})*{multiplier}";
-            question = level == 3 ? t.L($"Hai đợt đầu có tổng cộng bao nhiêu {unit}?", $"How many {unit} are in the first two batches combined?")
-                : level == 4 ? t.L($"Cả ba đợt có tổng cộng bao nhiêu {unit}?", $"How many {unit} are in all three batches combined?")
-                : t.L($"Tổng hai đợt đầu nhiều hơn đợt cuối bao nhiêu {unit}?", $"How many more {unit} are in the first two batches combined than in the last batch?");
+            question = level == 3 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.013", ("unit", $"{unit}"))
+                : level == 4 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.014", ("unit", $"{unit}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.015", ("unit", $"{unit}"));
         }
-        t.Answer(t.L("Số lượng cần tìm", "Requested quantity"), expression, unit);
-        string problem = t.L($"Biểu đồ tranh ghi kết quả ba đợt riêng biệt tại {context.Setting(language)}. Mỗi hình tròn biểu thị {multiplier} {unit}. {question}",
-            $"The pictograph records three separate batches at {context.Setting(language)}. Each circle represents {multiplier} {unit}. {question}");
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.016"), expression, unit);
+        string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.017", ("context_Setting_language", $"{context.Setting(language)}"), ("multiplier", $"{multiplier}"), ("unit", $"{unit}"), ("question", $"{question}"));
         return t.Build("pictograph-" + level, problem, new("pictograph", labels,
             counts.Select(count => (decimal)(count * key)).ToArray(), unit, PictographKey: key)) with { StoryContextId = context.Id };
     }
@@ -90,18 +88,16 @@ public sealed partial class ElementaryQuizGenerator
         var t = new DifficultyBuilder(QuizProblemKind.VisualGeometry, ElementaryQuizType.RecognizeShape, language, tier);
         int level = (int)tier;
         string[] ids = ["circle", "triangle", "square", "rectangle", "trapezoid", "parallelogram", "rhombus", "cube", "cuboid", "cylinder", "sphere"];
-        string[] names = language == AppLanguage.Vietnamese
-            ? ["Hình tròn", "Hình tam giác", "Hình vuông", "Hình chữ nhật", "Hình thang", "Hình bình hành", "Hình thoi", "Hình lập phương", "Hình hộp chữ nhật", "Hình trụ", "Hình cầu"]
-            : ["Circle", "Triangle", "Square", "Rectangle", "Trapezoid", "Parallelogram", "Rhombus", "Cube", "Rectangular prism", "Cylinder", "Sphere"];
+        string[] names = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.025"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.026"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.027"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.028"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.029"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.030"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.031"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.032"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.033"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.034"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.035") };
         int[] pool = level <= 2 ? [0, 1, 2, 3] : level == 3 ? [1, 2, 3, 4, 5, 6] : level == 4 ? [7, 8, 9, 10] : Enumerable.Range(0, ids.Length).ToArray();
         int index = pool[_random.Next(pool.Length)];
-        t.TextAnswer(t.L("Tên hình", "Shape name"), names[index], names[index].Replace("Hình ", ""), index == 8 ? t.L("hộp chữ nhật", "cuboid") : names[index]);
+        t.TextAnswer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.018"), names[index], names[index].Replace("Hình ", ""), index == 8 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.019") : names[index]);
         // Orientation varies; the answer is never placed in the figure's labels.
         decimal rotation = level == 1 || index >= 7 ? 0 : _random.Next(1, 7) * 15;
-        t.Explanation = t.L($"Hình trong tranh là {names[index].ToLowerInvariant()}.", $"The figure is a {names[index].ToLowerInvariant()}.");
+        t.Explanation = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.020", ("names_index_ToLowerInvariant", $"{names[index].ToLowerInvariant()}"));
         string[] distractors = names.Where((_, i) => i != index).ToArray();
         _random.Shuffle(distractors);
-        return t.Build("recognize-" + ids[index], t.L("Quan sát hình và gọi tên hình đó.", "Look at the figure and name the shape."),
+        return t.Build("recognize-" + ids[index], QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.021"),
             new("shape", [], [], "", RotationDegrees: rotation, ScenarioId: ids[index]))
             with { ChoiceTexts = [names[index], .. distractors.Take(3)] };
     }

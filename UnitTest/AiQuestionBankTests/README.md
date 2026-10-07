@@ -1,5 +1,12 @@
 # AI question bank checks
 
+Quiz wording and context lists load from `MathSolver/Resources/Raw/QuizContent`.
+See the [JSON authoring guide](../../MathSolver/QUIZ_CONTENT_AUTHORING.md).
+`--quiz-content` checks bundled packs, typed list caching, fallback, value slots and
+malformed input. `--validate-quiz-content <file>` validates an author file without
+loading a model; `--check-quiz-translation <translated-file> <reference-file>` also
+checks complete IDs, preserved slots and mathematical context metadata.
+
 `--practice-formats` checks 1,080 combinations of nine groups, four operations,
 five star levels, two languages and three answer modes for arithmetic and Find X.
 Numeric mode preserves the original question without SQLite reads; word mode

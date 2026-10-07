@@ -15,11 +15,10 @@ internal static partial class ComparisonEssayValidator
         var details = new List<string>();
         bool hasWork = !string.IsNullOrWhiteSpace(equations);
         bool hasAnswer = !string.IsNullOrWhiteSpace(answerText);
-        bool equationOkay = Check(equations, vi ? "So sánh" : "Comparison");
-        bool answerOkay = hasAnswer ? Check(answerText, vi ? "Đáp số" : "Answer") : hasWork && equationOkay;
+        bool equationOkay = Check(equations, QuizContentCatalog.Text(contract.Language, "ComparisonEssayValidator.Validate.001"));
+        bool answerOkay = hasAnswer ? Check(answerText, QuizContentCatalog.Text(contract.Language, "ComparisonEssayValidator.Validate.002")) : hasWork && equationOkay;
         if (!hasWork && !hasAnswer)
-            details.Add(vi ? "Chưa có đáp án. Hãy ghi dấu >, <, = hoặc cả dòng so sánh."
-                : "No answer supplied. Enter >, <, = or the complete comparison.");
+            details.Add(QuizContentCatalog.Text(contract.Language, "ComparisonEssayValidator.Validate.003"));
         return new(true, equationOkay, answerOkay, EssayAnswerError.None,
             equationOkay ? EssayAnswerError.None : EssayAnswerError.WrongOperandsOrOperation,
             answerOkay ? EssayAnswerError.None : hasWork || hasAnswer ? EssayAnswerError.WrongAnswer : EssayAnswerError.InvalidAnswerFormat)
@@ -31,7 +30,7 @@ internal static partial class ComparisonEssayValidator
             string[] lines = (text ?? "").Split(['\n', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
             if (lines.Length == 0 && !string.IsNullOrWhiteSpace(text))
             {
-                details.Add(vi ? $"{section}: chưa có dấu so sánh hợp lệ." : $"{section}: no valid comparison sign supplied.");
+                details.Add(QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ComparisonEssayValidator.Validate.004", ("section", $"{section}")));
                 return false;
             }
             foreach (string line in lines)
@@ -48,15 +47,12 @@ internal static partial class ComparisonEssayValidator
                     string reversed = expected == "<" ? ">" : expected == ">" ? "<" : "=";
                     if (sameOrder && symbol == expected || reverseOrder && symbol == reversed) continue;
                     if (!sameOrder && !reverseOrder)
-                        details.Add(vi ? $"{section}: hai giá trị trong “{line}” chưa khớp dữ kiện {left} và {right}."
-                            : $"{section}: the values in “{line}” do not match the given {left} and {right}.");
+                        details.Add(QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ComparisonEssayValidator.Validate.005", ("section", $"{section}"), ("line", $"{line}"), ("left", $"{left}"), ("right", $"{right}")));
                     else
-                        details.Add(vi ? $"{section}: dấu “{symbol}” chưa đúng; cần dấu “{(sameOrder ? expected : reversed)}”."
-                            : $"{section}: “{symbol}” is incorrect; use “{(sameOrder ? expected : reversed)}”.");
+                        details.Add(QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ComparisonEssayValidator.Validate.006", ("section", $"{section}"), ("symbol", $"{symbol}"), ("sameOrder_expected_reversed", $"{(sameOrder ? expected : reversed)}")));
                 }
                 else
-                    details.Add(vi ? $"{section}: em ghi “{line}”; cần {contract.FormatComparison(expected)}."
-                        : $"{section}: you wrote “{line}”; expected {contract.FormatComparison(expected)}.");
+                    details.Add(QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ComparisonEssayValidator.Validate.007", ("section", $"{section}"), ("line", $"{line}"), ("contract_FormatComparison_expected", $"{contract.FormatComparison(expected)}")));
                 correct = false;
             }
             return correct;

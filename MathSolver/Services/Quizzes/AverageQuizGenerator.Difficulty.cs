@@ -19,15 +19,13 @@ public sealed partial class AverageQuizGenerator
         int[] known = scores[..^1];
         int missing = scores[^1], total = target * count, knownTotal = known.Sum();
         bool vi = language == AppLanguage.Vietnamese;
-        string unit = vi ? "điểm" : "points";
-        string problem = vi
-            ? $"An có điểm của {known.Length} bài đầu lần lượt là {JoinValues(known)}. Bài thứ {count} An cần bao nhiêu điểm để điểm trung bình của {count} bài là {target}?"
-            : $"Alex scores {JoinValues(known)} on the first {known.Length} tests. What score is needed on test {count} for an average of {target} across {count} tests?";
+        string unit = QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.001");
+        string problem = QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.002", ("known_Length", $"{known.Length}"), ("JoinValues_known", $"{JoinValues(known)}"), ("count", $"{count}"), ("target", $"{target}"));
         string equation = $"{target} × {count} − ({string.Join(" + ", known)}) = {missing}";
-        string lead = vi ? $"Điểm bài thứ {count} cần có là:" : $"The score needed on test {count} is:";
+        string lead = QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.003", ("count", $"{count}"));
         return new(AverageQuizType.MissingValue,
             vi ? [known.Length, .. known, count, count, target] : [.. known, known.Length, count, target, count],
-            missing, unit, vi ? "điểm bài còn thiếu" : "missing test score", problem, equation,
+            missing, unit, QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.004"), problem, equation,
             FormatSolution(lead, equation, unit, missing, language), total, ArithmeticOperation.Subtract,
             knownTotal, KnownScores: known);
     }

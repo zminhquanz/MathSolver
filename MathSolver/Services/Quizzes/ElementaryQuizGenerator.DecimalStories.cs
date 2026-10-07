@@ -10,8 +10,8 @@ public sealed partial class ElementaryQuizGenerator
         string[] ids = ["kitchen", "decoration", "water"];
         string id = ids[NextContextVariant(type, language, "decimal-story", ids.Length)];
         var c = QuizStoryContextCatalog.Find(id);
-        string unit = t.L(id == "kitchen" ? "kg" : id == "water" ? "l" : "m", id == "kitchen" ? "kg" : id == "water" ? "litres" : "m");
-        string item = t.L(id == "kitchen" ? "gạo" : id == "water" ? "nước" : "ruy băng", id == "kitchen" ? "rice" : id == "water" ? "water" : "ribbon");
+        string unit = (id == "kitchen" ? "kg" : (id == "water" ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.023") : "m"));
+        string item = (id == "kitchen" ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.024") : (id == "water" ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.025") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.026")));
         int level = (int)tier, scale = level <= 2 ? 10 : 100;
         int maximum = id == "decoration" ? 50 : id == "kitchen" ? 100 : 1000;
         decimal x = _random.Next(2, Math.Min(maximum / 6, 5 + 2 * level)) + _random.Next(1, scale) / (decimal)scale;
@@ -28,30 +28,26 @@ public sealed partial class ElementaryQuizGenerator
         if (type == ElementaryQuizType.DecimalSubtract && x < y) (x, y) = (y, x);
         if (type == ElementaryQuizType.DecimalDivide) x *= y;
         string a = t.Given("quantity", x, unit), b = t.Given("second-quantity", y,
-            type is ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide ? t.L("phần", "portions") : unit);
+            type is ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.001") : unit);
         if (level >= 3) return CreateIndirectDecimalStory(t, c.Id, item, unit, type, level, x, y);
         string problem, op;
         if (type == ElementaryQuizType.DecimalAdd) {
             op = "+";
-            problem = t.L($"Hai phần {item} riêng biệt có số đo {a} {unit} và {b} {unit}. Hỏi tổng số đo của hai phần là bao nhiêu {unit}?",
-                $"Two separate portions of {item} measure {a} {unit} and {b} {unit}. What is their combined measurement in {unit}?");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002", ("item", $"{item}"), ("a", $"{a}"), ("unit", $"{unit}"), ("b", $"{b}"));
         }
         else if (type == ElementaryQuizType.DecimalSubtract) {
             op = "-";
-            problem = t.L($"Ban đầu có {a} {unit} {item}. Đã dùng {b} {unit} từ lượng đó. Hỏi còn lại bao nhiêu {unit}?",
-                $"There are initially {a} {unit} of {item}. {b} {unit} are used from that amount. How many {unit} remain?");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.003", ("a", $"{a}"), ("unit", $"{unit}"), ("item", $"{item}"), ("b", $"{b}"));
         }
         else if (type == ElementaryQuizType.DecimalMultiply) {
             op = "*";
-            problem = t.L($"Mỗi phần có {a} {unit} {item}. Chuẩn bị {b} phần bằng nhau như vậy. Hỏi cần tất cả bao nhiêu {unit}?",
-                $"Each portion contains {a} {unit} of {item}. {b} equal portions are prepared. How many {unit} are needed in total?");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.004", ("a", $"{a}"), ("unit", $"{unit}"), ("item", $"{item}"), ("b", $"{b}"));
         }
         else {
             op = "/";
-            problem = t.L($"Có {a} {unit} {item}, chia đều thành {b} phần. Hỏi mỗi phần có bao nhiêu {unit}?",
-                $"There are {a} {unit} of {item}, shared equally into {b} portions. How many {unit} are in each portion?");
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.005", ("a", $"{a}"), ("unit", $"{unit}"), ("item", $"{item}"), ("b", $"{b}"));
         }
-        t.Answer(t.L($"Số đo {item} cần tìm", $"Required measurement of {item}"), $"{a}{op}{b}", unit);
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.006", ("item", $"{item}")), $"{a}{op}{b}", unit);
         return t.Build("decimal-" + type, problem) with { StoryContextId = c.Id };
     }
 
@@ -64,61 +60,57 @@ public sealed partial class ElementaryQuizGenerator
         string smallUnit = contextId == "decoration" ? "cm" : contextId == "kitchen" ? "g" : "ml";
         string first = t.Given("quantity", conversion ? x * factor : x, conversion ? smallUnit : unit);
         string left = conversion ? $"({first}/{factor})" : first;
-        string prefix = t.L($"Phần đầu có {first} {(conversion ? smallUnit : unit)} {item}. ",
-            $"The first portion contains {first} {(conversion ? smallUnit : unit)} of {item}. ");
-        if (conversion) { t.Constant(factor); t.Step(t.L("Đổi số đo phần đầu", "Convert the first measurement"), left, unit); }
+        string prefix = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.007", ("first", $"{first}"), ("conversion_smallUnit_unit", $"{(conversion ? smallUnit : unit)}"), ("item", $"{item}"));
+        if (conversion) { t.Constant(factor); t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.008"), left, unit); }
         string expression, problem;
         if (type == ElementaryQuizType.DecimalAdd)
         {
             string gap = t.Given("difference", y, unit);
             string second = $"({left}+{gap})";
-            t.Step(t.L("Số đo phần thứ hai", "Second portion measurement"), second, unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.009"), second, unit);
             expression = $"{left}+{second}";
-            problem = prefix + t.L($"Phần thứ hai nhiều hơn phần đầu {gap} {unit}. ", $"The second portion exceeds the first by {gap} {unit}. ");
+            problem = prefix + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.010", ("gap", $"{gap}"), ("unit", $"{unit}"));
         }
         else if (type == ElementaryQuizType.DecimalSubtract)
         {
             // Use two portions from one total; no unmentioned or overlapping amount.
             string used = t.Given("used-first", y / 2, unit), other = t.Given("used-second", y / 2, unit);
             expression = $"{left}-({used}+{other})";
-            t.Step(t.L("Tổng lượng đã dùng", "Total amount used"), $"{used}+{other}", unit);
-            problem = t.L($"Ban đầu có {first} {(conversion ? smallUnit : unit)} {item}. Đã dùng lần lượt {used} {unit} và {other} {unit} từ lượng đó. ",
-                $"Initially there are {first} {(conversion ? smallUnit : unit)} of {item}. {used} {unit} and {other} {unit} are used from that amount. ");
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.011"), $"{used}+{other}", unit);
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.012", ("first", $"{first}"), ("conversion_smallUnit_unit", $"{(conversion ? smallUnit : unit)}"), ("item", $"{item}"), ("used", $"{used}"), ("unit", $"{unit}"), ("other", $"{other}"));
         }
         else
         {
             string extra = t.Given("extra-quantity", type == ElementaryQuizType.DecimalMultiply ? .5m : y / 2, unit);
-            string count = t.Given("portion-count", y, t.L("phần", "portions"));
+            string count = t.Given("portion-count", y, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.013"));
             string combined = $"({left}+{extra})";
-            t.Step(t.L("Lượng trước khi tính", "Amount before calculating"), combined, unit);
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.014"), combined, unit);
             if (type == ElementaryQuizType.DecimalMultiply)
             {
                 expression = $"{combined}*{count}";
-                problem = prefix + t.L($"Mỗi phần cần thêm {extra} {unit} nữa. Chuẩn bị {count} phần giống nhau. ",
-                    $"Each portion needs an additional {extra} {unit}. Prepare {count} identical portions. ");
+                problem = prefix + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.015", ("extra", $"{extra}"), ("unit", $"{unit}"), ("count", $"{count}"));
             }
             else
             {
                 expression = $"{combined}/{count}";
-                problem = prefix + t.L($"Gộp với phần thứ hai có {extra} {unit}, rồi chia đều thành {count} phần. ",
-                    $"Combine it with a second portion of {extra} {unit}, then share equally into {count} portions. ");
+                problem = prefix + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.016", ("extra", $"{extra}"), ("unit", $"{unit}"), ("count", $"{count}"));
             }
         }
         if (level >= 4)
         {
             string returned = t.Given("adjustment", .25m, unit);
-            t.Step(t.L(type == ElementaryQuizType.DecimalDivide ? "Lượng mỗi phần sau khi chia" : "Lượng trước khi bổ sung", type == ElementaryQuizType.DecimalDivide ? "Amount in each share" : "Amount before the addition"), expression, unit);
+            t.Step((type == ElementaryQuizType.DecimalDivide ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.027") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.028")), expression, unit);
             expression = $"({expression})+{returned}";
             problem += type == ElementaryQuizType.DecimalDivide
-                ? t.L($"Sau khi chia, bổ sung riêng {returned} {unit} {item} vào phần thứ nhất. ", $"After sharing, add another {returned} {unit} of {item} to the first share only. ")
-                : t.L($"Sau đó gộp thêm {returned} {unit} {item} từ bên ngoài vào lượng đang có. ", $"Then add another {returned} {unit} of {item} from outside to the amount available. ");
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.017", ("returned", $"{returned}"), ("unit", $"{unit}"), ("item", $"{item}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.018", ("returned", $"{returned}"), ("unit", $"{unit}"), ("item", $"{item}"));
         }
-        string label = t.L($"Số đo {item} cần tìm", $"Required measurement of {item}");
+        string label = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.019", ("item", $"{item}"));
         string question = type switch
         {
-            ElementaryQuizType.DecimalSubtract => t.L($"Hỏi còn lại bao nhiêu {unit}?", $"How many {unit} remain?"),
-            ElementaryQuizType.DecimalDivide => t.L($"Hỏi phần thứ nhất cuối cùng có bao nhiêu {unit}?", $"How many {unit} are in the first share at the end?"),
-            _ => t.L($"Hỏi cuối cùng có tất cả bao nhiêu {unit} {item}?", $"How many {unit} of {item} are there in total at the end?")
+            ElementaryQuizType.DecimalSubtract => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.020", ("unit", $"{unit}")),
+            ElementaryQuizType.DecimalDivide => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.021", ("unit", $"{unit}")),
+            _ => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.022", ("unit", $"{unit}"), ("item", $"{item}"))
         };
         t.Answer(label, expression, unit);
         return t.Build("decimal-story-" + type + "-" + level, problem + question) with { StoryContextId = contextId };

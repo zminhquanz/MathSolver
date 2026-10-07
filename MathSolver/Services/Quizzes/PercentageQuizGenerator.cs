@@ -9,25 +9,9 @@ namespace MathSolver.Services;
 /// </summary>
 public sealed partial class PercentageQuizGenerator
 {
-    private sealed record ItemContext(
-        string ViUnit,
-        string EnUnit,
-        string ViSubject,
-        string EnSubject,
-        string ViRatioPart,
-        string EnRatioPart);
+    private sealed record ItemContext(string Unit, string Subject, string RatioPart);
 
-    private static readonly ItemContext[] Contexts =
-    [
-        new("quyển sách", "books", "số sách", "number of books", "quyển truyện", "story books"),
-        new("cây", "trees", "số cây", "number of trees", "cây xoài", "mango trees"),
-        new("học sinh", "students", "số học sinh", "number of students", "học sinh nữ", "female students"),
-        new("viên bi", "marbles", "số viên bi", "number of marbles", "viên bi đỏ", "red marbles"),
-        new("bông hoa", "flowers", "số hoa", "number of flowers", "bông hoa hồng", "roses"),
-        new("chiếc bút", "pens", "số bút", "number of pens", "chiếc bút xanh", "blue pens"),
-        new("quả cam", "oranges", "số cam", "number of oranges", "quả cam loại A", "grade-A oranges"),
-        new("vé", "tickets", "số vé", "number of tickets", "vé trẻ em", "children's tickets")
-    ];
+    private static IReadOnlyList<ItemContext> Contexts(AppLanguage language) => QuizContentCatalog.LoadList<ItemContext>("PercentageQuizGenerator.Contexts", QuizContentCatalog.Culture(language));
 
     private readonly Random _random;
 
@@ -105,16 +89,12 @@ public sealed partial class PercentageQuizGenerator
         int percentage = percentages[_random.Next(percentages.Length)];
         int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(20, 40, 200);
         int part = whole * percentage / 100;
-        ItemContext item = Contexts[_random.Next(Contexts.Length)];
+        ItemContext item = Contexts(language)[_random.Next(Contexts(language).Count)];
         const string unit = "%";
-        string problem = language == AppLanguage.Vietnamese
-            ? $"Có tất cả {whole} {item.ViUnit}, trong đó có {part} {item.ViRatioPart}. Hỏi số {item.ViRatioPart} chiếm bao nhiêu phần trăm tổng số {item.ViUnit}?"
-            : $"There are {whole} {item.EnUnit} in total, including {part} {item.EnRatioPart}. What percentage of the total are {item.EnRatioPart}?";
+        string problem = QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateRatio.012", ("whole", $"{whole}"), ("item_ViUnit", $"{item.Unit}"), ("part", $"{part}"), ("item_ViRatioPart", $"{item.RatioPart}"), ("item_EnUnit", $"{item.Unit}"), ("item_EnRatioPart", $"{item.RatioPart}"));
         string equation = $"{part} ÷ {whole} × 100 = {percentage}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Tỉ lệ {item.ViRatioPart} trong tổng số {item.ViUnit} là:"
-                : $"The share of {item.EnRatioPart} among all {item.EnUnit} is:",
+            QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateRatio.013", ("item_ViRatioPart", $"{item.RatioPart}"), ("item_ViUnit", $"{item.Unit}"), ("item_EnRatioPart", $"{item.RatioPart}"), ("item_EnUnit", $"{item.Unit}")),
             equation,
             unit,
             percentage,
@@ -125,7 +105,7 @@ public sealed partial class PercentageQuizGenerator
             [whole, part],
             percentage,
             unit,
-            language == AppLanguage.Vietnamese ? item.ViRatioPart : item.EnRatioPart,
+            item.RatioPart,
             problem,
             equation,
             solution,
@@ -141,17 +121,13 @@ public sealed partial class PercentageQuizGenerator
         int percentage = percentages[_random.Next(percentages.Length)];
         int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(100, 100, 600);
         int value = whole * percentage / 100;
-        ItemContext item = Contexts[_random.Next(Contexts.Length)];
-        string unit = language == AppLanguage.Vietnamese ? item.ViRatioPart : item.EnRatioPart;
-        string subject = language == AppLanguage.Vietnamese ? $"số {item.ViRatioPart}" : $"number of {item.EnRatioPart}";
-        string problem = language == AppLanguage.Vietnamese
-            ? $"Có tất cả {whole} {item.ViUnit}, trong đó {percentage}% là {item.ViRatioPart}. Hỏi có bao nhiêu {item.ViRatioPart}?"
-            : $"There are {whole} {item.EnUnit} in total, and {percentage}% are {item.EnRatioPart}. How many {item.EnRatioPart} are there?";
+        ItemContext item = Contexts(language)[_random.Next(Contexts(language).Count)];
+        string unit = item.RatioPart;
+        string subject = QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateValue.014", ("item_ViRatioPart", $"{item.RatioPart}"), ("item_EnRatioPart", $"{item.RatioPart}"));
+        string problem = QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateValue.015", ("whole", $"{whole}"), ("item_ViUnit", $"{item.Unit}"), ("percentage", $"{percentage}"), ("item_ViRatioPart", $"{item.RatioPart}"), ("item_EnUnit", $"{item.Unit}"), ("item_EnRatioPart", $"{item.RatioPart}"));
         string equation = $"{whole} × {percentage} ÷ 100 = {value}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Số {item.ViRatioPart} là:"
-                : $"The number of {item.EnRatioPart} is:",
+            QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateValue.016", ("item_ViRatioPart", $"{item.RatioPart}"), ("item_EnRatioPart", $"{item.RatioPart}")),
             equation,
             unit,
             value,
@@ -178,17 +154,13 @@ public sealed partial class PercentageQuizGenerator
         int percentage = percentages[_random.Next(percentages.Length)];
         int whole = level.HasValue ? PickPercentageWhole(percentage, level.Value) : PickMultipleOf(100, 100, 600);
         int value = whole * percentage / 100;
-        ItemContext item = Contexts[_random.Next(Contexts.Length)];
-        string unit = language == AppLanguage.Vietnamese ? item.ViUnit : item.EnUnit;
-        string subject = language == AppLanguage.Vietnamese ? $"tổng {item.ViSubject}" : $"total {item.EnSubject}";
-        string problem = language == AppLanguage.Vietnamese
-            ? $"Có {value} {item.ViRatioPart}, bằng {percentage}% tổng số {item.ViUnit}. Hỏi có tất cả bao nhiêu {item.ViUnit}?"
-            : $"There are {value} {item.EnRatioPart}, which make up {percentage}% of all {item.EnUnit}. How many {item.EnUnit} are there altogether?";
+        ItemContext item = Contexts(language)[_random.Next(Contexts(language).Count)];
+        string unit = item.Unit;
+        string subject = QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateWhole.017", ("item_ViSubject", $"{item.Subject}"), ("item_EnSubject", $"{item.Subject}"));
+        string problem = QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateWhole.018", ("value", $"{value}"), ("item_ViRatioPart", $"{item.RatioPart}"), ("percentage", $"{percentage}"), ("item_ViUnit", $"{item.Unit}"), ("item_EnRatioPart", $"{item.RatioPart}"), ("item_EnUnit", $"{item.Unit}"));
         string equation = $"{value} × 100 ÷ {percentage} = {whole}";
         string solution = FormatSolution(
-            language == AppLanguage.Vietnamese
-                ? $"Tổng số {item.ViUnit} là:"
-                : $"The total number of {item.EnUnit} is:",
+            QuizContentCatalog.Text(language, "PercentageQuizGenerator.CreateWhole.019", ("item_ViUnit", $"{item.Unit}"), ("item_EnUnit", $"{item.Unit}")),
             equation,
             unit,
             whole,
@@ -309,9 +281,7 @@ public sealed partial class PercentageQuizGenerator
     }
 
     private static string BuildSolutionLead(PercentageQuizContract contract) =>
-        AppLanguageManager.CurrentLanguage == AppLanguage.Vietnamese
-            ? $"{contract.SubjectName} là:"
-            : $"The {contract.SubjectName} is:";
+        QuizContentCatalog.Text(AppLanguageManager.CurrentLanguage, "PercentageQuizGenerator.BuildSolutionLead.001", ("contract_SubjectName", $"{contract.SubjectName}"));
 
     private static string FormatSolution(
         string lead,
@@ -320,7 +290,7 @@ public sealed partial class PercentageQuizGenerator
         int answer,
         AppLanguage language)
     {
-        string answerLabel = language == AppLanguage.Vietnamese ? "Đáp số" : "Answer";
+        string answerLabel = QuizContentCatalog.Text(language, "PercentageQuizGenerator.FormatSolution.002");
         string unitSuffix = unit == "%" ? unit : $" {unit}";
         return $"{lead}{Environment.NewLine}" +
                $"{equation}{unitSuffix}{Environment.NewLine}" +

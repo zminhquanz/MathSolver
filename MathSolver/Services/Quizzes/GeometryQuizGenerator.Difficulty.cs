@@ -62,7 +62,6 @@ public sealed partial class GeometryQuizGenerator
     {
         int level = (int)tier;
         bool vi = language == AppLanguage.Vietnamese;
-        string L(string a, string b) => vi ? a : b;
         string unit = contract.LengthUnitSymbol;
         var givens = new List<GeometryGivenFact>();
         var steps = new List<GeometryInferenceStep>();
@@ -76,7 +75,7 @@ public sealed partial class GeometryQuizGenerator
         void Direct(string key)
         {
             BigInteger value = contract.Dimensions[key];
-            Given(key, value, unit, L($"{Name(key)} là {value} {unit}.", $"The {Name(key)} is {value} {unit}."));
+            Given(key, value, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.001", ("Name_key", $"{Name(key)}"), ("value", $"{value}"), ("unit", $"{unit}")));
             expressions[key] = N(value);
         }
         void Infer(string key, string expression, string label, BigInteger value)
@@ -94,7 +93,7 @@ public sealed partial class GeometryQuizGenerator
             if (unit == "mm" && value % factor != 0) throw new InvalidOperationException("Converted geometry givens must stay integral.");
             Given("difference", raw, inputUnit, $"{clausePrefix} {raw} {inputUnit}.");
             string expression = unit == "mm" ? $"{raw}*{factor}" : $"{raw}/{factor}";
-            Infer("converted", expression, L("Đổi đơn vị", "Convert units"), value);
+            Infer("converted", expression, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.002"), value);
             return expression;
         }
         string first = keys[0];
@@ -108,23 +107,23 @@ public sealed partial class GeometryQuizGenerator
         else if (level == 2 && keys.Length == 1 && contract.ShapeId is "square" or "cube" && contract.Measurement != GeometryMeasurement.Perimeter)
         {
             BigInteger p = 4 * firstValue;
-            string face = contract.ShapeId == "cube" ? L("một mặt hình vuông", "one square face") : contract.ShapeName;
-            Given("perimeter", p, unit, L($"Chu vi của {face} là {p} {unit}.", $"The perimeter of {face} is {p} {unit}."));
+            string face = contract.ShapeId == "cube" ? QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.003") : contract.ShapeName;
+            Given("perimeter", p, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.004", ("face", $"{face}"), ("p", $"{p}"), ("unit", $"{unit}")));
             Infer(first, $"{p}/4", Name(first), firstValue);
             scenario = "side-from-perimeter";
         }
         else if (level == 2 && contract.ShapeId == "circle")
         {
-            Given("diameter", firstValue * 2, unit, L($"Đường kính là {firstValue * 2} {unit}.", $"The diameter is {firstValue * 2} {unit}."));
+            Given("diameter", firstValue * 2, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.005", ("firstValue_2", $"{firstValue * 2}"), ("unit", $"{unit}")));
             Infer(first, $"{firstValue * 2}/2", Name(first), firstValue);
             scenario = "radius-from-diameter";
         }
         else if (level == 3 && contract.ShapeId == "rectangle" && contract.Measurement == GeometryMeasurement.Area)
         {
             BigInteger width = contract.Dimensions["b"], p = 2 * (firstValue + width);
-            Given("perimeter", p, unit, L($"Chu vi là {p} {unit}.", $"The perimeter is {p} {unit}."));
+            Given("perimeter", p, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.006", ("p", $"{p}"), ("unit", $"{unit}")));
             Direct("b");
-            Infer("semiperimeter", $"{p}/2", L("Nửa chu vi", "Half-perimeter"), p / 2);
+            Infer("semiperimeter", $"{p}/2", QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.007"), p / 2);
             Infer("a", $"{p}/2-{width}", Name("a"), firstValue);
             scenario = "length-from-perimeter-and-width";
         }
@@ -133,12 +132,12 @@ public sealed partial class GeometryQuizGenerator
             int count = level == 2 ? 2 : 3;
             BigInteger x = BigInteger.Max(1, firstValue / count), y = count == 2 ? firstValue - x : BigInteger.Max(1, (firstValue - x) / 2);
             BigInteger z = firstValue - x - y;
-            Given("part-x", x, unit, L($"{Name(first)} gồm các đoạn liên tiếp, đoạn đầu dài {x} {unit}.", $"The {Name(first)} consists of consecutive segments; the first is {x} {unit}."));
-            Given("part-y", y, unit, L($"Đoạn tiếp theo dài {y} {unit}.", $"The next segment is {y} {unit}."));
+            Given("part-x", x, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.008", ("Name_first", $"{Name(first)}"), ("x", $"{x}"), ("unit", $"{unit}")));
+            Given("part-y", y, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.009", ("y", $"{y}"), ("unit", $"{unit}")));
             if (count == 3)
             {
-                Given("part-z", z, unit, L($"Đoạn cuối dài {z} {unit}.", $"The last segment is {z} {unit}."));
-                Infer("partial", $"{x}+{y}", L("Tổng hai đoạn đầu", "Sum of the first two segments"), x + y);
+                Given("part-z", z, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.010", ("z", $"{z}"), ("unit", $"{unit}")));
+                Infer("partial", $"{x}+{y}", QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.011"), x + y);
             }
             Infer(first, count == 2 ? $"{x}+{y}" : $"{x}+{y}+{z}", Name(first), firstValue);
             foreach (string key in keys.Skip(1)) Direct(key);
@@ -152,14 +151,14 @@ public sealed partial class GeometryQuizGenerator
             BigInteger secondValue = keys.Length > 1 ? contract.Dimensions[second] : (level == 5 ? firstValue - 10 : BigInteger.Max(1, firstValue / 2));
             BigInteger difference = firstValue - secondValue;
             string prefix = keys.Length == 1
-                ? L("Đoạn dài lớn hơn đoạn ngắn", "The longer segment exceeds the shorter by")
-                : L($"{Name(first)} hơn {Name(second)}", $"The {Name(first)} exceeds the {Name(second)} by");
+                ? QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.012")
+                : QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.013", ("Name_first", $"{Name(first)}"), ("Name_second", $"{Name(second)}"));
             string differenceExpression;
             if (chain)
             {
                 BigInteger x = BigInteger.Max(1, secondValue / 2), y = secondValue - x;
-                Given("part-x", x, unit, L($"{Name(second)} gồm hai đoạn liên tiếp, đoạn đầu dài {x} {unit}.", $"The {Name(second)} consists of two consecutive segments; the first is {x} {unit}."));
-                Given("part-y", y, unit, L($"Đoạn còn lại dài {y} {unit}.", $"The remaining segment is {y} {unit}."));
+                Given("part-x", x, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.014", ("Name_second", $"{Name(second)}"), ("x", $"{x}"), ("unit", $"{unit}")));
+                Given("part-y", y, unit, QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.015", ("y", $"{y}"), ("unit", $"{unit}")));
                 Infer(second, $"{x}+{y}", Name(second), secondValue);
                 if (level == 5) differenceExpression = ConvertDifference(difference, prefix);
                 else { Given("difference", difference, unit, $"{prefix} {difference} {unit}."); differenceExpression = N(difference); }
@@ -170,14 +169,14 @@ public sealed partial class GeometryQuizGenerator
             {
                 BigInteger sum = firstValue + secondValue;
                 string sumClause = keys.Length == 1
-                    ? L($"Hai đoạn thẳng có tổng độ dài {sum} {unit}.", $"Two segments have a combined length of {sum} {unit}.")
-                    : L($"Tổng {Name(first)} và {Name(second)} là {sum} {unit}.", $"The sum of the {Name(first)} and the {Name(second)} is {sum} {unit}.");
+                    ? QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.016", ("sum", $"{sum}"), ("unit", $"{unit}"))
+                    : QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.017", ("Name_first", $"{Name(first)}"), ("Name_second", $"{Name(second)}"), ("sum", $"{sum}"), ("unit", $"{unit}"));
                 Given("sum", sum, unit, sumClause);
                 if (level == 5) differenceExpression = ConvertDifference(difference, prefix);
                 else { Given("difference", difference, unit, $"{prefix} {difference} {unit}."); differenceExpression = N(difference); }
                 Infer(first, $"({sum}+({differenceExpression}))/2", Name(first), firstValue);
                 if (keys.Length > 1) Infer(second, $"({sum}-({differenceExpression}))/2", Name(second), secondValue);
-                else relations.Add(L($"{Name(first)} bằng độ dài đoạn dài hơn.", $"The {Name(first)} equals the longer segment."));
+                else relations.Add(QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.018", ("Name_first", $"{Name(first)}")));
                 scenario = "sum-and-difference";
             }
             foreach (string key in keys.Skip(2)) Direct(key);
@@ -205,11 +204,10 @@ public sealed partial class GeometryQuizGenerator
             ("rectangular_prism", _) => $"2*({E("a")}*{E("b")}+{E("a")}*{E("h")}+{E("b")}*{E("h")})",
             _ => throw new ArgumentOutOfRangeException(nameof(contract))
         };
-        string question = L($"Hỏi {GeometryReasoningText.MeasurementName(contract.Measurement, language)} của {contract.ShapeName} là bao nhiêu {contract.AnswerUnit}?",
-            $"What is the {GeometryReasoningText.MeasurementName(contract.Measurement, language)} of the {contract.ShapeName} in {contract.AnswerUnit}?");
+        string question = QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.019", ("value0", $"{GeometryReasoningText.MeasurementName(contract.Measurement, language)}"), ("contract_ShapeName", $"{contract.ShapeName}"), ("contract_AnswerUnit", $"{contract.AnswerUnit}"));
         string math = string.Join(" ", givens.Select(fact => fact.Clause).Concat(relations)) + " " + question;
-        if (contract.ShapeId == "circle") math += L(" Lấy π = 3,14.", " Use π = 3.14.");
-        string problem = L($"Một {contract.ObjectName} có dạng {contract.ShapeName}. ", $"A {contract.ObjectName} has the shape of a {contract.ShapeName}. ") + math;
+        if (contract.ShapeId == "circle") math += QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.020");
+        string problem = QuizContentCatalog.Text(language, "GeometryQuizGenerator.Difficulty.CreateReasoning.021", ("contract_ObjectName", $"{contract.ObjectName}"), ("contract_ShapeName", $"{contract.ShapeName}")) + math;
         return new(tier, scenario, language, givens, relations, steps, hidden, math, problem, combined);
     }
 }

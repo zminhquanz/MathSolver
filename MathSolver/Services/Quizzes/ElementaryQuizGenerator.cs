@@ -46,7 +46,6 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         if (CreateDifficultyContract(kind, type, language, tier) is { } difficultyContract)
             return CompleteQuestion(mode, difficultyContract, [], difficultyContract.ChoiceTexts?.ToArray());
         bool vi = language == AppLanguage.Vietnamese;
-        string L(string vietnamese, string english) => vi ? vietnamese : english;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
         int scale = (int)tier;
         int a = _random.Next(2, 5 + scale * 4), b = _random.Next(2, 5 + scale * 3);
@@ -99,8 +98,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                     if ((relation == 1 && a > b) || (relation == 2 && a < b)) (a, b) = (b, a);
                 }
                 Fact(a, b);
-                problem = L($"So sánh {a} và {b}.", $"Compare {a} and {b}.");
-                TextAnswer(L("Dấu so sánh", "Comparison"), a < b ? "<" : a > b ? ">" : "=");
+                problem = QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.037", ("a", $"{a}"), ("b", $"{b}"));
+                TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.038"), a < b ? "<" : a > b ? ">" : "=");
                 break;
             }
             case ElementaryQuizType.CompareFractions:
@@ -118,10 +117,9 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                     otherDenominator = denominator * factor;
                 }
                 Fact(numerator, denominator, otherNumerator, otherDenominator);
-                problem = L($"So sánh {numerator}/{denominator} và {otherNumerator}/{otherDenominator}.",
-                    $"Compare {numerator}/{denominator} and {otherNumerator}/{otherDenominator}.");
+                problem = QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.039", ("numerator", $"{numerator}"), ("denominator", $"{denominator}"), ("otherNumerator", $"{otherNumerator}"), ("otherDenominator", $"{otherDenominator}"));
                 int comparison = ((long)numerator * otherDenominator).CompareTo((long)otherNumerator * denominator);
-                TextAnswer(L("Dấu so sánh", "Comparison"), comparison < 0 ? "<" : comparison > 0 ? ">" : "=");
+                TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.040"), comparison < 0 ? "<" : comparison > 0 ? ">" : "=");
                 break;
             }
             case ElementaryQuizType.ClassifyAngle:
@@ -144,18 +142,10 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                 string name = string.Concat(labels);
                 visual = new("angle", labels, [degrees], "°", RotationDegrees:
                     scale == 1 ? _random.Next(2) * 180 : scale == 2 ? _random.Next(4) * 90 : _random.Next(12) * 30);
-                string[] prompts = vi
-                    ? [$"Quan sát hình: góc {name} là góc nhọn, góc vuông, góc tù hay góc bẹt?",
-                       $"Góc {name} trong hình thuộc loại góc nào?",
-                       $"Hai tia {labels[1]}{labels[0]} và {labels[1]}{labels[2]} tạo thành loại góc nào?",
-                       $"Hãy gọi tên loại góc có đỉnh {labels[1]} trong hình."]
-                    : [$"Is angle {name} in the figure acute, right, obtuse or straight?",
-                       $"What type of angle is {name} in the figure?",
-                       $"What type of angle is formed by rays {labels[1]}{labels[0]} and {labels[1]}{labels[2]}?",
-                       $"Identify the type of angle with vertex {labels[1]} in the figure."];
+                string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.041", ("name", $"{name}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.042", ("name", $"{name}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.043", ("labels_1", $"{labels[1]}"), ("labels_0", $"{labels[0]}"), ("labels_2", $"{labels[2]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.044", ("labels_1", $"{labels[1]}")) };
                 problem = prompts[_random.Next(prompts.Length)];
-                string[] angleNames = vi ? ["Góc Nhọn", "Góc Vuông", "Góc Tù", "Góc Bẹt"] : ["Acute", "Right", "Obtuse", "Straight"];
-                TextAnswer(L("Loại góc", "Angle type"), angleNames[index], vi ? new[] { "nhọn", "vuông", "tù", "bẹt" }[index] : angleNames[index]);
+                string[] angleNames = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.045"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.046"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.047"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.048") };
+                TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.049"), angleNames[index], vi ? new[] { "nhọn", "vuông", "tù", "bẹt" }[index] : angleNames[index]);
                 break;
             }
             case ElementaryQuizType.ParallelLines:
@@ -179,8 +169,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                     var lines = names.Select((label, lineIndex) => new QuizVisualLine(label, directions[lineIndex],
                         parallel && hasPair ? (lineIndex - (lineCount - 1) / 2f) * .22f : 0)).ToArray();
                     visual = new("line-pairs", names, [], "", Lines: lines);
-                    string Pair(int left, int right) => L($"Đường {names[left]} Và Đường {names[right]}", $"Lines {names[left]} and {names[right]}");
-                    string none = parallel ? L("Không Có Cặp Song Song", "No parallel pair") : L("Không Có Cặp Vuông Góc", "No perpendicular pair");
+                    string Pair(int left, int right) => QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.050", ("names_left", $"{names[left]}"), ("names_right", $"{names[right]}"));
+                    string none = parallel ? QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.051") : QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.052");
                     int pairIndex = -1;
                     var pairs = (from left in Enumerable.Range(0, lineCount)
                                  from right in Enumerable.Range(left + 1, lineCount - left - 1)
@@ -197,23 +187,17 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                     string correctPair = pairIndex < 0 ? none : Pair(pairs[pairIndex].Left, pairs[pairIndex].Right);
                     textChoices = pairIndex < 0 ? [.. distractors.Take(3), none]
                         : [correctPair, .. distractors.Take(2), none];
-                    string relationName = parallel ? L("song song", "parallel") : L("vuông góc", "perpendicular");
-                    string[] prompts = vi
-                        ? [$"Trong các đường thẳng {string.Join(", ", names)}, cặp đường nào {relationName}? Nếu không có cặp phù hợp, ghi không có.",
-                           $"Quan sát hình và tìm cặp đường thẳng {relationName}. Nếu không có, hãy cho biết không có cặp phù hợp.",
-                           $"Cặp nào trong hình có quan hệ {relationName}? Chọn cặp đúng hoặc cho biết không có."]
-                        : [$"Which pair among lines {string.Join(", ", names)} is {relationName}? If there is none, say there is no such pair.",
-                           $"Find the {relationName} pair of lines in the figure, or state that there is no such pair.",
-                           $"Which pair in the figure is {relationName}? Choose the pair or state that none exists."];
+                    string relationName = parallel ? QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.053") : QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.054");
+                    string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.055", ("string_Join_names", $"{string.Join(", ", names)}"), ("relationName", $"{relationName}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.056", ("relationName", $"{relationName}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.057", ("relationName", $"{relationName}")) };
                     problem = prompts[_random.Next(prompts.Length)];
-                    if (pairIndex < 0) TextAnswer(L("Cặp đường thẳng", "Pair of lines"), none, L("không có", "none"));
+                    if (pairIndex < 0) TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.058"), none, QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.059"));
                     else
                     {
                         var pair = pairs[pairIndex];
-                        TextAnswer(L("Cặp đường thẳng", "Pair of lines"), correctPair,
-                            L($"{names[pair.Left]} và {names[pair.Right]}", $"{names[pair.Left]} and {names[pair.Right]}"),
-                            L($"{names[pair.Right]} và {names[pair.Left]}", $"{names[pair.Right]} and {names[pair.Left]}"),
-                            L($"Đường {names[pair.Right]} Và Đường {names[pair.Left]}", $"Lines {names[pair.Right]} and {names[pair.Left]}"));
+                        TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.060"), correctPair,
+                            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.061", ("names_pair_Left", $"{names[pair.Left]}"), ("names_pair_Right", $"{names[pair.Right]}")),
+                            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.062", ("names_pair_Right", $"{names[pair.Right]}"), ("names_pair_Left", $"{names[pair.Left]}")),
+                            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.063", ("names_pair_Right", $"{names[pair.Right]}"), ("names_pair_Left", $"{names[pair.Left]}")));
                     }
                 }
                 else
@@ -224,19 +208,13 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
                     visual = new(relation, names[..2], [], "", Lines:
                         [new(names[0], rotation, relation == "parallel" ? -.28f : 0),
                          new(names[1], rotation + difference, relation == "parallel" ? .28f : 0)]);
-                    string[] prompts = vi
-                        ? [$"Hai đường thẳng {names[0]} và {names[1]} trong hình có quan hệ gì?",
-                           $"Quan sát hình: {names[0]} và {names[1]} là hai đường song song, vuông góc hay cắt nhau nhưng không vuông góc?",
-                           $"Hãy xác định quan hệ giữa hai đường kẻ {names[0]} và {names[1]}." ]
-                        : [$"What is the relationship between lines {names[0]} and {names[1]} in the figure?",
-                           $"Are lines {names[0]} and {names[1]} parallel, perpendicular, or intersecting without a right angle?",
-                           $"Identify the relationship between the two drawn lines {names[0]} and {names[1]}." ];
+                    string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.064", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.065", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.066", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")) };
                     problem = prompts[_random.Next(prompts.Length)];
-                    TextAnswer(L("Quan hệ hai đường", "Line relationship"), relation switch
+                    TextAnswer(QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.067"), relation switch
                     {
-                        "parallel" => L("Song Song", "Parallel"),
-                        "perpendicular" => L("Vuông Góc", "Perpendicular"),
-                        _ => L("Cắt Nhau Nhưng Không Vuông Góc", "Intersecting but not perpendicular")
+                        "parallel" => QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.068"),
+                        "perpendicular" => QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.069"),
+                        _ => QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.070")
                     });
                 }
                 break;
@@ -269,7 +247,6 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         List<string> work, string[]? textChoices)
     {
         bool vi = contract.Language == AppLanguage.Vietnamese;
-        string L(string a, string b) => vi ? a : b;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
         var answers = contract.Answers.ToList();
         if (contract.Reasoning?.Explanation is { } explanation) work.Add(explanation);
@@ -279,7 +256,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         answers = answers.Select(answer => answer.RequireMixedNumber ? answer with { Text = Mixed(answer.Value) }
             : answer.RequiredDenominator is int denominator ? answer with { Text = $"{answer.Value.Numerator * denominator / answer.Value.Denominator}/{denominator}" } : answer).ToList();
         contract = contract with { Answers = answers };
-        string answerLabel = L("Đáp số", "Answer");
+        string answerLabel = QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.071");
         // Keep evaluation expressions intact; use school division notation only in the displayed work.
         string DisplayStepExpression(string expression) => QuizMathExpressionFormatter.Format(expression,
             preserveFractions: contract.Kind == QuizProblemKind.FractionSkills || contract.Type == ElementaryQuizType.ExperimentalProbability);
@@ -311,7 +288,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         }
         string[] options = choices.Distinct().ToArray();
         // Text tasks may naturally have only three alternatives; add a localized 'unsure'.
-        if (options.Length < 4) options = [.. options, L("Không xác định", "Undetermined")];
+        if (options.Length < 4) options = [.. options, QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.072")];
         options = options.Distinct().Take(4).ToArray();
         _random.Shuffle(options);
         bool correct = _random.Next(2) == 0;
@@ -327,14 +304,12 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         if (answer.RequiredDenominator is int denominator) return (answer.Value.Numerator * denominator / answer.Value.Denominator + delta).ToString() + "/" + denominator;
         string? normalizedText = answer.Text?.ToLowerInvariant();
         if (normalizedText is "góc nhọn" or "góc vuông" or "góc tù" or "góc bẹt" or "acute" or "right" or "obtuse" or "straight")
-            return (vi ? new[] { "Góc Nhọn", "Góc Vuông", "Góc Tù", "Góc Bẹt" } : new[] { "Acute", "Right", "Obtuse", "Straight" })
+            return (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.073"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.074"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.075"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.076") })
                 .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ElementAt(delta - 1);
         if (normalizedText is "song song" or "vuông góc" or "cắt nhau nhưng không vuông góc" or "parallel" or "perpendicular" or "intersecting but not perpendicular")
-            return (vi ? new[] { "Song Song", "Vuông Góc", "Cắt Nhau Nhưng Không Vuông Góc", "Trùng Nhau" }
-                : new[] { "Parallel", "Perpendicular", "Intersecting but not perpendicular", "Coincident" })
+            return (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.077"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.078"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.079"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.080") })
                 .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ElementAt(delta - 1);
-        string[] likelihoodChoices = (vi ? new[] { "Chắc Chắn", "Có Thể", "Không Thể" }
-            : new[] { "certain", "possible", "impossible" })
+        string[] likelihoodChoices = (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.081"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.082"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.083") })
             .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ToArray();
         return likelihoodChoices[(delta - 1) % likelihoodChoices.Length];
     }

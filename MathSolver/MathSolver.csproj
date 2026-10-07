@@ -98,7 +98,7 @@
     <MauiImage Include="Resources\Splash\splashicon.png" />
     <MauiImage Include="Resources\Images\*" />
     <MauiFont Include="Resources\Fonts\*" />
-    <MauiAsset Include="Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\QuizContent\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 
   <!-- Android adaptive launcher icon: reuse the original full appicon.png as-is.
@@ -115,6 +115,10 @@
     <MauiCss Remove="Resources\Raw\**" />
     <MauiXaml Remove="Resources\Raw\**" />
     <None Remove="Resources\Raw\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Raw\QuizContent\*.json" LogicalName="QuizContent.%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

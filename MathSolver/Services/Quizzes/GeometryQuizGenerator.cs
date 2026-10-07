@@ -43,7 +43,7 @@ public sealed partial class GeometryQuizGenerator
             ? null
             : GetShapeId(requestedShape.Value);
 
-        GeometryStoryTemplate[] eligibleTemplates = Templates
+        GeometryStoryTemplate[] eligibleTemplates = Templates(language)
             .Where(template =>
                 (requestedShapeId is null || template.ShapeId == requestedShapeId) &&
                 (!requestedMeasurement.HasValue || template.Measurement == requestedMeasurement.Value) &&
@@ -76,12 +76,8 @@ public sealed partial class GeometryQuizGenerator
             template.Measurement,
             dimensions,
             template.Unit,
-            language == AppLanguage.Vietnamese
-                ? template.VietnameseObject
-                : template.EnglishObject,
-            language == AppLanguage.Vietnamese
-                ? template.VietnameseShape
-                : template.EnglishShape,
+            template.Object,
+            template.Shape,
             correctAnswer,
             formula,
             BuildSubstitutionExpression(
@@ -323,31 +319,13 @@ public sealed partial class GeometryQuizGenerator
                     nameof(contract.Measurement))
             };
 
-        string solutionLead = language == AppLanguage.Vietnamese
-            ? contract.Measurement switch
+        string solutionLead = contract.Measurement switch
             {
                 GeometryMeasurement.Perimeter =>
-                    $"Chu vi {contract.ShapeName} là",
-                GeometryMeasurement.Volume =>
-                    $"Thể tích {contract.ShapeName} là",
-                GeometryMeasurement.LateralArea =>
-                    $"Diện tích xung quanh {contract.ShapeName} là",
-                GeometryMeasurement.TotalArea =>
-                    $"Diện tích toàn phần {contract.ShapeName} là",
-                _ => $"Diện tích {contract.ShapeName} là"
-            }
-            : contract.Measurement switch
-            {
-                GeometryMeasurement.Perimeter =>
-                    $"The perimeter of the {contract.ShapeName} is",
-                GeometryMeasurement.Volume =>
-                    $"The volume of the {contract.ShapeName} is",
-                GeometryMeasurement.LateralArea =>
-                    $"The lateral surface area of the {contract.ShapeName} is",
-                GeometryMeasurement.TotalArea =>
-                    $"The total surface area of the {contract.ShapeName} is",
-                _ => $"The area of the {contract.ShapeName} is"
-            };
+QuizContentCatalog.Text(language, "GeometryQuizGenerator.BuildAlgorithmProblem.001", ("contract_ShapeName", $"{contract.ShapeName}")),                GeometryMeasurement.Volume =>
+QuizContentCatalog.Text(language, "GeometryQuizGenerator.BuildAlgorithmProblem.002", ("contract_ShapeName", $"{contract.ShapeName}")),                GeometryMeasurement.LateralArea =>
+QuizContentCatalog.Text(language, "GeometryQuizGenerator.BuildAlgorithmProblem.003", ("contract_ShapeName", $"{contract.ShapeName}")),                GeometryMeasurement.TotalArea =>
+QuizContentCatalog.Text(language, "GeometryQuizGenerator.BuildAlgorithmProblem.004", ("contract_ShapeName", $"{contract.ShapeName}")),                _ => QuizContentCatalog.Text(language, "GeometryQuizGenerator.BuildAlgorithmProblem.005", ("contract_ShapeName", $"{contract.ShapeName}"))            };
 
         return new MathWordProblem(
             problemText,
@@ -720,84 +698,7 @@ public sealed partial class GeometryQuizGenerator
         };
     }
 
-    private static readonly GeometryStoryTemplate[] Templates =
-    [
-        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
-            "sân trường cần làm hàng rào", "school yard needing a fence", "hình chữ nhật", "rectangle", 100),
-        new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
-            "nền phòng cần lát gạch", "room floor to be tiled", "hình chữ nhật", "rectangle", 30),
-        new("square", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
-            "khu trồng rau", "vegetable plot", "hình vuông", "square", 50),
-        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
-            "khung tranh cần viền ruy băng", "picture frame needing a ribbon border", "hình chữ nhật", "rectangle", 100),
-        new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Decimeter,
-            "bể chứa nước tưới cây", "irrigation water tank", "hình hộp chữ nhật", "rectangular prism", 30),
-        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Kilometer,
-            "khu bảo tồn", "nature reserve", "hình chữ nhật", "rectangle"),
-        new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
-            "mảnh vườn", "garden", "hình chữ nhật", "rectangle"),
-        new("rectangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Decimeter,
-            "mặt bàn", "tabletop", "hình chữ nhật", "rectangle"),
-        new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
-            "tấm bìa", "sheet of cardboard", "hình chữ nhật", "rectangle"),
-        new("rectangle", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
-            "tấm kim loại nhỏ", "small metal plate", "hình chữ nhật", "rectangle"),
-        new("square", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
-            "sân chơi", "playground", "hình vuông", "square"),
-        new("square", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
-            "viên gạch", "tile", "hình vuông", "square"),
-        new("square", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
-            "miếng nhãn", "label", "hình vuông", "square"),
-        new("triangle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
-            "mảnh đất", "plot of land", "hình tam giác", "triangle"),
-        new("triangle", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
-            "tấm bìa", "cardboard piece", "hình tam giác", "triangle"),
-        new("trapezoid", GeometryMeasurement.Perimeter, GeometryLengthUnit.Meter,
-            "khu vườn", "garden", "hình thang", "trapezoid"),
-        new("trapezoid", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
-            "thửa ruộng", "field", "hình thang", "trapezoid"),
-        new("rhombus", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
-            "miếng trang trí", "decoration", "hình thoi", "rhombus"),
-        new("rhombus", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
-            "tấm bìa", "cardboard piece", "hình thoi", "rhombus"),
-        new("parallelogram", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
-            "khung trang trí", "decorative frame", "hình bình hành", "parallelogram"),
-        new("parallelogram", GeometryMeasurement.Area, GeometryLengthUnit.Meter,
-            "mảnh sân", "yard section", "hình bình hành", "parallelogram"),
-        new("circle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Centimeter,
-            "mặt bàn", "tabletop", "hình tròn", "circle"),
-        new("circle", GeometryMeasurement.Area, GeometryLengthUnit.Centimeter,
-            "tấm bìa", "cardboard sheet", "hình tròn", "circle"),
-        new("circle", GeometryMeasurement.Perimeter, GeometryLengthUnit.Millimeter,
-            "miếng nhãn", "label", "hình tròn", "circle"),
-        new("circle", GeometryMeasurement.Area, GeometryLengthUnit.Millimeter,
-            "miếng trang trí", "decoration", "hình tròn", "circle"),
-        new("cube", GeometryMeasurement.LateralArea, GeometryLengthUnit.Decimeter,
-            "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
-        new("cube", GeometryMeasurement.TotalArea, GeometryLengthUnit.Decimeter,
-            "thùng hình lập phương", "cube-shaped box", "hình lập phương", "cube"),
-        new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Centimeter,
-            "hộp quà", "gift box", "hình lập phương", "cube"),
-        new("cube", GeometryMeasurement.Volume, GeometryLengthUnit.Millimeter,
-            "khối mô hình nhỏ", "small model block", "hình lập phương", "cube"),
-        new("rectangular_prism", GeometryMeasurement.LateralArea, GeometryLengthUnit.Meter,
-            "bể chứa", "storage tank", "hình hộp chữ nhật", "rectangular prism"),
-        new("rectangular_prism", GeometryMeasurement.TotalArea, GeometryLengthUnit.Meter,
-            "bể chứa", "storage tank", "hình hộp chữ nhật", "rectangular prism"),
-        new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Meter,
-            "hồ bơi", "swimming pool", "hình hộp chữ nhật", "rectangular prism"),
-        new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Decimeter,
-            "bể cá", "aquarium", "hình hộp chữ nhật", "rectangular prism"),
-        new("rectangular_prism", GeometryMeasurement.Volume, GeometryLengthUnit.Centimeter,
-            "hộp đựng đồ", "storage box", "hình hộp chữ nhật", "rectangular prism")
-    ];
+    private static IReadOnlyList<GeometryStoryTemplate> Templates(AppLanguage language) => QuizContentCatalog.LoadList<GeometryStoryTemplate>("GeometryQuizGenerator.Templates", QuizContentCatalog.Culture(language));
 
-    private sealed record GeometryStoryTemplate(
-        string ShapeId,
-        GeometryMeasurement Measurement,
-        GeometryLengthUnit Unit,
-        string VietnameseObject,
-        string EnglishObject,
-        string VietnameseShape,
-        string EnglishShape, int MaximumDimension = int.MaxValue);
+    private sealed record GeometryStoryTemplate(string ShapeId, GeometryMeasurement Measurement, GeometryLengthUnit Unit, string Object, string Shape, int MaximumDimension = int.MaxValue);
 }

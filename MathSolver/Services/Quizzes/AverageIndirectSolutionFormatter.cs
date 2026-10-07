@@ -12,14 +12,14 @@ public static class AverageIndirectSolutionFormatter
         int third = second - data.Decrease;
         bool vi = language == AppLanguage.Vietnamese;
         string unit = contract.AnswerUnit;
-        string lead = finalLead ?? (vi ? $"Trung bình mỗi bạn ({unit}) là:" : $"The average per person ({unit}) is:");
+        string lead = finalLead ?? (QuizContentCatalog.Text(language, "AverageIndirectSolutionFormatter.Format.001", ("unit", $"{unit}")));
         return string.Join(Environment.NewLine,
-            vi ? $"Số {unit} của bạn thứ hai là:" : $"The amount for the second person ({unit}) is:",
+            QuizContentCatalog.Text(language, "AverageIndirectSolutionFormatter.Format.002", ("unit", $"{unit}")),
             $"{data.FirstQuantity} + {data.Increase} = {second} {unit}",
-            vi ? $"Số {unit} của bạn thứ ba là:" : $"The amount for the third person ({unit}) is:",
+            QuizContentCatalog.Text(language, "AverageIndirectSolutionFormatter.Format.003", ("unit", $"{unit}")),
             $"{second} − {data.Decrease} = {third} {unit}",
             ElementaryWordProblemSolutionFormatter.NormalizeSolutionLeadPunctuation(lead),
             $"({data.FirstQuantity} + {second} + {third}) ÷ {data.PersonCount} = {contract.CorrectAnswer} {unit}",
-            $"{(vi ? "Đáp số" : "Answer")}: {contract.CorrectAnswer} {unit}");
+            $"{(QuizContentCatalog.Text(language, "AverageIndirectSolutionFormatter.Format.004"))}: {contract.CorrectAnswer} {unit}");
     }
 }

@@ -18,10 +18,10 @@ public sealed partial class ElementaryQuizGenerator
             string a = t.Given("number", value);
             decimal rounded = decimal.Round(value, digits, MidpointRounding.AwayFromZero);
             t.Constants.Add(N(rounded));
-            t.Answer(t.L("Số sau khi làm tròn", "Rounded number"), N(rounded));
-            string destination = digits == 0 ? t.L("số nguyên gần nhất", "the nearest integer")
-                : t.L(digits == 1 ? "hàng phần mười" : "hàng phần trăm", digits == 1 ? "one decimal place" : "two decimal places");
-            return t.Build("decimal-round-" + level, t.L($"Làm tròn {a} đến {destination}.", $"Round {a} to {destination} (halves round up)."))
+            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.001"), N(rounded));
+            string destination = digits == 0 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.002")
+                : (digits == 1 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.008") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.009"));
+            return t.Build("decimal-round-" + level, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.003", ("a", $"{a}"), ("destination", $"{destination}")))
                 with { RoundingDecimalPlaces = digits };
         }
         if (type == ElementaryQuizType.DecimalCompare)
@@ -34,9 +34,9 @@ public sealed partial class ElementaryQuizGenerator
             decimal b = relation == 0 ? a : relation == 1 ? a - gap : a + gap;
             if (b <= 0) { a += 4; b += 4; }
             string first = t.Given("first", a), second = t.Given("second", b);
-            t.TextAnswer(t.L("Dấu so sánh", "Comparison"), a < b ? "<" : a > b ? ">" : "=");
+            t.TextAnswer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.004"), a < b ? "<" : a > b ? ">" : "=");
             return t.Build("decimal-compare-" + level,
-                t.L($"Điền dấu so sánh giữa {first} và {second}.", $"Compare {first} and {second}."));
+                QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", ("first", $"{first}"), ("second", $"{second}")));
         }
         if (_random.Next(2) == 0) return CreateDecimalStory(type, language, tier);
 
@@ -69,8 +69,8 @@ public sealed partial class ElementaryQuizGenerator
         }
         string x = t.Given("quantity", left), y = t.Given("second-quantity", right);
         string op = type switch { ElementaryQuizType.DecimalAdd => "+", ElementaryQuizType.DecimalSubtract => "-", ElementaryQuizType.DecimalMultiply => "*", _ => "/" };
-        t.Answer(t.L("Kết quả", "Result"), $"{x}{op}{y}");
+        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.006"), $"{x}{op}{y}");
         string expression = QuizMathExpressionFormatter.Format($"{x}{op}{y}");
-        return t.Build("decimal-calculation-" + level, t.L($"Tính {expression}.", $"Calculate {expression}."));
+        return t.Build("decimal-calculation-" + level, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.007", ("expression", $"{expression}")));
     }
 }
