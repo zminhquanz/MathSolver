@@ -217,8 +217,8 @@ public sealed partial class QuestionBankStore
                         if (contract is not null && row.Version == contract.Version && row.Operation == (int)contract.Operation
                             && row.Stars == (int)contract.Tier && row.Language == (int)contract.Language
                             && contract.Grade == row.Grade && (int)contract.KnowledgeGroup == row.KnowledgeGroup
-                            && (int)contract.Family == row.ProblemType && (int)contract.UnknownRole == row.ProblemVariant
-                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version) || (int)contract.Structure == row.Structure
+                            && (int)contract.Family == row.ProblemType && contract.BankVariant == row.ProblemVariant
+                            && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version or ReasoningStoryCatalogue.Version) || (int)contract.Structure == row.Structure
                                 && contract.TopicId == row.TopicId && contract.SceneId == row.SceneId))
                         {
                             var checkedDraft = BasicQuestionValidator.Validate(row.DraftJson, contract);

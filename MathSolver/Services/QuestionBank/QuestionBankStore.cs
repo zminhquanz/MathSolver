@@ -24,6 +24,9 @@ public interface IQuestionBankStore
         => Task.FromResult<IReadOnlySet<string>>(new HashSet<string>(StringComparer.Ordinal));
     Task<ValidatedBankQuestion?> TakeAsync(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, CancellationToken cancellationToken = default);
+    Task<ValidatedBankQuestion?> TakeReasoningAsync(BankQuestionFamily family, int variant, CurriculumTier tier,
+        AppLanguage language, CancellationToken cancellationToken = default)
+        => Task.FromResult<ValidatedBankQuestion?>(null);
     Task<ValidatedBankQuestion?> TakeFractionAsync(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
         => Task.FromResult<ValidatedBankQuestion?>(null);
@@ -91,6 +94,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             _selectionHistory.Clear();
             _findXHistory.Clear();
             _fractionHistory.Clear();
+            _storyHistory.Clear();
             return deleted;
         }, cancellationToken);
 
@@ -114,6 +118,8 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Structure}/{c.TopicId}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
         if (c.Version is AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version)
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Grade}/{c.KnowledgeGroup}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
+        if (c.Version == ReasoningStoryCatalogue.Version)
+            identity = $"{c.Version}/{c.Family}/{c.BankVariant}/{c.Tier}/{c.Language}/{c.Story!.Schema}\n{draftJson}";
         if (c.Family == BankQuestionFamily.FindX) identity += "\n" + c.UnknownRole;
         string hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(identity)));
         string proseHash = QuestionProseIdentity.Hash(c, question.Draft);
@@ -126,7 +132,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 "INSERT OR IGNORE INTO BasicQuestionBank (Hash,Operation,Stars,Language,Version,ContractJson,DraftJson,RawJson,ModelName,CreatedUtc,LastUsedUtc,UseCount,Structure,TopicId,SceneId,Grade,KnowledgeGroup,ProblemType,ProblemVariant) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 hash, (int)question.Contract.Operation, (int)question.Contract.Tier, (int)question.Contract.Language,
                 question.Contract.Version, contractJson, draftJson, question.RawJson, question.ModelName,
-                question.CreatedUtc, DateTime.MinValue, 0, (int)c.Structure, c.TopicId, c.SceneId, c.Grade, (int)c.KnowledgeGroup, (int)c.Family, (int)c.UnknownRole) == 1;
+                question.CreatedUtc, DateTime.MinValue, 0, (int)c.Structure, c.TopicId, c.SceneId, c.Grade, (int)c.KnowledgeGroup, (int)c.Family, c.BankVariant) == 1;
             if (inserted)
                 db.Execute("INSERT OR REPLACE INTO QuestionProseIndex(Hash,ProseHash) VALUES (?,?)", hash, proseHash);
         });
@@ -231,7 +237,10 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 [.. args, bucket.Structure, bucket.TopicId, bucket.SceneId])) yield return row;
     }
 
-    public static string SerializeDraft(BasicQuestionDraft draft) => draft.UnitId is null && draft.SolutionLead is null
+    public static string SerializeDraft(BasicQuestionDraft draft) => draft.Facts is not null
+        ? JsonSerializer.Serialize(new { facts = draft.Facts.Select(f => new { role = f.Role, text = f.Text }), question = draft.Question,
+            solution_leads = (draft.SolutionLeads ?? []).Select(l => new { step = l.Role, text = l.Text }) }, JsonOptions)
+        : draft.UnitId is null && draft.SolutionLead is null
         ? JsonSerializer.Serialize(new { given_a = draft.GivenA, given_b = draft.GivenB, question = draft.Question }, JsonOptions)
         : JsonSerializer.Serialize(new { given_a = draft.GivenA, given_b = draft.GivenB, question = draft.Question,
             solution_lead = draft.SolutionLead, unit_id = draft.UnitId }, JsonOptions);
@@ -260,6 +269,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                     db.Execute("CREATE INDEX IF NOT EXISTS AdditionSelection ON BasicQuestionBank(Operation,Stars,Language,Structure,TopicId,SceneId)");
                     db.Execute("CREATE INDEX IF NOT EXISTS KnowledgeSelection ON BasicQuestionBank(Operation,Stars,Language,KnowledgeGroup,SceneId)");
                     db.Execute("CREATE INDEX IF NOT EXISTS FindXSelection ON BasicQuestionBank(ProblemType,Operation,Stars,Language,KnowledgeGroup,ProblemVariant,SceneId)");
+                    db.Execute("CREATE INDEX IF NOT EXISTS StorySelection ON BasicQuestionBank(ProblemType,ProblemVariant,Stars,Language,SceneId)");
                     InitializeProseIndex(db);
                     _initialized = true;
                 }

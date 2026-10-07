@@ -1,5 +1,26 @@
 # AI question bank checks
 
+`--structure-policy` reproduces the screenshot's invalid bread/fraction prose,
+checks field-level diagnostics, safe synonyms and the removal of free prose
+from the semantic grammar. It also runs in the default suite.
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests -- --structure-model "<GGUF path>"
+dotnet run --project UnitTest/AiQuestionBankTests -- --structure-worker "<GGUF path>"
+```
+
+The first command runs 18 native cases across fractions, applied arithmetic,
+Find X, two-number relations, average and percentage, in Vietnamese and English.
+Each case allows up to three attempts and retains prompts, raw JSON, error
+fields and token metrics under `artifacts/verification/structure-model-*`.
+`--structure-repro <GGUF path>` runs only the screenshot's bread/addition case;
+running it against an old build can reproduce the original grammar mismatch.
+The worker command tests continuous automatic generation, SQLite saves/reads,
+fresh C# facts and practice grading, streamed snapshots and release of weights
+after each batch. It uses an isolated database under
+`artifacts/verification/structure-worker-*`, never the installed app database.
+See [verification notes](../../MathSolver/AI_STRUCTURE_VERIFICATION.md).
+
 Quiz wording and context lists load from `MathSolver/Resources/Raw/QuizContent`.
 See the [JSON authoring guide](../../MathSolver/QUIZ_CONTENT_AUTHORING.md).
 `--quiz-content` checks bundled packs, typed list caching, fallback, value slots and
@@ -30,8 +51,29 @@ units/roles, C# grading and insertion, verifies two Find X stories against the
 same stored wording, then runs the real automatic three-item
 worker against existing money questions. Logs and databases remain under
 `artifacts/verification/prose-model-*`. It never writes the installed app bank.
-`--prose-deduplication` also checks reviewed wording pool exhaustion, unused prompt
+`--prose-deduplication` also checks grammar availability after reviewed examples are exhausted, unused prompt
 examples and index snapshot synchronization without loading a model.
+
+`--reasoning-stories` checks the new two-number, average and percentage templates:
+480 bilingual subtype/star/seed combinations, fresh facts with an unchanged role
+schema, all three answer modes, complete C# work accepted by essay grading,
+swapped roles, answer leakage, wrong unit bindings, extra conditions, foreign
+text, novel equivalent wording and partial JSON streaming. It also verifies
+SQLite deduplication/selection, Excel interchange, background insertion and
+practice selection using temporary databases. These checks run in the default
+suite too.
+
+```powershell
+dotnet run --project UnitTest/AiQuestionBankTests -- --reasoning-model "<local GGUF path>"
+dotnet run --project UnitTest/AiQuestionBankTests -- --reasoning-budget "<Gemma 4 GGUF path>"
+```
+
+The model command exercises three Vietnamese cases: sum/difference 3 stars,
+indirect average 4 stars and whole-from-percentage 5 stars, with at most three
+attempts each. It retains prompt/output/error logs under `artifacts/verification`
+and ejects the model in `finally`. The budget command tokenizes 480 retry prompts
+with Gemma framing and verifies the existing 2048-token context/output budget;
+it runs no inference. Neither command changes the installed app database.
 
 This is the new optional question-bank implementation. It does not restore the
 previous AI practice source, validators, benchmark or model test fixtures.

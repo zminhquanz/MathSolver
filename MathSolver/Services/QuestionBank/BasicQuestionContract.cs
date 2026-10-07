@@ -15,18 +15,20 @@ public sealed record BasicQuestionContract(
     int Grade = 0, QuestionKnowledgeGroup KnowledgeGroup = QuestionKnowledgeGroup.Objects,
     FindXUnknownRole UnknownRole = FindXUnknownRole.None, int LeftDenominator = 1, int RightDenominator = 1)
 {
+    public ReasoningStorySeed? Story { get; init; }
     public const int CurrentVersion = 2;
-    [JsonIgnore] public BankQuestionFamily Family => Version == FractionQuestionCatalogue.Version ? BankQuestionFamily.Fraction : Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
-    [JsonIgnore] public string AnswerText => Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this).ToString() : Answer.ToString(CultureInfo.InvariantCulture);
-    [JsonIgnore] public BigInteger Answer => Version == FractionQuestionCatalogue.Version
+    [JsonIgnore] public int BankVariant => Story?.Variant ?? (int)UnknownRole;
+    [JsonIgnore] public BankQuestionFamily Family => Version == ReasoningStoryCatalogue.Version && Story is not null ? Story.Family : Version == FractionQuestionCatalogue.Version ? BankQuestionFamily.Fraction : Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
+    [JsonIgnore] public string AnswerText => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Lesson(this).Answer : Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this).ToString() : Answer.ToString(CultureInfo.InvariantCulture);
+    [JsonIgnore] public BigInteger Answer => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ElementaryProblem?.Answers[0].Value.Numerator ?? ReasoningStoryCatalogue.Lesson(this).QuestionModel.CorrectAnswer : Version == FractionQuestionCatalogue.Version
         ? FractionQuestionCatalogue.Answer(this) is { } fraction && fraction.Denominator.IsOne ? fraction.Numerator : throw new InvalidOperationException("UseExactFractionAnswer")
         : Version == AppliedQuestionCatalogue.Version
         && AppliedQuestionCatalogue.Reasoning(this) is { } reasoning ? reasoning.Answer
         : new BasicArithmeticEngine().CalculateInteger(Expression).Result;
     [JsonIgnore] public IntegerArithmeticExpression Expression => Version == FindXQuestionCatalogue.Version
         ? FindXQuestionCatalogue.Equation(this).SolutionExpression : new(Left, Operation, Right);
-    [JsonIgnore] public bool IsTemplate => Version == FractionQuestionCatalogue.Version || Version == FindXQuestionCatalogue.Version || Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version;
-    [JsonIgnore] public string AnswerUnit => Version == FractionQuestionCatalogue.Version ? Unit : Version == FindXQuestionCatalogue.Version
+    [JsonIgnore] public bool IsTemplate => Version == ReasoningStoryCatalogue.Version || Version == FractionQuestionCatalogue.Version || Version == FindXQuestionCatalogue.Version || Version is CurrentVersion or AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version;
+    [JsonIgnore] public string AnswerUnit => Version == ReasoningStoryCatalogue.Version ? Unit : Version == FractionQuestionCatalogue.Version ? Unit : Version == FindXQuestionCatalogue.Version
         ? AppliedQuestionCatalogue.ResultUnit(FindXQuestionCatalogue.AsApplied(this))
         : Version == AppliedQuestionCatalogue.Version
         ? AppliedQuestionCatalogue.ResultUnit(this)
@@ -34,7 +36,7 @@ public sealed record BasicQuestionContract(
         ? Language == AppLanguage.Vietnamese ? "lần" : "times" : Structure == BasicQuestionStructure.CountGroups
         ? QuestionUnits.Find(this)?.GroupFor(this, Answer.IsOne) ?? GroupUnit
         : QuestionUnits.Find(this)?.Item(Language, Answer.IsOne) ?? Unit;
-    [JsonIgnore] public bool IsValid => Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.IsValid(this)
+    [JsonIgnore] public bool IsValid => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.IsValid(this) : Story is null && (Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.IsValid(this)
         : LeftDenominator == 1 && RightDenominator == 1 && (Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.IsValid(this)
         : UnknownRole == FindXUnknownRole.None && (Version == AppliedQuestionCatalogue.Version
         ? Enum.IsDefined(Operation) && Enum.IsDefined(Tier) && Language is AppLanguage.Vietnamese or AppLanguage.English
@@ -58,7 +60,7 @@ public sealed record BasicQuestionContract(
             && Subject != OtherSubject && Left <= 99999 && Right <= 99999
             : Language == AppLanguage.Vietnamese ? Unit == "quyển sách" && GroupUnit == "thùng" : Unit == "books" && GroupUnit == "box")
         && (Operation != ArithmeticOperation.Subtract || Left >= Right)
-        && (Operation != ArithmeticOperation.Divide || Left % Right == 0)));
+        && (Operation != ArithmeticOperation.Divide || Left % Right == 0))));
 
     private static bool ValidActor(string actor) => !string.IsNullOrWhiteSpace(actor) && actor.Length <= 100
         && !actor.Any(c => char.IsControl(c) || char.IsDigit(c) || c is '{' or '}');
@@ -72,7 +74,7 @@ public sealed record BasicQuestionContract(
         ? $"Số {Unit} {(Operation == ArithmeticOperation.Divide ? "trong mỗi " + GroupUnit : "cần tìm")} là:"
         : $"The number of {Unit} {(Operation == ArithmeticOperation.Divide ? "in each " + GroupUnit : "requested")} is:";
 
-    [JsonIgnore] public string Solution => Version == FractionQuestionCatalogue.Version
+    [JsonIgnore] public string Solution => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Solution(this) : Version == FractionQuestionCatalogue.Version
         ? $"{SolutionLead}\n{FractionQuestionCatalogue.Expression(this)} = {AnswerText} {AnswerUnit}" : Version == FindXQuestionCatalogue.Version
         ? $"{SolutionLead}\n{Expression.LeftOperand} {BasicArithmeticEngine.GetSymbol(Expression.Operation)} {Expression.RightOperand} = {Answer} {AnswerUnit}"
         : (Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.ConversionStep(this) is { } step ? step + "\n" : "")
@@ -124,6 +126,7 @@ public sealed record BasicQuestionContract(
     public BasicQuestionContract FreshFacts(Random? random = null)
     {
         if (!IsTemplate) return this;
+        if (Version == ReasoningStoryCatalogue.Version) return ReasoningStoryCatalogue.Fresh(this, random);
         if (Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
         if (Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, UnknownRole, SceneId);
         if (Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
@@ -136,6 +139,9 @@ public sealed record BasicQuestionContract(
     public ArithmeticQuizQuestion ToPracticeQuestion(MathWordProblem text, ArithmeticQuizMode mode, Random? random = null)
     {
         if (!IsValid) throw new InvalidOperationException("Invalid stored arithmetic contract.");
+        // A structured story can have multiple answers/steps. It must not fall
+        // through the legacy two-operand adapter and become an unrelated 1 + 1.
+        if (Version == ReasoningStoryCatalogue.Version) throw new InvalidOperationException("UseStructuredReasoningDraft");
         random ??= Random.Shared;
         if (Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.ToPractice(this, text, mode, random);
         BigInteger answer = Answer;
@@ -154,18 +160,19 @@ public sealed record BasicQuestionContract(
 
 public sealed record AiGenerationOptions(ArithmeticOperation Operation, CurriculumTier Tier,
     AppLanguage Language, int Count, bool AutoInsert, QuestionLearningProfile? Profile = null,
-    BankQuestionFamily Family = BankQuestionFamily.Arithmetic, FindXUnknownRole UnknownRole = FindXUnknownRole.None)
+    BankQuestionFamily Family = BankQuestionFamily.Arithmetic, FindXUnknownRole UnknownRole = FindXUnknownRole.None, int StoryVariant = 0)
 {
     public void Validate()
     {
-        if (!Enum.IsDefined(Family) || !Enum.IsDefined(UnknownRole)
+        if (ReasoningStoryCatalogue.Supports(Family) && !ReasoningStoryCatalogue.Variants(Family, Tier).Contains(StoryVariant)
+            || !Enum.IsDefined(Family) || !Enum.IsDefined(UnknownRole)
             || Family != BankQuestionFamily.FindX && UnknownRole != FindXUnknownRole.None
             || Family == BankQuestionFamily.FindX && UnknownRole == FindXUnknownRole.None
             || Family == BankQuestionFamily.FindX && !FindXQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier, UnknownRole).Any()
             || Family == BankQuestionFamily.Fraction && !FractionQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier).Any()
             || !Enum.IsDefined(Operation) || !Enum.IsDefined(Tier)
             || Language is not (AppLanguage.Vietnamese or AppLanguage.English) || Count is < 1 or > 100
-            || Profile is not null && !Profile.Allows(Operation))
+            || !ReasoningStoryCatalogue.Supports(Family) && Profile is not null && !Profile.Allows(Operation))
             throw new ArgumentOutOfRangeException(nameof(Count));
     }
 }

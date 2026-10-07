@@ -15,6 +15,69 @@ The practice engine owns arithmetic, random operands, answer choices and grading
 
 Each family remembers its own style while switching families during the page session. The shared picker, knowledge-group selector and collapsed settings summary update in Vietnamese and English on Windows and Android. Arithmetic/fraction comparison uses its existing generator and hides these selectors. Word mode reuses the existing validated banks, fresh C# facts, star policies and prose deduplication; no database migration or additional model loading is needed.
 
+## Two-number, average and percentage language templates (version 8)
+
+The AI supplementation page also offers sum/difference, sum/ratio and
+difference/ratio; the six existing average subtypes; and percentage ratio,
+percentage value and whole-from-percentage questions. These use the existing
+1–5-star C# curriculum generators, in Vietnamese and English. They do not
+change numeric arithmetic, Find X or fraction practice.
+
+`ReasoningStoryCatalogue` projects one generated C# situation into a reusable
+template. `QuizNarrativeCapture` records numeric arguments and nested translated
+fragments, preserving each quantity's role even when several values coincide.
+Number slots (`{f0}`, …), owner/unit slots (`{v0}`, …), the question and ordered
+solution steps belong to C#. The LLM receives only that selected situation, a
+role map and one JSON example:
+
+```json
+{
+  "facts": [{ "role": "fact_0", "text": "…{f0}…{v0}…" }],
+  "question": "…{v0}…?",
+  "solution_leads": [{ "step": "step_0", "text": "…{v0}…" }]
+}
+```
+
+Facts and solution leads are lists, not a forced two-given structure. Average
+questions retain intermediate totals and all their calculation steps. The model
+does not supply equations or answers. Preview streams partial fact prose;
+completed practice uses the existing diagrams, answer choices and essay grader.
+
+`ReasoningStoryValidator` checks exact role/step lists, variable order, owners,
+dimensions, mathematical relation and target against the selected C# situation.
+`SemanticProseRules` permits neutral linking words and defined equivalent
+synonyms around ordered semantic anchors. Native grammar binds JSON shape,
+ordered variables and the remaining role/unit/relation phrases. It composes
+phrase substitutions using the same equivalence groups as the validator,
+instead of allowing arbitrary text between variables. This allows controlled
+equivalent wording, but is deliberately conservative: it is not a
+general natural-language meaning classifier, and unrestricted rephrasing can
+be rejected. Foreign text, concrete numbers, extra conditions and changed
+targets remain invalid. Applied, Find X and fraction templates use the same
+anchor policy in place of exact sentence equality. Developer logs name the
+failing fields or fact/step roles. See [structure verification](../../AI_STRUCTURE_VERIFICATION.md)
+for a reproduced three-attempt failure and the real-model regression matrix.
+
+SQLite records the language template and a `ReasoningStorySeed` with a schema
+fingerprint. Family IDs 3/4/5 identify two-number/average/percentage questions;
+`ProblemVariant` identifies their existing subtype. On reuse, C# chooses a new
+seed with the same context, role and step schema, then recalculates every answer
+and step. A retired or incompatible schema falls back to the original C#
+question. Practice keeps its independent 50/50 C#/SQLite choice; inference is
+never run to serve a practice question. Recent context history reduces repeated
+generation and selection. Excel adds optional `StorySeedJson`, `FactsJson` and
+`SolutionLeadsJson` columns; previous workbook versions still import.
+
+The default AI test suite covers 480 bilingual subtype/star/seed combinations,
+fresh facts, all answer modes, essay grading, mutation rejection, streaming,
+SQLite, Excel and background generation. Real Gemma 4 E4B Q4_0 verification
+accepted a three-star sum/difference, four-star indirect average and five-star
+whole-from-percentage template (average needed a second attempt). Logs are in
+`artifacts/verification/reasoning-model-20261007-160045`. Tokenizer checks of all
+480 prompts including correction instructions found a maximum of 631 input
+tokens (976 with two rejected wording examples), within the existing 2048-token
+context and 700-token output reservation.
+
 ## Shared one-step practice catalogue
 
 ### Knowledge groups and star difficulty (version 5)
@@ -47,7 +110,7 @@ In **Basic arithmetic → Word problems** practice and AI supplementation, selec
 
 For ordinary addition/subtraction, one star has no carrying/borrowing; later stars prefer one through four carry/borrow positions when the context allows them. Higher stars unlock inverse stock/comparison/age questions and conversions. Small pencil/card collections remain eligible at high stars; the ceilings are upper bounds, not mandatory stock sizes. Ordinary division constructs exact multiples; explicit packing remainder/rounding scenes instead require a nonzero remainder and use their dedicated answer rule. Money has its own scale: Vietnamese total ceilings are 20,000 / 50,000 / 100,000 / 300,000 / 500,000 đồng before scene capacity, and English totals have ceilings of 10 / 30 / 100 / 200 / 300 dollars. Notebook prices remain 3,000–30,000 đồng or 1–15 dollars, with separate item-count limits. Bags, truck loads and journey lengths have separate capacities. Uniform motion binds realistic distance, speed and time rather than treating speeds as object counts. At 4–5 stars it can give travel time in minutes, converted to working hours; five-star measurement can present decimal kg/km/l with exact integer g/m/ml answers.
 
-The version-5 prompt contains only the selected scene, its dimensions and two short reviewed surface examples; it includes no numerical facts, personal names or full catalogue. Grammar and validation bind complete reviewed clauses for these dimensional scenes. This intentionally bounds AI wording to supported alternatives; it is not free-form generation or general semantic verification. Extra quantities, changed units/roles/targets and foreign prose fail validation. Conversion steps are generated by C# and shown in the worked solution. Written submissions for these problems preserve all calculation lines, check exact kg/g, km/m or hour/minute conversions and intermediate arithmetic, then check the final value/unit. They accept a correct alternative arithmetic method and reject an incorrect conversion even when the final answer happens to match.
+The version-5 prompt contains only the selected scene, its dimensions and short reviewed surface examples; it includes no numerical facts, personal names or full catalogue. Grammar binds ordered variables; validation checks ordered semantic anchors with defined synonyms and neutral links, as described above. Extra quantities, changed units/roles/targets and foreign prose fail validation. Conversion steps are generated by C# and shown in the worked solution. Written submissions for these problems preserve all calculation lines, check exact kg/g, km/m or hour/minute conversions and intermediate arithmetic, then check the final value/unit. They accept a correct alternative arithmetic method and reject an incorrect conversion even when the final answer happens to match.
 
 SQLite selection matches group/operation/stars/language before revalidation. Persisted enum IDs remain stable: Objects=0, Money=1, legacy Mass=2/Length=3/Transport=4, Motion=5, Time=6, Measurement=7, Geometry=8, Packaging=9, Production=10, Data=11. The new Measurement picker also reads historical mass/length/transport rows. The `Grade` column is retained only for historical database/Excel compatibility; new facts use zero and it does not partition selection or constrain fresh operands. Saved version-5 templates from different grades share the same group pool. Version 1–4 counted templates remain available under quantities and comparison, without needing a separate general selector. Old Excel files still import. Word mode retains the independent C#/bank 50/50 choice. Only global mixed-topic practice retains the C# numeric/story 50/50 choice. Model inference remains outside the practice request.
 
@@ -88,21 +151,12 @@ share a maximum of three attempts per item. An exhausted duplicate stops the bat
 with `DuplicateProseRetriesExhausted`; partial prose is never saved. Automatic and
 manual saves and Excel imports also check wording at the storage boundary.
 
-For applied knowledge-group questions (v5) and Find X stories (v6), the GGUF
-grammar excludes complete `(given_a, given_b, question)` combinations already
-in SQLite or accepted in the current batch, before sampling. The prompt supplies
-a concrete unused example, preferring less-used factual clauses; C# facts and
-units stay fixed. Whole-clause alternatives preserve roles and dimensions, and
-the validator uses the same reviewed pool. Savings has additional factual
-paraphrases in both languages, beyond the former `tất cả`/`tổng cộng` question
-change. Solution leads do not create novelty.
-
-The reviewed pool is finite: if it is exhausted, generation reports
-`ProseAlternativesExhausted` without spending three retries on impossible new
-wording. Freer v2/v3/v4 grammars retain prompt-based retries and storage checks;
-they do not have this finite-combination sampling exclusion. A concurrent SQLite
-insert is still caught by the precheck or insertion boundary and added to the
-retry exclusion set. Historical rows are retained.
+For applied knowledge-group, Find X and fraction templates, the prompt prefers
+a concrete unused example when available. Exhausting that finite example list
+no longer exhausts grammar: new equivalent prose can be generated around the
+same semantic anchors. Duplicate detection happens after validation and at
+insertion, including concurrent inserts, with the existing three-attempt bound.
+Solution leads do not create novelty. Historical rows are retained.
 
 The derived index carries a validation revision so a policy upgrade revisits
 previously cached invalid rows without changing public question records.
@@ -306,7 +360,7 @@ The validator checks JSON fields, bounded text, placeholder counts and roles, ap
 
 Native GBNF constrains output to the five fields, known placeholders and catalogue IDs. It does not constrain prose to the example's exact sentences. Streaming previews render provisional slots from the C# preview contract; a unit choice arriving later can update the display. Partial or rejected output is never inserted. Retry limits, background generation, cancellation and developer diagnostics remain unchanged.
 
-SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Excel exports now have 30 columns: the original 17, version 2's `Structure`, `OtherSubject`, `SolutionLead`, `UnitId`, version 3's `TopicId`, `SceneId`, `PartA`, `PartB`, version 5's `Grade`, `KnowledgeGroup`, version 6's `UnknownRole`, and version 7's `LeftDenominator` and `RightDenominator`. Old workbooks still import. Numeric answers in imported workbooks never override C# calculations.
+SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Excel exports have 33 columns: the original 17, version 2's `Structure`, `OtherSubject`, `SolutionLead`, `UnitId`, version 3's `TopicId`, `SceneId`, `PartA`, `PartB`, version 5's `Grade`, `KnowledgeGroup`, version 6's `UnknownRole`, version 7's `LeftDenominator` and `RightDenominator`, and version 8's three structured-story JSON columns described above. Old workbooks still import. Numeric answers in imported workbooks never override C# calculations.
 
 ## Fraction word problems (version 7)
 
@@ -333,10 +387,11 @@ In AI supplementation, choose **Fraction word problems**, a group, operation,
 stars and language. AI returns the existing five-field JSON schema with `{a}`,
 `{b}`, `{name}`, `{unit_a}`, `{unit_b}` and `{unit}`. It never produces numeric
 facts or mathematical answers. The scene fixes the whole, quantity roles and units;
-validation and native grammar use reviewed complete-clause alternatives. Unused
-alternatives are selected using the existing prose identity and exclusion set;
-new numbers/names cannot bypass duplicate detection. The reviewed pool is finite:
-an exhausted scene is reported rather than inserting duplicate or unsafe prose.
+validation and native grammar share reviewed semantic anchors and composable
+phrase substitutions. Unused base examples are selected using the existing
+prose identity and exclusion set; new numbers/names cannot bypass duplicate
+detection. Duplicate output retries remain bounded; an exhausted scene is
+reported rather than inserting duplicate or unsafe prose.
 
 The existing SQLite table stores version 7 with `ProblemType = 2`; denominators
 live in `ContractJson`. C# practice mixes reviewed built-in stories with validated
@@ -371,7 +426,7 @@ streaming previews and model cleanup use the existing worker.
 
 The compact prompt contains only the selected scene, fact/target roles and units,
 allowed placeholders, and one JSON example. It contains no preview numbers or actor
-names. Version 6 shares version 5's grammar and reviewed whole-clause variants:
+names. Version 6 shares version 5's grammar and reviewed phrase compositions:
 validation accepts supported wording and binds the quantity/actor/unit roles and target.
 It rejects swapped group/per-group values, exposed answers, extra facts, incompatible
 units and foreign/corrupt text. This is bounded template validation, not unrestricted

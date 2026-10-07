@@ -38,6 +38,8 @@ public static class StreamingQuestionPreview
 
     public static string Render(string? json, BasicQuestionContract c)
     {
+        if (c.Version == ReasoningStoryCatalogue.Version)
+            return ReasoningStoryCatalogue.Render(ReadNarrative(json), c);
         if (!c.IsTemplate) return Read(json);
         var unit = QuestionUnits.Find(ReadField(json, "unit_id"));
         if (unit is not null && c.Version is not (AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version)) c = BasicQuestionTemplates.ApplyUnit(c, unit);
@@ -49,6 +51,49 @@ public static class StreamingQuestionPreview
             return unfinished >= 0 && text.IndexOf('}', unfinished) < 0 ? text[..unfinished].TrimEnd() : text;
         }
         return BasicQuestionTemplates.RenderProblem(CompleteSlots("given_a"), CompleteSlots("given_b"), CompleteSlots("question"), c);
+    }
+
+    private static string ReadNarrative(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json.Length > 12000) return "";
+        int index = 0, depth = 0, factsDepth = -1;
+        var prose = new List<string>();
+        while (index < json.Length)
+        {
+            SkipWhitespace(json, ref index);
+            if (index >= json.Length) break;
+            char token = json[index];
+            if (token != '"')
+            {
+                if (token is '{' or '[') depth++;
+                if (token is '}' or ']')
+                {
+                    if (token == ']' && depth == factsDepth) factsDepth = -1;
+                    depth--;
+                }
+                index++;
+                continue;
+            }
+            string key = ReadString(json, ref index, out bool keyComplete);
+            if (!keyComplete) break;
+            SkipWhitespace(json, ref index);
+            if (index >= json.Length || json[index] != ':') continue;
+            index++;
+            SkipWhitespace(json, ref index);
+            if (key == "solution_leads" && depth == 1) break;
+            if (index >= json.Length) break;
+            if (key == "facts" && depth == 1 && json[index] == '[') factsDepth = depth + 1;
+            if (json[index] != '"') continue;
+            string value = ReadString(json, ref index, out bool valueComplete);
+            if (key == "text" && factsDepth > 0 || key == "question" && depth == 1)
+            {
+                int unfinished = value.LastIndexOf('{');
+                if (unfinished >= 0 && value.IndexOf('}', unfinished) < 0) value = value[..unfinished];
+                if (!string.IsNullOrWhiteSpace(value)) prose.Add(value.Trim());
+            }
+            if (!valueComplete) break;
+        }
+        return string.Join(" ", prose);
     }
 
     private static void SkipWhitespace(string text, ref int index)

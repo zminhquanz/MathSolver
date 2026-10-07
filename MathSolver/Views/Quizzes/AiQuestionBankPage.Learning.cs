@@ -12,6 +12,8 @@ public partial class AiQuestionBankPage
     private QuestionKnowledgeGroup[] _learningGroups = [];
     private ArithmeticOperation[] _learningOperations = Enum.GetValues<ArithmeticOperation>();
     private BankQuestionFamily _family;
+    private int _storyVariant;
+    private int[] _storyVariants = [];
     private FindXUnknownRole _unknownRole;
     private FindXUnknownRole[] _unknownRoles = [];
     private QuestionLearningProfile CurrentLearningProfile => new(_learningGroup);
@@ -22,6 +24,22 @@ public partial class AiQuestionBankPage
         _updatingLearning = true;
         try
         {
+            LearningGroupPanel.IsVisible = !ReasoningStoryCatalogue.Supports(_family);
+            if (ReasoningStoryCatalogue.Supports(_family))
+            {
+                string[] keys = _family switch
+                {
+                    BankQuestionFamily.TwoNumbers => ["Quiz.Elementary.SumDifference", "Quiz.Elementary.SumRatio", "Quiz.Elementary.DifferenceRatio"],
+                    BankQuestionFamily.Average => ["Quiz.AverageDirect", "Quiz.AverageTotalToAverage", "Quiz.AverageAverageToTotal", "Quiz.AverageMissingValue", "Quiz.AverageIndirectData", "Quiz.AverageTwoGroups"],
+                    _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]
+                };
+                _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
+                if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
+                OperationPicker.ItemsSource = _storyVariants.Select(v => LocalizationService.TranslateKey(keys[v])).ToArray();
+                IllustratedQuizPicker.SetKeys(OperationPicker, _storyVariants.Select(v => keys[v]));
+                OperationPicker.SelectedIndex = Array.IndexOf(_storyVariants, _storyVariant);
+                return;
+            }
             string L(string key) => LocalizationService.TranslateKey("Learning." + key);
             _learningGroups = QuestionLearningProfile.Groups();
             if (_learningGroup is QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Length or QuestionKnowledgeGroup.Transport)
@@ -54,7 +72,14 @@ public partial class AiQuestionBankPage
 
     private void OnBankOperationChanged(object? sender, EventArgs e)
     {
-        if (!_updating && !_updatingLearning) RefreshFindXRoles();
+        if (_updating || _updatingLearning) return;
+        if (ReasoningStoryCatalogue.Supports(_family))
+        {
+            if (sender == OperationPicker && OperationPicker.SelectedIndex >= 0)
+                _storyVariant = _storyVariants[OperationPicker.SelectedIndex];
+            RefreshLearningPickers(ArithmeticOperation.Add);
+        }
+        RefreshFindXRoles();
     }
 
     private void RefreshFindXRoles()

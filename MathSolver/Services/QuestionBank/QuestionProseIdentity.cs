@@ -14,6 +14,7 @@ public static class QuestionProseIdentity
         {
             // Substitute numeric/actor slots before rendering fixed context and units, so
             // random values cannot change singular/plural wording in the identity.
+            prose = Regex.Replace(prose, @"\{f\d+\}", " quantity ");
             prose = prose.Replace("{a}", " quantity ").Replace("{b}", " quantity ")
                 .Replace("{name}", " actor_a ").Replace("{other}", " actor_b ");
             prose = BasicQuestionTemplates.Render(prose, contract);

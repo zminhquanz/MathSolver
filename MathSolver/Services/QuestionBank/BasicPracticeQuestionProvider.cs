@@ -15,6 +15,33 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
     private readonly FindXQuestionCycle _findX = new();
     private readonly FractionQuestionCycle _fractions = new();
 
+    public async Task<ArithmeticQuizQuestion> SelectReasoningAsync(ArithmeticQuizQuestion generated,
+        CurriculumTier tier, AppLanguage language, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers } elementary
+            ? (BankQuestionFamily.TwoNumbers, (int)elementary.Type)
+            : generated.AverageProblem is { } average ? (BankQuestionFamily.Average, (int)average.Type)
+            : generated.PercentageProblem is { } percentage ? (BankQuestionFamily.Percentage, (int)percentage.Type)
+            : throw new ArgumentException("ExpectedReasoningQuestion");
+        if (_random.Next(2) == 0) return generated;
+        var saved = await store.TakeReasoningAsync(family, variant, tier, language, cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (saved is null || saved.Contract is not { Version: ReasoningStoryCatalogue.Version } c
+            || c.Family != family || c.BankVariant != variant || c.Tier != tier || c.Language != language
+            || !BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c).IsValid) return generated;
+        try
+        {
+            var fresh = c.FreshFacts(_random);
+            return ReasoningStoryCatalogue.ToPractice(fresh, saved.Draft, generated.Mode);
+        }
+        catch (InvalidOperationException)
+        {
+            // A retired curriculum schema cannot be silently adapted to a different role.
+            return generated;
+        }
+    }
+
     public async Task<ArithmeticQuizQuestion> SelectFractionAsync(ArithmeticQuizQuestion generated,
         CurriculumTier tier, AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
     {

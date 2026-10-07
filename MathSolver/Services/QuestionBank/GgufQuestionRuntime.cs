@@ -227,6 +227,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryValidator.Grammar(c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prose(c).Grammar(c, new HashSet<string>(StringComparer.Ordinal));
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Grammar(c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Grammar(c);

@@ -31,7 +31,7 @@ public sealed record AiGenerationMetrics(int GeneratedTokens, TimeSpan Generatio
 public enum AiJobState { Idle, Generating, Validating, Completed, Stopped, Failed }
 public enum AiItemState { Generating, Validating, Ready, Saved, Duplicate, Rejected, Stopped, SaveFailed }
 public sealed record AiQuestionAttempt(int Number, string Prompt, string RawJson, string? ErrorCode,
-    bool IsComplete = true, AiGenerationMetrics? Metrics = null);
+    bool IsComplete = true, AiGenerationMetrics? Metrics = null, string? ErrorDetails = null);
 public sealed record AiQuestionItem(int Number, BasicQuestionContract Contract, AiItemState State,
     IReadOnlyList<AiQuestionAttempt> Attempts, ValidatedBankQuestion? Question = null, string? Error = null);
 public sealed record AiJobSnapshot(AiJobState State, AiGenerationOptions? Options,
@@ -49,6 +49,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     private readonly AppliedQuestionCycle _appliedCycle = new();
     private readonly FindXQuestionCycle _findXCycle = new();
     private readonly FractionQuestionCycle _fractionCycle = new();
+    private readonly ReasoningStoryCycle _storyCycle = new();
     private CancellationTokenSource? _cancellation;
     private Task _work = Task.CompletedTask;
     private int _pendingInserts;
@@ -174,7 +175,9 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         for (int number = 1; number <= options.Count; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var contract = options.Family == BankQuestionFamily.Fraction
+            var contract = ReasoningStoryCatalogue.Supports(options.Family)
+                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language)
+                : options.Family == BankQuestionFamily.Fraction
                 ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)
                 : options.Family == BankQuestionFamily.FindX
                 ? _findXCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, options.UnknownRole)
@@ -216,13 +219,6 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     if (acceptingText && !timeout.IsCancellationRequested) metrics = value;
                 }
                 try { raw = await runtime.GenerateNovelAsync(contract, prompt, excludedProse, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
-                catch (ProseAlternativesExhaustedException)
-                {
-                    const string exhausted = "ProseAlternativesExhausted";
-                    UpdateAttempt(number, attempt, a => a with { ErrorCode = exhausted, IsComplete = true });
-                    UpdateItem(number, i => i with { State = AiItemState.Duplicate, Question = null, Error = exhausted });
-                    return (AiJobState.Failed, exhausted);
-                }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     correction = "GenerationTimeout";
@@ -245,7 +241,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     Attempts = i.Attempts.Select(a => a.Number == attempt ? a with { RawJson = raw, Metrics = metrics } : a).ToArray() });
                 var validation = BasicQuestionValidator.Validate(raw, contract);
                 correction = validation.ErrorCode;
-                UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, IsComplete = true });
+                UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, ErrorDetails = validation.ErrorDetails, IsComplete = true });
                 UpdateItem(number, i => i with { Error = correction });
                 if (!validation.IsValid) continue;
                 var question = new ValidatedBankQuestion(validation.Contract ?? contract, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);

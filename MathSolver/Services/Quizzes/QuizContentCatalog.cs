@@ -141,7 +141,9 @@ public static partial class QuizContentCatalog
             throw new InvalidDataException($"Values do not match the variables of '{id}'.");
         // A single replacement pass prevents data containing braces from becoming a second template.
         // Undeclared placeholders belong to the downstream C# fact renderer (e.g. AI prose's {a}, {unit}).
-        return Placeholders().Replace(entry.Text, match => supplied.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
+        string rendered = Placeholders().Replace(entry.Text, match => supplied.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
+        QuizNarrativeCapture.Current?.Record(entry.Text, supplied, rendered);
+        return rendered;
     }
 
     [GeneratedRegex(@"(?<!\{)\{([A-Za-z0-9_.-]+)\}(?!\})", RegexOptions.CultureInvariant)]

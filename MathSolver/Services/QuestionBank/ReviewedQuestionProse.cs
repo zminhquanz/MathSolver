@@ -1,12 +1,11 @@
 using MathSolver.Models;
 using MathSolver.Services;
-using System.Text;
 using System.Text.Json;
 
 namespace MathSolver.Services.QuestionBank;
 
-/// <summary>Whole-clause alternatives preserve roles and dimensions. Novelty excludes
-/// complete stories, rather than forcing every individual clause to be different.</summary>
+/// <summary>Reviewed clauses supply semantic anchors, ordered variables and prompt
+/// examples. Novel equivalent prose is validated without exact sentence equality.</summary>
 internal sealed record ReviewedQuestionProse(string[] GivenA, string[] GivenB, string[] Questions,
     string[] Leads, string UnitId)
 {
@@ -30,7 +29,7 @@ internal sealed record ReviewedQuestionProse(string[] GivenA, string[] GivenB, s
         var stories = Stories().Select(d => (Draft: d, Used: excluded.Contains(QuestionProseIdentity.Hash(c, d)))).ToArray();
         var used = stories.Where(s => s.Used).Select(s => s.Draft).ToArray();
         // Prefer less-used factual clauses instead of cycling through questions
-        // over the same two givens. Sampling still enforces whole-story exclusions.
+        // over the same two givens. Validation/storage still enforce prose exclusions.
         return stories.Where(s => !s.Used).OrderBy(s => used.Count(d => d.GivenA == s.Draft.GivenA)
                 + used.Count(d => d.GivenB == s.Draft.GivenB))
             .ThenBy(s => used.Count(d => d.Question == s.Draft.Question)).Select(s => s.Draft).FirstOrDefault();
@@ -38,29 +37,14 @@ internal sealed record ReviewedQuestionProse(string[] GivenA, string[] GivenB, s
 
     public string Grammar(BasicQuestionContract c, IReadOnlySet<string> excluded)
     {
-        var stories = Stories().Where(d => !excluded.Contains(QuestionProseIdentity.Hash(c, d))).ToArray();
-        if (stories.Length == 0) throw new ProseAlternativesExhaustedException();
-        static string L(string value) => JsonSerializer.Serialize(value);
-        static string Field(string value) => "\"\\\"\" " + L(value) + " \"\\\"\"";
-        // A branch is a complete (given_a, given_b, question) tuple. Removing a
-        // used question alone would wrongly discard unused combinations of givens.
-        var grammar = new StringBuilder("root ::= \"{\" ws \"\\\"given_a\\\"\" ws \":\" ws (");
-        grammar.Append(string.Join(" | ", Enumerable.Range(0, stories.Length).Select(i => "story" + i))).Append(") tail\n");
-        for (int i = 0; i < stories.Length; i++)
-        {
-            var d = stories[i];
-            grammar.Append("story").Append(i).Append(" ::= ").Append(Field(d.GivenA))
-                .Append(" ws \",\" ws \"\\\"given_b\\\"\" ws \":\" ws ").Append(Field(d.GivenB))
-                .Append(" ws \",\" ws \"\\\"question\\\"\" ws \":\" ws ").Append(Field(d.Question)).Append('\n');
-        }
-        grammar.Append("tail ::= ws \",\" ws \"\\\"solution_lead\\\"\" ws \":\" ws lead ws \",\" ws \"\\\"unit_id\\\"\" ws \":\" ws ")
-            .Append(Field(UnitId)).Append(" ws \"}\" ws\nlead ::= ")
-            .Append(string.Join(" | ", Leads.Select(Field))).Append("\nws ::= [ \\t\\n\\r]*\n");
-        return grammar.ToString();
+        // Exclusion is enforced after validation against the database. A finite
+        // approved list must not prevent novel equivalent prose from being sampled.
+        static string L(string text) => JsonSerializer.Serialize(text);
+        return "root ::= \"{\" ws \"\\\"given_a\\\"\" ws \":\" ws given-a ws \",\" ws \"\\\"given_b\\\"\" ws \":\" ws given-b ws \",\" ws \"\\\"question\\\"\" ws \":\" ws question ws \",\" ws \"\\\"solution_lead\\\"\" ws \":\" ws lead ws \",\" ws \"\\\"unit_id\\\"\" ws \":\" ws "
+            + L("\"" + UnitId + "\"") + " ws \"}\" ws\n"
+            + SemanticProseRules.ClauseRule("given_a", GivenA, c.Language) + SemanticProseRules.ClauseRule("given_b", GivenB, c.Language)
+            + SemanticProseRules.ClauseRule("question", Questions, c.Language) + SemanticProseRules.ClauseRule("lead", Leads, c.Language)
+            + "\nws ::= [ \\t\\n\\r]*\n";
     }
-}
 
-internal sealed class ProseAlternativesExhaustedException : InvalidOperationException
-{
-    public ProseAlternativesExhaustedException() : base("ProseAlternativesExhausted") { }
 }

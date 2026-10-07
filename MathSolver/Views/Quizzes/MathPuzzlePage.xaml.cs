@@ -1674,6 +1674,14 @@ public partial class MathPuzzlePage : ContentPage
                 _currentQuestion = selected;
             }
 
+            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage)
+            {
+                var selected = await AiQuestionBank.Current.Practice.SelectReasoningAsync(_currentQuestion,
+                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage);
+                if (version != _questionGenerationVersion) return;
+                _currentQuestion = selected;
+            }
+
             CommitGeneratedQuestionNumber(
                 questionNumberOnSuccess);
             RenderCurrentQuestion(

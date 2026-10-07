@@ -2,6 +2,7 @@ using MathSolver.Models;
 using System.Globalization;
 using System.IO.Compression;
 using System.Xml;
+using System.Text.Json;
 using System.Xml.Linq;
 
 namespace MathSolver.Services.QuestionBank;
@@ -20,7 +21,7 @@ public static class QuestionBankWorkbook
     {
         "Version", "Operation", "Stars", "Language", "Left", "Right", "Subject", "Unit", "GroupUnit",
         "GivenA", "GivenB", "Question", "ModelName", "CreatedUtc", "RawJson", "Answer", "ProblemText",
-        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator"
+        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator", "StorySeedJson", "FactsJson", "SolutionLeadsJson"
     });
 
     public static int Write(Stream output, IEnumerable<ValidatedBankQuestion> questions, CancellationToken cancellationToken = default)
@@ -79,7 +80,10 @@ public static class QuestionBankWorkbook
                 DateTime.SpecifyKind(question.CreatedUtc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture), question.RawJson,
                 c.AnswerText, question.WordProblem.ProblemText,
                 c.IsTemplate ? c.Structure.ToString() : "", c.OtherSubject, question.Draft.SolutionLead ?? "", question.Draft.UnitId ?? "",
-                c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString(), c.LeftDenominator.ToString(CultureInfo.InvariantCulture), c.RightDenominator.ToString(CultureInfo.InvariantCulture)]);
+                c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString(), c.LeftDenominator.ToString(CultureInfo.InvariantCulture), c.RightDenominator.ToString(CultureInfo.InvariantCulture),
+                c.Story is null ? "" : JsonSerializer.Serialize(c.Story),
+                question.Draft.Facts is null ? "" : JsonSerializer.Serialize(question.Draft.Facts),
+                question.Draft.SolutionLeads is null ? "" : JsonSerializer.Serialize(question.Draft.SolutionLeads)]);
         }
         xml.WriteEndElement();
         xml.WriteStartElement("autoFilter", Main); xml.WriteAttributeString("ref", $"A1:{ColumnName(Columns.Count - 1)}{rowNumber - 1}"); xml.WriteEndElement();
@@ -189,8 +193,17 @@ public static class QuestionBankWorkbook
                     string.IsNullOrWhiteSpace(Get("UnknownRole")) ? FindXUnknownRole.None : Enum.Parse<FindXUnknownRole>(Get("UnknownRole"), true),
                     string.IsNullOrWhiteSpace(Get("LeftDenominator")) ? 1 : int.Parse(Get("LeftDenominator"), CultureInfo.InvariantCulture),
                     string.IsNullOrWhiteSpace(Get("RightDenominator")) ? 1 : int.Parse(Get("RightDenominator"), CultureInfo.InvariantCulture));
+                if (contract.Version == ReasoningStoryCatalogue.Version)
+                    contract = contract with { Story = JsonSerializer.Deserialize<ReasoningStorySeed>(Get("StorySeedJson")) };
                 var draft = new BasicQuestionDraft(Get("GivenA"), Get("GivenB"), Get("Question"),
                     contract.IsTemplate ? Get("SolutionLead") : null, contract.IsTemplate ? Get("UnitId") : null);
+                if (contract.Version == ReasoningStoryCatalogue.Version)
+                    draft = draft with {
+                        Facts = JsonSerializer.Deserialize<NarrativeClause[]>(Get("FactsJson")),
+                        SolutionLeads = JsonSerializer.Deserialize<NarrativeClause[]>(Get("SolutionLeadsJson"))
+                    };
+                if (draft.Facts?.Any(f => f is null) == true || draft.SolutionLeads?.Any(s => s is null) == true)
+                    throw new FormatException("Invalid narrative clause");
                 string json = QuestionBankStore.SerializeDraft(draft);
                 var validation = BasicQuestionValidator.Validate(json, contract);
                 if (!validation.IsValid) { result.Add(new(number, null, validation.ErrorCode)); continue; }
@@ -201,7 +214,7 @@ public static class QuestionBankWorkbook
                 result.Add(new(number, new(contract, validation.Draft!, string.IsNullOrWhiteSpace(Get("RawJson")) ? json : Get("RawJson"),
                     string.IsNullOrWhiteSpace(Get("ModelName")) ? "Excel import" : Get("ModelName"), created), null));
             }
-            catch (Exception error) when (error is FormatException or OverflowException or ArgumentException)
+            catch (Exception error) when (error is FormatException or OverflowException or ArgumentException or JsonException)
             { result.Add(new(number, null, "InvalidExcelRow")); }
         }
         if (header is null) throw new InvalidDataException("ExcelColumnsMissing");

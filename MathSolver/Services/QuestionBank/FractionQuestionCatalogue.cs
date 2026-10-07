@@ -118,10 +118,10 @@ public static class FractionQuestionCatalogue
             string? error = QuestionProseLanguage.ValidateAndNormalize(d, c.Language, out d);
             if (error is not null) return new(null, error);
             var pool = Prose(c);
-            bool Same(string a, string b) => string.Equals(Regex.Replace(a.Trim(), @"\s+", " "), Regex.Replace(b.Trim(), @"\s+", " "), StringComparison.OrdinalIgnoreCase);
             if (d.UnitId != pool.UnitId) return new(null, "ChangedUnits");
-            if (!pool.GivenA.Any(t => Same(t, d.GivenA)) || !pool.GivenB.Any(t => Same(t, d.GivenB))
-                || !pool.Questions.Any(t => Same(t, d.Question)) || !pool.Leads.Any(t => Same(t, d.SolutionLead!))) return new(null, "ChangedRelationOrTarget");
+            string mismatches = SemanticProseRules.MismatchedFields(c.Language, ("given_a", d.GivenA, pool.GivenA),
+                ("given_b", d.GivenB, pool.GivenB), ("question", d.Question, pool.Questions), ("solution_lead", d.SolutionLead, pool.Leads));
+            if (mismatches.Length > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: mismatches);
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }
@@ -136,7 +136,7 @@ public static class FractionQuestionCatalogue
     public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example)
         => (QuizContentCatalog.Text(c.Language, "FractionQuestionCatalogue.Prompt.001"))
             + "\nScene: " + c.SceneId + "; group=" + c.KnowledgeGroup + "; stars=" + (int)c.Tier
-            + "\nUse different approved phrasing from excluded stories. Example:\n" + QuestionBankStore.SerializeDraft(example ?? Draft(c))
+            + "\n" + SemanticProseRules.PromptGuidance(c.Language) + "\n" + QuestionBankStore.SerializeDraft(example ?? Draft(c))
             + "\nReturn only JSON with given_a, given_b, question, solution_lead, unit_id."
             + (correction is null ? "" : "\nCorrect the rejected output: " + correction);
 

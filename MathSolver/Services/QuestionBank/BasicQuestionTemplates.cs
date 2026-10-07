@@ -90,6 +90,7 @@ public static class BasicQuestionTemplates
     // Examples anchor roles, not sentence wording. Every structure remains one exact integer operation.
     public static BasicQuestionDraft Example(BasicQuestionContract c, string? unitId = null)
     {
+        if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryCatalogue.Draft(c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Draft(c);
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Draft(c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Draft(c);
@@ -137,6 +138,7 @@ public static class BasicQuestionTemplates
 
     public static string Render(string template, BasicQuestionContract c)
     {
+        if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryCatalogue.Render(template, c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Render(template, c);
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Render(template, c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Render(template, c);

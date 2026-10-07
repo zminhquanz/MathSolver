@@ -50,10 +50,8 @@ internal static class ProseDeduplicationTests
             }
             var all = stories.Select(s => QuestionProseIdentity.Hash(saving, s)).ToHashSet(StringComparer.Ordinal);
             Check(all.Count == stories.Length, "Cosmetic variants inflate the savings pool.");
-            bool poolExhausted = false;
-            try { GgufQuestionRuntime.BuildNovelGrammar(saving, all); }
-            catch (ProseAlternativesExhaustedException) { poolExhausted = true; }
-            Check(poolExhausted, "Exhausted wording produced a grammar allowing duplicates.");
+            Check(GgufQuestionRuntime.BuildNovelGrammar(saving, all).Contains("given-a ::="),
+                "A finite reviewed pool still blocks novel semantic prose.");
             var last = stories[^1];
             all.Remove(QuestionProseIdentity.Hash(saving, last));
             Check(choices.NovelExample(saving, all) == last, "Prompt selected an example already in SQLite.");
@@ -125,18 +123,6 @@ internal static class ProseDeduplicationTests
             && exhausted.Snapshot.Items.Single() is { State: AiItemState.Duplicate, Question: null },
             "Persistent duplicates were saved or the retry bound was exceeded.");
 
-        var finiteRuntime = new ExhaustedRuntime();
-        var finiteStore = new DuplicateStore(0);
-        var finiteWorker = new AiQuestionGenerationService(finiteRuntime, finiteStore);
-        finiteWorker.Start(new(ArithmeticOperation.Add, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, 4, true,
-            new(QuestionKnowledgeGroup.Money)));
-        await finiteWorker.Completion;
-        Check(finiteWorker.Snapshot.State == AiJobState.Failed && finiteWorker.Snapshot.Error == "ProseAlternativesExhausted"
-            && finiteRuntime.Calls == 1 && finiteRuntime.Releases == 1 && finiteStore.Saves == 0
-            && finiteWorker.Snapshot.Items.Single() is { State: AiItemState.Duplicate, Question: null }
-            && finiteWorker.Snapshot.Items.Single().Attempts.Single().IsComplete,
-            "Pool exhaustion retried impossible output, saved a duplicate or skipped model cleanup.");
-
         var raceRuntime = new Runtime();
         var racingStore = new DuplicateStore(0, rejectFirstInsert: true);
         var racing = new AiQuestionGenerationService(raceRuntime, racingStore);
@@ -187,24 +173,6 @@ internal static class ProseDeduplicationTests
             Prompts.Add(prompt);
             Contracts.Add(contract);
             return Task.FromResult(QuestionBankStore.SerializeDraft(AdditionQuestionCatalogue.Example(contract)));
-        }
-    }
-
-    private sealed class ExhaustedRuntime : IQuestionTextRuntime
-    {
-        public bool IsLoaded => true;
-        public string ModelName => "exhausted-prose";
-        public int Calls { get; private set; }
-        public int Releases { get; private set; }
-        public Task ReleaseAsync() { Releases++; return Task.CompletedTask; }
-        public Task<string> GenerateAsync(BasicQuestionContract c, string prompt, CancellationToken token,
-            Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
-            => throw new InvalidOperationException("Worker must pass exclusions to GenerateNovelAsync.");
-        public Task<string> GenerateNovelAsync(BasicQuestionContract c, string prompt, IReadOnlySet<string> excluded,
-            CancellationToken token, Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
-        {
-            Calls++;
-            return Task.FromException<string>(new ProseAlternativesExhaustedException());
         }
     }
 

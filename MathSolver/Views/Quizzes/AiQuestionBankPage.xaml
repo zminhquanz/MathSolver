@@ -250,11 +250,13 @@
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="ProblemPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankProblemChanged" />
                         </Border>
+                        <VerticalStackLayout x:Name="LearningGroupPanel" Spacing="8">
                         <Label Text="{localization:Translate Learning.Group}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="LearningGroupPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnLearningGroupChanged" />
                         </Border>
                         <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
+                        </VerticalStackLayout>
                         <Label Text="{localization:Translate AiBank.Operation}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="OperationPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankOperationChanged" />

@@ -30,6 +30,48 @@ static string Draft(BasicQuestionContract c)
     return JsonSerializer.Serialize(new { given_a = a, given_b = b, question = q });
 }
 
+if (args is ["--structure-policy"])
+{
+    try { GenerationStructurePolicyTests.Run(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--structure-worker", var structureWorkerModel])
+{
+    try { await GenerationStructureModelTests.RunWorkerAsync(structureWorkerModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--structure-model", _] or ["--structure-repro", _])
+{
+    try { await GenerationStructureModelTests.RunAsync(args[1], args[0] == "--structure-repro"); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--reasoning-budget", var reasoningBudgetModel])
+{
+    try { await ReasoningStoryTests.CheckPromptBudgetAsync(reasoningBudgetModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--reasoning-model", var reasoningModel])
+{
+    try { await ReasoningStoryTests.RunModelAsync(reasoningModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--reasoning-stories"])
+{
+    try { await ReasoningStoryTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--prose-model", var proseModelPath])
 {
     try { await ProseModelTests.RunAsync(proseModelPath); }
@@ -380,9 +422,11 @@ try
     await FindXBankTests.RunAsync(directory);
     await PracticeFormatTests.RunAsync(directory);
     await FractionBankTests.RunAsync(directory);
+    await ReasoningStoryTests.RunAsync();
 }
 finally { Directory.Delete(directory, true); }
 
+GenerationStructurePolicyTests.Run();
 Console.WriteLine("All AI question bank checks passed. No model inference or benchmark ran.");
 
 sealed class FakeRuntime(Func<string, string> produce) : IQuestionTextRuntime

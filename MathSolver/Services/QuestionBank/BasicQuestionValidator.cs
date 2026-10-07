@@ -8,8 +8,11 @@ namespace MathSolver.Services.QuestionBank;
 
 public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Question, string? SolutionLead = null, string? UnitId = null)
 {
-    public string ProblemText => $"{GivenA.Trim()} {GivenB.Trim()} {Question.Trim()}";
-    public MathWordProblem ToWordProblem(BasicQuestionContract c) => new(c.IsTemplate
+    public IReadOnlyList<NarrativeClause>? Facts { get; init; }
+    public IReadOnlyList<NarrativeClause>? SolutionLeads { get; init; }
+    public string ProblemText => Facts is not null ? string.Join(" ", Facts.Select(f => f.Text.Trim()).Append(Question.Trim())) : $"{GivenA.Trim()} {GivenB.Trim()} {Question.Trim()}";
+    public MathWordProblem ToWordProblem(BasicQuestionContract c) => c.Version == ReasoningStoryCatalogue.Version
+        ? new(ReasoningStoryCatalogue.Render(ProblemText, c), "", c.AnswerUnit, c.Subject) : new(c.IsTemplate
         ? BasicQuestionTemplates.RenderProblem(GivenA, GivenB, Question, c) : ProblemText,
         c.IsTemplate ? BasicQuestionTemplates.Render(SolutionLead!, c) : c.SolutionLead, c.AnswerUnit, c.Subject,
         c.Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Find(c.SceneId)!.Quantity
@@ -21,7 +24,7 @@ public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Que
             : c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.FactTable(c) : null);
 }
 
-public sealed record BasicDraftValidation(BasicQuestionDraft? Draft, string? ErrorCode, BasicQuestionContract? Contract = null)
+public sealed record BasicDraftValidation(BasicQuestionDraft? Draft, string? ErrorCode, BasicQuestionContract? Contract = null, string? ErrorDetails = null)
 {
     public bool IsValid => Draft is not null && ErrorCode is null;
 }

@@ -26,12 +26,14 @@ internal static class QuestionProseLanguage
                 GivenA = draft.GivenA.Normalize(NormalizationForm.FormC),
                 GivenB = draft.GivenB.Normalize(NormalizationForm.FormC),
                 Question = draft.Question.Normalize(NormalizationForm.FormC),
-                SolutionLead = draft.SolutionLead?.Normalize(NormalizationForm.FormC)
+                SolutionLead = draft.SolutionLead?.Normalize(NormalizationForm.FormC),
+                Facts = draft.Facts?.Select(f => f with { Text = f.Text.Normalize(NormalizationForm.FormC) }).ToArray(),
+                SolutionLeads = draft.SolutionLeads?.Select(f => f with { Text = f.Text.Normalize(NormalizationForm.FormC) }).ToArray()
             };
         }
         catch (ArgumentException) { return "InvalidText"; }
         foreach (string text in new[] { normalized.GivenA, normalized.GivenB, normalized.Question,
-            normalized.SolutionLead ?? "" })
+            normalized.SolutionLead ?? "" }.Concat(normalized.Facts?.Select(f => f.Text) ?? []).Concat(normalized.SolutionLeads?.Select(f => f.Text) ?? []))
         foreach (char ch in text)
         {
             // ASCII controls, quantities and placeholders are checked by the field
@@ -41,7 +43,7 @@ internal static class QuestionProseLanguage
             {
                 if (language != AppLanguage.Vietnamese || !VietnameseLetters.Contains(ch)) return "WrongLanguage";
             }
-            else if (!char.IsWhiteSpace(ch) && !"‘’“”–—…".Contains(ch))
+            else if (!char.IsWhiteSpace(ch) && !"‘’“”–—…²³°".Contains(ch))
                 return "InvalidText"; // Orphan marks, replacement glyphs, emoji, bidi/zero-width text.
         }
         return null;

@@ -13,6 +13,7 @@ public static class BasicQuestionValidator
 
     public static BasicDraftValidation Validate(string rawJson, BasicQuestionContract c)
     {
+        if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryValidator.Validate(rawJson, c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Validate(rawJson, c);
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Validate(rawJson, c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Validate(rawJson, c);

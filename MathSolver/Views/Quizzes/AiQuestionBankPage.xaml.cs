@@ -56,6 +56,7 @@ public partial class AiQuestionBankPage : ContentPage
             _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;
             _family = options.Family;
             _unknownRole = options.UnknownRole;
+            _storyVariant = options.StoryVariant;
             _updating = true;
             ProblemPicker.SelectedIndex = (int)_family;
             _updating = false;
@@ -107,8 +108,9 @@ public partial class AiQuestionBankPage : ContentPage
         int stars = Math.Max(0, StarsPicker.SelectedIndex);
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
         ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
-            LocalizationService.TranslateKey("FractionBank.Title") }; ProblemPicker.SelectedIndex = (int)_family;
-        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title" });
+            LocalizationService.TranslateKey("FractionBank.Title"), LocalizationService.TranslateKey("Quiz.ProblemTwoNumbers"),
+            LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage") }; ProblemPicker.SelectedIndex = (int)_family;
+        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage" });
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
@@ -176,7 +178,8 @@ public partial class AiQuestionBankPage : ContentPage
         PreviewFractionSolution.Expression = fractionStory ? item!.Question!.Contract.Solution : "";
         PreviewSolutionLabel.IsVisible = item?.Question is not null && !fractionStory;
         PreviewSolutionLabel.Text = item?.Question is { } question && !fractionStory
-            ? (question.WordProblem.ConversionStep is { } step ? step + "\n" : "")
+            ? question.Contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Solution(question.Contract, question.Draft)
+            : (question.WordProblem.ConversionStep is { } step ? step + "\n" : "")
                 + question.WordProblem.SolutionLead + "\n" + (question.WordProblem.ArithmeticReasoning?.Equation ?? question.Contract.Left + " "
                 + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Expression.Operation) + " "
                 + question.Contract.Right) + " = " + question.Contract.Answer + " " + question.Contract.AnswerUnit : "";
@@ -199,14 +202,17 @@ public partial class AiQuestionBankPage : ContentPage
             ContractEditor.Text = RawJsonEditor.Text = PromptEditor.Text = ValidationLogEditor.Text = "";
             return;
         }
-        ContractEditor.Text = item is null ? "" : JsonSerializer.Serialize(item.Contract, JsonOptions);
+        ContractEditor.Text = item is null ? "" : JsonSerializer.Serialize(
+            item.Contract.Version == ReasoningStoryCatalogue.Version
+                ? ReasoningStoryCatalogue.DiagnosticData(item.Contract) : item.Contract, JsonOptions);
         RawJsonEditor.Text = item is null ? "" : string.Join("\n\n", item.Attempts.Select(a => $"{T("Attempt")} {a.Number}/3\n{a.RawJson}"));
         PromptEditor.Text = item?.Attempts.LastOrDefault()?.Prompt ?? "";
         ValidationLogEditor.Text = item is null ? "" : string.Join("\n", item.Attempts.Select(a =>
             $"[{a.Number}/3] {(a.ErrorCode is not null ? ErrorText(a.ErrorCode) : a.IsComplete ? T("ValidationPassed")
                 : T("Job." + (item.State == AiItemState.Stopped ? AiJobState.Stopped
                     : item.State == AiItemState.Rejected ? AiJobState.Failed
-                    : item.State == AiItemState.Validating ? AiJobState.Validating : AiJobState.Generating)))}"))
+                    : item.State == AiItemState.Validating ? AiJobState.Validating : AiJobState.Generating)))}"
+            + (a.ErrorDetails is null ? "" : " · " + a.ErrorDetails)))
             + "\n" + T("Item." + item.State) + (item.Error is null ? "" : "\n" + ErrorText(item.Error));
     }
 
@@ -344,8 +350,8 @@ public partial class AiQuestionBankPage : ContentPage
         try
         {
             _followLatestItem = true;
-            _bank.Generation.Start(new(SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
-                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, CurrentLearningProfile, _family, _unknownRole));
+            _bank.Generation.Start(new(ReasoningStoryCatalogue.Supports(_family) ? ArithmeticOperation.Add : SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
+                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant));
             _updating = true;
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }

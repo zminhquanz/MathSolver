@@ -265,14 +265,12 @@ public static partial class AppliedQuestionCatalogue
             var languageError = QuestionProseLanguage.ValidateAndNormalize(d, c.Language, out d);
             if (languageError is not null) return new(null, languageError);
             if (d.UnitId != Find(c.SceneId)!.UnitId) return new(null, "ChangedUnits");
-            // Compare complete clauses against reviewed alternatives, not a bag of keywords.
+            // Compare ordered role/relation anchors against the C# situation.
             // Numeric/unit/actor slots and their order bind the roles for mixed dimensions.
             var prose = ReviewedQuestionProse.For(c)!;
-            bool Same(string a, string b) => string.Equals(Regex.Replace(a.Trim(), @"\s+", " "),
-                Regex.Replace(b.Trim(), @"\s+", " "), StringComparison.OrdinalIgnoreCase);
-            if (!prose.GivenA.Any(e => Same(d.GivenA, e)) || !prose.GivenB.Any(e => Same(d.GivenB, e))
-                || !prose.Questions.Any(e => Same(d.Question, e)) || !prose.Leads.Any(e => Same(d.SolutionLead!, e)))
-                return new(null, "ChangedRelationOrTarget");
+            string mismatches = SemanticProseRules.MismatchedFields(c.Language, ("given_a", d.GivenA, prose.GivenA),
+                ("given_b", d.GivenB, prose.GivenB), ("question", d.Question, prose.Questions), ("solution_lead", d.SolutionLead, prose.Leads));
+            if (mismatches.Length > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: mismatches);
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }
