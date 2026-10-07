@@ -88,7 +88,8 @@ internal static partial class PuzzleTests
     private static void CheckDataChartStories(EssayAnswerValidator validator)
     {
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-        foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data).Where(type => type != ElementaryQuizType.ReadPictograph))
+        foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Data).Where(type => type != ElementaryQuizType.ReadPictograph
+            && !ElementaryQuizGenerator.IsFoundationSkill(type)))
         {
             var contexts = DataChartStoryContextCatalog.GetProfile(language);
             var seenThemes = new HashSet<string>();

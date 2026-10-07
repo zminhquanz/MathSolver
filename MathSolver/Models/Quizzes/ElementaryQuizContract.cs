@@ -16,7 +16,12 @@ public enum ElementaryQuizType
     ClassifyAngle, ParallelLines, PerpendicularLines, CountSides, RectangleSide, CompositeArea,
     IntegerCompare,
     MapScale, ReadPictograph, RecognizeShape,
-    MultiStepAddSubtract, MultiStepEqualGroups, MultiStepRemaining, MultiStepShare
+    MultiStepAddSubtract, MultiStepEqualGroups, MultiStepRemaining, MultiStepShare,
+    Counting, ReadNumber, WriteNumber, PlaceValue, AdjacentNumbers, NumberLine,
+    Parity, RomanNumerals, OrderNumbers, RoundWholeNumber, EstimateSum, LetterExpression,
+    FractionPicture, FractionTerms, EquivalentFraction, OrderFractions,
+    SpatialPosition, IdentifyLine, Midpoint, CircleParts, ShapeNet, TriangleKind,
+    ReadRuler, ReadProtractor, ReadThermometer, SortData, CompleteBarChart
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -42,7 +47,8 @@ public sealed record QuizVisualData(string Kind, IReadOnlyList<string> Labels,
     IReadOnlyList<QuizVisualLine>? Lines = null,
     IReadOnlyList<QuizVisualPolygon>? Polygons = null,
     IReadOnlyList<QuizVisualAnnotation>? Annotations = null, string? ScenarioId = null,
-    IReadOnlySet<int>? HiddenValueIndices = null, decimal? PictographKey = null);
+    IReadOnlySet<int>? HiddenValueIndices = null, decimal? PictographKey = null,
+    string? AccessibleDescription = null);
 
 /// <summary>C# math puzzle data and rules.</summary>
 public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuizType Type,
@@ -56,6 +62,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
     public ElementaryQuizReasoning? Reasoning { get; init; }
     public int? RoundingDecimalPlaces { get; init; }
+    public bool RequiresCalculation { get; init; } = true;
 
     public bool IsDecimalArithmetic => Kind == QuizProblemKind.Decimal && Type is
         ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract or
@@ -82,7 +89,9 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.DifferenceRatio or ElementaryQuizType.ReduceFraction or
         ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
-        ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability;
+        ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability or
+        ElementaryQuizType.FractionPicture or ElementaryQuizType.FractionTerms or
+        ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions;
 
     public bool IsComparison => Type is ElementaryQuizType.IntegerCompare or
         ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;

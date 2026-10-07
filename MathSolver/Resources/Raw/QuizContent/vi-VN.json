@@ -7333,6 +7333,1380 @@
       "Id": "AppliedQuestionCatalogue.Contexts.FactTable.038",
       "Text": "Tổng lượt",
       "Variables": []
+    },
+    {
+        "Id":  "Foundation.Answer",
+        "Text":  "Kết quả",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Counting",
+        "Text":  "Đếm số chấm trong hình.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.CountDescription",
+        "Text":  "Hình có {count} chấm tròn riêng biệt.",
+        "Variables":  [
+                          "count"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadNumber",
+        "Text":  "Đọc số {number} bằng chữ.",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.WriteNumber",
+        "Text":  "Viết số được đọc là: {words}.",
+        "Variables":  [
+                          "words"
+                      ]
+    },
+    {
+        "Id":  "Foundation.PlaceValue",
+        "Text":  "Trong số {number}, chữ số {digit} ở hàng {place} có giá trị bao nhiêu?",
+        "Variables":  [
+                          "digit",
+                          "number",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Place0",
+        "Text":  "đơn vị",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place1",
+        "Text":  "chục",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place2",
+        "Text":  "trăm",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place3",
+        "Text":  "nghìn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place4",
+        "Text":  "chục nghìn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place5",
+        "Text":  "trăm nghìn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Before",
+        "Text":  "Số liền trước",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.After",
+        "Text":  "Số liền sau",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.AdjacentNumbers",
+        "Text":  "Tìm số liền trước và số liền sau của {number}.",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.NumberLine",
+        "Text":  "Điền số còn thiếu tại dấu ? trên tia số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineDescription",
+        "Text":  "Các vạch cách đều trên tia số có nhãn: {numbers}.",
+        "Variables":  [
+                          "numbers"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Even",
+        "Text":  "Số chẵn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Odd",
+        "Text":  "Số lẻ",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.BothParity",
+        "Text":  "Vừa chẵn vừa lẻ",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NeitherParity",
+        "Text":  "Không chẵn cũng không lẻ",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Parity",
+        "Text":  "{number} là số chẵn hay số lẻ?",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.RomanNumerals",
+        "Text":  "Số La Mã {roman} biểu diễn số nào?",
+        "Variables":  [
+                          "roman"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Order",
+        "Text":  "Sắp xếp các số theo thứ tự {direction}: {numbers}. Dùng dấu → giữa các số.",
+        "Variables":  [
+                          "direction",
+                          "numbers"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Ascending",
+        "Text":  "từ bé đến lớn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Descending",
+        "Text":  "từ lớn đến bé",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RoundWholeNumber",
+        "Text":  "Làm tròn {number} đến bội gần nhất của {place}. Nếu ở chính giữa, làm tròn lên.",
+        "Variables":  [
+                          "number",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.EstimateSum",
+        "Text":  "Ước lượng {a} + {b} bằng cách làm tròn từng số đến bội gần nhất của {place}, rồi cộng hai số đã làm tròn.",
+        "Variables":  [
+                          "a",
+                          "b",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.LetterExpression",
+        "Text":  "Với a = {a}, b = {b}, c = {c}, tính {expression}.",
+        "Variables":  [
+                          "a",
+                          "b",
+                          "c",
+                          "expression"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Numerator",
+        "Text":  "Tử số",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Denominator",
+        "Text":  "Mẫu số",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.FractionTerms",
+        "Text":  "Cho phân số {fraction}. Xác định tử số và mẫu số.",
+        "Variables":  [
+                          "fraction"
+                      ]
+    },
+    {
+        "Id":  "Foundation.EquivalentFraction",
+        "Text":  "Điền tử số còn thiếu: {fraction} = ?/{denominator}.",
+        "Variables":  [
+                          "denominator",
+                          "fraction"
+                      ]
+    },
+    {
+        "Id":  "Foundation.FractionPicture",
+        "Text":  "Viết phân số biểu thị phần được tô màu trong hình gồm các phần bằng nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.FractionDescription",
+        "Text":  "Hình chia thành {denominator} phần bằng nhau, có {numerator} phần được tô màu.",
+        "Variables":  [
+                          "denominator",
+                          "numerator"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Left",
+        "Text":  "Bên trái",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Right",
+        "Text":  "Bên phải",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Above",
+        "Text":  "Phía trên",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Below",
+        "Text":  "Phía dưới",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.SpatialPosition",
+        "Text":  "Điểm A nằm ở phía nào so với điểm B?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.PositionDescription",
+        "Text":  "Điểm A ở vị trí {position} so với điểm B.",
+        "Variables":  [
+                          "position"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Segment",
+        "Text":  "Đoạn thẳng",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Line",
+        "Text":  "Đường thẳng",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Curve",
+        "Text":  "Đường cong",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Polyline",
+        "Text":  "Đường gấp khúc",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.IdentifyLine",
+        "Text":  "Hình đang biểu diễn loại đường nào?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription0",
+        "Text":  "Một đường thẳng bị giới hạn bởi hai đầu mút đánh dấu bằng chấm.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription1",
+        "Text":  "Một đường thẳng có mũi tên ở cả hai phía, kéo dài theo hai hướng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription2",
+        "Text":  "Một đường uốn cong liên tục.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription3",
+        "Text":  "Ba đoạn thẳng nối tiếp nhau, đổi hướng ở các đỉnh.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointYes",
+        "Text":  "M là trung điểm AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointNo",
+        "Text":  "M không là trung điểm AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Endpoint",
+        "Text":  "M là đầu mút AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Outside",
+        "Text":  "M nằm ngoài đoạn AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Midpoint",
+        "Text":  "Quan sát A, M, B thẳng hàng và số đo trên hình. M có là trung điểm AB không?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointDescription",
+        "Text":  "A, M, B thẳng hàng theo thứ tự đó; AM = {left} cm, MB = {right} cm.",
+        "Variables":  [
+                          "left",
+                          "right"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Center",
+        "Text":  "Tâm",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Radius",
+        "Text":  "Bán kính",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Diameter",
+        "Text":  "Đường kính",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Circle",
+        "Text":  "Đường tròn",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.CircleParts",
+        "Text":  "{target} là yếu tố nào của đường tròn trong hình?",
+        "Variables":  [
+                          "target"
+                      ]
+    },
+    {
+        "Id":  "Foundation.CircleDescription",
+        "Text":  "O nằm chính giữa đường tròn. A, B là hai điểm đối diện trên đường tròn; AB đi qua O. C nằm trên đường tròn, OC nối O với C.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cube",
+        "Text":  "Hình lập phương",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cuboid",
+        "Text":  "Hình hộp chữ nhật",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cylinder",
+        "Text":  "Hình trụ",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Sphere",
+        "Text":  "Hình cầu",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ShapeNet",
+        "Text":  "Hình khai triển này có thể gấp thành hình khối nào?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription0",
+        "Text":  "Sáu hình vuông bằng nhau: bốn ô liên tiếp nằm ngang, một ô trên và một ô dưới ô thứ hai.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription1",
+        "Text":  "Bốn mặt bên hình chữ nhật nối liên tiếp, thêm hai mặt chữ nhật bằng nhau ở trên và dưới mặt thứ hai; chiều rộng và chiều cao khác nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription2",
+        "Text":  "Một hình chữ nhật với hai hình tròn bằng nhau gắn ở hai cạnh đối diện.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.AcuteTriangle",
+        "Text":  "Tam giác nhọn, không đều",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RightTriangle",
+        "Text":  "Tam giác vuông",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ObtuseTriangle",
+        "Text":  "Tam giác tù",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.EquilateralTriangle",
+        "Text":  "Tam giác đều",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleKind",
+        "Text":  "Phân loại tam giác theo các dấu góc và dấu bằng nhau trên hình.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription0",
+        "Text":  "Tam giác có ba góc 50°, 60°, 70°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription1",
+        "Text":  "Tam giác có một góc vuông, hai góc còn lại là 45°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription2",
+        "Text":  "Tam giác có các góc 120°, 30°, 30°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription3",
+        "Text":  "Tam giác có ba cạnh đánh dấu bằng nhau và ba góc 60°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ReadRuler",
+        "Text":  "Đoạn màu trên thước dài bao nhiêu xăng-ti-mét?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RulerDescription",
+        "Text":  "Đoạn màu bắt đầu ở vạch {start} cm và kết thúc ở vạch {end} cm.",
+        "Variables":  [
+                          "end",
+                          "start"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadProtractor",
+        "Text":  "Đọc số đo góc trên thước đo góc; tia gốc hướng sang phải và dùng vạch 0 ở bên phải.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ProtractorDescription",
+        "Text":  "Tia gốc hướng sang phải; tia còn lại trùng vạch {degrees}° của thang bắt đầu từ 0 ở bên phải.",
+        "Variables":  [
+                          "degrees"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadThermometer",
+        "Text":  "Đọc nhiệt độ trên nhiệt kế theo đơn vị °C.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ThermometerDescription",
+        "Text":  "Cột chất lỏng dừng tại vạch {degrees} trên thang độ C.",
+        "Variables":  [
+                          "degrees"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Red",
+        "Text":  "Đỏ",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Blue",
+        "Text":  "Xanh",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Yellow",
+        "Text":  "Vàng",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.SortData",
+        "Text":  "Danh sách màu: {items}. Kiểm đếm số lần xuất hiện của từng màu Đỏ, Xanh, Vàng, rồi ghi từng kết quả có nhãn.",
+        "Variables":  [
+                          "items"
+                      ]
+    },
+    {
+        "Id":  "Foundation.CompleteBarChart",
+        "Text":  "Dữ liệu quan sát: {items}. Điền giá trị cột {category} đang để dấu ? để hoàn thiện biểu đồ.",
+        "Variables":  [
+                          "category",
+                          "items"
+                      ]
+    },
+    {
+        "Id":  "Quiz.ProblemNumberSense",
+        "Text":  "Số và cấu tạo số",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Summary",
+        "Text":  "Tham chiếu lớp {grades} · {scope}: {requirement}",
+        "Variables":  [
+                          "grades",
+                          "requirement",
+                          "scope"
+                      ]
+    },
+    {
+        "Id":  "Curriculum.Scope.Core",
+        "Text":  "Kiến thức cơ bản",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Scope.Extension",
+        "Text":  "Mở rộng",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.AnswerHint",
+        "Text":  "Nhập đáp án trực tiếp. Nếu có nhiều kết quả, ghi nhãn và ngăn cách bằng dấu chấm phẩy.",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Counting",
+        "Text":  "Đếm đồ vật",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadNumber",
+        "Text":  "Đọc số tự nhiên",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.WriteNumber",
+        "Text":  "Viết số tự nhiên",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.PlaceValue",
+        "Text":  "Giá trị theo hàng",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.AdjacentNumbers",
+        "Text":  "Số liền trước và liền sau",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.NumberLine",
+        "Text":  "Điền số trên tia số",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Parity",
+        "Text":  "Số chẵn, số lẻ",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.RomanNumerals",
+        "Text":  "Số La Mã đến 20",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.OrderNumbers",
+        "Text":  "Sắp xếp số tự nhiên",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.RoundWholeNumber",
+        "Text":  "Làm tròn số tự nhiên",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.EstimateSum",
+        "Text":  "Ước lượng tổng",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.LetterExpression",
+        "Text":  "Tính biểu thức chứa chữ",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.FractionPicture",
+        "Text":  "Phân số từ phần tô màu",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.FractionTerms",
+        "Text":  "Nhận biết tử số, mẫu số",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.EquivalentFraction",
+        "Text":  "Phân số bằng nhau",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.OrderFractions",
+        "Text":  "Sắp xếp phân số",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.SpatialPosition",
+        "Text":  "Vị trí trong không gian",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.IdentifyLine",
+        "Text":  "Nhận biết các loại đường",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Midpoint",
+        "Text":  "Nhận biết trung điểm",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.CircleParts",
+        "Text":  "Tâm, bán kính, đường kính",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ShapeNet",
+        "Text":  "Nhận biết hình khai triển",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.TriangleKind",
+        "Text":  "Phân loại tam giác",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadRuler",
+        "Text":  "Đọc thước và đo đoạn thẳng",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadProtractor",
+        "Text":  "Đọc thước đo góc",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadThermometer",
+        "Text":  "Đọc nhiệt kế",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.SortData",
+        "Text":  "Phân loại và kiểm đếm số liệu",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.CompleteBarChart",
+        "Text":  "Hoàn thiện số liệu biểu đồ cột",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.SumDifference",
+        "Text":  "Tìm hai số khi biết tổng và hiệu của chúng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.SumRatio",
+        "Text":  "Tìm hai số khi biết tổng và tỉ số của chúng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.DifferenceRatio",
+        "Text":  "Tìm hai số khi biết hiệu và tỉ số của chúng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.LengthConversion",
+        "Text":  "Thực hiện dạng đổi đơn vị độ dài với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MassConversion",
+        "Text":  "Thực hiện dạng đổi đơn vị khối lượng với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.CapacityConversion",
+        "Text":  "Thực hiện dạng đổi đơn vị dung tích với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.AreaConversion",
+        "Text":  "Thực hiện dạng đổi đơn vị diện tích với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.VolumeConversion",
+        "Text":  "Thực hiện dạng đổi đơn vị thể tích với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MixedLength",
+        "Text":  "Thực hiện dạng số đo có hai đơn vị với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MapScale",
+        "Text":  "Thực hiện dạng tỉ lệ bản đồ với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.ElapsedTime",
+        "Text":  "Thực hiện dạng thời gian trôi qua với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.TimeAddition",
+        "Text":  "Thực hiện dạng đổi giờ và phút với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.ReadClock",
+        "Text":  "Thực hiện dạng đọc đồng hồ với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.Calendar",
+        "Text":  "Thực hiện dạng tính số ngày với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.QuotientRemainder",
+        "Text":  "Thực hiện dạng thương và số dư với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.MinimumGroups",
+        "Text":  "Thực hiện dạng số nhóm tối thiểu với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.Leftovers",
+        "Text":  "Thực hiện dạng chia nhóm và phần còn lại với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalAdd",
+        "Text":  "Thực hiện dạng cộng số thập phân với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalSubtract",
+        "Text":  "Thực hiện dạng trừ số thập phân với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalMultiply",
+        "Text":  "Thực hiện dạng nhân số thập phân với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalDivide",
+        "Text":  "Thực hiện dạng chia số thập phân với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalRound",
+        "Text":  "Thực hiện dạng làm tròn với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalCompare",
+        "Text":  "Thực hiện dạng so sánh số thập phân với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.ReduceFraction",
+        "Text":  "Rút gọn phân số bằng cách chia tử số và mẫu số cho cùng một ước chung.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.MixedNumber",
+        "Text":  "Chuyển phân số lớn hơn một thành hỗn số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.CommonDenominator",
+        "Text":  "Quy đồng mẫu số các phân số và giữ nguyên giá trị của chúng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionOfNumber",
+        "Text":  "Tìm giá trị một phân số của số đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.WholeFromFraction",
+        "Text":  "Tìm toàn bộ số lượng khi biết giá trị một phân số của nó.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadTable",
+        "Text":  "Đọc và sử dụng số liệu được trình bày trong bảng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadBarChart",
+        "Text":  "Đọc số liệu biểu diễn bằng chiều cao các cột.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadPieChart",
+        "Text":  "Đọc tỉ lệ phần trăm của các thành phần trong biểu đồ hình quạt tròn.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ChartTotal",
+        "Text":  "Tính tổng số lượng từ các nhóm số liệu.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ChartDifference",
+        "Text":  "Tìm chênh lệch giữa hai nhóm số liệu.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadPictograph",
+        "Text":  "Đọc biểu đồ tranh có quy ước số lượng cho mỗi biểu tượng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.Likelihood",
+        "Text":  "Mô tả sự kiện là chắc chắn, có thể hoặc không thể xảy ra.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.ExperimentalProbability",
+        "Text":  "Biểu diễn số lần xuất hiện một kết quả bằng phân số của tổng số lần thử đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ClassifyAngle",
+        "Text":  "Nhận biết góc nhọn, góc vuông, góc tù và góc bẹt.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ParallelLines",
+        "Text":  "Nhận biết hai đường thẳng song song trong hình.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.PerpendicularLines",
+        "Text":  "Nhận biết hai đường thẳng vuông góc trong hình.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CountSides",
+        "Text":  "Đếm các cạnh của hình phẳng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.RectangleSide",
+        "Text":  "Tìm độ dài cạnh chưa biết từ quan hệ cạnh hoặc chu vi.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CompositeArea",
+        "Text":  "Chia hình ghép thành các phần quen thuộc để tính diện tích.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.RecognizeShape",
+        "Text":  "Nhận biết hình phẳng và hình khối quen thuộc.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepAddSubtract",
+        "Text":  "Thực hiện dạng gộp, bớt và tìm lượng ban đầu với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepEqualGroups",
+        "Text":  "Thực hiện dạng các nhóm bằng nhau và điều chỉnh với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepRemaining",
+        "Text":  "Thực hiện dạng tìm lượng còn lại qua nhiều bước với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepShare",
+        "Text":  "Thực hiện dạng tổng hợp lượng rồi chia đều với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.IntegerCompare",
+        "Text":  "Thực hiện dạng so sánh số nguyên với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.CompareFractions",
+        "Text":  "Thực hiện dạng so sánh phân số với dữ kiện được cung cấp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.Counting",
+        "Text":  "Đếm và xác định số lượng đồ vật trong hình.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.ReadNumber",
+        "Text":  "Đọc số tự nhiên bằng lời theo giá trị các hàng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.WriteNumber",
+        "Text":  "Viết số tự nhiên từ cách đọc bằng lời.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.PlaceValue",
+        "Text":  "Xác định giá trị của chữ số ở một hàng trong số tự nhiên.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.AdjacentNumbers",
+        "Text":  "Tìm số liền trước và số liền sau của số tự nhiên.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.NumberLine",
+        "Text":  "Nhận biết số còn thiếu trên tia số có các vạch cách đều.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.Parity",
+        "Text":  "Nhận biết số chẵn và số lẻ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.RomanNumerals",
+        "Text":  "Đọc số La Mã trong phạm vi đến 20.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.OrderNumbers",
+        "Text":  "So sánh và sắp xếp số tự nhiên theo thứ tự tăng hoặc giảm.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.RoundWholeNumber",
+        "Text":  "Làm tròn số tự nhiên đến hàng được yêu cầu.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.EstimateSum",
+        "Text":  "Ước lượng tổng bằng cách làm tròn từng số hạng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.LetterExpression",
+        "Text":  "Tính giá trị biểu thức chứa chữ khi biết giá trị các chữ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionPicture",
+        "Text":  "Nhận biết phân số biểu thị phần tô màu của một hình chia thành các phần bằng nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionTerms",
+        "Text":  "Nhận biết tử số và mẫu số của phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.EquivalentFraction",
+        "Text":  "Tìm tử số còn thiếu của hai phân số bằng nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.OrderFractions",
+        "Text":  "So sánh và sắp xếp các phân số cùng mẫu số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.SpatialPosition",
+        "Text":  "Nhận biết vị trí trái, phải, trên, dưới của đối tượng so với đối tượng khác.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.IdentifyLine",
+        "Text":  "Phân biệt đường thẳng, đoạn thẳng, đường cong và đường gấp khúc.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.Midpoint",
+        "Text":  "Nhận biết trung điểm dựa vào vị trí thẳng hàng và hai đoạn bằng nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CircleParts",
+        "Text":  "Nhận biết tâm, bán kính và đường kính của hình tròn.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ShapeNet",
+        "Text":  "Nhận biết hình khai triển của hình lập phương, hình hộp chữ nhật và hình trụ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.TriangleKind",
+        "Text":  "Nhận biết tam giác nhọn, vuông, tù và đều từ góc hoặc dấu bằng nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadRuler",
+        "Text":  "Đọc vạch trên thước và xác định độ dài đoạn thẳng, kể cả khi đầu đoạn không ở vạch 0.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadProtractor",
+        "Text":  "Đọc số đo góc trên thước đo góc theo cạnh gốc.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadThermometer",
+        "Text":  "Đọc nhiệt độ theo vạch chia trên nhiệt kế.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.SortData",
+        "Text":  "Phân loại số liệu theo dấu hiệu cho trước và kiểm đếm số phần tử từng nhóm.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.CompleteBarChart",
+        "Text":  "Dùng danh sách quan sát để tìm giá trị cột còn thiếu trong biểu đồ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Add",
+        "Text":  "Thực hiện phép cộng với số tự nhiên và giải bài toán tương ứng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Add",
+        "Text":  "Thực hiện phép cộng với phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Add.Left",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Add.Right",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Subtract",
+        "Text":  "Thực hiện phép trừ với số tự nhiên và giải bài toán tương ứng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Subtract",
+        "Text":  "Thực hiện phép trừ với phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Subtract.Left",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Subtract.Right",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Multiply",
+        "Text":  "Thực hiện phép nhân với số tự nhiên và giải bài toán tương ứng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Multiply",
+        "Text":  "Thực hiện phép nhân với phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Multiply.Left",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Multiply.Right",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Divide",
+        "Text":  "Thực hiện phép chia với số tự nhiên và giải bài toán tương ứng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Divide",
+        "Text":  "Thực hiện phép chia với phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Divide.Left",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Divide.Right",
+        "Text":  "Tìm thành phần chưa biết của phép tính từ các dữ kiện đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.Direct",
+        "Text":  "Tính trung bình cộng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.TotalToAverage",
+        "Text":  "Tìm trung bình cộng từ tổng và số lượng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.AverageToTotal",
+        "Text":  "Tìm tổng từ trung bình cộng và số lượng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.MissingValue",
+        "Text":  "Tìm số còn thiếu khi biết trung bình cộng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.IndirectData",
+        "Text":  "Suy ra dữ kiện rồi tìm trung bình cộng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.TwoGroups",
+        "Text":  "Tính trung bình cộng của hai nhóm.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindPercentageRatio",
+        "Text":  "Tính tỉ số phần trăm của hai số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindPercentageValue",
+        "Text":  "Tìm giá trị phần trăm của một số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindWholeFromPercentageValue",
+        "Text":  "Tìm toàn bộ khi biết giá trị phần trăm.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.Integer",
+        "Text":  "Tính giá trị biểu thức số tự nhiên.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.IntegerWithBrackets",
+        "Text":  "Tính biểu thức số tự nhiên có ngoặc.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.Fraction",
+        "Text":  "Tính giá trị biểu thức phân số.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.FractionWithBrackets",
+        "Text":  "Tính biểu thức phân số có ngoặc.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Proportion.Direct",
+        "Text":  "Giải bài toán rút về đơn vị và phụ thuộc trực tiếp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Proportion.Inverse",
+        "Text":  "Giải bài toán quan hệ ngược giữa hai đại lượng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicDistance",
+        "Text":  "Tìm quãng đường của chuyển động đều.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicSpeed",
+        "Text":  "Tìm vận tốc của chuyển động đều.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicTime",
+        "Text":  "Tìm thời gian của chuyển động đều.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicRestDistance",
+        "Text":  "Tính quãng đường có xét thời gian nghỉ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.CatchUpTime",
+        "Text":  "Tính thời gian đuổi kịp.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.MeetingTime",
+        "Text":  "Tính thời gian gặp nhau.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverDownstreamSpeed",
+        "Text":  "Tính vận tốc xuôi dòng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverUpstreamSpeed",
+        "Text":  "Tính vận tốc ngược dòng.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverBoatSpeed",
+        "Text":  "Tìm vận tốc thuyền khi nước đứng yên.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverCurrentSpeed",
+        "Text":  "Tìm vận tốc dòng nước.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.square.Perimeter",
+        "Text":  "Tính chu vi của hình vuông từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.square.Area",
+        "Text":  "Tính diện tích của hình vuông từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangle.Perimeter",
+        "Text":  "Tính chu vi của hình chữ nhật từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangle.Area",
+        "Text":  "Tính diện tích của hình chữ nhật từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.triangle.Perimeter",
+        "Text":  "Tính chu vi của hình tam giác từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.triangle.Area",
+        "Text":  "Tính diện tích của hình tam giác từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.trapezoid.Perimeter",
+        "Text":  "Tính chu vi của hình thang từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.trapezoid.Area",
+        "Text":  "Tính diện tích của hình thang từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rhombus.Perimeter",
+        "Text":  "Tính chu vi của hình thoi từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rhombus.Area",
+        "Text":  "Tính diện tích của hình thoi từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.parallelogram.Perimeter",
+        "Text":  "Tính chu vi của hình bình hành từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.parallelogram.Area",
+        "Text":  "Tính diện tích của hình bình hành từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.circle.Perimeter",
+        "Text":  "Tính chu vi của hình tròn từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.circle.Area",
+        "Text":  "Tính diện tích của hình tròn từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.Volume",
+        "Text":  "Tính thể tích của hình lập phương từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.LateralArea",
+        "Text":  "Tính diện tích xung quanh của hình lập phương từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.TotalArea",
+        "Text":  "Tính diện tích toàn phần của hình lập phương từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.Volume",
+        "Text":  "Tính thể tích của hình hộp chữ nhật từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.LateralArea",
+        "Text":  "Tính diện tích xung quanh của hình hộp chữ nhật từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.TotalArea",
+        "Text":  "Tính diện tích toàn phần của hình hộp chữ nhật từ số đo đã cho.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ConstructShapes",
+        "Text":  "Đo, vẽ và dựng hình bằng dụng cụ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.ExperimentTrials",
+        "Text":  "Tự thực hiện thí nghiệm ngẫu nhiên và ghi kết quả.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.FreeChartInput",
+        "Text":  "Tự đưa số liệu vào biểu đồ qua thao tác.",
+        "Variables": []
     }
   ],
   "Lists": {
@@ -21024,6 +22398,172 @@
     "MotionQuizGenerator.Watercraft": [
       "một ca nô",
       "một xuồng máy"
-    ]
+    ],
+    "Foundation.NumberNames": [
+    {
+        "Value":  0,
+        "Words":  "không"
+    },
+    {
+        "Value":  1,
+        "Words":  "một"
+    },
+    {
+        "Value":  2,
+        "Words":  "hai"
+    },
+    {
+        "Value":  3,
+        "Words":  "ba"
+    },
+    {
+        "Value":  4,
+        "Words":  "bốn"
+    },
+    {
+        "Value":  5,
+        "Words":  "năm"
+    },
+    {
+        "Value":  6,
+        "Words":  "sáu"
+    },
+    {
+        "Value":  7,
+        "Words":  "bảy"
+    },
+    {
+        "Value":  8,
+        "Words":  "tám"
+    },
+    {
+        "Value":  9,
+        "Words":  "chín"
+    },
+    {
+        "Value":  10,
+        "Words":  "mười"
+    },
+    {
+        "Value":  11,
+        "Words":  "mười một"
+    },
+    {
+        "Value":  12,
+        "Words":  "mười hai"
+    },
+    {
+        "Value":  15,
+        "Words":  "mười lăm"
+    },
+    {
+        "Value":  20,
+        "Words":  "hai mươi"
+    },
+    {
+        "Value":  21,
+        "Words":  "hai mươi mốt"
+    },
+    {
+        "Value":  25,
+        "Words":  "hai mươi lăm"
+    },
+    {
+        "Value":  40,
+        "Words":  "bốn mươi"
+    },
+    {
+        "Value":  75,
+        "Words":  "bảy mươi lăm"
+    },
+    {
+        "Value":  90,
+        "Words":  "chín mươi"
+    },
+    {
+        "Value":  99,
+        "Words":  "chín mươi chín"
+    },
+    {
+        "Value":  100,
+        "Words":  "một trăm"
+    },
+    {
+        "Value":  105,
+        "Words":  "một trăm linh năm"
+    },
+    {
+        "Value":  112,
+        "Words":  "một trăm mười hai"
+    },
+    {
+        "Value":  200,
+        "Words":  "hai trăm"
+    },
+    {
+        "Value":  350,
+        "Words":  "ba trăm năm mươi"
+    },
+    {
+        "Value":  506,
+        "Words":  "năm trăm linh sáu"
+    },
+    {
+        "Value":  999,
+        "Words":  "chín trăm chín mươi chín"
+    },
+    {
+        "Value":  1000,
+        "Words":  "một nghìn"
+    },
+    {
+        "Value":  1005,
+        "Words":  "một nghìn không trăm linh năm"
+    },
+    {
+        "Value":  1010,
+        "Words":  "một nghìn không trăm mười"
+    },
+    {
+        "Value":  1200,
+        "Words":  "một nghìn hai trăm"
+    },
+    {
+        "Value":  5000,
+        "Words":  "năm nghìn"
+    },
+    {
+        "Value":  9999,
+        "Words":  "chín nghìn chín trăm chín mươi chín"
+    },
+    {
+        "Value":  10000,
+        "Words":  "mười nghìn"
+    },
+    {
+        "Value":  10001,
+        "Words":  "mười nghìn không trăm linh một"
+    },
+    {
+        "Value":  10500,
+        "Words":  "mười nghìn năm trăm"
+    },
+    {
+        "Value":  100000,
+        "Words":  "một trăm nghìn"
+    },
+    {
+        "Value":  125000,
+        "Words":  "một trăm hai mươi lăm nghìn"
+    },
+    {
+        "Value":  500000,
+        "Words":  "năm trăm nghìn"
+    },
+    {
+        "Value":  1000000,
+        "Words":  "một triệu"
+    }
+]
   }
 }

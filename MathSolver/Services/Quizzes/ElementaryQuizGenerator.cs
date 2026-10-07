@@ -11,15 +11,20 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
     public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
     {
+        QuizProblemKind.NumberSense => [ElementaryQuizType.Counting, ElementaryQuizType.ReadNumber,
+            ElementaryQuizType.WriteNumber, ElementaryQuizType.PlaceValue, ElementaryQuizType.AdjacentNumbers,
+            ElementaryQuizType.NumberLine, ElementaryQuizType.Parity, ElementaryQuizType.RomanNumerals,
+            ElementaryQuizType.OrderNumbers, ElementaryQuizType.RoundWholeNumber, ElementaryQuizType.EstimateSum,
+            ElementaryQuizType.LetterExpression],
         QuizProblemKind.TwoNumbers => [ElementaryQuizType.SumDifference, ElementaryQuizType.SumRatio, ElementaryQuizType.DifferenceRatio],
-        QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.MapScale],
+        QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.MapScale, ElementaryQuizType.ReadRuler, ElementaryQuizType.ReadProtractor, ElementaryQuizType.ReadThermometer],
         QuizProblemKind.Time => [ElementaryQuizType.ElapsedTime, ElementaryQuizType.TimeAddition, ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar],
         QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare],
-        QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction],
-        QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph],
+        QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction, ElementaryQuizType.FractionPicture, ElementaryQuizType.FractionTerms, ElementaryQuizType.EquivalentFraction, ElementaryQuizType.OrderFractions],
+        QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph, ElementaryQuizType.SortData, ElementaryQuizType.CompleteBarChart],
         QuizProblemKind.Probability => [ElementaryQuizType.Likelihood, ElementaryQuizType.ExperimentalProbability],
-        QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea, ElementaryQuizType.RecognizeShape],
+        QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea, ElementaryQuizType.RecognizeShape, ElementaryQuizType.SpatialPosition, ElementaryQuizType.IdentifyLine, ElementaryQuizType.Midpoint, ElementaryQuizType.CircleParts, ElementaryQuizType.ShapeNet, ElementaryQuizType.TriangleKind],
         QuizProblemKind.MultiStep => [ElementaryQuizType.MultiStepAddSubtract, ElementaryQuizType.MultiStepEqualGroups, ElementaryQuizType.MultiStepRemaining, ElementaryQuizType.MultiStepShare],
         _ => []
     };
@@ -263,7 +268,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         if (contract.Reasoning is not null)
             work.AddRange(contract.Reasoning.Steps.Select(step => step.Label + ":" + Environment.NewLine +
                 DisplayStepExpression(step.Expression) + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));
-        if (contract.Reasoning is not null && work.Count == 0 && contract.Type != ElementaryQuizType.ReadClock)
+        if (contract.Reasoning is not null && work.Count == 0 && contract.Type != ElementaryQuizType.ReadClock
+            && !IsFoundationSkill(contract.Type))
             work.Add(answers[0].Label + ": " + ElementaryQuizContract.FormatAnswer(answers[0]));
         contract = contract with { SolutionText = string.Join(Environment.NewLine,
             work.Append(answerLabel + ": " + contract.AnswerText)) };
@@ -277,7 +283,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
             choices.AddRange(Enumerable.Range(1, 3).Select(delta =>
                 new ReducedFraction((favorable + delta) % (total + 1), total).ToString()));
         }
-        else for (int delta = 1; delta <= 3; delta++)
+        else if (textChoices is null) for (int delta = 1; delta <= 3; delta++)
         {
             var alternative = answers.Select((answer, index) => index != 0 ? answer : answer.Text is not null
                 ? answer with { Text = WrongText(answer, delta, vi) }

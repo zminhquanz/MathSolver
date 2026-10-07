@@ -637,7 +637,8 @@ public static class QuizCurriculumLayer
 
         // Skills become available individually at every star; Mixed follows a
         // gradual progression and uses the same pool for both sources.
-        pool = [.. pool, new(new(QuizProblemKind.VisualGeometry), 1), new(new(QuizProblemKind.Time), 1)];
+        pool = [.. pool, new(new(QuizProblemKind.VisualGeometry), 1), new(new(QuizProblemKind.Time), 1),
+            new(new(QuizProblemKind.NumberSense), 1)];
         if (tier >= CurriculumTier.TwoStars)
             pool = [.. pool, new(new(QuizProblemKind.Data), 1), new(new(QuizProblemKind.Probability), 1),
                 new(new(QuizProblemKind.MultiStep), 1)];
@@ -680,6 +681,13 @@ public static class QuizCurriculumLayer
         int level = (int)tier;
         return kind switch
         {
+            QuizProblemKind.NumberSense => ElementaryQuizGenerator.Types(kind).Where(type => level >= (type switch
+            {
+                ElementaryQuizType.AdjacentNumbers or ElementaryQuizType.NumberLine => 2,
+                ElementaryQuizType.RomanNumerals or ElementaryQuizType.RoundWholeNumber or ElementaryQuizType.EstimateSum => 3,
+                ElementaryQuizType.Parity or ElementaryQuizType.LetterExpression => 4,
+                _ => 1
+            })).ToArray(),
             QuizProblemKind.VisualGeometry => level <= 2 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides]
                 : level == 3 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle]
                 : level == 4 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,

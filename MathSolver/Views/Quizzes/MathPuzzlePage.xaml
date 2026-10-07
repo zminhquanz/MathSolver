@@ -803,6 +803,10 @@
                                     Clicked="OnQuizDiagramToggleClicked" HorizontalOptions="Center"
                                     CornerRadius="12" />
 
+                            <Label x:Name="QuestionCurriculumLabel" IsVisible="False" FontSize="12"
+                                   HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                   TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
                             <Grid x:Name="QuestionDiagramGrid" RowDefinitions="Auto,Auto"
                                   RowSpacing="16" ColumnSpacing="20" SizeChanged="OnQuestionDiagramSizeChanged">
                                 <VerticalStackLayout x:Name="QuestionTextPanel" Spacing="8" VerticalOptions="Center">

@@ -24,7 +24,8 @@ public enum QuizProblemKind
     Data,
     Probability,
     VisualGeometry,
-    MultiStep
+    MultiStep,
+    NumberSense
 }
 
 /// <summary>

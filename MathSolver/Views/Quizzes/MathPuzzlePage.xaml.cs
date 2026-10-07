@@ -689,10 +689,10 @@ public partial class MathPuzzlePage : ContentPage
                 EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayCombinedAnswerHint");
                 EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder");
             }
-            else if (elementary.Kind == QuizProblemKind.VisualGeometry && elementary.Answers.All(answer => answer.IsText))
+            else if (!elementary.RequiresSolution && (!elementary.RequiresCalculation || elementary.Answers.All(answer => answer.IsText)))
             {
                 EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
-                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayCombinedAnswerHint");
+                EssayValidationHintLabel.Text = QuizContentCatalog.Text(elementary.Language, "Curriculum.AnswerHint");
                 EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayCombinedAnswerPlaceholder");
             }
         }
@@ -1902,10 +1902,12 @@ public partial class MathPuzzlePage : ContentPage
                 SetQuestionContent(wordProblem?.ProblemText ?? elementary.ProblemText, 21,
                     "WallpaperTextPrimaryColor", useFractionFormatting: elementary.UsesFractionFormatting);
                 bool showPresented = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse;
+                string presentedText = FormatPresentedAnswerForDisplay(elementary.PresentedText ?? "");
                 PresentedAnswerLabel.IsVisible = showPresented && !elementary.UsesFractionFormatting;
-                PresentedAnswerLabel.Text = elementary.PresentedText ?? "";
+                PresentedAnswerLabel.Text = showPresented ? presentedText : "";
                 PresentedAnswerFractionView.IsVisible = showPresented && elementary.UsesFractionFormatting;
-                PresentedAnswerFractionView.Expression = FormatElementaryAnswerForDisplay(elementary, elementary.PresentedText ?? "");
+                PresentedAnswerFractionView.Expression = showPresented
+                    ? FormatElementaryAnswerForDisplay(elementary, presentedText) : "";
             }
         }
         else if (wordProblem is not null)
@@ -1929,11 +1931,7 @@ public partial class MathPuzzlePage : ContentPage
                         .GetValueOrDefault()
                         .ToString("N0", CultureInfo.CurrentCulture);
 
-                string presentedText = string.Format(
-                    CultureInfo.CurrentCulture,
-                    Translate("Quiz.PresentedAnswer"),
-                    presentedAnswer,
-                    wordProblem.AnswerUnit);
+                string presentedText = FormatPresentedAnswerForDisplay(presentedAnswer, wordProblem.AnswerUnit);
 
                 if (_currentQuestion.UsesFractionFormatting)
                 {
@@ -1974,11 +1972,7 @@ public partial class MathPuzzlePage : ContentPage
                         .ToString("N0", CultureInfo.CurrentCulture);
 
                 PresentedAnswerFractionView.IsVisible = false;
-                PresentedAnswerLabel.Text = string.Format(
-                    CultureInfo.CurrentCulture,
-                    Translate("Quiz.PresentedAnswer"),
-                    presentedAnswer,
-                    proportionProblem.AnswerUnit);
+                PresentedAnswerLabel.Text = FormatPresentedAnswerForDisplay(presentedAnswer, proportionProblem.AnswerUnit);
                 PresentedAnswerLabel.IsVisible = true;
             }
             else
@@ -2006,11 +2000,7 @@ public partial class MathPuzzlePage : ContentPage
                         .ToString("N0", CultureInfo.CurrentCulture);
 
                 PresentedAnswerFractionView.IsVisible = false;
-                PresentedAnswerLabel.Text = string.Format(
-                    CultureInfo.CurrentCulture,
-                    Translate("Quiz.PresentedAnswer"),
-                    presentedAnswer,
-                    motionProblem.AnswerUnit);
+                PresentedAnswerLabel.Text = FormatPresentedAnswerForDisplay(presentedAnswer, motionProblem.AnswerUnit);
                 PresentedAnswerLabel.IsVisible = true;
             }
             else
@@ -2213,6 +2203,10 @@ public partial class MathPuzzlePage : ContentPage
     private static string FormatElementaryAnswerForDisplay(ElementaryQuizContract contract, string text) =>
         contract.Answers.Count > 1 ? text.Replace("; ", Environment.NewLine, StringComparison.Ordinal) : text;
 
+    // Label only the proposed value; never substitute the computed answer in True/False mode.
+    private string FormatPresentedAnswerForDisplay(string answer, string answerUnit = "") =>
+        string.Format(CultureInfo.CurrentCulture, Translate("Quiz.PresentedAnswer"), answer, answerUnit).TrimEnd();
+
     private void UpdateElementaryChoiceLayout(ElementaryQuizContract? contract)
     {
         double width = MultipleChoiceAnswerGrid.Width;
@@ -2252,11 +2246,7 @@ public partial class MathPuzzlePage : ContentPage
             .ToString("N0", CultureInfo.CurrentCulture);
 
         PresentedAnswerFractionView.IsVisible = false;
-        PresentedAnswerLabel.Text = string.Format(
-            CultureInfo.CurrentCulture,
-            Translate("Quiz.PresentedAnswer"),
-            presentedAnswer,
-            answerUnit);
+        PresentedAnswerLabel.Text = FormatPresentedAnswerForDisplay(presentedAnswer, answerUnit);
         PresentedAnswerLabel.IsVisible = true;
     }
 
@@ -2345,8 +2335,7 @@ public partial class MathPuzzlePage : ContentPage
                     || _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null
                     || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData,
                 requireAnswerLabel: _currentQuestion.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
-                allowTextAnswer: _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.VisualGeometry,
-                    Type: ElementaryQuizType.ClassifyAngle or ElementaryQuizType.ParallelLines or ElementaryQuizType.PerpendicularLines or ElementaryQuizType.RecognizeShape });
+                allowTextAnswer: _currentQuestion.ElementaryProblem?.Answers.Any(answer => answer.IsText) == true);
 
         EssayAnswerValidationResult validation =
             _essayAnswerValidator.Validate(

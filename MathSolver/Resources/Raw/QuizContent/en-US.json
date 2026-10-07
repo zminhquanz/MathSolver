@@ -7333,6 +7333,1380 @@
       "Id": "AppliedQuestionCatalogue.Contexts.FactTable.038",
       "Text": "Total visits",
       "Variables": []
+    },
+    {
+        "Id":  "Foundation.Answer",
+        "Text":  "Answer",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Counting",
+        "Text":  "Count the dots in the picture.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.CountDescription",
+        "Text":  "The picture contains {count} separate dots.",
+        "Variables":  [
+                          "count"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadNumber",
+        "Text":  "Write {number} in words.",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.WriteNumber",
+        "Text":  "Write the number: {words}.",
+        "Variables":  [
+                          "words"
+                      ]
+    },
+    {
+        "Id":  "Foundation.PlaceValue",
+        "Text":  "In {number}, what is the value of digit {digit} in the {place} place?",
+        "Variables":  [
+                          "digit",
+                          "number",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Place0",
+        "Text":  "ones",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place1",
+        "Text":  "tens",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place2",
+        "Text":  "hundreds",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place3",
+        "Text":  "thousands",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place4",
+        "Text":  "ten-thousands",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Place5",
+        "Text":  "hundred-thousands",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Before",
+        "Text":  "Predecessor",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.After",
+        "Text":  "Successor",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.AdjacentNumbers",
+        "Text":  "Find the predecessor and successor of {number}.",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.NumberLine",
+        "Text":  "Fill in the missing number marked ? on the number line.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineDescription",
+        "Text":  "Equally spaced ticks on the number line are labelled: {numbers}.",
+        "Variables":  [
+                          "numbers"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Even",
+        "Text":  "Even",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Odd",
+        "Text":  "Odd",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.BothParity",
+        "Text":  "Both even and odd",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NeitherParity",
+        "Text":  "Neither even nor odd",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Parity",
+        "Text":  "Is {number} even or odd?",
+        "Variables":  [
+                          "number"
+                      ]
+    },
+    {
+        "Id":  "Foundation.RomanNumerals",
+        "Text":  "What number does the Roman numeral {roman} represent?",
+        "Variables":  [
+                          "roman"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Order",
+        "Text":  "Arrange in {direction} order: {numbers}. Use → between numbers.",
+        "Variables":  [
+                          "direction",
+                          "numbers"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Ascending",
+        "Text":  "ascending",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Descending",
+        "Text":  "descending",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RoundWholeNumber",
+        "Text":  "Round {number} to the nearest multiple of {place}. Round halfway cases up.",
+        "Variables":  [
+                          "number",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.EstimateSum",
+        "Text":  "Estimate {a} + {b}: round each number to the nearest multiple of {place}, then add the rounded numbers.",
+        "Variables":  [
+                          "a",
+                          "b",
+                          "place"
+                      ]
+    },
+    {
+        "Id":  "Foundation.LetterExpression",
+        "Text":  "Given a = {a}, b = {b}, c = {c}, evaluate {expression}.",
+        "Variables":  [
+                          "a",
+                          "b",
+                          "c",
+                          "expression"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Numerator",
+        "Text":  "Numerator",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Denominator",
+        "Text":  "Denominator",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.FractionTerms",
+        "Text":  "Identify the numerator and denominator of {fraction}.",
+        "Variables":  [
+                          "fraction"
+                      ]
+    },
+    {
+        "Id":  "Foundation.EquivalentFraction",
+        "Text":  "Fill in the missing numerator: {fraction} = ?/{denominator}.",
+        "Variables":  [
+                          "denominator",
+                          "fraction"
+                      ]
+    },
+    {
+        "Id":  "Foundation.FractionPicture",
+        "Text":  "Write the fraction of equal parts shaded in the picture.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.FractionDescription",
+        "Text":  "The picture has {denominator} equal parts; {numerator} are shaded.",
+        "Variables":  [
+                          "denominator",
+                          "numerator"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Left",
+        "Text":  "Left",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Right",
+        "Text":  "Right",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Above",
+        "Text":  "Above",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Below",
+        "Text":  "Below",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.SpatialPosition",
+        "Text":  "Where is point A relative to point B?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.PositionDescription",
+        "Text":  "Point A is {position} relative to point B.",
+        "Variables":  [
+                          "position"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Segment",
+        "Text":  "Line segment",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Line",
+        "Text":  "Straight line",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Curve",
+        "Text":  "Curve",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Polyline",
+        "Text":  "Polyline",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.IdentifyLine",
+        "Text":  "What type of line is shown?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription0",
+        "Text":  "A straight path bounded by two endpoints marked with dots.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription1",
+        "Text":  "A straight path with arrows extending in both directions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription2",
+        "Text":  "A continuous curved path.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.LineShapeDescription3",
+        "Text":  "Three connected straight segments that change direction at their vertices.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointYes",
+        "Text":  "M is the midpoint of AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointNo",
+        "Text":  "M is not the midpoint of AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Endpoint",
+        "Text":  "M is an endpoint of AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Outside",
+        "Text":  "M is outside segment AB",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Midpoint",
+        "Text":  "A, M and B are collinear. Using the labelled lengths, is M the midpoint of AB?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.MidpointDescription",
+        "Text":  "A, M, B are collinear in that order; AM = {left} cm, MB = {right} cm.",
+        "Variables":  [
+                          "left",
+                          "right"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Center",
+        "Text":  "Centre",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Radius",
+        "Text":  "Radius",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Diameter",
+        "Text":  "Diameter",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Circle",
+        "Text":  "Circle",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.CircleParts",
+        "Text":  "Which part of the circle is {target}?",
+        "Variables":  [
+                          "target"
+                      ]
+    },
+    {
+        "Id":  "Foundation.CircleDescription",
+        "Text":  "O is at the centre of the circle. A and B are opposite points on the circle; AB passes through O. C lies on the circle; OC joins O to C.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cube",
+        "Text":  "Cube",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cuboid",
+        "Text":  "Cuboid",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Cylinder",
+        "Text":  "Cylinder",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Sphere",
+        "Text":  "Sphere",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ShapeNet",
+        "Text":  "Which solid can be folded from this net?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription0",
+        "Text":  "Six equal squares: four in a row, one above and one below the second square.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription1",
+        "Text":  "Four joined rectangular side faces, with two matching rectangles above and below the second face; the side lengths differ.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.NetDescription2",
+        "Text":  "A rectangle with two equal circles attached to opposite edges.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.AcuteTriangle",
+        "Text":  "Acute, non-equilateral triangle",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RightTriangle",
+        "Text":  "Right triangle",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ObtuseTriangle",
+        "Text":  "Obtuse triangle",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.EquilateralTriangle",
+        "Text":  "Equilateral triangle",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleKind",
+        "Text":  "Classify the triangle using the angle and equal-side markings.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription0",
+        "Text":  "The triangle has angles of 50°, 60° and 70°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription1",
+        "Text":  "The triangle has a right angle and two angles of 45°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription2",
+        "Text":  "The triangle has angles of 120°, 30° and 30°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.TriangleDescription3",
+        "Text":  "The triangle has three equally marked sides and three angles of 60°.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ReadRuler",
+        "Text":  "How many centimetres long is the coloured segment on the ruler?",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.RulerDescription",
+        "Text":  "The coloured segment starts at {start} cm and ends at {end} cm.",
+        "Variables":  [
+                          "end",
+                          "start"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadProtractor",
+        "Text":  "Read the angle using the protractor scale with zero on the right; the baseline ray points right.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ProtractorDescription",
+        "Text":  "The baseline ray points right; the other ray meets {degrees}° on the scale starting at zero on the right.",
+        "Variables":  [
+                          "degrees"
+                      ]
+    },
+    {
+        "Id":  "Foundation.ReadThermometer",
+        "Text":  "Read the thermometer in °C.",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.ThermometerDescription",
+        "Text":  "The liquid column ends at the tick labelled {degrees} on the Celsius scale.",
+        "Variables":  [
+                          "degrees"
+                      ]
+    },
+    {
+        "Id":  "Foundation.Red",
+        "Text":  "Red",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Blue",
+        "Text":  "Blue",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.Yellow",
+        "Text":  "Yellow",
+        "Variables": []
+    },
+    {
+        "Id":  "Foundation.SortData",
+        "Text":  "Colours: {items}. Count Red, Blue and Yellow occurrences and label each result.",
+        "Variables":  [
+                          "items"
+                      ]
+    },
+    {
+        "Id":  "Foundation.CompleteBarChart",
+        "Text":  "Observed data: {items}. Fill in the missing {category} bar value marked ? to complete the chart.",
+        "Variables":  [
+                          "category",
+                          "items"
+                      ]
+    },
+    {
+        "Id":  "Quiz.ProblemNumberSense",
+        "Text":  "Number sense",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Summary",
+        "Text":  "Grade reference {grades} · {scope}: {requirement}",
+        "Variables":  [
+                          "grades",
+                          "requirement",
+                          "scope"
+                      ]
+    },
+    {
+        "Id":  "Curriculum.Scope.Core",
+        "Text":  "Core skill",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Scope.Extension",
+        "Text":  "Extension",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.AnswerHint",
+        "Text":  "Enter the answer directly. Label multiple results and separate them with semicolons.",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Counting",
+        "Text":  "Count objects",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadNumber",
+        "Text":  "Read natural numbers",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.WriteNumber",
+        "Text":  "Write natural numbers",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.PlaceValue",
+        "Text":  "Place value",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.AdjacentNumbers",
+        "Text":  "Predecessor and successor",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.NumberLine",
+        "Text":  "Fill a number line",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Parity",
+        "Text":  "Even and odd numbers",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.RomanNumerals",
+        "Text":  "Roman numerals up to 20",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.OrderNumbers",
+        "Text":  "Order natural numbers",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.RoundWholeNumber",
+        "Text":  "Round whole numbers",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.EstimateSum",
+        "Text":  "Estimate a sum",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.LetterExpression",
+        "Text":  "Evaluate a letter expression",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.FractionPicture",
+        "Text":  "Fractions from shaded parts",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.FractionTerms",
+        "Text":  "Identify numerator and denominator",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.EquivalentFraction",
+        "Text":  "Equivalent fractions",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.OrderFractions",
+        "Text":  "Order fractions",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.SpatialPosition",
+        "Text":  "Spatial position",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.IdentifyLine",
+        "Text":  "Identify lines and paths",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.Midpoint",
+        "Text":  "Identify a midpoint",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.CircleParts",
+        "Text":  "Centre, radius and diameter",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ShapeNet",
+        "Text":  "Recognise solid nets",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.TriangleKind",
+        "Text":  "Classify triangles",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadRuler",
+        "Text":  "Read a ruler and measure a segment",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadProtractor",
+        "Text":  "Read a protractor",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.ReadThermometer",
+        "Text":  "Read a thermometer",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.SortData",
+        "Text":  "Classify and tally data",
+        "Variables": []
+    },
+    {
+        "Id":  "Quiz.Elementary.CompleteBarChart",
+        "Text":  "Complete bar-chart data",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.SumDifference",
+        "Text":  "Find two numbers from their sum and difference.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.SumRatio",
+        "Text":  "Find two numbers from their sum and ratio.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.TwoNumbers.DifferenceRatio",
+        "Text":  "Find two numbers from their difference and ratio.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.LengthConversion",
+        "Text":  "Solve a length conversion task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MassConversion",
+        "Text":  "Solve a mass conversion task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.CapacityConversion",
+        "Text":  "Solve a capacity conversion task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.AreaConversion",
+        "Text":  "Solve a area conversion task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.VolumeConversion",
+        "Text":  "Solve a volume conversion task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MixedLength",
+        "Text":  "Solve a mixed length units task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.MapScale",
+        "Text":  "Solve a map scale task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.ElapsedTime",
+        "Text":  "Solve a elapsed time task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.TimeAddition",
+        "Text":  "Solve a hours and minutes task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.ReadClock",
+        "Text":  "Solve a read a clock task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Time.Calendar",
+        "Text":  "Solve a calendar intervals task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.QuotientRemainder",
+        "Text":  "Solve a quotient and remainder task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.MinimumGroups",
+        "Text":  "Solve a minimum groups task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Remainder.Leftovers",
+        "Text":  "Solve a groups and leftovers task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalAdd",
+        "Text":  "Solve a decimal addition task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalSubtract",
+        "Text":  "Solve a decimal subtraction task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalMultiply",
+        "Text":  "Solve a decimal multiplication task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalDivide",
+        "Text":  "Solve a decimal division task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalRound",
+        "Text":  "Solve a rounding task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Decimal.DecimalCompare",
+        "Text":  "Solve a compare decimals task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.ReduceFraction",
+        "Text":  "Simplify a fraction by dividing numerator and denominator by a common factor.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.MixedNumber",
+        "Text":  "Convert an improper fraction into a mixed number.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.CommonDenominator",
+        "Text":  "Express fractions with a common denominator while preserving their values.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionOfNumber",
+        "Text":  "Find a specified fraction of a given quantity.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.WholeFromFraction",
+        "Text":  "Find a whole quantity from a known fractional part.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadTable",
+        "Text":  "Read and use data presented in a table.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadBarChart",
+        "Text":  "Read data represented by bar heights.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadPieChart",
+        "Text":  "Read component percentages from a pie chart.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ChartTotal",
+        "Text":  "Find a total from grouped data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ChartDifference",
+        "Text":  "Find the difference between two data categories.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.ReadPictograph",
+        "Text":  "Read a pictograph using its quantity-per-symbol key.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.Likelihood",
+        "Text":  "Describe an event as certain, possible or impossible.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.ExperimentalProbability",
+        "Text":  "Express an outcome count as a fraction of the supplied trial count.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ClassifyAngle",
+        "Text":  "Identify acute, right, obtuse and straight angles.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ParallelLines",
+        "Text":  "Identify parallel lines in a diagram.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.PerpendicularLines",
+        "Text":  "Identify perpendicular lines in a diagram.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CountSides",
+        "Text":  "Count the sides of a plane shape.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.RectangleSide",
+        "Text":  "Find a missing side from side relationships or perimeter.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CompositeArea",
+        "Text":  "Split a composite shape into familiar parts to calculate its area.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.RecognizeShape",
+        "Text":  "Recognise familiar plane shapes and solids.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepAddSubtract",
+        "Text":  "Solve a combine, remove and recover an initial amount task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepEqualGroups",
+        "Text":  "Solve a equal groups and adjustments task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepRemaining",
+        "Text":  "Solve a find the remainder in several steps task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.MultiStep.MultiStepShare",
+        "Text":  "Solve a combine quantities and share equally task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.IntegerCompare",
+        "Text":  "Solve a compare integers task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.CompareFractions",
+        "Text":  "Solve a compare fractions task using the supplied data.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.Counting",
+        "Text":  "Count objects and determine their quantity from a picture.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.ReadNumber",
+        "Text":  "Read a natural number in words using place value.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.WriteNumber",
+        "Text":  "Write a natural number from its word form.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.PlaceValue",
+        "Text":  "Determine a digit\u0027s value at a specified place in a natural number.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.AdjacentNumbers",
+        "Text":  "Find the predecessor and successor of a natural number.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.NumberLine",
+        "Text":  "Identify the missing number on an equally spaced number line.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.Parity",
+        "Text":  "Identify even and odd numbers.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.RomanNumerals",
+        "Text":  "Read Roman numerals up to 20.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.OrderNumbers",
+        "Text":  "Compare and arrange natural numbers in ascending or descending order.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.RoundWholeNumber",
+        "Text":  "Round a natural number to the specified place.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.EstimateSum",
+        "Text":  "Estimate a sum by rounding each addend.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.NumberSense.LetterExpression",
+        "Text":  "Evaluate a letter expression at supplied values.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionPicture",
+        "Text":  "Identify the fraction represented by shaded equal parts of a whole.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.FractionTerms",
+        "Text":  "Identify the numerator and denominator of a fraction.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.EquivalentFraction",
+        "Text":  "Find a missing numerator in equivalent fractions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FractionSkills.OrderFractions",
+        "Text":  "Compare and order fractions with a common denominator.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.SpatialPosition",
+        "Text":  "Identify an object\u0027s position to the left, right, above or below another.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.IdentifyLine",
+        "Text":  "Distinguish straight lines, segments, curves and polylines.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.Midpoint",
+        "Text":  "Identify a midpoint using collinearity and equal adjacent lengths.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.CircleParts",
+        "Text":  "Identify the centre, radius and diameter of a circle.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ShapeNet",
+        "Text":  "Recognise nets of cubes, cuboids and cylinders.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.TriangleKind",
+        "Text":  "Identify acute, right, obtuse and equilateral triangles from angles or equal-side marks.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadRuler",
+        "Text":  "Read ruler marks and measure a segment even when its start is not at zero.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadProtractor",
+        "Text":  "Read an angle on a protractor from its baseline.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Measurement.ReadThermometer",
+        "Text":  "Read temperature from a thermometer scale.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.SortData",
+        "Text":  "Classify observations by a given attribute and tally each category.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.CompleteBarChart",
+        "Text":  "Use observations to determine the missing bar-chart value.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Add",
+        "Text":  "Perform natural-number Add and solve the corresponding problem.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Add",
+        "Text":  "Perform fraction Add.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Add.Left",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Add.Right",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Subtract",
+        "Text":  "Perform natural-number Subtract and solve the corresponding problem.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Subtract",
+        "Text":  "Perform fraction Subtract.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Subtract.Left",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Subtract.Right",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Multiply",
+        "Text":  "Perform natural-number Multiply and solve the corresponding problem.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Multiply",
+        "Text":  "Perform fraction Multiply.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Multiply.Left",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Multiply.Right",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Arithmetic.Divide",
+        "Text":  "Perform natural-number Divide and solve the corresponding problem.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Fraction.Divide",
+        "Text":  "Perform fraction Divide.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Divide.Left",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.FindX.Divide.Right",
+        "Text":  "Find the unknown component of an arithmetic operation.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.Direct",
+        "Text":  "Calculate an arithmetic mean.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.TotalToAverage",
+        "Text":  "Calculate a mean from a total and count.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.AverageToTotal",
+        "Text":  "Find a total from a mean and count.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.MissingValue",
+        "Text":  "Find a missing value using a mean.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.IndirectData",
+        "Text":  "Infer data before calculating a mean.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Average.TwoGroups",
+        "Text":  "Calculate a combined mean of two groups.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindPercentageRatio",
+        "Text":  "Calculate the percentage ratio of two numbers.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindPercentageValue",
+        "Text":  "Find a percentage of a number.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Percentage.FindWholeFromPercentageValue",
+        "Text":  "Find a whole from a percentage value.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.Integer",
+        "Text":  "Evaluate a natural-number expression.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.IntegerWithBrackets",
+        "Text":  "Evaluate a bracketed natural-number expression.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.Fraction",
+        "Text":  "Evaluate a fraction expression.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Expression.FractionWithBrackets",
+        "Text":  "Evaluate a bracketed fraction expression.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Proportion.Direct",
+        "Text":  "Solve unitary-method and direct-dependence problems.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Proportion.Inverse",
+        "Text":  "Solve inverse-dependence problems.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicDistance",
+        "Text":  "Find distance in uniform motion.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicSpeed",
+        "Text":  "Find speed in uniform motion.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicTime",
+        "Text":  "Find time in uniform motion.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.BasicRestDistance",
+        "Text":  "Find distance excluding rest time.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.CatchUpTime",
+        "Text":  "Find catch-up time.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.MeetingTime",
+        "Text":  "Find meeting time.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverDownstreamSpeed",
+        "Text":  "Find downstream speed.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverUpstreamSpeed",
+        "Text":  "Find upstream speed.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverBoatSpeed",
+        "Text":  "Find boat speed in still water.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Motion.RiverCurrentSpeed",
+        "Text":  "Find river-current speed.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.square.Perimeter",
+        "Text":  "Calculate Perimeter of square from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.square.Area",
+        "Text":  "Calculate Area of square from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangle.Perimeter",
+        "Text":  "Calculate Perimeter of rectangle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangle.Area",
+        "Text":  "Calculate Area of rectangle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.triangle.Perimeter",
+        "Text":  "Calculate Perimeter of triangle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.triangle.Area",
+        "Text":  "Calculate Area of triangle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.trapezoid.Perimeter",
+        "Text":  "Calculate Perimeter of trapezoid from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.trapezoid.Area",
+        "Text":  "Calculate Area of trapezoid from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rhombus.Perimeter",
+        "Text":  "Calculate Perimeter of rhombus from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rhombus.Area",
+        "Text":  "Calculate Area of rhombus from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.parallelogram.Perimeter",
+        "Text":  "Calculate Perimeter of parallelogram from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.parallelogram.Area",
+        "Text":  "Calculate Area of parallelogram from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.circle.Perimeter",
+        "Text":  "Calculate Perimeter of circle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.circle.Area",
+        "Text":  "Calculate Area of circle from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.Volume",
+        "Text":  "Calculate Volume of cube from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.LateralArea",
+        "Text":  "Calculate LateralArea of cube from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.cube.TotalArea",
+        "Text":  "Calculate TotalArea of cube from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.Volume",
+        "Text":  "Calculate Volume of rectangular_prism from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.LateralArea",
+        "Text":  "Calculate LateralArea of rectangular_prism from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Geometry.rectangular_prism.TotalArea",
+        "Text":  "Calculate TotalArea of rectangular_prism from supplied dimensions.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.VisualGeometry.ConstructShapes",
+        "Text":  "Measure and construct shapes with instruments.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Probability.ExperimentTrials",
+        "Text":  "Perform random trials and record results.",
+        "Variables": []
+    },
+    {
+        "Id":  "Curriculum.Requirement.Data.FreeChartInput",
+        "Text":  "Enter data into a chart interactively.",
+        "Variables": []
     }
   ],
   "Lists": {
@@ -20700,6 +22074,172 @@
     "MotionQuizGenerator.Watercraft": [
       "a motorboat",
       "a speedboat"
-    ]
+    ],
+    "Foundation.NumberNames": [
+    {
+        "Value":  0,
+        "Words":  "zero"
+    },
+    {
+        "Value":  1,
+        "Words":  "one"
+    },
+    {
+        "Value":  2,
+        "Words":  "two"
+    },
+    {
+        "Value":  3,
+        "Words":  "three"
+    },
+    {
+        "Value":  4,
+        "Words":  "four"
+    },
+    {
+        "Value":  5,
+        "Words":  "five"
+    },
+    {
+        "Value":  6,
+        "Words":  "six"
+    },
+    {
+        "Value":  7,
+        "Words":  "seven"
+    },
+    {
+        "Value":  8,
+        "Words":  "eight"
+    },
+    {
+        "Value":  9,
+        "Words":  "nine"
+    },
+    {
+        "Value":  10,
+        "Words":  "ten"
+    },
+    {
+        "Value":  11,
+        "Words":  "eleven"
+    },
+    {
+        "Value":  12,
+        "Words":  "twelve"
+    },
+    {
+        "Value":  15,
+        "Words":  "fifteen"
+    },
+    {
+        "Value":  20,
+        "Words":  "twenty"
+    },
+    {
+        "Value":  21,
+        "Words":  "twenty-one"
+    },
+    {
+        "Value":  25,
+        "Words":  "twenty-five"
+    },
+    {
+        "Value":  40,
+        "Words":  "forty"
+    },
+    {
+        "Value":  75,
+        "Words":  "seventy-five"
+    },
+    {
+        "Value":  90,
+        "Words":  "ninety"
+    },
+    {
+        "Value":  99,
+        "Words":  "ninety-nine"
+    },
+    {
+        "Value":  100,
+        "Words":  "one hundred"
+    },
+    {
+        "Value":  105,
+        "Words":  "one hundred and five"
+    },
+    {
+        "Value":  112,
+        "Words":  "one hundred and twelve"
+    },
+    {
+        "Value":  200,
+        "Words":  "two hundred"
+    },
+    {
+        "Value":  350,
+        "Words":  "three hundred and fifty"
+    },
+    {
+        "Value":  506,
+        "Words":  "five hundred and six"
+    },
+    {
+        "Value":  999,
+        "Words":  "nine hundred and ninety-nine"
+    },
+    {
+        "Value":  1000,
+        "Words":  "one thousand"
+    },
+    {
+        "Value":  1005,
+        "Words":  "one thousand and five"
+    },
+    {
+        "Value":  1010,
+        "Words":  "one thousand and ten"
+    },
+    {
+        "Value":  1200,
+        "Words":  "one thousand two hundred"
+    },
+    {
+        "Value":  5000,
+        "Words":  "five thousand"
+    },
+    {
+        "Value":  9999,
+        "Words":  "nine thousand nine hundred and ninety-nine"
+    },
+    {
+        "Value":  10000,
+        "Words":  "ten thousand"
+    },
+    {
+        "Value":  10001,
+        "Words":  "ten thousand and one"
+    },
+    {
+        "Value":  10500,
+        "Words":  "ten thousand five hundred"
+    },
+    {
+        "Value":  100000,
+        "Words":  "one hundred thousand"
+    },
+    {
+        "Value":  125000,
+        "Words":  "one hundred and twenty-five thousand"
+    },
+    {
+        "Value":  500000,
+        "Words":  "five hundred thousand"
+    },
+    {
+        "Value":  1000000,
+        "Words":  "one million"
+    }
+]
   }
 }

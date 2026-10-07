@@ -156,7 +156,7 @@ internal static partial class ElementaryEssayValidator
         {
             var expected = contract.Answers[target];
             // Identification and direct readings need only an answer, not invented arithmetic.
-            if (!expected.IsText && !achieved[target] && !implicitSecondAnswer && expected.Expression.Any(character => "+-*/".Contains(character)) &&
+            if (contract.RequiresCalculation && !expected.IsText && !achieved[target] && !implicitSecondAnswer && expected.Expression.Any(character => "+-*/".Contains(character)) &&
                 !reports.Any(report => !report.IsCorrect))
                 details.Add(QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.007", ("expected_Label", $"{expected.Label}")));
         }

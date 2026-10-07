@@ -53,6 +53,22 @@
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
             <Setter Property="Stroke" Value="{DynamicResource PrimaryBorderBrush}" />
         </Style>
+        <!-- Match the shape selector in GeometryCalculatorView. Native picker spacing
+             already insets its text; extra frame padding would double that spacing. -->
+        <Style x:Key="AiBankPickerBorderStyle" TargetType="Border" BasedOn="{StaticResource SolverInputBorderStyle}">
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=48, Default=48}" />
+        </Style>
+        <Style x:Key="AiBankPickerStyle" TargetType="Picker" BasedOn="{StaticResource {x:Type Picker}}">
+            <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=48, Default=48}" />
+            <Setter Property="Margin" Value="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="VerticalOptions" Value="Fill" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
+            <Setter Property="TitleColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
+        </Style>
         <Style x:Key="AiBankDiagnosticCardStyle" TargetType="Border">
             <Setter Property="Padding" Value="12" />
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
@@ -90,8 +106,8 @@
                         </Grid>
                         <Button x:Name="OpenFolderButton" Text="{localization:Translate AiBank.OpenFolder}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnOpenFolderClicked" />
                         <Label Text="{localization:Translate AiBank.DownloadHint}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="DownloadModelPicker" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="DownloadModelPicker" Style="{StaticResource AiBankPickerStyle}" />
                         </Border>
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                             <Button x:Name="DownloadButton" Text="{localization:Translate AiBank.Download}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
@@ -186,36 +202,36 @@
                     <VerticalStackLayout x:Name="ConfigurationPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Label Text="{localization:Translate AiBank.ProblemType}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="ProblemPicker" SelectedIndexChanged="OnBankProblemChanged" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="ProblemPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankProblemChanged" />
                         </Border>
                         <Label Text="{localization:Translate Learning.Group}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="LearningGroupPicker" SelectedIndexChanged="OnLearningGroupChanged" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="LearningGroupPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnLearningGroupChanged" />
                         </Border>
                         <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
                         <Label Text="{localization:Translate AiBank.Operation}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="OperationPicker" SelectedIndexChanged="OnBankOperationChanged" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="OperationPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankOperationChanged" />
                         </Border>
                         <VerticalStackLayout x:Name="FindXRolePanel" IsVisible="False" Spacing="8">
                             <Label Text="{localization:Translate FindXBank.UnknownRole}" />
-                            <Border Style="{StaticResource AiBankInputBorderStyle}">
-                                <Picker x:Name="FindXRolePicker" SelectedIndexChanged="OnFindXRoleChanged" />
+                            <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                                <Picker x:Name="FindXRolePicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnFindXRoleChanged" />
                             </Border>
                         </VerticalStackLayout>
                         <Label Text="{localization:Translate AiBank.Difficulty}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="StarsPicker" SelectedIndexChanged="OnBankOperationChanged" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="StarsPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankOperationChanged" />
                         </Border>
                         <Label Text="{localization:Translate AiBank.Language}" />
-                        <Border Style="{StaticResource AiBankInputBorderStyle}">
-                            <Picker x:Name="LanguagePicker" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="LanguagePicker" Style="{StaticResource AiBankPickerStyle}" />
                         </Border>
                         <Label Text="{localization:Translate AiBank.GenerationMode}" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Border Style="{StaticResource AiBankInputBorderStyle}">
-                                <Picker x:Name="BatchModePicker" SelectedIndexChanged="OnBatchModeChanged" />
+                            <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                                <Picker x:Name="BatchModePicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBatchModeChanged" />
                             </Border>
                             <Border Grid.Column="1" Style="{StaticResource AiBankInputBorderStyle}">
                                 <Entry x:Name="CountEntry" Text="10" Keyboard="Numeric" Placeholder="{localization:Translate AiBank.Count}" IsEnabled="False" />
@@ -236,8 +252,8 @@
                 <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" />
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{localization:Translate AiBank.ProcessedQuestions}" FontAttributes="Bold" />
-                    <Border Style="{StaticResource AiBankInputBorderStyle}">
-                        <Picker x:Name="QuestionPicker" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
+                    <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                        <Picker x:Name="QuestionPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
                     </Border>
                 </VerticalStackLayout>
                 <Border x:Name="PreviewCard" Style="{StaticResource SolverCardStyle}">

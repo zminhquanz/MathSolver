@@ -26,7 +26,11 @@ public sealed partial class ElementaryQuizDrawable(QuizVisualData? data) : IDraw
             void Text(string text, float x, float y, float w, float h = 26) =>
                 canvas.DrawString(text, x, y, w, h, HorizontalAlignment.Center, VerticalAlignment.Center);
 
-            if (data.Polygons is { Count: > 0 })
+            if (data.Kind.StartsWith("foundation-", StringComparison.Ordinal))
+            {
+                DrawFoundation(canvas, data, width, height);
+            }
+            else if (data.Polygons is { Count: > 0 })
             {
                 DrawPolygons(canvas, data, width, height);
             }

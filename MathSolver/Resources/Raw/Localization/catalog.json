@@ -886,8 +886,8 @@
     },
     "Quiz.PresentedAnswer": {
       "context": "Math puzzle practice on Windows and Android.",
-      "description": "A label or message displayed in the math puzzle interface.",
-      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+      "description": "Labels the proposed answer that learners judge in True/False mode; it may be incorrect.",
+      "translatorNote": "Keep {0} for the proposed value or labeled results and {1} for the optional unit. Use a concise Answer: prefix, without implying the value is correct."
     },
     "Quiz.SolutionTitle": {
       "context": "Math puzzle practice on Windows and Android.",
@@ -2346,7 +2346,7 @@
     },
     {
       "key": "Quiz.PresentedAnswer",
-      "source": "Đáp án được đưa ra: {0} {1}",
+      "source": "Đáp án: {0} {1}",
       "mode": "exact"
     },
     {

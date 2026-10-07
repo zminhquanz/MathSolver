@@ -135,7 +135,8 @@ public static partial class TextbookFractionParser
         private static bool Integer(string value, out BigInteger number) => BigInteger.TryParse(value, out number);
     }
 
-    [GeneratedRegex(@"(?<![\p{L}\p{N}_])(?:[+\-−(]*[0-9])[0-9\s.,()+\-−*/×÷=<>?≈]*", RegexOptions.CultureInvariant)]
+    // A comma followed by whitespace separates list items; commas inside a number remain intact.
+    [GeneratedRegex(@"(?<![\p{L}\p{N}_])(?:[+\-−(]*[0-9])(?:[0-9\s.()+\-−*/×÷=<>?≈]|,(?=[0-9]))*", RegexOptions.CultureInvariant)]
     private static partial Regex MathRunRegex();
     [GeneratedRegex(@"^\d{1,2}/\d{1,2}/\d{4}$", RegexOptions.CultureInvariant)]
     private static partial Regex DateRegex();

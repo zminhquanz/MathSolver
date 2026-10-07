@@ -57,3 +57,21 @@ A filter that matches no group exits with a nonzero status.
 The command returns a nonzero exit code when any check fails. It needs no
 AI model, API key or unit-test package. Platform stubs let the shared math and
 storage code run outside MAUI. No benchmark is run by this test harness.
+
+## Primary curriculum and foundation skills
+
+The curriculum check validates 140 grade/objective references, unique routes,
+all implemented elementary subtypes, existing calculator quiz routes, and the
+three practical activities explicitly marked as planned. Grades describe skill
+alignment; they do not constrain every star variant's numbers or reasoning depth.
+See [PRIMARY_CURRICULUM_MAP.md](../../MathSolver/PRIMARY_CURRICULUM_MAP.md).
+
+Foundation checks generate 12,960 questions across 27 skills, five stars, both
+languages and all three answer modes. They check distinct choices, exact grading,
+answer-only input for recognition/reading tasks, rejected wrong answers and units,
+independent counting/measurement data, and hidden chart/number-line values.
+These checks do not replace visual inspection on Windows and Android devices.
+
+```powershell
+dotnet run --project UnitTest/MathPuzzleUnitTests -- "Primary curriculum" "Foundation" "Quiz localization" "Textbook fraction"
+```

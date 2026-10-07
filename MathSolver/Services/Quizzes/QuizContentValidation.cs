@@ -7,6 +7,20 @@ public static partial class QuizContentValidation
 {
     public static void CheckLists(QuizContentPack pack)
     {
+        if (pack.Lists.TryGetValue("Foundation.NumberNames", out var numberNames))
+        {
+            var values = new HashSet<int>();
+            var words = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (numberNames.GetArrayLength() < 4) Fail("Number vocabulary needs at least four distinct choices.");
+            foreach (var name in numberNames.EnumerateArray())
+            {
+                if (!name.GetProperty("Value").TryGetInt32(out int value) || value < 0 || !values.Add(value))
+                    Fail("Invalid or duplicate number vocabulary value.");
+                if (!words.Add(RequiredString(name, "Words").Trim())) Fail("Duplicate number vocabulary wording.");
+            }
+            if (values.Count(value => value <= 100) < 4)
+                Fail("Number vocabulary needs at least four choices within the introductory range 0-100.");
+        }
         foreach (var (key, fields) in ContextFields)
             if (pack.Lists.TryGetValue(key, out var contexts))
             {
@@ -81,6 +95,10 @@ public static partial class QuizContentValidation
         {
             if (!pack.Lists.TryGetValue(list.Key, out var translated)) Fail("Missing list: " + list.Key);
             if (translated.GetArrayLength() != list.Value.GetArrayLength()) Fail("Changed list length: " + list.Key);
+            if (list.Key == "Foundation.NumberNames")
+                for (int i = 0; i < list.Value.GetArrayLength(); i++)
+                    if (list.Value[i].GetProperty("Value").GetInt32() != translated[i].GetProperty("Value").GetInt32())
+                        Fail("Changed number vocabulary value.");
             if (ContextFields.ContainsKey(list.Key) || list.Key is "FractionQuantityContexts" or "DataChartContexts")
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                 {

@@ -17,6 +17,8 @@ public partial class MathPuzzlePage
     private void UpdateQuizDiagram()
     {
         if (_currentQuestion is null) { ResetQuizDiagram(); return; }
+        QuestionCurriculumLabel.Text = PrimaryCurriculumCatalog.Describe(_currentQuestion, AppLanguageManager.CurrentLanguage);
+        QuestionCurriculumLabel.IsVisible = !string.IsNullOrWhiteSpace(QuestionCurriculumLabel.Text);
         if (!ReferenceEquals(_diagramQuestion, _currentQuestion))
         {
             _diagramQuestion = _currentQuestion;
@@ -118,6 +120,8 @@ public partial class MathPuzzlePage
 
     private void ResetQuizDiagram()
     {
+        QuestionCurriculumLabel.Text = "";
+        QuestionCurriculumLabel.IsVisible = false;
         _diagramScrollVersion++;
         _diagramQuestion = null;
         _diagramExpanded = false;

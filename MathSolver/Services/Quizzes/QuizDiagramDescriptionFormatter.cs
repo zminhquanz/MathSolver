@@ -12,6 +12,8 @@ internal static class QuizDiagramDescriptionFormatter
         bool vi = language == AppLanguage.Vietnamese;
         if (visual is not null)
         {
+            if (visual.AccessibleDescription is { } accessible)
+                return AccessibleMathText.Format(accessible, language);
             parts.AddRange(visual.Labels);
             if (visual.Kind is "table" or "bar" or "pie" or "composite" or "rectangle" or "angle")
             {

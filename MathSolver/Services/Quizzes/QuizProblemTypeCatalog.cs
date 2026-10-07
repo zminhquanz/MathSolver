@@ -49,7 +49,8 @@ public sealed class QuizProblemTypeCatalog
         new("Quiz.ProblemData", new(QuizProblemKind.Data)),
         new("Quiz.ProblemProbability", new(QuizProblemKind.Probability)),
         new("Quiz.ProblemVisualGeometry", new(QuizProblemKind.VisualGeometry)),
-        new("Quiz.ProblemMultiStep", new(QuizProblemKind.MultiStep))
+        new("Quiz.ProblemMultiStep", new(QuizProblemKind.MultiStep)),
+        new("Quiz.ProblemNumberSense", new(QuizProblemKind.NumberSense))
     ];
 
     private static readonly IReadOnlyList<QuizProblemOption>

@@ -3852,6 +3852,2036 @@
         "UnitId": "responses",
         "MaximumPerPeriod": 500
       }
-    ]
+    ],
+    "PrimaryCurriculum": [
+    {
+        "Id":  "TwoNumbers.SumDifference",
+        "Kind":  "TwoNumbers",
+        "Subtype":  "SumDifference",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.TwoNumbers.SumDifference",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "TwoNumbers.SumRatio",
+        "Kind":  "TwoNumbers",
+        "Subtype":  "SumRatio",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.TwoNumbers.SumRatio",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "TwoNumbers.DifferenceRatio",
+        "Kind":  "TwoNumbers",
+        "Subtype":  "DifferenceRatio",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.TwoNumbers.DifferenceRatio",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.LengthConversion",
+        "Kind":  "Measurement",
+        "Subtype":  "LengthConversion",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.LengthConversion",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.MassConversion",
+        "Kind":  "Measurement",
+        "Subtype":  "MassConversion",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.MassConversion",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.CapacityConversion",
+        "Kind":  "Measurement",
+        "Subtype":  "CapacityConversion",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.CapacityConversion",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.AreaConversion",
+        "Kind":  "Measurement",
+        "Subtype":  "AreaConversion",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.AreaConversion",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.VolumeConversion",
+        "Kind":  "Measurement",
+        "Subtype":  "VolumeConversion",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.VolumeConversion",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.MixedLength",
+        "Kind":  "Measurement",
+        "Subtype":  "MixedLength",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.MixedLength",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.MapScale",
+        "Kind":  "Measurement",
+        "Subtype":  "MapScale",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.MapScale",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Time.ElapsedTime",
+        "Kind":  "Time",
+        "Subtype":  "ElapsedTime",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Time.ElapsedTime",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Time.TimeAddition",
+        "Kind":  "Time",
+        "Subtype":  "TimeAddition",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Time.TimeAddition",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Time.ReadClock",
+        "Kind":  "Time",
+        "Subtype":  "ReadClock",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Time.ReadClock",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Time.Calendar",
+        "Kind":  "Time",
+        "Subtype":  "Calendar",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Time.Calendar",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Remainder.QuotientRemainder",
+        "Kind":  "Remainder",
+        "Subtype":  "QuotientRemainder",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Remainder.QuotientRemainder",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Remainder.MinimumGroups",
+        "Kind":  "Remainder",
+        "Subtype":  "MinimumGroups",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Remainder.MinimumGroups",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Remainder.Leftovers",
+        "Kind":  "Remainder",
+        "Subtype":  "Leftovers",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Remainder.Leftovers",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalAdd",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalAdd",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalAdd",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalSubtract",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalSubtract",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalSubtract",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalMultiply",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalMultiply",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalMultiply",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalDivide",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalDivide",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalDivide",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalRound",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalRound",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalRound",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Decimal.DecimalCompare",
+        "Kind":  "Decimal",
+        "Subtype":  "DecimalCompare",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Decimal.DecimalCompare",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.ReduceFraction",
+        "Kind":  "FractionSkills",
+        "Subtype":  "ReduceFraction",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.ReduceFraction",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.MixedNumber",
+        "Kind":  "FractionSkills",
+        "Subtype":  "MixedNumber",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.MixedNumber",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.CommonDenominator",
+        "Kind":  "FractionSkills",
+        "Subtype":  "CommonDenominator",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.CommonDenominator",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.FractionOfNumber",
+        "Kind":  "FractionSkills",
+        "Subtype":  "FractionOfNumber",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.FractionOfNumber",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.WholeFromFraction",
+        "Kind":  "FractionSkills",
+        "Subtype":  "WholeFromFraction",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.WholeFromFraction",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ReadTable",
+        "Kind":  "Data",
+        "Subtype":  "ReadTable",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ReadTable",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ReadBarChart",
+        "Kind":  "Data",
+        "Subtype":  "ReadBarChart",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ReadBarChart",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ReadPieChart",
+        "Kind":  "Data",
+        "Subtype":  "ReadPieChart",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ReadPieChart",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ChartTotal",
+        "Kind":  "Data",
+        "Subtype":  "ChartTotal",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ChartTotal",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ChartDifference",
+        "Kind":  "Data",
+        "Subtype":  "ChartDifference",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ChartDifference",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.ReadPictograph",
+        "Kind":  "Data",
+        "Subtype":  "ReadPictograph",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.ReadPictograph",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Probability.Likelihood",
+        "Kind":  "Probability",
+        "Subtype":  "Likelihood",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Probability.Likelihood",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Probability.ExperimentalProbability",
+        "Kind":  "Probability",
+        "Subtype":  "ExperimentalProbability",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Probability.ExperimentalProbability",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.ClassifyAngle",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "ClassifyAngle",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.ClassifyAngle",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.ParallelLines",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "ParallelLines",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.ParallelLines",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.PerpendicularLines",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "PerpendicularLines",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.PerpendicularLines",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.CountSides",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "CountSides",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.CountSides",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.RectangleSide",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "RectangleSide",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.RectangleSide",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.CompositeArea",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "CompositeArea",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.CompositeArea",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.RecognizeShape",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "RecognizeShape",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.RecognizeShape",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "MultiStep.MultiStepAddSubtract",
+        "Kind":  "MultiStep",
+        "Subtype":  "MultiStepAddSubtract",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.MultiStep.MultiStepAddSubtract",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "MultiStep.MultiStepEqualGroups",
+        "Kind":  "MultiStep",
+        "Subtype":  "MultiStepEqualGroups",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.MultiStep.MultiStepEqualGroups",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "MultiStep.MultiStepRemaining",
+        "Kind":  "MultiStep",
+        "Subtype":  "MultiStepRemaining",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.MultiStep.MultiStepRemaining",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "MultiStep.MultiStepShare",
+        "Kind":  "MultiStep",
+        "Subtype":  "MultiStepShare",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.MultiStep.MultiStepShare",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Arithmetic.IntegerCompare",
+        "Kind":  "Arithmetic",
+        "Subtype":  "IntegerCompare",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Arithmetic.IntegerCompare",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Fraction.CompareFractions",
+        "Kind":  "Fraction",
+        "Subtype":  "CompareFractions",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Fraction.CompareFractions",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.Counting",
+        "Kind":  "NumberSense",
+        "Subtype":  "Counting",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.Counting",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.ReadNumber",
+        "Kind":  "NumberSense",
+        "Subtype":  "ReadNumber",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.ReadNumber",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.WriteNumber",
+        "Kind":  "NumberSense",
+        "Subtype":  "WriteNumber",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.WriteNumber",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.PlaceValue",
+        "Kind":  "NumberSense",
+        "Subtype":  "PlaceValue",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.PlaceValue",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.AdjacentNumbers",
+        "Kind":  "NumberSense",
+        "Subtype":  "AdjacentNumbers",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.AdjacentNumbers",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.NumberLine",
+        "Kind":  "NumberSense",
+        "Subtype":  "NumberLine",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.NumberLine",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.Parity",
+        "Kind":  "NumberSense",
+        "Subtype":  "Parity",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.Parity",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.RomanNumerals",
+        "Kind":  "NumberSense",
+        "Subtype":  "RomanNumerals",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.RomanNumerals",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.OrderNumbers",
+        "Kind":  "NumberSense",
+        "Subtype":  "OrderNumbers",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.OrderNumbers",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.RoundWholeNumber",
+        "Kind":  "NumberSense",
+        "Subtype":  "RoundWholeNumber",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.RoundWholeNumber",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.EstimateSum",
+        "Kind":  "NumberSense",
+        "Subtype":  "EstimateSum",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.EstimateSum",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "NumberSense.LetterExpression",
+        "Kind":  "NumberSense",
+        "Subtype":  "LetterExpression",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.NumberSense.LetterExpression",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.FractionPicture",
+        "Kind":  "FractionSkills",
+        "Subtype":  "FractionPicture",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.FractionPicture",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.FractionTerms",
+        "Kind":  "FractionSkills",
+        "Subtype":  "FractionTerms",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.FractionTerms",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.EquivalentFraction",
+        "Kind":  "FractionSkills",
+        "Subtype":  "EquivalentFraction",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.EquivalentFraction",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.OrderFractions",
+        "Kind":  "FractionSkills",
+        "Subtype":  "OrderFractions",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.OrderFractions",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.SpatialPosition",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "SpatialPosition",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.SpatialPosition",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.IdentifyLine",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "IdentifyLine",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.IdentifyLine",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.Midpoint",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "Midpoint",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.Midpoint",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.CircleParts",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "CircleParts",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.CircleParts",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.ShapeNet",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "ShapeNet",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.ShapeNet",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.TriangleKind",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "TriangleKind",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.TriangleKind",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.ReadRuler",
+        "Kind":  "Measurement",
+        "Subtype":  "ReadRuler",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.ReadRuler",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.ReadProtractor",
+        "Kind":  "Measurement",
+        "Subtype":  "ReadProtractor",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.ReadProtractor",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Measurement.ReadThermometer",
+        "Kind":  "Measurement",
+        "Subtype":  "ReadThermometer",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Measurement.ReadThermometer",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.SortData",
+        "Kind":  "Data",
+        "Subtype":  "SortData",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.SortData",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.CompleteBarChart",
+        "Kind":  "Data",
+        "Subtype":  "CompleteBarChart",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.CompleteBarChart",
+        "Scope":  "Core",
+        "Coverage":  "Skill",
+        "Constraints":  "Implemented digital skill; narrower than the complete curriculum requirement. Reading/writing uses reviewed JSON number names; spatial positions cover four directions; ordering uses a shared denominator; no freehand drawing.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Arithmetic.Add",
+        "Kind":  "Arithmetic",
+        "Subtype":  "Add",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Arithmetic.Add",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Fraction.Add",
+        "Kind":  "Fraction",
+        "Subtype":  "Add",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Fraction.Add",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Add.Left",
+        "Kind":  "FindX",
+        "Subtype":  "Add.Left",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Add.Left",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Add.Right",
+        "Kind":  "FindX",
+        "Subtype":  "Add.Right",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Add.Right",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Arithmetic.Subtract",
+        "Kind":  "Arithmetic",
+        "Subtype":  "Subtract",
+        "Grades":  [
+                       1,
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Arithmetic.Subtract",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Fraction.Subtract",
+        "Kind":  "Fraction",
+        "Subtype":  "Subtract",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Fraction.Subtract",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Subtract.Left",
+        "Kind":  "FindX",
+        "Subtype":  "Subtract.Left",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Subtract.Left",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Subtract.Right",
+        "Kind":  "FindX",
+        "Subtype":  "Subtract.Right",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Subtract.Right",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Arithmetic.Multiply",
+        "Kind":  "Arithmetic",
+        "Subtype":  "Multiply",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Arithmetic.Multiply",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Fraction.Multiply",
+        "Kind":  "Fraction",
+        "Subtype":  "Multiply",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Fraction.Multiply",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Multiply.Left",
+        "Kind":  "FindX",
+        "Subtype":  "Multiply.Left",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Multiply.Left",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Multiply.Right",
+        "Kind":  "FindX",
+        "Subtype":  "Multiply.Right",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Multiply.Right",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Arithmetic.Divide",
+        "Kind":  "Arithmetic",
+        "Subtype":  "Divide",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Arithmetic.Divide",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Fraction.Divide",
+        "Kind":  "Fraction",
+        "Subtype":  "Divide",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Fraction.Divide",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Divide.Left",
+        "Kind":  "FindX",
+        "Subtype":  "Divide.Left",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Divide.Left",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FindX.Divide.Right",
+        "Kind":  "FindX",
+        "Subtype":  "Divide.Right",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FindX.Divide.Right",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.Direct",
+        "Kind":  "Average",
+        "Subtype":  "Direct",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.Direct",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.TotalToAverage",
+        "Kind":  "Average",
+        "Subtype":  "TotalToAverage",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.TotalToAverage",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.AverageToTotal",
+        "Kind":  "Average",
+        "Subtype":  "AverageToTotal",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.AverageToTotal",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.MissingValue",
+        "Kind":  "Average",
+        "Subtype":  "MissingValue",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.MissingValue",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.IndirectData",
+        "Kind":  "Average",
+        "Subtype":  "IndirectData",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.IndirectData",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Average.TwoGroups",
+        "Kind":  "Average",
+        "Subtype":  "TwoGroups",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Average.TwoGroups",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Percentage.FindPercentageRatio",
+        "Kind":  "Percentage",
+        "Subtype":  "FindPercentageRatio",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Percentage.FindPercentageRatio",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Percentage.FindPercentageValue",
+        "Kind":  "Percentage",
+        "Subtype":  "FindPercentageValue",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Percentage.FindPercentageValue",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Percentage.FindWholeFromPercentageValue",
+        "Kind":  "Percentage",
+        "Subtype":  "FindWholeFromPercentageValue",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Percentage.FindWholeFromPercentageValue",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Expression.Integer",
+        "Kind":  "Expression",
+        "Subtype":  "Integer",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Expression.Integer",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Expression.IntegerWithBrackets",
+        "Kind":  "Expression",
+        "Subtype":  "IntegerWithBrackets",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Expression.IntegerWithBrackets",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Expression.Fraction",
+        "Kind":  "Expression",
+        "Subtype":  "Fraction",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Expression.Fraction",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Expression.FractionWithBrackets",
+        "Kind":  "Expression",
+        "Subtype":  "FractionWithBrackets",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Expression.FractionWithBrackets",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Proportion.Direct",
+        "Kind":  "Proportion",
+        "Subtype":  "Direct",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Proportion.Direct",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Proportion.Inverse",
+        "Kind":  "Proportion",
+        "Subtype":  "Inverse",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Proportion.Inverse",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.BasicDistance",
+        "Kind":  "Motion",
+        "Subtype":  "BasicDistance",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.BasicDistance",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.BasicSpeed",
+        "Kind":  "Motion",
+        "Subtype":  "BasicSpeed",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.BasicSpeed",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.BasicTime",
+        "Kind":  "Motion",
+        "Subtype":  "BasicTime",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.BasicTime",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.BasicRestDistance",
+        "Kind":  "Motion",
+        "Subtype":  "BasicRestDistance",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.BasicRestDistance",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.CatchUpTime",
+        "Kind":  "Motion",
+        "Subtype":  "CatchUpTime",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.CatchUpTime",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.MeetingTime",
+        "Kind":  "Motion",
+        "Subtype":  "MeetingTime",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.MeetingTime",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.RiverDownstreamSpeed",
+        "Kind":  "Motion",
+        "Subtype":  "RiverDownstreamSpeed",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.RiverDownstreamSpeed",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.RiverUpstreamSpeed",
+        "Kind":  "Motion",
+        "Subtype":  "RiverUpstreamSpeed",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.RiverUpstreamSpeed",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.RiverBoatSpeed",
+        "Kind":  "Motion",
+        "Subtype":  "RiverBoatSpeed",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.RiverBoatSpeed",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Motion.RiverCurrentSpeed",
+        "Kind":  "Motion",
+        "Subtype":  "RiverCurrentSpeed",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Motion.RiverCurrentSpeed",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.square.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "square.Perimeter",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.square.Perimeter",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.square.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "square.Area",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.square.Area",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rectangle.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "rectangle.Perimeter",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rectangle.Perimeter",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rectangle.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "rectangle.Area",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rectangle.Area",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.triangle.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "triangle.Perimeter",
+        "Grades":  [
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.triangle.Perimeter",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.triangle.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "triangle.Area",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.triangle.Area",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.trapezoid.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "trapezoid.Perimeter",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.trapezoid.Perimeter",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.trapezoid.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "trapezoid.Area",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.trapezoid.Area",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rhombus.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "rhombus.Perimeter",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rhombus.Perimeter",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rhombus.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "rhombus.Area",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rhombus.Area",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.parallelogram.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "parallelogram.Perimeter",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.parallelogram.Perimeter",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.parallelogram.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "parallelogram.Area",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.parallelogram.Area",
+        "Scope":  "Extension",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.circle.Perimeter",
+        "Kind":  "Geometry",
+        "Subtype":  "circle.Perimeter",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.circle.Perimeter",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.circle.Area",
+        "Kind":  "Geometry",
+        "Subtype":  "circle.Area",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.circle.Area",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.cube.Volume",
+        "Kind":  "Geometry",
+        "Subtype":  "cube.Volume",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.cube.Volume",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.cube.LateralArea",
+        "Kind":  "Geometry",
+        "Subtype":  "cube.LateralArea",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.cube.LateralArea",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.cube.TotalArea",
+        "Kind":  "Geometry",
+        "Subtype":  "cube.TotalArea",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.cube.TotalArea",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rectangular_prism.Volume",
+        "Kind":  "Geometry",
+        "Subtype":  "rectangular_prism.Volume",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rectangular_prism.Volume",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rectangular_prism.LateralArea",
+        "Kind":  "Geometry",
+        "Subtype":  "rectangular_prism.LateralArea",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rectangular_prism.LateralArea",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Geometry.rectangular_prism.TotalArea",
+        "Kind":  "Geometry",
+        "Subtype":  "rectangular_prism.TotalArea",
+        "Grades":  [
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Geometry.rectangular_prism.TotalArea",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "VisualGeometry.ConstructShapes",
+        "Kind":  "VisualGeometry",
+        "Subtype":  "ConstructShapes",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.VisualGeometry.ConstructShapes",
+        "Scope":  "Core",
+        "Coverage":  "Planned",
+        "Constraints":  "Not yet implemented as a student-controlled interactive activity.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Probability.ExperimentTrials",
+        "Kind":  "Probability",
+        "Subtype":  "ExperimentTrials",
+        "Grades":  [
+                       2,
+                       3,
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Probability.ExperimentTrials",
+        "Scope":  "Core",
+        "Coverage":  "Planned",
+        "Constraints":  "Not yet implemented as a student-controlled interactive activity.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Data.FreeChartInput",
+        "Kind":  "Data",
+        "Subtype":  "FreeChartInput",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.Data.FreeChartInput",
+        "Scope":  "Core",
+        "Coverage":  "Planned",
+        "Constraints":  "Not yet implemented as a student-controlled interactive activity.",
+        "SourcePages":  "21-46"
+    }
+]
   }
 }

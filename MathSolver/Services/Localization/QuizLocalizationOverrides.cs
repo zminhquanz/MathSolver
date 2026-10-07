@@ -180,7 +180,7 @@ internal static class QuizLocalizationOverrides
             ["Quiz.FindXEssayValidationHint"] = "Ứng dụng chấm phép tính ngược và giá trị 𝑥; không cần câu lời giải cho phương trình số.",
             ["Quiz.FindXEssayEquationPlaceholder"] = "Ví dụ: 12 − 5 = 7",
             ["Quiz.WordProblemTitle"] = "Bài toán có lời văn",
-            ["Quiz.PresentedAnswer"] = "Đáp án được đưa ra: {0} {1}",
+            ["Quiz.PresentedAnswer"] = "Đáp án: {0} {1}",
             ["Quiz.SolutionTitle"] = "Lời giải"
         };
 
@@ -361,7 +361,7 @@ internal static class QuizLocalizationOverrides
             ["Quiz.FindXEssayValidationHint"] = "The app checks the inverse calculation and 𝑥 value; a solution sentence is not needed for a numeric equation.",
             ["Quiz.FindXEssayEquationPlaceholder"] = "Example: 12 − 5 = 7",
             ["Quiz.WordProblemTitle"] = "Word problem",
-            ["Quiz.PresentedAnswer"] = "Proposed answer: {0} {1}",
+            ["Quiz.PresentedAnswer"] = "Answer: {0} {1}",
             ["Quiz.SolutionTitle"] = "Solution"
         };
 
@@ -377,8 +377,14 @@ internal static class QuizLocalizationOverrides
                 ? Vietnamese
                 : English;
 
-        return strings.TryGetValue(
-            key,
-            out value!);
+        if (strings.TryGetValue(key, out value!)) return true;
+        if (key == "Quiz.ProblemNumberSense" || key.StartsWith("Quiz.Elementary.", StringComparison.Ordinal)
+            && Enum.TryParse<MathSolver.Models.ElementaryQuizType>(key[16..], out var type)
+            && MathSolver.Services.ElementaryQuizGenerator.IsFoundationSkill(type))
+        {
+            value = MathSolver.Services.QuizContentCatalog.Text(culture.StartsWith("vi", StringComparison.OrdinalIgnoreCase) ? "vi-VN" : "en-US", key);
+            return true;
+        }
+        return false;
     }
 }
