@@ -5,6 +5,11 @@ catalogue. See the [authoring guide](../../QUIZ_CONTENT_AUTHORING.md) for langua
 packs, context lists, placeholders and validation commands. Arithmetic rules and
 AI grammar validation remain in C#.
 
+Measurement word problems now cover mass, capacity and length conversions,
+including additions/removals at higher star levels. See
+[MEASUREMENT_AI.md](../../MEASUREMENT_AI.md) for supported profiles, JSON authoring,
+exact answers, prose deduplication and real-model verification commands.
+
 The practice engine owns arithmetic, random operands, answer choices and grading. Local AI supplies reusable prose templates and a prose solution lead. For a selected arithmetic, Find X or fraction family, the practice-style picker chooses numeric exercises (the default) or word problems. Numeric mode retains the original C# generator and does not read SQLite or use a knowledge group. Word mode shows all nine knowledge groups and independently selects reviewed C# stories or optional SQLite templates 50/50; empty, inaccessible or invalid bank entries fall back to C# stories, never numeric exercises. Neither practice source runs model inference. The global mixed-topic option keeps its previous random numeric/story behaviour.
 
 ## Choosing a practice style
@@ -558,3 +563,8 @@ integer Answer property. SQLite/Excel persist the seed and validated prose;
 practice regenerates all numeric facts and exact solution steps. Numeric-only
 decimal practice, comparison and rounding are not replaced by bank prose.
 See [DECIMAL_AI.md](../../DECIMAL_AI.md) for tiers, JSON authoring and verification.
+
+Packing (family 11) and time (family 12) use reviewed JSON wording. Packing
+separates minimum groups, leftovers only and the complete quotient/remainder
+tuple. ExactAnswers retains every result; display/grading checks all components
+and units. See [PACKING_TIME_AI.md](../../PACKING_TIME_AI.md).

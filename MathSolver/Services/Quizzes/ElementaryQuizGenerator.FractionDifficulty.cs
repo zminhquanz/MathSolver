@@ -5,7 +5,16 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateFractionDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    public ArithmeticQuizQuestion GenerateFractionQuantityStory(ArithmeticQuizMode mode, ElementaryQuizType type,
+        AppLanguage language, CurriculumTier tier, string contextId)
+    {
+        if (!Enum.IsDefined(tier) || type is not (ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)
+            || string.IsNullOrWhiteSpace(contextId)) throw new ArgumentException("InvalidFractionQuantityProfile");
+        return CompleteQuestion(mode, CreateFractionDifficulty(type, language, tier, contextId), [], null);
+    }
+
+    private ElementaryQuizContract CreateFractionDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier,
+        string contextId = "")
     {
         var t = new DifficultyBuilder(QuizProblemKind.FractionSkills, type, language, tier);
         int level = (int)tier;
@@ -17,15 +26,35 @@ public sealed partial class ElementaryQuizGenerator
         {
             t.RequiresSolution = true;
             var contexts = FractionQuantityStoryContextCatalog.GetProfile(language);
-            var context = contexts[_random.Next(contexts.Count)];
-            int quantum = denominator * (level == 5 ? 4 : 1);
-            int whole = quantum * _random.Next(1, Math.Max(2, Math.Min(8, context.Capacity / quantum) + 1));
+            var context = contextId.Length == 0 ? contexts[_random.Next(contexts.Count)]
+                : contexts.SingleOrDefault(c => c.ContextId == contextId) ?? throw new ArgumentException("InvalidFractionQuantityProfile");
             string unit = context.Unit, wholeExpression, problem;
             bool findPart = type == ElementaryQuizType.FractionOfNumber;
+            int supplied;
+            if (context.Quantity == WordProblemQuantity.Count)
+            {
+                // All counted quantities, including the retained 3/4 at five stars,
+                // must stay integral. Never truncate a fractional item count.
+                int quantum = denominator * (level == 5 ? 4 : 1);
+                int maximum = Math.Min(8, context.Capacity / quantum);
+                if (maximum < 1) throw new InvalidDataException("Fraction context capacity is too small: " + context.ContextId);
+                int whole = quantum * _random.Next(1, maximum + 1);
+                supplied = findPart ? whole : whole * numerator * (level == 5 ? 3 : 1) / (denominator * (level == 5 ? 4 : 1));
+            }
+            else if (context.Quantity is WordProblemQuantity.Mass or WordProblemQuantity.Distance or WordProblemQuantity.Capacity)
+            {
+                // Supply whole units, then let exact rational arithmetic compute the
+                // requested part/whole. These dimensions permit fractional results.
+                int maximum = Math.Min(8, findPart ? context.Capacity
+                    : (int)((long)context.Capacity * numerator * (level == 5 ? 3 : 1) / (denominator * (level == 5 ? 4 : 1))));
+                int minimum = level is 3 or 4 ? 2 : 1;
+                if (maximum < minimum) throw new InvalidDataException("Fraction context capacity is too small: " + context.ContextId);
+                supplied = _random.Next(minimum, maximum + 1);
+            }
+            else throw new InvalidDataException("Unsupported fraction quantity: " + context.ContextId);
             string n = t.Given("numerator", numerator), d = t.Given("denominator", denominator);
             if (level <= 2)
             {
-                int supplied = findPart ? whole : whole * numerator / denominator;
                 string given = t.Given("quantity", supplied, unit);
                 string expression = findPart ? $"{given}*{n}/{d}" : $"{given}/{n}*{d}";
                 problem = string.Format(System.Globalization.CultureInfo.InvariantCulture,
@@ -35,7 +64,6 @@ public sealed partial class ElementaryQuizGenerator
             }
             if (level < 5)
             {
-                int supplied = findPart ? whole : whole * numerator / denominator;
                 int first = supplied / 2;
                 string a = t.Given("quantity-first", first, unit), b = t.Given("quantity-second", supplied - first, unit);
                 wholeExpression = $"({a}+{b})";
@@ -56,7 +84,6 @@ public sealed partial class ElementaryQuizGenerator
             else
             {
                 string removedNumerator = t.Given("removed-numerator", 1), removedDenominator = t.Given("removed-denominator", 4);
-                int supplied = findPart ? whole : whole * 3 / 4 * numerator / denominator;
                 string quantity = t.Given("quantity", supplied, unit);
                 string retained = $"(1-{removedNumerator}/{removedDenominator})";
                 problem = (findPart ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019", ("context_WholeLabel", $"{context.WholeLabel}"), ("quantity", $"{quantity}"), ("unit", $"{unit}"), ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020", ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_WholeLabel_ToLowerInvariant", $"{context.WholeLabel.ToLowerInvariant()}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("quantity", $"{quantity}"), ("unit", $"{unit}")));

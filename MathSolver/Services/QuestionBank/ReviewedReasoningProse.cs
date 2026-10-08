@@ -17,7 +17,7 @@ internal static class ReviewedReasoningProse
                 Facts = lesson.Facts.Select((f, i) => f with { Text = choices[i][indices[i]] }).ToArray(),
                 Question = choices[^1][indices[^1]]
             };
-            if ((c.Family is not (BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal) || HasNewFacts(c, draft))
+            if ((!ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family) || HasNewFacts(c, draft))
                 && seen.Add(QuestionProseIdentity.Hash(c, draft))) yield return draft;
             int index = 0;
             // Vary the factual clauses before merely changing the question.

@@ -3,7 +3,8 @@ using MathSolver.Models;
 namespace MathSolver.Services;
 
 public sealed record FractionQuantityStoryContext(string Unit, string PartLabel, string WholeLabel,
-    string PartProblemTemplate, string WholeProblemTemplate, int Capacity = 5000, string? ContextId = null);
+    string PartProblemTemplate, string WholeProblemTemplate, int Capacity = 5000, string ContextId = "",
+    WordProblemQuantity Quantity = WordProblemQuantity.Unspecified);
 
 public static class FractionQuantityStoryContextCatalog
 {

@@ -285,7 +285,10 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         }
         else if (textChoices is null) for (int delta = 1; delta <= 3; delta++)
         {
-            var alternative = answers.Select((answer, index) => index != 0 ? answer : answer.Text is not null
+            // A quotient/remainder proposal must exercise both requested results.
+            // Offer a wrong quotient, a wrong remainder, and a tuple with both wrong.
+            bool packingTuple = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2;
+            var alternative = answers.Select((answer, index) => (packingTuple ? delta < 3 && index != delta - 1 : index != 0) ? answer : answer.Text is not null
                 ? answer with { Text = WrongText(answer, delta, vi) }
                 : answer with { Value = new(answer.Value.Numerator + delta * answer.Value.Denominator, answer.Value.Denominator),
                     DisplayValue = answer.DisplayValue is not null
@@ -298,7 +301,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null)
         options = options.Distinct().Take(4).ToArray();
         _random.Shuffle(options);
         bool correct = _random.Next(2) == 0;
-        contract = contract with { PresentedText = correct ? contract.AnswerText : choices[1], ChoiceTexts = options };
+        contract = contract with { PresentedText = correct ? contract.AnswerText
+            : choices[contract.Type == ElementaryQuizType.QuotientRemainder ? _random.Next(1, choices.Count) : 1], ChoiceTexts = options };
         return new(new(0, ArithmeticOperation.Add, 0), mode, 0, null, correct, [], ElementaryProblem: contract);
     }
 

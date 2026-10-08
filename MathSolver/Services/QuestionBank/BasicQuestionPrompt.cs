@@ -9,7 +9,7 @@ public static class BasicQuestionPrompt
         IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null)
     {
         string prompt = contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryValidator.Prompt(contract, correction, excludedProse) : BuildCore(contract, correction, excludedProse);
-        if ((contract.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal) && excludedProse is not null) return prompt;
+        if (ReasoningStoryCatalogue.UsesReviewedPhrasings(contract.Family) && excludedProse is not null) return prompt;
         if (duplicateProse is not { Count: > 0 }) return prompt;
         string instruction = contract.Language == AppLanguage.Vietnamese
             ? "Mẫu lời văn trước đã trùng. Viết lại đề với cách diễn đạt khác các mẫu bị loại bên dưới; thay số, tên, chữ hoa, khoảng trắng, dấu câu hoặc chỉ câu dẫn lời giải không tạo ra mẫu mới. Giữ nguyên vai trò toán học, các biến và đơn vị; không sinh số. Trả lại toàn bộ JSON đúng schema."

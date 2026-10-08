@@ -36,6 +36,9 @@ public partial class AiQuestionBankPage
                     BankQuestionFamily.Motion => ["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"],
                     BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse"],
                     BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]
                 };
                 _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));

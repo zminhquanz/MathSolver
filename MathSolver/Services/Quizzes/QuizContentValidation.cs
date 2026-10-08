@@ -41,7 +41,21 @@ public static partial class QuizContentValidation
                     Fail("Invalid decimal story dimension or capacity.");
             }
         }
-        foreach (string listName in new[] { ReviewedNarrativePhrasings.ListName, ReviewedNarrativePhrasings.MotionListName, ReviewedNarrativePhrasings.ProportionListName, ReviewedNarrativePhrasings.DecimalListName })
+        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList, out var measurementContexts))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var categories = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in measurementContexts.EnumerateArray())
+            {
+                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate measurement story context.");
+                _ = RequiredString(row, "Subject");
+                string category = RequiredString(row, "Category");
+                if (category is not ("mass" or "capacity" or "length")) Fail("Invalid measurement story dimension.");
+                categories.Add(category);
+            }
+            if (categories.Count != 3) Fail("Missing measurement story dimension.");
+        }
+        foreach (string listName in new[] { ReviewedNarrativePhrasings.ListName, ReviewedNarrativePhrasings.MotionListName, ReviewedNarrativePhrasings.ProportionListName, ReviewedNarrativePhrasings.DecimalListName, ReviewedNarrativePhrasings.MeasurementListName, ReviewedNarrativePhrasings.RemainderListName, ReviewedNarrativePhrasings.TimeListName })
         if (pack.Lists.TryGetValue(listName, out var phrasings))
         {
             var texts = pack.Texts.ToDictionary(text => text.Id, StringComparer.Ordinal);
@@ -53,6 +67,9 @@ public static partial class QuizContentValidation
                 string prefix = listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
                     : listName == ReviewedNarrativePhrasings.ProportionListName ? "ProportionQuizGenerator.Narrative."
                     : listName == ReviewedNarrativePhrasings.DecimalListName ? "ElementaryQuizGenerator.DecimalStories."
+                    : listName == ReviewedNarrativePhrasings.MeasurementListName ? "ElementaryQuizGenerator.MeasurementStories."
+                    : listName == ReviewedNarrativePhrasings.RemainderListName ? "ElementaryQuizGenerator.ContextStories.CreateRemainderStory."
+                    : listName == ReviewedNarrativePhrasings.TimeListName ? "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty."
                     : "ElementaryQuizGenerator.MultiStep.CreateMultiStep.";
                 if (!ids.Add(id) || !id.StartsWith(prefix, StringComparison.Ordinal)
                     || !texts.TryGetValue(id, out var source)) Fail("Unknown or duplicate reviewed narrative: " + id);
@@ -143,13 +160,21 @@ public static partial class QuizContentValidation
             }
         }
         if (pack.Lists.TryGetValue("FractionQuantityContexts", out var fractions))
+        {
+            var contextIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var context in fractions.EnumerateArray())
             {
+                string contextId = RequiredString(context, "ContextId");
+                if (!Regex.IsMatch(contextId, @"^[a-z][a-z0-9-]*$") || !contextIds.Add(contextId))
+                    Fail("Invalid or duplicate fraction context ID: " + contextId);
+                if (RequiredString(context, "Quantity") is not ("Count" or "Mass" or "Distance" or "Capacity"))
+                    Fail("Unsupported fraction quantity: " + contextId);
                 foreach (string field in new[] { "Unit", "PartLabel", "WholeLabel" }) _ = RequiredString(context, field);
                 foreach (string field in new[] { "PartProblemTemplate", "WholeProblemTemplate" })
                     if (!Slots(RequiredString(context, field)).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
                 CheckCapacity(context);
             }
+        }
         if (pack.Lists.TryGetValue("DataChartContexts", out var charts))
             foreach (var context in charts.EnumerateArray())
             {
@@ -185,7 +210,7 @@ public static partial class QuizContentValidation
                     if (list.Value[i].GetProperty("Value").GetInt32() != translated[i].GetProperty("Value").GetInt32())
                         Fail("Changed number vocabulary value.");
             if (list.Key is ReviewedNarrativePhrasings.ListName or ReviewedNarrativePhrasings.MotionListName
-                or ReviewedNarrativePhrasings.ProportionListName or ReviewedNarrativePhrasings.DecimalListName)
+                or ReviewedNarrativePhrasings.ProportionListName or ReviewedNarrativePhrasings.DecimalListName or ReviewedNarrativePhrasings.MeasurementListName or ReviewedNarrativePhrasings.RemainderListName or ReviewedNarrativePhrasings.TimeListName)
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                     if (RequiredString(list.Value[i], "Id") != RequiredString(translated[i], "Id"))
                         Fail("Changed reviewed narrative ID.");
@@ -224,6 +249,7 @@ public static partial class QuizContentValidation
 
     private static readonly Dictionary<string, string[]> ContextFields = new(StringComparer.Ordinal)
     {
+        [ElementaryQuizGenerator.MeasurementContextsList] = ["Id", "Category", "Subject"],
         [ElementaryQuizGenerator.DecimalContextsList] = ["Id", "Item", "Unit", "SmallUnit"],
         ["AverageQuizGenerator.DirectContexts"] = ["Id", "Action", "Unit", "Subject", "Period"],
         ["AverageQuizGenerator.DistributionContexts"] = ["Group", "Unit", "Subject"],
@@ -236,9 +262,9 @@ public static partial class QuizContentValidation
         ["MotionQuizGenerator.UnitProfiles"] = ["Kind", "SpeedUnit", "TimeUnit", "DistanceUnit"],
         ["MotionQuizGenerator.MovingSubjects"] = ["Kind", "Name"]
     };
-    private static readonly string[] FixedContextFields = ["Id", "ContextId", "ShapeId", "Measurement", "Type", "Scenario",
+    private static readonly string[] FixedContextFields = ["Id", "ContextId", "ShapeId", "Measurement", "Type", "Scenario", "Category",
         "RateProfile", "Kind", "Capacity", "MaximumSize", "MaximumDimension", "DistanceScale", "TimeDivisor",
-        "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity"];
+        "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity", "Quantity"];
 
     private static HashSet<string> Slots(string text) => Placeholder().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
     private static string RequiredString(JsonElement element, string field)

@@ -190,7 +190,13 @@ internal static class ProportionBankTests
         using var excel = new MemoryStream(); await store.ExportExcelAsync(excel); excel.Position = 0;
         var restored = new QuestionBankStore(Path.Combine(dir, Guid.NewGuid() + ".db3"));
         Check((await restored.ImportExcelAsync(excel)).Inserted == 1, "Excel roundtrip failed");
-        var generated = ReasoningStoryCatalogue.ToPractice(c, draft, ArithmeticQuizMode.Essay);
+        var restoredQuestion = await restored.TakeReasoningAsync(c.Family, c.BankVariant, c.Tier, c.Language);
+        Check(restoredQuestion is not null, "Imported proportion cannot be retrieved");
+        var refreshed = restoredQuestion!.Contract.FreshFacts(new AlwaysBank());
+        Check(refreshed.IsValid, "Refreshed proportion is invalid");
+        // Compare the built-in wording with the saved novel wording. At one star,
+        // fresh facts can legitimately repeat, so identical numbers do not prove fallback.
+        var generated = ReasoningStoryCatalogue.ToPractice(c, ReasoningStoryCatalogue.Draft(c), ArithmeticQuizMode.Essay);
         var provider = new BasicPracticeQuestionProvider(restored, new AlwaysBank());
         var selected = await provider.SelectReasoningAsync(generated, c.Tier, c.Language);
         Check(selected != generated && selected.ProportionProblem?.Type == generated.ProportionProblem!.Type, "Provider failed");

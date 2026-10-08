@@ -57,7 +57,7 @@ public static class ReasoningStoryValidator
     {
         var lesson = ReasoningStoryCatalogue.Lesson(c);
         bool vi = c.Language == AppLanguage.Vietnamese;
-        if (c.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal)
+        if (ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family))
         {
             var example = ReviewedReasoningProse.NovelDrafts(c, excluded ?? new HashSet<string>()).FirstOrDefault()
                 ?? ReasoningStoryCatalogue.Draft(c);
@@ -85,7 +85,7 @@ public static class ReasoningStoryValidator
         static string L(string text) => JsonSerializer.Serialize(text);
         string Object(string id, string role, string field) => "\"{\" ws " + L("\"" + id + "\"") + " ws \":\" ws "
             + L("\"" + role + "\"") + " ws \",\" ws " + L("\"text\"") + " ws \":\" ws " + field.Replace('_', '-') + " ws \"}\"";
-        if (c.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal)
+        if (ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family))
         {
             // Bound the native grammar size. All branches are complete, novel
             // fact/question combinations, so a model cannot retry the old prose

@@ -14,6 +14,7 @@ public sealed partial class ElementaryQuizGenerator
         QuizProblemKind.Data => CreateDataDifficulty(type, language, tier),
         QuizProblemKind.Time => AddTimeStory(CreateTimeDifficulty(type, language, tier)),
         QuizProblemKind.Measurement when type == ElementaryQuizType.MapScale => CreateMapScale(language, tier),
+        QuizProblemKind.Measurement when MeasurementStoryTypes.Contains(type) => CreateMeasurementStory(type, language, tier),
         QuizProblemKind.Measurement => CreateMeasurementDifficulty(type, language, tier),
         QuizProblemKind.Remainder => CreateRemainderStory(type, language, tier),
         QuizProblemKind.Decimal => CreateDecimalDifficulty(type, language, tier),

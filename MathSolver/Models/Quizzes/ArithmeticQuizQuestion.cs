@@ -33,6 +33,11 @@ public sealed record ArithmeticQuizQuestion(
     public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true
         || ElementaryProblem?.UsesFractionFormatting == true;
 
+    /// <summary>Every requested result, in display/grading order. Includes both quotient and remainder.</summary>
+    public IReadOnlyList<ReducedFraction> ExactAnswers => ElementaryProblem is { } elementary
+        ? elementary.Answers.Select(answer => answer.Value).ToArray() : [ExactAnswer];
+
+    /// <summary>Primary result for legacy scalar consumers; use ExactAnswers for multi-part questions.</summary>
     public ReducedFraction ExactAnswer => ElementaryProblem?.Answers[0].Value ?? ExpressionProblem?.CorrectAnswer ??
         FractionProblem?.CorrectAnswer ?? new ReducedFraction(CorrectAnswer, BigInteger.One);
 }

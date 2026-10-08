@@ -1,5 +1,21 @@
 # AI question bank checks
 
+`--packing-time-bank` checks 218 bilingual context/subtype/star profiles and
+18 remainder boundaries, independent arithmetic, all answer components/units,
+fresh data, all grading modes, unsafe prose, exhaustion, SQLite/Excel/provider.
+`--packing-time-model <gguf> <directory> <part>` runs native model batches;
+`--packing-time-evidence <directory>` replays actual raw JSON and all saved model
+rows with fresh facts. See [PACKING_TIME_AI.md](../../MathSolver/PACKING_TIME_AI.md)
+for the five subtype batches, boundary batches, worker and JSON authoring.
+
+`--measurement-bank` checks 80 bilingual mass/capacity/length context/star
+profiles, all answer modes, independent conversions, fresh data, units,
+grading, unsafe prose, exhaustion and SQLite/Excel/provider integration.
+`--measurement-model <gguf>` runs 30 real native generations after seeding
+duplicate prose in SQLite, verifies streamed JSON and fresh practice, then
+generates four additional items with the app worker. See
+[MEASUREMENT_AI.md](../../MathSolver/MEASUREMENT_AI.md) for scope and authoring.
+
 `--motion-bank` checks all four motion subtypes, ten question targets, five star
 levels and both languages. It verifies independent unit/direction/rest arithmetic,
 reviewed alternatives, rejected unsafe prose, fresh facts in all answer modes,

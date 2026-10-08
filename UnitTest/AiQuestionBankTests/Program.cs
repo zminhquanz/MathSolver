@@ -65,6 +65,55 @@ if (args is ["--decimal-bank"])
     return;
 }
 
+if (args is ["--packing-time-bank"])
+{
+    try { await PackingTimeBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--packing-time-model", var packingModel, var packingDirectory, var packingPart])
+{
+    try { await PackingTimeBankTests.RunModelAsync(packingModel, packingDirectory, packingPart); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--packing-time-evidence", var packingEvidenceDirectory])
+{
+    try { await PackingTimeBankTests.CheckEvidenceAsync(packingEvidenceDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--measurement-bank"])
+{
+    try { await MeasurementBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--measurement-model", var measurementModel])
+{
+    try { await MeasurementBankTests.RunModelAsync(measurementModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--measurement-model-resume", var measurementResumeModel, var measurementResumeDirectory])
+{
+    try { await MeasurementBankTests.RunModelAsync(measurementResumeModel, measurementResumeDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--measurement-evidence", var measurementEvidenceDirectory])
+{
+    try { await MeasurementBankTests.CheckEvidenceAsync(measurementEvidenceDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--decimal-model-resume", var decimalResumeModel, var decimalResumeDirectory])
 {
     try { await DecimalBankTests.RunModelAsync(decimalResumeModel, decimalResumeDirectory); }
@@ -518,6 +567,8 @@ try
     await MotionBankTests.RunAsync();
     await ProportionBankTests.RunAsync();
     await DecimalBankTests.RunAsync();
+    await MeasurementBankTests.RunAsync();
+    await PackingTimeBankTests.RunAsync();
 }
 finally { Directory.Delete(directory, true); }
 

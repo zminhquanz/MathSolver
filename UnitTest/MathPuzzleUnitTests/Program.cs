@@ -19,6 +19,7 @@ var tests = new (string Name, Action Run)[]
     ("Decimal presentation and grading consistency", PuzzleTests.CheckDecimalPresentationAndGrading),
     ("Curriculum expansion and Mixed subtype policy", PuzzleTests.CheckCurriculumExpansion),
     ("Textbook fraction presentation", PuzzleTests.CheckFractionPresentation),
+    ("Fraction quantity context IDs and exact answers", PuzzleTests.CheckFractionQuantityContexts),
     ("Visual geometry variety", PuzzleTests.CheckVisualGeometryVariety),
     ("Side counting, missing sides and composite areas", PuzzleTests.CheckShapeProblemVariety),
     ("Probability variety and contracts", PuzzleTests.CheckProbabilityVariety),

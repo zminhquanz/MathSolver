@@ -8,6 +8,9 @@ internal sealed record ReviewedNarrativePhrasings(string Id, string[] Alternativ
     internal const string MotionListName = "Narrative.Motion.Phrasings";
     internal const string ProportionListName = "Narrative.Proportion.Phrasings";
     internal const string DecimalListName = "Narrative.Decimal.Phrasings";
+    internal const string MeasurementListName = "Narrative.Measurement.Phrasings";
+    internal const string RemainderListName = "Narrative.Remainder.Phrasings";
+    internal const string TimeListName = "Narrative.Time.Phrasings";
 
     internal static IReadOnlyDictionary<string, string[]> For(AppLanguage language, string listName = ListName,
         string unit = "")

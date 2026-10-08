@@ -2,6 +2,128 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {
+      "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
+      "Text": "Xếp đầy các {container} thì còn lại bao nhiêu {item}?",
+      "Variables": [
+        "container",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.001",
+      "Text": "Độ dài cần tìm",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Khối lượng cần tìm",
+        "capacity": "Dung tích cần tìm"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.002",
+      "Text": "{subject} đo được độ dài {amount} {large_unit}. Hỏi độ dài đó bằng bao nhiêu {small_unit}?",
+      "Variables": [
+        "subject",
+        "amount",
+        "large_unit",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} cân được {amount} {large_unit}. Hỏi khối lượng đó bằng bao nhiêu {small_unit}?",
+        "capacity": "{subject} có dung tích {amount} {large_unit}. Hỏi dung tích đó bằng bao nhiêu {small_unit}?"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.003",
+      "Text": "{subject} đo được độ dài {amount} {small_unit}. Hỏi độ dài đó bằng bao nhiêu {large_unit}?",
+      "Variables": [
+        "subject",
+        "amount",
+        "small_unit",
+        "large_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} cân được {amount} {small_unit}. Hỏi khối lượng đó bằng bao nhiêu {large_unit}?",
+        "capacity": "{subject} có dung tích {amount} {small_unit}. Hỏi dung tích đó bằng bao nhiêu {large_unit}?"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.004",
+      "Text": "{subject} đo được độ dài {large_amount} {large_unit} và {small_amount} {small_unit}.",
+      "Variables": [
+        "subject",
+        "large_amount",
+        "large_unit",
+        "small_amount",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} cân được {large_amount} {large_unit} và {small_amount} {small_unit}.",
+        "capacity": "{subject} có dung tích {large_amount} {large_unit} và {small_amount} {small_unit}."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.005",
+      "Text": "Đổi độ dài ban đầu sang đơn vị nhỏ",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Đổi khối lượng ban đầu sang đơn vị nhỏ",
+        "capacity": "Đổi dung tích ban đầu sang đơn vị nhỏ"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.006",
+      "Text": " Nhận thêm {extra} {large_unit} cùng loại.",
+      "Variables": [
+        "extra",
+        "large_unit"
+      ],
+      "TextByUnit": {
+        "mass": " Nhận thêm {extra} {large_unit} cùng loại.",
+        "capacity": " Nhận thêm {extra} {large_unit} cùng loại."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.007",
+      "Text": "Đổi độ dài được bổ sung sang đơn vị nhỏ",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Đổi khối lượng được bổ sung sang đơn vị nhỏ",
+        "capacity": "Đổi dung tích được bổ sung sang đơn vị nhỏ"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.008",
+      "Text": " Sau đó dùng bớt {used} {small_unit}.",
+      "Variables": [
+        "used",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": " Sau đó dùng bớt {used} {small_unit}.",
+        "capacity": " Sau đó dùng bớt {used} {small_unit}."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.009",
+      "Text": "Độ dài còn lại theo đơn vị nhỏ",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Khối lượng còn lại theo đơn vị nhỏ",
+        "capacity": "Dung tích còn lại theo đơn vị nhỏ"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.010",
+      "Text": " Hỏi độ dài hiện có là bao nhiêu {answer_unit}?",
+      "Variables": [
+        "answer_unit"
+      ],
+      "TextByUnit": {
+        "mass": " Hỏi khối lượng hiện có là bao nhiêu {answer_unit}?",
+        "capacity": " Hỏi dung tích hiện có là bao nhiêu {answer_unit}?"
+      }
+    },
     {"Id":"ProportionQuizGenerator.Narrative.001","Text":"May {sets} bộ quần áo hết {fabric} mét vải. Hỏi may {new_sets} bộ quần áo như thế hết bao nhiêu mét vải?","Variables":["sets","fabric","new_sets"]},
     {"Id":"ProportionQuizGenerator.Narrative.002","Text":"Cần {fabric} mét vải để may {sets} bộ quần áo. Hỏi may {new_sets} bộ thì cần bao nhiêu mét vải?","Variables":["sets","fabric","new_sets"]},
     {"Id":"ProportionQuizGenerator.Narrative.003","Text":"{students} học sinh trồng được {trees} cây. Hỏi {new_students} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?","Variables":["students","trees","new_students"]},
@@ -8237,7 +8359,7 @@
     },
     {
         "Id":  "Curriculum.Requirement.Remainder.Leftovers",
-        "Text":  "Thực hiện dạng chia nhóm và phần còn lại với dữ kiện được cung cấp.",
+        "Text":  "Tìm số đồ vật còn dư sau khi xếp đầy các nhóm.",
         "Variables": []
     },
     {
@@ -8857,6 +8979,289 @@
     }
   ],
   "Lists": {
+    "MeasurementStoryContexts": [
+      {
+        "Id": "kitchen",
+        "Category": "mass",
+        "Subject": "Phần gạo"
+      },
+      {
+        "Id": "bakery",
+        "Category": "mass",
+        "Subject": "Phần bột mì"
+      },
+      {
+        "Id": "agriculture",
+        "Category": "mass",
+        "Subject": "Phần rau thu hoạch"
+      },
+      {
+        "Id": "environment",
+        "Category": "mass",
+        "Subject": "Phần giấy thu gom"
+      },
+      {
+        "Id": "water",
+        "Category": "capacity",
+        "Subject": "Phần nước"
+      },
+      {
+        "Id": "dairy",
+        "Category": "capacity",
+        "Subject": "Phần sữa"
+      },
+      {
+        "Id": "decoration",
+        "Category": "length",
+        "Subject": "Phần ruy băng"
+      },
+      {
+        "Id": "craft",
+        "Category": "length",
+        "Subject": "Phần vải"
+      }
+    ],
+    "Narrative.Remainder.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.001",
+        "Alternatives": [
+          "Cần xếp {amount} {item} vào các {container}. ",
+          "Có tổng cộng {amount} {item} chờ được xếp vào {container}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.002",
+        "Alternatives": [
+          "Đợt đầu có {a} và đợt sau có {b} {item}, hai đợt được gộp lại. ",
+          "Hai đợt cần xếp lần lượt là {a} và {b} {item}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.003",
+        "Alternatives": [
+          "Có {used} {item} đã được bố trí riêng nên loại khỏi số cần xếp. ",
+          "Không xếp tiếp {used} {item} vì số này đã được bố trí riêng. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.005",
+        "Alternatives": [
+          "Sức chứa của mỗi {container} là {nominal} {item}, trong đó chỗ cho {excluded} {item} khác được dành riêng và không dùng để xếp số đang xét. ",
+          "Mỗi {container} chứa được {nominal} {item}; chỗ cho {excluded} {item} khác đã dành riêng nên phải trừ phần sức chứa này. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.006",
+        "Alternatives": [
+          "Sức chứa tối đa của mỗi {container} là {per} {item}. ",
+          "Mỗi {container} xếp được nhiều nhất {per} {item}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.007",
+        "Alternatives": [
+          "Để xếp hết, cần ít nhất bao nhiêu {container}?",
+          "Số {container} ít nhất cần dùng để xếp hết là bao nhiêu?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.009",
+        "Alternatives": [
+          "Có bao nhiêu {container} được xếp đầy và còn dư bao nhiêu {item}?",
+          "Hỏi số {container} xếp đầy và số {item} còn lại lần lượt là bao nhiêu?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
+        "Alternatives": [
+          "Sau khi xếp đầy các {container}, còn dư bao nhiêu {item}?",
+          "Hỏi sau khi xếp đầy các {container} thì còn dư bao nhiêu {item}?"
+        ]
+      }
+    ],
+    "Narrative.Time.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.017",
+        "Alternatives": [
+          "Khoảng thời gian đầu là {h} giờ và {m} phút. ",
+          "Khoảng đầu tiên kéo dài {h} giờ cộng với {m} phút. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.019",
+        "Alternatives": [
+          "Khoảng tiếp theo kéo dài {extra} phút. ",
+          "Sau khoảng đầu còn có thêm {extra} phút. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.020",
+        "Alternatives": [
+          "Khoảng thời gian cuối là {other} giờ. ",
+          "Cuối cùng còn một khoảng kéo dài {other} giờ. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.022",
+        "Alternatives": [
+          "Tổng thời gian nghỉ trong các khoảng này là {pause} phút và phải trừ ra. ",
+          "Cần loại {pause} phút nghỉ khỏi tổng các khoảng đã nêu. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.025",
+        "Alternatives": [
+          "Hỏi thời gian hoạt động thực tế là bao nhiêu {unit}?",
+          "Thời gian hoạt động không tính nghỉ bằng bao nhiêu {unit}?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.029",
+        "Alternatives": [
+          "Trong khoảng này có {pause} phút nghỉ, không tính là thời gian hoạt động. ",
+          "Phải trừ {pause} phút nghỉ trong khoảng đã nêu để tính thời gian hoạt động. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.031",
+        "Alternatives": [
+          "Một buổi khác tiếp theo có thêm {second} phút hoạt động liên tục, không nghỉ. ",
+          "Sau buổi đầu, hoạt động thêm {second} phút trong một buổi khác không có thời gian nghỉ. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.033",
+        "Alternatives": [
+          "Hỏi tổng số phút hoạt động thực tế là bao nhiêu?",
+          "Có tất cả bao nhiêu phút hoạt động không tính nghỉ?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.036",
+        "Alternatives": [
+          "Thời điểm bắt đầu là {startHour}:{startMinute_00} và kết thúc là {endHour}:{endMinute_00} {ending_24_60_ng_y_h_m_sau_c_ng_ng_y}. ",
+          "Hoạt động từ {startHour}:{startMinute_00} đến {endHour}:{endMinute_00} {ending_24_60_ng_y_h_m_sau_c_ng_ng_y}. "
+        ]
+      }
+    ],
+    "Narrative.Measurement.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.001",
+        "Alternatives": [
+          "Độ dài cần tìm sau khi đổi đơn vị"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "Khối lượng cần tìm sau khi đổi đơn vị"
+          ],
+          "capacity": [
+            "Dung tích cần tìm sau khi đổi đơn vị"
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.002",
+        "Alternatives": [
+          "{subject} đo được độ dài {amount} {large_unit} theo đơn vị ban đầu. Hỏi độ dài này bằng bao nhiêu {small_unit}?",
+          "{subject} đo được độ dài {amount} {large_unit} khi kiểm tra. Đổi độ dài đó sang đơn vị nhỏ hơn, được bao nhiêu {small_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} cân được {amount} {large_unit} theo đơn vị ban đầu. Hỏi khối lượng này bằng bao nhiêu {small_unit}?",
+            "{subject} cân được {amount} {large_unit} khi kiểm tra. Đổi khối lượng đó sang đơn vị nhỏ hơn, được bao nhiêu {small_unit}?"
+          ],
+          "capacity": [
+            "{subject} có dung tích {amount} {large_unit} theo đơn vị ban đầu. Hỏi dung tích này bằng bao nhiêu {small_unit}?",
+            "{subject} có dung tích {amount} {large_unit} khi kiểm tra. Đổi dung tích đó sang đơn vị nhỏ hơn, được bao nhiêu {small_unit}?"
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.003",
+        "Alternatives": [
+          "{subject} đo được độ dài {amount} {small_unit} theo đơn vị ban đầu. Hỏi độ dài này bằng bao nhiêu {large_unit}?",
+          "{subject} đo được độ dài {amount} {small_unit} khi kiểm tra. Đổi độ dài đó sang đơn vị lớn hơn, được bao nhiêu {large_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} cân được {amount} {small_unit} theo đơn vị ban đầu. Hỏi khối lượng này bằng bao nhiêu {large_unit}?",
+            "{subject} cân được {amount} {small_unit} khi kiểm tra. Đổi khối lượng đó sang đơn vị lớn hơn, được bao nhiêu {large_unit}?"
+          ],
+          "capacity": [
+            "{subject} có dung tích {amount} {small_unit} theo đơn vị ban đầu. Hỏi dung tích này bằng bao nhiêu {large_unit}?",
+            "{subject} có dung tích {amount} {small_unit} khi kiểm tra. Đổi dung tích đó sang đơn vị lớn hơn, được bao nhiêu {large_unit}?"
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.004",
+        "Alternatives": [
+          "{subject} đo được độ dài {large_amount} {large_unit} kèm {small_amount} {small_unit}.",
+          "{subject} đo được độ dài {large_amount} {large_unit}, cộng với {small_amount} {small_unit}."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} cân được {large_amount} {large_unit} kèm {small_amount} {small_unit}.",
+            "{subject} cân được {large_amount} {large_unit}, cộng với {small_amount} {small_unit}."
+          ],
+          "capacity": [
+            "{subject} có dung tích {large_amount} {large_unit} kèm {small_amount} {small_unit}.",
+            "{subject} có dung tích {large_amount} {large_unit}, cộng với {small_amount} {small_unit}."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.006",
+        "Alternatives": [
+          " Bổ sung thêm {extra} {large_unit} cùng loại.",
+          " Tiếp theo nhận thêm {extra} {large_unit} cùng loại."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " Bổ sung thêm {extra} {large_unit} cùng loại.",
+            " Tiếp theo nhận thêm {extra} {large_unit} cùng loại."
+          ],
+          "capacity": [
+            " Bổ sung thêm {extra} {large_unit} cùng loại.",
+            " Tiếp theo nhận thêm {extra} {large_unit} cùng loại."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.008",
+        "Alternatives": [
+          " Tiếp theo lấy ra sử dụng {used} {small_unit}.",
+          " Sau khi bổ sung, sử dụng bớt {used} {small_unit}."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " Tiếp theo lấy ra sử dụng {used} {small_unit}.",
+            " Sau khi bổ sung, sử dụng bớt {used} {small_unit}."
+          ],
+          "capacity": [
+            " Tiếp theo lấy ra sử dụng {used} {small_unit}.",
+            " Sau khi bổ sung, sử dụng bớt {used} {small_unit}."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.010",
+        "Alternatives": [
+          " Hỏi độ dài sau các thao tác trên bằng bao nhiêu {answer_unit}?",
+          " Tính độ dài hiện có theo đơn vị {answer_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " Hỏi khối lượng sau các thao tác trên bằng bao nhiêu {answer_unit}?",
+            " Tính khối lượng hiện có theo đơn vị {answer_unit}?"
+          ],
+          "capacity": [
+            " Hỏi dung tích sau các thao tác trên bằng bao nhiêu {answer_unit}?",
+            " Tính dung tích hiện có theo đơn vị {answer_unit}?"
+          ]
+        }
+      }
+    ],
 
     "DecimalStoryContexts": [
       {"Id":"kitchen","Item":"gạo","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
@@ -21169,7 +21574,8 @@
         "PartProblemTemplate": "Thư viện có {0} quyển sách, trong đó {1} là sách truyện. Thư viện có bao nhiêu quyển sách truyện?",
         "WholeProblemTemplate": "Thư viện có {0} quyển sách truyện, chiếm {1} tổng số sách. Thư viện có tất cả bao nhiêu quyển sách?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "library-books",
+        "Quantity": "Count"
       },
       {
         "Unit": "quả cam",
@@ -21178,7 +21584,8 @@
         "PartProblemTemplate": "Cửa hàng có {0} quả cam và đã bán {1} số cam đó. Cửa hàng đã bán bao nhiêu quả cam?",
         "WholeProblemTemplate": "Cửa hàng đã bán {0} quả cam, bằng {1} số cam ban đầu. Lúc đầu cửa hàng có bao nhiêu quả cam?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "shop-oranges",
+        "Quantity": "Count"
       },
       {
         "Unit": "cây bút",
@@ -21187,7 +21594,8 @@
         "PartProblemTemplate": "Một hộp có {0} cây bút. Cô giáo lấy {1} số bút trong hộp để tặng học sinh. Cô giáo đã tặng bao nhiêu cây bút?",
         "WholeProblemTemplate": "Cô giáo lấy {0} cây bút để tặng học sinh, bằng {1} số bút trong hộp lúc đầu. Lúc đầu hộp có bao nhiêu cây bút?",
         "Capacity": 100,
-        "ContextId": null
+        "ContextId": "gift-pens",
+        "Quantity": "Count"
       },
       {
         "Unit": "học sinh",
@@ -21196,7 +21604,8 @@
         "PartProblemTemplate": "Một trường có {0} học sinh đăng ký hoạt động ngoại khóa, trong đó {1} số học sinh tham gia câu lạc bộ đọc sách. Có bao nhiêu học sinh tham gia câu lạc bộ?",
         "WholeProblemTemplate": "Có {0} học sinh tham gia câu lạc bộ đọc sách, chiếm {1} số học sinh đăng ký hoạt động ngoại khóa của trường. Có tất cả bao nhiêu học sinh đăng ký hoạt động ngoại khóa?",
         "Capacity": 600,
-        "ContextId": null
+        "ContextId": "school-club",
+        "Quantity": "Count"
       },
       {
         "Unit": "cây",
@@ -21205,7 +21614,8 @@
         "PartProblemTemplate": "Vườn ươm có {0} cây giống và đã trồng {1} số cây đó. Vườn ươm đã trồng bao nhiêu cây?",
         "WholeProblemTemplate": "Vườn ươm đã trồng {0} cây, bằng {1} tổng số cây giống. Ban đầu vườn ươm có tất cả bao nhiêu cây giống?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "nursery-trees",
+        "Quantity": "Count"
       },
       {
         "Unit": "m",
@@ -21214,7 +21624,8 @@
         "PartProblemTemplate": "Một tấm vải dài {0} m. Thợ may dùng {1} tấm vải để may áo. Thợ may đã dùng bao nhiêu mét vải?",
         "WholeProblemTemplate": "Thợ may đã dùng {0} m vải để may áo, bằng {1} chiều dài tấm vải ban đầu. Tấm vải ban đầu dài bao nhiêu mét?",
         "Capacity": 200,
-        "ContextId": null
+        "ContextId": "tailoring-fabric",
+        "Quantity": "Distance"
       },
       {
         "Unit": "kg",
@@ -21223,7 +21634,8 @@
         "PartProblemTemplate": "Một bao có {0} kg gạo. Cửa hàng bán {1} lượng gạo trong bao. Cửa hàng đã bán bao nhiêu ki-lô-gam gạo?",
         "WholeProblemTemplate": "Cửa hàng bán {0} kg gạo, bằng {1} lượng gạo trong bao lúc đầu. Lúc đầu bao có bao nhiêu ki-lô-gam gạo?",
         "Capacity": 50,
-        "ContextId": null
+        "ContextId": "shop-rice",
+        "Quantity": "Mass"
       },
       {
         "Unit": "lít",
@@ -21232,7 +21644,8 @@
         "PartProblemTemplate": "Một bể chứa {0} lít nước. Người ta dùng {1} lượng nước trong bể để tưới cây. Đã dùng bao nhiêu lít nước?",
         "WholeProblemTemplate": "Người ta dùng {0} lít nước để tưới cây, bằng {1} lượng nước trong bể lúc đầu. Lúc đầu bể chứa bao nhiêu lít nước?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "watering-tank",
+        "Quantity": "Capacity"
       },
       {
         "Unit": "viên bi",
@@ -21241,7 +21654,8 @@
         "PartProblemTemplate": "Một bạn có {0} viên bi và cho em {1} số bi của mình. Bạn đã cho em bao nhiêu viên bi?",
         "WholeProblemTemplate": "Một bạn cho em {0} viên bi, bằng {1} số bi của mình lúc đầu. Lúc đầu bạn có bao nhiêu viên bi?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "share-marbles",
+        "Quantity": "Count"
       },
       {
         "Unit": "quả trứng",
@@ -21250,7 +21664,8 @@
         "PartProblemTemplate": "Một khay có {0} quả trứng. Đầu bếp dùng {1} số trứng trong khay để làm bánh. Đầu bếp đã dùng bao nhiêu quả trứng?",
         "WholeProblemTemplate": "Đầu bếp dùng {0} quả trứng để làm bánh, bằng {1} số trứng trong khay lúc đầu. Lúc đầu khay có bao nhiêu quả trứng?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "baking-eggs",
+        "Quantity": "Count"
       },
       {
         "Unit": "suất ăn",
@@ -21259,7 +21674,8 @@
         "PartProblemTemplate": "Trong chuẩn bị suất ăn, cần hoàn thành {0} suất ăn. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu suất ăn?",
         "WholeProblemTemplate": "Trong chuẩn bị suất ăn, đã hoàn thành {0} suất ăn, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu suất ăn?",
         "Capacity": 1000,
-        "ContextId": "kitchen"
+        "ContextId": "kitchen",
+        "Quantity": "Count"
       },
       {
         "Unit": "bông hoa giấy",
@@ -21268,7 +21684,8 @@
         "PartProblemTemplate": "Trong gấp hoa giấy, cần hoàn thành {0} bông hoa giấy. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu bông hoa giấy?",
         "WholeProblemTemplate": "Trong gấp hoa giấy, đã hoàn thành {0} bông hoa giấy, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu bông hoa giấy?",
         "Capacity": 200,
-        "ContextId": "craft"
+        "ContextId": "craft",
+        "Quantity": "Count"
       },
       {
         "Unit": "gói quà",
@@ -21277,7 +21694,8 @@
         "PartProblemTemplate": "Trong đóng gói quà, cần hoàn thành {0} gói quà. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu gói quà?",
         "WholeProblemTemplate": "Trong đóng gói quà, đã hoàn thành {0} gói quà, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu gói quà?",
         "Capacity": 500,
-        "ContextId": "distribution"
+        "ContextId": "distribution",
+        "Quantity": "Count"
       },
       {
         "Unit": "quyển sách",
@@ -21286,7 +21704,8 @@
         "PartProblemTemplate": "Trong quyên góp sách, cần hoàn thành {0} quyển sách. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu quyển sách?",
         "WholeProblemTemplate": "Trong quyên góp sách, đã hoàn thành {0} quyển sách, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu quyển sách?",
         "Capacity": 500,
-        "ContextId": "community"
+        "ContextId": "community",
+        "Quantity": "Count"
       },
       {
         "Unit": "phiếu trả lời",
@@ -21295,7 +21714,8 @@
         "PartProblemTemplate": "Trong khảo sát sở thích, cần hoàn thành {0} phiếu trả lời. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu phiếu trả lời?",
         "WholeProblemTemplate": "Trong khảo sát sở thích, đã hoàn thành {0} phiếu trả lời, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu phiếu trả lời?",
         "Capacity": 500,
-        "ContextId": "survey"
+        "ContextId": "survey",
+        "Quantity": "Count"
       }
     ],
     "DataChartContexts": [

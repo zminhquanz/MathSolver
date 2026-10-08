@@ -1684,8 +1684,12 @@ public partial class MathPuzzlePage : ContentPage
                 _currentQuestion = selected;
             }
 
-            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null })
+            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder
+                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
+                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Time } time
+                    && ElementaryQuizGenerator.TimeStoryTypes.Contains(time.Type)
+                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurement
+                    && ElementaryQuizGenerator.MeasurementStoryTypes.Contains(measurement.Type))
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectReasoningAsync(_currentQuestion,
                     curriculumContext.Tier, AppLanguageManager.CurrentLanguage);

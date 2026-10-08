@@ -60,6 +60,20 @@ internal static class QuizContentTests
         }
         Reject(() => QuizContentCatalog.Validate(ChangeRow("MotionQuizGenerator.UnitProfiles", "TimeDivisor", 0)), "invalid time conversion");
         Reject(() => QuizContentValidation.CheckTranslation(ChangeRow("AverageQuizGenerator.DirectContexts", "Capacity", 1), en), "changed mathematical metadata");
+        QuizContentPack ChangeFractionContexts(Action<JsonArray> change)
+        {
+            var rows = JsonNode.Parse(en.Lists["FractionQuantityContexts"].GetRawText())!.AsArray();
+            change(rows);
+            return new() { Version = 1, Culture = "fr-FR", Texts = en.Texts,
+                Lists = new(en.Lists) { ["FractionQuantityContexts"] = JsonSerializer.SerializeToElement(rows) } };
+        }
+        Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["ContextId"] = null)), "missing fraction context ID");
+        Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[1]!["ContextId"] = rows[0]!["ContextId"]!.GetValue<string>())), "duplicate fraction context ID");
+        Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["Quantity"] = "Unspecified")), "missing quantity policy");
+        Reject(() => QuizContentValidation.CheckTranslation(ChangeFractionContexts(rows => rows[5]!["Quantity"] = "Count"), en), "translation changed a measured quantity to count");
+        QuizContentPack FractionMetadata(QuizContentPack pack) => new() { Version = 1, Culture = pack.Culture,
+            Lists = new() { ["FractionQuantityContexts"] = pack.Lists["FractionQuantityContexts"] } };
+        QuizContentValidation.CheckTranslation(FractionMetadata(en), FractionMetadata(vi));
         var charts = QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN");
         Check(ReferenceEquals(charts, QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN")), "Lists are not cached.");
         Check(QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes").Count == 241, "Lost applied scenes.");

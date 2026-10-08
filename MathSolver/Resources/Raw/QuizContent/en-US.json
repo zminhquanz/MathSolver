@@ -2,6 +2,128 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {
+      "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
+      "Text": "After filling the {container}, how many {item} are left over?",
+      "Variables": [
+        "container",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.001",
+      "Text": "Requested length",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Requested mass",
+        "capacity": "Requested capacity"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.002",
+      "Text": "{subject} has a measured length of {amount} {large_unit}. What is this length in {small_unit}?",
+      "Variables": [
+        "subject",
+        "amount",
+        "large_unit",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} weighs {amount} {large_unit}. What is this mass in {small_unit}?",
+        "capacity": "{subject} has a capacity of {amount} {large_unit}. What is this capacity in {small_unit}?"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.003",
+      "Text": "{subject} has a measured length of {amount} {small_unit}. What is this length in {large_unit}?",
+      "Variables": [
+        "subject",
+        "amount",
+        "small_unit",
+        "large_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} weighs {amount} {small_unit}. What is this mass in {large_unit}?",
+        "capacity": "{subject} has a capacity of {amount} {small_unit}. What is this capacity in {large_unit}?"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.004",
+      "Text": "{subject} has a measured length of {large_amount} {large_unit} and {small_amount} {small_unit}.",
+      "Variables": [
+        "subject",
+        "large_amount",
+        "large_unit",
+        "small_amount",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": "{subject} weighs {large_amount} {large_unit} and {small_amount} {small_unit}.",
+        "capacity": "{subject} has a capacity of {large_amount} {large_unit} and {small_amount} {small_unit}."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.005",
+      "Text": "Convert the initial length to the smaller unit",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Convert the initial mass to the smaller unit",
+        "capacity": "Convert the initial capacity to the smaller unit"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.006",
+      "Text": " An extra {extra} {large_unit} of the same material is added.",
+      "Variables": [
+        "extra",
+        "large_unit"
+      ],
+      "TextByUnit": {
+        "mass": " An extra {extra} {large_unit} of the same material is added.",
+        "capacity": " An extra {extra} {large_unit} of the same material is added."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.007",
+      "Text": "Convert the added length to the smaller unit",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Convert the added mass to the smaller unit",
+        "capacity": "Convert the added capacity to the smaller unit"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.008",
+      "Text": " Then {used} {small_unit} is used up.",
+      "Variables": [
+        "used",
+        "small_unit"
+      ],
+      "TextByUnit": {
+        "mass": " Then {used} {small_unit} is used up.",
+        "capacity": " Then {used} {small_unit} is used up."
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.009",
+      "Text": "Length remaining in the smaller unit",
+      "Variables": [],
+      "TextByUnit": {
+        "mass": "Mass remaining in the smaller unit",
+        "capacity": "Capacity remaining in the smaller unit"
+      }
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MeasurementStories.010",
+      "Text": " What is the length now in {answer_unit}?",
+      "Variables": [
+        "answer_unit"
+      ],
+      "TextByUnit": {
+        "mass": " What is the mass now in {answer_unit}?",
+        "capacity": " What is the capacity now in {answer_unit}?"
+      }
+    },
     {"Id":"ProportionQuizGenerator.Narrative.001","Text":"Making {sets} sets of clothes uses {fabric} meters of fabric. How many meters of fabric are needed for {new_sets} sets at the same rate?","Variables":["sets","fabric","new_sets"]},
     {"Id":"ProportionQuizGenerator.Narrative.002","Text":"It takes {fabric} meters of fabric to make {sets} sets of clothes. How many meters are needed for {new_sets} sets?","Variables":["sets","fabric","new_sets"]},
     {"Id":"ProportionQuizGenerator.Narrative.003","Text":"{students} students plant {trees} trees. How many trees can {new_students} students plant if every student plants the same number?","Variables":["students","trees","new_students"]},
@@ -8208,7 +8330,7 @@
     },
     {
         "Id":  "Curriculum.Requirement.Remainder.Leftovers",
-        "Text":  "Solve a groups and leftovers task using the supplied data.",
+        "Text":  "Find only the items left over after filling complete groups.",
         "Variables": []
     },
     {
@@ -8828,6 +8950,275 @@
     }
   ],
   "Lists": {
+    "MeasurementStoryContexts": [
+      {
+        "Id": "kitchen",
+        "Category": "mass",
+        "Subject": "The rice portion"
+      },
+      {
+        "Id": "bakery",
+        "Category": "mass",
+        "Subject": "The flour portion"
+      },
+      {
+        "Id": "agriculture",
+        "Category": "mass",
+        "Subject": "The harvested vegetables"
+      },
+      {
+        "Id": "environment",
+        "Category": "mass",
+        "Subject": "The collected paper"
+      },
+      {
+        "Id": "water",
+        "Category": "capacity",
+        "Subject": "The water portion"
+      },
+      {
+        "Id": "dairy",
+        "Category": "capacity",
+        "Subject": "The milk portion"
+      },
+      {
+        "Id": "decoration",
+        "Category": "length",
+        "Subject": "The ribbon portion"
+      },
+      {
+        "Id": "craft",
+        "Category": "length",
+        "Subject": "The fabric portion"
+      }
+    ],
+    "Narrative.Remainder.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.001",
+        "Alternatives": [
+          "A total of {amount} {item} must be placed into {container}. ",
+          "There are {amount} {item} waiting to be packed into {container}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.002",
+        "Alternatives": [
+          "The first batch has {a} and the second has {b} {item}; combine these separate batches. ",
+          "The two separate batches contain {a} and {b} {item} respectively. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.003",
+        "Alternatives": [
+          "Exclude {used} {item} that have already been accommodated separately. ",
+          "There are {used} {item} already accommodated separately, so do not pack them again. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.005",
+        "Alternatives": [
+          "Each {container} has a capacity of {nominal} {item}, but space for {excluded} other {item} is reserved and unavailable for this batch. ",
+          "The capacity of each {container} is {nominal} {item}; subtract the space reserved for {excluded} other {item}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.006",
+        "Alternatives": [
+          "The maximum capacity of each {container} is {per} {item}. ",
+          "Each {container} can accommodate at most {per} {item}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.007",
+        "Alternatives": [
+          "What is the minimum number of {container} needed to accommodate everything?",
+          "How many {container} are needed at minimum so that nothing is left out?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.009",
+        "Alternatives": [
+          "After packing, how many {container} are completely full and how many {item} are left over?",
+          "What are the number of full {container} and the number of leftover {item}?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
+        "Alternatives": [
+          "After filling the {container} completely, how many {item} remain?",
+          "After filling as many full {container} as possible, how many {item} are left?"
+        ]
+      }
+    ],
+    "Narrative.Time.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.017",
+        "Alternatives": [
+          "The initial interval takes {h} hours and {m} minutes. ",
+          "The first interval has a duration of {h} hours plus {m} minutes. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.019",
+        "Alternatives": [
+          "The following interval lasts {extra} minutes. ",
+          "Another interval of {extra} minutes follows. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.020",
+        "Alternatives": [
+          "The final interval takes {other} hours. ",
+          "There is a last interval lasting {other} hours. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.022",
+        "Alternatives": [
+          "Subtract {pause} minutes of rest included in these intervals. ",
+          "The total includes {pause} minutes of rest that must be excluded. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.025",
+        "Alternatives": [
+          "What is the actual active duration in {unit}?",
+          "How many {unit} of activity remain after excluding rest?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.029",
+        "Alternatives": [
+          "There are {pause} minutes of rest within this interval that do not count as activity. ",
+          "Exclude the {pause} minutes of rest within this interval when finding active time. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.031",
+        "Alternatives": [
+          "A separate later session includes {second} additional active minutes with no rest. ",
+          "After the first session, another session adds {second} minutes of continuous activity without rest. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.033",
+        "Alternatives": [
+          "What is the total number of active minutes, excluding rest?",
+          "How many minutes of actual activity are there altogether?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.036",
+        "Alternatives": [
+          "The activity begins at {startHour}:{startMinute_00} and ends at {endHour}:{endMinute_00} {ending_24_60_the_next_day_on_the_same_day}. ",
+          "The start time is {startHour}:{startMinute_00} and the finish time is {endHour}:{endMinute_00} {ending_24_60_the_next_day_on_the_same_day}. "
+        ]
+      }
+    ],
+    "Narrative.Measurement.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.002",
+        "Alternatives": [
+          "{subject} has a measured length of {amount} {large_unit} in the original unit. Express this length in {small_unit}?",
+          "{subject} has a measured length of {amount} {large_unit} when checked. What is the equivalent length in {small_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} weighs {amount} {large_unit} in the original unit. Express this mass in {small_unit}?",
+            "{subject} weighs {amount} {large_unit} when checked. What is the equivalent mass in {small_unit}?"
+          ],
+          "capacity": [
+            "{subject} has a capacity of {amount} {large_unit} in the original unit. Express this capacity in {small_unit}?",
+            "{subject} has a capacity of {amount} {large_unit} when checked. What is the equivalent capacity in {small_unit}?"
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.003",
+        "Alternatives": [
+          "{subject} has a measured length of {amount} {small_unit} in the original unit. Express this length in {large_unit}?",
+          "{subject} has a measured length of {amount} {small_unit} when checked. What is the equivalent length in {large_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} weighs {amount} {small_unit} in the original unit. Express this mass in {large_unit}?",
+            "{subject} weighs {amount} {small_unit} when checked. What is the equivalent mass in {large_unit}?"
+          ],
+          "capacity": [
+            "{subject} has a capacity of {amount} {small_unit} in the original unit. Express this capacity in {large_unit}?",
+            "{subject} has a capacity of {amount} {small_unit} when checked. What is the equivalent capacity in {large_unit}?"
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.004",
+        "Alternatives": [
+          "{subject} has a measured length of {large_amount} {large_unit} plus {small_amount} {small_unit}.",
+          "{subject} has a measured length of {large_amount} {large_unit} together with {small_amount} {small_unit}."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            "{subject} weighs {large_amount} {large_unit} plus {small_amount} {small_unit}.",
+            "{subject} weighs {large_amount} {large_unit} together with {small_amount} {small_unit}."
+          ],
+          "capacity": [
+            "{subject} has a capacity of {large_amount} {large_unit} plus {small_amount} {small_unit}.",
+            "{subject} has a capacity of {large_amount} {large_unit} together with {small_amount} {small_unit}."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.006",
+        "Alternatives": [
+          " A further {extra} {large_unit} of the same material is received.",
+          " Next, {extra} {large_unit} of the same material is added."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " A further {extra} {large_unit} of the same material is received.",
+            " Next, {extra} {large_unit} of the same material is added."
+          ],
+          "capacity": [
+            " A further {extra} {large_unit} of the same material is received.",
+            " Next, {extra} {large_unit} of the same material is added."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.008",
+        "Alternatives": [
+          " Next, {used} {small_unit} is taken out for use.",
+          " After the addition, {used} {small_unit} is removed for use."
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " Next, {used} {small_unit} is taken out for use.",
+            " After the addition, {used} {small_unit} is removed for use."
+          ],
+          "capacity": [
+            " Next, {used} {small_unit} is taken out for use.",
+            " After the addition, {used} {small_unit} is removed for use."
+          ]
+        }
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MeasurementStories.010",
+        "Alternatives": [
+          " What is the resulting length in {answer_unit}?",
+          " What length remains after these operations, in {answer_unit}?"
+        ],
+        "AlternativesByUnit": {
+          "mass": [
+            " What is the resulting mass in {answer_unit}?",
+            " What mass remains after these operations, in {answer_unit}?"
+          ],
+          "capacity": [
+            " What is the resulting capacity in {answer_unit}?",
+            " What capacity remains after these operations, in {answer_unit}?"
+          ]
+        }
+      }
+    ],
 
     "DecimalStoryContexts": [
       {"Id":"kitchen","Item":"rice","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
@@ -20816,7 +21207,8 @@
         "PartProblemTemplate": "A library has {0} books; {1} of them are storybooks. How many storybooks are there?",
         "WholeProblemTemplate": "A library has {0} storybooks, representing {1} of all its books. How many books does the library have in total?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "library-books",
+        "Quantity": "Count"
       },
       {
         "Unit": "oranges",
@@ -20825,7 +21217,8 @@
         "PartProblemTemplate": "A shop has {0} oranges and sells {1} of them. How many oranges does it sell?",
         "WholeProblemTemplate": "A shop sells {0} oranges, representing {1} of its initial stock. How many oranges did it have at first?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "shop-oranges",
+        "Quantity": "Count"
       },
       {
         "Unit": "pens",
@@ -20833,8 +21226,9 @@
         "WholeLabel": "Initial number of pens",
         "PartProblemTemplate": "A box contains {0} pens. A teacher gives {1} of them to students. How many pens does the teacher give away?",
         "WholeProblemTemplate": "A teacher gives students {0} pens, representing {1} of the pens initially in a box. How many pens were in the box at first?",
-        "Capacity": 1000,
-        "ContextId": null
+        "Capacity": 100,
+        "ContextId": "gift-pens",
+        "Quantity": "Count"
       },
       {
         "Unit": "students",
@@ -20843,7 +21237,8 @@
         "PartProblemTemplate": "At a school, {0} students register for extracurricular activities; {1} of them join the reading club. How many students join the club?",
         "WholeProblemTemplate": "At a school, {0} students join the reading club, representing {1} of the students registering for extracurricular activities. How many students register for activities in total?",
         "Capacity": 600,
-        "ContextId": null
+        "ContextId": "school-club",
+        "Quantity": "Count"
       },
       {
         "Unit": "seedlings",
@@ -20852,7 +21247,8 @@
         "PartProblemTemplate": "A nursery has {0} seedlings and plants {1} of them. How many seedlings does it plant?",
         "WholeProblemTemplate": "A nursery plants {0} seedlings, representing {1} of its initial stock. How many seedlings did it have in total?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "nursery-trees",
+        "Quantity": "Count"
       },
       {
         "Unit": "m",
@@ -20861,7 +21257,8 @@
         "PartProblemTemplate": "A piece of fabric is {0} m long. A tailor uses {1} of it to make shirts. How many metres of fabric does the tailor use?",
         "WholeProblemTemplate": "A tailor uses {0} m of fabric, representing {1} of the original piece. How many metres long was the original piece?",
         "Capacity": 200,
-        "ContextId": null
+        "ContextId": "tailoring-fabric",
+        "Quantity": "Distance"
       },
       {
         "Unit": "kg",
@@ -20870,7 +21267,8 @@
         "PartProblemTemplate": "A sack contains {0} kg of rice. A shop sells {1} of the rice. How many kilograms of rice does it sell?",
         "WholeProblemTemplate": "A shop sells {0} kg of rice, representing {1} of the rice initially in a sack. How many kilograms of rice were in the sack at first?",
         "Capacity": 50,
-        "ContextId": null
+        "ContextId": "shop-rice",
+        "Quantity": "Mass"
       },
       {
         "Unit": "litres",
@@ -20879,7 +21277,8 @@
         "PartProblemTemplate": "A tank holds {0} litres of water. A gardener uses {1} of it to water plants. How many litres of water does the gardener use?",
         "WholeProblemTemplate": "A gardener uses {0} litres of water, representing {1} of the water initially in a tank. How many litres did the tank hold at first?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "watering-tank",
+        "Quantity": "Capacity"
       },
       {
         "Unit": "marbles",
@@ -20888,7 +21287,8 @@
         "PartProblemTemplate": "A child has {0} marbles and gives {1} of them to a younger sibling. How many marbles does the child give away?",
         "WholeProblemTemplate": "A child gives a younger sibling {0} marbles, representing {1} of the initial collection. How many marbles did the child have at first?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "share-marbles",
+        "Quantity": "Count"
       },
       {
         "Unit": "eggs",
@@ -20897,7 +21297,8 @@
         "PartProblemTemplate": "A tray contains {0} eggs. A cook uses {1} of them to make cakes. How many eggs does the cook use?",
         "WholeProblemTemplate": "A cook uses {0} eggs to make cakes, representing {1} of the eggs initially in a tray. How many eggs were on the tray at first?",
         "Capacity": 1000,
-        "ContextId": null
+        "ContextId": "baking-eggs",
+        "Quantity": "Count"
       },
       {
         "Unit": "meals",
@@ -20906,7 +21307,8 @@
         "PartProblemTemplate": "For meal preparation, the target is {0} meals. {1} of this target is complete. How many meals are complete?",
         "WholeProblemTemplate": "For meal preparation, {0} meals are complete, representing {1} of the target. What is the total target in meals?",
         "Capacity": 1000,
-        "ContextId": "kitchen"
+        "ContextId": "kitchen",
+        "Quantity": "Count"
       },
       {
         "Unit": "paper flowers",
@@ -20915,7 +21317,8 @@
         "PartProblemTemplate": "For paper flower making, the target is {0} paper flowers. {1} of this target is complete. How many paper flowers are complete?",
         "WholeProblemTemplate": "For paper flower making, {0} paper flowers are complete, representing {1} of the target. What is the total target in paper flowers?",
         "Capacity": 200,
-        "ContextId": "craft"
+        "ContextId": "craft",
+        "Quantity": "Count"
       },
       {
         "Unit": "gift packs",
@@ -20924,7 +21327,8 @@
         "PartProblemTemplate": "For gift packing, the target is {0} gift packs. {1} of this target is complete. How many gift packs are complete?",
         "WholeProblemTemplate": "For gift packing, {0} gift packs are complete, representing {1} of the target. What is the total target in gift packs?",
         "Capacity": 500,
-        "ContextId": "distribution"
+        "ContextId": "distribution",
+        "Quantity": "Count"
       },
       {
         "Unit": "books",
@@ -20933,7 +21337,8 @@
         "PartProblemTemplate": "For book donations, the target is {0} books. {1} of this target is complete. How many books are complete?",
         "WholeProblemTemplate": "For book donations, {0} books are complete, representing {1} of the target. What is the total target in books?",
         "Capacity": 500,
-        "ContextId": "community"
+        "ContextId": "community",
+        "Quantity": "Count"
       },
       {
         "Unit": "responses",
@@ -20942,7 +21347,8 @@
         "PartProblemTemplate": "For preference surveys, the target is {0} responses. {1} of this target is complete. How many responses are complete?",
         "WholeProblemTemplate": "For preference surveys, {0} responses are complete, representing {1} of the target. What is the total target in responses?",
         "Capacity": 500,
-        "ContextId": "survey"
+        "ContextId": "survey",
+        "Quantity": "Count"
       }
     ],
     "DataChartContexts": [

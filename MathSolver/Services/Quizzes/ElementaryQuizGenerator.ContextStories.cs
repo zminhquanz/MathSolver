@@ -4,26 +4,31 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract AddTimeStory(ElementaryQuizContract contract)
+    internal static string[] TimeStoryContextIds(CurriculumTier tier) => tier >= CurriculumTier.ThreeStars
+        ? ["tourism", "events", "schedule"] : ["library", "sports", "craft", "schedule"];
+
+    private ElementaryQuizContract AddTimeStory(ElementaryQuizContract contract, string contextId = "")
     {
-        bool late = contract.Reasoning?.Tier >= CurriculumTier.ThreeStars;
-        string[] ids = late ? ["tourism", "events", "schedule"] : ["library", "sports", "craft", "schedule"];
-        string id = ids[NextContextVariant(contract.Type, contract.Language, "time-story", ids.Length)];
+        string[] ids = TimeStoryContextIds(contract.Reasoning!.Tier);
+        string id = contextId.Length == 0 ? ids[NextContextVariant(contract.Type, contract.Language, "time-story", ids.Length)]
+            : ids.Contains(contextId) ? contextId : throw new ArgumentException("InvalidTimeStoryProfile");
         string introduction = id switch
         {
             "library" => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.012"),"sports" => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.013"),            "craft" => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.014"),"events" => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.015"),            "tourism" => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.016"),_ => QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.ContextStories.AddTimeStory.017")        };
         return contract with { ProblemText = introduction + contract.ProblemText, StoryContextId = id };
     }
 
-    private sealed record PackingStory(string Id, string Item, string Container, int Capacity, int MaximumSize);
-    private static IReadOnlyList<PackingStory> PackingStories(AppLanguage language) => QuizContentCatalog.LoadList<PackingStory>("ElementaryQuizGenerator.PackingStories", QuizContentCatalog.Culture(language));
-    private ElementaryQuizContract CreateRemainderStory(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    internal sealed record PackingStory(string Id, string Item, string Container, int Capacity, int MaximumSize);
+    internal static IReadOnlyList<PackingStory> PackingStories(AppLanguage language) => QuizContentCatalog.LoadList<PackingStory>("ElementaryQuizGenerator.PackingStories", QuizContentCatalog.Culture(language));
+    private ElementaryQuizContract CreateRemainderStory(ElementaryQuizType type, AppLanguage language, CurriculumTier tier, string contextId = "")
     {
         var t = new DifficultyBuilder(QuizProblemKind.Remainder, type, language, tier);
-        var s = PackingStories(language)[NextContextVariant(type, language, "packing-story", PackingStories(language).Count)];
+        var contexts = PackingStories(language);
+        var s = contextId.Length == 0 ? contexts[NextContextVariant(type, language, "packing-story", contexts.Count)]
+            : contexts.FirstOrDefault(context => context.Id == contextId) ?? throw new ArgumentException("InvalidRemainderStoryProfile");
         int level = (int)tier, size = _random.Next(2, Math.Min(s.MaximumSize - (level == 5 ? 3 : 0), 4 + level * 4) + 1);
         int full = _random.Next(1, Math.Min(2 + level * 3, s.Capacity / size));
-        int remainder = level == 1 ? 0 : _random.Next(1, size), total = full * size + remainder;
+        int remainder = level == 1 ? 0 : _random.Next(size), total = full * size + remainder;
         string item = s.Item, container = s.Container;
         string amount, problem;
         if (level <= 2)
@@ -67,6 +72,13 @@ public sealed partial class ElementaryQuizGenerator
         {
             problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.007", ("container", $"{container}"));
             t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.008"), q + (remainder > 0 ? "+1" : ""), container);
+        }
+        else if (type == ElementaryQuizType.Leftovers)
+        {
+            problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
+                ("container", container), ("item", item));
+            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.010"), q, container);
+            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.011"), r, item);
         }
         else
         {
