@@ -19,6 +19,11 @@ internal static partial class ElementaryEssayValidator
         bool solutionOkay = !contract.RequiresSolution || !string.IsNullOrWhiteSpace(solution) &&
             (contract.Answers.Any(answer => ContainsCue(solution, answer.Label) || answer.Unit.Length > 0 &&
                 EssayAnswerValidator.ValidateSolution(question with { WordProblem = new(contract.ProblemText, "", answer.Unit, answer.Label) }, solution).IsCorrect)
+             // Reviewed AI leads can phrase the final target differently from
+             // Answer.Label. Accept its bound final step, never an arbitrary
+             // intermediate cue; calculations and units are still checked below.
+             || contract.Reasoning?.Steps.Any(step => contract.Answers.Any(answer => answer.Expression == step.Expression)
+                 && ContainsCue(solution, step.Label)) == true
              || ContainsCue(solution, QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.001")) || ContainsCue(solution, QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.002")));
         var reports = new List<EssayStepValidationResult>();
         var details = new List<string>();

@@ -11,7 +11,7 @@ internal static class ReasoningStoryTests
         using var weights = await LLama.LLamaWeights.LoadFromFileAsync(new LLama.Common.ModelParams(path)
             { GpuLayerCount = 0, UseMemorymap = true });
         int maximum = 0, count = 0;
-        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage })
+        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var variant in ReasoningStoryCatalogue.Variants(family, tier))
@@ -68,7 +68,7 @@ internal static class ReasoningStoryTests
     public static async Task RunAsync()
     {
         int count = 0;
-        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage })
+        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var variant in ReasoningStoryCatalogue.Variants(family, tier))
@@ -154,13 +154,14 @@ internal static class ReasoningStoryTests
         try
         {
             var store = new QuestionBankStore(Path.Combine(directory, "stories.db3"));
-            foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage })
+            foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
             {
-                var c = ReasoningStoryCatalogue.Create(family, 0, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, new(19));
+                int variant = ReasoningStoryCatalogue.Variants(family, CurriculumTier.ThreeStars)[0];
+                var c = ReasoningStoryCatalogue.Create(family, variant, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, new(19));
                 var d = ReasoningStoryCatalogue.Draft(c);
                 var saved = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "test", DateTime.UtcNow);
                 if (!await store.InsertAsync(saved) || await store.InsertAsync(saved)) throw new Exception("Storage/deduplication failed");
-                if (await store.TakeReasoningAsync(family, 0, c.Tier, c.Language) is not { } selected
+                if (await store.TakeReasoningAsync(family, variant, c.Tier, c.Language) is not { } selected
                     || selected.Contract != c) throw new Exception("Stored family or variant was lost");
                 using var excel = new MemoryStream();
                 QuestionBankWorkbook.Write(excel, [saved]);
@@ -186,7 +187,7 @@ internal static class ReasoningStoryTests
                 if (QuestionBankWorkbook.Read(malformed).Single().ErrorCode != "InvalidExcelRow")
                     throw new Exception("Malformed narrative Excel row was not rejected safely");
                 var worker = new AiQuestionGenerationService(new StoryRuntime(), store);
-                worker.Start(new(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.English, 1, true, Family: family));
+                worker.Start(new(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.English, 1, true, Family: family, StoryVariant: variant));
                 await worker.Completion;
                 if (worker.Snapshot.State != AiJobState.Completed || worker.Snapshot.Items.Single().State != AiItemState.Saved)
                     throw new Exception("New-family background worker failed: " + worker.Snapshot.Error);
@@ -197,12 +198,12 @@ internal static class ReasoningStoryTests
                     || bankPractice.AverageProblem?.Type != original.AverageProblem?.Type
                     || bankPractice.PercentageProblem?.Type != original.PercentageProblem?.Type)
                     throw new Exception("Practice did not refresh facts from the matching stored template");
-                if (await store.TakeReasoningAsync(family, 0, c.Tier, AppLanguage.English) is not null)
+                if (await store.TakeReasoningAsync(family, variant, c.Tier, AppLanguage.English) is not null)
                     throw new Exception("Language filter leaked another family/template");
             }
             using var allExcel = new MemoryStream();
             var exported = await store.ExportExcelAsync(allExcel);
-            if (exported.Exported != 6) throw new Exception("Store export lost version 8 rows");
+            if (exported.Exported != 8) throw new Exception("Store export lost version 8 rows");
             await store.DeleteAllAsync();
         }
         finally { Directory.Delete(directory, true); }

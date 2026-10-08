@@ -29,7 +29,7 @@ public sealed class ProportionQuizGenerator
         PaintAreaSquareMeters
     }
 
-    private sealed record TemplateDefinition(ProportionQuizType Type, ProportionScenarioKind Scenario, string Template, string Unit, string Subject, bool AsksForAdditionalPeople = false, DirectRateProfile RateProfile = DirectRateProfile.GenericCount);
+    private sealed record TemplateDefinition(ProportionQuizType Type, ProportionScenarioKind Scenario, string Template, string Unit, string Subject, bool AsksForAdditionalPeople = false, DirectRateProfile RateProfile = DirectRateProfile.GenericCount, string NarrativeId = "");
 
     private static IReadOnlyList<TemplateDefinition> Templates(AppLanguage language) => QuizContentCatalog.LoadList<TemplateDefinition>("ProportionQuizGenerator.Templates", QuizContentCatalog.Culture(language));
 
@@ -66,10 +66,14 @@ public sealed class ProportionQuizGenerator
         return CreateQuestion(mode, contract);
     }
 
+    internal ArithmeticQuizQuestion GenerateNarrative(ArithmeticQuizMode mode, ProportionQuizType type,
+        AppLanguage language, QuizCurriculumContext context, string narrativeId)
+        => CreateQuestion(mode, CreateContract(type, language, context, narrativeId));
+
     private ProportionQuizContract CreateContract(
         ProportionQuizType? requestedType,
         AppLanguage language,
-        QuizCurriculumContext? curriculumContext)
+        QuizCurriculumContext? curriculumContext, string? narrativeId = null)
     {
         IReadOnlyList<ProportionQuizType> allowedTypes =
             curriculumContext.HasValue
@@ -92,15 +96,11 @@ public sealed class ProportionQuizGenerator
                 ? requestedType.Value
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
-        TemplateDefinition[] candidates = Templates(language)
-            .Where(template => template.Type == type &&
-                (level is not >= 4 || type != ProportionQuizType.Direct ||
-                    template.RateProfile is not (DirectRateProfile.TreesPerStudent or DirectRateProfile.GenericCount or DirectRateProfile.MoneyDong)) &&
-                (level is not <= 2 || (!template.AsksForAdditionalPeople &&
-                    template.Scenario is not (ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))) &&
-                (level is not >= 5 || type != ProportionQuizType.Inverse ||
-                    template.AsksForAdditionalPeople || template.Scenario is ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))
-            .ToArray();
+        TemplateDefinition[] candidates = Candidates(type, language, level);
+
+        if (!string.IsNullOrEmpty(narrativeId))
+            candidates = candidates.Where(t => t.NarrativeId == narrativeId).ToArray();
+        if (candidates.Length == 0) throw new ArgumentException("InvalidProportionNarrativeProfile");
 
         TemplateDefinition template = PickWeightedTemplate(candidates);
 
@@ -111,31 +111,64 @@ public sealed class ProportionQuizGenerator
                     template.Scenario,
                     template.AsksForAdditionalPeople, level);
 
-        string problemTemplate = template.Template;
-
         string unit = template.Unit;
-
         string subject = template.Subject;
+        string problemText = string.Format(CultureInfo.CurrentCulture, template.Template, a, b, c);
 
-        string problemText = string.Format(
-            CultureInfo.CurrentCulture,
-            problemTemplate,
-            a,
-            b,
-            c);
+        // Named slots distinguish equal-valued quantities with different roles.
+        // Keep legacy positional packs usable; current packs carry reviewed IDs.
+        if (template.NarrativeId.Length > 0)
+        {
+            string[] roles = NarrativeRoles(template);
+            problemText = QuizContentCatalog.Text(language, template.NarrativeId,
+                (roles[0], a.ToString(CultureInfo.CurrentCulture)),
+                (roles[1], b.ToString(CultureInfo.CurrentCulture)),
+                (roles[2], c.ToString(CultureInfo.CurrentCulture)));
+        }
 
-        return new(
-            template.Type,
-            template.Scenario,
-            a,
-            b,
-            c,
-            answer,
-            unit,
-            subject,
-            problemText,
-            template.AsksForAdditionalPeople);
+        return new(template.Type, template.Scenario, a, b, c, answer, unit, subject,
+            problemText, template.AsksForAdditionalPeople) { NarrativeId = template.NarrativeId };
     }
+
+    internal static string[] NarrativeIds(ProportionQuizType type, CurriculumTier tier, AppLanguage language)
+        => Candidates(type, language, (int)tier).Select(t => t.NarrativeId).Where(id => id.Length > 0).ToArray();
+
+    private static TemplateDefinition[] Candidates(ProportionQuizType type, AppLanguage language, int? level)
+        => Templates(language)
+            .Where(template => template.Type == type &&
+                (level is not >= 4 || type != ProportionQuizType.Direct ||
+                    template.RateProfile is not (DirectRateProfile.TreesPerStudent or DirectRateProfile.GenericCount or DirectRateProfile.MoneyDong)) &&
+                (level is not <= 2 || (!template.AsksForAdditionalPeople &&
+                    template.Scenario is not (ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))) &&
+                (level is not >= 5 || type != ProportionQuizType.Inverse ||
+                    template.AsksForAdditionalPeople || template.Scenario is ProportionScenarioKind.WorkersRequired or ProportionScenarioKind.MachinesRequired))
+            .ToArray();
+
+    private static string[] NarrativeRoles(TemplateDefinition template) => template.Scenario switch
+    {
+        ProportionScenarioKind.Clothing => ["sets", "fabric", "new_sets"],
+        ProportionScenarioKind.StudentsPlanting => ["students", "trees", "new_students"],
+        ProportionScenarioKind.Shopping => ["quantity", "cost", "new_quantity"],
+        ProportionScenarioKind.VehiclesCargo => ["vehicles", "cargo", "new_vehicles"],
+        ProportionScenarioKind.VehiclesFuel => ["vehicles", "fuel", "new_vehicles"],
+        ProportionScenarioKind.DistanceTime => ["duration", "distance", "new_duration"],
+        ProportionScenarioKind.ProductionItems => ["groups", "items", "new_groups"],
+        ProportionScenarioKind.RiceBagsWeight or ProportionScenarioKind.FoodWeightGrams or ProportionScenarioKind.EggWeightGrams => ["quantity", "mass", "new_quantity"],
+        ProportionScenarioKind.ContainersLiquid => ["containers", "volume", "new_containers"],
+        ProportionScenarioKind.PaintArea => ["cans", "area", "new_cans"],
+        ProportionScenarioKind.WorkersDays or ProportionScenarioKind.WorkersJob => ["workers", "duration", "new_workers"],
+        ProportionScenarioKind.MachinesHours => ["machines", "duration", "new_machines"],
+        ProportionScenarioKind.FoodPeopleDays => ["people", "days", "new_people"],
+        ProportionScenarioKind.FoodAdditionalPeople => ["people", "days", "new_days"],
+        ProportionScenarioKind.SalesStock => ["days", "daily_sales", "new_daily_sales"],
+        ProportionScenarioKind.WorkersRequired => ["workers", "days", "new_days"],
+        ProportionScenarioKind.MachinesRequired => ["machines", "hours", "new_hours"],
+        ProportionScenarioKind.TapsTime => ["taps", "minutes", "new_taps"],
+        ProportionScenarioKind.TravelSpeedTime => ["speed", "hours", "new_speed"],
+        ProportionScenarioKind.TransportTrips => ["vehicles", "trips_each", "new_vehicles"],
+        ProportionScenarioKind.PackagingCount => ["packages", "mass_each", "new_mass_each"],
+        _ => throw new InvalidDataException("Unknown proportion roles")
+    };
 
     private TemplateDefinition PickWeightedTemplate(
         IReadOnlyList<TemplateDefinition> candidates)
@@ -492,6 +525,8 @@ public sealed class ProportionQuizGenerator
     {
         if (contract.IsDirect)
         {
+            if (contract.B % contract.A != 0)
+                return new((BigInteger)contract.B * contract.C, ArithmeticOperation.Divide, contract.A);
             int unitRate = contract.B / contract.A;
             return new(unitRate, ArithmeticOperation.Multiply, contract.C);
         }

@@ -33,6 +33,8 @@
       {"Key":"Quiz.ProblemMultiStep","IllustrationId":"multi-step","DescriptionKey":"Choice.Description.multi-step"},
       {"Key":"Quiz.ProblemFraction","IllustrationId":"fraction","DescriptionKey":"Choice.Description.fraction"},
       {"Key":"Quiz.ProblemProportion","IllustrationId":"proportion","DescriptionKey":"Choice.Description.proportion"},
+      {"Key":"Quiz.ProportionDirect","IllustrationId":"proportion-direct","DescriptionKey":"Choice.Skill.Quiz.ProportionDirect"},
+      {"Key":"Quiz.ProportionInverse","IllustrationId":"proportion-inverse","DescriptionKey":"Choice.Skill.Quiz.ProportionInverse"},
       {"Key":"Quiz.ProblemDecimal","IllustrationId":"decimal","DescriptionKey":"Choice.Description.decimal"},
       {"Key":"Quiz.ProblemPercentage","IllustrationId":"percentage","DescriptionKey":"Choice.Description.percentage"},
       {"Key":"Quiz.ProblemVisualGeometry","IllustrationId":"visual-angle","DescriptionKey":"Choice.Description.visual-angle"},

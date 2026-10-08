@@ -10,6 +10,7 @@ public partial class MathPuzzlePage
     private bool _arithmeticWordProblems;
     private bool _findXWordProblems;
     private bool _fractionWordProblems;
+    private bool _decimalWordProblems;
     private QuestionKnowledgeGroup _learningGroup = QuestionKnowledgeGroup.Objects;
     private QuestionKnowledgeGroup[] _learningGroups = [];
     private QuestionLearningProfile CurrentLearningProfile => new(_learningGroup);
@@ -38,6 +39,7 @@ public partial class MathPuzzlePage
         QuizProblemKind.Arithmetic => _arithmeticWordProblems,
         QuizProblemKind.FindX => _findXWordProblems,
         QuizProblemKind.Fraction => _fractionWordProblems,
+        QuizProblemKind.Decimal => _decimalWordProblems,
         _ => false
     };
     private PracticeQuestionFormat GetPracticeFormat(QuizProblemKind kind) =>
@@ -51,6 +53,7 @@ public partial class MathPuzzlePage
             QuizProblemKind.Arithmetic => "ArithmeticPractice",
             QuizProblemKind.FindX => "FindXPractice",
             QuizProblemKind.Fraction => "FractionBank",
+            QuizProblemKind.Decimal => "DecimalPractice",
             _ => ""
         };
         if (prefix.Length == 0) return;
@@ -76,6 +79,7 @@ public partial class MathPuzzlePage
             case QuizProblemKind.Arithmetic: _arithmeticWordProblems = wordProblems; break;
             case QuizProblemKind.FindX: _findXWordProblems = wordProblems; break;
             case QuizProblemKind.Fraction: _fractionWordProblems = wordProblems; break;
+            case QuizProblemKind.Decimal: _decimalWordProblems = wordProblems; break;
             default: return;
         }
         RegenerateLearningQuestion();

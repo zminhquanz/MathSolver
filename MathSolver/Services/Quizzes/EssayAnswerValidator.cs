@@ -616,11 +616,14 @@ public sealed partial class EssayAnswerValidator
 
         if (contract.IsDirect)
         {
-            int unitRate = contract.B / contract.A;
             accepted.Add(NormalizeProportionEquation($"{contract.B} ÷ {contract.A} × {contract.C} = {answer}"));
             accepted.Add(NormalizeProportionEquation($"{contract.B} × {contract.C} ÷ {contract.A} = {answer}"));
-            accepted.Add(NormalizeProportionEquation($"{unitRate} × {contract.C} = {answer}"));
-            accepted.Add(NormalizeProportionEquation($"{contract.C} × {unitRate} = {answer}"));
+            if (contract.B % contract.A == 0)
+            {
+                int unitRate = contract.B / contract.A;
+                accepted.Add(NormalizeProportionEquation($"{unitRate} × {contract.C} = {answer}"));
+                accepted.Add(NormalizeProportionEquation($"{contract.C} × {unitRate} = {answer}"));
+            }
         }
         else if (contract.AsksForAdditionalPeople)
         {

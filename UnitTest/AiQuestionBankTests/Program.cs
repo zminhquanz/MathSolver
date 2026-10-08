@@ -58,6 +58,97 @@ if (args is ["--reasoning-budget", var reasoningBudgetModel])
     return;
 }
 
+if (args is ["--decimal-bank"])
+{
+    try { await DecimalBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--decimal-model-resume", var decimalResumeModel, var decimalResumeDirectory])
+{
+    try { await DecimalBankTests.RunModelAsync(decimalResumeModel, decimalResumeDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--decimal-model", var decimalModel])
+{
+    try { await DecimalBankTests.RunModelAsync(decimalModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--proportion-bank"])
+{
+    try { await ProportionBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--proportion-budget", var proportionBudgetModel])
+{
+    try { await ProportionBankTests.CheckPromptBudgetAsync(proportionBudgetModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--proportion-model", var proportionModel])
+{
+    try { await ProportionBankTests.RunModelAsync(proportionModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--proportion-model-resume", var resumeModel, var resumeDirectory])
+{
+    try { await ProportionBankTests.RunModelAsync(resumeModel, resumeDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--motion-evidence", var motionDirectory])
+{
+    try { await MotionBankTests.WriteRenderedEvidenceAsync(motionDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--motion-budget", var motionBudgetModel])
+{
+    try { await MotionBankTests.CheckPromptBudgetAsync(motionBudgetModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--motion-bank"])
+{
+    try { await MotionBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--motion-model", var motionModel])
+{
+    try { await MotionBankTests.RunModelAsync(motionModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--multistep-bank"])
+{
+    try { await MultiStepBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--multistep-model", var multiStepModel])
+{
+    try { await MultiStepBankTests.RunModelAsync(multiStepModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--reasoning-model", var reasoningModel])
 {
     try { await ReasoningStoryTests.RunModelAsync(reasoningModel); }
@@ -423,6 +514,10 @@ try
     await PracticeFormatTests.RunAsync(directory);
     await FractionBankTests.RunAsync(directory);
     await ReasoningStoryTests.RunAsync();
+    await MultiStepBankTests.RunAsync();
+    await MotionBankTests.RunAsync();
+    await ProportionBankTests.RunAsync();
+    await DecimalBankTests.RunAsync();
 }
 finally { Directory.Delete(directory, true); }
 

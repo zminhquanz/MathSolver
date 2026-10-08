@@ -31,12 +31,17 @@ public partial class AiQuestionBankPage
                 {
                     BankQuestionFamily.TwoNumbers => ["Quiz.Elementary.SumDifference", "Quiz.Elementary.SumRatio", "Quiz.Elementary.DifferenceRatio"],
                     BankQuestionFamily.Average => ["Quiz.AverageDirect", "Quiz.AverageTotalToAverage", "Quiz.AverageAverageToTotal", "Quiz.AverageMissingValue", "Quiz.AverageIndirectData", "Quiz.AverageTwoGroups"],
+                    BankQuestionFamily.MultiStep => ElementaryQuizGenerator.Types(QuizProblemKind.MultiStep)
+                        .Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Motion => ["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"],
+                    BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse"],
+                    BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]
                 };
                 _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
                 if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
-                OperationPicker.ItemsSource = _storyVariants.Select(v => LocalizationService.TranslateKey(keys[v])).ToArray();
-                IllustratedQuizPicker.SetKeys(OperationPicker, _storyVariants.Select(v => keys[v]));
+                OperationPicker.ItemsSource = keys.Select(LocalizationService.TranslateKey).ToArray();
+                IllustratedQuizPicker.SetKeys(OperationPicker, keys);
                 OperationPicker.SelectedIndex = Array.IndexOf(_storyVariants, _storyVariant);
                 return;
             }

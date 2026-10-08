@@ -109,8 +109,9 @@ public partial class AiQuestionBankPage : ContentPage
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
         ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
             LocalizationService.TranslateKey("FractionBank.Title"), LocalizationService.TranslateKey("Quiz.ProblemTwoNumbers"),
-            LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage") }; ProblemPicker.SelectedIndex = (int)_family;
-        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage" });
+            LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage"),
+            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal") }; ProblemPicker.SelectedIndex = (int)_family;
+        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal" });
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };

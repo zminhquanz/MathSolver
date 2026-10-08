@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace MathSolver.Services.QuestionBank;
 
-public enum BankQuestionFamily { Arithmetic, FindX, Fraction, TwoNumbers, Average, Percentage }
+public enum BankQuestionFamily { Arithmetic, FindX, Fraction, TwoNumbers, Average, Percentage, MultiStep, Motion, Proportion, Decimal }
 public enum FindXUnknownRole { None, Addend, Minuend, Subtrahend, Factor, Dividend, Divisor }
 
 /// <summary>The same reviewed situation, with an explicit equation/unknown role.

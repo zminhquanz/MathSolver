@@ -42,6 +42,12 @@ internal static class QuizContentTests
         Reject(() => QuizContentCatalog.Text("en-US", variable.Id), "missing values");
         Reject(() => QuizContentCatalog.Validate(new() { Version = 1, Culture = "en-US", Texts = [first, first] }), "duplicate key");
         Reject(() => QuizContentCatalog.Validate(new() { Version = 1, Culture = "en-US", Texts = [new("typo", "{wrong_slot}", [])] }), "unknown slot");
+        Reject(() => QuizContentCatalog.Validate(new() { Version = 1, Culture = "vi-VN",
+            Texts = [new("unit-text", "{a} {unit}", ["a", "unit"], new() { ["kg"] = "{a}" })] }),
+            "unit wording lost a fact or dimension");
+        Reject(() => QuizContentCatalog.Validate(new() { Version = 1, Culture = "vi-VN",
+            Texts = [new("unit-text", "{a} {unit}", ["a", "unit"], new() { ["kg"] = "{unit} {a}" })] }),
+            "unit wording swapped ordered roles");
         Reject(() => QuizContentCatalog.Validate(new() { Version = 8, Culture = "en-US" }), "version");
         var changed = new QuizContentPack { Version = 1, Culture = "fr-FR", Texts = en.Texts.Skip(1).ToList(), Lists = en.Lists };
         Reject(() => QuizContentValidation.CheckTranslation(changed, en), "incomplete translation");

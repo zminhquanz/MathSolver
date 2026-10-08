@@ -20,7 +20,11 @@ public sealed record BasicQuestionContract(
     [JsonIgnore] public int BankVariant => Story?.Variant ?? (int)UnknownRole;
     [JsonIgnore] public BankQuestionFamily Family => Version == ReasoningStoryCatalogue.Version && Story is not null ? Story.Family : Version == FractionQuestionCatalogue.Version ? BankQuestionFamily.Fraction : Version == FindXQuestionCatalogue.Version ? BankQuestionFamily.FindX : BankQuestionFamily.Arithmetic;
     [JsonIgnore] public string AnswerText => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Lesson(this).Answer : Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this).ToString() : Answer.ToString(CultureInfo.InvariantCulture);
-    [JsonIgnore] public BigInteger Answer => Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ElementaryProblem?.Answers[0].Value.Numerator ?? ReasoningStoryCatalogue.Lesson(this).QuestionModel.CorrectAnswer : Version == FractionQuestionCatalogue.Version
+    [JsonIgnore] public ReducedFraction ExactAnswer => Version == ReasoningStoryCatalogue.Version
+        ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ExactAnswer
+        : Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this) : new(Answer, BigInteger.One);
+    [JsonIgnore] public BigInteger Answer => Version == ReasoningStoryCatalogue.Version
+        ? ExactAnswer.Denominator.IsOne ? ExactAnswer.Numerator : throw new InvalidOperationException("UseExactAnswer") : Version == FractionQuestionCatalogue.Version
         ? FractionQuestionCatalogue.Answer(this) is { } fraction && fraction.Denominator.IsOne ? fraction.Numerator : throw new InvalidOperationException("UseExactFractionAnswer")
         : Version == AppliedQuestionCatalogue.Version
         && AppliedQuestionCatalogue.Reasoning(this) is { } reasoning ? reasoning.Answer

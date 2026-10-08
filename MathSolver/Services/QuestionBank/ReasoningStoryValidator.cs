@@ -35,12 +35,16 @@ public static class ReasoningStoryValidator
                 return new(null, "ChangedRelationOrTarget", ErrorDetails: "facts.role, solution_leads.step");
             string? languageError = QuestionProseLanguage.ValidateAndNormalize(draft, c.Language, out draft);
             if (languageError is not null) return new(null, languageError);
+            bool Matches(string text, IEnumerable<string> examples) => examples.Any(example =>
+                SemanticProseRules.Matches(text, [example], c.Language)
+                // '$' is a currency unit in English price facts, not punctuation.
+                && (c.Family != BankQuestionFamily.Proportion || text.Count(ch => ch == '$') == example.Count(ch => ch == '$')));
             var mismatches = draft.Facts!.Zip(lesson.Facts)
-                .Where(pair => !SemanticProseRules.Matches(pair.First.Text, [pair.Second.Text], c.Language))
+                .Where(pair => !Matches(pair.First.Text, lesson.FactPhrasings[pair.Second.Role]))
                 .Select(pair => "facts." + pair.First.Role).ToList();
-            if (!SemanticProseRules.Matches(draft.Question, [lesson.Question], c.Language)) mismatches.Add("question");
+            if (!Matches(draft.Question, lesson.QuestionPhrasings)) mismatches.Add("question");
             mismatches.AddRange(draft.SolutionLeads!.Zip(lesson.Steps)
-                .Where(pair => !SemanticProseRules.Matches(pair.First.Text, [pair.Second.Lead], c.Language))
+                .Where(pair => !Matches(pair.First.Text, lesson.LeadPhrasings[pair.Second.Id]))
                 .Select(pair => "solution_leads." + pair.First.Role));
             if (mismatches.Count > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: string.Join(", ", mismatches));
             return new(draft, null, c);
@@ -49,10 +53,20 @@ public static class ReasoningStoryValidator
         { return new(null, "InvalidJson"); }
     }
 
-    public static string Prompt(BasicQuestionContract c, string? correction)
+    public static string Prompt(BasicQuestionContract c, string? correction, IReadOnlySet<string>? excluded = null)
     {
         var lesson = ReasoningStoryCatalogue.Lesson(c);
         bool vi = c.Language == AppLanguage.Vietnamese;
+        if (c.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal)
+        {
+            var example = ReviewedReasoningProse.NovelDrafts(c, excluded ?? new HashSet<string>()).FirstOrDefault()
+                ?? ReasoningStoryCatalogue.Draft(c);
+            return (vi ? "Viết MẪU bài toán có lời văn bằng tiếng Việt, dùng cách diễn đạt tương đương đã duyệt. C# sinh số và tính đáp án. Giữ nguyên từng role, step, biến {f...}/{v...}, đơn vị, thứ tự sự việc và đối tượng hỏi. Không điền số hay tên vào biến; không thêm sự kiện, điều kiện hoặc phép tính. Chỉ trả JSON đầy đủ như ví dụ, không giải bài. Khi mẫu cũ đã có, đổi câu dữ kiện theo lựa chọn hợp lệ; chỉ đổi câu dẫn lời giải không tạo đề mới."
+                : "Write a word-problem TEMPLATE in English using reviewed equivalent wording. C# generates numbers and calculates answers. Keep every role, step, literal {f...}/{v...} placeholder, unit, chronology and target. Do not fill variables, add events, conditions or formulas. Return only complete JSON as shown; do not solve. If wording already exists, choose different approved fact clauses; changing only solution leads is not novel.")
+                + "\n" + c.Family + "; stars=" + (int)c.Tier + "; context=" + lesson.Context
+                + "\n" + QuestionBankStore.SerializeDraft(example)
+                + (correction is null ? "" : "\nRejected: " + correction + ". Return complete corrected JSON.");
+        }
         return (vi ? "Viết lại MẪU đề và câu dẫn lời giải bằng tiếng Việt tự nhiên. C# chọn số và tính đáp án. Giữ nguyên biến, thứ tự vai trò, đơn vị, quan hệ, đối tượng hỏi và thứ tự sự việc. Được thay từ đồng nghĩa và từ nối trung tính; không thêm dữ kiện, nhân vật, điều kiện, số hay phép tính. Mỗi câu ngắn; không giải bài."
             : "Rewrite this word-problem TEMPLATE and its solution leads in natural English. C# owns numbers and calculations. Preserve placeholders, ordered fact roles, units, relationships, target and chronology. Use equivalent synonyms or neutral linking words; no extra facts, actors, conditions, numbers or formulas. Keep clauses short; do not solve.")
             + (vi ? "\nĐây là tình huống cụ thể, không viết thành mô tả trừu tượng: giữ nguyên tên nhóm và đơn vị trong ví dụ, không thay bằng ‘đối tượng’ hay ‘đơn vị’. Chỉ thêm từ nối trung tính hoặc dùng các từ tương đương: có/sở hữu, tổng/tổng cộng/tất cả, trung bình/trung bình cộng, sau đó/tiếp theo. Giữ nguyên các từ chính còn lại và thứ tự biến."
@@ -65,19 +79,43 @@ public static class ReasoningStoryValidator
             + (correction is null ? "" : "\nRejected: " + correction + ". Rewrite the full JSON.");
     }
 
-    internal static string Grammar(BasicQuestionContract c)
+    internal static string Grammar(BasicQuestionContract c, IReadOnlySet<string>? excluded = null)
     {
         var lesson = ReasoningStoryCatalogue.Lesson(c);
         static string L(string text) => JsonSerializer.Serialize(text);
         string Object(string id, string role, string field) => "\"{\" ws " + L("\"" + id + "\"") + " ws \":\" ws "
             + L("\"" + role + "\"") + " ws \",\" ws " + L("\"text\"") + " ws \":\" ws " + field.Replace('_', '-') + " ws \"}\"";
+        if (c.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal)
+        {
+            // Bound the native grammar size. All branches are complete, novel
+            // fact/question combinations, so a model cannot retry the old prose
+            // by changing only punctuation, names, numbers or solution leads.
+            var candidates = ReviewedReasoningProse.NovelDrafts(c, excluded ?? new HashSet<string>()).Take(8).ToArray();
+            if (candidates.Length == 0) throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+            // The inner string is JSON output, the outer string is GBNF. Emit
+            // accented letters directly instead of forcing six-character JSON
+            // escapes that waste the model's output budget on Vietnamese prose.
+            var outputOptions = new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
+            string Text(string value) => L(JsonSerializer.Serialize(value, outputOptions));
+            string heads = string.Join(" | ", candidates.Select((_, i) => "body-" + i));
+            string bodies = string.Concat(candidates.Select((draft, i) => "body-" + i + " ::= "
+                + L("\"facts\"") + " ws \":\" ws \"[\" "
+                + string.Join(" ws \",\" ws ", draft.Facts!.Select(f => "\"{\" ws " + L("\"role\"")
+                    + " ws \":\" ws " + L("\"" + f.Role + "\"") + " ws \",\" ws " + L("\"text\"")
+                    + " ws \":\" ws " + Text(f.Text) + " ws \"}\""))
+                + " ws \"]\" ws \",\" ws " + L("\"question\"") + " ws \":\" ws " + Text(draft.Question) + "\n"));
+            return "root ::= \"{\" ws (" + heads + ") ws \",\" ws " + L("\"solution_leads\"") + " ws \":\" ws \"[\" "
+                + string.Join(" ws \",\" ws ", lesson.Steps.Select(s => Object("step", s.Id, s.Id))) + " ws \"]\" ws \"}\" ws\n"
+                + bodies + string.Concat(lesson.Steps.Select(s => SemanticProseRules.ClauseRule(s.Id, lesson.LeadPhrasings[s.Id], c.Language)))
+                + "\nws ::= [ \\t\\n\\r]*\n";
+        }
         return "root ::= \"{\" ws \"\\\"facts\\\"\" ws \":\" ws \"[\" "
             + string.Join(" ws \",\" ws ", lesson.Facts.Select(f => Object("role", f.Role, f.Role)))
             + " ws \"]\" ws \",\" ws \"\\\"question\\\"\" ws \":\" ws question ws \",\" ws \"\\\"solution_leads\\\"\" ws \":\" ws \"[\" "
             + string.Join(" ws \",\" ws ", lesson.Steps.Select(s => Object("step", s.Id, s.Id))) + " ws \"]\" ws \"}\" ws\n"
-            + string.Concat(lesson.Facts.Select(f => SemanticProseRules.ClauseRule(f.Role, [f.Text], c.Language)))
-            + SemanticProseRules.ClauseRule("question", [lesson.Question], c.Language)
-            + string.Concat(lesson.Steps.Select(s => SemanticProseRules.ClauseRule(s.Id, [s.Lead], c.Language)))
+            + string.Concat(lesson.Facts.Select(f => SemanticProseRules.ClauseRule(f.Role, lesson.FactPhrasings[f.Role], c.Language)))
+            + SemanticProseRules.ClauseRule("question", lesson.QuestionPhrasings, c.Language)
+            + string.Concat(lesson.Steps.Select(s => SemanticProseRules.ClauseRule(s.Id, lesson.LeadPhrasings[s.Id], c.Language)))
             + "\nws ::= [ \\t\\n\\r]*\n";
     }
 }

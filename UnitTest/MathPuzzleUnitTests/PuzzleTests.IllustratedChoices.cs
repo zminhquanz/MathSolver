@@ -7,6 +7,23 @@ internal static partial class PuzzleTests
 {
     public static void CheckIllustratedChoices()
     {
+        // Validate the keys used by the AI subtype picker, not only entries already
+        // present in the catalog: missing entries otherwise escape catalog checks.
+        using var pickerSource = typeof(PuzzleTests).Assembly.GetManifestResourceStream("QuizLocalization.AiQuestionBankPage.Learning.cs")
+            ?? throw new Exception("Missing AI picker source for catalog validation.");
+        using var reader = new StreamReader(pickerSource);
+        var aiSubtypeKeys = System.Text.RegularExpressions.Regex.Matches(reader.ReadToEnd(), "\"(Quiz\\.[A-Za-z0-9_.]+)\"")
+            .Select(match => match.Groups[1].Value)
+            .Where(key => !key.EndsWith('.')).Distinct(StringComparer.Ordinal).ToArray();
+        Require(aiSubtypeKeys.Contains("Quiz.ProportionDirect") && aiSubtypeKeys.Contains("Quiz.ProportionInverse"),
+            "AI proportion subtype routes must be validated.");
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (string key in aiSubtypeKeys)
+        {
+            var choice = QuizChoiceCatalog.Create(0, key, "label", language, false);
+            Require(!string.IsNullOrWhiteSpace(choice.Description) && choice.Description != key,
+                "Missing AI subtype description: " + key);
+        }
         var catalog = new QuizProblemTypeCatalog();
         foreach (var option in catalog.Options)
             if (!QuizChoiceCatalog.Definitions.ContainsKey(option.LocalizationKey))
@@ -25,7 +42,7 @@ internal static partial class PuzzleTests
             Require(ids.Distinct(StringComparer.Ordinal).Count() == ids.Length,
                 "Repeated skill illustration in " + kind);
         }
-        foreach (string prefix in new[] { "Quiz.Problem", "Quiz.Expression", "Quiz.Average", "Quiz.Percentage", "Quiz.Motion", "FindXBank.Role." })
+        foreach (string prefix in new[] { "Quiz.Problem", "Quiz.Expression", "Quiz.Average", "Quiz.Percentage", "Quiz.Motion", "Quiz.Proportion", "FindXBank.Role." })
         {
             var ids = QuizChoiceCatalog.Definitions.Values.Where(row => row.Key.StartsWith(prefix, StringComparison.Ordinal))
                 .Select(row => row.IllustrationId).ToArray();

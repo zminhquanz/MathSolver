@@ -38,4 +38,9 @@ public sealed record MotionQuizContract(
     BigInteger RepresentativeLeft,
     ArithmeticOperation RepresentativeOperation,
     BigInteger RepresentativeRight,
-    IReadOnlyList<string> RequiredProblemUnits);
+    IReadOnlyList<string> RequiredProblemUnits)
+{
+    // Actors are bound independently from numeric facts; AI cannot swap the
+    // leading/trailing travellers or replace the watercraft with a road vehicle.
+    public IReadOnlyList<string> NarrativeActors { get; init; } = [];
+}

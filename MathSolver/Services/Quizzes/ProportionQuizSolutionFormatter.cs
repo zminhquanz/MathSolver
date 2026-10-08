@@ -14,6 +14,8 @@ public static class ProportionQuizSolutionFormatter
         ArgumentNullException.ThrowIfNull(contract);
         ArgumentNullException.ThrowIfNull(culture);
 
+        if (contract.SolutionText is { Length: > 0 } reviewedSolution) return reviewedSolution;
+
         string unit = answerUnit ?? contract.AnswerUnit;
         string a = contract.A.ToString("N0", culture);
         string b = contract.B.ToString("N0", culture);

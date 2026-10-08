@@ -2,6 +2,53 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id":"ProportionQuizGenerator.Narrative.001","Text":"May {sets} bộ quần áo hết {fabric} mét vải. Hỏi may {new_sets} bộ quần áo như thế hết bao nhiêu mét vải?","Variables":["sets","fabric","new_sets"]},
+    {"Id":"ProportionQuizGenerator.Narrative.002","Text":"Cần {fabric} mét vải để may {sets} bộ quần áo. Hỏi may {new_sets} bộ thì cần bao nhiêu mét vải?","Variables":["sets","fabric","new_sets"]},
+    {"Id":"ProportionQuizGenerator.Narrative.003","Text":"{students} học sinh trồng được {trees} cây. Hỏi {new_students} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?","Variables":["students","trees","new_students"]},
+    {"Id":"ProportionQuizGenerator.Narrative.004","Text":"Một tổ có {students} em trồng được {trees} cây. Hỏi cả lớp {new_students} em trồng được bao nhiêu cây nếu năng suất mỗi em như nhau?","Variables":["students","trees","new_students"]},
+    {"Id":"ProportionQuizGenerator.Narrative.005","Text":"{quantity} quyển vở giá {cost} đồng. Hỏi {new_quantity} quyển vở giá bao nhiêu tiền, biết giá mỗi quyển như nhau?","Variables":["quantity","cost","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.006","Text":"Mẹ mua {quantity} quyển tập hết {cost} đồng. Hỏi mua {new_quantity} quyển thì hết bao nhiêu tiền?","Variables":["quantity","cost","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.007","Text":"{vehicles} xe tải chở được {cargo} tấn gạo đóng bao. Hỏi {new_vehicles} xe tải như thế chở được bao nhiêu tấn gạo?","Variables":["vehicles","cargo","new_vehicles"]},
+    {"Id":"ProportionQuizGenerator.Narrative.008","Text":"{vehicles} xe cùng loại hết {fuel} lít xăng cho cùng một quãng đường. Hỏi {new_vehicles} xe như thế hết bao nhiêu lít xăng?","Variables":["vehicles","fuel","new_vehicles"]},
+    {"Id":"ProportionQuizGenerator.Narrative.009","Text":"Một ô tô trong {duration} giờ đi được {distance} km. Hỏi với cùng vận tốc, trong {new_duration} giờ ô tô đi được bao nhiêu km?","Variables":["duration","distance","new_duration"]},
+    {"Id":"ProportionQuizGenerator.Narrative.010","Text":"Trong cùng một khoảng thời gian, {groups} thợ làm được {items} cái ghế. Hỏi {new_groups} thợ cùng năng suất làm được bao nhiêu cái ghế?","Variables":["groups","items","new_groups"]},
+    {"Id":"ProportionQuizGenerator.Narrative.011","Text":"Trong cùng một khoảng thời gian, {groups} máy làm được {items} sản phẩm. Hỏi {new_groups} máy cùng năng suất làm được bao nhiêu sản phẩm?","Variables":["groups","items","new_groups"]},
+    {"Id":"ProportionQuizGenerator.Narrative.012","Text":"{groups} thùng như nhau có tổng cộng {items} hộp hàng. Hỏi {new_groups} thùng như thế có bao nhiêu hộp hàng?","Variables":["groups","items","new_groups"]},
+    {"Id":"ProportionQuizGenerator.Narrative.013","Text":"{quantity} bao gạo cùng loại nặng {mass} kg. Hỏi {new_quantity} bao gạo như thế nặng bao nhiêu kg?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.014","Text":"{quantity} bó rau cùng loại nặng {mass} gam. Hỏi {new_quantity} bó rau như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.015","Text":"{quantity} củ cà rốt có khối lượng như nhau nặng tổng cộng {mass} gam. Hỏi {new_quantity} củ như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.016","Text":"{quantity} củ khoai tây cùng cỡ nặng tổng cộng {mass} gam. Hỏi {new_quantity} củ khoai tây như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.017","Text":"{quantity} quả táo cùng cỡ nặng tổng cộng {mass} gam. Hỏi {new_quantity} quả táo như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.018","Text":"{quantity} quả cam cùng cỡ nặng tổng cộng {mass} gam. Hỏi {new_quantity} quả cam như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.019","Text":"{quantity} quả xoài cùng cỡ nặng tổng cộng {mass} gam. Hỏi {new_quantity} quả xoài như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.020","Text":"{quantity} phần thịt heo cùng khối lượng nặng tổng cộng {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.021","Text":"{quantity} phần cá cùng khối lượng nặng tổng cộng {mass} gam. Hỏi {new_quantity} phần cá như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.022","Text":"{quantity} phần thịt gà cùng khối lượng nặng tổng cộng {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.023","Text":"{quantity} quả trứng cùng cỡ nặng tổng cộng {mass} gam. Hỏi {new_quantity} quả trứng như thế nặng bao nhiêu gam?","Variables":["quantity","mass","new_quantity"]},
+    {"Id":"ProportionQuizGenerator.Narrative.024","Text":"{containers} thùng cùng loại chứa được {volume} lít mật ong. Hỏi {new_containers} thùng như thế chứa được bao nhiêu lít mật ong?","Variables":["containers","volume","new_containers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.025","Text":"{containers} can cùng loại chứa được {volume} lít dầu. Hỏi {new_containers} can như thế chứa được bao nhiêu lít dầu?","Variables":["containers","volume","new_containers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.026","Text":"{cans} thùng sơn cùng loại sơn được {area} m² tường. Hỏi {new_cans} thùng sơn như thế sơn được bao nhiêu m² tường?","Variables":["cans","area","new_cans"]},
+    {"Id":"ProportionQuizGenerator.Narrative.027","Text":"{workers} người làm xong một công việc trong {duration} ngày. Hỏi {new_workers} người làm xong công việc đó trong bao nhiêu ngày, biết năng suất mỗi người như nhau?","Variables":["workers","duration","new_workers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.028","Text":"{workers} công nhân đắp xong một đoạn đường trong {duration} ngày. Hỏi {new_workers} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","Variables":["workers","duration","new_workers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.029","Text":"{workers} công nhân cùng năng suất hoàn thành một công việc trong {duration} giờ. Hỏi {new_workers} công nhân hoàn thành công việc đó trong bao nhiêu giờ?","Variables":["workers","duration","new_workers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.030","Text":"{machines} máy hoàn thành một công việc trong {duration} giờ. Hỏi {new_machines} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?","Variables":["machines","duration","new_machines"]},
+    {"Id":"ProportionQuizGenerator.Narrative.031","Text":"{workers} thợ làm xong một công việc trong {duration} ngày. Hỏi {new_workers} thợ cùng năng suất làm xong trong bao nhiêu ngày?","Variables":["workers","duration","new_workers"]},
+    {"Id":"ProportionQuizGenerator.Narrative.032","Text":"Một bếp ăn chuẩn bị gạo đủ cho {people} người ăn trong {days} ngày. Thực tế có {new_people} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?","Variables":["people","days","new_people"]},
+    {"Id":"ProportionQuizGenerator.Narrative.033","Text":"Một bếp ăn có đủ thực phẩm cho {people} học sinh dùng trong {days} ngày. Nếu số học sinh thực tế là {new_people} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?","Variables":["people","days","new_people"]},
+    {"Id":"ProportionQuizGenerator.Narrative.034","Text":"Chuẩn bị đủ thực phẩm cho {people} người ăn trong {days} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {new_days} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?","Variables":["people","days","new_days"]},
+    {"Id":"ProportionQuizGenerator.Narrative.035","Text":"Một cửa hàng chuẩn bị số hộp mứt đủ bán trong {days} ngày nếu mỗi ngày bán {daily_sales} hộp. Thực tế mỗi ngày bán {new_daily_sales} hộp. Hỏi số hàng đó đủ bán trong bao nhiêu ngày?","Variables":["days","daily_sales","new_daily_sales"]},
+    {"Id":"ProportionQuizGenerator.Narrative.036","Text":"{workers} công nhân hoàn thành một công việc trong {days} ngày. Muốn hoàn thành cùng công việc đó trong {new_days} ngày thì cần bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","Variables":["workers","days","new_days"]},
+    {"Id":"ProportionQuizGenerator.Narrative.037","Text":"Một đội có {workers} thợ xây xong một bức tường trong {days} ngày. Hỏi cần bao nhiêu thợ để xây cùng bức tường đó trong {new_days} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?","Variables":["workers","days","new_days"]},
+    {"Id":"ProportionQuizGenerator.Narrative.038","Text":"{machines} máy đóng gói xong một lô hàng trong {hours} giờ. Hỏi cần bao nhiêu máy để đóng gói cùng lô hàng đó trong {new_hours} giờ, biết các máy chạy đồng thời và có cùng năng suất?","Variables":["machines","hours","new_hours"]},
+    {"Id":"ProportionQuizGenerator.Narrative.039","Text":"{machines} máy in hoàn thành một đơn hàng trong {hours} giờ. Muốn in xong cùng đơn hàng đó trong {new_hours} giờ thì cần bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?","Variables":["machines","hours","new_hours"]},
+    {"Id":"ProportionQuizGenerator.Narrative.040","Text":"{taps} vòi nước cùng chảy thì đầy một bể trống trong {minutes} phút. Hỏi {new_taps} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?","Variables":["taps","minutes","new_taps"]},
+    {"Id":"ProportionQuizGenerator.Narrative.041","Text":"{taps} máy bơm làm đầy một bể trống trong {minutes} phút. Hỏi {new_taps} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?","Variables":["taps","minutes","new_taps"]},
+    {"Id":"ProportionQuizGenerator.Narrative.042","Text":"Một ô tô đi đều với vận tốc {speed} km/h và hết {hours} giờ để đi một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {new_speed} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?","Variables":["speed","hours","new_speed"]},
+    {"Id":"ProportionQuizGenerator.Narrative.043","Text":"Một xe máy đi đều với vận tốc {speed} km/h trong {hours} giờ thì đến nơi. Hỏi đi cùng quãng đường với vận tốc {new_speed} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?","Variables":["speed","hours","new_speed"]},
+    {"Id":"ProportionQuizGenerator.Narrative.044","Text":"{vehicles} xe tải chở hết một lô hàng, mỗi xe đi {trips_each} chuyến. Nếu dùng {new_vehicles} xe tải có cùng sức chở thì mỗi xe cần đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?","Variables":["vehicles","trips_each","new_vehicles"]},
+    {"Id":"ProportionQuizGenerator.Narrative.045","Text":"{vehicles} xe tải chở hết một lô cát, mỗi xe đi {trips_each} chuyến đầy tải. Hỏi dùng {new_vehicles} xe tải cùng sức chở thì mỗi xe phải đi bao nhiêu chuyến đầy tải để chở hết cùng lô cát, biết các xe đi số chuyến như nhau?","Variables":["vehicles","trips_each","new_vehicles"]},
+    {"Id":"ProportionQuizGenerator.Narrative.046","Text":"Một kho có {packages} bao gạo, mỗi bao chứa {mass_each} kg. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {new_mass_each} kg thì cần bao nhiêu bao, biết không hao hụt gạo?","Variables":["packages","mass_each","new_mass_each"]},
+    {"Id":"ProportionQuizGenerator.Narrative.047","Text":"Có {packages} túi đường, mỗi túi nặng {mass_each} kg. Chia lại toàn bộ số đường đó vào các túi, mỗi túi nặng {new_mass_each} kg thì được bao nhiêu túi, biết không hao hụt đường?","Variables":["packages","mass_each","new_mass_each"]},
     {"Id":"Choice.SelectShape","Text":"Chọn hình","Variables":[]},
     {"Id":"Choice.Shape.square","Text":"Bốn cạnh bằng nhau và bốn góc vuông. Tính chu vi, diện tích từ cạnh a.","Variables":[]},
     {"Id":"Choice.Shape.rectangle","Text":"Bốn góc vuông, hai cặp cạnh đối bằng nhau. Nhập chiều dài và chiều rộng.","Variables":[]},
@@ -37,6 +84,8 @@
     {"Id":"Choice.Description.percentage","Text":"Tìm tỉ số phần trăm, một phần hoặc toàn bộ số lượng.","Variables":[]},
     {"Id":"Choice.Description.probability","Text":"Nhận biết khả năng xảy ra và đọc kết quả thử nghiệm.","Variables":[]},
     {"Id":"Choice.Description.proportion","Text":"Nhận biết và giải các quan hệ tỉ lệ thuận, tỉ lệ nghịch.","Variables":[]},
+    {"Id":"Choice.Skill.Quiz.ProportionDirect","Text":"Một đại lượng tăng bao nhiêu lần thì đại lượng kia tăng bấy nhiêu lần.","Variables":[]},
+    {"Id":"Choice.Skill.Quiz.ProportionInverse","Text":"Với cùng khối lượng công việc, tăng số người hoặc số máy thì giảm thời gian theo cùng tỉ lệ.","Variables":[]},
     {"Id":"Choice.Description.remainder","Text":"Chia theo nhóm, xác định thương và phần còn dư.","Variables":[]},
     {"Id":"Choice.Description.two-numbers","Text":"Tìm hai số từ tổng, hiệu và tỉ số của chúng.","Variables":[]},
     {"Id":"Choice.Description.visual-angle","Text":"Nhận biết hình, góc và quan hệ giữa các đường thẳng.","Variables":[]},
@@ -2467,15 +2516,20 @@
       "Variables": []
     },
     {
-      "Id": "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002",
-      "Text": "Hai phần {item} riêng biệt có số đo {a} {unit} và {b} {unit}. Hỏi tổng số đo của hai phần là bao nhiêu {unit}?",
-      "Variables": [
-        "item",
-        "a",
-        "unit",
-        "b"
-      ]
-    },
+    "Id":  "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002",
+    "Text":  "Hai phần {item} riêng biệt có số đo {a} {unit} và {b} {unit}. Hỏi tổng số đo của hai phần là bao nhiêu {unit}?",
+    "Variables":  [
+                      "item",
+                      "a",
+                      "unit",
+                      "b"
+                  ],
+    "TextByUnit":  {
+                       "ml":  "Hai phần {item} riêng biệt có dung tích {a} {unit} và {b} {unit}. Hỏi tổng dung tích của hai phần là bao nhiêu {unit}?",
+                       "l":  "Hai phần {item} riêng biệt có dung tích {a} {unit} và {b} {unit}. Hỏi tổng dung tích của hai phần là bao nhiêu {unit}?",
+                       "kg":  "Hai phần {item} riêng biệt lần lượt cân được {a} {unit} và {b} {unit}. Hỏi tổng khối lượng của hai phần là bao nhiêu {unit}?"
+                   }
+},
     {
       "Id": "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.003",
       "Text": "Ban đầu có {a} {unit} {item}. Đã dùng {b} {unit} từ lượng đó. Hỏi còn lại bao nhiêu {unit}?",
@@ -2507,12 +2561,17 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.006",
-      "Text": "Số đo {item} cần tìm",
-      "Variables": [
-        "item"
-      ]
-    },
+    "Id":  "ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.006",
+    "Text":  "Số đo {item} cần tìm",
+    "Variables":  [
+                      "item"
+                  ],
+    "TextByUnit":  {
+                       "ml":  "Dung tích {item} cần tìm",
+                       "l":  "Dung tích {item} cần tìm",
+                       "kg":  "Khối lượng {item} cần tìm"
+                   }
+},
     {
       "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.007",
       "Text": "Phần đầu có {first} {conversion_smallUnit_unit} {item}. ",
@@ -2523,15 +2582,29 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.008",
-      "Text": "Đổi số đo phần đầu",
-      "Variables": []
-    },
+    "Id":  "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.008",
+    "Text":  "Đổi số đo phần đầu",
+    "Variables":  [
+
+                  ],
+    "TextByUnit":  {
+                       "ml":  "Đổi đơn vị dung tích phần đầu",
+                       "l":  "Đổi đơn vị dung tích phần đầu",
+                       "kg":  "Đổi đơn vị khối lượng phần đầu"
+                   }
+},
     {
-      "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.009",
-      "Text": "Số đo phần thứ hai",
-      "Variables": []
-    },
+    "Id":  "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.009",
+    "Text":  "Số đo phần thứ hai",
+    "Variables":  [
+
+                  ],
+    "TextByUnit":  {
+                       "ml":  "Dung tích phần thứ hai",
+                       "l":  "Dung tích phần thứ hai",
+                       "kg":  "Khối lượng phần thứ hai"
+                   }
+},
     {
       "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.010",
       "Text": "Phần thứ hai nhiều hơn phần đầu {gap} {unit}. ",
@@ -2604,12 +2677,17 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.019",
-      "Text": "Số đo {item} cần tìm",
-      "Variables": [
-        "item"
-      ]
-    },
+    "Id":  "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.019",
+    "Text":  "Số đo {item} cần tìm",
+    "Variables":  [
+                      "item"
+                  ],
+    "TextByUnit":  {
+                       "ml":  "Dung tích {item} cần tìm",
+                       "l":  "Dung tích {item} cần tìm",
+                       "kg":  "Khối lượng {item} cần tìm"
+                   }
+},
     {
       "Id": "ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.020",
       "Text": "Hỏi còn lại bao nhiêu {unit}?",
@@ -8779,6 +8857,242 @@
     }
   ],
   "Lists": {
+
+    "DecimalStoryContexts": [
+      {"Id":"kitchen","Item":"gạo","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
+      {"Id":"decoration","Item":"ruy băng","Unit":"m","SmallUnit":"cm","ConversionFactor":100,"MaximumQuantity":100},
+      {"Id":"water","Item":"nước","Unit":"l","SmallUnit":"ml","ConversionFactor":1000,"MaximumQuantity":1000},
+      {"Id":"bakery","Item":"bột mì","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
+      {"Id":"agriculture","Item":"rau thu hoạch","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
+      {"Id":"craft","Item":"vải","Unit":"m","SmallUnit":"cm","ConversionFactor":100,"MaximumQuantity":100},
+      {"Id":"dairy","Item":"sữa","Unit":"l","SmallUnit":"ml","ConversionFactor":1000,"MaximumQuantity":1000},
+      {"Id":"environment","Item":"giấy thu gom","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100}
+    ],
+    "Narrative.Decimal.Phrasings": [
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002","Alternatives":["Có hai phần {item} tách biệt, lần lượt đo được {a} {unit} và {b} {unit}. Hỏi hai phần gộp lại có số đo bao nhiêu {unit}?"],"AlternativesByUnit":{"kg":["Có hai phần {item} tách biệt, lần lượt cân được {a} {unit} và {b} {unit}. Hỏi hai phần gộp lại có khối lượng bao nhiêu {unit}?"],"l":["Có hai phần {item} tách biệt, lần lượt có dung tích {a} {unit} và {b} {unit}. Hỏi hai phần gộp lại có dung tích bao nhiêu {unit}?"],"ml":["Có hai phần {item} tách biệt, lần lượt có dung tích {a} {unit} và {b} {unit}. Hỏi hai phần gộp lại có dung tích bao nhiêu {unit}?"]}},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.003","Alternatives":["Lúc đầu có {a} {unit} {item}. Người ta lấy ra dùng {b} {unit} từ lượng ban đầu. Hỏi lượng còn lại là bao nhiêu {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.004","Alternatives":["Một phần cần {a} {unit} {item}. Làm {b} phần có cùng số đo đó. Hỏi tất cả các phần cần bao nhiêu {unit}?"],"AlternativesByUnit":{"ml":["Một phần cần {a} {unit} {item}. Làm {b} phần có cùng dung tích đó. Hỏi tất cả các phần cần bao nhiêu {unit}?"],"l":["Một phần cần {a} {unit} {item}. Làm {b} phần có cùng dung tích đó. Hỏi tất cả các phần cần bao nhiêu {unit}?"],"kg":["Một phần cần {a} {unit} {item}. Làm {b} phần có cùng khối lượng đó. Hỏi tất cả các phần cần bao nhiêu {unit}?"]}},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.005","Alternatives":["Người ta đem {a} {unit} {item}, phân thành {b} phần có lượng bằng nhau. Hỏi lượng trong mỗi phần là bao nhiêu {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.006","Alternatives":["Lượng {item} cần tính"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.007","Alternatives":["Lượng ở phần thứ nhất là {first} {conversion_smallUnit_unit} {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.008","Alternatives":["Quy đổi số đo ban đầu"],"AlternativesByUnit":{"ml":["Quy đổi dung tích ban đầu"],"l":["Quy đổi dung tích ban đầu"],"kg":["Quy đổi khối lượng ban đầu"]}},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.009","Alternatives":["Tính số đo phần tiếp theo"],"AlternativesByUnit":{"ml":["Tính dung tích phần tiếp theo"],"l":["Tính dung tích phần tiếp theo"],"kg":["Tính khối lượng phần tiếp theo"]}},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.010","Alternatives":["So với phần đầu, phần thứ hai có thêm {gap} {unit}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.011","Alternatives":["Tính lượng dùng trong cả hai lần"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.012","Alternatives":["Lượng ban đầu là {first} {conversion_smallUnit_unit} {item}. Người ta lấy từ lượng đó {used} {unit}, rồi lấy tiếp {other} {unit} để dùng. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.014","Alternatives":["Tính lượng đã gộp"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.015","Alternatives":["Bổ sung vào từng phần {extra} {unit}. Cần làm {count} phần có số đo bằng nhau. "],"AlternativesByUnit":{"ml":["Bổ sung vào từng phần {extra} {unit}. Cần làm {count} phần có dung tích bằng nhau. "],"l":["Bổ sung vào từng phần {extra} {unit}. Cần làm {count} phần có dung tích bằng nhau. "],"kg":["Bổ sung vào từng phần {extra} {unit}. Cần làm {count} phần có khối lượng bằng nhau. "]}},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.016","Alternatives":["Thêm phần thứ hai gồm {extra} {unit} vào lượng ban đầu, sau đó phân đều thành {count} phần. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.017","Alternatives":["Khi đã chia xong, thêm {returned} {unit} {item} chỉ vào phần thứ nhất. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.018","Alternatives":["Tiếp theo, nhận thêm từ bên ngoài {returned} {unit} {item} và gộp vào lượng đang có. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.019","Alternatives":["Lượng {item} cần tính"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.020","Alternatives":["Hỏi lượng còn lại là bao nhiêu {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.021","Alternatives":["Hỏi lượng cuối cùng trong riêng phần thứ nhất là bao nhiêu {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.022","Alternatives":["Hỏi tổng lượng cuối cùng là bao nhiêu {unit} {item}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.027","Alternatives":["Tính lượng một phần sau khi chia đều"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.028","Alternatives":["Tính lượng trước khi nhận thêm"]}
+    ],
+    "Narrative.Proportion.Phrasings": [{"Id":"ProportionQuizGenerator.Narrative.001","Alternatives":["May {sets} bộ quần áo cần sử dụng {fabric} mét vải. Hỏi may {new_sets} bộ quần áo như thế hết bao nhiêu mét vải?","May {sets} bộ quần áo phải dùng {fabric} mét vải. Hỏi may {new_sets} bộ quần áo như thế hết bao nhiêu mét vải?"]},{"Id":"ProportionQuizGenerator.Narrative.002","Alternatives":["Phải dùng {fabric} mét vải để may đủ {sets} bộ quần áo. Hỏi may {new_sets} bộ thì cần bao nhiêu mét vải?","Cần sử dụng {fabric} mét vải để may đủ {sets} bộ quần áo. Hỏi may {new_sets} bộ thì phải dùng bao nhiêu mét vải?"]},{"Id":"ProportionQuizGenerator.Narrative.003","Alternatives":["{students} học sinh trồng tổng cộng {trees} cây. Hỏi {new_students} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?","{students} học sinh trồng tất cả {trees} cây. Hỏi {new_students} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.004","Alternatives":["Một tổ gồm {students} em trồng tổng cộng {trees} cây. Hỏi cả lớp {new_students} em trồng được bao nhiêu cây nếu năng suất mỗi em như nhau?","Một tổ gồm {students} em trồng tất cả {trees} cây. Hỏi cả lớp {new_students} em trồng được bao nhiêu cây nếu năng suất mỗi em như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.005","Alternatives":["Mua {quantity} quyển vở phải trả {cost} đồng. Hỏi {new_quantity} quyển vở giá bao nhiêu tiền, biết giá mỗi quyển như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.006","Alternatives":["Mẹ trả tiền mua {quantity} quyển tập với tổng giá {cost} đồng. Hỏi mua {new_quantity} quyển thì hết bao nhiêu tiền?"]},{"Id":"ProportionQuizGenerator.Narrative.007","Alternatives":["{vehicles} xe tải vận chuyển tổng cộng {cargo} tấn gạo đóng bao. Hỏi {new_vehicles} xe tải như thế chở được bao nhiêu tấn gạo?","{vehicles} xe tải vận chuyển tất cả {cargo} tấn gạo đóng bao. Hỏi {new_vehicles} xe tải như thế chở được bao nhiêu tấn gạo?"]},{"Id":"ProportionQuizGenerator.Narrative.008","Alternatives":["{vehicles} xe cùng loại tiêu thụ tổng cộng {fuel} lít xăng khi đi cùng một quãng đường. Hỏi {new_vehicles} xe như thế hết bao nhiêu lít xăng?","{vehicles} xe cùng loại tiêu thụ tất cả {fuel} lít xăng khi đi cùng một quãng đường. Hỏi {new_vehicles} xe như thế hết bao nhiêu lít xăng?"]},{"Id":"ProportionQuizGenerator.Narrative.009","Alternatives":["Một ô tô di chuyển trong {duration} giờ với quãng đường dài {distance} km. Hỏi với cùng vận tốc, trong {new_duration} giờ ô tô đi được bao nhiêu km?"]},{"Id":"ProportionQuizGenerator.Narrative.010","Alternatives":["Trong cùng một khoảng thời gian, {groups} thợ sản xuất tổng cộng {items} cái ghế. Hỏi {new_groups} thợ cùng năng suất làm được bao nhiêu cái ghế?","Trong cùng một khoảng thời gian, {groups} thợ sản xuất tất cả {items} cái ghế. Hỏi {new_groups} thợ cùng năng suất làm được bao nhiêu cái ghế?"]},{"Id":"ProportionQuizGenerator.Narrative.011","Alternatives":["Trong cùng một khoảng thời gian, {groups} máy sản xuất tổng cộng {items} sản phẩm. Hỏi {new_groups} máy cùng năng suất làm được bao nhiêu sản phẩm?","Trong cùng một khoảng thời gian, {groups} máy sản xuất tất cả {items} sản phẩm. Hỏi {new_groups} máy cùng năng suất làm được bao nhiêu sản phẩm?"]},{"Id":"ProportionQuizGenerator.Narrative.012","Alternatives":["{groups} thùng như nhau chứa tổng cộng {items} hộp hàng. Hỏi {new_groups} thùng như thế có bao nhiêu hộp hàng?","{groups} thùng như nhau chứa tất cả {items} hộp hàng. Hỏi {new_groups} thùng như thế có bao nhiêu hộp hàng?"]},{"Id":"ProportionQuizGenerator.Narrative.013","Alternatives":["{quantity} bao gạo cùng loại có tổng khối lượng {mass} kg. Hỏi {new_quantity} bao gạo như thế nặng bao nhiêu kg?","{quantity} bao gạo cùng loại có khối lượng cộng lại là {mass} kg. Hỏi {new_quantity} bao gạo như thế nặng bao nhiêu kg?"]},{"Id":"ProportionQuizGenerator.Narrative.014","Alternatives":["{quantity} bó rau cùng loại có tổng khối lượng {mass} gam. Hỏi {new_quantity} bó rau như thế nặng bao nhiêu gam?","{quantity} bó rau cùng loại có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} bó rau như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.015","Alternatives":["{quantity} củ cà rốt có khối lượng như nhau có tổng khối lượng {mass} gam. Hỏi {new_quantity} củ như thế nặng bao nhiêu gam?","{quantity} củ cà rốt có khối lượng như nhau có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} củ như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.016","Alternatives":["{quantity} củ khoai tây cùng cỡ có tổng khối lượng {mass} gam. Hỏi {new_quantity} củ khoai tây như thế nặng bao nhiêu gam?","{quantity} củ khoai tây cùng cỡ có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} củ khoai tây như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.017","Alternatives":["{quantity} quả táo cùng cỡ có tổng khối lượng {mass} gam. Hỏi {new_quantity} quả táo như thế nặng bao nhiêu gam?","{quantity} quả táo cùng cỡ có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} quả táo như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.018","Alternatives":["{quantity} quả cam cùng cỡ có tổng khối lượng {mass} gam. Hỏi {new_quantity} quả cam như thế nặng bao nhiêu gam?","{quantity} quả cam cùng cỡ có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} quả cam như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.019","Alternatives":["{quantity} quả xoài cùng cỡ có tổng khối lượng {mass} gam. Hỏi {new_quantity} quả xoài như thế nặng bao nhiêu gam?","{quantity} quả xoài cùng cỡ có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} quả xoài như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.020","Alternatives":["{quantity} phần thịt heo cùng khối lượng có tổng khối lượng {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?","{quantity} phần thịt heo cùng khối lượng có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.021","Alternatives":["{quantity} phần cá cùng khối lượng có tổng khối lượng {mass} gam. Hỏi {new_quantity} phần cá như thế nặng bao nhiêu gam?","{quantity} phần cá cùng khối lượng có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} phần cá như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.022","Alternatives":["{quantity} phần thịt gà cùng khối lượng có tổng khối lượng {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?","{quantity} phần thịt gà cùng khối lượng có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} phần như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.023","Alternatives":["{quantity} quả trứng cùng cỡ có tổng khối lượng {mass} gam. Hỏi {new_quantity} quả trứng như thế nặng bao nhiêu gam?","{quantity} quả trứng cùng cỡ có khối lượng cộng lại là {mass} gam. Hỏi {new_quantity} quả trứng như thế nặng bao nhiêu gam?"]},{"Id":"ProportionQuizGenerator.Narrative.024","Alternatives":["{containers} thùng cùng loại có tổng sức chứa {volume} lít mật ong. Hỏi {new_containers} thùng như thế chứa được bao nhiêu lít mật ong?","{containers} thùng cùng loại chứa được tất cả {volume} lít mật ong. Hỏi {new_containers} thùng như thế chứa được bao nhiêu lít mật ong?"]},{"Id":"ProportionQuizGenerator.Narrative.025","Alternatives":["{containers} can cùng loại có tổng sức chứa {volume} lít dầu. Hỏi {new_containers} can như thế chứa được bao nhiêu lít dầu?","{containers} can cùng loại chứa được tất cả {volume} lít dầu. Hỏi {new_containers} can như thế chứa được bao nhiêu lít dầu?"]},{"Id":"ProportionQuizGenerator.Narrative.026","Alternatives":["{cans} thùng sơn cùng loại có thể phủ được {area} m² tường. Hỏi {new_cans} thùng sơn như thế sơn được bao nhiêu m² tường?"]},{"Id":"ProportionQuizGenerator.Narrative.027","Alternatives":["{workers} người cần {duration} ngày để hoàn thành một công việc. Hỏi {new_workers} người làm xong công việc đó trong bao nhiêu ngày, biết năng suất mỗi người như nhau?","{workers} người phải dùng {duration} ngày để hoàn thành một công việc. Hỏi {new_workers} người làm xong công việc đó trong bao nhiêu ngày, biết năng suất mỗi người như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.028","Alternatives":["{workers} công nhân cần {duration} ngày để hoàn thành việc đắp một đoạn đường. Hỏi {new_workers} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","{workers} công nhân phải dùng {duration} ngày để hoàn thành việc đắp một đoạn đường. Hỏi {new_workers} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.029","Alternatives":["{workers} công nhân cùng năng suất cần {duration} giờ để hoàn thành một công việc. Hỏi {new_workers} công nhân hoàn thành công việc đó trong bao nhiêu giờ?","{workers} công nhân cùng năng suất phải dùng {duration} giờ để hoàn thành một công việc. Hỏi {new_workers} công nhân hoàn thành công việc đó trong bao nhiêu giờ?"]},{"Id":"ProportionQuizGenerator.Narrative.030","Alternatives":["{machines} máy cần {duration} giờ để hoàn thành một công việc. Hỏi {new_machines} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?","{machines} máy phải dùng {duration} giờ để hoàn thành một công việc. Hỏi {new_machines} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?"]},{"Id":"ProportionQuizGenerator.Narrative.031","Alternatives":["{workers} thợ cần {duration} ngày để hoàn thành một công việc. Hỏi {new_workers} thợ cùng năng suất làm xong trong bao nhiêu ngày?","{workers} thợ phải dùng {duration} ngày để hoàn thành một công việc. Hỏi {new_workers} thợ cùng năng suất làm xong trong bao nhiêu ngày?"]},{"Id":"ProportionQuizGenerator.Narrative.032","Alternatives":["Một bếp ăn dự trữ gạo cho {people} người ăn đủ trong {days} ngày. Thực tế có {new_people} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?","Một bếp ăn chuẩn bị sẵn gạo cho {people} người ăn đủ trong {days} ngày. Thực tế có {new_people} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?"]},{"Id":"ProportionQuizGenerator.Narrative.033","Alternatives":["Một bếp ăn dự trữ đủ thực phẩm cho {people} học sinh sử dụng trong {days} ngày. Nếu số học sinh thực tế là {new_people} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?","Một bếp ăn chuẩn bị sẵn đủ thực phẩm cho {people} học sinh sử dụng trong {days} ngày. Nếu số học sinh thực tế là {new_people} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?"]},{"Id":"ProportionQuizGenerator.Narrative.034","Alternatives":["Dự trữ một lượng thực phẩm đủ để {people} người ăn trong {days} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {new_days} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?","Chuẩn bị sẵn một lượng thực phẩm đủ để {people} người ăn trong {days} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {new_days} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?"]},{"Id":"ProportionQuizGenerator.Narrative.035","Alternatives":["Một cửa hàng dự trữ số hộp mứt đủ bán trong {days} ngày với mức bán {daily_sales} hộp mỗi ngày. Thực tế mỗi ngày bán {new_daily_sales} hộp. Hỏi số hàng đó đủ bán trong bao nhiêu ngày?","Một cửa hàng chuẩn bị sẵn số hộp mứt đủ bán trong {days} ngày với mức bán {daily_sales} hộp mỗi ngày. Thực tế mỗi ngày bán {new_daily_sales} hộp. Hỏi số hàng đó đủ bán trong bao nhiêu ngày?"]},{"Id":"ProportionQuizGenerator.Narrative.036","Alternatives":["{workers} công nhân cần {days} ngày để hoàn thành một công việc. Muốn hoàn thành cùng công việc đó trong {new_days} ngày thì cần bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","{workers} công nhân phải dùng {days} ngày để hoàn thành một công việc. Muốn hoàn thành cùng công việc đó trong {new_days} ngày thì phải dùng bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.037","Alternatives":["Một đội gồm {workers} thợ cần {days} ngày để hoàn thành việc xây một bức tường. Hỏi cần bao nhiêu thợ để xây cùng bức tường đó trong {new_days} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?","Một đội gồm {workers} thợ phải dùng {days} ngày để hoàn thành việc xây một bức tường. Hỏi phải dùng bao nhiêu thợ để xây cùng bức tường đó trong {new_days} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?"]},{"Id":"ProportionQuizGenerator.Narrative.038","Alternatives":["{machines} máy cần {hours} giờ để hoàn thành việc đóng gói một lô hàng. Hỏi cần bao nhiêu máy để đóng gói cùng lô hàng đó trong {new_hours} giờ, biết các máy chạy đồng thời và có cùng năng suất?","{machines} máy phải dùng {hours} giờ để hoàn thành việc đóng gói một lô hàng. Hỏi phải dùng bao nhiêu máy để đóng gói cùng lô hàng đó trong {new_hours} giờ, biết các máy chạy đồng thời và có cùng năng suất?"]},{"Id":"ProportionQuizGenerator.Narrative.039","Alternatives":["{machines} máy in cần {hours} giờ để hoàn thành một đơn hàng. Muốn in xong cùng đơn hàng đó trong {new_hours} giờ thì cần bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?","{machines} máy in phải dùng {hours} giờ để hoàn thành một đơn hàng. Muốn in xong cùng đơn hàng đó trong {new_hours} giờ thì phải dùng bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?"]},{"Id":"ProportionQuizGenerator.Narrative.040","Alternatives":["{taps} vòi nước chảy cùng nhau cần {minutes} phút để làm đầy một bể trống. Hỏi {new_taps} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?","{taps} vòi nước chảy cùng nhau phải dùng {minutes} phút để làm đầy một bể trống. Hỏi {new_taps} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?"]},{"Id":"ProportionQuizGenerator.Narrative.041","Alternatives":["{taps} máy bơm cần {minutes} phút để làm đầy một bể trống. Hỏi {new_taps} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?","{taps} máy bơm phải dùng {minutes} phút để làm đầy một bể trống. Hỏi {new_taps} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?"]},{"Id":"ProportionQuizGenerator.Narrative.042","Alternatives":["Một ô tô duy trì vận tốc {speed} km/h và cần {hours} giờ để hoàn thành một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {new_speed} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?","Một ô tô di chuyển đều với vận tốc {speed} km/h và phải dùng {hours} giờ để hoàn thành một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {new_speed} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?"]},{"Id":"ProportionQuizGenerator.Narrative.043","Alternatives":["Một xe máy duy trì vận tốc {speed} km/h trong {hours} giờ để đến nơi. Hỏi đi cùng quãng đường với vận tốc {new_speed} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?","Một xe máy di chuyển đều với vận tốc {speed} km/h trong {hours} giờ để đến nơi. Hỏi đi cùng quãng đường với vận tốc {new_speed} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?"]},{"Id":"ProportionQuizGenerator.Narrative.044","Alternatives":["{vehicles} xe tải vận chuyển xong một lô hàng với {trips_each} chuyến cho mỗi xe. Nếu dùng {new_vehicles} xe tải có cùng sức chở thì mỗi xe cần đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?","{vehicles} xe tải vận chuyển xong một lô hàng với {trips_each} chuyến cho mỗi xe. Nếu dùng {new_vehicles} xe tải có cùng sức chở thì mỗi xe phải dùng đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.045","Alternatives":["{vehicles} xe tải vận chuyển xong một lô cát với {trips_each} chuyến đầy tải cho mỗi xe. Hỏi dùng {new_vehicles} xe tải cùng sức chở thì mỗi xe phải đi bao nhiêu chuyến đầy tải để chở hết cùng lô cát, biết các xe đi số chuyến như nhau?"]},{"Id":"ProportionQuizGenerator.Narrative.046","Alternatives":["Một kho chứa {packages} bao gạo với lượng gạo {mass_each} kg trong mỗi bao. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {new_mass_each} kg thì cần bao nhiêu bao, biết không hao hụt gạo?","Một kho chứa {packages} bao gạo với lượng gạo {mass_each} kg trong mỗi bao. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {new_mass_each} kg thì phải dùng bao nhiêu bao, biết không hao hụt gạo?"]},{"Id":"ProportionQuizGenerator.Narrative.047","Alternatives":["Có tất cả {packages} túi đường với khối lượng {mass_each} kg trong mỗi túi. Chia lại toàn bộ số đường đó vào các túi, mỗi túi nặng {new_mass_each} kg thì được bao nhiêu túi, biết không hao hụt đường?"]}],
+    "Narrative.Motion.Phrasings": [{"Id":"MotionQuizGenerator.CreateBasicContract.001","Alternatives":["{Capitalize_subject} duy trì vận tốc {speed} {speedUnit}. Hành trình kéo dài tổng cộng {totalElapsed} {timeUnit}, tính cả thời gian nghỉ {restTime} {timeUnit}. Hỏi {subject} đã di chuyển được bao nhiêu {distanceUnit}?","{Capitalize_subject} di chuyển với vận tốc không đổi {speed} {speedUnit}. Từ khi khởi hành đến khi đến nơi hết {totalElapsed} {timeUnit}, bao gồm một lần nghỉ dài {restTime} {timeUnit}. Quãng đường {subject} đi được là bao nhiêu {distanceUnit}?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.003","Alternatives":["{Capitalize_subject} giữ vận tốc không đổi {speed} {speedUnit} suốt {time} {timeUnit}. Quãng đường đi được dài bao nhiêu {distanceUnit}?","{Capitalize_subject} di chuyển đều với vận tốc {speed} {speedUnit} trong khoảng thời gian {time} {timeUnit}. Tính quãng đường đã di chuyển theo {distanceUnit}?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.017","Alternatives":["{Capitalize_subject} di chuyển đều trên quãng đường dài {distance} {distanceUnit} hết {time} {timeUnit}. Vận tốc của {subject} bằng bao nhiêu {speedUnit}?","{Capitalize_subject} hoàn thành quãng đường {distance} {distanceUnit} trong thời gian {time} {timeUnit} với vận tốc không đổi. Tính vận tốc của {subject} theo {speedUnit}?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.018","Alternatives":["{Capitalize_subject} giữ vận tốc không đổi {targetSpeed} {speedUnit} để đi hết quãng đường {targetDistance} {distanceUnit}. Hỏi {subject} cần bao nhiêu {timeUnit} để đi hết quãng đường đó?","{Capitalize_subject} di chuyển đều với vận tốc {targetSpeed} {speedUnit} trên quãng đường dài {targetDistance} {distanceUnit}. Thời gian di chuyển của {subject} là bao nhiêu {timeUnit}?"]},{"Id":"MotionQuizGenerator.CreateChasingContract.009","Alternatives":["{Capitalize_slowSubject} đang ở phía trước, cách {fastSubject} một đoạn {gap} {distanceUnit}. {Capitalize_slowSubject} di chuyển với vận tốc {slowSpeed} {speedUnit}, còn {fastSubject} đuổi theo cùng chiều với vận tốc {fastSpeed} {speedUnit}. Cần bao nhiêu {timeUnit} để {fastSubject} đuổi kịp?","{Capitalize_slowSubject} ở phía trước và cách {fastSubject} {gap} {distanceUnit}. {Capitalize_slowSubject} giữ vận tốc {slowSpeed} {speedUnit}, trong khi {fastSubject} di chuyển cùng chiều phía sau với vận tốc {fastSpeed} {speedUnit}. Sau bao nhiêu {timeUnit} thì {fastSubject} bắt kịp?"]},{"Id":"MotionQuizGenerator.CreateMeetingContract.012","Alternatives":["{Capitalize_subject1} và {subject2} khởi hành đồng thời từ hai nơi cách nhau {distance} {distanceUnit} và đi về phía nhau. Vận tốc của hai bên lần lượt là {speed1} {speedUnit} và {speed2} {speedUnit}. Cần bao nhiêu {timeUnit} để hai bên gặp nhau?","{Capitalize_subject1} và {subject2} xuất phát cùng lúc, đi ngược chiều về phía nhau từ hai điểm cách nhau {distance} {distanceUnit}. Hai bên giữ vận tốc lần lượt {speed1} {speedUnit} và {speed2} {speedUnit}. Hai bên sẽ gặp nhau sau bao nhiêu {timeUnit}?"]},{"Id":"MotionQuizGenerator.CreateRiverDerivedContract.021","Alternatives":["{Capitalize_craft} đi xuôi dòng với vận tốc {downstream} {speedUnit} và đi ngược dòng với vận tốc {upstream} {speedUnit}. Tính {value4} theo {speedUnit}?","{Capitalize_craft} có vận tốc khi xuôi dòng là {downstream} {speedUnit}, còn khi ngược dòng là {upstream} {speedUnit}. Cho biết {value4} bằng bao nhiêu {speedUnit}?"]},{"Id":"MotionQuizGenerator.CreateRiverSimpleContract.019","Alternatives":["{Capitalize_craft} di chuyển với vận tốc {boatSpeed} {speedUnit} khi nước yên, còn dòng nước chảy với vận tốc {currentSpeed} {speedUnit}. Tính vận tốc {isDownstream_xu_i_d_ng_ng_c_d_ng} của {craft} theo {speedUnit}?","{Capitalize_craft} chạy trong nước yên với vận tốc {boatSpeed} {speedUnit}, và vận tốc dòng nước là {currentSpeed} {speedUnit}. Khi đi {isDownstream_xu_i_d_ng_ng_c_d_ng}, vận tốc của {craft} bằng bao nhiêu {speedUnit}?"]}],
+    "Narrative.MultiStep.Phrasings":
+    [
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.002",
+        "Alternatives": [
+          "Ở thư viện, ",
+          "Trong hoạt động tại thư viện, "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.003",
+        "Alternatives": [
+          "Tại buổi gấp hoa giấy, ",
+          "Trong hoạt động gấp hoa giấy, "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.004",
+        "Alternatives": [
+          "Ở điểm quyên góp sách, ",
+          "Trong hoạt động tại điểm quyên góp sách, "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.005",
+        "Alternatives": [
+          "Trong hoạt động chuẩn bị quà, ",
+          "Khi chuẩn bị quà, "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.006",
+        "Alternatives": [
+          "Lượng gộp của hai phần",
+          "Tổng lượng trong hai phần"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.007",
+        "Alternatives": [
+          "phần thứ nhất chứa {first} và phần thứ hai chứa {second} {unit}. ",
+          "hai phần được để riêng, với số lượng lần lượt là {first} và {second} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.008",
+        "Alternatives": [
+          "Lượng gộp của ba phần",
+          "Tổng lượng trong ba phần"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.009",
+        "Alternatives": [
+          "Phần thứ ba gồm {third} {unit} được thêm vào. ",
+          "Bổ sung phần thứ ba gồm {third} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.010",
+        "Alternatives": [
+          "Tiếp đó bớt đi {used} {unit}. Hỏi số {unit} còn lại là bao nhiêu?",
+          "Sau khi gộp, lấy đi {used} {unit}. Hỏi còn bao nhiêu {unit}?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.011",
+        "Alternatives": [
+          "lúc đầu có hai phần để riêng. Lấy đi {removed} {unit} thì còn {remaining} {unit}. ",
+          "hai phần được để riêng lúc ban đầu. Sau khi bớt {removed} {unit}, số còn lại là {remaining} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.012",
+        "Alternatives": [
+          "Trước lúc lấy ra, đã bổ sung {added} {unit} từ bên ngoài. ",
+          "Đã thêm {added} {unit} từ bên ngoài trước lúc lấy ra. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.013",
+        "Alternatives": [
+          "Tổng lượng trước khi trừ phần bổ sung",
+          "Lượng gộp trước khi loại phần thêm"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.014",
+        "Alternatives": [
+          "Lượng có lúc ban đầu",
+          "Tổng lượng lúc đầu"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.016",
+        "Alternatives": [
+          "Lượng trong phần thứ nhất",
+          "Số lượng của phần thứ nhất"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.017",
+        "Alternatives": [
+          "Phần thứ nhất được xếp thành {count} nhóm bằng nhau, mỗi nhóm chứa {each} {unit}. ",
+          "Trong phần thứ nhất có {count} nhóm bằng nhau, với {each} {unit} ở mỗi nhóm. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.021",
+        "Alternatives": [
+          "Số nhóm thực sự sử dụng",
+          "Số nhóm còn được dùng"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.023",
+        "Alternatives": [
+          "Tổng lượng ở các nhóm đầu",
+          "Số lượng trong các nhóm đầu"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.024",
+        "Alternatives": [
+          "có {count} nhóm riêng biệt, mỗi nhóm chứa {each} {unit}. ",
+          "số nhóm là {count}, với {each} {unit} trong mỗi nhóm. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.025",
+        "Alternatives": [
+          "Một nhóm được để lại không dùng; chỉ dùng lượng của những nhóm còn lại. ",
+          "Không dùng một nhóm; chỉ sử dụng lượng trong các nhóm còn lại. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.026",
+        "Alternatives": [
+          "Đợt riêng tiếp theo có {second} {unit}. ",
+          "Ở một đợt riêng khác, số lượng là {second} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.028",
+        "Alternatives": [
+          "Tổng lượng ở các nhóm sau",
+          "Số lượng trong các nhóm sau"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.029",
+        "Alternatives": [
+          "Đợt riêng khác được xếp thành {countSecond} nhóm, mỗi nhóm chứa {eachSecond} {unit}. ",
+          "Ở một đợt riêng khác có {countSecond} nhóm, với {eachSecond} {unit} trong mỗi nhóm. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.030",
+        "Alternatives": [
+          "Tổng lượng của các đợt",
+          "Lượng gộp từ các đợt"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.031",
+        "Alternatives": [
+          "Bớt đi {delta} {unit} trong tổng lượng vừa có. ",
+          "Từ tổng lượng đó, lấy đi {delta} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.032",
+        "Alternatives": [
+          "Bổ sung thêm {delta} {unit} riêng lẻ. ",
+          "Thêm vào tổng lượng đó {delta} {unit} riêng lẻ. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.033",
+        "Alternatives": [
+          "Tổng lượng đem chia",
+          "Số lượng để chia đều"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.035",
+        "Alternatives": [
+          "Chia lượng vừa có thành {shares} phần bằng nhau. Hỏi số {unit} trong mỗi phần là bao nhiêu?",
+          "Phân chia đều lượng đó vào {shares} phần. Hỏi mỗi phần nhận được bao nhiêu {unit}?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.036",
+        "Alternatives": [
+          "Hỏi tổng lượng sau các hoạt động là bao nhiêu {unit}?",
+          "Sau các hoạt động đó, hỏi có tất cả bao nhiêu {unit}?"
+        ]
+      }
+    ],
     "Stories": [
       {
         "Id": "object-total",
@@ -18919,30 +19233,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về nước là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi tổng hai số đo về nước là bao nhiêu {unit}?",
-            "SolutionLead": "Tổng lượng nước là ({unit}):",
+            "GivenA": "Dung tích phần nước thứ nhất là {a} {unit_a},",
+            "GivenB": "dung tích phần thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi tổng dung tích hai phần nước là bao nhiêu {unit}?",
+            "SolutionLead": "Tổng dung tích nước là ({unit}):",
             "UnitId": "fraction-water-Add",
-            "ProblemText": "Số đo thứ nhất về nước là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi tổng hai số đo về nước là bao nhiêu {unit}?"
+            "ProblemText": "Dung tích phần nước thứ nhất là {a} {unit_a}, dung tích phần thứ hai là {b} {unit_b}. Hỏi tổng dung tích hai phần nước là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về nước là {a} {unit_a},",
-            "Số đo thứ nhất về nước bằng {a} {unit_a},",
-            "Số đo thứ nhất về nước được xác định là {a} {unit_a},"
+            "Dung tích phần nước thứ nhất là {a} {unit_a},",
+            "Dung tích phần nước thứ nhất bằng {a} {unit_a},",
+            "Dung tích phần nước thứ nhất được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "dung tích phần thứ hai là {b} {unit_b}.",
+            "dung tích phần thứ hai bằng {b} {unit_b}.",
+            "dung tích phần thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi tổng hai số đo về nước là bao nhiêu {unit}?"
+            "Hỏi tổng dung tích hai phần nước là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Tổng lượng nước là ({unit}):"
+            "Tổng dung tích nước là ({unit}):"
           ],
           "UnitId": "fraction-water-Add"
         }
@@ -18952,30 +19266,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về nước là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi số đo thứ nhất về nước lớn hơn số đo thứ hai bao nhiêu {unit}?",
-            "SolutionLead": "Phần chênh lệch về nước là ({unit}):",
+            "GivenA": "Dung tích phần nước thứ nhất là {a} {unit_a},",
+            "GivenB": "dung tích phần thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi dung tích phần nước thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch dung tích nước là ({unit}):",
             "UnitId": "fraction-water-Subtract",
-            "ProblemText": "Số đo thứ nhất về nước là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi số đo thứ nhất về nước lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "ProblemText": "Dung tích phần nước thứ nhất là {a} {unit_a}, dung tích phần thứ hai là {b} {unit_b}. Hỏi dung tích phần nước thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về nước là {a} {unit_a},",
-            "Số đo thứ nhất về nước bằng {a} {unit_a},",
-            "Số đo thứ nhất về nước được xác định là {a} {unit_a},"
+            "Dung tích phần nước thứ nhất là {a} {unit_a},",
+            "Dung tích phần nước thứ nhất bằng {a} {unit_a},",
+            "Dung tích phần nước thứ nhất được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "dung tích phần thứ hai là {b} {unit_b}.",
+            "dung tích phần thứ hai bằng {b} {unit_b}.",
+            "dung tích phần thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi số đo thứ nhất về nước lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "Hỏi dung tích phần nước thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Phần chênh lệch về nước là ({unit}):"
+            "Chênh lệch dung tích nước là ({unit}):"
           ],
           "UnitId": "fraction-water-Subtract"
         }
@@ -18985,29 +19299,29 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "lượng nước ban đầu là {a} {unit_a},",
+            "GivenA": "dung tích nước ban đầu là {a} {unit_a},",
             "GivenB": "phần được chọn bằng {b} lượng ban đầu.",
-            "Question": "Hỏi phần nước được chọn là bao nhiêu {unit}?",
-            "SolutionLead": "lượng nước được chọn là ({unit}):",
+            "Question": "Hỏi dung tích phần nước được chọn là bao nhiêu {unit}?",
+            "SolutionLead": "dung tích phần nước được chọn là ({unit}):",
             "UnitId": "fraction-water-Multiply",
-            "ProblemText": "lượng nước ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi phần nước được chọn là bao nhiêu {unit}?"
+            "ProblemText": "dung tích nước ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi dung tích phần nước được chọn là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "lượng nước ban đầu là {a} {unit_a},",
-            "lượng nước ban đầu bằng {a} {unit_a},",
-            "lượng nước ban đầu được xác định là {a} {unit_a},"
+            "dung tích nước ban đầu là {a} {unit_a},",
+            "dung tích nước ban đầu bằng {a} {unit_a},",
+            "dung tích nước ban đầu được xác định là {a} {unit_a},"
           ],
           "GivenB": [
             "phần được chọn bằng {b} lượng ban đầu.",
             "người ta chọn {b} lượng ban đầu."
           ],
           "Questions": [
-            "Hỏi phần nước được chọn là bao nhiêu {unit}?"
+            "Hỏi dung tích phần nước được chọn là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "lượng nước được chọn là ({unit}):"
+            "dung tích phần nước được chọn là ({unit}):"
           ],
           "UnitId": "fraction-water-Multiply"
         }
@@ -19017,29 +19331,29 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Phần đã biết của nước là {a} {unit_a},",
+            "GivenA": "Dung tích phần nước đã biết là {a} {unit_a},",
             "GivenB": "phần này bằng {b} lượng ban đầu.",
-            "Question": "Hỏi lượng nước ban đầu là bao nhiêu {unit}?",
-            "SolutionLead": "lượng nước ban đầu là ({unit}):",
+            "Question": "Hỏi dung tích nước ban đầu là bao nhiêu {unit}?",
+            "SolutionLead": "dung tích nước ban đầu là ({unit}):",
             "UnitId": "fraction-water-Divide",
-            "ProblemText": "Phần đã biết của nước là {a} {unit_a}, phần này bằng {b} lượng ban đầu. Hỏi lượng nước ban đầu là bao nhiêu {unit}?"
+            "ProblemText": "Dung tích phần nước đã biết là {a} {unit_a}, phần này bằng {b} lượng ban đầu. Hỏi dung tích nước ban đầu là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Phần đã biết của nước là {a} {unit_a},",
-            "Phần đã biết của nước bằng {a} {unit_a},",
-            "Phần đã biết của nước được xác định là {a} {unit_a},"
+            "Dung tích phần nước đã biết là {a} {unit_a},",
+            "Dung tích phần nước đã biết bằng {a} {unit_a},",
+            "Dung tích phần nước đã biết được xác định là {a} {unit_a},"
           ],
           "GivenB": [
             "phần này bằng {b} lượng ban đầu.",
             "phần này chiếm {b} lượng ban đầu."
           ],
           "Questions": [
-            "Hỏi lượng nước ban đầu là bao nhiêu {unit}?"
+            "Hỏi dung tích nước ban đầu là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "lượng nước ban đầu là ({unit}):"
+            "dung tích nước ban đầu là ({unit}):"
           ],
           "UnitId": "fraction-water-Divide"
         }
@@ -19569,30 +19883,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về nước đóng chai là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi tổng hai số đo về nước đóng chai là bao nhiêu {unit}?",
-            "SolutionLead": "Tổng lượng nước đóng chai là ({unit}):",
+            "GivenA": "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a},",
+            "GivenB": "dung tích phần thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi tổng dung tích hai phần nước đóng chai là bao nhiêu {unit}?",
+            "SolutionLead": "Tổng dung tích nước đóng chai là ({unit}):",
             "UnitId": "fraction-bottle-Add",
-            "ProblemText": "Số đo thứ nhất về nước đóng chai là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi tổng hai số đo về nước đóng chai là bao nhiêu {unit}?"
+            "ProblemText": "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a}, dung tích phần thứ hai là {b} {unit_b}. Hỏi tổng dung tích hai phần nước đóng chai là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về nước đóng chai là {a} {unit_a},",
-            "Số đo thứ nhất về nước đóng chai bằng {a} {unit_a},",
-            "Số đo thứ nhất về nước đóng chai được xác định là {a} {unit_a},"
+            "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a},",
+            "Dung tích phần nước đóng chai thứ nhất bằng {a} {unit_a},",
+            "Dung tích phần nước đóng chai thứ nhất được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "dung tích phần thứ hai là {b} {unit_b}.",
+            "dung tích phần thứ hai bằng {b} {unit_b}.",
+            "dung tích phần thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi tổng hai số đo về nước đóng chai là bao nhiêu {unit}?"
+            "Hỏi tổng dung tích hai phần nước đóng chai là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Tổng lượng nước đóng chai là ({unit}):"
+            "Tổng dung tích nước đóng chai là ({unit}):"
           ],
           "UnitId": "fraction-bottle-Add"
         }
@@ -19602,30 +19916,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về nước đóng chai là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi số đo thứ nhất về nước đóng chai lớn hơn số đo thứ hai bao nhiêu {unit}?",
-            "SolutionLead": "Phần chênh lệch về nước đóng chai là ({unit}):",
+            "GivenA": "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a},",
+            "GivenB": "dung tích phần thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi dung tích phần nước đóng chai thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch dung tích nước đóng chai là ({unit}):",
             "UnitId": "fraction-bottle-Subtract",
-            "ProblemText": "Số đo thứ nhất về nước đóng chai là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi số đo thứ nhất về nước đóng chai lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "ProblemText": "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a}, dung tích phần thứ hai là {b} {unit_b}. Hỏi dung tích phần nước đóng chai thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về nước đóng chai là {a} {unit_a},",
-            "Số đo thứ nhất về nước đóng chai bằng {a} {unit_a},",
-            "Số đo thứ nhất về nước đóng chai được xác định là {a} {unit_a},"
+            "Dung tích phần nước đóng chai thứ nhất là {a} {unit_a},",
+            "Dung tích phần nước đóng chai thứ nhất bằng {a} {unit_a},",
+            "Dung tích phần nước đóng chai thứ nhất được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "dung tích phần thứ hai là {b} {unit_b}.",
+            "dung tích phần thứ hai bằng {b} {unit_b}.",
+            "dung tích phần thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi số đo thứ nhất về nước đóng chai lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "Hỏi dung tích phần nước đóng chai thứ nhất lớn hơn dung tích phần thứ hai bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Phần chênh lệch về nước đóng chai là ({unit}):"
+            "Chênh lệch dung tích nước đóng chai là ({unit}):"
           ],
           "UnitId": "fraction-bottle-Subtract"
         }
@@ -19635,29 +19949,29 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "lượng nước đóng chai ban đầu là {a} {unit_a},",
+            "GivenA": "dung tích nước đóng chai ban đầu là {a} {unit_a},",
             "GivenB": "phần được chọn bằng {b} lượng ban đầu.",
-            "Question": "Hỏi phần nước đóng chai được chọn là bao nhiêu {unit}?",
-            "SolutionLead": "lượng nước đóng chai được chọn là ({unit}):",
+            "Question": "Hỏi dung tích phần nước đóng chai được chọn là bao nhiêu {unit}?",
+            "SolutionLead": "dung tích phần nước đóng chai được chọn là ({unit}):",
             "UnitId": "fraction-bottle-Multiply",
-            "ProblemText": "lượng nước đóng chai ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi phần nước đóng chai được chọn là bao nhiêu {unit}?"
+            "ProblemText": "dung tích nước đóng chai ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi dung tích phần nước đóng chai được chọn là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "lượng nước đóng chai ban đầu là {a} {unit_a},",
-            "lượng nước đóng chai ban đầu bằng {a} {unit_a},",
-            "lượng nước đóng chai ban đầu được xác định là {a} {unit_a},"
+            "dung tích nước đóng chai ban đầu là {a} {unit_a},",
+            "dung tích nước đóng chai ban đầu bằng {a} {unit_a},",
+            "dung tích nước đóng chai ban đầu được xác định là {a} {unit_a},"
           ],
           "GivenB": [
             "phần được chọn bằng {b} lượng ban đầu.",
             "người ta chọn {b} lượng ban đầu."
           ],
           "Questions": [
-            "Hỏi phần nước đóng chai được chọn là bao nhiêu {unit}?"
+            "Hỏi dung tích phần nước đóng chai được chọn là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "lượng nước đóng chai được chọn là ({unit}):"
+            "dung tích phần nước đóng chai được chọn là ({unit}):"
           ],
           "UnitId": "fraction-bottle-Multiply"
         }
@@ -20213,30 +20527,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi tổng hai số đo về khối lượng mẫu đo được là bao nhiêu {unit}?",
-            "SolutionLead": "Tổng lượng khối lượng mẫu đo được là ({unit}):",
+            "GivenA": "Phần mẫu thứ nhất cân được là {a} {unit_a},",
+            "GivenB": "khối lượng phần mẫu thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi tổng khối lượng của hai phần mẫu là bao nhiêu {unit}?",
+            "SolutionLead": "Tổng khối lượng hai phần mẫu là ({unit}):",
             "UnitId": "fraction-mass-data-Add",
-            "ProblemText": "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi tổng hai số đo về khối lượng mẫu đo được là bao nhiêu {unit}?"
+            "ProblemText": "Phần mẫu thứ nhất cân được là {a} {unit_a}, khối lượng phần mẫu thứ hai là {b} {unit_b}. Hỏi tổng khối lượng của hai phần mẫu là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a},",
-            "Số đo thứ nhất về khối lượng mẫu đo được bằng {a} {unit_a},",
-            "Số đo thứ nhất về khối lượng mẫu đo được được xác định là {a} {unit_a},"
+            "Phần mẫu thứ nhất cân được là {a} {unit_a},",
+            "Phần mẫu thứ nhất cân được bằng {a} {unit_a},",
+            "Phần mẫu thứ nhất cân được được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "khối lượng phần mẫu thứ hai là {b} {unit_b}.",
+            "khối lượng phần mẫu thứ hai bằng {b} {unit_b}.",
+            "khối lượng phần mẫu thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi tổng hai số đo về khối lượng mẫu đo được là bao nhiêu {unit}?"
+            "Hỏi tổng khối lượng của hai phần mẫu là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Tổng lượng khối lượng mẫu đo được là ({unit}):"
+            "Tổng khối lượng hai phần mẫu là ({unit}):"
           ],
           "UnitId": "fraction-mass-data-Add"
         }
@@ -20246,30 +20560,30 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a},",
-            "GivenB": "số đo thứ hai là {b} {unit_b}.",
-            "Question": "Hỏi số đo thứ nhất về khối lượng mẫu đo được lớn hơn số đo thứ hai bao nhiêu {unit}?",
-            "SolutionLead": "Phần chênh lệch về khối lượng mẫu đo được là ({unit}):",
+            "GivenA": "Phần mẫu thứ nhất cân được là {a} {unit_a},",
+            "GivenB": "khối lượng phần mẫu thứ hai là {b} {unit_b}.",
+            "Question": "Hỏi khối lượng phần mẫu thứ nhất lớn hơn khối lượng phần mẫu thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch khối lượng hai phần mẫu là ({unit}):",
             "UnitId": "fraction-mass-data-Subtract",
-            "ProblemText": "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a}, số đo thứ hai là {b} {unit_b}. Hỏi số đo thứ nhất về khối lượng mẫu đo được lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "ProblemText": "Phần mẫu thứ nhất cân được là {a} {unit_a}, khối lượng phần mẫu thứ hai là {b} {unit_b}. Hỏi khối lượng phần mẫu thứ nhất lớn hơn khối lượng phần mẫu thứ hai bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Số đo thứ nhất về khối lượng mẫu đo được là {a} {unit_a},",
-            "Số đo thứ nhất về khối lượng mẫu đo được bằng {a} {unit_a},",
-            "Số đo thứ nhất về khối lượng mẫu đo được được xác định là {a} {unit_a},"
+            "Phần mẫu thứ nhất cân được là {a} {unit_a},",
+            "Phần mẫu thứ nhất cân được bằng {a} {unit_a},",
+            "Phần mẫu thứ nhất cân được được xác định là {a} {unit_a},"
           ],
           "GivenB": [
-            "số đo thứ hai là {b} {unit_b}.",
-            "số đo thứ hai bằng {b} {unit_b}.",
-            "số đo thứ hai được xác định là {b} {unit_b}."
+            "khối lượng phần mẫu thứ hai là {b} {unit_b}.",
+            "khối lượng phần mẫu thứ hai bằng {b} {unit_b}.",
+            "khối lượng phần mẫu thứ hai được xác định là {b} {unit_b}."
           ],
           "Questions": [
-            "Hỏi số đo thứ nhất về khối lượng mẫu đo được lớn hơn số đo thứ hai bao nhiêu {unit}?"
+            "Hỏi khối lượng phần mẫu thứ nhất lớn hơn khối lượng phần mẫu thứ hai bao nhiêu {unit}?"
           ],
           "Leads": [
-            "Phần chênh lệch về khối lượng mẫu đo được là ({unit}):"
+            "Chênh lệch khối lượng hai phần mẫu là ({unit}):"
           ],
           "UnitId": "fraction-mass-data-Subtract"
         }
@@ -20279,29 +20593,29 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "khối lượng mẫu đo được ban đầu là {a} {unit_a},",
+            "GivenA": "khối lượng mẫu cân được ban đầu là {a} {unit_a},",
             "GivenB": "phần được chọn bằng {b} lượng ban đầu.",
-            "Question": "Hỏi phần khối lượng mẫu đo được được chọn là bao nhiêu {unit}?",
-            "SolutionLead": "khối lượng mẫu đo được được chọn là ({unit}):",
+            "Question": "Hỏi phần khối lượng mẫu cân được được chọn là bao nhiêu {unit}?",
+            "SolutionLead": "khối lượng mẫu cân được được chọn là ({unit}):",
             "UnitId": "fraction-mass-data-Multiply",
-            "ProblemText": "khối lượng mẫu đo được ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi phần khối lượng mẫu đo được được chọn là bao nhiêu {unit}?"
+            "ProblemText": "khối lượng mẫu cân được ban đầu là {a} {unit_a}, phần được chọn bằng {b} lượng ban đầu. Hỏi phần khối lượng mẫu cân được được chọn là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "khối lượng mẫu đo được ban đầu là {a} {unit_a},",
-            "khối lượng mẫu đo được ban đầu bằng {a} {unit_a},",
-            "khối lượng mẫu đo được ban đầu được xác định là {a} {unit_a},"
+            "khối lượng mẫu cân được ban đầu là {a} {unit_a},",
+            "khối lượng mẫu cân được ban đầu bằng {a} {unit_a},",
+            "khối lượng mẫu cân được ban đầu được xác định là {a} {unit_a},"
           ],
           "GivenB": [
             "phần được chọn bằng {b} lượng ban đầu.",
             "người ta chọn {b} lượng ban đầu."
           ],
           "Questions": [
-            "Hỏi phần khối lượng mẫu đo được được chọn là bao nhiêu {unit}?"
+            "Hỏi phần khối lượng mẫu cân được được chọn là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "khối lượng mẫu đo được được chọn là ({unit}):"
+            "khối lượng mẫu cân được được chọn là ({unit}):"
           ],
           "UnitId": "fraction-mass-data-Multiply"
         }
@@ -20311,29 +20625,29 @@
         "Family": "Fraction",
         "Examples": [
           {
-            "GivenA": "Phần đã biết của khối lượng mẫu đo được là {a} {unit_a},",
+            "GivenA": "Phần đã biết của khối lượng mẫu cân được là {a} {unit_a},",
             "GivenB": "phần này bằng {b} lượng ban đầu.",
-            "Question": "Hỏi khối lượng mẫu đo được ban đầu là bao nhiêu {unit}?",
-            "SolutionLead": "khối lượng mẫu đo được ban đầu là ({unit}):",
+            "Question": "Hỏi khối lượng mẫu cân được ban đầu là bao nhiêu {unit}?",
+            "SolutionLead": "khối lượng mẫu cân được ban đầu là ({unit}):",
             "UnitId": "fraction-mass-data-Divide",
-            "ProblemText": "Phần đã biết của khối lượng mẫu đo được là {a} {unit_a}, phần này bằng {b} lượng ban đầu. Hỏi khối lượng mẫu đo được ban đầu là bao nhiêu {unit}?"
+            "ProblemText": "Phần đã biết của khối lượng mẫu cân được là {a} {unit_a}, phần này bằng {b} lượng ban đầu. Hỏi khối lượng mẫu cân được ban đầu là bao nhiêu {unit}?"
           }
         ],
         "Prose": {
           "GivenA": [
-            "Phần đã biết của khối lượng mẫu đo được là {a} {unit_a},",
-            "Phần đã biết của khối lượng mẫu đo được bằng {a} {unit_a},",
-            "Phần đã biết của khối lượng mẫu đo được được xác định là {a} {unit_a},"
+            "Phần đã biết của khối lượng mẫu cân được là {a} {unit_a},",
+            "Phần đã biết của khối lượng mẫu cân được bằng {a} {unit_a},",
+            "Phần đã biết của khối lượng mẫu cân được được xác định là {a} {unit_a},"
           ],
           "GivenB": [
             "phần này bằng {b} lượng ban đầu.",
             "phần này chiếm {b} lượng ban đầu."
           ],
           "Questions": [
-            "Hỏi khối lượng mẫu đo được ban đầu là bao nhiêu {unit}?"
+            "Hỏi khối lượng mẫu cân được ban đầu là bao nhiêu {unit}?"
           ],
           "Leads": [
-            "khối lượng mẫu đo được ban đầu là ({unit}):"
+            "khối lượng mẫu cân được ban đầu là ({unit}):"
           ],
           "UnitId": "fraction-mass-data-Divide"
         }
@@ -21885,429 +22199,53 @@
       }
     ],
     "ProportionQuizGenerator.Templates": [
-      {
-        "Type": "Direct",
-        "Scenario": "Clothing",
-        "Template": "May {0} bộ quần áo hết {1} mét vải. Hỏi may {2} bộ quần áo như thế hết bao nhiêu mét vải?",
-        "Unit": "mét vải",
-        "Subject": "vải",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FabricMeters"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "Clothing",
-        "Template": "Cần {1} mét vải để may {0} bộ quần áo. Hỏi may {2} bộ thì cần bao nhiêu mét vải?",
-        "Unit": "mét vải",
-        "Subject": "vải",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FabricMeters"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "StudentsPlanting",
-        "Template": "{0} học sinh trồng được {1} cây. Hỏi {2} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?",
-        "Unit": "cây",
-        "Subject": "cây",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "TreesPerStudent"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "StudentsPlanting",
-        "Template": "Một tổ có {0} em trồng được {1} cây. Hỏi cả lớp {2} em trồng được bao nhiêu cây nếu năng suất mỗi em như nhau?",
-        "Unit": "cây",
-        "Subject": "cây",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "TreesPerStudent"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "Shopping",
-        "Template": "{0} quyển vở giá {1} đồng. Hỏi {2} quyển vở giá bao nhiêu tiền, biết giá mỗi quyển như nhau?",
-        "Unit": "đồng",
-        "Subject": "tiền",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "MoneyDong"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "Shopping",
-        "Template": "Mẹ mua {0} quyển tập hết {1} đồng. Hỏi mua {2} quyển thì hết bao nhiêu tiền?",
-        "Unit": "đồng",
-        "Subject": "tiền",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "MoneyDong"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "VehiclesCargo",
-        "Template": "{0} xe tải chở được {1} tấn gạo đóng bao. Hỏi {2} xe tải như thế chở được bao nhiêu tấn gạo?",
-        "Unit": "tấn gạo",
-        "Subject": "gạo",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "CargoTons"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "VehiclesFuel",
-        "Template": "{0} xe cùng loại hết {1} lít xăng cho cùng một quãng đường. Hỏi {2} xe như thế hết bao nhiêu lít xăng?",
-        "Unit": "lít xăng",
-        "Subject": "xăng",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FuelLiters"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "DistanceTime",
-        "Template": "Một ô tô trong {0} giờ đi được {1} km. Hỏi với cùng vận tốc, trong {2} giờ ô tô đi được bao nhiêu km?",
-        "Unit": "km",
-        "Subject": "quãng đường",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "DistanceKilometers"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "ProductionItems",
-        "Template": "Trong cùng một khoảng thời gian, {0} thợ làm được {1} cái ghế. Hỏi {2} thợ cùng năng suất làm được bao nhiêu cái ghế?",
-        "Unit": "cái ghế",
-        "Subject": "ghế",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "ProductionItems",
-        "Template": "Trong cùng một khoảng thời gian, {0} máy làm được {1} sản phẩm. Hỏi {2} máy cùng năng suất làm được bao nhiêu sản phẩm?",
-        "Unit": "sản phẩm",
-        "Subject": "sản phẩm",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "ProductionItems",
-        "Template": "{0} thùng như nhau có tổng cộng {1} hộp hàng. Hỏi {2} thùng như thế có bao nhiêu hộp hàng?",
-        "Unit": "hộp",
-        "Subject": "hộp hàng",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "RiceBagsWeight",
-        "Template": "{0} bao gạo cùng loại nặng {1} kg. Hỏi {2} bao gạo như thế nặng bao nhiêu kg?",
-        "Unit": "kg",
-        "Subject": "gạo",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "RiceBagKilograms"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} bó rau cùng loại nặng {1} gam. Hỏi {2} bó rau như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "rau",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "VegetableGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} củ cà rốt có khối lượng như nhau nặng tổng cộng {1} gam. Hỏi {2} củ như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "cà rốt",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "VegetableGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} củ khoai tây cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} củ khoai tây như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "khoai tây",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "VegetableGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} quả táo cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả táo như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "táo",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FruitGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} quả cam cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả cam như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "cam",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FruitGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} quả xoài cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả xoài như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "xoài",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "FruitGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} phần thịt heo cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "thịt heo",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "MeatGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} phần cá cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần cá như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "cá",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "MeatGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "FoodWeightGrams",
-        "Template": "{0} phần thịt gà cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "thịt gà",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "MeatGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "EggWeightGrams",
-        "Template": "{0} quả trứng cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả trứng như thế nặng bao nhiêu gam?",
-        "Unit": "gam",
-        "Subject": "trứng",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "EggGrams"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "ContainersLiquid",
-        "Template": "{0} thùng cùng loại chứa được {1} lít mật ong. Hỏi {2} thùng như thế chứa được bao nhiêu lít mật ong?",
-        "Unit": "lít mật ong",
-        "Subject": "mật ong",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "ContainerLiters"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "ContainersLiquid",
-        "Template": "{0} can cùng loại chứa được {1} lít dầu. Hỏi {2} can như thế chứa được bao nhiêu lít dầu?",
-        "Unit": "lít dầu",
-        "Subject": "dầu",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "ContainerLiters"
-      },
-      {
-        "Type": "Direct",
-        "Scenario": "PaintArea",
-        "Template": "{0} thùng sơn cùng loại sơn được {1} m² tường. Hỏi {2} thùng sơn như thế sơn được bao nhiêu m² tường?",
-        "Unit": "m²",
-        "Subject": "diện tích tường",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "PaintAreaSquareMeters"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersDays",
-        "Template": "{0} người làm xong một công việc trong {1} ngày. Hỏi {2} người làm xong công việc đó trong bao nhiêu ngày, biết năng suất mỗi người như nhau?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersDays",
-        "Template": "{0} công nhân đắp xong một đoạn đường trong {1} ngày. Hỏi {2} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersDays",
-        "Template": "{0} công nhân cùng năng suất hoàn thành một công việc trong {1} giờ. Hỏi {2} công nhân hoàn thành công việc đó trong bao nhiêu giờ?",
-        "Unit": "giờ",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "MachinesHours",
-        "Template": "{0} máy hoàn thành một công việc trong {1} giờ. Hỏi {2} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?",
-        "Unit": "giờ",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersJob",
-        "Template": "{0} thợ làm xong một công việc trong {1} ngày. Hỏi {2} thợ cùng năng suất làm xong trong bao nhiêu ngày?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "FoodPeopleDays",
-        "Template": "Một bếp ăn chuẩn bị gạo đủ cho {0} người ăn trong {1} ngày. Thực tế có {2} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "FoodPeopleDays",
-        "Template": "Một bếp ăn có đủ thực phẩm cho {0} học sinh dùng trong {1} ngày. Nếu số học sinh thực tế là {2} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "FoodAdditionalPeople",
-        "Template": "Chuẩn bị đủ thực phẩm cho {0} người ăn trong {1} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {2} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?",
-        "Unit": "người",
-        "Subject": "số người đến thêm",
-        "AsksForAdditionalPeople": true,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "SalesStock",
-        "Template": "Một cửa hàng chuẩn bị số hộp mứt đủ bán trong {0} ngày nếu mỗi ngày bán {1} hộp. Thực tế mỗi ngày bán {2} hộp. Hỏi số hàng đó đủ bán trong bao nhiêu ngày?",
-        "Unit": "ngày",
-        "Subject": "thời gian",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersRequired",
-        "Template": "{0} công nhân hoàn thành một công việc trong {1} ngày. Muốn hoàn thành cùng công việc đó trong {2} ngày thì cần bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?",
-        "Unit": "công nhân",
-        "Subject": "số công nhân",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "WorkersRequired",
-        "Template": "Một đội có {0} thợ xây xong một bức tường trong {1} ngày. Hỏi cần bao nhiêu thợ để xây cùng bức tường đó trong {2} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?",
-        "Unit": "thợ",
-        "Subject": "số thợ",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "MachinesRequired",
-        "Template": "{0} máy đóng gói xong một lô hàng trong {1} giờ. Hỏi cần bao nhiêu máy để đóng gói cùng lô hàng đó trong {2} giờ, biết các máy chạy đồng thời và có cùng năng suất?",
-        "Unit": "máy",
-        "Subject": "số máy",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "MachinesRequired",
-        "Template": "{0} máy in hoàn thành một đơn hàng trong {1} giờ. Muốn in xong cùng đơn hàng đó trong {2} giờ thì cần bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?",
-        "Unit": "máy in",
-        "Subject": "số máy in",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TapsTime",
-        "Template": "{0} vòi nước cùng chảy thì đầy một bể trống trong {1} phút. Hỏi {2} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?",
-        "Unit": "phút",
-        "Subject": "thời gian đầy bể",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TapsTime",
-        "Template": "{0} máy bơm làm đầy một bể trống trong {1} phút. Hỏi {2} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?",
-        "Unit": "phút",
-        "Subject": "thời gian đầy bể",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TravelSpeedTime",
-        "Template": "Một ô tô đi đều với vận tốc {0} km/h và hết {1} giờ để đi một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {2} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?",
-        "Unit": "giờ",
-        "Subject": "thời gian đi",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TravelSpeedTime",
-        "Template": "Một xe máy đi đều với vận tốc {0} km/h trong {1} giờ thì đến nơi. Hỏi đi cùng quãng đường với vận tốc {2} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?",
-        "Unit": "giờ",
-        "Subject": "thời gian đi",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TransportTrips",
-        "Template": "{0} xe tải chở hết một lô hàng, mỗi xe đi {1} chuyến. Nếu dùng {2} xe tải có cùng sức chở thì mỗi xe cần đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?",
-        "Unit": "chuyến",
-        "Subject": "số chuyến mỗi xe",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "TransportTrips",
-        "Template": "{0} xe tải chở hết một lô cát, mỗi xe đi {1} chuyến đầy tải. Hỏi dùng {2} xe tải cùng sức chở thì mỗi xe phải đi bao nhiêu chuyến đầy tải để chở hết cùng lô cát, biết các xe đi số chuyến như nhau?",
-        "Unit": "chuyến",
-        "Subject": "số chuyến mỗi xe",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "PackagingCount",
-        "Template": "Một kho có {0} bao gạo, mỗi bao chứa {1} kg. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {2} kg thì cần bao nhiêu bao, biết không hao hụt gạo?",
-        "Unit": "bao",
-        "Subject": "gạo",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      },
-      {
-        "Type": "Inverse",
-        "Scenario": "PackagingCount",
-        "Template": "Có {0} túi đường, mỗi túi nặng {1} kg. Chia lại toàn bộ số đường đó vào các túi, mỗi túi nặng {2} kg thì được bao nhiêu túi, biết không hao hụt đường?",
-        "Unit": "túi",
-        "Subject": "đường",
-        "AsksForAdditionalPeople": false,
-        "RateProfile": "GenericCount"
-      }
+      {"Type":"Direct","Scenario":"Clothing","Template":"May {0} bộ quần áo hết {1} mét vải. Hỏi may {2} bộ quần áo như thế hết bao nhiêu mét vải?","Unit":"mét vải","Subject":"vải","AsksForAdditionalPeople":false,"RateProfile":"FabricMeters","NarrativeId":"ProportionQuizGenerator.Narrative.001"},
+      {"Type":"Direct","Scenario":"Clothing","Template":"Cần {1} mét vải để may {0} bộ quần áo. Hỏi may {2} bộ thì cần bao nhiêu mét vải?","Unit":"mét vải","Subject":"vải","AsksForAdditionalPeople":false,"RateProfile":"FabricMeters","NarrativeId":"ProportionQuizGenerator.Narrative.002"},
+      {"Type":"Direct","Scenario":"StudentsPlanting","Template":"{0} học sinh trồng được {1} cây. Hỏi {2} học sinh trồng được bao nhiêu cây, biết mỗi em trồng như nhau?","Unit":"cây","Subject":"cây","AsksForAdditionalPeople":false,"RateProfile":"TreesPerStudent","NarrativeId":"ProportionQuizGenerator.Narrative.003"},
+      {"Type":"Direct","Scenario":"StudentsPlanting","Template":"Một tổ có {0} em trồng được {1} cây. Hỏi cả lớp {2} em trồng được bao nhiêu cây nếu năng suất mỗi em như nhau?","Unit":"cây","Subject":"cây","AsksForAdditionalPeople":false,"RateProfile":"TreesPerStudent","NarrativeId":"ProportionQuizGenerator.Narrative.004"},
+      {"Type":"Direct","Scenario":"Shopping","Template":"{0} quyển vở giá {1} đồng. Hỏi {2} quyển vở giá bao nhiêu tiền, biết giá mỗi quyển như nhau?","Unit":"đồng","Subject":"tiền","AsksForAdditionalPeople":false,"RateProfile":"MoneyDong","NarrativeId":"ProportionQuizGenerator.Narrative.005"},
+      {"Type":"Direct","Scenario":"Shopping","Template":"Mẹ mua {0} quyển tập hết {1} đồng. Hỏi mua {2} quyển thì hết bao nhiêu tiền?","Unit":"đồng","Subject":"tiền","AsksForAdditionalPeople":false,"RateProfile":"MoneyDong","NarrativeId":"ProportionQuizGenerator.Narrative.006"},
+      {"Type":"Direct","Scenario":"VehiclesCargo","Template":"{0} xe tải chở được {1} tấn gạo đóng bao. Hỏi {2} xe tải như thế chở được bao nhiêu tấn gạo?","Unit":"tấn gạo","Subject":"gạo","AsksForAdditionalPeople":false,"RateProfile":"CargoTons","NarrativeId":"ProportionQuizGenerator.Narrative.007"},
+      {"Type":"Direct","Scenario":"VehiclesFuel","Template":"{0} xe cùng loại hết {1} lít xăng cho cùng một quãng đường. Hỏi {2} xe như thế hết bao nhiêu lít xăng?","Unit":"lít xăng","Subject":"xăng","AsksForAdditionalPeople":false,"RateProfile":"FuelLiters","NarrativeId":"ProportionQuizGenerator.Narrative.008"},
+      {"Type":"Direct","Scenario":"DistanceTime","Template":"Một ô tô trong {0} giờ đi được {1} km. Hỏi với cùng vận tốc, trong {2} giờ ô tô đi được bao nhiêu km?","Unit":"km","Subject":"quãng đường","AsksForAdditionalPeople":false,"RateProfile":"DistanceKilometers","NarrativeId":"ProportionQuizGenerator.Narrative.009"},
+      {"Type":"Direct","Scenario":"ProductionItems","Template":"Trong cùng một khoảng thời gian, {0} thợ làm được {1} cái ghế. Hỏi {2} thợ cùng năng suất làm được bao nhiêu cái ghế?","Unit":"cái ghế","Subject":"ghế","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.010"},
+      {"Type":"Direct","Scenario":"ProductionItems","Template":"Trong cùng một khoảng thời gian, {0} máy làm được {1} sản phẩm. Hỏi {2} máy cùng năng suất làm được bao nhiêu sản phẩm?","Unit":"sản phẩm","Subject":"sản phẩm","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.011"},
+      {"Type":"Direct","Scenario":"ProductionItems","Template":"{0} thùng như nhau có tổng cộng {1} hộp hàng. Hỏi {2} thùng như thế có bao nhiêu hộp hàng?","Unit":"hộp","Subject":"hộp hàng","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.012"},
+      {"Type":"Direct","Scenario":"RiceBagsWeight","Template":"{0} bao gạo cùng loại nặng {1} kg. Hỏi {2} bao gạo như thế nặng bao nhiêu kg?","Unit":"kg","Subject":"gạo","AsksForAdditionalPeople":false,"RateProfile":"RiceBagKilograms","NarrativeId":"ProportionQuizGenerator.Narrative.013"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} bó rau cùng loại nặng {1} gam. Hỏi {2} bó rau như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"rau","AsksForAdditionalPeople":false,"RateProfile":"VegetableGrams","NarrativeId":"ProportionQuizGenerator.Narrative.014"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} củ cà rốt có khối lượng như nhau nặng tổng cộng {1} gam. Hỏi {2} củ như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"cà rốt","AsksForAdditionalPeople":false,"RateProfile":"VegetableGrams","NarrativeId":"ProportionQuizGenerator.Narrative.015"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} củ khoai tây cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} củ khoai tây như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"khoai tây","AsksForAdditionalPeople":false,"RateProfile":"VegetableGrams","NarrativeId":"ProportionQuizGenerator.Narrative.016"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} quả táo cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả táo như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"táo","AsksForAdditionalPeople":false,"RateProfile":"FruitGrams","NarrativeId":"ProportionQuizGenerator.Narrative.017"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} quả cam cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả cam như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"cam","AsksForAdditionalPeople":false,"RateProfile":"FruitGrams","NarrativeId":"ProportionQuizGenerator.Narrative.018"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} quả xoài cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả xoài như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"xoài","AsksForAdditionalPeople":false,"RateProfile":"FruitGrams","NarrativeId":"ProportionQuizGenerator.Narrative.019"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} phần thịt heo cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"thịt heo","AsksForAdditionalPeople":false,"RateProfile":"MeatGrams","NarrativeId":"ProportionQuizGenerator.Narrative.020"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} phần cá cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần cá như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"cá","AsksForAdditionalPeople":false,"RateProfile":"MeatGrams","NarrativeId":"ProportionQuizGenerator.Narrative.021"},
+      {"Type":"Direct","Scenario":"FoodWeightGrams","Template":"{0} phần thịt gà cùng khối lượng nặng tổng cộng {1} gam. Hỏi {2} phần như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"thịt gà","AsksForAdditionalPeople":false,"RateProfile":"MeatGrams","NarrativeId":"ProportionQuizGenerator.Narrative.022"},
+      {"Type":"Direct","Scenario":"EggWeightGrams","Template":"{0} quả trứng cùng cỡ nặng tổng cộng {1} gam. Hỏi {2} quả trứng như thế nặng bao nhiêu gam?","Unit":"gam","Subject":"trứng","AsksForAdditionalPeople":false,"RateProfile":"EggGrams","NarrativeId":"ProportionQuizGenerator.Narrative.023"},
+      {"Type":"Direct","Scenario":"ContainersLiquid","Template":"{0} thùng cùng loại chứa được {1} lít mật ong. Hỏi {2} thùng như thế chứa được bao nhiêu lít mật ong?","Unit":"lít mật ong","Subject":"mật ong","AsksForAdditionalPeople":false,"RateProfile":"ContainerLiters","NarrativeId":"ProportionQuizGenerator.Narrative.024"},
+      {"Type":"Direct","Scenario":"ContainersLiquid","Template":"{0} can cùng loại chứa được {1} lít dầu. Hỏi {2} can như thế chứa được bao nhiêu lít dầu?","Unit":"lít dầu","Subject":"dầu","AsksForAdditionalPeople":false,"RateProfile":"ContainerLiters","NarrativeId":"ProportionQuizGenerator.Narrative.025"},
+      {"Type":"Direct","Scenario":"PaintArea","Template":"{0} thùng sơn cùng loại sơn được {1} m² tường. Hỏi {2} thùng sơn như thế sơn được bao nhiêu m² tường?","Unit":"m²","Subject":"diện tích tường","AsksForAdditionalPeople":false,"RateProfile":"PaintAreaSquareMeters","NarrativeId":"ProportionQuizGenerator.Narrative.026"},
+      {"Type":"Inverse","Scenario":"WorkersDays","Template":"{0} người làm xong một công việc trong {1} ngày. Hỏi {2} người làm xong công việc đó trong bao nhiêu ngày, biết năng suất mỗi người như nhau?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.027"},
+      {"Type":"Inverse","Scenario":"WorkersDays","Template":"{0} công nhân đắp xong một đoạn đường trong {1} ngày. Hỏi {2} công nhân đắp xong cùng đoạn đường đó trong bao nhiêu ngày, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.028"},
+      {"Type":"Inverse","Scenario":"WorkersDays","Template":"{0} công nhân cùng năng suất hoàn thành một công việc trong {1} giờ. Hỏi {2} công nhân hoàn thành công việc đó trong bao nhiêu giờ?","Unit":"giờ","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.029"},
+      {"Type":"Inverse","Scenario":"MachinesHours","Template":"{0} máy hoàn thành một công việc trong {1} giờ. Hỏi {2} máy cùng năng suất hoàn thành cùng công việc đó trong bao nhiêu giờ, biết các máy chạy đồng thời?","Unit":"giờ","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.030"},
+      {"Type":"Inverse","Scenario":"WorkersJob","Template":"{0} thợ làm xong một công việc trong {1} ngày. Hỏi {2} thợ cùng năng suất làm xong trong bao nhiêu ngày?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.031"},
+      {"Type":"Inverse","Scenario":"FoodPeopleDays","Template":"Một bếp ăn chuẩn bị gạo đủ cho {0} người ăn trong {1} ngày. Thực tế có {2} người, mỗi người ăn lượng gạo như nhau mỗi ngày. Hỏi số gạo đã chuẩn bị đủ ăn trong bao nhiêu ngày?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.032"},
+      {"Type":"Inverse","Scenario":"FoodPeopleDays","Template":"Một bếp ăn có đủ thực phẩm cho {0} học sinh dùng trong {1} ngày. Nếu số học sinh thực tế là {2} em và khẩu phần mỗi em mỗi ngày không đổi thì số thực phẩm đó đủ dùng trong bao nhiêu ngày?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.033"},
+      {"Type":"Inverse","Scenario":"FoodAdditionalPeople","Template":"Chuẩn bị đủ thực phẩm cho {0} người ăn trong {1} ngày. Vì có thêm người nên số thực phẩm đó chỉ đủ ăn trong {2} ngày, biết khẩu phần mỗi người mỗi ngày không đổi. Hỏi có thêm bao nhiêu người?","Unit":"người","Subject":"số người đến thêm","AsksForAdditionalPeople":true,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.034"},
+      {"Type":"Inverse","Scenario":"SalesStock","Template":"Một cửa hàng chuẩn bị số hộp mứt đủ bán trong {0} ngày nếu mỗi ngày bán {1} hộp. Thực tế mỗi ngày bán {2} hộp. Hỏi số hàng đó đủ bán trong bao nhiêu ngày?","Unit":"ngày","Subject":"thời gian","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.035"},
+      {"Type":"Inverse","Scenario":"WorkersRequired","Template":"{0} công nhân hoàn thành một công việc trong {1} ngày. Muốn hoàn thành cùng công việc đó trong {2} ngày thì cần bao nhiêu công nhân, biết năng suất và thời gian làm việc mỗi ngày của mỗi người như nhau?","Unit":"công nhân","Subject":"số công nhân","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.036"},
+      {"Type":"Inverse","Scenario":"WorkersRequired","Template":"Một đội có {0} thợ xây xong một bức tường trong {1} ngày. Hỏi cần bao nhiêu thợ để xây cùng bức tường đó trong {2} ngày, biết mỗi thợ có cùng năng suất và làm cùng thời gian mỗi ngày?","Unit":"thợ","Subject":"số thợ","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.037"},
+      {"Type":"Inverse","Scenario":"MachinesRequired","Template":"{0} máy đóng gói xong một lô hàng trong {1} giờ. Hỏi cần bao nhiêu máy để đóng gói cùng lô hàng đó trong {2} giờ, biết các máy chạy đồng thời và có cùng năng suất?","Unit":"máy","Subject":"số máy","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.038"},
+      {"Type":"Inverse","Scenario":"MachinesRequired","Template":"{0} máy in hoàn thành một đơn hàng trong {1} giờ. Muốn in xong cùng đơn hàng đó trong {2} giờ thì cần bao nhiêu máy in cùng năng suất, biết các máy hoạt động đồng thời?","Unit":"máy in","Subject":"số máy in","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.039"},
+      {"Type":"Inverse","Scenario":"TapsTime","Template":"{0} vòi nước cùng chảy thì đầy một bể trống trong {1} phút. Hỏi {2} vòi có cùng lưu lượng chảy đồng thời thì đầy cùng bể trống đó trong bao nhiêu phút, biết bể không có nước thoát ra?","Unit":"phút","Subject":"thời gian đầy bể","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.040"},
+      {"Type":"Inverse","Scenario":"TapsTime","Template":"{0} máy bơm làm đầy một bể trống trong {1} phút. Hỏi {2} máy bơm cùng lưu lượng hoạt động đồng thời thì đầy cùng bể đó trong bao nhiêu phút, biết không có nước thoát ra?","Unit":"phút","Subject":"thời gian đầy bể","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.041"},
+      {"Type":"Inverse","Scenario":"TravelSpeedTime","Template":"Một ô tô đi đều với vận tốc {0} km/h và hết {1} giờ để đi một quãng đường. Nếu đi cùng quãng đường đó với vận tốc {2} km/h thì mất bao nhiêu giờ, biết ô tô không dừng nghỉ?","Unit":"giờ","Subject":"thời gian đi","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.042"},
+      {"Type":"Inverse","Scenario":"TravelSpeedTime","Template":"Một xe máy đi đều với vận tốc {0} km/h trong {1} giờ thì đến nơi. Hỏi đi cùng quãng đường với vận tốc {2} km/h thì hết bao nhiêu giờ, biết xe không dừng nghỉ?","Unit":"giờ","Subject":"thời gian đi","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.043"},
+      {"Type":"Inverse","Scenario":"TransportTrips","Template":"{0} xe tải chở hết một lô hàng, mỗi xe đi {1} chuyến. Nếu dùng {2} xe tải có cùng sức chở thì mỗi xe cần đi bao nhiêu chuyến để chở hết cùng lô hàng đó, biết mỗi chuyến đều chở đủ tải và các xe đi số chuyến như nhau?","Unit":"chuyến","Subject":"số chuyến mỗi xe","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.044"},
+      {"Type":"Inverse","Scenario":"TransportTrips","Template":"{0} xe tải chở hết một lô cát, mỗi xe đi {1} chuyến đầy tải. Hỏi dùng {2} xe tải cùng sức chở thì mỗi xe phải đi bao nhiêu chuyến đầy tải để chở hết cùng lô cát, biết các xe đi số chuyến như nhau?","Unit":"chuyến","Subject":"số chuyến mỗi xe","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.045"},
+      {"Type":"Inverse","Scenario":"PackagingCount","Template":"Một kho có {0} bao gạo, mỗi bao chứa {1} kg. Đóng lại toàn bộ số gạo đó vào các bao, mỗi bao chứa {2} kg thì cần bao nhiêu bao, biết không hao hụt gạo?","Unit":"bao","Subject":"gạo","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.046"},
+      {"Type":"Inverse","Scenario":"PackagingCount","Template":"Có {0} túi đường, mỗi túi nặng {1} kg. Chia lại toàn bộ số đường đó vào các túi, mỗi túi nặng {2} kg thì được bao nhiêu túi, biết không hao hụt đường?","Unit":"túi","Subject":"đường","AsksForAdditionalPeople":false,"RateProfile":"GenericCount","NarrativeId":"ProportionQuizGenerator.Narrative.047"}
     ],
     "ElementaryQuizGenerator.PackingStories": [
       {

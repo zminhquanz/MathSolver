@@ -1231,6 +1231,7 @@ public partial class MathPuzzlePage : ContentPage
         if (_isUpdatingSubtypePickers || ElementaryTypePicker.SelectedIndex < 0) return;
         _selectedElementaryType = _elementaryTypePickerValues[ElementaryTypePicker.SelectedIndex];
 
+        UpdateProblemOperationPanel();
         ResetQuizSessionState();
         GenerateAlgorithmQuestion();
     }
@@ -1258,11 +1259,15 @@ public partial class MathPuzzlePage : ContentPage
             kind == QuizProblemKind.Motion;
 
         ProblemOperationPanel.IsVisible = showOperations;
+        UpdateElementaryPicker(kind);
         PracticeFormatPanel.IsVisible = kind == QuizProblemKind.FindX
             || kind == QuizProblemKind.Arithmetic && !_selectedBasicComparison
-            || kind == QuizProblemKind.Fraction && !_selectedFractionComparison;
+            || kind == QuizProblemKind.Fraction && !_selectedFractionComparison
+            || kind == QuizProblemKind.Decimal && _selectedElementaryType is
+                (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
+                or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide);
         RefreshPracticeFormatPicker(kind);
-        LearningProfilePanel.IsVisible = PracticeFormatPanel.IsVisible && UsesWordProblems(kind);
+        LearningProfilePanel.IsVisible = PracticeFormatPanel.IsVisible && kind != QuizProblemKind.Decimal && UsesWordProblems(kind);
         ProportionTypePanel.IsVisible = showProportionType;
         AverageTypePanel.IsVisible = showAverageType;
         PercentageTypePanel.IsVisible = showPercentageType;
@@ -1270,7 +1275,6 @@ public partial class MathPuzzlePage : ContentPage
         GeometryShapePanel.IsVisible = showGeometryShape;
         MotionTypePanel.IsVisible = showMotionType;
         ExpressionTypePanel.IsVisible = kind == QuizProblemKind.Expression;
-        UpdateElementaryPicker(kind);
 
         if (showProportionType)
         {
@@ -1591,6 +1595,12 @@ public partial class MathPuzzlePage : ContentPage
                 {
                     _ when problemRequest.IsComparison => _elementaryQuizGenerator.GenerateComparison(
                         _selectedMode, problemRequest.Kind, AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
+                    QuizProblemKind.Decimal when problemRequest.ElementaryType is
+                        (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
+                        or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)
+                        && GetPracticeFormat(QuizProblemKind.Decimal) != PracticeQuestionFormat.Mixed =>
+                        _elementaryQuizGenerator.GenerateDecimalArithmetic(_selectedMode, problemRequest.ElementaryType.Value,
+                            AppLanguageManager.CurrentLanguage, curriculumContext.Tier, _decimalWordProblems),
                     _ when ElementaryQuizGenerator.Supports(problemRequest.Kind) => _elementaryQuizGenerator.Generate(
                         _selectedMode, problemRequest.Kind, problemRequest.ElementaryType,
                         AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
@@ -1674,7 +1684,8 @@ public partial class MathPuzzlePage : ContentPage
                 _currentQuestion = selected;
             }
 
-            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage)
+            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion
+                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null })
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectReasoningAsync(_currentQuestion,
                     curriculumContext.Tier, AppLanguageManager.CurrentLanguage);

@@ -6,7 +6,8 @@ internal sealed class ReasoningStoryCycle
 {
     private readonly Dictionary<(BankQuestionFamily, int, CurriculumTier, AppLanguage), Queue<string>> _recent = [];
 
-    public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language)
+    public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
+        IReadOnlySet<string>? excludedProse = null)
     {
         var key = (family, variant, tier, language);
         if (!_recent.TryGetValue(key, out var history)) _recent[key] = history = new();
@@ -19,6 +20,20 @@ internal sealed class ReasoningStoryCycle
             int repetitions = history.Count(s => s == context);
             if (repetitions < bestCount) { best = c; bestCount = repetitions; }
             if (repetitions == 0) break;
+        }
+        if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal && excludedProse is not null
+            && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
+        {
+            // One exhausted context must not stop a batch while other compatible
+            // contexts still have wording. Search the finite catalog before failing.
+            var narrativeIds = family == BankQuestionFamily.Decimal
+                ? ElementaryQuizGenerator.DecimalContexts(language).Select(c => c.Id)
+                : ProportionQuizGenerator.NarrativeIds((ProportionQuizType)variant, tier, language);
+            best = narrativeIds
+                .Select(id => ReasoningStoryCatalogue.Create(family, variant, tier, language, narrativeId: id))
+                .Where(c => ReviewedReasoningProse.NovelDrafts(c, excludedProse).Any())
+                .OrderBy(c => history.Count(s => s == c.SceneId + "/" + c.Unit)).FirstOrDefault()
+                ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
         }
         history.Enqueue(best!.SceneId + "/" + best.Unit);
         if (history.Count > 4) history.Dequeue();

@@ -176,7 +176,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         {
             cancellationToken.ThrowIfCancellationRequested();
             var contract = ReasoningStoryCatalogue.Supports(options.Family)
-                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language)
+                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse)
                 : options.Family == BankQuestionFamily.Fraction
                 ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)
                 : options.Family == BankQuestionFamily.FindX

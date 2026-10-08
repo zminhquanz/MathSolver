@@ -9,9 +9,16 @@ public static class QuestionProseIdentity
 {
     public static string Hash(BasicQuestionContract contract, BasicQuestionDraft draft)
     {
-        string prose = draft.ProblemText.Normalize(NormalizationForm.FormC).ToLowerInvariant();
+        string prose = draft.ProblemText.Normalize(NormalizationForm.FormC);
+        if (contract.Family == BankQuestionFamily.MultiStep)
+            prose = ReviewedReasoningProse.CanonicalizeOpening(contract, prose);
+        prose = prose.ToLowerInvariant();
         if (contract.IsTemplate)
         {
+            if (contract.Family == BankQuestionFamily.Motion)
+                foreach (var actor in ReasoningStoryCatalogue.Lesson(contract).Quantities
+                    .Where(q => q.Role.StartsWith("motion_actor_", StringComparison.Ordinal)))
+                    prose = prose.Replace("{" + actor.Id + "}", " actor_" + actor.Role + " ");
             // Substitute numeric/actor slots before rendering fixed context and units, so
             // random values cannot change singular/plural wording in the identity.
             prose = Regex.Replace(prose, @"\{f\d+\}", " quantity ");

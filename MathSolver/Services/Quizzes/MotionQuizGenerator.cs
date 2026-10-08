@@ -164,7 +164,7 @@ public sealed class MotionQuizGenerator
                 profile.TimeDivisor == 1 ? travelTime : speed * travelTime,
                 profile.TimeDivisor == 1 ? ArithmeticOperation.Multiply : ArithmeticOperation.Divide,
                 profile.TimeDivisor == 1 ? speed * profile.DistanceScale : profile.TimeDivisor,
-                DistinctUnits(speedUnit, timeUnit, distanceUnit));
+                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = [subject] };
         }
 
         if (kind == MotionQuestionKind.BasicDistance)
@@ -190,7 +190,7 @@ public sealed class MotionQuizGenerator
                 profile.TimeDivisor == 1 ? speed : speed * time,
                 profile.TimeDivisor == 1 ? ArithmeticOperation.Multiply : ArithmeticOperation.Divide,
                 profile.TimeDivisor == 1 ? time * profile.DistanceScale : profile.TimeDivisor,
-                DistinctUnits(speedUnit, timeUnit, distanceUnit));
+                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = [subject] };
         }
 
         if (kind == MotionQuestionKind.BasicSpeed)
@@ -218,7 +218,7 @@ public sealed class MotionQuizGenerator
                 numerator,
                 ArithmeticOperation.Divide,
                 time,
-                DistinctUnits(distanceUnit, timeUnit, speedUnit));
+                DistinctUnits(distanceUnit, timeUnit, speedUnit)) { NarrativeActors = [subject] };
         }
 
         // BasicTime
@@ -246,7 +246,7 @@ public sealed class MotionQuizGenerator
             timeNumerator,
             ArithmeticOperation.Divide,
             targetSpeed,
-            DistinctUnits(speedUnit, distanceUnit, timeUnit));
+            DistinctUnits(speedUnit, distanceUnit, timeUnit)) { NarrativeActors = [subject] };
     }
 
     private MotionQuizContract CreateChasingContract(AppLanguage language, int? level)
@@ -289,7 +289,7 @@ public sealed class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             relativeSpeed,
-            DistinctUnits(distanceUnit, speedUnit, timeUnit));
+            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = [slowSubject, fastSubject] };
     }
 
     private MotionQuizContract CreateMeetingContract(AppLanguage language, int? level)
@@ -332,7 +332,7 @@ public sealed class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             relativeSpeed,
-            DistinctUnits(distanceUnit, speedUnit, timeUnit));
+            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = [subject1, subject2] };
     }
 
     private MotionQuizContract CreateRiverContract(AppLanguage language, int? level)
@@ -439,7 +439,7 @@ public sealed class MotionQuizGenerator
             boatSpeed,
             isDownstream ? ArithmeticOperation.Add : ArithmeticOperation.Subtract,
             currentSpeed,
-            DistinctUnits(speedUnit));
+            DistinctUnits(speedUnit)) { NarrativeActors = [craft] };
     }
 
     private static MotionQuizContract CreateRiverDerivedContract(
@@ -474,7 +474,7 @@ public sealed class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             2,
-            DistinctUnits(speedUnit));
+            DistinctUnits(speedUnit)) { NarrativeActors = [craft] };
     }
 
     private ArithmeticQuizQuestion CreateQuestion(

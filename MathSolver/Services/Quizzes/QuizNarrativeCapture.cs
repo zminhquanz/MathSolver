@@ -10,22 +10,43 @@ internal sealed class QuizNarrativeCapture : IDisposable
     internal static QuizNarrativeCapture? Current => Scope.Value;
     private readonly QuizNarrativeCapture? _previous;
     private readonly Dictionary<string, string> _fragments = new(StringComparer.Ordinal);
+    private readonly IReadOnlyDictionary<string, string[]>? _reviewed;
+    private readonly Dictionary<string, string[]> _phrasingFragments = new(StringComparer.Ordinal);
     internal readonly Dictionary<string, (string Role, string Value)> Slots = new(StringComparer.Ordinal);
     private static readonly Regex Numbers = new(@"(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?(?![\p{L}\p{N}])");
 
-    internal QuizNarrativeCapture() { _previous = Scope.Value; Scope.Value = this; }
+    internal QuizNarrativeCapture(IReadOnlyDictionary<string, string[]>? reviewed = null)
+    { _reviewed = reviewed; _previous = Scope.Value; Scope.Value = this; }
 
     internal void Record(string template, IReadOnlyDictionary<string, string> arguments, string rendered)
     {
-        if (!Numbers.IsMatch(rendered)) return;
+        string[]? alternatives = null;
+        _reviewed?.TryGetValue(template, out alternatives);
+        if (!Numbers.IsMatch(rendered) && alternatives is null) return;
+        var projectedArguments = new Dictionary<string, string>(StringComparer.Ordinal);
         string projected = Regex.Replace(template, @"\{([A-Za-z0-9_.-]+)\}", m =>
         {
             if (!arguments.TryGetValue(m.Groups[1].Value, out string? value)) return m.Value;
             string nested = Project(value);
-            return Numbers.Replace(nested, number => Slot(m.Groups[1].Value, number.Value));
+            string argument = Numbers.Replace(nested, number => Slot(m.Groups[1].Value, number.Value));
+            projectedArguments[m.Groups[1].Value] = argument;
+            return argument;
         });
         projected = Numbers.Replace(projected, number => Slot("constant", number.Value));
         _fragments[rendered] = projected;
+        if (alternatives is null) return;
+        string[] original = Sentences(projected);
+        var choices = original.Select(_ => new List<string>()).ToArray();
+        foreach (string alternative in alternatives)
+        {
+            string text = Regex.Replace(alternative, @"\{([A-Za-z0-9_.-]+)\}", m =>
+                projectedArguments.GetValueOrDefault(m.Groups[1].Value, m.Value));
+            var parts = Sentences(text);
+            if (parts.Length != original.Length) throw new InvalidDataException("Reviewed clause count changed.");
+            for (int i = 0; i < parts.Length; i++) choices[i].Add(parts[i]);
+        }
+        for (int i = 0; i < original.Length; i++)
+            _phrasingFragments[original[i]] = choices[i].ToArray();
     }
 
     private string Slot(string role, string value)
@@ -45,5 +66,23 @@ internal sealed class QuizNarrativeCapture : IDisposable
     }
 
     internal string Finish(string text) => Numbers.Replace(Project(text), m => Slot("given", m.Value));
+
+    private static string[] Sentences(string text) => Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
+
+    internal string[] Phrasings(string text)
+    {
+        var choices = new List<string> { text };
+        foreach (var (original, alternatives) in _phrasingFragments.OrderByDescending(pair => pair.Key.Length))
+        {
+            if (!text.Contains(original, StringComparison.Ordinal)) continue;
+            // Longer fragments carry the factual sentence; shorter fragments
+            // are often just a context opening. Vary the former first, rather
+            // than spending retries on "At the library" / "In the library".
+            choices = new[] { original }.Concat(alternatives).SelectMany(alt => choices
+                .Select(choice => choice.Replace(original, alt, StringComparison.Ordinal)))
+                .Distinct(StringComparer.Ordinal).Take(64).ToList();
+        }
+        return choices.ToArray();
+    }
     public void Dispose() => Scope.Value = _previous;
 }

@@ -15,7 +15,23 @@ The practice engine owns arithmetic, random operands, answer choices and grading
 
 Each family remembers its own style while switching families during the page session. The shared picker, knowledge-group selector and collapsed settings summary update in Vietnamese and English on Windows and Android. Arithmetic/fraction comparison uses its existing generator and hides these selectors. Word mode reuses the existing validated banks, fresh C# facts, star policies and prose deduplication; no database migration or additional model loading is needed.
 
-## Two-number, average and percentage language templates (version 8)
+## Two-number, average, percentage and multi-step templates (version 8)
+
+Motion templates also use version 8 (`ProblemType = 7`), covering the existing
+basic, meeting, chasing and river generators. C# retains the actors, physical
+unit profiles, directions, rest-time arithmetic, answers and grading. Reviewed
+wording comes from `Lists.Narrative.Motion.Phrasings`; native grammar excludes
+saved prose before sampling. Practice replaces facts using the same schema and
+falls back to C# when the bank has no valid matching template. See
+[motion authoring and real-model verification](../../MOTION_AI.md).
+
+Multi-step word problems now share the version 8 projection, storage, Excel and
+practice path (`ProblemType = 6`). All four existing multi-step subtypes retain
+their C# mathematical roles, chronology and inference steps. Reviewed Vietnamese
+and English alternative clauses live in `Lists.Narrative.MultiStep.Phrasings`.
+Native sampling excludes used complete fact/question combinations before model
+generation, and validation/storage enforce them again. See
+[the multi-step authoring and verification guide](../../MULTISTEP_AI.md).
 
 The AI supplementation page also offers sum/difference, sum/ratio and
 difference/ratio; the six existing average subtypes; and percentage ratio,
@@ -68,13 +84,13 @@ never run to serve a practice question. Recent context history reduces repeated
 generation and selection. Excel adds optional `StorySeedJson`, `FactsJson` and
 `SolutionLeadsJson` columns; previous workbook versions still import.
 
-The default AI test suite covers 480 bilingual subtype/star/seed combinations,
+The default AI test suite covers 640 bilingual subtype/star/seed combinations,
 fresh facts, all answer modes, essay grading, mutation rejection, streaming,
 SQLite, Excel and background generation. Real Gemma 4 E4B Q4_0 verification
 accepted a three-star sum/difference, four-star indirect average and five-star
 whole-from-percentage template (average needed a second attempt). Logs are in
-`artifacts/verification/reasoning-model-20261007-160045`. Tokenizer checks of all
-480 prompts including correction instructions found a maximum of 631 input
+`artifacts/verification/reasoning-model-20261007-160045`. The earlier three-family
+check of 480 prompts including correction instructions found a maximum of 631 input
 tokens (976 with two rejected wording examples), within the existing 2048-token
 context and 700-token output reservation.
 
@@ -527,3 +543,18 @@ Names occur in both lists; these frequency pools do not establish an exclusive g
 Structure references: the Vietnamese [2018 mathematics curriculum](https://boiduonghanoi.edu.vn/pluginfile.php/45/mod_folder/content/0/3-CT-Toan.pdf), [Common Core operations and algebraic thinking](https://www.thecorestandards.org/Math/Content/OA/), and England's [primary mathematics programmes of study](https://www.gov.uk/government/publications/national-curriculum-in-england-mathematics-programmes-of-study/national-curriculum-in-england-mathematics-programmes-of-study). Example sentences in the code are original; no textbook exercises are copied.
 
 Run `dotnet run --project UnitTest/AiQuestionBankTests` for template, legacy, SQLite, Excel, streaming and worker regression checks. See that project's README for the optional live GGUF validation run.
+
+## Proportion templates
+
+Proportion is story family 8 (Direct=0, Inverse=1). It reuses reviewed narrative grammar, prose deduplication, SQLite/Excel, fresh C# facts and the practice provider. Story.NarrativeId retains the source template and its target. See [PROPORTION_AI.md](../../PROPORTION_AI.md) for supported contexts and language JSON authoring.
+
+## Decimal word problems
+
+Decimal is story family 9, contract version 8. The four arithmetic variants
+always generate word problems, retaining Story.NarrativeId for one of eight
+continuous-quantity contexts. ExactAnswer uses ReducedFraction; AnswerText
+formats the decimal preview. Nonintegral answers must not use the legacy
+integer Answer property. SQLite/Excel persist the seed and validated prose;
+practice regenerates all numeric facts and exact solution steps. Numeric-only
+decimal practice, comparison and rounding are not replaced by bank prose.
+See [DECIMAL_AI.md](../../DECIMAL_AI.md) for tiers, JSON authoring and verification.

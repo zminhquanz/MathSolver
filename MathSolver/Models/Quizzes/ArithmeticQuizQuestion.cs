@@ -33,7 +33,7 @@ public sealed record ArithmeticQuizQuestion(
     public bool UsesFractionFormatting => FractionProblem is not null || ExpressionProblem?.UsesFractions == true
         || ElementaryProblem?.UsesFractionFormatting == true;
 
-    public ReducedFraction ExactAnswer => ExpressionProblem?.CorrectAnswer ??
+    public ReducedFraction ExactAnswer => ElementaryProblem?.Answers[0].Value ?? ExpressionProblem?.CorrectAnswer ??
         FractionProblem?.CorrectAnswer ?? new ReducedFraction(CorrectAnswer, BigInteger.One);
 }
 

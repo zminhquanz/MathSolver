@@ -7,6 +7,91 @@ public static partial class QuizContentValidation
 {
     public static void CheckLists(QuizContentPack pack)
     {
+        if (pack.Lists.TryGetValue("ProportionQuizGenerator.Templates", out var proportionTemplates))
+        {
+            var texts = pack.Texts.ToDictionary(t => t.Id, StringComparer.Ordinal);
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in proportionTemplates.EnumerateArray())
+            {
+                if (!row.TryGetProperty("NarrativeId", out _)) continue; // Legacy positional language packs.
+                string id = RequiredString(row, "NarrativeId");
+                if (!ids.Add(id) || !id.StartsWith("ProportionQuizGenerator.Narrative.", StringComparison.Ordinal)
+                    || !texts.TryGetValue(id, out var source)) Fail("Invalid proportion narrative ID: " + id);
+                var entry = texts[id];
+                if (entry.Variables.Length != 3) Fail("Proportion requires three named roles: " + id);
+                string named = RequiredString(row, "Template");
+                for (int i = 0; i < 3; i++) named = named.Replace("{" + i + "}", "{" + entry.Variables[i] + "}");
+                if (named != entry.Text) Fail("Named proportion template changed positional facts: " + id);
+            }
+        }
+        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.DecimalContextsList, out var decimalContexts))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (decimalContexts.GetArrayLength() == 0) Fail("Empty decimal story contexts.");
+            foreach (var row in decimalContexts.EnumerateArray())
+            {
+                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate decimal story context.");
+                _ = RequiredString(row, "Item");
+                string unit = RequiredString(row, "Unit"), small = RequiredString(row, "SmallUnit");
+                int factor = row.GetProperty("ConversionFactor").GetInt32();
+                if (!((unit == "kg" && small == "g" && factor == 1000)
+                    || (unit == "m" && small == "cm" && factor == 100)
+                    || (unit is "l" or "litres" && small == "ml" && factor == 1000))
+                    || row.GetProperty("MaximumQuantity").GetInt32() < 100)
+                    Fail("Invalid decimal story dimension or capacity.");
+            }
+        }
+        foreach (string listName in new[] { ReviewedNarrativePhrasings.ListName, ReviewedNarrativePhrasings.MotionListName, ReviewedNarrativePhrasings.ProportionListName, ReviewedNarrativePhrasings.DecimalListName })
+        if (pack.Lists.TryGetValue(listName, out var phrasings))
+        {
+            var texts = pack.Texts.ToDictionary(text => text.Id, StringComparer.Ordinal);
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (phrasings.GetArrayLength() == 0) Fail("Empty reviewed narrative list.");
+            foreach (var row in phrasings.EnumerateArray())
+            {
+                string id = RequiredString(row, "Id");
+                string prefix = listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.ProportionListName ? "ProportionQuizGenerator.Narrative."
+                    : listName == ReviewedNarrativePhrasings.DecimalListName ? "ElementaryQuizGenerator.DecimalStories."
+                    : "ElementaryQuizGenerator.MultiStep.CreateMultiStep.";
+                if (!ids.Add(id) || !id.StartsWith(prefix, StringComparison.Ordinal)
+                    || !texts.TryGetValue(id, out var source)) Fail("Unknown or duplicate reviewed narrative: " + id);
+                string[] parts = Regex.Split(texts[id].Text.Trim(), @"(?<=[.!?])\s+");
+                var choiceGroups = new List<JsonElement> { RequiredArray(row, "Alternatives") };
+                if (row.TryGetProperty("AlternativesByUnit", out var byUnit))
+                {
+                    if (byUnit.ValueKind != JsonValueKind.Object) Fail("Invalid unit phrasing map: " + id);
+                    var units = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var entry in byUnit.EnumerateObject())
+                    {
+                        if (string.IsNullOrWhiteSpace(entry.Name) || !units.Add(entry.Name)
+                            || entry.Value.ValueKind != JsonValueKind.Array || entry.Value.GetArrayLength() == 0)
+                            Fail("Invalid unit phrasing choices: " + id);
+                        choiceGroups.Add(entry.Value);
+                    }
+                }
+                foreach (var choices in choiceGroups)
+                {
+                    // Different units may share an equivalent sentence, but each
+                    // unit's own alternatives must still be distinct.
+                    var distinct = new HashSet<string>(StringComparer.Ordinal) { texts[id].Text.Trim() };
+                    foreach (var choice in choices.EnumerateArray())
+                    {
+                        if (choice.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(choice.GetString())) Fail("Empty reviewed phrasing: " + id);
+                        string text = choice.GetString()!;
+                        string[] alternative = Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
+                        if (!distinct.Add(text.Trim()) || text.Any(char.IsControl) || text.Length > 700
+                            || alternative.Length != parts.Length || Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", "").Any(char.IsDigit))
+                            Fail("Invalid reviewed phrasing: " + id);
+                        for (int i = 0; i < parts.Length; i++)
+                            if (!Placeholder().Matches(parts[i]).Select(m => m.Value)
+                                    .SequenceEqual(Placeholder().Matches(alternative[i]).Select(m => m.Value))
+                                || parts[i].EndsWith('?') != alternative[i].EndsWith('?'))
+                                Fail("Changed ordered roles or target: " + id);
+                    }
+                }
+            }
+        }
         if (pack.Lists.TryGetValue("Foundation.NumberNames", out var numberNames))
         {
             var values = new HashSet<int>();
@@ -99,6 +184,11 @@ public static partial class QuizContentValidation
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                     if (list.Value[i].GetProperty("Value").GetInt32() != translated[i].GetProperty("Value").GetInt32())
                         Fail("Changed number vocabulary value.");
+            if (list.Key is ReviewedNarrativePhrasings.ListName or ReviewedNarrativePhrasings.MotionListName
+                or ReviewedNarrativePhrasings.ProportionListName or ReviewedNarrativePhrasings.DecimalListName)
+                for (int i = 0; i < list.Value.GetArrayLength(); i++)
+                    if (RequiredString(list.Value[i], "Id") != RequiredString(translated[i], "Id"))
+                        Fail("Changed reviewed narrative ID.");
             if (ContextFields.ContainsKey(list.Key) || list.Key is "FractionQuantityContexts" or "DataChartContexts")
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                 {
@@ -134,6 +224,7 @@ public static partial class QuizContentValidation
 
     private static readonly Dictionary<string, string[]> ContextFields = new(StringComparer.Ordinal)
     {
+        [ElementaryQuizGenerator.DecimalContextsList] = ["Id", "Item", "Unit", "SmallUnit"],
         ["AverageQuizGenerator.DirectContexts"] = ["Id", "Action", "Unit", "Subject", "Period"],
         ["AverageQuizGenerator.DistributionContexts"] = ["Group", "Unit", "Subject"],
         ["AverageQuizGenerator.TwoGroupContexts"] = ["Member", "Unit", "Subject"],
@@ -147,7 +238,7 @@ public static partial class QuizContentValidation
     };
     private static readonly string[] FixedContextFields = ["Id", "ContextId", "ShapeId", "Measurement", "Type", "Scenario",
         "RateProfile", "Kind", "Capacity", "MaximumSize", "MaximumDimension", "DistanceScale", "TimeDivisor",
-        "EnglishOnly", "Money", "AsksForAdditionalPeople"];
+        "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity"];
 
     private static HashSet<string> Slots(string text) => Placeholder().Matches(text).Select(m => m.Groups[1].Value).ToHashSet(StringComparer.Ordinal);
     private static string RequiredString(JsonElement element, string field)

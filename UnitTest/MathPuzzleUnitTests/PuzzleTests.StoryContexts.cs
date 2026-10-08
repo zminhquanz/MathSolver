@@ -58,7 +58,7 @@ internal static partial class PuzzleTests
                 {
                     var g = c.Reasoning!.Givens.ToDictionary(given => given.Role, given => decimal.Parse(given.Value, CultureInfo.InvariantCulture));
                     decimal first = g["quantity"];
-                    if (tier == CurriculumTier.FiveStars) first /= c.StoryContextId == "decoration" ? 100 : 1000;
+                    if (tier == CurriculumTier.FiveStars) first /= c.Answers[0].Unit == "m" ? 100 : 1000;
                     expected = type switch
                     {
                         ElementaryQuizType.DecimalAdd => first * 2 + g["difference"],
@@ -69,7 +69,8 @@ internal static partial class PuzzleTests
                     expected += g.GetValueOrDefault("adjustment");
                 }
                 decimal value = (decimal)c.Answers[0].Value.Numerator / (decimal)c.Answers[0].Value.Denominator;
-                Require(value == expected && value <= (c.StoryContextId == "decoration" ? 50 : c.StoryContextId == "kitchen" ? 100 : 1000), "Decimal context scale or arithmetic is invalid.");
+                Require(value == expected && value <= ElementaryQuizGenerator.DecimalContexts(language)
+                    .Single(context => context.Id == c.StoryContextId).MaximumQuantity, "Decimal context scale or arithmetic is invalid.");
                 CheckExample(question);
                 checkedCount++;
             }

@@ -6,7 +6,11 @@ using System.Text.RegularExpressions;
 
 namespace MathSolver.Services;
 
-public sealed record QuizContentText(string Id, string Text, string[] Variables);
+public sealed record QuizContentText(string Id, string Text, string[] Variables,
+    Dictionary<string, string>? TextByUnit = null)
+{
+    internal string ForUnit(string unit) => TextByUnit?.TryGetValue(unit, out var text) == true ? text : Text;
+}
 
 /// <summary>Language content only. Mathematical rules and accepted contracts remain in C#.</summary>
 public sealed class QuizContentPack
@@ -79,6 +83,14 @@ public static partial class QuizContentCatalog
             foreach (Match match in Placeholders().Matches(text.Text))
                 if (!variables.Contains(match.Groups[1].Value) && !FactVariables.Contains(match.Groups[1].Value))
                     throw new InvalidDataException($"Unknown placeholder '{match.Groups[1].Value}' in '{text.Id}'.");
+            if (text.TextByUnit is not null)
+                foreach (var (unit, variant) in text.TextByUnit)
+                {
+                    if (string.IsNullOrWhiteSpace(unit) || string.IsNullOrWhiteSpace(variant)
+                        || !Placeholders().Matches(text.Text).Select(m => m.Value)
+                            .SequenceEqual(Placeholders().Matches(variant).Select(m => m.Value)))
+                        throw new InvalidDataException($"Invalid unit-specific text in '{text.Id}'.");
+                }
         }
         foreach (var list in pack.Lists)
             if (string.IsNullOrWhiteSpace(list.Key) || list.Value.ValueKind != JsonValueKind.Array)
@@ -130,20 +142,32 @@ public static partial class QuizContentCatalog
         => Text(Culture(language), id, values);
 
     public static string Text(string culture, string id, params (string Name, string Value)[] values)
+        => Render(Entry(culture, id), "", values);
+
+    public static string TextForUnit(AppLanguage language, string unit, string id,
+        params (string Name, string Value)[] values)
+        => Render(Entry(Culture(language), id), unit, values);
+
+    private static string Render(QuizContentText entry, string unit, (string Name, string Value)[] values)
+    {
+        string id = entry.Id, template = entry.ForUnit(unit);
+        var supplied = values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal);
+        if (!entry.Variables.ToHashSet(StringComparer.Ordinal).SetEquals(supplied.Keys))
+            throw new InvalidDataException($"Values do not match the variables of '{id}'.");
+        // A single replacement pass prevents data containing braces from becoming a second template.
+        string rendered = Placeholders().Replace(template, match => supplied.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
+        QuizNarrativeCapture.Current?.Record(template, supplied, rendered);
+        return rendered;
+    }
+
+    internal static QuizContentText Entry(string culture, string id)
     {
         culture = CultureInfo.GetCultureInfo(culture).Name;
         IReadOnlyDictionary<string, QuizContentText> Entries(string code) => Texts.GetOrAdd(code,
             name => Pack(name).Texts.ToDictionary(t => t.Id, StringComparer.Ordinal));
         if (!Entries(culture).TryGetValue(id, out var entry) && !Entries(FallbackCulture).TryGetValue(id, out entry))
             throw new InvalidDataException($"Missing quiz text '{id}'.");
-        var supplied = values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal);
-        if (!entry.Variables.ToHashSet(StringComparer.Ordinal).SetEquals(supplied.Keys))
-            throw new InvalidDataException($"Values do not match the variables of '{id}'.");
-        // A single replacement pass prevents data containing braces from becoming a second template.
-        // Undeclared placeholders belong to the downstream C# fact renderer (e.g. AI prose's {a}, {unit}).
-        string rendered = Placeholders().Replace(entry.Text, match => supplied.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
-        QuizNarrativeCapture.Current?.Record(entry.Text, supplied, rendered);
-        return rendered;
+        return entry;
     }
 
     [GeneratedRegex(@"(?<!\{)\{([A-Za-z0-9_.-]+)\}(?!\})", RegexOptions.CultureInvariant)]

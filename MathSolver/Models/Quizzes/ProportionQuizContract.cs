@@ -49,6 +49,8 @@ public sealed record ProportionQuizContract(
     string ProblemText,
     bool AsksForAdditionalPeople = false)
 {
+    public string? SolutionText { get; init; }
+    public string NarrativeId { get; init; } = "";
     public bool IsDirect => Type == ProportionQuizType.Direct;
 
     // For these inverse questions C replaces B, rather than A: e.g. a new

@@ -250,7 +250,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     }
 
     internal static string BuildNovelGrammar(BasicQuestionContract c, IReadOnlySet<string> excludedProse)
-        => ReviewedQuestionProse.For(c)?.Grammar(c, excludedProse) ?? BuildGrammar(c);
+        => c.Family is BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal ? ReasoningStoryValidator.Grammar(c, excludedProse)
+            : ReviewedQuestionProse.For(c)?.Grammar(c, excludedProse) ?? BuildGrammar(c);
 
     private static string BuildArithmeticGrammar(BasicQuestionContract c)
     {

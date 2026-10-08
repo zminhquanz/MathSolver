@@ -157,8 +157,16 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
                     canvas.FillCircle(80, 49, 5); break;
                 case "decimal": Label("0,5", 18); canvas.DrawLine(14, 69, 86, 69);
                     canvas.FillCircle(50, 69, 5); break;
-                case "proportion": canvas.DrawLine(18, 80, 84, 20);
+                case "proportion":
+                case "proportion-direct": canvas.DrawLine(18, 80, 84, 20);
                     canvas.DrawLine(18, 80, 18, 16); canvas.DrawLine(18, 80, 89, 80); break;
+                case "proportion-inverse":
+                    canvas.DrawLine(18, 80, 18, 16); canvas.DrawLine(18, 80, 89, 80);
+                    var inverseCurve = new PathF();
+                    inverseCurve.MoveTo(26, 20);
+                    for (int x = 27; x <= 84; x++)
+                        inverseCurve.LineTo(x, 80 - 480f / (x - 18));
+                    canvas.DrawPath(inverseCurve); break;
                 case "data": Bars(); break;
                 case "multi-step": Label("① → ②", 18); Label("→ ③", 52); break;
                 case "mixed": canvas.FontSize = 32; Label("+ −", 17); Label("× ÷", 53); break;

@@ -18,20 +18,30 @@ internal static partial class PuzzleTests
             foreach (var tier in Enum.GetValues<CurriculumTier>())
             foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Decimal))
             foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
+            foreach (bool? wordProblems in type is (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
+                or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)
+                ? new bool?[] { null, false, true } : new bool?[] { null })
             for (int sample = 0; sample < 12; sample++)
             {
-                var question = generator.Generate(mode, QuizProblemKind.Decimal, type, language, tier);
+                var question = wordProblems.HasValue
+                    ? generator.GenerateDecimalArithmetic(mode, type, language, tier, wordProblems.Value)
+                    : generator.Generate(mode, QuizProblemKind.Decimal, type, language, tier);
                 var c = question.ElementaryProblem!;
                 bool story = c.StoryContextId is not null;
+                Require(!wordProblems.HasValue || story == wordProblems.Value,
+                    "Decimal practice switched away from the requested numeric/word-problem format.");
                 string result = c.Answers[0].DisplayValue ?? c.AnswerText;
                 decimal Number(string text) => decimal.Parse(text, CultureInfo.InvariantCulture);
                 string Text(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
                 decimal a = Number(c.Facts[0]);
                 if (c.IsDecimalArithmetic)
                 {
-                    var key = (language, tier, type);
-                    if (!formats.TryGetValue(key, out var seen)) formats[key] = seen = [];
-                    seen.Add(story);
+                    if (!wordProblems.HasValue)
+                    {
+                        var key = (language, tier, type);
+                        if (!formats.TryGetValue(key, out var seen)) formats[key] = seen = [];
+                        seen.Add(story);
+                    }
                     Require(c.IsNumericDecimalCalculation == !story,
                         "A decimal story must not be rendered as a bare calculation.");
                     Require(c.RequiresSolution == story && (c.Answers[0].Unit.Length > 0) == story,
@@ -48,7 +58,7 @@ internal static partial class PuzzleTests
                     {
                         var g = c.Reasoning!.Givens.ToDictionary(given => given.Role, given => Number(given.Value));
                         decimal first = g["quantity"];
-                        if (tier == CurriculumTier.FiveStars) first /= c.StoryContextId == "decoration" ? 100 : 1000;
+                        if (tier == CurriculumTier.FiveStars) first /= c.Answers[0].Unit == "m" ? 100 : 1000;
                         expected = type switch
                         {
                             ElementaryQuizType.DecimalAdd => first * 2 + g["difference"],
@@ -127,6 +137,6 @@ internal static partial class PuzzleTests
         }
         Require(formats.Count == 40 && formats.Values.All(seen => seen.Count == 2),
             "Every decimal arithmetic subtype must retain numeric and story practice at all five stars.");
-        Console.WriteLine($"  Checked {count} decimal questions across all six subtypes, five stars, both languages and all answer modes.");
+        Console.WriteLine($"  Checked {count} decimal questions across all six subtypes, explicit numeric/story practice, five stars, both languages and all answer modes.");
     }
 }

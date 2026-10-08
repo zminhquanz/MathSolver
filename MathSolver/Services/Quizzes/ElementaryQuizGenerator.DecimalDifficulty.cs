@@ -4,7 +4,17 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateDecimalDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    public ArithmeticQuizQuestion GenerateDecimalArithmetic(ArithmeticQuizMode mode, ElementaryQuizType type,
+        AppLanguage language, CurriculumTier tier, bool wordProblems)
+    {
+        if (!Enum.IsDefined(tier) || !DecimalStoryTypes.Contains(type))
+            throw new ArgumentException("InvalidDecimalArithmeticProfile");
+        var contract = CreateDecimalDifficulty(type, language, tier, wordProblems);
+        return CompleteQuestion(mode, contract, [], contract.ChoiceTexts?.ToArray());
+    }
+
+    private ElementaryQuizContract CreateDecimalDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier,
+        bool? wordProblems = null)
     {
         int level = (int)tier;
         var t = new DifficultyBuilder(QuizProblemKind.Decimal, type, language, tier) { RequiresSolution = false };
@@ -38,7 +48,7 @@ public sealed partial class ElementaryQuizGenerator
             return t.Build("decimal-compare-" + level,
                 QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", ("first", $"{first}"), ("second", $"{second}")));
         }
-        if (_random.Next(2) == 0) return CreateDecimalStory(type, language, tier);
+        if (wordProblems ?? _random.Next(2) == 0) return CreateDecimalStory(type, language, tier);
 
         int precision = level <= 2 ? 10 : 100;
         int integerLimit = level <= 2 ? 10 : level == 3 ? 30 : 100;

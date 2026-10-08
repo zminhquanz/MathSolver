@@ -19,10 +19,15 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         CurriculumTier tier, AppLanguage language, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers } elementary
-            ? (BankQuestionFamily.TwoNumbers, (int)elementary.Type)
+        if (generated.ElementaryProblem is { Kind: QuizProblemKind.Decimal } decimalProblem
+            && (!decimalProblem.IsDecimalArithmetic || decimalProblem.StoryContextId is null)) return generated;
+        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal } elementary
+            ? (elementary.Kind switch { QuizProblemKind.MultiStep => BankQuestionFamily.MultiStep,
+                QuizProblemKind.Decimal => BankQuestionFamily.Decimal, _ => BankQuestionFamily.TwoNumbers }, (int)elementary.Type)
             : generated.AverageProblem is { } average ? (BankQuestionFamily.Average, (int)average.Type)
             : generated.PercentageProblem is { } percentage ? (BankQuestionFamily.Percentage, (int)percentage.Type)
+            : generated.MotionProblem is { } motion ? (BankQuestionFamily.Motion, (int)motion.Type)
+            : generated.ProportionProblem is { } proportion ? (BankQuestionFamily.Proportion, (int)proportion.Type)
             : throw new ArgumentException("ExpectedReasoningQuestion");
         if (_random.Next(2) == 0) return generated;
         var saved = await store.TakeReasoningAsync(family, variant, tier, language, cancellationToken).ConfigureAwait(false);

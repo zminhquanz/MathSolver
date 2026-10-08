@@ -1,5 +1,18 @@
 # AI question bank checks
 
+`--motion-bank` checks all four motion subtypes, ten question targets, five star
+levels and both languages. It verifies independent unit/direction/rest arithmetic,
+reviewed alternatives, rejected unsafe prose, fresh facts in all answer modes,
+SQLite/Excel and bank practice/fallback. It is also included in the default suite.
+
+`--motion-model "C:\path\model.gguf"` runs the real app runtime with an isolated
+SQLite bank, every subtype/star/language, repeated five-star schemas, all ten
+targets, then a four-question auto-save job and model release. Evidence is saved
+under `artifacts/verification/motion-model-*`. `--motion-budget` checks Gemma input
+tokens against the runtime's context/output limits; `--motion-evidence directory`
+exports rendered questions and C# solutions for human review.
+See [the motion authoring guide](../../MathSolver/MOTION_AI.md).
+
 `--structure-policy` reproduces the screenshot's invalid bread/fraction prose,
 checks field-level diagnostics, safe synonyms and the removal of free prose
 from the semantic grammar. It also runs in the default suite.
@@ -54,8 +67,8 @@ worker against existing money questions. Logs and databases remain under
 `--prose-deduplication` also checks grammar availability after reviewed examples are exhausted, unused prompt
 examples and index snapshot synchronization without loading a model.
 
-`--reasoning-stories` checks the new two-number, average and percentage templates:
-480 bilingual subtype/star/seed combinations, fresh facts with an unchanged role
+`--reasoning-stories` checks two-number, average, percentage and multi-step templates:
+640 bilingual subtype/star/seed combinations, fresh facts with an unchanged role
 schema, all three answer modes, complete C# work accepted by essay grading,
 swapped roles, answer leakage, wrong unit bindings, extra conditions, foreign
 text, novel equivalent wording and partial JSON streaming. It also verifies
@@ -71,9 +84,24 @@ dotnet run --project UnitTest/AiQuestionBankTests -- --reasoning-budget "<Gemma 
 The model command exercises three Vietnamese cases: sum/difference 3 stars,
 indirect average 4 stars and whole-from-percentage 5 stars, with at most three
 attempts each. It retains prompt/output/error logs under `artifacts/verification`
-and ejects the model in `finally`. The budget command tokenizes 480 retry prompts
+and ejects the model in `finally`. The budget command tokenizes 640 retry prompts
 with Gemma framing and verifies the existing 2048-token context/output budget;
 it runs no inference. Neither command changes the installed app database.
+
+`--multistep-bank` additionally checks all four multi-step subtypes, five star
+levels, both languages and four contexts (160 cases), every reviewed clause,
+fresh facts in all answer modes, factual novelty, finite palette exhaustion,
+SQLite opening-phrase deduplication and derived-index migration. It is included
+in the default suite.
+
+`--multistep-model "<local GGUF path>"` performs actual native inference: twenty
+bilingual outputs including repeated generation over pre-existing SQLite prose,
+followed by the real four-item auto-save worker. It validates template roles,
+changed factual wording, fresh C# steps, essay grading, streaming and model
+release. Separate databases, prompts and metrics are written under
+`artifacts/verification/multistep-model-*`. See the
+[multi-step authoring guide](../../MathSolver/MULTISTEP_AI.md) for JSON examples
+and the limits of reviewed prose generation.
 
 This is the new optional question-bank implementation. It does not restore the
 previous AI practice source, validators, benchmark or model test fixtures.
@@ -342,3 +370,23 @@ failed-write rollback. It also verifies that invalid manually edited JSON still
 cannot enter normal practice. The tests use temporary SQLite databases, without
 model inference or benchmarks. App builds compile the native editor UI; device
 layout has not been verified by this harness.
+
+## Proportion bank and real GGUF
+
+Run --proportion-bank for all 47 templates in both languages and every permitted star tier (390 cases), fresh facts/all three modes, essay grading, hostile prose, exhausted grammar, SQLite/Excel and provider fallback. Run --proportion-model <model.gguf> for live native inference across bilingual templates and the subtype/star matrix, then the real auto-save worker. Evidence uses isolated artifacts/verification/proportion-model-* databases. --proportion-model-resume <model.gguf> <evidence-directory> revalidates saved rows before continuing a partially completed verification run.
+
+## Decimal bank and real GGUF
+
+`--decimal-bank` checks 320 bilingual context/subtype/star profiles, independent
+exact decimal math, three answer modes, fresh values, essay grading, unsafe
+prose, exhausted grammar, SQLite/Excel and provider fallback. Included in the
+default full regression run.
+
+`--decimal-model <model.gguf>` runs 40 native bilingual operation/star profiles
+across eight contexts, excludes already stored wording, validates streamed JSON,
+saves to isolated SQLite and regenerates/grades fresh questions. It then runs
+the real auto-save worker for four questions and verifies weights are released.
+Evidence is written under `artifacts/verification/decimal-model-*`.
+`--decimal-model-resume <model.gguf> <evidence-directory>` revalidates prior
+saved rows before continuing a partially completed run. Installed user data is
+not modified. See [DECIMAL_AI.md](../../MathSolver/DECIMAL_AI.md).

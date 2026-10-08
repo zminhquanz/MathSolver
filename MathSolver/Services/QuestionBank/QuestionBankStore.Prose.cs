@@ -45,7 +45,8 @@ public sealed partial class QuestionBankStore
         // Expanded reviewed clauses can make a previously invalid advanced-user
         // row valid. Revisit cached blank identities once after this policy change.
         // Public questions, their row keys and usage metadata are never rewritten.
-        const int validationRevision = 3;
+        // Revision 4 also canonicalizes equivalent multi-step context openings.
+        const int validationRevision = 4;
         if (db.ExecuteScalar<int>("SELECT EXISTS(SELECT 1 FROM QuestionProseIndexMetadata WHERE Key='ValidationRevision' AND Value=?)", validationRevision) == 0)
             db.RunInTransaction(() =>
             {
