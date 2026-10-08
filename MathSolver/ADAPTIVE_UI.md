@@ -141,11 +141,38 @@ selection event. Shape descriptions are localized in QuizContent language packs;
 thumbnails distinguish triangle/trapezoid variants and the five solid shapes.
 
 The modal is centered, capped at 1100 by 780 logical units, with a search field
-and one internally scrolling CollectionView. Its cards use 1–3 columns according
-to available width and system text scale. Narrow windows and phones show an
-illustration on the left and text on the right in a single column. Search matches
+and one internally scrolling CollectionView on wide displays. Compact displays
+can use their full available height. Its cards use 1–3 columns according
+to available width and system text scale. Phones retain a single list when rotated;
+tablets and desktop windows reflow according to their actual available width.
+Narrow windows and phones show an illustration on the left and text on the right.
+Search matches
 localized titles and descriptions, including Vietnamese without accents, while
-preserving the original selection indexes.
+preserving the original selection indexes. Filtering retains the original panel
+footprint so the search field does not jump as results change or become empty.
+
+Single-column choices use LinearItemsLayout and MeasureAllItems, automatic card
+height, a 44-unit thumbnail and fully wrapped titles/descriptions. Wide grids use
+uniform 152-unit rows (scaled with system text), 54-unit thumbnails and previews
+of up to three title/description lines. Full text remains available to screen
+readers in both modes. The check mark occupies only the title row, preserving
+description width. Card minimum height is 96 units; both Close controls have a
+minimum 48 × 48 target. The same input-transparent decorative overlay keeps the
+whole card clickable for mouse and touch.
+
+The page uses SafeAreaEdges.All; layout bounds come from the inset content Grid,
+accounting for system bars, cutouts and the soft keyboard. Below 400 units of
+usable height, choices use a list. Below 260, Close shares the search row and the
+visual heading is hidden (the accessible page Title remains). Submitting search
+attempts to hide the soft keyboard. Android does not focus search on arrival;
+Windows desktop search receives keyboard focus. Tab/Enter/Space use native button
+behavior and Escape closes the Windows modal. Resizing and rotation recompute
+the layout without changing the selected catalogue index.
+
+Layout regression checks include logical widths 280–3840, usable heights
+160–2160, font scales 1–3, Android/Windows scrollbar gutters, portrait tablets,
+laptops, rotated phones and keyboard-reduced viewports. These are layout and
+control checks, not a substitute for device interaction and screen-reader tests.
 
 On Windows, the list reserves a 24-unit gutter inside its native ItemsPresenter
 for the overlay scrollbar. Card columns share the remaining width evenly, and

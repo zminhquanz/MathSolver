@@ -7,21 +7,23 @@ internal static partial class PuzzleTests
 {
     public static void CheckResponsivePresentation()
     {
-        foreach (double width in new[] { 320d, 360, 480, 600, 768, 1024, 1440, 1920, 3840 })
-        foreach (double height in new[] { 320d, 640, 900, 2160 })
-        foreach (double scale in new[] { 1d, 1.5, 2 })
+        foreach (double width in new[] { 280d, 320, 360, 480, 600, 768, 1024, 1440, 1920, 3840 })
+        foreach (double height in new[] { 160d, 240, 320, 640, 900, 2160 })
+        foreach (double scale in new[] { 1d, 1.5, 2, 3 })
+        foreach (double gutter in new[] { 0d, 24 })
         foreach (int count in new[] { 0, 1, 2, 4, 9, 19, 40 })
         {
-            var dialog = QuizChoiceLayout.Calculate(width, height, count, scale, scrollbarGutter: 24);
+            var dialog = QuizChoiceLayout.Calculate(width, height, count, scale, scrollbarGutter: gutter);
             Require(dialog.Width > 0 && dialog.Width <= width - 24 && dialog.Height > 0 && dialog.Height <= height - 24,
                 "Choice dialog must stay inside the viewport, including landscape and enlarged text.");
             Require(dialog.Columns >= 1 && dialog.Columns <= Math.Max(1, Math.Min(count, 3)),
                 "Choice dialog must not create unused columns.");
             if (dialog.Columns > 1)
-                Require((dialog.Width - 2 * dialog.Padding - 2 - 24 - (dialog.Columns - 1) * 10)
+                Require((dialog.Width - 2 * dialog.Padding - 2 - gutter - (dialog.Columns - 1) * 10)
                     / dialog.Columns >= 320 * scale - 0.01,
                     "Every choice column needs enough room for scaled text and the scrollbar.");
             if (width <= 600) Require(dialog.Columns == 1, "Phone choices must use one column.");
+            if (height < 400) Require(dialog.UseList, "A keyboard or short landscape viewport needs a readable list.");
         }
         var fourChoices = QuizChoiceLayout.Calculate(1920, 1080, 4, scrollbarGutter: 24);
         Require(fourChoices.Columns == 2 && fourChoices.Height < 500,
@@ -29,11 +31,21 @@ internal static partial class PuzzleTests
         var manyChoices = QuizChoiceLayout.Calculate(1920, 1080, 19, scrollbarGutter: 24);
         Require(manyChoices.Columns == 3 && manyChoices.Height == 780,
             "Long desktop lists need three columns and a bounded scrolling viewport.");
-        var filteredChoices = QuizChoiceLayout.Calculate(1920, 1080, 1, scrollbarGutter: 24);
-        Require(filteredChoices.Height < fourChoices.Height && filteredChoices.Width < fourChoices.Width,
-            "Filtering should shrink the dialog to its remaining choices.");
-        Require(QuizChoiceLayout.Calculate(1920, 1080, 0).Height < filteredChoices.Height,
-            "Empty search results should not leave a tall blank list.");
+        var singleChoice = QuizChoiceLayout.Calculate(1920, 1080, 1, scrollbarGutter: 24);
+        Require(singleChoice.Height < fourChoices.Height && singleChoice.Width < fourChoices.Width,
+            "A catalogue with one choice should start with a smaller dialog.");
+        Require(QuizChoiceLayout.Calculate(1920, 1080, 0).Height < singleChoice.Height,
+            "An empty catalogue should not start with a tall blank list.");
+        Require(QuizChoiceLayout.Calculate(768, 1024, 19).Columns == 2,
+            "A portrait tablet should support two comfortable columns.");
+        Require(QuizChoiceLayout.Calculate(1366, 768, 19).Columns == 3,
+            "A laptop should support three columns inside a bounded panel.");
+        var phoneLandscape = QuizChoiceLayout.Calculate(844, 390, 19, forceSingleColumn: true);
+        Require(phoneLandscape.UseList && phoneLandscape.Width == 820,
+            "A rotated phone must retain a single list and use its available width.");
+        var keyboard = QuizChoiceLayout.Calculate(844, 180, 19, headerHeight: 56, forceSingleColumn: true);
+        Require(keyboard.UseList && keyboard.Height - (2 * keyboard.Padding + 2 + 24 + 56) >= 48,
+            "A short keyboard viewport must retain at least a touch target of list height.");
 
         foreach (double width in new[] { 320d, 360, 480, 600, 720, 920, 1024, 1280, 1440 })
         {

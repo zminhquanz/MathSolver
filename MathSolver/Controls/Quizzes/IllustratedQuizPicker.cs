@@ -207,9 +207,13 @@ internal sealed class QuizChoicePage : ContentPage
     private readonly TaskCompletionSource<int?> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly CollectionView _list;
     private readonly SearchBar _search;
+    private readonly Label _heading;
+    private readonly Button _close;
+    private readonly Button _compactClose;
     private readonly Grid _header;
+    private readonly Grid _searchRow;
+    private readonly Grid _root;
     private readonly Border _card;
-    private int _visibleCount;
     public static readonly BindableProperty ChoiceCardHeightProperty = BindableProperty.Create(
         nameof(ChoiceCardHeight), typeof(double), typeof(QuizChoicePage), 136d);
     public double ChoiceCardHeight
@@ -217,11 +221,27 @@ internal sealed class QuizChoicePage : ContentPage
         get => (double)GetValue(ChoiceCardHeightProperty);
         private set => SetValue(ChoiceCardHeightProperty, value);
     }
+    public static readonly BindableProperty ChoiceIconSizeProperty = BindableProperty.Create(
+        nameof(ChoiceIconSize), typeof(double), typeof(QuizChoicePage), 54d);
+    public double ChoiceIconSize
+    {
+        get => (double)GetValue(ChoiceIconSizeProperty);
+        private set => SetValue(ChoiceIconSizeProperty, value);
+    }
+    public static readonly BindableProperty ChoiceTextMaxLinesProperty = BindableProperty.Create(
+        nameof(ChoiceTextMaxLines), typeof(int), typeof(QuizChoicePage), 3);
+    public int ChoiceTextMaxLines
+    {
+        get => (int)GetValue(ChoiceTextMaxLinesProperty);
+        private set => SetValue(ChoiceTextMaxLinesProperty, value);
+    }
+    private readonly LinearItemsLayout _listLayout = new(ItemsLayoutOrientation.Vertical) { ItemSpacing = 10 };
     private readonly GridItemsLayout _itemsLayout = new(1, ItemsLayoutOrientation.Vertical)
         { HorizontalItemSpacing = 10, VerticalItemSpacing = 10 };
     private bool _closing;
     private bool _dismissed;
     private bool _visible;
+    private bool _resizing;
     private bool _hostDestroyed;
     private Window? _hostWindow;
     internal bool WasHostDestroyed => _hostDestroyed;
@@ -233,27 +253,45 @@ internal sealed class QuizChoicePage : ContentPage
     public QuizChoicePage(string title, IReadOnlyList<QuizChoiceOption> choices)
     {
         _choices = choices;
+        Title = title;
+        SafeAreaEdges = Microsoft.Maui.SafeAreaEdges.All;
+        HideSoftInputOnTapped = true;
         Shell.SetNavBarIsVisible(this, false);
         SetDynamicResource(BackgroundColorProperty, "PageBackgroundColor");
-        var heading = new Label { Text = title, FontSize = 20, FontAttributes = FontAttributes.Bold,
-            VerticalOptions = LayoutOptions.Center };
-        heading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
-        SemanticProperties.SetHeadingLevel(heading, SemanticHeadingLevel.Level1);
-        var close = new Button { Text = IllustratedQuizPicker.Text("Choice.Close"), MinimumHeightRequest = 48,
+        _heading = new Label { Text = title, FontSize = 20, FontAttributes = FontAttributes.Bold,
+            VerticalOptions = LayoutOptions.Center, MaxLines = 2, LineBreakMode = LineBreakMode.TailTruncation };
+        _heading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
+        SemanticProperties.SetHeadingLevel(_heading, SemanticHeadingLevel.Level1);
+        SemanticProperties.SetDescription(_heading, title);
+        _close = new Button { Text = IllustratedQuizPicker.Text("Choice.Close"), MinimumHeightRequest = 48, MinimumWidthRequest = 48,
             Padding = new Thickness(12, 6), CornerRadius = 10 };
-        close.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
-        close.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
-        close.Clicked += async (_, _) => await CloseAsync(null);
+        _close.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
+        _close.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+        SemanticProperties.SetDescription(_close, IllustratedQuizPicker.Text("Choice.Close"));
+        ToolTipProperties.SetText(_close, IllustratedQuizPicker.Text("Choice.Close"));
+        _close.Clicked += async (_, _) => await CloseAsync(null);
         _header = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 12 };
-        _header.Add(heading);
-        _header.Add(close, 1);
+        _header.Add(_heading);
+        _header.Add(_close, 1);
         _header.SizeChanged += (_, _) => Resize();
         _search = new SearchBar { Placeholder = IllustratedQuizPicker.Text("Choice.Search"), MinimumHeightRequest = 48 };
         _search.SetDynamicResource(SearchBar.TextColorProperty, "TextPrimaryColor");
         _search.SetDynamicResource(SearchBar.PlaceholderColorProperty, "TextSecondaryColor");
         SemanticProperties.SetDescription(_search, IllustratedQuizPicker.Text("Choice.Search"));
         _search.TextChanged += (_, _) => ApplyFilter();
+        _search.SearchButtonPressed += OnSearchSubmitted;
         _search.SizeChanged += (_, _) => Resize();
+        _compactClose = new Button { Text = "×", FontSize = 24, FontAutoScalingEnabled = false,
+            MinimumHeightRequest = 48, MinimumWidthRequest = 48, Padding = 0, CornerRadius = 10, IsVisible = false };
+        _compactClose.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
+        _compactClose.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+        SemanticProperties.SetDescription(_compactClose, IllustratedQuizPicker.Text("Choice.Close"));
+        ToolTipProperties.SetText(_compactClose, IllustratedQuizPicker.Text("Choice.Close"));
+        _compactClose.Clicked += async (_, _) => await CloseAsync(null);
+        _searchRow = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 8 };
+        _searchRow.Add(_search);
+        _searchRow.Add(_compactClose, 1);
+        _searchRow.SizeChanged += (_, _) => Resize();
         _list = new CollectionView { SelectionMode = SelectionMode.None, ItemsLayout = _itemsLayout,
             ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
             VerticalScrollBarVisibility = ScrollBarVisibility.Default,
@@ -266,16 +304,19 @@ internal sealed class QuizChoicePage : ContentPage
 #endif
         var body = new Grid { RowDefinitions = new() { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) }, RowSpacing = 12 };
         body.Add(_header);
-        body.Add(_search, 0, 1);
+        body.Add(_searchRow, 0, 1);
         body.Add(_list, 0, 2);
         _card = new Border { Content = body, Padding = 16, StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = 16 },
             HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
         _card.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");
         _card.SetDynamicResource(Border.StrokeProperty, "BorderBrush");
-        var root = new Grid();
-        root.Add(_card);
-        Content = root;
+        // Measure the content area after the page has avoided system bars,
+        // cutouts and the soft keyboard, rather than the full page bounds.
+        _root = new Grid { SafeAreaEdges = Microsoft.Maui.SafeAreaEdges.None };
+        _root.Add(_card);
+        _root.SizeChanged += (_, _) => Resize();
+        Content = _root;
         SizeChanged += (_, _) => Resize();
         Unloaded += (_, _) => EndLifetime();
         ApplyFilter();
@@ -289,15 +330,37 @@ internal sealed class QuizChoicePage : ContentPage
 
     private void Resize()
     {
-        if (_closing || _dismissed || !_visible || Width <= 0 || Height <= 0) return;
-        var layout = QuizChoiceLayout.Calculate(Width, Height, _visibleCount,
-            ResponsiveLayoutPolicy.TextScale, ScrollbarGutter,
-            _header.Height > 0 && _search.Height > 0 ? _header.Height + _search.Height : 0);
-        _card.WidthRequest = layout.Width;
-        _card.HeightRequest = layout.Height;
-        _card.Padding = layout.Padding;
-        ChoiceCardHeight = layout.ItemHeight - 4; // The card's two-pixel margins belong to the row too.
-        if (_itemsLayout.Span != layout.Columns) _itemsLayout.Span = layout.Columns;
+        if (_resizing || _closing || _dismissed || !_visible || _root.Width <= 0 || _root.Height <= 0) return;
+        _resizing = true;
+        try
+        {
+            // With a keyboard in landscape, keep search and Close on one row so
+            // the list still has usable height. The page's accessible Title remains.
+            bool shortInputArea = _root.Height < 260;
+            _header.IsVisible = !shortInputArea;
+            _compactClose.IsVisible = shortInputArea;
+            // Searching changes the items, not the position/size of the field being
+            // typed into. Fit the original catalogue, including an empty result set.
+            var layout = QuizChoiceLayout.Calculate(_root.Width, _root.Height, _choices.Count,
+                ResponsiveLayoutPolicy.TextScale, ScrollbarGutter,
+                _searchRow.Height > 0 ? (_header.IsVisible ? Math.Max(48, _header.Height) : 0) + _searchRow.Height : 0,
+                forceSingleColumn: DeviceInfo.Idiom == DeviceIdiom.Phone);
+            _card.WidthRequest = layout.Width;
+            _card.HeightRequest = layout.Height;
+            _card.Padding = layout.Padding;
+            ChoiceCardHeight = layout.UseList ? -1 : layout.ItemHeight - 4;
+            ChoiceIconSize = layout.UseList ? 44 : 54;
+            ChoiceTextMaxLines = layout.UseList ? -1 : 3;
+            _heading.MaxLines = _root.Height < 400 ? 1 : 2;
+            _close.Text = layout.Width < 600 * ResponsiveLayoutPolicy.TextScale ? "×" : IllustratedQuizPicker.Text("Choice.Close");
+            _close.FontSize = _close.Text == "×" ? 24 : 14;
+            _close.FontAutoScalingEnabled = _close.Text != "×";
+            if (_itemsLayout.Span != layout.Columns) _itemsLayout.Span = layout.Columns;
+            IItemsLayout itemsLayout = layout.UseList ? _listLayout : _itemsLayout;
+            if (!ReferenceEquals(_list.ItemsLayout, itemsLayout)) _list.ItemsLayout = itemsLayout;
+            _list.ItemSizingStrategy = layout.UseList ? ItemSizingStrategy.MeasureAllItems : ItemSizingStrategy.MeasureFirstItem;
+        }
+        finally { _resizing = false; }
     }
 
 #if WINDOWS
@@ -316,9 +379,22 @@ internal sealed class QuizChoicePage : ContentPage
     private void ApplyFilter()
     {
         var visible = QuizChoiceCatalog.Filter(_choices, _search.Text ?? "");
-        _visibleCount = visible.Count;
         _list.ItemsSource = visible;
-        Resize();
+    }
+
+    private async void OnSearchSubmitted(object? sender, EventArgs e)
+    {
+        if (!CanUseDialog) return;
+        try
+        {
+            await _search.HideSoftInputAsync(CancellationToken.None);
+            if (CanUseDialog && DeviceInfo.Platform == DevicePlatform.Android) _search.Unfocus();
+        }
+        catch (Exception error) when (_dismissed && error is (ObjectDisposedException
+            or System.Runtime.InteropServices.COMException or OperationCanceledException))
+        {
+            // The host can close while the keyboard is being dismissed.
+        }
     }
 
     private View CreateChoiceCard()
@@ -326,27 +402,35 @@ internal sealed class QuizChoicePage : ContentPage
         var button = IllustratedQuizPicker.ChoiceButton();
         var icon = new QuizChoiceIllustration { WidthRequest = 54, HeightRequest = 54,
             VerticalOptions = LayoutOptions.Center };
-        var title = new Label { FontSize = 16, FontAttributes = FontAttributes.Bold, MaxLines = 2, LineBreakMode = LineBreakMode.WordWrap };
+        icon.SetBinding(WidthRequestProperty, new Binding(nameof(ChoiceIconSize), source: this));
+        icon.SetBinding(HeightRequestProperty, new Binding(nameof(ChoiceIconSize), source: this));
+        var title = new Label { FontSize = 16, FontAttributes = FontAttributes.Bold, LineBreakMode = LineBreakMode.WordWrap };
+        title.SetBinding(Label.MaxLinesProperty, new Binding(nameof(ChoiceTextMaxLines), source: this));
         title.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
-        var description = new Label { FontSize = 13, MaxLines = 3, LineBreakMode = LineBreakMode.WordWrap };
+        var description = new Label { FontSize = 13, LineBreakMode = LineBreakMode.WordWrap };
+        description.SetBinding(Label.MaxLinesProperty, new Binding(nameof(ChoiceTextMaxLines), source: this));
         description.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
         var check = new Label { Text = "✓", FontSize = 22, FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Start };
         check.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
         var text = new VerticalStackLayout { Spacing = 4, VerticalOptions = LayoutOptions.Center };
-        text.Add(title);
+        // The check mark shares only the title row. Descriptions retain the full
+        // text width on phones rather than losing another column to the check.
+        var titleRow = new Grid { ColumnDefinitions = new() { new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 6 };
+        titleRow.Add(title);
+        titleRow.Add(check, 1);
+        text.Add(titleRow);
         text.Add(description);
-        var display = new Grid { ColumnDefinitions = new() { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) }, ColumnSpacing = 10,
+        var display = new Grid { ColumnDefinitions = new() { new(GridLength.Auto), new(GridLength.Star) }, ColumnSpacing = 10,
             Padding = 12, InputTransparent = true };
         display.Add(icon);
         display.Add(text, 1);
-        display.Add(check, 2);
         AutomationProperties.SetExcludedWithChildren(display, true);
         var layout = new Grid();
         layout.Add(button);
         layout.Add(IllustratedQuizPicker.ChoiceDisplay(display));
         var card = new Border { Content = layout, StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = 12 }, Margin = new Thickness(2) };
+            StrokeShape = new RoundRectangle { CornerRadius = 12 }, Margin = new Thickness(2), MinimumHeightRequest = 96 };
         card.SetBinding(HeightRequestProperty, new Binding(nameof(ChoiceCardHeight), source: this));
         card.BindingContextChanged += (_, _) =>
         {
@@ -407,7 +491,8 @@ internal sealed class QuizChoicePage : ContentPage
         _keyboardSurface = Content.Handler?.PlatformView as Microsoft.UI.Xaml.UIElement;
         _keyHandler = OnKeyDown;
         _keyboardSurface?.AddHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler, true);
-        Dispatcher.Dispatch(() => { if (CanUseDialog) _search.Focus(); });
+        // Touch tablets should not open their on-screen keyboard on arrival.
+        Dispatcher.Dispatch(() => { if (CanUseDialog && DeviceInfo.Idiom == DeviceIdiom.Desktop) _search.Focus(); });
 #endif
         var selected = _choices.FirstOrDefault(option => option.IsSelected);
         if (selected is not null) Dispatcher.Dispatch(() =>
