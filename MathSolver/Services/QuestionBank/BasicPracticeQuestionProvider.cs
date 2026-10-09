@@ -27,8 +27,10 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             && !ElementaryQuizGenerator.TimeStoryTypes.Contains(timeProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionProblem
             && !ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionProblem.Type)) return generated;
-        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills } elementary
+        if (generated.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: null }) return generated;
+        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills or QuizProblemKind.Data } elementary
             ? (elementary.Kind switch { QuizProblemKind.MultiStep => BankQuestionFamily.MultiStep,
+                QuizProblemKind.Data => BankQuestionFamily.Data,
                 QuizProblemKind.Measurement => BankQuestionFamily.Measurement,
                 QuizProblemKind.Remainder => BankQuestionFamily.Remainder,
                 QuizProblemKind.Time => BankQuestionFamily.Time,
@@ -38,12 +40,17 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             : generated.PercentageProblem is { } percentage ? (BankQuestionFamily.Percentage, (int)percentage.Type)
             : generated.MotionProblem is { } motion ? (BankQuestionFamily.Motion, (int)motion.Type)
             : generated.ProportionProblem is { } proportion ? (BankQuestionFamily.Proportion, (int)proportion.Type)
+            : generated.GeometryProblem is { } geometry ? (BankQuestionFamily.Geometry,
+                ReasoningStoryCatalogue.GeometryVariant(GeometryShape(geometry.ShapeId), geometry.Measurement))
             : throw new ArgumentException("ExpectedReasoningQuestion");
         if (_random.Next(2) == 0) return generated;
-        var saved = await store.TakeReasoningAsync(family, variant, tier, language, cancellationToken).ConfigureAwait(false);
+        var saved = family == BankQuestionFamily.Data
+            ? await store.TakeChartAsync(generated.ElementaryProblem!.DataChart!.Profile, cancellationToken).ConfigureAwait(false)
+            : await store.TakeReasoningAsync(family, variant, tier, language, cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         if (saved is null || saved.Contract is not { Version: ReasoningStoryCatalogue.Version } c
             || c.Family != family || c.BankVariant != variant || c.Tier != tier || c.Language != language
+            || !ReasoningStoryCatalogue.MatchesVisualProfile(c, generated)
             || !BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c).IsValid) return generated;
         try
         {
@@ -56,6 +63,10 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             return generated;
         }
     }
+
+    private static GeometryQuizShape GeometryShape(string id) => id switch {
+        "rectangular_prism" => GeometryQuizShape.RectangularPrism,
+        _ => Enum.Parse<GeometryQuizShape>(id, true) };
 
     public async Task<ArithmeticQuizQuestion> SelectFractionAsync(ArithmeticQuizQuestion generated,
         CurriculumTier tier, AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)

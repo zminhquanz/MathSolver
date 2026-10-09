@@ -9,6 +9,7 @@ public sealed partial class ElementaryQuizGenerator
         var t = new DifficultyBuilder(QuizProblemKind.MultiStep, type, language, tier);
         int level = (int)tier;
         string[] ids = ["library", "craft", "community", "distribution"];
+        if (_expandNarratives) ids = [.. ids, "kitchen", "livestock", "water", "environment", "agriculture"];
         var context = QuizStoryContextCatalog.Find(ids[NextContextVariant(type, language, "multi-step", ids.Length)]);
         string unit = context.Unit(language);
         int cap = Math.Min(context.MaximumPerPeriod, level == 1 ? 24 : level == 2 ? 96 : 200);
@@ -21,7 +22,8 @@ public sealed partial class ElementaryQuizGenerator
             "library" => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.002"),
             "craft" => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.003"),
             "community" => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.004"),
-            _ => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.005")
+            "distribution" => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.005"),
+            _ => QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro." + context.Id)
         };
         if (type == ElementaryQuizType.MultiStepAddSubtract)
         {

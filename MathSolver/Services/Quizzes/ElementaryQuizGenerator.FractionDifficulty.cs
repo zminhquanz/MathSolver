@@ -24,15 +24,24 @@ public sealed partial class ElementaryQuizGenerator
         t.RequiresSolution = level >= 4;
         int denominator = level == 1 ? 2 : level == 2 ? 4 : level == 3 ? 5 : level == 4 ? 6 : 8;
         int numerator = level <= 2 ? 1 : denominator - 1;
+        if (_expandNarratives && type is ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)
+        {
+            int[] choices = level switch { 1 => [2, 3], 2 => [3, 4, 5], 3 => [4, 5, 6], 4 => [5, 6, 8], _ => [4, 5, 8] };
+            denominator = choices[_random.Next(choices.Length)];
+            numerator = level == 1 ? 1 : _random.Next(1, denominator);
+        }
         string fraction = $"{numerator}/{denominator}";
         if (type is ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)
         {
             t.RequiresSolution = true;
-            var contexts = FractionQuantityStoryContextCatalog.GetProfile(language);
+            var contexts = FractionQuantityStoryContextCatalog.GetProfile(language, _expandNarratives);
             var context = contextId.Length == 0 ? contexts[_random.Next(contexts.Count)]
                 : contexts.SingleOrDefault(c => c.ContextId == contextId) ?? throw new ArgumentException("InvalidFractionQuantityProfile");
             string unit = context.Unit, wholeExpression, problem;
             bool findPart = type == ElementaryQuizType.FractionOfNumber;
+            var activity = _expandNarratives ? FractionQuantityActivityCatalog.Get(language, context.ContextId) : null;
+            string ContextText(string suffix, params (string Key, string Value)[] values) => QuizContentCatalog.Text(language,
+                "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context." + suffix, values);
             int supplied;
             if (context.Quantity == WordProblemQuantity.Count)
             {
@@ -72,14 +81,19 @@ public sealed partial class ElementaryQuizGenerator
                 int first = supplied / 2;
                 string a = t.Given("quantity-first", first, unit), b = t.Given("quantity-second", supplied - first, unit);
                 wholeExpression = $"({a}+{b})";
-                problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"));
+                problem = activity is null ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"))
+                    : ContextText("001", ("source", findPart ? activity.PartSource : activity.WholeSource), ("a", a), ("b", b), ("unit", unit));
                 if (level == 4)
                 {
-                    string removed = t.Given("removed", _random.Next(2, 6), unit);
+                    // The contextual story describes an overlap of two records.
+                    // An overlap cannot contain more items than either record.
+                    string removed = t.Given("removed", activity is null ? _random.Next(2, 6)
+                        : _random.Next(1, Math.Min(5, supplied - first) + 1), unit);
                     t.Givens.RemoveAll(given => given.Role == "quantity-first");
                     a = t.Given("quantity-first", first + int.Parse(removed), unit);
                     wholeExpression = $"({a}+{b}-{removed})";
-                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"), ("removed", $"{removed}"));
+                    problem = activity is null ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002", ("a", $"{a}"), ("b", $"{b}"), ("unit", $"{unit}"), ("removed", $"{removed}"))
+                        : ContextText("002", ("source", findPart ? activity.PartSource : activity.WholeSource), ("a", a), ("b", b), ("unit", unit), ("removed", removed));
                 }
                 t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.003"), wholeExpression, unit);
                 problem += (findPart ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.017", ("context_PartLabel", $"{context.PartLabel}"), ("fraction", $"{fraction}"), ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}"), ("unit", $"{unit}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.018", ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}"), ("fraction", $"{fraction}"), ("context_WholeLabel_ToLowerInvariant", $"{context.WholeLabel.ToLowerInvariant()}"), ("unit", $"{unit}")));
@@ -92,6 +106,12 @@ public sealed partial class ElementaryQuizGenerator
                 string quantity = t.Given("quantity", supplied, unit);
                 string retained = $"(1-{removedNumerator}/{removedDenominator})";
                 problem = (findPart ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019", ("context_WholeLabel", $"{context.WholeLabel}"), ("quantity", $"{quantity}"), ("unit", $"{unit}"), ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("context_PartLabel_ToLowerInvariant", $"{context.PartLabel.ToLowerInvariant()}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020", ("removedNumerator", $"{removedNumerator}"), ("removedDenominator", $"{removedDenominator}"), ("context_WholeLabel_ToLowerInvariant", $"{context.WholeLabel.ToLowerInvariant()}"), ("context_PartLabel", $"{context.PartLabel}"), ("n", $"{n}"), ("d", $"{d}"), ("quantity", $"{quantity}"), ("unit", $"{unit}")));
+                if (activity is not null)
+                    problem = ContextText(findPart ? "019" : "020", ("source", activity.PartSource),
+                        ("initial_action", activity.InitialAction), ("part_action", activity.PartAction),
+                        ("quantity", quantity), ("unit", unit), ("removedNumerator", removedNumerator),
+                        ("removedDenominator", removedDenominator), ("n", n), ("d", d),
+                        ("target", (findPart ? context.PartLabel : context.WholeLabel).ToLowerInvariant()));
                 t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.004"), retained);
                 if (findPart) t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.005"), $"{quantity}*{retained}", unit);
                 else t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.006"), $"{retained}*{n}/{d}");

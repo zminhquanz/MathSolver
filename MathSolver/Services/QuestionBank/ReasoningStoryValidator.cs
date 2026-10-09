@@ -67,6 +67,9 @@ public static class ReasoningStoryValidator
                 + (c.Family != BankQuestionFamily.FractionQuantity ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
                     : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
+                + (c.Family != BankQuestionFamily.Decimal ? "" : vi
+                    ? "\nGiữ riêng lượng mỗi nhóm, số nhóm và tổng lượng; phần bổ sung sau khi chia chỉ thuộc nhóm được chỉ định."
+                    : "\nKeep amount per group, group count and total distinct; an addition after sharing belongs only to the specified group.")
                 + "\n" + QuestionBankStore.SerializeDraft(example)
                 + (correction is null ? "" : "\nRejected: " + correction + ". Return complete corrected JSON.");
         }

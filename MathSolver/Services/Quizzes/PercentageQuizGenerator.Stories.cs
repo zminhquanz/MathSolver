@@ -5,7 +5,7 @@ namespace MathSolver.Services;
 public sealed partial class PercentageQuizGenerator
 {
     private sealed record PercentageStory(string Id, string Whole, string Part, string Unit, int Capacity, bool Money = false);
-    private static IReadOnlyList<PercentageStory> PercentageStories(AppLanguage language) => QuizContentCatalog.LoadList<PercentageStory>("PercentageQuizGenerator.PercentageStories", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<PercentageStory> PercentageStories(AppLanguage language) => NarrativeContextExpansion.Load<PercentageStory>("PercentageQuizGenerator.PercentageStories", language, _expandNarratives);
     private PercentageQuizContract CreateStoryPercentage(PercentageQuizType type, AppLanguage language, int? level)
     {
         var s = PercentageStories(language)[_random.Next(PercentageStories(language).Count)];

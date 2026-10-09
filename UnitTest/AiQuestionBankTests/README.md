@@ -1,5 +1,28 @@
 # AI question bank checks
 
+## Reviewed prose expansion and visual families
+
+`--prose-expansion` covers 1,220 subtype/star/language/seed cases for the
+13 structured narrative families. It checks existing and additional reviewed
+clauses, variable roles, foreign-language rejection, fresh C# values, all three
+answer modes, essay grading, immutable chart data, SQLite selection and Excel
+round trips. This check also runs in the default suite.
+
+`--prose-expansion-model <model.gguf>` invokes `GgufQuestionRuntime` with a real
+local model for one representative profile from each of the 16 AI families in
+Vietnamese and English (32 cases, at most three attempts each). It checks streamed
+output, validation, isolated SQLite persistence, reuse with freshly generated
+C# facts, grading and model disposal. Native sampling is representative; it does
+not run inference for every subtype and star combination. Evidence is written to
+`artifacts/verification/prose-expansion-model-*`, including prompts, raw JSON,
+validation results, a temporary bank and `results.json` with token metrics.
+
+The bank retains the original 14 family IDs and appends applied geometry and
+table/chart narratives. The model's native grammar and validator share the
+reviewed alternatives and permitted synonym policy. This deliberately bounds
+wording changes rather than treating arbitrary prose as semantically verified.
+
+
 `--packing-time-bank` checks 218 bilingual context/subtype/star profiles and
 18 remainder boundaries, independent arithmetic, all answer components/units,
 fresh data, all grading modes, unsafe prose, exhaustion, SQLite/Excel/provider.
@@ -393,7 +416,7 @@ Run --proportion-bank for all 47 templates in both languages and every permitted
 
 ## Decimal bank and real GGUF
 
-`--decimal-bank` checks 320 bilingual context/subtype/star profiles, independent
+`--decimal-bank` checks 560 bilingual context/subtype/star profiles, independent
 exact decimal math, three answer modes, fresh values, essay grading, unsafe
 prose, exhausted grammar, SQLite/Excel and provider fallback. Included in the
 default full regression run.
@@ -407,14 +430,55 @@ Evidence is written under `artifacts/verification/decimal-model-*`.
 saved rows before continuing a partially completed run. Installed user data is
 not modified. See [DECIMAL_AI.md](../../MathSolver/DECIMAL_AI.md).
 
-`--fraction-quantity-bank` tests all 300 bilingual context/subtype/star profiles,
+`--fraction-quantity-bank` tests all 460 bilingual context/subtype/star profiles,
 exact fractions, integer object quantities, unsafe relations/targets/units,
 novelty/exhaustion, SQLite/Excel round trips and fresh three-mode grading.
 It is included in the default full regression run.
 
-`--fraction-quantity-model <model.gguf> <directory>` samples 60 native profiles:
-both types/languages and all 15 contexts, with stars stratified 1–5. It also runs
+`--fraction-quantity-model <model.gguf> <directory>` samples 92 native profiles:
+both types/languages and all 23 contexts, with stars stratified 1–5. It also runs
 four two-question auto-save jobs, checking release of weights. Reuse the same
 directory to resume. `--fraction-quantity-evidence <directory>` revalidates model
-outputs and native SQLite rows using fresh data. This is native sampling of 60
-profiles, not the full 300-profile Cartesian matrix.
+outputs and native SQLite rows using fresh data. It also accepts historical
+sixty-profile evidence from the fifteen-context catalogue. This is native sampling,
+not the full 460-profile Cartesian matrix. Use the quantity-depth run below to
+explicitly sample the new settings across every star tier.
+
+`--narrative-depth` checks the six priority families across 1–5 stars and both
+languages. It explicitly samples every new two-number, multi-step, average and
+percentage setting and every eligible proportion narrative, verifies reviewed
+roles/grammar, fresh exact answers and three-mode grading, and checks catalogue
+version preservation through SQLite/Excel. Historical payloads without a
+`ContextVersion` property replay the original catalogue.
+
+`--narrative-depth-model <model.gguf>` runs twelve real GGUF cases: one expanded
+situation from each priority family in Vietnamese and English. It verifies token
+streaming, validation, SQLite persistence, fresh-number grading and model disposal.
+This is a representative five-star sample, not a live-model test of the entire
+1–5-star matrix. Evidence goes to `artifacts/verification/narrative-depth-model-*`.
+
+`--legacy-prose-evidence <model.db3>` reads an earlier real-model SQLite database
+without changing it, checks all stored payloads and grades regenerated questions.
+`--narrative-depth-evidence <model.db3>` performs the same check for expanded
+real-model records using the current source, without rerunning inference.
+
+## Decimal and fraction-quantity depth
+
+`--quantity-depth` checks 2,260 profiles: all fourteen decimal and twenty-three
+fraction-quantity contexts at 1–5 stars in Vietnamese/English, plus version-0/1
+replay of the original contexts. It verifies C# and reviewed prose, fresh exact
+answers, three answer modes, grading, grammar, rejection of changed roles and
+foreign text, total/per-group capacities, feasible overlaps, SQLite deduplication
+and a thirty-record Excel round trip. Included in the default full regression run.
+
+`--quantity-depth-model <model.gguf>` runs thirty actual native profiles: four
+decimal operations and the two fraction-quantity types at each star tier. Decimal
+cases alternate language and rotate through all six new activities; fraction cases
+use Vietnamese for finding a part and English for finding a whole, rotating five
+new settings. This is representative native sampling, not the full bilingual
+Cartesian matrix. It checks streamed output and token metrics, validation, SQLite
+insertion, fresh-number grading and release of model weights in `finally`.
+Evidence is written under `artifacts/verification/quantity-depth-model-*`.
+
+`--narrative-depth-evidence <model.db3>` can replay those saved outputs against
+the current source without modifying the evidence database or rerunning inference.

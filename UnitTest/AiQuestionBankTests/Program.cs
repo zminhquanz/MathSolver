@@ -4,6 +4,38 @@ using MathSolver.Services.QuestionBank;
 using System.Text.Json;
 using System.Text;
 
+if (args is ["--quantity-depth"] or ["--quantity-depth-model", _])
+{
+    try {
+        if (args.Length == 1) await QuantityDepthTests.RunAsync();
+        else await QuantityDepthTests.RunModelAsync(args[1]);
+    }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--narrative-depth"] or ["--narrative-depth-model", _] or ["--legacy-prose-evidence", _] or ["--narrative-depth-evidence", _])
+{
+    try {
+        if (args.Length == 1) await NarrativeDepthTests.RunAsync();
+        else if (args[0] is "--legacy-prose-evidence" or "--narrative-depth-evidence")
+            NarrativeDepthTests.CheckDatabase(args[1], legacy: args[0] == "--legacy-prose-evidence");
+        else await ProseExpansionTests.RunModelAsync(args[1], narrativeDepth: true);
+    }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--prose-expansion"] or ["--prose-expansion-model", _])
+{
+    try {
+        if (args.Length == 1) await ProseExpansionTests.RunAsync();
+        else await ProseExpansionTests.RunModelAsync(args[1]);
+    }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 static void Check(bool condition, string message)
 { if (!condition) throw new InvalidOperationException(message); }
 
@@ -591,6 +623,9 @@ try
     await MeasurementBankTests.RunAsync();
     await PackingTimeBankTests.RunAsync();
     await FractionQuantityBankTests.RunAsync();
+    await ProseExpansionTests.RunAsync();
+    await NarrativeDepthTests.RunAsync();
+    await QuantityDepthTests.RunAsync();
 }
 finally { Directory.Delete(directory, true); }
 

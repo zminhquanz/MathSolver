@@ -9,8 +9,20 @@ public sealed record FractionQuantityStoryContext(string Unit, string PartLabel,
 
 public static class FractionQuantityStoryContextCatalog
 {
-    public static IReadOnlyList<FractionQuantityStoryContext> GetProfile(AppLanguage language)
-        => QuizContentCatalog.LoadList<FractionQuantityStoryContext>("FractionQuantityContexts", QuizContentCatalog.Culture(language));
+    public static IReadOnlyList<FractionQuantityStoryContext> GetProfile(AppLanguage language, bool expanded = true)
+        => NarrativeContextExpansion.Load<FractionQuantityStoryContext>("FractionQuantityContexts", language, expanded);
+}
+
+// Separate activity metadata keeps historical templates and their seed replay intact.
+internal sealed record FractionQuantityActivity(string ContextId, string PartSource, string WholeSource,
+    string InitialAction, string PartAction);
+
+internal static class FractionQuantityActivityCatalog
+{
+    internal const string ListName = "FractionQuantityActivities";
+    internal static FractionQuantityActivity Get(AppLanguage language, string contextId) =>
+        QuizContentCatalog.LoadList<FractionQuantityActivity>(ListName, QuizContentCatalog.Culture(language))
+            .Single(activity => activity.ContextId == contextId);
 }
 
 public sealed record DataChartStoryContext(string Description, IReadOnlyList<string> Labels,

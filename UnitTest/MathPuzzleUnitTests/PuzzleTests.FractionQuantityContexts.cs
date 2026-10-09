@@ -12,11 +12,11 @@ internal static partial class PuzzleTests
     {
         var vi = FractionQuantityStoryContextCatalog.GetProfile(AppLanguage.Vietnamese);
         var en = FractionQuantityStoryContextCatalog.GetProfile(AppLanguage.English);
-        Require(vi.Count == 15 && vi.Select(c => c.ContextId).Distinct().Count() == 15
+        Require(vi.Count == 23 && vi.Select(c => c.ContextId).Distinct().Count() == vi.Count
             && vi.Select(c => (c.ContextId, c.Quantity, c.Capacity)).SequenceEqual(en.Select(c => (c.ContextId, c.Quantity, c.Capacity))),
             "Fraction context IDs and quantity metadata must be stable across languages.");
-        Require(vi.Count(c => c.Quantity == WordProblemQuantity.Count) == 12
-            && vi.Count(c => c.Quantity is WordProblemQuantity.Mass or WordProblemQuantity.Distance or WordProblemQuantity.Capacity) == 3,
+        Require(vi.Count(c => c.Quantity == WordProblemQuantity.Count) == 16
+            && vi.Count(c => c.Quantity is WordProblemQuantity.Mass or WordProblemQuantity.Distance or WordProblemQuantity.Capacity) == 7,
             "Counted objects and measured quantities must have distinct policies.");
         var fractionalResults = new HashSet<string>();
         var grader = new EssayAnswerValidator(new BasicArithmeticEngine());

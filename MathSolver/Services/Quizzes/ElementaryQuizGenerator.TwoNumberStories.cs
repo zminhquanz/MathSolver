@@ -4,13 +4,15 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private static string TwoNumberStory(DifficultyBuilder t, QuizStoryContext c, string first, string second, bool sum, int level)
+    private string TwoNumberStory(DifficultyBuilder t, QuizStoryContext c, string first, string second, bool sum, int level)
     {
         string F(string role) => t.Givens.Single(g => g.Role == role).Value;
         string unit = c.Unit(t.Language);
         string pair = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.001", ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}"), ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"));
         string relation = (sum ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.013", ("unit", $"{unit}"), ("pair", $"{pair}")) : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.014", ("unit", $"{unit}"), ("second_ToLowerInvariant", $"{second.ToLowerInvariant()}"), ("first_ToLowerInvariant", $"{first.ToLowerInvariant()}")));
-        string text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.012", ("c_ViSetting", $"{c.ViSetting}"), ("pair", $"{pair}"), ("c_EnSetting", $"{c.EnSetting}"));
+        string text = QuizContentCatalog.Text(t.Language, _expandNarratives
+            ? "ElementaryQuizGenerator.TwoNumberStories.Intro" : "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.012",
+            ("c_ViSetting", $"{c.ViSetting}"), ("pair", $"{pair}"), ("c_EnSetting", $"{c.EnSetting}"));
         if (level == 1)
             text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.002", ("relation", $"{relation}"), ("F_quantity", $"{F("quantity")}"), ("unit", $"{unit}"));
         else if (level == 2)

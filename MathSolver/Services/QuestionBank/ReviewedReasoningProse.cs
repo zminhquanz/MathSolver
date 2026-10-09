@@ -46,7 +46,7 @@ internal static class ReviewedReasoningProse
         var lesson = ReasoningStoryCatalogue.Lesson(c);
         string introId = "ElementaryQuizGenerator.MultiStep.CreateMultiStep." + (lesson.Context switch {
             "library" => "002", "craft" => "003", "community" => "004", "distribution" => "005",
-            _ => throw new InvalidOperationException("UnknownMultiStepContext")
+            _ => "Intro." + lesson.Context
         });
         string intro = QuizContentCatalog.Entry(QuizContentCatalog.Culture(c.Language), introId).Text;
         var openings = new[] { intro }.Concat(ReviewedNarrativePhrasings.For(c.Language)[intro])

@@ -90,7 +90,8 @@ public sealed partial class ElementaryQuizGenerator
 
     private ElementaryQuizContract CreateTwoNumberDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
     {
-        var candidates = QuizStoryContextCatalog.All.Where(c => c.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age").ToArray();
+        var candidates = QuizStoryContextCatalog.All.Where(c => c.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age"
+            || (_expandNarratives && c.Id is "kitchen" or "livestock" or "agriculture" or "distribution" or "environment" or "decoration" or "water")).ToArray();
         var context = candidates[NextContextVariant(type, language, "two-number-story", candidates.Length)];
         if (context.Id == "family-age") return CreateAgeTwoNumbers(type, language, tier);
         var t = new DifficultyBuilder(QuizProblemKind.TwoNumbers, type, language, tier);
@@ -105,6 +106,13 @@ public sealed partial class ElementaryQuizGenerator
             "classroom" => ("Tổ thứ nhất", "Tổ thứ hai", "The first team", "The second team"),
             "library" => ("Kệ thứ nhất", "Kệ thứ hai", "The first shelf", "The second shelf"),
             "events" => ("Khu ghế thứ nhất", "Khu ghế thứ hai", "The first seating section", "The second seating section"),
+            "kitchen" => ("Bếp thứ nhất", "Bếp thứ hai", "The first kitchen", "The second kitchen"),
+            "livestock" => ("Trang trại thứ nhất", "Trang trại thứ hai", "The first farm", "The second farm"),
+            "agriculture" => ("Kho thứ nhất", "Kho thứ hai", "The first storehouse", "The second storehouse"),
+            "distribution" => ("Điểm phát quà thứ nhất", "Điểm phát quà thứ hai", "The first gift station", "The second gift station"),
+            "environment" => ("Đội thu gom thứ nhất", "Đội thu gom thứ hai", "The first collection team", "The second collection team"),
+            "decoration" => ("Cuộn ruy băng thứ nhất", "Cuộn ruy băng thứ hai", "The first ribbon roll", "The second ribbon roll"),
+            "water" => ("Bể thứ nhất", "Bể thứ hai", "The first tank", "The second tank"),
             _ => ("Nhóm thứ nhất", "Nhóm thứ hai", "The first group", "The second group")
         };
         string smallLabel = t.L(owners.Item1, owners.Item3), largeLabel = t.L(owners.Item2, owners.Item4);

@@ -8996,82 +8996,1096 @@
         "Id":  "Curriculum.Requirement.Data.FreeChartInput",
         "Text":  "Enter data into a chart interactively.",
         "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.TwoNumberStories.Intro",
+      "Text": "In {c_EnSetting}, consider {pair}. ",
+      "Variables": [
+        "c_ViSetting",
+        "pair",
+        "c_EnSetting"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.kitchen",
+      "Text": "The kitchen prepares meals. ",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.livestock",
+      "Text": "The farm prepares eggs for packing. ",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.water",
+      "Text": "The water supply team prepares water for distribution. ",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.environment",
+      "Text": "The collection team sorts paper for recycling. ",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.agriculture",
+      "Text": "The produce warehouse prepares goods for distribution. ",
+      "Variables": []
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.048",
+      "Text": "Sewing {sets} performance costumes requires {fabric} metres of fabric. How many metres are needed for {new_sets} such costumes?",
+      "Variables": [
+        "sets",
+        "fabric",
+        "new_sets"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.049",
+      "Text": "In the same amount of time, {groups} ovens bake {items} cakes. How many cakes can {new_groups} equally productive ovens bake?",
+      "Variables": [
+        "groups",
+        "items",
+        "new_groups"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.050",
+      "Text": "{quantity} identical bags of animal feed weigh {mass} kg. How many kilograms do {new_quantity} such bags weigh?",
+      "Variables": [
+        "quantity",
+        "mass",
+        "new_quantity"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.051",
+      "Text": "{containers} identical full containers hold {volume} litres of water for plants. How many litres do {new_containers} such full containers hold?",
+      "Variables": [
+        "containers",
+        "volume",
+        "new_containers"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.052",
+      "Text": "{cans} identical paint cans cover {area} square metres of community centre wall. How many square metres can {new_cans} such cans cover at the same coverage rate?",
+      "Variables": [
+        "cans",
+        "area",
+        "new_cans"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.053",
+      "Text": "{workers} workers pack the donated books in {duration} days. How many days do {new_workers} equally productive workers need to pack the same books, working the same hours per day?",
+      "Variables": [
+        "workers",
+        "duration",
+        "new_workers"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.054",
+      "Text": "{machines} printers finish an order in {duration} hours. How many hours do {new_machines} equally productive printers working together need to finish the same order?",
+      "Variables": [
+        "machines",
+        "duration",
+        "new_machines"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.055",
+      "Text": "A camping group prepares enough food for {people} people for {days} days. For how many days will that food last for {new_people} people if each daily portion is unchanged?",
+      "Variables": [
+        "people",
+        "days",
+        "new_people"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.056",
+      "Text": "{vehicles} trucks move all the produce, each making {trips_each} full-load trips. If {new_vehicles} trucks with the same capacity are used, how many trips must each make to move the same produce, with equal trips per truck?",
+      "Variables": [
+        "vehicles",
+        "trips_each",
+        "new_vehicles"
+      ]
+    },
+    {
+      "Id": "ProportionQuizGenerator.Narrative.057",
+      "Text": "{workers} workers pack the gift bags in {days} days. How many workers are needed to pack the same bags in {new_days} days if productivity and daily working hours are the same?",
+      "Variables": [
+        "workers",
+        "days",
+        "new_days"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.002",
+      "Text": "A sewing workshop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.003",
+      "Text": "A sewing workshop has {a} {unit} of {item}. It cuts {b} {unit} for uniforms. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.004",
+      "Text": "Each uniform needs {a} {unit} of {item}. The workshop prepares {b} uniforms. How much fabric is needed in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.005",
+      "Text": "The workshop shares {a} {unit} of {item} equally among {b} uniforms. How much does each uniform receive in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.007",
+      "Text": "The first delivery contains {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.010",
+      "Text": "The second delivery contains {gap} {unit} more than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.012",
+      "Text": "The workshop has {first} {conversion_smallUnit_unit} of {item}. It cuts {used} {unit} for shirts and {other} {unit} for trousers. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.015",
+      "Text": "Each uniform also needs {extra} {unit} of lining fabric in addition to the stated fabric for one uniform. The workshop makes {count} identical uniforms. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.016",
+      "Text": "It receives another {extra} {unit} of the same fabric, then shares the entire amount equally among {count} uniforms. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.017",
+      "Text": "After sharing, it gives an additional {returned} {unit} of {item} only to the first uniform. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.018",
+      "Text": "It then receives another {returned} {unit} of the same {item}, adding it to the total. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.021",
+      "Text": "How much does the first uniform finally receive in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.006",
+      "Text": "Length of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.019",
+      "Text": "Length of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.029",
+      "Text": "Each uniform initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.002",
+      "Text": "A juice maker prepares {item}: the first container holds {a} {unit} and the second holds {b} {unit}. How much do both containers hold in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.003",
+      "Text": "A container holds {a} {unit} of {item}. The maker sells {b} {unit}. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.004",
+      "Text": "Each bottle needs {a} {unit} of {item}. The maker prepares {b} bottles. How much is needed in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.005",
+      "Text": "The maker pours {a} {unit} of {item} equally into {b} bottles. How much is in each bottle in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.007",
+      "Text": "The first container holds {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.010",
+      "Text": "The second container holds {gap} {unit} more than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.012",
+      "Text": "A container holds {first} {conversion_smallUnit_unit} of {item}. The maker sells {used} {unit} in the morning and {other} {unit} in the afternoon. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.015",
+      "Text": "Each bottle needs another {extra} {unit} of juice in addition to the stated amount for one bottle. The maker prepares {count} identical bottles. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.016",
+      "Text": "The maker prepares another {extra} {unit} of juice, then shares the entire amount equally among {count} bottles. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.017",
+      "Text": "After sharing, the maker adds {returned} {unit} of {item} only to the first bottle. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.018",
+      "Text": "The maker then adds another {returned} {unit} of {item} to the total. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.021",
+      "Text": "How much is finally in the first bottle in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.006",
+      "Text": "Volume of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.019",
+      "Text": "Volume of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.029",
+      "Text": "Each bottle initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.002",
+      "Text": "A farm prepares {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.003",
+      "Text": "A farm has {a} {unit} of {item}. It feeds {b} {unit} to its animals. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.004",
+      "Text": "Each bag needs {a} {unit} of {item}. The farm prepares {b} bags. How much is needed in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.005",
+      "Text": "The farm shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.007",
+      "Text": "The first delivery contains {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.010",
+      "Text": "The second delivery contains {gap} {unit} more than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.012",
+      "Text": "A farm has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} in the morning and {other} {unit} in the afternoon. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.015",
+      "Text": "Each bag needs another {extra} {unit} of feed in addition to the stated amount for one bag. The farm prepares {count} identical bags. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.016",
+      "Text": "The farm receives another {extra} {unit} of the same feed, then shares the entire amount equally among {count} bags. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.017",
+      "Text": "After sharing, the farm adds {returned} {unit} of {item} only to the first bag. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.018",
+      "Text": "The farm then adds another {returned} {unit} of {item} to the total. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.021",
+      "Text": "How much is finally in the first bag in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.006",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.019",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.029",
+      "Text": "Each bag initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.002",
+      "Text": "A decorating team prepares {item}: the first roll is {a} {unit} long and the second is {b} {unit} long. What is their total length in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.003",
+      "Text": "A roll contains {a} {unit} of {item}. The team cuts off {b} {unit}. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.004",
+      "Text": "Each piece needs {a} {unit} of {item}. The team cuts {b} pieces. What total length is needed in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.005",
+      "Text": "The team cuts {a} {unit} of {item} into {b} equal pieces. How long is each piece in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.007",
+      "Text": "The first roll contains {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.010",
+      "Text": "The second roll is {gap} {unit} longer than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.012",
+      "Text": "A roll contains {first} {conversion_smallUnit_unit} of {item}. The team cuts {used} {unit} for a sign and {other} {unit} for a doorway. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.015",
+      "Text": "Each piece needs another {extra} {unit} of cord in addition to its stated length. The team prepares {count} identical pieces. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.016",
+      "Text": "The team attaches another {extra} {unit} of the same cord, then cuts the entire length into {count} equal pieces. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.017",
+      "Text": "After cutting, the team attaches {returned} {unit} of {item} only to the first piece. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.018",
+      "Text": "The team then adds another {returned} {unit} of {item} to the total length. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.021",
+      "Text": "How long is the first piece finally in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.006",
+      "Text": "Length of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.019",
+      "Text": "Length of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.029",
+      "Text": "Each piece of cord initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.002",
+      "Text": "A shop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much does it receive in total in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.003",
+      "Text": "A shop has {a} {unit} of {item}. It sells {b} {unit}. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.004",
+      "Text": "Each bag needs {a} {unit} of {item}. The shop packs {b} bags. How much is needed in total in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.005",
+      "Text": "The shop shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.007",
+      "Text": "The first delivery contains {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.010",
+      "Text": "The second delivery contains {gap} {unit} more than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.012",
+      "Text": "A shop has {first} {conversion_smallUnit_unit} of {item}. It sells {used} {unit} in the morning and {other} {unit} in the afternoon. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.015",
+      "Text": "Each bag needs another {extra} {unit} of rice in addition to the stated amount for one bag. The shop packs {count} identical bags. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.016",
+      "Text": "The shop receives another {extra} {unit} of the same rice, then shares the entire amount equally among {count} bags. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.017",
+      "Text": "After sharing, the shop adds {returned} {unit} of {item} only to the first bag. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.018",
+      "Text": "The shop then adds another {returned} {unit} of {item} to the total. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.021",
+      "Text": "How much is finally in the first bag in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.006",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.019",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.029",
+      "Text": "Each bag initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.002",
+      "Text": "A bakery prepares {item}: the first batch needs {a} {unit} and the second needs {b} {unit}. How much do both batches need in {unit}?",
+      "Variables": [
+        "item",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.003",
+      "Text": "A bakery has {a} {unit} of {item}. It uses {b} {unit} for baking. How much remains in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.004",
+      "Text": "Each batch needs {a} {unit} of {item}. The bakery makes {b} batches. How much is needed in total in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.005",
+      "Text": "The bakery shares {a} {unit} of {item} equally among {b} batches. How much does each batch receive in {unit}?",
+      "Variables": [
+        "a",
+        "unit",
+        "item",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.007",
+      "Text": "The first batch needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.010",
+      "Text": "The second batch needs {gap} {unit} more than the first. ",
+      "Variables": [
+        "gap",
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.012",
+      "Text": "A bakery has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} for bread and {other} {unit} for cakes. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item",
+        "used",
+        "unit",
+        "other"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.015",
+      "Text": "Each batch needs another {extra} {unit} of flour in addition to the stated amount for one batch. The bakery makes {count} identical batches. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.016",
+      "Text": "The bakery receives another {extra} {unit} of the same flour, then shares the entire amount equally among {count} batches. ",
+      "Variables": [
+        "extra",
+        "unit",
+        "count"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.017",
+      "Text": "After sharing, the bakery gives an additional {returned} {unit} of {item} only to the first batch. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.018",
+      "Text": "The bakery then adds another {returned} {unit} of {item} to the total. ",
+      "Variables": [
+        "returned",
+        "unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.021",
+      "Text": "How much does the first batch finally receive in {unit}?",
+      "Variables": [
+        "unit"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.006",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.019",
+      "Text": "Mass of {item} required",
+      "Variables": [
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.029",
+      "Text": "Each batch initially needs {first} {conversion_smallUnit_unit} of {item}. ",
+      "Variables": [
+        "first",
+        "conversion_smallUnit_unit",
+        "item"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.001",
+      "Text": "{source} Two separate portions contain {a} {unit} and {b} {unit}. ",
+      "Variables": [
+        "source",
+        "a",
+        "unit",
+        "b"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.002",
+      "Text": "{source} The record lists two portions of {a} {unit} and {b} {unit}. There are {removed} {unit} included in both portions, which must be counted only once. ",
+      "Variables": [
+        "source",
+        "a",
+        "unit",
+        "b",
+        "removed"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.019",
+      "Text": "{source} Initially there are {quantity} {unit}. Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}. What is the {target} in {unit}?",
+      "Variables": [
+        "source",
+        "quantity",
+        "unit",
+        "removedNumerator",
+        "removedDenominator",
+        "initial_action",
+        "n",
+        "d",
+        "part_action",
+        "target"
+      ]
+    },
+    {
+      "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.020",
+      "Text": "{source} Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}, corresponding to {quantity} {unit}. What is the {target} in {unit}?",
+      "Variables": [
+        "source",
+        "removedNumerator",
+        "removedDenominator",
+        "initial_action",
+        "n",
+        "d",
+        "part_action",
+        "quantity",
+        "unit",
+        "target"
+      ]
     }
   ],
   "Lists": {
     "Narrative.FractionQuantity.Phrasings": [
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001",
             "Alternatives":  [
                                  "The portions {a} and {b} {unit} together form the supplied quantity. ",
                                  "The supplied quantity consists of two portions: {a} and {b} {unit}. "
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002",
             "Alternatives":  [
                                  "Combine the portions {a} and {b} {unit}, then take away {removed} {unit} before calculating the fraction. ",
                                  "From the two portions {a} and {b} {unit}, subtract {removed} {unit} to obtain the quantity for the fraction. "
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.003",
             "Alternatives":  [
                                  "Quantity after combining and adjusting",
                                  "Supplied quantity for the fraction calculation"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.004",
             "Alternatives":  [
                                  "Share left after using the first portion",
                                  "Remaining fraction after the first use"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.005",
             "Alternatives":  [
                                  "Quantity left after the first use",
                                  "Unused quantity after the first portion"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.006",
             "Alternatives":  [
                                  "Second-use fraction expressed relative to the original quantity",
                                  "Share of the original amount used on the second occasion"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.017",
             "Alternatives":  [
                                  "{context_PartLabel} accounts for {fraction} of the supplied quantity above. What is {context_PartLabel_ToLowerInvariant} in {unit}?",
                                  "{context_PartLabel} represents {fraction} of this supplied amount. What is {context_PartLabel_ToLowerInvariant} in {unit}?"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.018",
             "Alternatives":  [
                                  "The supplied portion is {context_PartLabel_ToLowerInvariant}, accounting for {fraction} of {context_WholeLabel_ToLowerInvariant}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?",
                                  "The given amount represents {context_PartLabel_ToLowerInvariant}, making up {fraction} of {context_WholeLabel_ToLowerInvariant}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019",
             "Alternatives":  [
                                  "{context_WholeLabel} contains {quantity} {unit}. After using {removedNumerator}/{removedDenominator} of the original amount first, some remains. {context_PartLabel} is {n}/{d} of that remaining amount. What is {context_PartLabel_ToLowerInvariant} in {unit}?",
                                  "{context_WholeLabel} amounts to {quantity} {unit}. The first use takes {removedNumerator}/{removedDenominator} of the initial quantity. {context_PartLabel} is calculated as {n}/{d} of what remains after that first use. What is {context_PartLabel_ToLowerInvariant} in {unit}?"
                              ]
         },
-        {
+      {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020",
             "Alternatives":  [
                                  "The first use takes {removedNumerator}/{removedDenominator} of {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} is {n}/{d} of what remains after the first use and contains {quantity} {unit}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?",
                                  "The first portion used makes up {removedNumerator}/{removedDenominator} of {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} accounts for {n}/{d} of the unused remainder and amounts to {quantity} {unit}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?"
                              ]
-        }
+        },
+      {
+        "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.001",
+        "Alternatives": [
+          "According to the record, {source} Two separate portions contain {a} {unit} and {b} {unit}. ",
+          "The record states: {source} Two separate portions contain {a} {unit} and {b} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.002",
+        "Alternatives": [
+          "According to the record, {source} The record lists two portions of {a} {unit} and {b} {unit}. There are {removed} {unit} included in both portions, which must be counted only once. ",
+          "The record states: {source} The record lists two portions of {a} {unit} and {b} {unit}. There are {removed} {unit} included in both portions, which must be counted only once. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.019",
+        "Alternatives": [
+          "According to the record, {source} Initially there are {quantity} {unit}. Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}. What is the {target} in {unit}?",
+          "The record states: {source} Initially there are {quantity} {unit}. Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}. What is the {target} in {unit}?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.Context.020",
+        "Alternatives": [
+          "According to the record, {source} Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}, corresponding to {quantity} {unit}. What is the {target} in {unit}?",
+          "The record states: {source} Of the initial amount, {removedNumerator}/{removedDenominator} is {initial_action}. Of the remainder, {n}/{d} is {part_action}, corresponding to {quantity} {unit}. What is the {target} in {unit}?"
+        ]
+      }
     ],
-
     "MeasurementStoryContexts": [
       {
         "Id": "kitchen",
@@ -9126,7 +10140,8 @@
         "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.002",
         "Alternatives": [
           "The first batch has {a} and the second has {b} {item}; combine these separate batches. ",
-          "The two separate batches contain {a} and {b} {item} respectively. "
+          "The two separate batches contain {a} and {b} {item} respectively. ",
+          "The two separate batches contain {a} and {b} {item} in that order. "
         ]
       },
       {
@@ -9341,7 +10356,6 @@
         }
       }
     ],
-
     "DecimalStoryContexts": [
       {"Id":"kitchen","Item":"rice","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100},
       {"Id":"decoration","Item":"ribbon","Unit":"m","SmallUnit":"cm","ConversionFactor":100,"MaximumQuantity":100},
@@ -9353,7 +10367,7 @@
       {"Id":"environment","Item":"collected paper","Unit":"kg","SmallUnit":"g","ConversionFactor":1000,"MaximumQuantity":100}
     ],
     "Narrative.Decimal.Phrasings": [
-      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002","Alternatives":["There are two separate portions of {item}, measuring {a} {unit} and {b} {unit} respectively. What is the total measurement of both portions in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.002","Alternatives":["There are two separate portions of {item}, measuring {a} {unit} and {b} {unit} respectively. What is the total measurement of both portions in {unit}?","There are two separate portions of {item}, measuring {a} {unit} and {b} {unit} in that order. What is the total measurement of both portions in {unit}?"]},
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.003","Alternatives":["The starting amount is {a} {unit} of {item}. From this amount, {b} {unit} are taken for use. How many {unit} are left?"]},
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.004","Alternatives":["One portion requires {a} {unit} of {item}. Make {b} portions with that same measurement. How many {unit} do all the portions require?"]},
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateDecimalStory.005","Alternatives":["Take {a} {unit} of {item} and distribute it into {b} equal portions. How many {unit} does each portion contain?"]},
@@ -9374,12 +10388,168 @@
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.021","Alternatives":["How many {unit} are finally in the first portion alone?"]},
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.022","Alternatives":["What is the final total in {unit} of {item}?"]},
       {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.027","Alternatives":["Find the amount in one equal share"]},
-      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.028","Alternatives":["Find the amount before receiving more"]}
+      {"Id":"ElementaryQuizGenerator.DecimalStories.CreateIndirectDecimalStory.028","Alternatives":["Find the amount before receiving more"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.002","Alternatives":["According to the record, a sewing workshop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?","The record states: a sewing workshop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.003","Alternatives":["According to the record, a sewing workshop has {a} {unit} of {item}. It cuts {b} {unit} for uniforms. How much remains in {unit}?","The record states: a sewing workshop has {a} {unit} of {item}. It cuts {b} {unit} for uniforms. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.004","Alternatives":["According to the record, each uniform needs {a} {unit} of {item}. The workshop prepares {b} uniforms. How much fabric is needed in {unit}?","The record states: each uniform needs {a} {unit} of {item}. The workshop prepares {b} uniforms. How much fabric is needed in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.005","Alternatives":["According to the record, the workshop shares {a} {unit} of {item} equally among {b} uniforms. How much does each uniform receive in {unit}?","The record states: the workshop shares {a} {unit} of {item} equally among {b} uniforms. How much does each uniform receive in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.007","Alternatives":["According to the record, the first delivery contains {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first delivery contains {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.010","Alternatives":["According to the record, the second delivery contains {gap} {unit} more than the first. ","The record states: the second delivery contains {gap} {unit} more than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.012","Alternatives":["According to the record, the workshop has {first} {conversion_smallUnit_unit} of {item}. It cuts {used} {unit} for shirts and {other} {unit} for trousers. ","The record states: the workshop has {first} {conversion_smallUnit_unit} of {item}. It cuts {used} {unit} for shirts and {other} {unit} for trousers. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.015","Alternatives":["According to the record, each uniform also needs {extra} {unit} of lining fabric in addition to the stated fabric for one uniform. The workshop makes {count} identical uniforms. ","The record states: each uniform also needs {extra} {unit} of lining fabric in addition to the stated fabric for one uniform. The workshop makes {count} identical uniforms. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.016","Alternatives":["According to the record, it receives another {extra} {unit} of the same fabric, then shares the entire amount equally among {count} uniforms. ","The record states: it receives another {extra} {unit} of the same fabric, then shares the entire amount equally among {count} uniforms. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.017","Alternatives":["According to the record, after sharing, it gives an additional {returned} {unit} of {item} only to the first uniform. ","The record states: after sharing, it gives an additional {returned} {unit} of {item} only to the first uniform. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.018","Alternatives":["According to the record, it then receives another {returned} {unit} of the same {item}, adding it to the total. ","The record states: it then receives another {returned} {unit} of the same {item}, adding it to the total. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.021","Alternatives":["According to the record, how much does the first uniform finally receive in {unit}?","The record states: how much does the first uniform finally receive in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.006","Alternatives":["According to the record, length of {item} required","The record states: length of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.019","Alternatives":["According to the record, length of {item} required","The record states: length of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.sewing-uniforms.029","Alternatives":["According to the record, each uniform initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each uniform initially needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.002","Alternatives":["According to the record, a juice maker prepares {item}: the first container holds {a} {unit} and the second holds {b} {unit}. How much do both containers hold in {unit}?","The record states: a juice maker prepares {item}: the first container holds {a} {unit} and the second holds {b} {unit}. How much do both containers hold in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.003","Alternatives":["According to the record, a container holds {a} {unit} of {item}. The maker sells {b} {unit}. How much remains in {unit}?","The record states: a container holds {a} {unit} of {item}. The maker sells {b} {unit}. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.004","Alternatives":["According to the record, each bottle needs {a} {unit} of {item}. The maker prepares {b} bottles. How much is needed in {unit}?","The record states: each bottle needs {a} {unit} of {item}. The maker prepares {b} bottles. How much is needed in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.005","Alternatives":["According to the record, the maker pours {a} {unit} of {item} equally into {b} bottles. How much is in each bottle in {unit}?","The record states: the maker pours {a} {unit} of {item} equally into {b} bottles. How much is in each bottle in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.007","Alternatives":["According to the record, the first container holds {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first container holds {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.010","Alternatives":["According to the record, the second container holds {gap} {unit} more than the first. ","The record states: the second container holds {gap} {unit} more than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.012","Alternatives":["According to the record, a container holds {first} {conversion_smallUnit_unit} of {item}. The maker sells {used} {unit} in the morning and {other} {unit} in the afternoon. ","The record states: a container holds {first} {conversion_smallUnit_unit} of {item}. The maker sells {used} {unit} in the morning and {other} {unit} in the afternoon. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.015","Alternatives":["According to the record, each bottle needs another {extra} {unit} of juice in addition to the stated amount for one bottle. The maker prepares {count} identical bottles. ","The record states: each bottle needs another {extra} {unit} of juice in addition to the stated amount for one bottle. The maker prepares {count} identical bottles. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.016","Alternatives":["According to the record, the maker prepares another {extra} {unit} of juice, then shares the entire amount equally among {count} bottles. ","The record states: the maker prepares another {extra} {unit} of juice, then shares the entire amount equally among {count} bottles. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.017","Alternatives":["According to the record, after sharing, the maker adds {returned} {unit} of {item} only to the first bottle. ","The record states: after sharing, the maker adds {returned} {unit} of {item} only to the first bottle. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.018","Alternatives":["According to the record, the maker then adds another {returned} {unit} of {item} to the total. ","The record states: the maker then adds another {returned} {unit} of {item} to the total. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.021","Alternatives":["According to the record, how much is finally in the first bottle in {unit}?","The record states: how much is finally in the first bottle in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.006","Alternatives":["According to the record, volume of {item} required","The record states: volume of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.019","Alternatives":["According to the record, volume of {item} required","The record states: volume of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.juice-bottling.029","Alternatives":["According to the record, each bottle initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each bottle initially needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.002","Alternatives":["According to the record, a farm prepares {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?","The record states: a farm prepares {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much do both deliveries contain in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.003","Alternatives":["According to the record, a farm has {a} {unit} of {item}. It feeds {b} {unit} to its animals. How much remains in {unit}?","The record states: a farm has {a} {unit} of {item}. It feeds {b} {unit} to its animals. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.004","Alternatives":["According to the record, each bag needs {a} {unit} of {item}. The farm prepares {b} bags. How much is needed in {unit}?","The record states: each bag needs {a} {unit} of {item}. The farm prepares {b} bags. How much is needed in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.005","Alternatives":["According to the record, the farm shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?","The record states: the farm shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.007","Alternatives":["According to the record, the first delivery contains {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first delivery contains {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.010","Alternatives":["According to the record, the second delivery contains {gap} {unit} more than the first. ","The record states: the second delivery contains {gap} {unit} more than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.012","Alternatives":["According to the record, a farm has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} in the morning and {other} {unit} in the afternoon. ","The record states: a farm has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} in the morning and {other} {unit} in the afternoon. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.015","Alternatives":["According to the record, each bag needs another {extra} {unit} of feed in addition to the stated amount for one bag. The farm prepares {count} identical bags. ","The record states: each bag needs another {extra} {unit} of feed in addition to the stated amount for one bag. The farm prepares {count} identical bags. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.016","Alternatives":["According to the record, the farm receives another {extra} {unit} of the same feed, then shares the entire amount equally among {count} bags. ","The record states: the farm receives another {extra} {unit} of the same feed, then shares the entire amount equally among {count} bags. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.017","Alternatives":["According to the record, after sharing, the farm adds {returned} {unit} of {item} only to the first bag. ","The record states: after sharing, the farm adds {returned} {unit} of {item} only to the first bag. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.018","Alternatives":["According to the record, the farm then adds another {returned} {unit} of {item} to the total. ","The record states: the farm then adds another {returned} {unit} of {item} to the total. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.021","Alternatives":["According to the record, how much is finally in the first bag in {unit}?","The record states: how much is finally in the first bag in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.006","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.019","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.feed-preparation.029","Alternatives":["According to the record, each bag initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each bag initially needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.002","Alternatives":["According to the record, a decorating team prepares {item}: the first roll is {a} {unit} long and the second is {b} {unit} long. What is their total length in {unit}?","The record states: a decorating team prepares {item}: the first roll is {a} {unit} long and the second is {b} {unit} long. What is their total length in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.003","Alternatives":["According to the record, a roll contains {a} {unit} of {item}. The team cuts off {b} {unit}. How much remains in {unit}?","The record states: a roll contains {a} {unit} of {item}. The team cuts off {b} {unit}. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.004","Alternatives":["According to the record, each piece needs {a} {unit} of {item}. The team cuts {b} pieces. What total length is needed in {unit}?","The record states: each piece needs {a} {unit} of {item}. The team cuts {b} pieces. What total length is needed in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.005","Alternatives":["According to the record, the team cuts {a} {unit} of {item} into {b} equal pieces. How long is each piece in {unit}?","The record states: the team cuts {a} {unit} of {item} into {b} equal pieces. How long is each piece in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.007","Alternatives":["According to the record, the first roll contains {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first roll contains {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.010","Alternatives":["According to the record, the second roll is {gap} {unit} longer than the first. ","The record states: the second roll is {gap} {unit} longer than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.012","Alternatives":["According to the record, a roll contains {first} {conversion_smallUnit_unit} of {item}. The team cuts {used} {unit} for a sign and {other} {unit} for a doorway. ","The record states: a roll contains {first} {conversion_smallUnit_unit} of {item}. The team cuts {used} {unit} for a sign and {other} {unit} for a doorway. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.015","Alternatives":["According to the record, each piece needs another {extra} {unit} of cord in addition to its stated length. The team prepares {count} identical pieces. ","The record states: each piece needs another {extra} {unit} of cord in addition to its stated length. The team prepares {count} identical pieces. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.016","Alternatives":["According to the record, the team attaches another {extra} {unit} of the same cord, then cuts the entire length into {count} equal pieces. ","The record states: the team attaches another {extra} {unit} of the same cord, then cuts the entire length into {count} equal pieces. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.017","Alternatives":["According to the record, after cutting, the team attaches {returned} {unit} of {item} only to the first piece. ","The record states: after cutting, the team attaches {returned} {unit} of {item} only to the first piece. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.018","Alternatives":["According to the record, the team then adds another {returned} {unit} of {item} to the total length. ","The record states: the team then adds another {returned} {unit} of {item} to the total length. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.021","Alternatives":["According to the record, how long is the first piece finally in {unit}?","The record states: how long is the first piece finally in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.006","Alternatives":["According to the record, length of {item} required","The record states: length of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.019","Alternatives":["According to the record, length of {item} required","The record states: length of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rope-cutting.029","Alternatives":["According to the record, each piece of cord initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each piece of cord initially needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.002","Alternatives":["According to the record, a shop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much does it receive in total in {unit}?","The record states: a shop receives {item}: {a} {unit} in the first delivery and {b} {unit} in the second. How much does it receive in total in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.003","Alternatives":["According to the record, a shop has {a} {unit} of {item}. It sells {b} {unit}. How much remains in {unit}?","The record states: a shop has {a} {unit} of {item}. It sells {b} {unit}. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.004","Alternatives":["According to the record, each bag needs {a} {unit} of {item}. The shop packs {b} bags. How much is needed in total in {unit}?","The record states: each bag needs {a} {unit} of {item}. The shop packs {b} bags. How much is needed in total in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.005","Alternatives":["According to the record, the shop shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?","The record states: the shop shares {a} {unit} of {item} equally among {b} bags. How much is in each bag in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.007","Alternatives":["According to the record, the first delivery contains {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first delivery contains {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.010","Alternatives":["According to the record, the second delivery contains {gap} {unit} more than the first. ","The record states: the second delivery contains {gap} {unit} more than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.012","Alternatives":["According to the record, a shop has {first} {conversion_smallUnit_unit} of {item}. It sells {used} {unit} in the morning and {other} {unit} in the afternoon. ","The record states: a shop has {first} {conversion_smallUnit_unit} of {item}. It sells {used} {unit} in the morning and {other} {unit} in the afternoon. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.015","Alternatives":["According to the record, each bag needs another {extra} {unit} of rice in addition to the stated amount for one bag. The shop packs {count} identical bags. ","The record states: each bag needs another {extra} {unit} of rice in addition to the stated amount for one bag. The shop packs {count} identical bags. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.016","Alternatives":["According to the record, the shop receives another {extra} {unit} of the same rice, then shares the entire amount equally among {count} bags. ","The record states: the shop receives another {extra} {unit} of the same rice, then shares the entire amount equally among {count} bags. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.017","Alternatives":["According to the record, after sharing, the shop adds {returned} {unit} of {item} only to the first bag. ","The record states: after sharing, the shop adds {returned} {unit} of {item} only to the first bag. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.018","Alternatives":["According to the record, the shop then adds another {returned} {unit} of {item} to the total. ","The record states: the shop then adds another {returned} {unit} of {item} to the total. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.021","Alternatives":["According to the record, how much is finally in the first bag in {unit}?","The record states: how much is finally in the first bag in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.006","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.019","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.rice-packing.029","Alternatives":["According to the record, each bag initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each bag initially needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.002","Alternatives":["According to the record, a bakery prepares {item}: the first batch needs {a} {unit} and the second needs {b} {unit}. How much do both batches need in {unit}?","The record states: a bakery prepares {item}: the first batch needs {a} {unit} and the second needs {b} {unit}. How much do both batches need in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.003","Alternatives":["According to the record, a bakery has {a} {unit} of {item}. It uses {b} {unit} for baking. How much remains in {unit}?","The record states: a bakery has {a} {unit} of {item}. It uses {b} {unit} for baking. How much remains in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.004","Alternatives":["According to the record, each batch needs {a} {unit} of {item}. The bakery makes {b} batches. How much is needed in total in {unit}?","The record states: each batch needs {a} {unit} of {item}. The bakery makes {b} batches. How much is needed in total in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.005","Alternatives":["According to the record, the bakery shares {a} {unit} of {item} equally among {b} batches. How much does each batch receive in {unit}?","The record states: the bakery shares {a} {unit} of {item} equally among {b} batches. How much does each batch receive in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.007","Alternatives":["According to the record, the first batch needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: the first batch needs {first} {conversion_smallUnit_unit} of {item}. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.010","Alternatives":["According to the record, the second batch needs {gap} {unit} more than the first. ","The record states: the second batch needs {gap} {unit} more than the first. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.012","Alternatives":["According to the record, a bakery has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} for bread and {other} {unit} for cakes. ","The record states: a bakery has {first} {conversion_smallUnit_unit} of {item}. It uses {used} {unit} for bread and {other} {unit} for cakes. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.015","Alternatives":["According to the record, each batch needs another {extra} {unit} of flour in addition to the stated amount for one batch. The bakery makes {count} identical batches. ","The record states: each batch needs another {extra} {unit} of flour in addition to the stated amount for one batch. The bakery makes {count} identical batches. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.016","Alternatives":["According to the record, the bakery receives another {extra} {unit} of the same flour, then shares the entire amount equally among {count} batches. ","The record states: the bakery receives another {extra} {unit} of the same flour, then shares the entire amount equally among {count} batches. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.017","Alternatives":["According to the record, after sharing, the bakery gives an additional {returned} {unit} of {item} only to the first batch. ","The record states: after sharing, the bakery gives an additional {returned} {unit} of {item} only to the first batch. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.018","Alternatives":["According to the record, the bakery then adds another {returned} {unit} of {item} to the total. ","The record states: the bakery then adds another {returned} {unit} of {item} to the total. "]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.021","Alternatives":["According to the record, how much does the first batch finally receive in {unit}?","The record states: how much does the first batch finally receive in {unit}?"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.006","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.019","Alternatives":["According to the record, mass of {item} required","The record states: mass of {item} required"]},
+      {"Id":"ElementaryQuizGenerator.DecimalStories.Activity.bakery-batches.029","Alternatives":["According to the record, each batch initially needs {first} {conversion_smallUnit_unit} of {item}. ","The record states: each batch initially needs {first} {conversion_smallUnit_unit} of {item}. "]}
     ],
-    "Narrative.Proportion.Phrasings": [{"Id":"ProportionQuizGenerator.Narrative.001","Alternatives":["Making {sets} sets of clothes requires a total of {fabric} meters of fabric. How many meters of fabric are needed for {new_sets} sets at the same rate?","Making {sets} sets of clothes requires altogether {fabric} meters of fabric. How many meters of fabric are needed for {new_sets} sets at the same rate?"]},{"Id":"ProportionQuizGenerator.Narrative.002","Alternatives":["A total of {fabric} meters of fabric is required to make {sets} sets of clothes. How many meters are needed for {new_sets} sets?"]},{"Id":"ProportionQuizGenerator.Narrative.003","Alternatives":["{students} students plant a total of {trees} trees. How many trees can {new_students} students plant if every student plants the same number?","{students} students plant altogether {trees} trees. How many trees can {new_students} students plant if every student plants the same number?"]},{"Id":"ProportionQuizGenerator.Narrative.004","Alternatives":["A group consisting of {students} students plants a total of {trees} trees. How many trees can a class of {new_students} students plant at the same rate?","A group consisting of {students} students plants altogether {trees} trees. How many trees can a class of {new_students} students plant at the same rate?"]},{"Id":"ProportionQuizGenerator.Narrative.005","Alternatives":["Buying {quantity} notebooks requires a payment of ${cost}. How much do {new_quantity} notebooks cost at the same unit price?"]},{"Id":"ProportionQuizGenerator.Narrative.006","Alternatives":["A parent pays for {quantity} notebooks at a total cost of ${cost}. How much would {new_quantity} notebooks cost at the same unit price?"]},{"Id":"ProportionQuizGenerator.Narrative.007","Alternatives":["{vehicles} trucks transport a total of {cargo} tons of bagged rice. How many tons of rice can {new_vehicles} identical trucks carry?","{vehicles} trucks transport altogether {cargo} tons of bagged rice. How many tons of rice can {new_vehicles} identical trucks carry?"]},{"Id":"ProportionQuizGenerator.Narrative.008","Alternatives":["{vehicles} identical vehicles consume a total of {fuel} liters of fuel over the same route. How many liters do {new_vehicles} such vehicles use?","{vehicles} identical vehicles consume altogether {fuel} liters of fuel over the same route. How many liters do {new_vehicles} such vehicles use?"]},{"Id":"ProportionQuizGenerator.Narrative.009","Alternatives":["A car covers {distance} km over a period of {duration} hours. At the same speed, how many kilometers does it travel in {new_duration} hours?"]},{"Id":"ProportionQuizGenerator.Narrative.010","Alternatives":["In the same amount of time, {groups} workers produce a total of {items} chairs. How many chairs can {new_groups} equally productive workers make?","In the same amount of time, {groups} workers produce altogether {items} chairs. How many chairs can {new_groups} equally productive workers make?"]},{"Id":"ProportionQuizGenerator.Narrative.011","Alternatives":["In the same amount of time, {groups} machines produce a total of {items} products. How many products can {new_groups} equally productive machines make?","In the same amount of time, {groups} machines produce altogether {items} products. How many products can {new_groups} equally productive machines make?"]},{"Id":"ProportionQuizGenerator.Narrative.012","Alternatives":["{groups} identical crates hold a total of {items} boxes. How many boxes are in {new_groups} such crates?","{groups} identical crates hold altogether {items} boxes. How many boxes are in {new_groups} such crates?"]},{"Id":"ProportionQuizGenerator.Narrative.013","Alternatives":["{quantity} equal bags of rice have a combined weight of {mass} kg. How many kilograms do {new_quantity} such bags weigh?","{quantity} equal bags of rice have a total weight of {mass} kg. How many kilograms do {new_quantity} such bags weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.014","Alternatives":["{quantity} equal bunches of vegetables have a combined weight of {mass} grams. How many grams do {new_quantity} such bunches weigh?","{quantity} equal bunches of vegetables have a total weight of {mass} grams. How many grams do {new_quantity} such bunches weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.015","Alternatives":["{quantity} equal carrots have a combined weight of {mass} grams. How many grams do {new_quantity} such carrots weigh?","{quantity} equal carrots have a total weight of {mass} grams. How many grams do {new_quantity} such carrots weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.016","Alternatives":["{quantity} equal potatoes have a combined weight of {mass} grams. How many grams do {new_quantity} such potatoes weigh?","{quantity} equal potatoes have a total weight of {mass} grams. How many grams do {new_quantity} such potatoes weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.017","Alternatives":["{quantity} equal apples have a combined weight of {mass} grams. How many grams do {new_quantity} such apples weigh?","{quantity} equal apples have a total weight of {mass} grams. How many grams do {new_quantity} such apples weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.018","Alternatives":["{quantity} equal oranges have a combined weight of {mass} grams. How many grams do {new_quantity} such oranges weigh?","{quantity} equal oranges have a total weight of {mass} grams. How many grams do {new_quantity} such oranges weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.019","Alternatives":["{quantity} equal mangoes have a combined weight of {mass} grams. How many grams do {new_quantity} such mangoes weigh?","{quantity} equal mangoes have a total weight of {mass} grams. How many grams do {new_quantity} such mangoes weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.020","Alternatives":["{quantity} equal portions of pork have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of pork have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.021","Alternatives":["{quantity} equal portions of fish have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of fish have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.022","Alternatives":["{quantity} equal portions of chicken have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of chicken have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.023","Alternatives":["{quantity} eggs of the same size have a combined weight of {mass} grams. How many grams do {new_quantity} such eggs weigh?","{quantity} eggs of the same size have a total weight of {mass} grams. How many grams do {new_quantity} such eggs weigh?"]},{"Id":"ProportionQuizGenerator.Narrative.024","Alternatives":["{containers} identical containers have a combined capacity of {volume} liters of honey. How many liters can {new_containers} such containers hold?","{containers} identical containers hold altogether {volume} liters of honey. How many liters can {new_containers} such containers hold?"]},{"Id":"ProportionQuizGenerator.Narrative.025","Alternatives":["{containers} identical cans have a combined capacity of {volume} liters of oil. How many liters can {new_containers} such cans hold?","{containers} identical cans hold altogether {volume} liters of oil. How many liters can {new_containers} such cans hold?"]},{"Id":"ProportionQuizGenerator.Narrative.026","Alternatives":["{cans} identical cans of paint can coat {area} m² of wall. How many square meters can {new_cans} cans cover?","{cans} identical cans of paint can cover {area} m² of wall. How many square meters can {new_cans} cans cover?"]},{"Id":"ProportionQuizGenerator.Narrative.027","Alternatives":["{workers} people need {duration} days to complete a job. How many days do {new_workers} people need if everyone works at the same rate?","{workers} people require {duration} days to complete a job. How many days do {new_workers} people require if everyone works at the same rate?"]},{"Id":"ProportionQuizGenerator.Narrative.028","Alternatives":["{workers} workers need {duration} days to complete work on a road section. How many days do {new_workers} workers need at the same productivity?","{workers} workers require {duration} days to complete work on a road section. How many days do {new_workers} workers require at the same productivity?"]},{"Id":"ProportionQuizGenerator.Narrative.029","Alternatives":["{workers} equally productive workers need {duration} hours to complete a job. How many hours do {new_workers} workers need to finish the same job?","{workers} equally productive workers require {duration} hours to complete a job. How many hours do {new_workers} workers require to finish the same job?"]},{"Id":"ProportionQuizGenerator.Narrative.030","Alternatives":["{machines} machines need {duration} hours to complete a job. How many hours do {new_machines} equally productive machines, running simultaneously, need to finish the same job?","{machines} machines require {duration} hours to complete a job. How many hours do {new_machines} equally productive machines, running simultaneously, require to finish the same job?"]},{"Id":"ProportionQuizGenerator.Narrative.031","Alternatives":["{workers} workers need {duration} days to complete a job. How many days do {new_workers} workers need at the same productivity?","{workers} workers require {duration} days to complete a job. How many days do {new_workers} workers require at the same productivity?"]},{"Id":"ProportionQuizGenerator.Narrative.032","Alternatives":["A kitchen prepares a supply of rice for {people} people lasting {days} days. There are actually {new_people} people, all eating the same amount of rice per day. For how many days will the prepared rice last?","A kitchen sets aside a supply of rice for {people} people lasting {days} days. There are actually {new_people} people, all eating the same amount of rice per day. For how many days will the prepared rice last?"]},{"Id":"ProportionQuizGenerator.Narrative.033","Alternatives":["A school kitchen prepares a supply of food for {people} students lasting {days} days. If there are actually {new_people} students and each student\u0027s daily portion stays the same, for how many days will the food last?","A school kitchen sets aside a supply of food for {people} students lasting {days} days. If there are actually {new_people} students and each student\u0027s daily portion stays the same, for how many days will the food last?"]},{"Id":"ProportionQuizGenerator.Narrative.034","Alternatives":["A supply of food is prepared to feed {people} people for {days} days. Because more people arrive, it lasts only {new_days} days, with each person\u0027s daily portion unchanged. How many additional people arrived?","A supply of food is set aside to feed {people} people for {days} days. Because more people arrive, it lasts only {new_days} days, with each person\u0027s daily portion unchanged. How many additional people arrived?"]},{"Id":"ProportionQuizGenerator.Narrative.035","Alternatives":["A store prepares a supply of jam boxes lasting {days} days at a sales rate of {daily_sales} boxes per day. If it actually sells {new_daily_sales} boxes per day, for how many days will the stock last?","A store sets aside a supply of jam boxes lasting {days} days at a sales rate of {daily_sales} boxes per day. If it actually sells {new_daily_sales} boxes per day, for how many days will the stock last?"]},{"Id":"ProportionQuizGenerator.Narrative.036","Alternatives":["{workers} workers need {days} days to complete a job. How many workers are needed to finish the same job in {new_days} days if each worker has the same productivity and daily working hours?","{workers} workers require {days} days to complete a job. How many workers are needed to finish the same job in {new_days} days if each worker has the same productivity and daily working hours?"]},{"Id":"ProportionQuizGenerator.Narrative.037","Alternatives":["A crew consisting of {workers} builders needs {days} days to finish a wall. How many builders are needed to build the same wall in {new_days} days if their productivity and daily working hours are equal?","A crew consisting of {workers} builders requires {days} days to finish a wall. How many builders are needed to build the same wall in {new_days} days if their productivity and daily working hours are equal?"]},{"Id":"ProportionQuizGenerator.Narrative.038","Alternatives":["{machines} machines need {hours} hours to finish packing a batch of goods. How many machines are needed to pack the same batch in {new_hours} hours if they run simultaneously at the same rate?","{machines} machines require {hours} hours to finish packing a batch of goods. How many machines are needed to pack the same batch in {new_hours} hours if they run simultaneously at the same rate?"]},{"Id":"ProportionQuizGenerator.Narrative.039","Alternatives":["{machines} printers need {hours} hours to finish an order. How many equally productive printers, running simultaneously, are needed to complete the same order in {new_hours} hours?","{machines} printers require {hours} hours to finish an order. How many equally productive printers, running simultaneously, are needed to complete the same order in {new_hours} hours?"]},{"Id":"ProportionQuizGenerator.Narrative.040","Alternatives":["{taps} taps need {minutes} minutes to fill an empty tank. How many minutes do {new_taps} taps take to fill the same empty tank if all taps run simultaneously at the same flow rate and no water drains out?","{taps} taps require {minutes} minutes to fill an empty tank. How many minutes do {new_taps} taps take to fill the same empty tank if all taps run simultaneously at the same flow rate and no water drains out?"]},{"Id":"ProportionQuizGenerator.Narrative.041","Alternatives":["{taps} pumps need {minutes} minutes to fill an empty tank. How many minutes do {new_taps} pumps take to fill the same empty tank if they run simultaneously at the same flow rate and no water drains out?","{taps} pumps require {minutes} minutes to fill an empty tank. How many minutes do {new_taps} pumps take to fill the same empty tank if they run simultaneously at the same flow rate and no water drains out?"]},{"Id":"ProportionQuizGenerator.Narrative.042","Alternatives":["A car maintains a speed of {speed} km/h and needs {hours} hours to complete a route. How many hours would the same route take at {new_speed} km/h if the car makes no stops?","A car travels steadily at a speed of {speed} km/h and requires {hours} hours to complete a route. How many hours would the same route take at {new_speed} km/h if the car makes no stops?"]},{"Id":"ProportionQuizGenerator.Narrative.043","Alternatives":["A motorcycle reaches its destination in {hours} hours while maintaining a speed of {speed} km/h. How many hours would the same route take at {new_speed} km/h without any stops?"]},{"Id":"ProportionQuizGenerator.Narrative.044","Alternatives":["{vehicles} trucks transport an entire batch of goods with {trips_each} trips per truck. How many trips must each of {new_vehicles} trucks make to move the same batch if every trip carries a full load, all trucks have equal capacity, and each truck makes the same number of trips?"]},{"Id":"ProportionQuizGenerator.Narrative.045","Alternatives":["{vehicles} trucks transport an entire batch of sand with {trips_each} fully loaded trips per truck. How many fully loaded trips must each of {new_vehicles} trucks make to move the same batch if all trucks have equal capacity and make the same number of trips?"]},{"Id":"ProportionQuizGenerator.Narrative.046","Alternatives":["A store holds {packages} bags of rice with {mass_each} kg of rice in each bag. How many bags are needed to repack all that rice with {new_mass_each} kg in each bag, without any loss?"]},{"Id":"ProportionQuizGenerator.Narrative.047","Alternatives":["There are a total of {packages} bags of sugar with {mass_each} kg of sugar in each bag. How many bags can be made by repacking all the sugar into bags weighing {new_mass_each} kg each, without any loss?","There are altogether {packages} bags of sugar with {mass_each} kg of sugar in each bag. How many bags can be made by repacking all the sugar into bags weighing {new_mass_each} kg each, without any loss?"]}],
-    "Narrative.Motion.Phrasings": [{"Id":"MotionQuizGenerator.CreateBasicContract.001","Alternatives":["{Capitalize_subject} maintains a speed of {speed} {speedUnit}. The journey lasts {totalElapsed} {timeUnit} in total, with {restTime} {timeUnit} spent resting. What distance does {subject} cover in {distanceUnit}?","{Capitalize_subject} moves at a constant speed of {speed} {speedUnit}. From departure to arrival, {totalElapsed} {timeUnit} pass, including a rest lasting {restTime} {timeUnit}. What distance does {subject} cover, measured in {distanceUnit}?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.003","Alternatives":["{Capitalize_subject} maintains a steady speed of {speed} {speedUnit} throughout {time} {timeUnit}. What distance is covered in {distanceUnit}?","{Capitalize_subject} travels steadily at {speed} {speedUnit} over a period of {time} {timeUnit}. How many {distanceUnit} are covered?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.017","Alternatives":["{Capitalize_subject} covers a distance of {distance} {distanceUnit} over {time} {timeUnit} at a constant speed. What is the speed in {speedUnit}?","{Capitalize_subject} completes a journey of {distance} {distanceUnit} in {time} {timeUnit}, moving steadily. Find the speed in {speedUnit}?"]},{"Id":"MotionQuizGenerator.CreateBasicContract.018","Alternatives":["{Capitalize_subject} travels steadily at {targetSpeed} {speedUnit} over a distance of {targetDistance} {distanceUnit}. What is the travel time in {timeUnit}?","{Capitalize_subject} maintains a speed of {targetSpeed} {speedUnit} to cover {targetDistance} {distanceUnit}. How many {timeUnit} are needed for this journey?"]},{"Id":"MotionQuizGenerator.CreateChasingContract.009","Alternatives":["{Capitalize_slowSubject} has a lead of {gap} {distanceUnit} over {fastSubject}. {Capitalize_slowSubject} travels at {slowSpeed} {speedUnit}, and {fastSubject} follows in the same direction at {fastSpeed} {speedUnit}. How many {timeUnit} are needed for the faster traveller to catch up?","{Capitalize_slowSubject} is ahead by {gap} {distanceUnit}, measured from {fastSubject}. {Capitalize_slowSubject} maintains {slowSpeed} {speedUnit}, while {fastSubject} follows along the same direction at {fastSpeed} {speedUnit}. In how many {timeUnit} will the faster traveller catch up?"]},{"Id":"MotionQuizGenerator.CreateMeetingContract.012","Alternatives":["{Capitalize_subject1} and {subject2} are initially {distance} {distanceUnit} apart and set off simultaneously toward each other. They travel at {speed1} {speedUnit} and {speed2} {speedUnit}, respectively. How many {timeUnit} pass before they meet?","{Capitalize_subject1} and {subject2} leave two places {distance} {distanceUnit} apart at the same time, travelling toward each other. Their respective speeds remain {speed1} {speedUnit} and {speed2} {speedUnit}. What is the meeting time in {timeUnit}?"]},{"Id":"MotionQuizGenerator.CreateRiverDerivedContract.021","Alternatives":["{Capitalize_craft} travels downstream at {downstream} {speedUnit} and upstream at {upstream} {speedUnit}. Find the {findBoat_speed_in_still_water_current_speed} in {speedUnit}?","{Capitalize_craft} maintains {downstream} {speedUnit} downstream and {upstream} {speedUnit} upstream. What value does the {findBoat_speed_in_still_water_current_speed} have in {speedUnit}?"]},{"Id":"MotionQuizGenerator.CreateRiverSimpleContract.019","Alternatives":["{Capitalize_craft} has a still-water speed of {boatSpeed} {speedUnit}, while the water flows at {currentSpeed} {speedUnit}. What speed is reached when travelling {isDownstream_downstream_upstream}, in {speedUnit}?","{Capitalize_craft} travels at {boatSpeed} {speedUnit} in still water, with a current moving at {currentSpeed} {speedUnit}. Find the {isDownstream_downstream_upstream} speed in {speedUnit}?"]}],
-    "Narrative.MultiStep.Phrasings":
-    [
+    "Narrative.Proportion.Phrasings": [
+      {"Id":"ProportionQuizGenerator.Narrative.001","Alternatives":["Making {sets} sets of clothes requires a total of {fabric} meters of fabric. How many meters of fabric are needed for {new_sets} sets at the same rate?","Making {sets} sets of clothes requires altogether {fabric} meters of fabric. How many meters of fabric are needed for {new_sets} sets at the same rate?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.002","Alternatives":["A total of {fabric} meters of fabric is required to make {sets} sets of clothes. How many meters are needed for {new_sets} sets?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.003","Alternatives":["{students} students plant a total of {trees} trees. How many trees can {new_students} students plant if every student plants the same number?","{students} students plant altogether {trees} trees. How many trees can {new_students} students plant if every student plants the same number?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.004","Alternatives":["A group consisting of {students} students plants a total of {trees} trees. How many trees can a class of {new_students} students plant at the same rate?","A group consisting of {students} students plants altogether {trees} trees. How many trees can a class of {new_students} students plant at the same rate?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.005","Alternatives":["Buying {quantity} notebooks requires a payment of ${cost}. How much do {new_quantity} notebooks cost at the same unit price?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.006","Alternatives":["A parent pays for {quantity} notebooks at a total cost of ${cost}. How much would {new_quantity} notebooks cost at the same unit price?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.007","Alternatives":["{vehicles} trucks transport a total of {cargo} tons of bagged rice. How many tons of rice can {new_vehicles} identical trucks carry?","{vehicles} trucks transport altogether {cargo} tons of bagged rice. How many tons of rice can {new_vehicles} identical trucks carry?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.008","Alternatives":["{vehicles} identical vehicles consume a total of {fuel} liters of fuel over the same route. How many liters do {new_vehicles} such vehicles use?","{vehicles} identical vehicles consume altogether {fuel} liters of fuel over the same route. How many liters do {new_vehicles} such vehicles use?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.009","Alternatives":["A car covers {distance} km over a period of {duration} hours. At the same speed, how many kilometers does it travel in {new_duration} hours?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.010","Alternatives":["In the same amount of time, {groups} workers produce a total of {items} chairs. How many chairs can {new_groups} equally productive workers make?","In the same amount of time, {groups} workers produce altogether {items} chairs. How many chairs can {new_groups} equally productive workers make?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.011","Alternatives":["In the same amount of time, {groups} machines produce a total of {items} products. How many products can {new_groups} equally productive machines make?","In the same amount of time, {groups} machines produce altogether {items} products. How many products can {new_groups} equally productive machines make?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.012","Alternatives":["{groups} identical crates hold a total of {items} boxes. How many boxes are in {new_groups} such crates?","{groups} identical crates hold altogether {items} boxes. How many boxes are in {new_groups} such crates?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.013","Alternatives":["{quantity} equal bags of rice have a combined weight of {mass} kg. How many kilograms do {new_quantity} such bags weigh?","{quantity} equal bags of rice have a total weight of {mass} kg. How many kilograms do {new_quantity} such bags weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.014","Alternatives":["{quantity} equal bunches of vegetables have a combined weight of {mass} grams. How many grams do {new_quantity} such bunches weigh?","{quantity} equal bunches of vegetables have a total weight of {mass} grams. How many grams do {new_quantity} such bunches weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.015","Alternatives":["{quantity} equal carrots have a combined weight of {mass} grams. How many grams do {new_quantity} such carrots weigh?","{quantity} equal carrots have a total weight of {mass} grams. How many grams do {new_quantity} such carrots weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.016","Alternatives":["{quantity} equal potatoes have a combined weight of {mass} grams. How many grams do {new_quantity} such potatoes weigh?","{quantity} equal potatoes have a total weight of {mass} grams. How many grams do {new_quantity} such potatoes weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.017","Alternatives":["{quantity} equal apples have a combined weight of {mass} grams. How many grams do {new_quantity} such apples weigh?","{quantity} equal apples have a total weight of {mass} grams. How many grams do {new_quantity} such apples weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.018","Alternatives":["{quantity} equal oranges have a combined weight of {mass} grams. How many grams do {new_quantity} such oranges weigh?","{quantity} equal oranges have a total weight of {mass} grams. How many grams do {new_quantity} such oranges weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.019","Alternatives":["{quantity} equal mangoes have a combined weight of {mass} grams. How many grams do {new_quantity} such mangoes weigh?","{quantity} equal mangoes have a total weight of {mass} grams. How many grams do {new_quantity} such mangoes weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.020","Alternatives":["{quantity} equal portions of pork have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of pork have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.021","Alternatives":["{quantity} equal portions of fish have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of fish have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.022","Alternatives":["{quantity} equal portions of chicken have a combined weight of {mass} grams. How many grams do {new_quantity} such portions weigh?","{quantity} equal portions of chicken have a total weight of {mass} grams. How many grams do {new_quantity} such portions weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.023","Alternatives":["{quantity} eggs of the same size have a combined weight of {mass} grams. How many grams do {new_quantity} such eggs weigh?","{quantity} eggs of the same size have a total weight of {mass} grams. How many grams do {new_quantity} such eggs weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.024","Alternatives":["{containers} identical containers have a combined capacity of {volume} liters of honey. How many liters can {new_containers} such containers hold?","{containers} identical containers hold altogether {volume} liters of honey. How many liters can {new_containers} such containers hold?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.025","Alternatives":["{containers} identical cans have a combined capacity of {volume} liters of oil. How many liters can {new_containers} such cans hold?","{containers} identical cans hold altogether {volume} liters of oil. How many liters can {new_containers} such cans hold?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.026","Alternatives":["{cans} identical cans of paint can coat {area} m² of wall. How many square meters can {new_cans} cans cover?","{cans} identical cans of paint can cover {area} m² of wall. How many square meters can {new_cans} cans cover?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.027","Alternatives":["{workers} people need {duration} days to complete a job. How many days do {new_workers} people need if everyone works at the same rate?","{workers} people require {duration} days to complete a job. How many days do {new_workers} people require if everyone works at the same rate?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.028","Alternatives":["{workers} workers need {duration} days to complete work on a road section. How many days do {new_workers} workers need at the same productivity?","{workers} workers require {duration} days to complete work on a road section. How many days do {new_workers} workers require at the same productivity?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.029","Alternatives":["{workers} equally productive workers need {duration} hours to complete a job. How many hours do {new_workers} workers need to finish the same job?","{workers} equally productive workers require {duration} hours to complete a job. How many hours do {new_workers} workers require to finish the same job?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.030","Alternatives":["{machines} machines need {duration} hours to complete a job. How many hours do {new_machines} equally productive machines, running simultaneously, need to finish the same job?","{machines} machines require {duration} hours to complete a job. How many hours do {new_machines} equally productive machines, running simultaneously, require to finish the same job?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.031","Alternatives":["{workers} workers need {duration} days to complete a job. How many days do {new_workers} workers need at the same productivity?","{workers} workers require {duration} days to complete a job. How many days do {new_workers} workers require at the same productivity?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.032","Alternatives":["A kitchen prepares a supply of rice for {people} people lasting {days} days. There are actually {new_people} people, all eating the same amount of rice per day. For how many days will the prepared rice last?","A kitchen sets aside a supply of rice for {people} people lasting {days} days. There are actually {new_people} people, all eating the same amount of rice per day. For how many days will the prepared rice last?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.033","Alternatives":["A school kitchen prepares a supply of food for {people} students lasting {days} days. If there are actually {new_people} students and each student\u0027s daily portion stays the same, for how many days will the food last?","A school kitchen sets aside a supply of food for {people} students lasting {days} days. If there are actually {new_people} students and each student\u0027s daily portion stays the same, for how many days will the food last?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.034","Alternatives":["A supply of food is prepared to feed {people} people for {days} days. Because more people arrive, it lasts only {new_days} days, with each person\u0027s daily portion unchanged. How many additional people arrived?","A supply of food is set aside to feed {people} people for {days} days. Because more people arrive, it lasts only {new_days} days, with each person\u0027s daily portion unchanged. How many additional people arrived?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.035","Alternatives":["A store prepares a supply of jam boxes lasting {days} days at a sales rate of {daily_sales} boxes per day. If it actually sells {new_daily_sales} boxes per day, for how many days will the stock last?","A store sets aside a supply of jam boxes lasting {days} days at a sales rate of {daily_sales} boxes per day. If it actually sells {new_daily_sales} boxes per day, for how many days will the stock last?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.036","Alternatives":["{workers} workers need {days} days to complete a job. How many workers are needed to finish the same job in {new_days} days if each worker has the same productivity and daily working hours?","{workers} workers require {days} days to complete a job. How many workers are needed to finish the same job in {new_days} days if each worker has the same productivity and daily working hours?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.037","Alternatives":["A crew consisting of {workers} builders needs {days} days to finish a wall. How many builders are needed to build the same wall in {new_days} days if their productivity and daily working hours are equal?","A crew consisting of {workers} builders requires {days} days to finish a wall. How many builders are needed to build the same wall in {new_days} days if their productivity and daily working hours are equal?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.038","Alternatives":["{machines} machines need {hours} hours to finish packing a batch of goods. How many machines are needed to pack the same batch in {new_hours} hours if they run simultaneously at the same rate?","{machines} machines require {hours} hours to finish packing a batch of goods. How many machines are needed to pack the same batch in {new_hours} hours if they run simultaneously at the same rate?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.039","Alternatives":["{machines} printers need {hours} hours to finish an order. How many equally productive printers, running simultaneously, are needed to complete the same order in {new_hours} hours?","{machines} printers require {hours} hours to finish an order. How many equally productive printers, running simultaneously, are needed to complete the same order in {new_hours} hours?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.040","Alternatives":["{taps} taps need {minutes} minutes to fill an empty tank. How many minutes do {new_taps} taps take to fill the same empty tank if all taps run simultaneously at the same flow rate and no water drains out?","{taps} taps require {minutes} minutes to fill an empty tank. How many minutes do {new_taps} taps take to fill the same empty tank if all taps run simultaneously at the same flow rate and no water drains out?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.041","Alternatives":["{taps} pumps need {minutes} minutes to fill an empty tank. How many minutes do {new_taps} pumps take to fill the same empty tank if they run simultaneously at the same flow rate and no water drains out?","{taps} pumps require {minutes} minutes to fill an empty tank. How many minutes do {new_taps} pumps take to fill the same empty tank if they run simultaneously at the same flow rate and no water drains out?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.042","Alternatives":["A car maintains a speed of {speed} km/h and needs {hours} hours to complete a route. How many hours would the same route take at {new_speed} km/h if the car makes no stops?","A car travels steadily at a speed of {speed} km/h and requires {hours} hours to complete a route. How many hours would the same route take at {new_speed} km/h if the car makes no stops?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.043","Alternatives":["A motorcycle reaches its destination in {hours} hours while maintaining a speed of {speed} km/h. How many hours would the same route take at {new_speed} km/h without any stops?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.044","Alternatives":["{vehicles} trucks transport an entire batch of goods with {trips_each} trips per truck. How many trips must each of {new_vehicles} trucks make to move the same batch if every trip carries a full load, all trucks have equal capacity, and each truck makes the same number of trips?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.045","Alternatives":["{vehicles} trucks transport an entire batch of sand with {trips_each} fully loaded trips per truck. How many fully loaded trips must each of {new_vehicles} trucks make to move the same batch if all trucks have equal capacity and make the same number of trips?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.046","Alternatives":["A store holds {packages} bags of rice with {mass_each} kg of rice in each bag. How many bags are needed to repack all that rice with {new_mass_each} kg in each bag, without any loss?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.047","Alternatives":["There are a total of {packages} bags of sugar with {mass_each} kg of sugar in each bag. How many bags can be made by repacking all the sugar into bags weighing {new_mass_each} kg each, without any loss?","There are altogether {packages} bags of sugar with {mass_each} kg of sugar in each bag. How many bags can be made by repacking all the sugar into bags weighing {new_mass_each} kg each, without any loss?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.048","Alternatives":["According to the problem, sewing {sets} performance costumes requires {fabric} metres of fabric. How many metres are needed for {new_sets} such costumes?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.049","Alternatives":["According to the problem, in the same amount of time, {groups} ovens bake {items} cakes. How many cakes can {new_groups} equally productive ovens bake?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.050","Alternatives":["According to the problem, {quantity} identical bags of animal feed weigh {mass} kg. How many kilograms do {new_quantity} such bags weigh?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.051","Alternatives":["According to the problem, {containers} identical full containers hold {volume} litres of water for plants. How many litres do {new_containers} such full containers hold?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.052","Alternatives":["According to the problem, {cans} identical paint cans cover {area} square metres of community centre wall. How many square metres can {new_cans} such cans cover at the same coverage rate?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.053","Alternatives":["According to the problem, {workers} workers pack the donated books in {duration} days. How many days do {new_workers} equally productive workers need to pack the same books, working the same hours per day?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.054","Alternatives":["According to the problem, {machines} printers finish an order in {duration} hours. How many hours do {new_machines} equally productive printers working together need to finish the same order?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.055","Alternatives":["According to the problem, a camping group prepares enough food for {people} people for {days} days. For how many days will that food last for {new_people} people if each daily portion is unchanged?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.056","Alternatives":["According to the problem, {vehicles} trucks move all the produce, each making {trips_each} full-load trips. If {new_vehicles} trucks with the same capacity are used, how many trips must each make to move the same produce, with equal trips per truck?"]},
+      {"Id":"ProportionQuizGenerator.Narrative.057","Alternatives":["According to the problem, {workers} workers pack the gift bags in {days} days. How many workers are needed to pack the same bags in {new_days} days if productivity and daily working hours are the same?"]}
+    ],
+    "Narrative.Motion.Phrasings": [
+      {"Id":"MotionQuizGenerator.CreateBasicContract.001","Alternatives":["{Capitalize_subject} maintains a speed of {speed} {speedUnit}. The journey lasts {totalElapsed} {timeUnit} in total, with {restTime} {timeUnit} spent resting. What distance does {subject} cover in {distanceUnit}?","{Capitalize_subject} moves at a constant speed of {speed} {speedUnit}. From departure to arrival, {totalElapsed} {timeUnit} pass, including a rest lasting {restTime} {timeUnit}. What distance does {subject} cover, measured in {distanceUnit}?","{Capitalize_subject} maintains a speed of {speed} {speedUnit}. The journey lasts {totalElapsed} {timeUnit} altogether, with {restTime} {timeUnit} spent resting. What distance does {subject} cover in {distanceUnit}?"]},
+      {"Id":"MotionQuizGenerator.CreateBasicContract.003","Alternatives":["{Capitalize_subject} maintains a steady speed of {speed} {speedUnit} throughout {time} {timeUnit}. What distance is covered in {distanceUnit}?","{Capitalize_subject} travels steadily at {speed} {speedUnit} over a period of {time} {timeUnit}. How many {distanceUnit} are covered?"]},
+      {"Id":"MotionQuizGenerator.CreateBasicContract.017","Alternatives":["{Capitalize_subject} covers a distance of {distance} {distanceUnit} over {time} {timeUnit} at a constant speed. What is the speed in {speedUnit}?","{Capitalize_subject} completes a journey of {distance} {distanceUnit} in {time} {timeUnit}, moving steadily. Find the speed in {speedUnit}?"]},
+      {"Id":"MotionQuizGenerator.CreateBasicContract.018","Alternatives":["{Capitalize_subject} travels steadily at {targetSpeed} {speedUnit} over a distance of {targetDistance} {distanceUnit}. What is the travel time in {timeUnit}?","{Capitalize_subject} maintains a speed of {targetSpeed} {speedUnit} to cover {targetDistance} {distanceUnit}. How many {timeUnit} are needed for this journey?"]},
+      {"Id":"MotionQuizGenerator.CreateChasingContract.009","Alternatives":["{Capitalize_slowSubject} has a lead of {gap} {distanceUnit} over {fastSubject}. {Capitalize_slowSubject} travels at {slowSpeed} {speedUnit}, and {fastSubject} follows in the same direction at {fastSpeed} {speedUnit}. How many {timeUnit} are needed for the faster traveller to catch up?","{Capitalize_slowSubject} is ahead by {gap} {distanceUnit}, measured from {fastSubject}. {Capitalize_slowSubject} maintains {slowSpeed} {speedUnit}, while {fastSubject} follows along the same direction at {fastSpeed} {speedUnit}. In how many {timeUnit} will the faster traveller catch up?"]},
+      {"Id":"MotionQuizGenerator.CreateMeetingContract.012","Alternatives":["{Capitalize_subject1} and {subject2} are initially {distance} {distanceUnit} apart and set off simultaneously toward each other. They travel at {speed1} {speedUnit} and {speed2} {speedUnit}, respectively. How many {timeUnit} pass before they meet?","{Capitalize_subject1} and {subject2} leave two places {distance} {distanceUnit} apart at the same time, travelling toward each other. Their respective speeds remain {speed1} {speedUnit} and {speed2} {speedUnit}. What is the meeting time in {timeUnit}?","{Capitalize_subject1} and {subject2} are initially {distance} {distanceUnit} apart and set off simultaneously toward each other. They travel at {speed1} {speedUnit} and {speed2} {speedUnit}, in that order. How many {timeUnit} pass before they meet?"]},
+      {"Id":"MotionQuizGenerator.CreateRiverDerivedContract.021","Alternatives":["{Capitalize_craft} travels downstream at {downstream} {speedUnit} and upstream at {upstream} {speedUnit}. Find the {findBoat_speed_in_still_water_current_speed} in {speedUnit}?","{Capitalize_craft} maintains {downstream} {speedUnit} downstream and {upstream} {speedUnit} upstream. What value does the {findBoat_speed_in_still_water_current_speed} have in {speedUnit}?"]},
+      {"Id":"MotionQuizGenerator.CreateRiverSimpleContract.019","Alternatives":["{Capitalize_craft} has a still-water speed of {boatSpeed} {speedUnit}, while the water flows at {currentSpeed} {speedUnit}. What speed is reached when travelling {isDownstream_downstream_upstream}, in {speedUnit}?","{Capitalize_craft} travels at {boatSpeed} {speedUnit} in still water, with a current moving at {currentSpeed} {speedUnit}. Find the {isDownstream_downstream_upstream} speed in {speedUnit}?"]}
+    ],
+    "Narrative.MultiStep.Phrasings": [
       {
         "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.002",
         "Alternatives": [
@@ -9573,7 +10743,38 @@
         "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.036",
         "Alternatives": [
           "How many {unit} are there in total after these activities?",
-          "What is the total number of {unit} after these activities?"
+          "What is the total number of {unit} after these activities?",
+          "How many {unit} are there altogether after these activities?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.kitchen",
+        "Alternatives": [
+          "Meals are prepared in the kitchen. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.livestock",
+        "Alternatives": [
+          "Eggs are prepared for packing at the farm. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.water",
+        "Alternatives": [
+          "Water is prepared for distribution by the supply team. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.environment",
+        "Alternatives": [
+          "Paper is sorted for recycling by the collection team. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.Intro.agriculture",
+        "Alternatives": [
+          "Goods are prepared for distribution at the produce warehouse. "
         ]
       }
     ],
@@ -9770,7 +10971,8 @@
             "{name} currently has {b} such {groups}."
           ],
           "Questions": [
-            "How many {unit} does {name} have in total?"
+            "How many {unit} does {name} have in total?",
+            "How many {unit} does {name} have altogether?"
           ],
           "Leads": [
             "The total number of {unit} is:"
@@ -10404,7 +11606,8 @@
             "{name} currently has {b} such {groups}."
           ],
           "Questions": [
-            "How many {unit} does {name} have in total?"
+            "How many {unit} does {name} have in total?",
+            "How many {unit} does {name} have altogether?"
           ],
           "Leads": [
             "The total number of {unit} is:"
@@ -11038,7 +12241,8 @@
             "{name} currently has {b} such {groups}."
           ],
           "Questions": [
-            "How many {unit} does {name} have in total?"
+            "How many {unit} does {name} have in total?",
+            "How many {unit} does {name} have altogether?"
           ],
           "Leads": [
             "The total number of {unit} is:"
@@ -11676,7 +12880,8 @@
             "{name} purchases {b} {unit_b}."
           ],
           "Questions": [
-            "How many {unit} does {name} pay in total?"
+            "How many {unit} does {name} pay in total?",
+            "How many {unit} does {name} pay altogether?"
           ],
           "Leads": [
             "The total cost of the notebooks is:"
@@ -11977,7 +13182,8 @@
             "{name} makes {b} {unit_b} of equal length."
           ],
           "Questions": [
-            "How many {unit} does {name} travel in total?"
+            "How many {unit} does {name} travel in total?",
+            "How many {unit} does {name} travel altogether?"
           ],
           "Leads": [
             "The total distance travelled is:"
@@ -12206,7 +13412,8 @@
             "{name} gets another {b} {unit_b} of rice."
           ],
           "Questions": [
-            "How many {unit} of rice does {name} have in total?"
+            "How many {unit} of rice does {name} have in total?",
+            "How many {unit} of rice does {name} have altogether?"
           ],
           "Leads": [
             "The total mass of rice is:"
@@ -12737,7 +13944,8 @@
             "{other} holds {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -12890,7 +14098,8 @@
             "{other} raises {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13039,7 +14248,8 @@
             "{other} reads {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13188,7 +14398,8 @@
             "{other} scores {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13337,7 +14548,8 @@
             "{other} records {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13486,7 +14698,8 @@
             "{other} plants {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13635,7 +14848,8 @@
             "{other} collects {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13784,7 +14998,8 @@
             "{other} bakes {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -13933,7 +15148,8 @@
             "{other} harvests {b} {unit}."
           ],
           "Questions": [
-            "How many {unit} do they have in total?"
+            "How many {unit} do they have in total?",
+            "How many {unit} do they have altogether?"
           ],
           "Leads": [
             "Their total number of {unit} is:"
@@ -16223,10 +17439,12 @@
         ],
         "Prose": {
           "GivenA": [
-            "In the first day, a library receives {a} {unit},"
+            "In the first day, a library receives {a} {unit},",
+            "In the first day, a library gets {a} {unit},"
           ],
           "GivenB": [
-            "in a separate second day, a library receives {b} {unit}."
+            "in a separate second day, a library receives {b} {unit}.",
+            "in a separate second day, a library gets {b} {unit}."
           ],
           "Questions": [
             "How many {unit} are recorded across the two days?"
@@ -16297,13 +17515,15 @@
         ],
         "Prose": {
           "GivenA": [
-            "In each day, a library receives {a} {unit_a},"
+            "In each day, a library receives {a} {unit_a},",
+            "In each day, a library gets {a} {unit_a},"
           ],
           "GivenB": [
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -16451,7 +17671,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -16599,7 +17820,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -16747,7 +17969,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -16895,7 +18118,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17043,7 +18267,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17194,7 +18419,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17342,7 +18568,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17490,7 +18717,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17638,7 +18866,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17786,7 +19015,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -17934,7 +19164,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -18082,7 +19313,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -18230,7 +19462,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -18378,7 +19611,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -18526,7 +19760,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -18674,7 +19909,8 @@
             "there are {b} separate {unit_b} with the same quantity each."
           ],
           "Questions": [
-            "How many {unit} are there in total?"
+            "How many {unit} are there in total?",
+            "How many {unit} are there altogether?"
           ],
           "Leads": [
             "The total quantity of {unit} is:"
@@ -23001,6 +24237,1116 @@
         "Value":  1000000,
         "Words":  "one million"
     }
-]
+],
+    "Narrative.TwoNumbers.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.002",
+        "Alternatives": [
+          "The value of {relation} is {F_quantity} {unit}. ",
+          "{relation} amounts to {F_quantity} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.003",
+        "Alternatives": [
+          "Twice {relation} amounts to {F_double_quantity} {unit}. ",
+          "When doubled, {relation} equals {F_double_quantity} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.004",
+        "Alternatives": [
+          "{relation} equals {F_quantity_first} {unit} added to {F_quantity_second} {unit}. ",
+          "According to the record, {relation} is {F_quantity_first} {unit} plus {F_quantity_second} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.005",
+        "Alternatives": [
+          "Next, {second_ToLowerInvariant} moves {F_previous_reduction} {unit} elsewhere. ",
+          "Afterwards, {second_ToLowerInvariant} transfers {F_previous_reduction} {unit} outside. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.006",
+        "Alternatives": [
+          "At this point, {relation} equals {F_after} {unit}. ",
+          "Following these changes, {relation} amounts to {F_after} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.007",
+        "Alternatives": [
+          "{second} exceeds the other quantity by {F_difference} {unit}, compared with {first_ToLowerInvariant}. ",
+          "{second} has an excess of {F_difference} {unit} over {first_ToLowerInvariant}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.008",
+        "Alternatives": [
+          "Considering the original quantities, moving {F_transfer} {unit} from {second_ToLowerInvariant} to {first_ToLowerInvariant} leaves the second exceeding the first by {F_remaining_difference} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.009",
+        "Alternatives": [
+          "The original quantities of {pair} are in the ratio {F_ratio_small}/{F_ratio_large}. ",
+          "Initially, the quantities of {pair} have the ratio {F_ratio_small}/{F_ratio_large}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.010",
+        "Alternatives": [
+          "Initially, the first quantity corresponds to {F_ratio_small} equal parts, while the second has an extra {F_ratio_extra} parts of the same size. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.011",
+        "Alternatives": [
+          "How much did each side have originally?",
+          "What were the quantities on each side at the start?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.015",
+        "Alternatives": [
+          "Each gets {F_added} more {unit}. ",
+          "Each side is given {F_added} extra {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.016",
+        "Alternatives": [
+          "Only {second_ToLowerInvariant} gets {F_added} extra {unit}; the other quantity stays the same. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.005",
+        "Alternatives": [
+          "After {elapsed} years, doubling {quantityName} gives {F_double_future_age_quantity} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.006",
+        "Alternatives": [
+          "After {elapsed} years, {quantityName} will equal {F_age_quantity_first} years added to {F_age_quantity_second} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.007",
+        "Alternatives": [
+          "After {elapsed} years, {quantityName} will be {future} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.010",
+        "Alternatives": [
+          "Doubling their age difference gives {gapTwice} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.012",
+        "Alternatives": [
+          "Sam is older than Alex by {gap} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.014",
+        "Alternatives": [
+          "Looking back {past} years, Alex and Sam had ages in the ratio {p}/{q}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.016",
+        "Alternatives": [
+          "Their current ages, Alex first and Sam second, have the ratio {p}/{q}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.017",
+        "Alternatives": [
+          "What is each person's current age?",
+          "Find the present age of each person?"
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.019",
+        "Alternatives": [
+          "The sum of Alex and Sam's ages now is {quantity} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.020",
+        "Alternatives": [
+          "Sam is older than Alex by {quantity} years. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.TwoNumberStories.Intro",
+        "Alternatives": [
+          "In {c_EnSetting}, we consider {pair}. "
+        ]
+      }
+    ],
+    "Narrative.Average.Phrasings": [
+      {
+        "Id": "AverageQuizGenerator.CreateDirect.013",
+        "Alternatives": [
+          "During {count} distinct {value1}, {context_EnAction} {list} {context_EnUnit}, respectively. How many {context_EnUnit} per {context_EnPeriod} on average?",
+          "Over {count} separate {value1}, {context_EnAction} {list} {context_EnUnit}, respectively. What is the mean in {context_EnUnit} per {context_EnPeriod}?",
+          "During {count} distinct {value1}, {context_EnAction} {list} {context_EnUnit}, in that order. How many {context_EnUnit} per {context_EnPeriod} on average?",
+          "Over {count} separate {value1}, {context_EnAction} {list} {context_EnUnit}, in that order. What is the mean in {context_EnUnit} per {context_EnPeriod}?"
+        ]
+      },
+      {
+        "Id": "AverageQuizGenerator.CreateTotalToAverage.015",
+        "Alternatives": [
+          "Across {count} {context_EnGroup}, the total is {total} {context_EnUnit}. What is the mean number of {context_EnUnit} per group?",
+          "{count} {context_EnGroup} together have {total} {context_EnUnit}. What is the average number of {context_EnUnit} per group?"
+        ]
+      },
+      {
+        "Id": "AverageQuizGenerator.CreateAverageToTotal.017",
+        "Alternatives": [
+          "There are {count} {context_EnGroup}, with a mean of {average} {context_EnUnit} per group. What is the total number of {context_EnUnit}?",
+          "Across {count} {context_EnGroup}, each group has an average of {average} {context_EnUnit}. How many {context_EnUnit} are there in total?",
+          "Across {count} {context_EnGroup}, each group has an average of {average} {context_EnUnit}. How many {context_EnUnit} are there altogether?"
+        ]
+      },
+      {
+        "Id": "AverageQuizGenerator.CreateIndirectData.020",
+        "Alternatives": [
+          "Lan owns {lan} {context_EnUnit}. Mai owns {more} more {context_EnUnit} than Lan, and Hoa owns {less} fewer {context_EnUnit} than Mai. What is the mean number of {context_EnUnit} per person?"
+        ]
+      },
+      {
+        "Id": "AverageQuizGenerator.CreateTwoGroups.022",
+        "Alternatives": [
+          "Group A consists of {countA} {context_EnMember}, with a mean of {averageA} {context_EnUnit} each. Group B consists of {countB} {context_EnMember}, with a mean of {averageB} {context_EnUnit} each. What is the average across both groups in {context_EnUnit}?"
+        ]
+      },
+      {
+        "Id": "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.002",
+        "Alternatives": [
+          "Alex gets scores of {JoinValues_known} on the first {known_Length} tests. What score must be obtained on test {count} to reach an average of {target} across {count} tests?"
+        ]
+      }
+    ],
+    "Narrative.Percentage.Phrasings": [
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.001",
+        "Alternatives": [
+          "{Capital_totalLabel} totals {whole} {unit}, including {partLabel} with {part} {unit}. {Question}",
+          "{Capital_totalLabel} amounts to {whole} {unit}, of which {partLabel} accounts for {part} {unit}. {Question}"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.002",
+        "Alternatives": [
+          "{Capital_totalLabel} is the sum of {quantity} {unit}, including {partLabel} with {part} {unit}. {Question}"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.004",
+        "Alternatives": [
+          "{Capital_partLabel} represents {percentage}% of {totalLabel}. ",
+          "{Capital_partLabel} accounts for {percentage}% of {totalLabel}. "
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.005",
+        "Alternatives": [
+          "{Capital_totalLabel} amounts to {whole} {unit}. ",
+          "{Capital_totalLabel} totals {whole} {unit}. "
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.006",
+        "Alternatives": [
+          "{Capital_totalLabel} is the combined quantity of {quantity} {unit}. "
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.008",
+        "Alternatives": [
+          "accounting for {percentage}% of {totalLabel}. What is the amount of {totalLabel} in {unit}?"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.009",
+        "Alternatives": [
+          "amounts to {part} {unit}, "
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Stories.CreateStoryPercentage.010",
+        "Alternatives": [
+          "is the combined quantity of {quantity} {unit}, "
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.CreateRatio.012",
+        "Alternatives": [
+          "The total is {whole} {item_EnUnit}, of which {part} are {item_EnRatioPart}. What percentage of the total are {item_EnRatioPart}?"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.CreateValue.015",
+        "Alternatives": [
+          "A total of {whole} {item_EnUnit} is recorded, with {percentage}% being {item_EnRatioPart}. How many {item_EnRatioPart} are there?"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.CreateWhole.018",
+        "Alternatives": [
+          "A quantity of {value} {item_EnRatioPart} accounts for {percentage}% of the total {item_EnUnit}. What is the total number of {item_EnUnit}?"
+        ]
+      },
+      {
+        "Id": "PercentageQuizGenerator.Difficulty.CombineKnownQuantity.002",
+        "Alternatives": [
+          "The separate groups contain {list}",
+          "The group quantities, in order, are {list}"
+        ]
+      }
+    ],
+    "Narrative.Geometry.Phrasings": [
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.001",
+        "Alternatives": [
+          "The length of the {Name_key} is {value} {unit}. ",
+          "The {Name_key} measures {value} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.004",
+        "Alternatives": [
+          "The {face} has a perimeter of {p} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.005",
+        "Alternatives": [
+          "The diameter measures {firstValue_2} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.006",
+        "Alternatives": [
+          "The perimeter measures {p} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.008",
+        "Alternatives": [
+          "The {Name_first} consists of consecutive segments, with the first measuring {x} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.009",
+        "Alternatives": [
+          "The next segment measures {y} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.010",
+        "Alternatives": [
+          "The last segment measures {z} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.014",
+        "Alternatives": [
+          "The {Name_second} is made of two consecutive segments, the first measuring {x} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.015",
+        "Alternatives": [
+          "The remaining segment measures {y} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.016",
+        "Alternatives": [
+          "The combined length of the two segments is {sum} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.017",
+        "Alternatives": [
+          "The {Name_first} plus the {Name_second} totals {sum} {unit}. "
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.019",
+        "Alternatives": [
+          "Find the {value0} of the {contract_ShapeName}, measured in {contract_AnswerUnit}?",
+          "Calculate the {value0} of the {contract_ShapeName} in {contract_AnswerUnit}?"
+        ]
+      },
+      {
+        "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.021",
+        "Alternatives": [
+          "Consider a {contract_ObjectName} shaped like a {contract_ShapeName}. ",
+          "A {contract_ObjectName} is in the form of a {contract_ShapeName}. "
+        ]
+      }
+    ],
+    "Narrative.Data.Phrasings": [
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.001",
+        "Alternatives": [
+          "{name} records data about {context_Description}. ",
+          "{name} compiles statistics about {context_Description}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.005",
+        "Alternatives": [
+          "The overall quantity is {totalExpression} {context_Unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.006",
+        "Alternatives": [
+          "Excluding “{labels_selected}”, the other two categories total {remaining} {context_Unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.008",
+        "Alternatives": [
+          "Category “{labels_others_0}” records {firstCount} {context_Unit}; category “{labels_others_1}” records {secondCount} {context_Unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.014",
+        "Alternatives": [
+          "The record shows that category “{labels_2}” exceeds “{labels_0}” by {extra} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.015",
+        "Alternatives": [
+          "Category “{labels_2}” has {factor} times the quantity of “{labels_0}”. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.016",
+        "Alternatives": [
+          "The record shows that category “{labels_1}” exceeds “{labels_2}” by {extra} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.019",
+        "Alternatives": [
+          "The combined quantity across the three categories is {total} {unit}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.020",
+        "Alternatives": [
+          "The total for the three categories equals two batches of {batchA} and {batchB} {unit} combined. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.023",
+        "Alternatives": [
+          "The three categories total {total} {unit}; the ratio of “{labels_1}” to “{labels_2}” is {r1}/{r2}. "
+        ]
+      },
+      {
+        "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.024",
+        "Alternatives": [
+          "The record shows that category “{labels_2}” exceeds “{labels_1}” by {difference} {unit}. "
+        ]
+      }
+    ],
+    "AverageQuizGenerator.DirectContexts.Extensions": [
+      {
+        "Id": "reading-pages",
+        "Action": "a reading group reads",
+        "Unit": "pages",
+        "Subject": "average pages read per day",
+        "Period": "day",
+        "Capacity": 80
+      },
+      {
+        "Id": "bakery-batches",
+        "Action": "a bakery makes",
+        "Unit": "cakes",
+        "Subject": "average cakes per batch",
+        "Period": "batch",
+        "Capacity": 300
+      },
+      {
+        "Id": "nursery-seedlings",
+        "Action": "a nursery prepares",
+        "Unit": "seedlings",
+        "Subject": "average seedlings per day",
+        "Period": "day",
+        "Capacity": 200
+      },
+      {
+        "Id": "swimming-training",
+        "Action": "a swimmer swims",
+        "Unit": "laps",
+        "Subject": "average laps per session",
+        "Period": "session",
+        "Capacity": 30
+      },
+      {
+        "Id": "volunteer-gifts",
+        "Action": "volunteers prepare",
+        "Unit": "gift bags",
+        "Subject": "average gift bags per event",
+        "Period": "event",
+        "Capacity": 200
+      },
+      {
+        "Id": "commute-duration",
+        "Action": "a worker spends commuting time of",
+        "Unit": "minutes",
+        "Subject": "average commuting time per day",
+        "Period": "day",
+        "Capacity": 120
+      }
+    ],
+    "AverageQuizGenerator.DistributionContexts.Extensions": [
+      {
+        "Group": "trays",
+        "Unit": "eggs",
+        "Subject": "average eggs per tray"
+      },
+      {
+        "Group": "teams",
+        "Unit": "plastic bottles",
+        "Subject": "average bottles collected per team"
+      },
+      {
+        "Group": "buses",
+        "Unit": "passengers",
+        "Subject": "average passengers per bus"
+      },
+      {
+        "Group": "kitchens",
+        "Unit": "meals",
+        "Subject": "average meals per kitchen"
+      }
+    ],
+    "AverageQuizGenerator.TwoGroupContexts.Extensions": [
+      {
+        "Member": "participants",
+        "Unit": "plastic bottles",
+        "Subject": "average bottles collected per participant"
+      },
+      {
+        "Member": "members",
+        "Unit": "paper flowers",
+        "Subject": "average paper flowers per member"
+      },
+      {
+        "Member": "athletes",
+        "Unit": "points",
+        "Subject": "average points per athlete"
+      }
+    ],
+    "PercentageQuizGenerator.Contexts.Extensions": [
+      {
+        "Unit": "plastic bottles",
+        "Subject": "collected plastic bottles",
+        "RatioPart": "reusable bottles"
+      },
+      {
+        "Unit": "responses",
+        "Subject": "survey responses",
+        "RatioPart": "responses choosing sports"
+      },
+      {
+        "Unit": "seeds",
+        "Subject": "seeds",
+        "RatioPart": "germinated seeds"
+      },
+      {
+        "Unit": "shirts",
+        "Subject": "shirts to sew",
+        "RatioPart": "completed shirts"
+      }
+    ],
+    "PercentageQuizGenerator.PercentageStories.Extensions": [
+      {
+        "Id": "school-attendance",
+        "Whole": "students in the year group",
+        "Part": "students joining the club",
+        "Unit": "students",
+        "Capacity": 500,
+        "Money": false
+      },
+      {
+        "Id": "nursery-quality",
+        "Whole": "seedlings grown",
+        "Part": "seedlings meeting requirements",
+        "Unit": "seedlings",
+        "Capacity": 2000,
+        "Money": false
+      },
+      {
+        "Id": "library-returns",
+        "Whole": "borrowed books",
+        "Part": "returned books",
+        "Unit": "books",
+        "Capacity": 1000,
+        "Money": false
+      },
+      {
+        "Id": "delivery-progress",
+        "Whole": "parcels to deliver",
+        "Part": "delivered parcels",
+        "Unit": "parcels",
+        "Capacity": 2000,
+        "Money": false
+      },
+      {
+        "Id": "household-budget",
+        "Whole": "savings budget",
+        "Part": "money spent on supplies",
+        "Unit": "dollars",
+        "Capacity": 300000,
+        "Money": true
+      },
+      {
+        "Id": "sports-registration",
+        "Whole": "activity registrations",
+        "Part": "registrations choosing swimming",
+        "Unit": "registrations",
+        "Capacity": 500,
+        "Money": false
+      },
+      {
+        "Id": "sewing-progress",
+        "Whole": "shirts to sew",
+        "Part": "completed shirts",
+        "Unit": "shirts",
+        "Capacity": 1000,
+        "Money": false
+      },
+      {
+        "Id": "recycling-sorting",
+        "Whole": "collected plastic bottles",
+        "Part": "sorted bottles",
+        "Unit": "bottles",
+        "Capacity": 2000,
+        "Money": false
+      }
+    ],
+    "MotionQuizGenerator.MovingSubjects.Extensions": [
+      {
+        "Kind": "MotorVehicle",
+        "Name": "delivery vehicle"
+      },
+      {
+        "Kind": "MotorVehicle",
+        "Name": "produce truck"
+      },
+      {
+        "Kind": "MotorVehicle",
+        "Name": "tour bus"
+      },
+      {
+        "Kind": "Train",
+        "Name": "freight train"
+      },
+      {
+        "Kind": "Bicycle",
+        "Name": "cyclist travelling to the library"
+      },
+      {
+        "Kind": "Pedestrian",
+        "Name": "person walking to school"
+      },
+      {
+        "Kind": "Runner",
+        "Name": "athlete training for a race"
+      }
+    ],
+    "ProportionQuizGenerator.Templates.Extensions": [
+      {
+        "Type": "Direct",
+        "Scenario": "Clothing",
+        "Template": "Sewing {0} performance costumes requires {1} metres of fabric. How many metres are needed for {2} such costumes?",
+        "Unit": "metres of fabric",
+        "Subject": "fabric",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "FabricMeters",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.048"
+      },
+      {
+        "Type": "Direct",
+        "Scenario": "ProductionItems",
+        "Template": "In the same amount of time, {0} ovens bake {1} cakes. How many cakes can {2} equally productive ovens bake?",
+        "Unit": "cakes",
+        "Subject": "cakes",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.049"
+      },
+      {
+        "Type": "Direct",
+        "Scenario": "RiceBagsWeight",
+        "Template": "{0} identical bags of animal feed weigh {1} kg. How many kilograms do {2} such bags weigh?",
+        "Unit": "kg",
+        "Subject": "animal feed",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "RiceBagKilograms",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.050"
+      },
+      {
+        "Type": "Direct",
+        "Scenario": "ContainersLiquid",
+        "Template": "{0} identical full containers hold {1} litres of water for plants. How many litres do {2} such full containers hold?",
+        "Unit": "litres",
+        "Subject": "water for plants",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "ContainerLiters",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.051"
+      },
+      {
+        "Type": "Direct",
+        "Scenario": "PaintArea",
+        "Template": "{0} identical paint cans cover {1} square metres of community centre wall. How many square metres can {2} such cans cover at the same coverage rate?",
+        "Unit": "m²",
+        "Subject": "wall area",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "PaintAreaSquareMeters",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.052"
+      },
+      {
+        "Type": "Inverse",
+        "Scenario": "WorkersDays",
+        "Template": "{0} workers pack the donated books in {1} days. How many days do {2} equally productive workers need to pack the same books, working the same hours per day?",
+        "Unit": "days",
+        "Subject": "packing time",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.053"
+      },
+      {
+        "Type": "Inverse",
+        "Scenario": "MachinesHours",
+        "Template": "{0} printers finish an order in {1} hours. How many hours do {2} equally productive printers working together need to finish the same order?",
+        "Unit": "hours",
+        "Subject": "printing time",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.054"
+      },
+      {
+        "Type": "Inverse",
+        "Scenario": "FoodPeopleDays",
+        "Template": "A camping group prepares enough food for {0} people for {1} days. For how many days will that food last for {2} people if each daily portion is unchanged?",
+        "Unit": "days",
+        "Subject": "time",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.055"
+      },
+      {
+        "Type": "Inverse",
+        "Scenario": "TransportTrips",
+        "Template": "{0} trucks move all the produce, each making {1} full-load trips. If {2} trucks with the same capacity are used, how many trips must each make to move the same produce, with equal trips per truck?",
+        "Unit": "trips",
+        "Subject": "trips per truck",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.056"
+      },
+      {
+        "Type": "Inverse",
+        "Scenario": "WorkersRequired",
+        "Template": "{0} workers pack the gift bags in {1} days. How many workers are needed to pack the same bags in {2} days if productivity and daily working hours are the same?",
+        "Unit": "workers",
+        "Subject": "packing workers",
+        "AsksForAdditionalPeople": false,
+        "RateProfile": "GenericCount",
+        "NarrativeId": "ProportionQuizGenerator.Narrative.057"
+      }
+    ],
+    "DecimalStoryContexts.Extensions": [
+      {
+        "Id": "sewing-uniforms",
+        "Item": "fabric",
+        "Unit": "m",
+        "SmallUnit": "cm",
+        "ConversionFactor": 100,
+        "MaximumQuantity": 100,
+        "Activity": "sewing-uniforms",
+        "GroupUnit": "uniform",
+        "GroupMaximum": 6
+      },
+      {
+        "Id": "juice-bottling",
+        "Item": "orange juice",
+        "Unit": "litres",
+        "SmallUnit": "ml",
+        "ConversionFactor": 1000,
+        "MaximumQuantity": 100,
+        "Activity": "juice-bottling",
+        "GroupUnit": "bottle",
+        "GroupMaximum": 2
+      },
+      {
+        "Id": "feed-preparation",
+        "Item": "animal feed",
+        "Unit": "kg",
+        "SmallUnit": "g",
+        "ConversionFactor": 1000,
+        "MaximumQuantity": 150,
+        "Activity": "feed-preparation",
+        "GroupUnit": "bag",
+        "GroupMaximum": 20
+      },
+      {
+        "Id": "rope-cutting",
+        "Item": "decorative cord",
+        "Unit": "m",
+        "SmallUnit": "cm",
+        "ConversionFactor": 100,
+        "MaximumQuantity": 100,
+        "Activity": "rope-cutting",
+        "GroupUnit": "piece of cord",
+        "GroupMaximum": 4
+      },
+      {
+        "Id": "rice-packing",
+        "Item": "rice",
+        "Unit": "kg",
+        "SmallUnit": "g",
+        "ConversionFactor": 1000,
+        "MaximumQuantity": 100,
+        "Activity": "rice-packing",
+        "GroupUnit": "bag",
+        "GroupMaximum": 5
+      },
+      {
+        "Id": "bakery-batches",
+        "Item": "flour",
+        "Unit": "kg",
+        "SmallUnit": "g",
+        "ConversionFactor": 1000,
+        "MaximumQuantity": 100,
+        "Activity": "bakery-batches",
+        "GroupUnit": "batch",
+        "GroupMaximum": 4
+      }
+    ],
+    "FractionQuantityContexts.Extensions": [
+      {
+        "ContextId": "reading-pages",
+        "Unit": "pages",
+        "PartLabel": "Pages read during this session",
+        "WholeLabel": "Pages in the storybook",
+        "Capacity": 400,
+        "Quantity": "Count",
+        "PartProblemTemplate": "A storybook has {0} pages. A reader reads {1} of its pages during this session. How many pages are read during this session?",
+        "WholeProblemTemplate": "A reader reads {0} pages during this session, equal to {1} of the storybook. How many pages are in the storybook?",
+        "PartProblemAlternatives": [
+          "According to the record, a storybook has {0} pages. A reader reads {1} of its pages during this session. How many pages are read during this session?",
+          "The record states: a storybook has {0} pages. A reader reads {1} of its pages during this session. How many pages are read during this session?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, a reader reads {0} pages during this session, equal to {1} of the storybook. How many pages are in the storybook?",
+          "The record states: a reader reads {0} pages during this session, equal to {1} of the storybook. How many pages are in the storybook?"
+        ]
+      },
+      {
+        "ContextId": "delivered-parcels",
+        "Unit": "parcels",
+        "PartLabel": "Delivered parcels",
+        "WholeLabel": "Initial parcels",
+        "Capacity": 500,
+        "Quantity": "Count",
+        "PartProblemTemplate": "A post office has {0} parcels. It delivers {1} of them. How many parcels does it deliver?",
+        "WholeProblemTemplate": "A post office delivers {0} parcels, equal to {1} of its initial parcels. How many parcels did it initially have?",
+        "PartProblemAlternatives": [
+          "According to the record, a post office has {0} parcels. It delivers {1} of them. How many parcels does it deliver?",
+          "The record states: a post office has {0} parcels. It delivers {1} of them. How many parcels does it deliver?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, a post office delivers {0} parcels, equal to {1} of its initial parcels. How many parcels did it initially have?",
+          "The record states: a post office delivers {0} parcels, equal to {1} of its initial parcels. How many parcels did it initially have?"
+        ]
+      },
+      {
+        "ContextId": "planted-seedlings",
+        "Unit": "seedlings",
+        "PartLabel": "Seedlings planted in this garden",
+        "WholeLabel": "Initial seedlings",
+        "Capacity": 600,
+        "Quantity": "Count",
+        "PartProblemTemplate": "Volunteers have {0} seedlings. They plant {1} of them in this garden. How many seedlings do they plant in this garden?",
+        "WholeProblemTemplate": "Volunteers plant {0} seedlings in this garden, equal to {1} of their initial seedlings. How many seedlings did they initially have?",
+        "PartProblemAlternatives": [
+          "According to the record, volunteers have {0} seedlings. They plant {1} of them in this garden. How many seedlings do they plant in this garden?",
+          "The record states: volunteers have {0} seedlings. They plant {1} of them in this garden. How many seedlings do they plant in this garden?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, volunteers plant {0} seedlings in this garden, equal to {1} of their initial seedlings. How many seedlings did they initially have?",
+          "The record states: volunteers plant {0} seedlings in this garden, equal to {1} of their initial seedlings. How many seedlings did they initially have?"
+        ]
+      },
+      {
+        "ContextId": "bread-flour",
+        "Unit": "kg",
+        "PartLabel": "Flour used for bread",
+        "WholeLabel": "Initial flour",
+        "Capacity": 25,
+        "Quantity": "Mass",
+        "PartProblemTemplate": "A bakery has {0} kg of flour. It uses {1} of the flour for bread. How much flour does it use for bread in kg?",
+        "WholeProblemTemplate": "A bakery uses {0} kg of flour for bread, equal to {1} of its initial flour. How much flour did it initially have in kg?",
+        "PartProblemAlternatives": [
+          "According to the record, a bakery has {0} kg of flour. It uses {1} of the flour for bread. How much flour does it use for bread in kg?",
+          "The record states: a bakery has {0} kg of flour. It uses {1} of the flour for bread. How much flour does it use for bread in kg?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, a bakery uses {0} kg of flour for bread, equal to {1} of its initial flour. How much flour did it initially have in kg?",
+          "The record states: a bakery uses {0} kg of flour for bread, equal to {1} of its initial flour. How much flour did it initially have in kg?"
+        ]
+      },
+      {
+        "ContextId": "juice-capacity",
+        "Unit": "litres",
+        "PartLabel": "Juice sold",
+        "WholeLabel": "Initial juice",
+        "Capacity": 40,
+        "Quantity": "Capacity",
+        "PartProblemTemplate": "A stall has {0} litres of orange juice. It sells {1} of this juice. How much juice does it sell in litres?",
+        "WholeProblemTemplate": "A stall sells {0} litres of orange juice, equal to {1} of its initial juice. How much juice did it initially have in litres?",
+        "PartProblemAlternatives": [
+          "According to the record, a stall has {0} litres of orange juice. It sells {1} of this juice. How much juice does it sell in litres?",
+          "The record states: a stall has {0} litres of orange juice. It sells {1} of this juice. How much juice does it sell in litres?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, a stall sells {0} litres of orange juice, equal to {1} of its initial juice. How much juice did it initially have in litres?",
+          "The record states: a stall sells {0} litres of orange juice, equal to {1} of its initial juice. How much juice did it initially have in litres?"
+        ]
+      },
+      {
+        "ContextId": "route-distance",
+        "Unit": "km",
+        "PartLabel": "Distance travelled in the later stage",
+        "WholeLabel": "Entire route length",
+        "Capacity": 100,
+        "Quantity": "Distance",
+        "PartProblemTemplate": "A tour route is {0} km long. The later stage covers {1} of the route. How long is the later stage in km?",
+        "WholeProblemTemplate": "The later stage is {0} km long, equal to {1} of the tour route. How long is the entire route in km?",
+        "PartProblemAlternatives": [
+          "According to the record, a tour route is {0} km long. The later stage covers {1} of the route. How long is the later stage in km?",
+          "The record states: a tour route is {0} km long. The later stage covers {1} of the route. How long is the later stage in km?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, the later stage is {0} km long, equal to {1} of the tour route. How long is the entire route in km?",
+          "The record states: the later stage is {0} km long, equal to {1} of the tour route. How long is the entire route in km?"
+        ]
+      },
+      {
+        "ContextId": "decoration-cord",
+        "Unit": "m",
+        "PartLabel": "Cord used for signs",
+        "WholeLabel": "Initial cord length",
+        "Capacity": 100,
+        "Quantity": "Distance",
+        "PartProblemTemplate": "A team has {0} m of cord. It uses {1} of its length for signs. How much cord does it use for signs in m?",
+        "WholeProblemTemplate": "A team uses {0} m of cord for signs, equal to {1} of its initial length. How much cord did it initially have in m?",
+        "PartProblemAlternatives": [
+          "According to the record, a team has {0} m of cord. It uses {1} of its length for signs. How much cord does it use for signs in m?",
+          "The record states: a team has {0} m of cord. It uses {1} of its length for signs. How much cord does it use for signs in m?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, a team uses {0} m of cord for signs, equal to {1} of its initial length. How much cord did it initially have in m?",
+          "The record states: a team uses {0} m of cord for signs, equal to {1} of its initial length. How much cord did it initially have in m?"
+        ]
+      },
+      {
+        "ContextId": "sports-registration",
+        "Unit": "people",
+        "PartLabel": "Running participants",
+        "WholeLabel": "Total sports registrations",
+        "Capacity": 80,
+        "Quantity": "Count",
+        "PartProblemTemplate": "There are {0} people registered for sports. Of these, {1} participate in running. How many people participate in running?",
+        "WholeProblemTemplate": "There are {0} people participating in running, equal to {1} of all sports registrations. How many people are registered for sports?",
+        "PartProblemAlternatives": [
+          "According to the record, there are {0} people registered for sports. Of these, {1} participate in running. How many people participate in running?",
+          "The record states: there are {0} people registered for sports. Of these, {1} participate in running. How many people participate in running?"
+        ],
+        "WholeProblemAlternatives": [
+          "According to the record, there are {0} people participating in running, equal to {1} of all sports registrations. How many people are registered for sports?",
+          "The record states: there are {0} people participating in running, equal to {1} of all sports registrations. How many people are registered for sports?"
+        ]
+      }
+    ],
+    "FractionQuantityActivities": [
+      {
+        "ContextId": "library-books",
+        "PartSource": "The library checks its stored books.",
+        "WholeSource": "The library records its storybooks.",
+        "InitialAction": "moved to another reading room",
+        "PartAction": "placed on the storybook shelf"
+      },
+      {
+        "ContextId": "shop-oranges",
+        "PartSource": "The shop checks its oranges.",
+        "WholeSource": "The shop records the oranges it sold.",
+        "InitialAction": "moved to another stall",
+        "PartAction": "sold at this stall"
+      },
+      {
+        "ContextId": "gift-pens",
+        "PartSource": "The teacher checks the pens in a box.",
+        "WholeSource": "The teacher records pens given to pupils.",
+        "InitialAction": "moved to another box",
+        "PartAction": "given to pupils"
+      },
+      {
+        "ContextId": "school-club",
+        "PartSource": "The school records extracurricular registrations.",
+        "WholeSource": "The school records reading club participants.",
+        "InitialAction": "assigned to other activities",
+        "PartAction": "assigned to the reading club"
+      },
+      {
+        "ContextId": "nursery-trees",
+        "PartSource": "The nursery checks its seedlings.",
+        "WholeSource": "The nursery records planted seedlings.",
+        "InitialAction": "sent to another garden",
+        "PartAction": "planted in this garden"
+      },
+      {
+        "ContextId": "tailoring-fabric",
+        "PartSource": "The workshop checks its fabric.",
+        "WholeSource": "The workshop records fabric used for shirts.",
+        "InitialAction": "set aside for another purpose",
+        "PartAction": "used for shirts"
+      },
+      {
+        "ContextId": "shop-rice",
+        "PartSource": "The shop checks its rice.",
+        "WholeSource": "The shop records the rice it sold.",
+        "InitialAction": "moved to another store",
+        "PartAction": "sold at this shop"
+      },
+      {
+        "ContextId": "watering-tank",
+        "PartSource": "The gardener checks the water tank.",
+        "WholeSource": "The gardener records water used for plants.",
+        "InitialAction": "moved to another tank",
+        "PartAction": "used for watering plants"
+      },
+      {
+        "ContextId": "share-marbles",
+        "PartSource": "A child counts their marbles.",
+        "WholeSource": "A child records marbles given to a sibling.",
+        "InitialAction": "put aside in another box",
+        "PartAction": "given to the sibling"
+      },
+      {
+        "ContextId": "baking-eggs",
+        "PartSource": "The cook checks the eggs.",
+        "WholeSource": "The cook records eggs used for baking.",
+        "InitialAction": "sent to another kitchen",
+        "PartAction": "used for baking"
+      },
+      {
+        "ContextId": "kitchen",
+        "PartSource": "The kitchen checks its planned meals.",
+        "WholeSource": "The kitchen records completed meals.",
+        "InitialAction": "assigned to another kitchen",
+        "PartAction": "completed in this kitchen"
+      },
+      {
+        "ContextId": "craft",
+        "PartSource": "The craft group checks its planned paper flowers.",
+        "WholeSource": "The craft group records completed flowers.",
+        "InitialAction": "assigned to another group",
+        "PartAction": "completed by this group"
+      },
+      {
+        "ContextId": "distribution",
+        "PartSource": "The volunteers check gifts to be packed.",
+        "WholeSource": "The volunteers record packed gifts.",
+        "InitialAction": "assigned to another group",
+        "PartAction": "packed by this group"
+      },
+      {
+        "ContextId": "community",
+        "PartSource": "The volunteers check donated books.",
+        "WholeSource": "The volunteers record sorted books.",
+        "InitialAction": "sent to another group",
+        "PartAction": "sorted by this group"
+      },
+      {
+        "ContextId": "survey",
+        "PartSource": "The survey team checks response forms.",
+        "WholeSource": "The survey team records entered forms.",
+        "InitialAction": "sent to another team",
+        "PartAction": "entered by this team"
+      },
+      {
+        "ContextId": "reading-pages",
+        "PartSource": "A reader tracks the pages of a storybook.",
+        "WholeSource": "The reader records pages read.",
+        "InitialAction": "reserved for another day",
+        "PartAction": "read during this session"
+      },
+      {
+        "ContextId": "delivered-parcels",
+        "PartSource": "The post office checks its parcels.",
+        "WholeSource": "The post office records delivered parcels.",
+        "InitialAction": "sent to another post office",
+        "PartAction": "delivered to recipients"
+      },
+      {
+        "ContextId": "planted-seedlings",
+        "PartSource": "The volunteers check their seedlings.",
+        "WholeSource": "The volunteers record planted seedlings.",
+        "InitialAction": "sent to another group",
+        "PartAction": "planted in this garden"
+      },
+      {
+        "ContextId": "bread-flour",
+        "PartSource": "The bakery checks its flour.",
+        "WholeSource": "The bakery records flour used for bread.",
+        "InitialAction": "sent to another bakery",
+        "PartAction": "used for bread"
+      },
+      {
+        "ContextId": "juice-capacity",
+        "PartSource": "The juice maker checks its orange juice.",
+        "WholeSource": "The juice maker records juice sold.",
+        "InitialAction": "sent to another stall",
+        "PartAction": "sold at this stall"
+      },
+      {
+        "ContextId": "route-distance",
+        "PartSource": "The tour group tracks its route length.",
+        "WholeSource": "The group records the distance of the later stage.",
+        "InitialAction": "allocated to the first stage",
+        "PartAction": "travelled in the later stage"
+      },
+      {
+        "ContextId": "decoration-cord",
+        "PartSource": "The decorating team checks its cord.",
+        "WholeSource": "The team records cord used for signs.",
+        "InitialAction": "set aside for another purpose",
+        "PartAction": "used for signs"
+      },
+      {
+        "ContextId": "sports-registration",
+        "PartSource": "The organisers check sports registrations.",
+        "WholeSource": "The organisers record running participants.",
+        "InitialAction": "assigned to other sports",
+        "PartAction": "assigned to running"
+      }
+    ]
   }
 }

@@ -12,17 +12,19 @@ public sealed partial class AverageQuizGenerator
 
     private sealed record TwoGroupContext(string Member, string Unit, string Subject);
 
-    private static IReadOnlyList<DirectContext> DirectContexts(AppLanguage language) => QuizContentCatalog.LoadList<DirectContext>("AverageQuizGenerator.DirectContexts", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<DirectContext> DirectContexts(AppLanguage language) => NarrativeContextExpansion.Load<DirectContext>("AverageQuizGenerator.DirectContexts", language, _expandNarratives);
 
-    private static IReadOnlyList<DistributionContext> DistributionContexts(AppLanguage language) => QuizContentCatalog.LoadList<DistributionContext>("AverageQuizGenerator.DistributionContexts", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<DistributionContext> DistributionContexts(AppLanguage language) => NarrativeContextExpansion.Load<DistributionContext>("AverageQuizGenerator.DistributionContexts", language, _expandNarratives);
 
-    private static IReadOnlyList<TwoGroupContext> TwoGroupContexts(AppLanguage language) => QuizContentCatalog.LoadList<TwoGroupContext>("AverageQuizGenerator.TwoGroupContexts", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<TwoGroupContext> TwoGroupContexts(AppLanguage language) => NarrativeContextExpansion.Load<TwoGroupContext>("AverageQuizGenerator.TwoGroupContexts", language, _expandNarratives);
 
     private readonly Random _random;
+    private readonly bool _expandNarratives;
 
-    public AverageQuizGenerator(Random? random = null)
+    public AverageQuizGenerator(Random? random = null, bool expandNarratives = true)
     {
         _random = random ?? Random.Shared;
+        _expandNarratives = expandNarratives;
     }
 
     public ArithmeticQuizQuestion GenerateAlgorithm(

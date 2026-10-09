@@ -11,13 +11,15 @@ public sealed partial class PercentageQuizGenerator
 {
     private sealed record ItemContext(string Unit, string Subject, string RatioPart);
 
-    private static IReadOnlyList<ItemContext> Contexts(AppLanguage language) => QuizContentCatalog.LoadList<ItemContext>("PercentageQuizGenerator.Contexts", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<ItemContext> Contexts(AppLanguage language) => NarrativeContextExpansion.Load<ItemContext>("PercentageQuizGenerator.Contexts", language, _expandNarratives);
 
     private readonly Random _random;
+    private readonly bool _expandNarratives;
 
-    public PercentageQuizGenerator(Random? random = null)
+    public PercentageQuizGenerator(Random? random = null, bool expandNarratives = true)
     {
         _random = random ?? Random.Shared;
+        _expandNarratives = expandNarratives;
     }
 
     public ArithmeticQuizQuestion GenerateAlgorithm(

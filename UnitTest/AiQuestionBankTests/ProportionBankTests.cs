@@ -29,10 +29,13 @@ internal static class ProportionBankTests
     private static void Check(bool condition, string message)
     { if (!condition) throw new Exception(message); }
 
+    private static IReadOnlyList<JsonElement> Templates(AppLanguage language)
+        => NarrativeContextExpansion.Load<JsonElement>("ProportionQuizGenerator.Templates", language, expanded: true);
+
     internal static IEnumerable<BasicQuestionContract> Cases()
     {
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-        foreach (var row in QuizContentCatalog.LoadList<JsonElement>("ProportionQuizGenerator.Templates", QuizContentCatalog.Culture(language)))
+        foreach (var row in Templates(language))
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         {
             var type = Enum.Parse<ProportionQuizType>(row.GetProperty("Type").GetString()!);
@@ -117,7 +120,7 @@ internal static class ProportionBankTests
             coverage.Add((c.Language, p.NarrativeId));
             Check(c.IsValid, "Invalid proportion contract");
             // Named projection must still render the original positional JSON exactly.
-            var row = QuizContentCatalog.LoadList<JsonElement>("ProportionQuizGenerator.Templates", QuizContentCatalog.Culture(c.Language))
+            var row = Templates(c.Language)
                 .Single(r => r.GetProperty("NarrativeId").GetString() == p.NarrativeId);
             Check(p.ProblemText == string.Format(CultureInfo.CurrentCulture, row.GetProperty("Template").GetString()!, p.A, p.B, p.C), "Named roles changed original data");
             Check(lesson.Quantities.Where(v => v.Id.StartsWith('f')).All(v => v.Role is not ("given" or "constant")), "Unnamed proportion role");
@@ -153,7 +156,9 @@ internal static class ProportionBankTests
             Check(!(c with { Story = c.Story! with { NarrativeId = "missing" } }).IsValid, "Invalid narrative accepted");
             count++;
         }
-        Check(coverage.Count == 94, "Missing one of 47 templates in both languages: " + coverage.Count);
+        var expected = new[] { AppLanguage.Vietnamese, AppLanguage.English }.SelectMany(language =>
+            Templates(language).Select(row => (language, row.GetProperty("NarrativeId").GetString()!))).ToHashSet();
+        Check(coverage.SetEquals(expected), "Missing proportion templates in bilingual coverage: " + coverage.Count);
         var profiles = Cases().Where(c => c.Language == AppLanguage.Vietnamese && c.Tier == CurriculumTier.FiveStars
             && c.BankVariant == (int)ProportionQuizType.Inverse).ToArray();
         var all = profiles.SelectMany(c => ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>())
@@ -172,7 +177,7 @@ internal static class ProportionBankTests
         }
         catch (InvalidOperationException e) when (e.Message == "DuplicateProseRetriesExhausted") { }
         await CheckStoreAsync();
-        Console.WriteLine($"Proportion: {count} cases; 94 bilingual templates; {alternatives} reviewed clauses; fresh math/all modes/grading, unsafe prose, exhaustion, SQLite/Excel/provider passed.");
+        Console.WriteLine($"Proportion: {count} cases; {coverage.Count} bilingual templates; {alternatives} reviewed clauses; fresh math/all modes/grading, unsafe prose, exhaustion, SQLite/Excel/provider passed.");
     }
 
     private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue == 2 ? 1 : base.Next(maxValue); }

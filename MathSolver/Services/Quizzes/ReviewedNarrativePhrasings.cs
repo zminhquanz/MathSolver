@@ -12,6 +12,14 @@ internal sealed record ReviewedNarrativePhrasings(string Id, string[] Alternativ
     internal const string RemainderListName = "Narrative.Remainder.Phrasings";
     internal const string TimeListName = "Narrative.Time.Phrasings";
     internal const string FractionQuantityListName = "Narrative.FractionQuantity.Phrasings";
+    internal const string TwoNumbersListName = "Narrative.TwoNumbers.Phrasings";
+    internal const string AverageListName = "Narrative.Average.Phrasings";
+    internal const string PercentageListName = "Narrative.Percentage.Phrasings";
+    internal const string GeometryListName = "Narrative.Geometry.Phrasings";
+    internal const string DataListName = "Narrative.Data.Phrasings";
+    internal static readonly string[] ListNames = [ListName, MotionListName, ProportionListName,
+        DecimalListName, MeasurementListName, RemainderListName, TimeListName, FractionQuantityListName,
+        TwoNumbersListName, AverageListName, PercentageListName, GeometryListName, DataListName];
 
     internal static IReadOnlyDictionary<string, string[]> ForFractionQuantity(AppLanguage language)
     {

@@ -295,6 +295,11 @@
                                 </Border>
                         </VerticalStackLayout>
 
+                        <Label
+                            Margin="0,6,0,0"
+                            Text="{localization:Translate SettingsMenu.SystemSection}"
+                            Style="{StaticResource SettingsMenuSectionLabelStyle}" />
+
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon x:Name="DataMenuIcon" Grid.Column="0"
@@ -311,14 +316,9 @@
                             </Grid>
                         </Border>
 
-                        <Label
-                            Margin="0,6,0,0"
-                            Text="{localization:Translate SettingsMenu.SystemSection}"
-                            Style="{StaticResource SettingsMenuSectionLabelStyle}" />
-
                         <!-- Hardware and performance -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                            <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon
                                     x:Name="HardwareMenuIcon"
                                     Grid.Column="0"
@@ -357,7 +357,7 @@
 
                         <!-- About -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                            <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon
                                     x:Name="AboutMenuIcon"
                                     Grid.Column="0"
@@ -403,7 +403,7 @@
 
                         <!-- Reset -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*" ColumnSpacing="10">
+                            <Grid ColumnDefinitions="34,*" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon
                                     x:Name="ResetMenuIcon"
                                     Grid.Column="0"
@@ -425,7 +425,7 @@
 
                         <!-- Advanced -->
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
-                            <Grid ColumnDefinitions="44,*,Auto" ColumnSpacing="10">
+                            <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon
                                     x:Name="AdvancedMenuIcon"
                                     Grid.Column="0"

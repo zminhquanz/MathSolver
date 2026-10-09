@@ -4,6 +4,7 @@ using MathSolver.Services.Core;
 using System.Globalization;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System.Text.Json;
 
 namespace MathSolver.Tests;
 
@@ -98,8 +99,10 @@ internal static partial class PuzzleTests
                 Require(expectedScenarios.All(seenInMode.Contains),
                     $"{language}/{mode}/{contractOnly}: some inverse contexts never appeared.");
             }
-            Require(seenTemplates.Count == 21,
-                $"{language}: expected all 21 inverse templates, got {seenTemplates.Count}.");
+            int expectedTemplates = NarrativeContextExpansion.Load<JsonElement>("ProportionQuizGenerator.Templates", language, expanded: true)
+                .Count(row => row.GetProperty("Type").GetString() == "Inverse");
+            Require(seenTemplates.Count == expectedTemplates,
+                $"{language}: expected all {expectedTemplates} inverse templates, got {seenTemplates.Count}.");
             Require(scenarios[ProportionScenarioKind.WorkersDays] < scenarios.Values.Sum() / 4,
                 $"{language}: duplicate worker wordings dominate the selection.");
             foreach (ProportionScenarioKind scenario in expectedScenarios)
@@ -109,6 +112,6 @@ internal static partial class PuzzleTests
                     Require(directions.Contains((scenario, true)), $"{language}/{scenario}: missing increase.");
             }
         }
-        Console.WriteLine($"  Checked {count} inverse contracts and all 21 bilingual templates on both paths.");
+        Console.WriteLine($"  Checked {count} inverse contracts and the complete bilingual template catalogue on both paths.");
     }
 }

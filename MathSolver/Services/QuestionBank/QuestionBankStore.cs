@@ -27,6 +27,16 @@ public interface IQuestionBankStore
     Task<ValidatedBankQuestion?> TakeReasoningAsync(BankQuestionFamily family, int variant, CurriculumTier tier,
         AppLanguage language, CancellationToken cancellationToken = default)
         => Task.FromResult<ValidatedBankQuestion?>(null);
+    async Task<ValidatedBankQuestion?> TakeChartAsync(DataChartProfile profile, CancellationToken cancellationToken = default)
+    {
+        var saved = await TakeReasoningAsync(BankQuestionFamily.Data, (int)profile.Type, profile.Tier, profile.Language, cancellationToken).ConfigureAwait(false);
+        return saved?.Contract.Story?.ChartProfile is { } stored && ChartProfilesMatch(stored, profile) ? saved : null;
+    }
+    internal static bool ChartProfilesMatch(DataChartProfile stored, DataChartProfile selected) =>
+        stored.Type == selected.Type && stored.Tier == selected.Tier && stored.Language == selected.Language
+        && stored.ContextId == selected.ContextId && stored.QuestionKind == selected.QuestionKind
+        && stored.CategoryIds.SequenceEqual(selected.CategoryIds) && stored.TargetCategoryIds.SequenceEqual(selected.TargetCategoryIds)
+        && stored.HiddenCategoryIds.SequenceEqual(selected.HiddenCategoryIds);
     Task<ValidatedBankQuestion?> TakeFractionAsync(ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
         => Task.FromResult<ValidatedBankQuestion?>(null);

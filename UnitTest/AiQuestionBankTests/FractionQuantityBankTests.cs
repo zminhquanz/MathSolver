@@ -147,8 +147,8 @@ internal static class FractionQuantityBankTests
         try
         {
             await runtime.LoadAsync(path, timeout.Token);
-            // Full 300-profile math/validator matrix runs in RunAsync. Native sampling
-            // stratifies 60 profiles over both types/languages, every context and star.
+            // Full bilingual math/validator matrix runs in RunAsync. Native sampling
+            // covers both types/languages and every current context, with stratified stars.
             foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
             foreach (var type in ElementaryQuizGenerator.FractionQuantityStoryTypes)
             {
@@ -211,7 +211,23 @@ internal static class FractionQuantityBankTests
     public static async Task CheckEvidenceAsync(string directory)
     {
         var files = Directory.GetFiles(directory, "*.json").Where(file => !Path.GetFileName(file).StartsWith("worker-", StringComparison.Ordinal)).ToArray();
-        Check(files.Length == 60, "Incomplete native context/type/language/star coverage");
+        var contracts = files.Select(file =>
+        {
+            using var document = JsonDocument.Parse(File.ReadAllText(file));
+            return document.RootElement.GetProperty("Contract").Deserialize<BasicQuestionContract>()!;
+        }).ToArray();
+        Check(contracts.Length > 0 && contracts.All(c => c.Story!.ContextVersion == contracts[0].Story!.ContextVersion),
+            "Mixed or empty native catalogue evidence");
+        // Retain historical fifteen-context evidence; current catalogues have twenty-three.
+        var expected = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
+        foreach (var type in ElementaryQuizGenerator.FractionQuantityStoryTypes)
+        {
+            var contexts = FractionQuantityStoryContextCatalog.GetProfile(language, contracts[0].Story!.ContextVersion >= 2);
+            for (int i = 0; i < contexts.Count; i++)
+                expected.Add($"{type}-{language}-{(CurriculumTier)(1 + i % 5)}-{contexts[i].ContextId}");
+        }
+        Check(expected.SetEquals(files.Select(file => Path.GetFileNameWithoutExtension(file)!)), "Incomplete native context/type/language/star coverage");
         var samples = new StringBuilder();
         foreach (string file in files)
         {
@@ -225,7 +241,7 @@ internal static class FractionQuantityBankTests
         var store = new QuestionBankStore(Path.Combine(directory, "model.db3"));
         using var workbook = new MemoryStream(); await store.ExportExcelAsync(workbook); workbook.Position = 0;
         var rows = QuestionBankWorkbook.Read(workbook).Select(r => r.Question).Where(q => q is not null && q.ModelName != "original").ToArray();
-        Check(rows.Length >= 68, "SQLite lost native model rows");
+        Check(rows.Length >= files.Length + 8, "SQLite lost native model rows");
         foreach (var q in rows) CheckPractice(q!.Contract.FreshFacts(new(881)), q.Draft);
         await File.WriteAllTextAsync(Path.Combine(directory, "rendered-samples.txt"), samples.ToString());
         Console.WriteLine($"PASS {files.Length} sampled profiles and {rows.Length} native SQLite/Excel rows; fresh facts and all three grading modes.");

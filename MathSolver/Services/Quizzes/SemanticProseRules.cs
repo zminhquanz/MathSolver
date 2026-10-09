@@ -1,7 +1,6 @@
-using MathSolver.Services;
 using System.Text.RegularExpressions;
 
-namespace MathSolver.Services.QuestionBank;
+namespace MathSolver.Services;
 
 /// <summary>Checks ordered semantic anchors rather than exact approved sentences.
 /// Only neutral linking language and reviewed synonyms may change around the anchors.</summary>
@@ -29,11 +28,19 @@ internal static class SemanticProseRules
     }
 
     internal static bool Matches(string? candidate, IEnumerable<string> examples, AppLanguage language)
+        => MatchesCore(candidate, examples, language, false);
+
+    // Used only after C# has substituted the immutable chart data. Native model
+    // templates still reject every literal number through Matches above.
+    internal static bool MatchesRendered(string? candidate, IEnumerable<string> examples, AppLanguage language)
+        => MatchesCore(candidate, examples, language, true);
+
+    private static bool MatchesCore(string? candidate, IEnumerable<string> examples, AppLanguage language, bool rendered)
     {
         if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > 1400 || candidate.Any(char.IsControl)) return false;
         string withoutSlots = Regex.Replace(candidate, @"\{[A-Za-z0-9_.-]+\}", "");
         // Template quantities and computations always belong to C#.
-        if (withoutSlots.Any(char.IsDigit)) return false;
+        if (!rendered && withoutSlots.Any(char.IsDigit)) return false;
         var links = language == AppLanguage.Vietnamese ? VietnameseLinks : EnglishLinks;
         string[] Signature(string text) => Tokens.Matches(Normalize(text, language)).Select(m => m.Value)
             .Where(word => !links.Contains(word)).ToArray();
@@ -44,7 +51,8 @@ internal static class SemanticProseRules
         // two equal values must never swap owner, total, part, rate or group count.
         // Variable names are case-sensitive in the renderer. Lowercasing them
         // with the surrounding prose could otherwise accept an unrenderable {F0}.
-        return examples.Any(example => Slots(example).SequenceEqual(slots)
+        string[] Numbers(string text) => Regex.Matches(text, @"(?<![\p{L}\p{N}])[-+]?\d+(?:[.,]\d+)?").Select(m => m.Value).ToArray();
+        return examples.Any(example => (!rendered || Numbers(example).SequenceEqual(Numbers(candidate))) && Slots(example).SequenceEqual(slots)
             && Signature(example).SequenceEqual(actual));
     }
 

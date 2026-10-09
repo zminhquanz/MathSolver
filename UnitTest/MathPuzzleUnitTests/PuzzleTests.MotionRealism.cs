@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using System.Text.Json;
 
 namespace MathSolver.Tests;
 
@@ -17,9 +18,10 @@ internal static partial class PuzzleTests
                 .MotionProblem!;
             string label = $"{language}/{type}/{seed}";
             string story = contract.ProblemText.ToLowerInvariant();
-            if (story.Contains("đi bộ", StringComparison.Ordinal) ||
-                story.Contains("pedestrian", StringComparison.Ordinal) ||
-                story.Contains("student walking", StringComparison.Ordinal))
+            bool HasKind(string kind) => NarrativeContextExpansion.Load<JsonElement>("MotionQuizGenerator.MovingSubjects", language, expanded: true)
+                .Where(row => row.GetProperty("Kind").GetString() == kind)
+                .Any(row => contract.NarrativeActors.Contains(row.GetProperty("Name").GetString()!, StringComparer.OrdinalIgnoreCase));
+            if (HasKind("Pedestrian"))
             {
                 int[] speeds = contract.QuestionKind switch
                 {
@@ -34,8 +36,7 @@ internal static partial class PuzzleTests
                     $"{label}: walking speed is implausible: {string.Join(", ", speeds)} m/s.");
             }
 
-            if (story.Contains("tàu hỏa", StringComparison.Ordinal) ||
-                story.Contains("train", StringComparison.Ordinal))
+            if (HasKind("Train"))
             {
                 Require(type == MotionQuizType.Basic,
                     $"{label}: a train was paired with a road vehicle.");
@@ -47,13 +48,7 @@ internal static partial class PuzzleTests
                     $"{label}: train speed is implausibly low: {speed}.");
             }
 
-            if (story.Contains("m/s", StringComparison.Ordinal) &&
-                (story.Contains("ô tô", StringComparison.Ordinal) ||
-                 story.Contains("xe máy", StringComparison.Ordinal) ||
-                 story.Contains("xe buýt", StringComparison.Ordinal) ||
-                 story.Contains("car", StringComparison.Ordinal) ||
-                 story.Contains("motorcycle", StringComparison.Ordinal) ||
-                 story.Contains("bus", StringComparison.Ordinal)))
+            if (story.Contains("m/s", StringComparison.Ordinal) && HasKind("MotorVehicle"))
             {
                 int[] speeds = contract.QuestionKind switch
                 {

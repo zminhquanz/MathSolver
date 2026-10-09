@@ -2,6 +2,7 @@ using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
 using System.Globalization;
+using System.Text.Json;
 
 namespace MathSolver.Tests;
 
@@ -19,11 +20,12 @@ internal static partial class PuzzleTests
         {
             var average = new AverageQuizGenerator(new Random(seed)).GenerateAlgorithm(
                 ArithmeticQuizMode.Essay, AverageQuizType.Direct, language, new(tier, false)).AverageProblem!;
-            var context = QuizStoryContextCatalog.Find(average.StoryContextId!);
-            Require(average.Facts.Skip(1).All(n => n > 0 && n <= context.MaximumPerPeriod), "An average datum exceeds the context capacity.");
+            var context = NarrativeContextExpansion.Load<JsonElement>("AverageQuizGenerator.DirectContexts", language, expanded: true)
+                .Single(row => row.GetProperty("Id").GetString() == average.StoryContextId);
+            Require(average.Facts.Skip(1).All(n => n > 0 && n <= context.GetProperty("Capacity").GetInt32()), "An average datum exceeds the context capacity.");
             Require(average.Facts.Skip(1).Sum() == (int)average.CorrectAnswer * average.Facts[0], "Contextual average is inconsistent.");
-            Require(average.AnswerUnit == context.Unit(language) && !average.ProblemText.Contains("matchs"), "An average lost its unit or period.");
-            seen.Add(context.Id);
+            Require(average.AnswerUnit == context.GetProperty("Unit").GetString() && !average.ProblemText.Contains("matchs"), "An average lost its unit or period.");
+            seen.Add(average.StoryContextId!);
             foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Remainder))
             {
                 var question = new ElementaryQuizGenerator(new Random(seed)).Generate(ArithmeticQuizMode.Essay, QuizProblemKind.Remainder, type, language, tier);

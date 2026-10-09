@@ -41,13 +41,15 @@ public sealed class MotionQuizGenerator
     // có thể dùng cm hoặc mm với tốc độ tương ứng cm/s, mm/s.
     private static IReadOnlyList<MotionUnitProfile> UnitProfiles(AppLanguage language) => QuizContentCatalog.LoadList<MotionUnitProfile>("MotionQuizGenerator.UnitProfiles", QuizContentCatalog.Culture(language));
 
-    private static IReadOnlyList<MovingSubject> MovingSubjects(AppLanguage language) => QuizContentCatalog.LoadList<MovingSubject>("MotionQuizGenerator.MovingSubjects", QuizContentCatalog.Culture(language));
+    private IReadOnlyList<MovingSubject> MovingSubjects(AppLanguage language) => NarrativeContextExpansion.Load<MovingSubject>("MotionQuizGenerator.MovingSubjects", language, _expandNarratives);
 
     private readonly Random _random;
+    private readonly bool _expandNarratives;
 
-    public MotionQuizGenerator(Random? random = null)
+    public MotionQuizGenerator(Random? random = null, bool expandNarratives = true)
     {
         _random = random ?? Random.Shared;
+        _expandNarratives = expandNarratives;
     }
 
     public ArithmeticQuizQuestion GenerateAlgorithm(
@@ -729,7 +731,10 @@ public sealed class MotionQuizGenerator
     {
         MotionSubjectKind[] pairKinds = MovingSubjects(language)
             .GroupBy(subject => subject.Kind)
-            .Where(group => group.Count() >= 2 && (level is not >= 4 || group.Key == MotionSubjectKind.MotorVehicle))
+            // Train contexts model a single journey. Adding a second named train
+            // must not implicitly enable chase/meeting stories without a rail model.
+            .Where(group => group.Key != MotionSubjectKind.Train && group.Count() >= 2
+                && (level is not >= 4 || group.Key == MotionSubjectKind.MotorVehicle))
             .Select(group => group.Key)
             .ToArray();
 

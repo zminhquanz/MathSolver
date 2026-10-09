@@ -14,7 +14,9 @@ internal static partial class PuzzleTests
         using var reader = new StreamReader(pickerSource);
         var aiSubtypeKeys = System.Text.RegularExpressions.Regex.Matches(reader.ReadToEnd(), "\"(Quiz\\.[A-Za-z0-9_.]+)\"")
             .Select(match => match.Groups[1].Value)
-            .Where(key => !key.EndsWith('.')).Distinct(StringComparer.Ordinal).ToArray();
+            .Where(key => !key.EndsWith('.') && key != "Quiz.Geometry")
+            .Concat(Enum.GetValues<GeometryQuizShape>().Select(shape => "Quiz.Geometry" + shape))
+            .Distinct(StringComparer.Ordinal).ToArray();
         Require(aiSubtypeKeys.Contains("Quiz.ProportionDirect") && aiSubtypeKeys.Contains("Quiz.ProportionInverse"),
             "AI proportion subtype routes must be validated.");
         foreach (var language in Enum.GetValues<AppLanguage>())

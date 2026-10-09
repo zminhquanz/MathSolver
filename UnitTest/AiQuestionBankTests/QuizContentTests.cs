@@ -60,6 +60,12 @@ internal static class QuizContentTests
         }
         Reject(() => QuizContentCatalog.Validate(ChangeRow("MotionQuizGenerator.UnitProfiles", "TimeDivisor", 0)), "invalid time conversion");
         Reject(() => QuizContentValidation.CheckTranslation(ChangeRow("AverageQuizGenerator.DirectContexts", "Capacity", 1), en), "changed mathematical metadata");
+        Reject(() => QuizContentCatalog.Validate(ChangeRow("PercentageQuizGenerator.PercentageStories.Extensions", "Capacity", 0)), "invalid expanded scenario capacity");
+        var duplicateContexts = JsonNode.Parse(en.Lists["AverageQuizGenerator.DirectContexts.Extensions"].GetRawText())!;
+        duplicateContexts[0]!["Id"] = "library";
+        Reject(() => QuizContentCatalog.Validate(new() { Version = 1, Culture = "en-US", Texts = en.Texts,
+            Lists = new(en.Lists) { ["AverageQuizGenerator.DirectContexts.Extensions"] = JsonSerializer.SerializeToElement(duplicateContexts) } }),
+            "expanded catalogue collided with a historical context");
         QuizContentPack ChangeFractionContexts(Action<JsonArray> change)
         {
             var rows = JsonNode.Parse(en.Lists["FractionQuantityContexts"].GetRawText())!.AsArray();

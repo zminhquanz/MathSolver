@@ -1,5 +1,30 @@
 # Local AI question templates
 
+## Shared reviewed language and visual lessons
+
+The existing 14 AI families retain their stored IDs. Reviewed factual and
+question clauses have been expanded in both language packs, with explicit
+phrasing lists for two-number relations, averages and percentages alongside
+the existing multi-step, motion and proportion lists. Prompt construction sends
+one selected C# situation and its role bindings; the full context catalogue is
+never placed in the prompt. Grammar and validation use the same alternatives.
+
+Applied geometry and data lessons are additional AI families. Geometry variants
+encode both shape and requested measurement; dimensions, diagrams, calculations
+and answer units stay under C# control. Data lessons retain a `DataChartProfile`
+with category order, target category, hidden categories and context. SQLite
+selection requires a matching profile before generating fresh C# values. Chart
+validation rebuilds those values independently and allows reviewed wording
+changes only after checking all visual data and calculation roles.
+
+Language templates use the existing version 8 bank schema and Excel format.
+Practice reuses these templates with the original curriculum generators; no
+inference is performed per practice question. Missing or invalid bank entries
+fall back to C#, and numeric practice retains its current selection policy.
+See the [regression and actual GGUF commands](../../../UnitTest/AiQuestionBankTests/README.md)
+for reproducible coverage and the limits of native sampling.
+
+
 Reviewed story wording and scene metadata are loaded from the bundled quiz JSON
 catalogue. See the [authoring guide](../../QUIZ_CONTENT_AUTHORING.md) for language
 packs, context lists, placeholders and validation commands. Arithmetic rules and
@@ -576,13 +601,13 @@ Proportion is story family 8 (Direct=0, Inverse=1). It reuses reviewed narrative
 ## Decimal word problems
 
 Decimal is story family 9, contract version 8. The four arithmetic variants
-always generate word problems, retaining Story.NarrativeId for one of eight
+always generate word problems, retaining Story.NarrativeId for one of fourteen
 continuous-quantity contexts. ExactAnswer uses ReducedFraction; AnswerText
 formats the decimal preview. Nonintegral answers must not use the legacy
 integer Answer property. SQLite/Excel persist the seed and validated prose;
 practice regenerates all numeric facts and exact solution steps. Numeric-only
 decimal practice, comparison and rounding are not replaced by bank prose.
-See [DECIMAL_AI.md](../../DECIMAL_AI.md) for tiers, JSON authoring and verification.
+The six added activities and their physical limits are described below.
 
 Packing (family 11) and time (family 12) use reviewed JSON wording. Packing
 separates minimum groups, leftovers only and the complete quotient/remainder
@@ -590,8 +615,64 @@ tuple. ExactAnswers retains every result; display/grading checks all components
 and units. See [PACKING_TIME_AI.md](../../PACKING_TIME_AI.md).
 
 Fraction quantity (family 13) adds finding a fractional part and recovering the
-whole, including the existing five-star remainder-based structures. Fifteen
+whole, including the existing five-star remainder-based structures. Twenty-three
 stable contexts carry Count/Mass/Distance/Capacity policies. Reviewed direct
 templates and multi-step phrasings are stored in QuizContent JSON. Exact answers,
 fresh facts, validation, prose deduplication and SQLite reuse the version 8 story
-pipeline. See [FRACTION_QUANTITY_AI.md](../../FRACTION_QUANTITY_AI.md).
+pipeline. The expanded activity model is described below.
+
+## Expanded priority contexts
+
+Two-number, multi-step, average, percentage, proportion and motion generators
+share their C# situations with AI templates. Additional activities include meal
+preparation, collected materials, pages read, swimming sessions, nursery quality,
+returned books, deliveries, sewing progress, camping supplies and produce transport.
+The selected scenario retains its quantity roles, units, capacity and allowed tier;
+the prompt contains only that scenario. New prose clauses are registered with the
+same reviewed grammar and semantic validator, rather than expanding the prompt
+with every available setting. Geometry/data remain limited to the supported applied
+variants; direct numerical and visual recognition exercises continue to use C#.
+
+`Story.ContextVersion=1` selects the six priority families' extended context lists.
+Version 2 also selects the decimal and fraction-quantity extensions. A missing property
+deserializes as zero, retaining the original seeded catalogue for existing SQLite
+and Excel records. Base lists must keep their order and meaning. Future context
+expansions must retain each historical catalogue version, rather than appending
+entries to an already released version. Fresh facts preserve both context version
+and mathematical schema. See `--narrative-depth` and `--narrative-depth-model`
+in the AI regression project's README.
+
+## Decimal and fraction-quantity activity depth
+
+Decimal version-2 situations add sewing uniforms, bottling juice, preparing animal
+feed, cutting decorative cord, packing rice and preparing bakery batches. Each
+activity supplies its own factual clauses, group unit and per-group limit; it does
+not merely substitute an item into a generic sentence. Bottles stay within two
+litres, rice bags within five kilograms, uniforms within six metres of fabric,
+cord pieces within four metres, feed bags within twenty kilograms and bakery
+batches within four kilograms of flour, including the later adjustments. Group
+counts are integral; total quantities have a separate limit. C# chooses all values
+and computes exact answers. Stars 1–2 use direct decimal arithmetic; 3 adds inferred
+quantities, 4 adds an adjustment, and 5 includes compatible unit conversion.
+
+Fraction quantity adds pages read, parcels delivered, seedlings planted, flour
+used, juice capacity, route distance, decorative cord and sports registrations.
+Every current context has a source, an initial action and a distinct target action.
+Direct part/whole questions at 1–2 stars retain the selected activity; 3 derives
+the supplied quantity from separate parts; 4 removes an explicitly duplicated
+overlap bounded by both records; 5 separates the initial allocation from the
+requested fraction of the remainder. Fraction numerators/denominators vary within
+the tier policy. Counted objects remain integral, while measurements may have
+exact fractional answers. Context capacities also constrain a recovered whole.
+
+The selected C# situation feeds the compact AI prompt, reviewed grammar and
+validator. AI selects compatible wording without supplying numbers, changing
+quantity roles, adding facts or choosing solution calculations. Stored templates
+regenerate fresh numbers in practice. Context versions 0 and 1 retain their original
+decimal/fraction seed replay; version 2 preserves the new activity schema through
+SQLite and Excel. The numeric practice path remains independent.
+
+Run `--quantity-depth` for all current and historical profiles, both languages,
+all five tiers, role/language rejection, physical limits, grading and storage.
+Run `--quantity-depth-model <model.gguf>` for streamed native inference of thirty
+representative cases, validation, SQLite reuse, fresh answers and model disposal.

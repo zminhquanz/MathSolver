@@ -40,11 +40,20 @@ public partial class AiQuestionBankPage
                     BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Geometry => ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1))
+                        .Select(variant => "Quiz.Geometry" + ReasoningStoryCatalogue.GeometryProfile(variant).Shape).ToArray(),
+                    BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]
                 };
                 _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
                 if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
                 OperationPicker.ItemsSource = keys.Select(LocalizationService.TranslateKey).ToArray();
+                if (_family == BankQuestionFamily.Geometry)
+                    OperationPicker.ItemsSource = _storyVariants.Select(variant => {
+                        var profile = ReasoningStoryCatalogue.GeometryProfile(variant);
+                        return LocalizationService.TranslateKey("Quiz.Geometry" + profile.Shape) + " · "
+                            + GeometryReasoningText.MeasurementName(profile.Measurement, AppLanguageManager.CurrentLanguage);
+                    }).ToArray();
                 IllustratedQuizPicker.SetKeys(OperationPicker, keys);
                 OperationPicker.SelectedIndex = Array.IndexOf(_storyVariants, _storyVariant);
                 return;

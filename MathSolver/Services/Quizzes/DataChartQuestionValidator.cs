@@ -2,7 +2,7 @@ using MathSolver.Models;
 
 namespace MathSolver.Services;
 
-/// <summary>Before AI integration, accept only prose generated from the bound JSON roles.</summary>
+/// <summary>C# owns chart data/roles; optional reviewed AI clauses may change presentation.</summary>
 public static class DataChartQuestionValidator
 {
     public static void ValidateProfile(DataChartProfile profile)
@@ -67,16 +67,20 @@ public static class DataChartQuestionValidator
             || visual.AccessibleDescription is not null || visual.Annotations is not null || visual.Polygons is not null
             || visual.Lines is not null || visual.PictographKey is not null || visual.RotationDegrees != 0)
             Fail("Chart labels, data, units or hidden cells disagree.");
-        if (!contract.ProblemText.Equals(expected.ProblemText, StringComparison.Ordinal)
-            || !contract.Facts.SequenceEqual(expected.Facts) || !contract.Constants.ToHashSet().SetEquals(expected.Constants)
+        bool originalProse = contract.ProblemText.Equals(expected.ProblemText, StringComparison.Ordinal)
+            && contract.Reasoning!.Steps.SequenceEqual(expected.Reasoning!.Steps);
+        if (!contract.Facts.SequenceEqual(expected.Facts) || !contract.Constants.ToHashSet().SetEquals(expected.Constants)
             || !contract.Answers.SequenceEqual(expected.Answers) || contract.RequiresSolution != expected.RequiresSolution
             || contract.Reasoning!.ScenarioId != expected.Reasoning!.ScenarioId
             || !contract.Reasoning.Givens.SequenceEqual(expected.Reasoning.Givens)
-            || !contract.Reasoning.Steps.SequenceEqual(expected.Reasoning.Steps)
+            || !contract.Reasoning.Steps.Select((step, i) => step with { Label = expected.Reasoning.Steps.ElementAtOrDefault(i)?.Label ?? "" })
+                .SequenceEqual(expected.Reasoning.Steps)
             || !contract.Reasoning.IntermediateUnits.ToHashSet().SetEquals(expected.Reasoning.IntermediateUnits)
             || contract.Reasoning.Explanation != expected.Reasoning.Explanation
             || contract.Reasoning.SupportingDiagram != expected.Reasoning.SupportingDiagram)
             Fail("Chart prose, relations or answer disagree with the C# data.");
+        if (!originalProse && !ReviewedDataChartProse.Matches(contract))
+            Fail("Chart wording changes facts, units or the requested category.");
         if (chart.Profile.QuestionKind == DataChartQuestionKind.MoreThan)
         {
             int first = chart.Profile.CategoryIds.ToList().IndexOf(chart.Profile.TargetCategoryIds[0]);

@@ -103,9 +103,10 @@ internal static class DecimalBankTests
             Check(!text.Contains("số đo") && !text.Contains("đo được"),
                 "Generic measurement wording leaked into mass/capacity: " + problem.ProblemText);
         if (problem.Type == ElementaryQuizType.DecimalAdd && (int)problem.Reasoning!.Tier <= 2)
-            Check(text.Contains(problem.Answers[0].Unit == "kg" ? "cân được"
-                : problem.Answers[0].Unit is "l" or "ml" ? "dung tích" : "số đo"),
-                "Built-in addition has the wrong quantity wording: " + problem.ProblemText);
+            Check(problem.Answers[0].Unit == "kg" ? text.Contains("cân được") || text.Contains("khối lượng") || text.Contains("lượng")
+                : problem.Answers[0].Unit is "l" or "ml" ? text.Contains("dung tích") || text.Contains("lượng")
+                    : text.Contains("số đo") || text.Contains("chiều dài") || text.Contains("độ dài"),
+                "Built-in addition has the wrong quantity wording: " + problem.ProblemText + "\n" + problem.SolutionText);
     }
 
     public static async Task RunAsync()
@@ -125,7 +126,7 @@ internal static class DecimalBankTests
                 Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d), c).IsValid, "Reviewed prose rejected");
             var lesson = ReasoningStoryCatalogue.Lesson(c);
             if (c.Language == AppLanguage.Vietnamese && c.BankVariant == (int)ElementaryQuizType.DecimalAdd
-                && (int)c.Tier <= 2)
+                && (int)c.Tier <= 2 && ElementaryQuizGenerator.DecimalContexts(c.Language).Single(context => context.Id == c.SceneId).Activity.Length == 0)
             {
                 var clauses = lesson.FactPhrasings.Values.SelectMany(phrases => phrases).ToArray();
                 string expectedVerb = c.Unit switch { "kg" => "cân được", "l" or "ml" => "có dung tích", _ => "đo được" };

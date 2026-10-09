@@ -31,13 +31,15 @@ public sealed class ProportionQuizGenerator
 
     private sealed record TemplateDefinition(ProportionQuizType Type, ProportionScenarioKind Scenario, string Template, string Unit, string Subject, bool AsksForAdditionalPeople = false, DirectRateProfile RateProfile = DirectRateProfile.GenericCount, string NarrativeId = "");
 
-    private static IReadOnlyList<TemplateDefinition> Templates(AppLanguage language) => QuizContentCatalog.LoadList<TemplateDefinition>("ProportionQuizGenerator.Templates", QuizContentCatalog.Culture(language));
+    private static IReadOnlyList<TemplateDefinition> Templates(AppLanguage language, bool expanded = true) => NarrativeContextExpansion.Load<TemplateDefinition>("ProportionQuizGenerator.Templates", language, expanded);
 
     private readonly Random _random;
+    private readonly bool _expandNarratives;
 
-    public ProportionQuizGenerator(Random? random = null)
+    public ProportionQuizGenerator(Random? random = null, bool expandNarratives = true)
     {
         _random = random ?? Random.Shared;
+        _expandNarratives = expandNarratives;
     }
 
     public ArithmeticQuizQuestion GenerateAlgorithm(
@@ -96,7 +98,7 @@ public sealed class ProportionQuizGenerator
                 ? requestedType.Value
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
-        TemplateDefinition[] candidates = Candidates(type, language, level);
+        TemplateDefinition[] candidates = Candidates(type, language, level, _expandNarratives);
 
         if (!string.IsNullOrEmpty(narrativeId))
             candidates = candidates.Where(t => t.NarrativeId == narrativeId).ToArray();
@@ -133,8 +135,8 @@ public sealed class ProportionQuizGenerator
     internal static string[] NarrativeIds(ProportionQuizType type, CurriculumTier tier, AppLanguage language)
         => Candidates(type, language, (int)tier).Select(t => t.NarrativeId).Where(id => id.Length > 0).ToArray();
 
-    private static TemplateDefinition[] Candidates(ProportionQuizType type, AppLanguage language, int? level)
-        => Templates(language)
+    private static TemplateDefinition[] Candidates(ProportionQuizType type, AppLanguage language, int? level, bool expanded = true)
+        => Templates(language, expanded)
             .Where(template => template.Type == type &&
                 (level is not >= 4 || type != ProportionQuizType.Direct ||
                     template.RateProfile is not (DirectRateProfile.TreesPerStudent or DirectRateProfile.GenericCount or DirectRateProfile.MoneyDong)) &&

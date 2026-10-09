@@ -41,6 +41,15 @@ internal sealed class ReasoningStoryCycle
                 .OrderBy(c => history.Count(s => s == c.SceneId + "/" + c.Unit)).FirstOrDefault()
                 ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
         }
+        if (ReasoningStoryCatalogue.UsesReviewedPhrasings(family) && excludedProse is not null
+            && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
+        {
+            // Resampling is bounded and never calls inference. A used-up scene
+            // should not stop generation while other compatible scenes remain.
+            best = Enumerable.Range(0, 256).Select(_ => ReasoningStoryCatalogue.Create(family, variant, tier, language))
+                .FirstOrDefault(c => ReviewedReasoningProse.NovelDrafts(c, excludedProse).Any())
+                ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+        }
         history.Enqueue(best!.SceneId + "/" + best.Unit);
         if (history.Count > 4) history.Dequeue();
         return best;

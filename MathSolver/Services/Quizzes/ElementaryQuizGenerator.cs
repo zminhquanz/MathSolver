@@ -5,9 +5,10 @@ using System.Globalization;
 namespace MathSolver.Services;
 
 /// <summary>C# math puzzle data and rules.</summary>
-public sealed partial class ElementaryQuizGenerator(Random? random = null)
+public sealed partial class ElementaryQuizGenerator(Random? random = null, bool expandNarratives = true)
 {
     private readonly Random _random = random ?? Random.Shared;
+    private readonly bool _expandNarratives = expandNarratives;
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
     public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
     {

@@ -12,6 +12,7 @@ internal sealed class QuizNarrativeCapture : IDisposable
     private readonly Dictionary<string, string> _fragments = new(StringComparer.Ordinal);
     private readonly IReadOnlyDictionary<string, string[]>? _reviewed;
     private readonly Dictionary<string, string[]> _phrasingFragments = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string[]> _deferredPhrasings = new(StringComparer.Ordinal);
     internal readonly Dictionary<string, (string Role, string Value)> Slots = new(StringComparer.Ordinal);
     private static readonly Regex Numbers = new(@"(?<![\p{L}\p{N}])\d+(?:[.,]\d+)?(?![\p{L}\p{N}])");
 
@@ -65,7 +66,39 @@ internal sealed class QuizNarrativeCapture : IDisposable
         return text;
     }
 
-    internal string Finish(string text) => Numbers.Replace(Project(text), m => Slot("given", m.Value));
+    // Some generators bind a supplied list only after translating the sentence.
+    // Capture its reviewed alternatives without changing the existing fact slots
+    // or schemas of templates already saved in SQLite.
+    internal void BindAlternatives(string template, string variable, string value)
+    {
+        string source = template.Replace("{" + variable + "}", value, StringComparison.Ordinal);
+        string Restore(string text) => Regex.Replace(text, @"\{(f\d+)\}", m => Slots[m.Groups[1].Value].Value);
+        var choices = Phrasings(Project(template)).Select(text => Restore(text)
+            .Replace("{" + variable + "}", value, StringComparison.Ordinal)).Distinct(StringComparer.Ordinal).ToArray();
+        if (choices.Any(choice => choice != source)) _deferredPhrasings[source] = choices;
+    }
+
+    internal string Finish(string text)
+    {
+        string result = Numbers.Replace(Project(text), m => Slot("given", m.Value));
+        if (_deferredPhrasings.TryGetValue(text, out var alternatives))
+        {
+            var ordered = Regex.Matches(result, @"\{f\d+\}").Select(m => m.Value).ToArray();
+            string[] original = Sentences(result);
+            var choices = original.Select(_ => new List<string>()).ToArray();
+            foreach (string alternative in alternatives)
+            {
+                int index = 0;
+                string projected = Numbers.Replace(alternative, _ => index < ordered.Length ? ordered[index++]
+                    : throw new InvalidDataException("Deferred narrative quantity count changed."));
+                var parts = Sentences(projected);
+                if (index != ordered.Length || parts.Length != original.Length) throw new InvalidDataException("Deferred narrative roles changed.");
+                for (int i = 0; i < parts.Length; i++) choices[i].Add(parts[i]);
+            }
+            for (int i = 0; i < original.Length; i++) _phrasingFragments[original[i]] = choices[i].ToArray();
+        }
+        return result;
+    }
 
     private static string[] Sentences(string text) => Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
 
