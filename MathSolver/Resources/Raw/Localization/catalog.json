@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "sourceCulture": "vi-VN",
   "translationGroups": {
+    "DataManagement": "Settings destination for stored app data; question bank management.",
     "Formula": "Công thức toán học — nội dung hướng dẫn và minh họa.",
     "Quiz": "Math puzzles: question generation, practice and grading.",
     "PowerRoot": "Lũy thừa và căn — nhập dữ liệu, kết quả và lời giải.",
@@ -31,6 +32,70 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "AiBank.SqlQueryTitle": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpShow": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpHide": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpQueryTitle": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpEditTitle": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpColumnsTitle": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpLimitsTitle": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpQuery": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpEdit": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpColumns": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpLimits": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.SqlHelpSelected": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.GridRowEditing": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.GridEditingHint": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.GridRowSaved": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
+    "AiBank.GridCloseInfo": {
+      "context": "AI question bank > SQLite: compact contextual help.",
+      "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
+    },
     "Formula.Tabs.UnknownComponent": {
       "context": "Trang Công thức → tab Tìm thành phần chưa biết (Android và Windows).",
       "description": "Mở hướng dẫn tìm số chưa biết trong phép cộng, trừ, nhân, chia; không nói về thành phần phần mềm.",
@@ -1639,6 +1704,167 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    { "key": "DataManagement.Title", "source": "Quản lý dữ liệu", "mode": "exact" },
+    { "key": "DataManagement.Subtitle", "source": "Ngân hàng đề · SQLite", "mode": "exact" },
+    { "key": "DataManagement.MenuHint", "source": "Xem, chỉnh sửa và nhập/xuất đề đã lưu", "mode": "exact" },
+    { "key": "DataManagement.QuestionBank", "source": "Ngân hàng đề", "mode": "exact" },
+    { "key": "DataManagement.BankHint", "source": "Quản lý đề đã lưu, không cần nạp model AI.", "mode": "exact" },
+    { "key": "DataManagement.SavedQuestions", "source": "Đề đã lưu", "mode": "exact" },
+    { "key": "DataManagement.ShowSql", "source": "SQL", "mode": "exact" },
+    { "key": "DataManagement.HideSql", "source": "Ẩn SQL", "mode": "exact" },
+    { "key": "DataManagement.Back", "source": "Quay lại", "mode": "exact" },
+    { "key": "DataManagement.DiscardHint", "source": "Dòng đang sửa chưa được lưu. Bỏ thay đổi và quay lại?", "mode": "exact" },
+    { "key": "DataManagement.Discard", "source": "Bỏ thay đổi", "mode": "exact" },
+    {
+      "key": "AiBank.InquiryShow",
+      "source": "Quản lý đề trong SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryHide",
+      "source": "Ẩn bảng và truy vấn",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryHint",
+      "source": "Mở bảng để thêm, sửa, xóa đề; hoặc nhập SQL bên dưới.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlQueryTitle",
+      "source": "Truy vấn SQL",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpShow",
+      "source": "Trợ giúp",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpHide",
+      "source": "Đóng trợ giúp",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpQueryTitle",
+      "source": "SQL",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpEditTitle",
+      "source": "Thao tác bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpColumnsTitle",
+      "source": "Cột dữ liệu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpLimitsTitle",
+      "source": "Giới hạn",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpQuery",
+      "source": "• SELECT để xem; INSERT, UPDATE, DELETE thay đổi dữ liệu ngay.\n• Chạy một lệnh trên BasicQuestionBank. Dùng WHERE để chọn dòng, LIMIT để giới hạn kết quả.\n• Hỗ trợ WITH và chú thích -- hoặc /* */.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpEdit",
+      "source": "• Chọn ô để xem. Sửa dòng → sửa trên bảng → Lưu dòng.\n• Thêm dòng → nhập ở dòng + → Lưu dòng mới. Hủy thay đổi để bỏ bản nháp.\n• Xóa dòng xóa bản ghi đang chọn.\n• SELECT cần giữ Hash; JOIN/tổng hợp chỉ xem. Mở bảng để chỉnh sửa.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpColumns",
+      "source": "• Hash: mã dòng, không sửa; để trống khi thêm để tự tạo.\n• Operation: 0 cộng, 1 trừ, 2 nhân, 3 chia. Stars: 1–5. Language: 0 Việt, 1 Anh.\n• ProblemType / ProblemVariant: mã bài toán / dạng bài. KnowledgeGroup: mã nhóm kiến thức.\n• ContractJson / DraftJson / RawJson: dữ liệu JSON; cần đúng cấu trúc để luyện tập.\n• CreatedUtc / LastUsedUtc: ticks UTC của .NET. UseCount: số lần dùng.\n• NULL là giá trị rỗng; chuỗi để trống không phải NULL.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpLimits",
+      "source": "• Tối đa 100 dòng, 32 cột, 4.000 ký tự/ô; thời gian 3 giây.\n• Chọn ô để xem chi tiết; dùng WHERE hoặc LIMIT để lọc.\n• Sau khi lưu, bộ lọc có thể ẩn dòng. Tải lại bảng nếu dữ liệu đã thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlHelpSelected",
+      "source": "Đang xem mục này.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.CancelData",
+      "source": "Dừng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.InquiryTruncated",
+      "source": "Đang hiển thị một phần; thêm WHERE hoặc LIMIT để lọc.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.SqlGridHint",
+      "source": "Cuộn để xem thêm cột và dòng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridLoadEditable",
+      "source": "Mở bảng",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridRowEditing",
+      "source": "Đang sửa dòng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridEditingHint",
+      "source": "Sửa các ô trên dòng đang chọn, rồi Lưu dòng hoặc Hủy thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridRowSaved",
+      "source": "Đã lưu dòng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridKeyReadOnly",
+      "source": "Hash là mã dòng, chỉ đọc.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridInsertHint",
+      "source": "Nhập ở dòng +, rồi Lưu dòng mới hoặc Hủy thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridEditableHint",
+      "source": "Chọn ô để xem; bấm Sửa dòng để chỉnh sửa.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridReadOnlyHint",
+      "source": "Chỉ xem. Bấm Mở bảng để thêm, sửa, xóa.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridCellLoaded",
+      "source": "Đang xem ô đã chọn.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.CopySqlCell",
+      "source": "Sao chép",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.GridCloseInfo",
+      "source": "Đóng thông tin",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DataTransferHint",
+      "source": "Excel (.xlsx): tối đa 20 MB / 10.000 dòng. Đề trùng hoặc sai được bỏ qua. Xuất ngân hàng rỗng để lấy file mẫu.",
+      "mode": "exact"
+    },
     {
       "key": "Formula.Tabs.UnknownComponent",
       "source": "𝑥  Tìm thành phần chưa biết",

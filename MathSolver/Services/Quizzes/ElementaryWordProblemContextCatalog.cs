@@ -4,7 +4,8 @@ namespace MathSolver.Services;
 
 public sealed record FractionQuantityStoryContext(string Unit, string PartLabel, string WholeLabel,
     string PartProblemTemplate, string WholeProblemTemplate, int Capacity = 5000, string ContextId = "",
-    WordProblemQuantity Quantity = WordProblemQuantity.Unspecified);
+    WordProblemQuantity Quantity = WordProblemQuantity.Unspecified,
+    string[]? PartProblemAlternatives = null, string[]? WholeProblemAlternatives = null);
 
 public static class FractionQuantityStoryContextCatalog
 {
@@ -13,7 +14,8 @@ public static class FractionQuantityStoryContextCatalog
 }
 
 public sealed record DataChartStoryContext(string Description, IReadOnlyList<string> Labels,
-    string Unit, string QuantityName, int Capacity = 5000, string? ContextId = null);
+    string Unit, string QuantityName, int Capacity = 5000, string ContextId = "",
+    IReadOnlyList<string>? CategoryIds = null);
 
 public static class DataChartStoryContextCatalog
 {

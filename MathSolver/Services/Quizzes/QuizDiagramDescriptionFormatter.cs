@@ -12,6 +12,8 @@ internal static class QuizDiagramDescriptionFormatter
         bool vi = language == AppLanguage.Vietnamese;
         if (visual is not null)
         {
+            if (QuizChartPresentation.IsChart(visual))
+                visual = QuizChartPresentation.ForDisplay(visual, revealSolution);
             if (visual.AccessibleDescription is { } accessible)
                 return AccessibleMathText.Format(accessible, language);
             parts.AddRange(visual.Labels);

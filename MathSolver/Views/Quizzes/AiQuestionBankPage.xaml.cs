@@ -32,7 +32,7 @@ public partial class AiQuestionBankPage : ContentPage
         IllustratedQuizPicker.Attach(ProblemPicker, "Choice.SelectProblem");
         IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectSubtype");
         IllustratedQuizPicker.Attach(FindXRolePicker, "Choice.SelectSubtype");
-        QueryEditor.Text = QuestionBankStore.DefaultInquiry;
+
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         RefreshPickerLabels();
         StarsPicker.SelectedIndex = 2;
@@ -97,7 +97,7 @@ public partial class AiQuestionBankPage : ContentPage
         })) Interlocked.Exchange(ref _renderQueued, 0);
     }
     private void OnCultureChanged(object? sender, EventArgs e) => Dispatcher.Dispatch(() =>
-    { RefreshPickerLabels(); RefreshSqlCellLabels(); Render(); });
+    { RefreshPickerLabels(); Render(); });
     private void OnDeveloperModeChanged(object? sender, EventArgs e) => Dispatcher.Dispatch(() =>
     { if (_appeared) RenderSelected(); });
 
@@ -110,8 +110,8 @@ public partial class AiQuestionBankPage : ContentPage
         ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
             LocalizationService.TranslateKey("FractionBank.Title"), LocalizationService.TranslateKey("Quiz.ProblemTwoNumbers"),
             LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage"),
-            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime") }; ProblemPicker.SelectedIndex = (int)_family;
-        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime" });
+            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime"), LocalizationService.TranslateKey("Quiz.ProblemFractionSkills") }; ProblemPicker.SelectedIndex = (int)_family;
+        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime", "Quiz.ProblemFractionSkills" });
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
@@ -127,7 +127,7 @@ public partial class AiQuestionBankPage : ContentPage
     private void Render()
     {
         var snapshot = _bank.Generation.Snapshot;
-        bool running = snapshot.IsRunning, busy = running || _bank.IsManaging || _confirmingDeleteAll || _bank.Generation.IsDeletingAll;
+        bool running = snapshot.IsRunning, busy = running || _bank.IsManaging || _bank.Generation.IsDeletingAll;
         ConfigurationPanel.IsEnabled = !busy;
         ChooseModelButton.IsEnabled = DownloadButton.IsEnabled = !busy;
         DownloadModelPicker.IsEnabled = !busy;
@@ -158,7 +158,7 @@ public partial class AiQuestionBankPage : ContentPage
         QuestionPicker.IsEnabled = snapshot.Items.Count > 0;
         _updating = false;
         RenderSelected();
-        UpdateDataActions();
+
     }
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
@@ -185,7 +185,7 @@ public partial class AiQuestionBankPage : ContentPage
                 + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Expression.Operation) + " "
                 + question.Contract.Right) + " = " + question.Contract.Answer + " " + question.Contract.AnswerUnit : "";
         // Only complete, validated drafts can be exported or inserted.
-        InsertButton.IsEnabled = !_saving && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll && item?.Question is not null
+        InsertButton.IsEnabled = !_saving && !_bank.Generation.IsDeletingAll && item?.Question is not null
             && (item.State == AiItemState.SaveFailed || item.State == AiItemState.Ready
                 && (!_bank.Generation.IsRunning || _bank.Generation.Snapshot.Options?.AutoInsert != true));
         ShareButton.IsEnabled = item?.Question is not null;
@@ -344,7 +344,7 @@ public partial class AiQuestionBankPage : ContentPage
 
     private async void OnGenerateClicked(object? sender, EventArgs e)
     {
-        if (_bank.IsManaging || _bank.Generation.IsRunning || _saving || _confirmingDeleteAll || _bank.Generation.IsDeletingAll) return;
+        if (_bank.IsManaging || _bank.Generation.IsRunning || _saving || _bank.Generation.IsDeletingAll) return;
         int count = 1;
         if (BatchModePicker.SelectedIndex == 1 && (!int.TryParse(CountEntry.Text, out count) || count is < 1 or > 100))
         { await DisplayAlertAsync(T("Title"), T("CountHint"), T("Ok")); return; }
@@ -365,7 +365,7 @@ public partial class AiQuestionBankPage : ContentPage
     private async void OnInsertClicked(object? sender, EventArgs e)
     {
         var item = SelectedItem;
-        if (item?.Question is null || _saving || _confirmingDeleteAll || _bank.Generation.IsDeletingAll) return;
+        if (item?.Question is null || _saving || _bank.Generation.IsDeletingAll) return;
         _saving = true; Render();
         try { await _bank.Generation.InsertAsync(item.Number); }
         finally { _saving = false; Render(); }

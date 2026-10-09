@@ -34,7 +34,7 @@ public partial class MathPuzzlePage
         QuizDiagramToggleButton.Text = TranslateQuiz(_diagramExpanded ? "Quiz.HideDiagram" : "Quiz.ShowDiagram");
         QuizDiagramPanel.IsVisible = visible;
         QuizVisualView.IsVisible = visible;
-        QuizVisualView.Drawable = mandatory ? new ElementaryQuizDrawable(_questionAnswered ? essential! with { HiddenValueIndices = null } : essential)
+        QuizVisualView.Drawable = mandatory ? new ElementaryQuizDrawable(QuizChartPresentation.ForDisplay(essential!, _questionAnswered))
             : diagram is not null ? new QuizDiagramDrawable(diagram) : null;
         QuizVisualView.Invalidate();
         QuizDiagramCaptionLabel.Text = diagram?.Caption ?? "";
@@ -45,7 +45,7 @@ public partial class MathPuzzlePage
         QuizDiagramCaptionFractionView.IsVisible = diagram is not null && !mandatory && fractionCaption;
         QuizVisualDataLabel.IsVisible = visible && essential?.Kind is "table" or "bar" or "pie";
         QuizVisualDataLabel.Text = QuizVisualDataLabel.IsVisible && essential is not null
-            ? string.Join(" · ", essential.Labels.Select((label, index) => $"{label}: {(essential.HiddenValueIndices?.Contains(index) == true && !_questionAnswered ? "?" : essential.Values[index].ToString())} {essential.Unit}")) : "";
+            ? QuizChartPresentation.DescribeValues(essential, _questionAnswered) : "";
         QuizDiagramNoteLabel.IsVisible = visible &&
             (essential?.Polygons is { Count: > 0 } || essential is { Kind: "bar", HiddenValueIndices.Count: > 0 }
                 || diagram?.Kind is "geometry" or "motion" or "bars");
@@ -145,93 +145,44 @@ public partial class MathPuzzlePage
     {
         if (_diagramPreviewOpen || QuizVisualView.Drawable is not IDrawable source) return;
         _diagramPreviewOpen = true;
-        var page = new ContentPage();
-        page.SetDynamicResource(BackgroundColorProperty, "WallpaperSurfaceColor");
-        var close = new Button { Text = TranslateQuiz("Quiz.CloseDiagram"), CornerRadius = 12 };
-        View caption;
-        if (QuizDiagramCaptionFractionView.IsVisible)
+        var details = new VerticalStackLayout { Spacing = 10, Padding = new Thickness(4, 4, 20, 4) };
+        void AddText(string text, bool fraction = false, bool arithmetic = false)
         {
-            var formatted = new FractionExpressionView { Expression = QuizDiagramCaptionLabel.Text,
-                MathFontSize = 18, ParseArithmeticExpressions = true, WrapContent = true,
-                TokenSpacing = 4, HorizontalTextAlignment = TextAlignment.Center };
-            formatted.SetDynamicResource(FractionExpressionView.MathColorProperty, "WallpaperTextPrimaryColor");
-            caption = formatted;
-        }
-        else
-        {
-            var label = new Label { Text = QuizDiagramCaptionLabel.Text, FontSize = 18,
-                HorizontalTextAlignment = TextAlignment.Center, LineBreakMode = LineBreakMode.WordWrap };
-            label.SetDynamicResource(Label.TextColorProperty, "WallpaperTextPrimaryColor");
-            caption = label;
-        }
-        var image = new GraphicsView { WidthRequest = 720, HeightRequest = 520,
-            Drawable = new DiagramPreviewDrawable(source, 2) };
-        SemanticProperties.SetDescription(image, SemanticProperties.GetDescription(QuizVisualView));
-        AutomationProperties.SetIsInAccessibleTree(image, true);
-        var zoom = new Slider { Minimum = 1, Maximum = 3, Value = 2 };
-        void SetZoom(double factor)
-        {
-            image.WidthRequest = 360 * factor;
-            image.HeightRequest = 260 * factor;
-            image.Drawable = new DiagramPreviewDrawable(source, (float)factor);
-            image.Invalidate();
-        }
-        zoom.ValueChanged += (_, args) => SetZoom(args.NewValue);
-        double pinchStart = 2;
-        var pinch = new PinchGestureRecognizer();
-        pinch.PinchUpdated += (_, args) =>
-        {
-            if (args.Status == GestureStatus.Started) pinchStart = zoom.Value;
-            else if (args.Status == GestureStatus.Running)
+            if (string.IsNullOrWhiteSpace(text)) return;
+            if (fraction)
             {
-                pinchStart = Math.Clamp(pinchStart * args.Scale, 1, 3);
-                zoom.Value = pinchStart;
+                var formatted = new FractionExpressionView { Expression = text, MathFontSize = 16,
+                    ParseArithmeticExpressions = arithmetic, WrapContent = true, TokenSpacing = 4 };
+                formatted.SetDynamicResource(FractionExpressionView.MathColorProperty, "TextPrimaryColor");
+                details.Add(formatted);
             }
-        };
-        image.GestureRecognizers.Add(pinch);
-        var zoomLabel = new Label { Text = TranslateQuiz("Quiz.DiagramZoom") };
-        zoomLabel.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
-        var content = new Grid { Padding = new Thickness(16), RowSpacing = 10,
-            RowDefinitions = { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) } };
-        content.Add(close, 0, 0); content.Add(caption, 0, 1);
-        content.Add(new VerticalStackLayout { Children = { zoomLabel, zoom } }, 0, 2);
-        content.Add(new ScrollView { Orientation = ScrollOrientation.Both, Content = image }, 0, 3);
-        bool showExplanation = QuizDiagramExplanationLabel.IsVisible || QuizDiagramExplanationFractionView.IsVisible;
-        View explanation;
-        if (_currentQuestion?.UsesFractionFormatting == true)
-        {
-            var formatted = new FractionExpressionView { Expression = QuizDiagramExplanationLabel.Text,
-                ParseArithmeticExpressions = _currentQuestion?.ElementaryProblem?.Kind == QuizProblemKind.FractionSkills,
-                IsVisible = showExplanation, MathFontSize = 15, WrapContent = true, TokenSpacing = 4 };
-            formatted.SetDynamicResource(FractionExpressionView.MathColorProperty, "WallpaperTextPrimaryColor");
-            explanation = formatted;
+            else
+            {
+                var label = new Label { Text = text, FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
+                label.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
+                details.Add(label);
+            }
         }
-        else
-        {
-            var label = new Label { Text = QuizDiagramExplanationLabel.Text, IsVisible = showExplanation,
-                FontSize = 15, LineBreakMode = LineBreakMode.WordWrap };
-            label.SetDynamicResource(Label.TextColorProperty, "WallpaperTextPrimaryColor");
-            explanation = label;
-        }
-        content.Add(new ScrollView { Content = explanation, MaximumHeightRequest = 150 }, 0, 4);
-        page.Content = content;
-        close.Clicked += async (_, _) => await Navigation.PopModalAsync();
+        // Freeze the same display-safe values used in the question. The enlarged
+        // view must never reveal an answer or a masked chart value before grading.
+        if (QuizDiagramCaptionLabel.IsVisible || QuizDiagramCaptionFractionView.IsVisible)
+            AddText(QuizDiagramCaptionLabel.Text, QuizDiagramCaptionFractionView.IsVisible, true);
+        if (QuizVisualDataLabel.IsVisible) AddText(QuizVisualDataLabel.Text);
+        if (QuizDiagramNoteLabel.IsVisible) AddText(QuizDiagramNoteLabel.Text);
+        if (QuizDiagramExplanationLabel.IsVisible || QuizDiagramExplanationFractionView.IsVisible)
+            AddText(QuizDiagramExplanationLabel.Text, _currentQuestion?.UsesFractionFormatting == true,
+                _currentQuestion?.ElementaryProblem?.Kind == QuizProblemKind.FractionSkills);
+        var page = new DiagramPreviewPage(source, QuizVisualView.Width, QuizVisualView.Height,
+            SemanticProperties.GetDescription(QuizVisualView) ?? "", details.Children.Count == 0 ? null : details);
         page.Disappearing += (_, _) => _diagramPreviewOpen = false;
-        try { await Navigation.PushModalAsync(page); }
-        catch { _diagramPreviewOpen = false; throw; }
-    }
-
-    private sealed class DiagramPreviewDrawable(IDrawable source, float scale) : IDrawable
-    {
-        public void Draw(ICanvas canvas, RectF dirtyRect)
+        try
         {
-            canvas.SaveState();
-            try
-            {
-                canvas.Scale(scale, scale);
-                source.Draw(canvas, new RectF(0, 0, dirtyRect.Width / scale, dirtyRect.Height / scale));
-            }
-            finally { canvas.RestoreState(); }
+            await Navigation.PushModalAsync(page);
+        }
+        catch
+        {
+            _diagramPreviewOpen = false;
+            throw;
         }
     }
 }

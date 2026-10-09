@@ -7,6 +7,47 @@ internal static partial class PuzzleTests
 {
     public static void CheckResponsivePresentation()
     {
+        // A zoomed picture retains its aspect ratio through rotation, split-screen
+        // and desktop resize. Fit must not require scrolling on either axis.
+        foreach (double width in new[] { 280d, 320, 600, 768, 1366, 1920, 3840 })
+        foreach (double height in new[] { 180d, 390, 768, 1080, 2160 })
+        foreach (var source in new[] { (360d, 260d), (800d, 260d), (300d, 600d) })
+        foreach (double zoom in new[] { -1d, 1, 1.25, 2, 4, 20 })
+        {
+            var viewport = DiagramPreviewViewport.Fit(width, height, source.Item1, source.Item2, zoom);
+            Require(Math.Abs(viewport.ImageWidth / viewport.ImageHeight - source.Item1 / source.Item2) < .001,
+                "Preview zoom must preserve the diagram's aspect ratio.");
+            Require(viewport.Width >= width && viewport.Height >= height && viewport.Scale > 0,
+                "The scroll canvas must contain the picture and fill the viewport.");
+            if (zoom <= 1)
+                Require(viewport.ImageWidth <= width - 20 + .001 && viewport.ImageHeight <= height - 20 + .001,
+                    "Fit must leave space for scrollbar overlays and must not crop the picture.");
+            var panel = DiagramPreviewViewport.Panel(width, height);
+            Require(panel.Width < width && panel.Height < height && panel.Width <= 1440 && panel.Height <= 1100,
+                "The preview panel must stay inside phones, tablets and desktop windows.");
+        }
+        var beforeZoom = DiagramPreviewViewport.Fit(800, 600, 360, 260, 1);
+        var afterZoom = DiagramPreviewViewport.Fit(800, 600, 360, 260, 2);
+        double x = DiagramPreviewViewport.AnchorOffset(0, 400, beforeZoom.Width, beforeZoom.ImageWidth,
+            afterZoom.Width, afterZoom.ImageWidth, 800);
+        double y = DiagramPreviewViewport.AnchorOffset(0, 300, beforeZoom.Height, beforeZoom.ImageHeight,
+            afterZoom.Height, afterZoom.ImageHeight, 600);
+        Require(Math.Abs(x - (afterZoom.Width - 800) / 2) < .001 && Math.Abs(y - (afterZoom.Height - 600) / 2) < .001,
+            "Toolbar zoom must keep the centered diagram centered, including Fit margins.");
+        double anchor = 250;
+        double offset = DiagramPreviewViewport.AnchorOffset(100, anchor, 1400, 1400, 2100, 2100, 800);
+        Require(Math.Abs((100 + anchor) / 1400 - (offset + anchor) / 2100) < .001,
+            "Wheel/pinch zoom must preserve the image point under the pointer.");
+        Require(DiagramPreviewViewport.AnchorOffset(700, 400, 2100, 2100, 800, 780, 800) == 0,
+            "Returning to Fit must clear the previous pan offset.");
+        var rotated = DiagramPreviewViewport.Fit(600, 800, 360, 260, 2);
+        double rotatedX = DiagramPreviewViewport.AnchorOffset(x, 400, afterZoom.Width, afterZoom.ImageWidth,
+            rotated.Width, rotated.ImageWidth, 600, 300);
+        double rotatedY = DiagramPreviewViewport.AnchorOffset(y, 300, afterZoom.Height, afterZoom.ImageHeight,
+            rotated.Height, rotated.ImageHeight, 800, 400);
+        Require(Math.Abs(rotatedX - (rotated.Width - 600) / 2) < .001 && Math.Abs(rotatedY - (rotated.Height - 800) / 2) < .001,
+            "Rotation must preserve the middle of a zoomed diagram even when Fit scale changes.");
+
         foreach (double width in new[] { 280d, 320, 360, 480, 600, 768, 1024, 1440, 1920, 3840 })
         foreach (double height in new[] { 160d, 240, 320, 640, 900, 2160 })
         foreach (double scale in new[] { 1d, 1.5, 2, 3 })

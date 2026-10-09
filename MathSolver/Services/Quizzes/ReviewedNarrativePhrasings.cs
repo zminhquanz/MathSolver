@@ -11,6 +11,18 @@ internal sealed record ReviewedNarrativePhrasings(string Id, string[] Alternativ
     internal const string MeasurementListName = "Narrative.Measurement.Phrasings";
     internal const string RemainderListName = "Narrative.Remainder.Phrasings";
     internal const string TimeListName = "Narrative.Time.Phrasings";
+    internal const string FractionQuantityListName = "Narrative.FractionQuantity.Phrasings";
+
+    internal static IReadOnlyDictionary<string, string[]> ForFractionQuantity(AppLanguage language)
+    {
+        var result = new Dictionary<string, string[]>(For(language, FractionQuantityListName), StringComparer.Ordinal);
+        foreach (var context in FractionQuantityStoryContextCatalog.GetProfile(language))
+        {
+            result.Add(context.PartProblemTemplate, context.PartProblemAlternatives!);
+            result.Add(context.WholeProblemTemplate, context.WholeProblemAlternatives!);
+        }
+        return result;
+    }
 
     internal static IReadOnlyDictionary<string, string[]> For(AppLanguage language, string listName = ListName,
         string unit = "")

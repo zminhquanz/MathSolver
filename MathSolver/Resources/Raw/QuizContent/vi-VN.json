@@ -3,6 +3,55 @@
   "Culture": "vi-VN",
   "Texts": [
     {
+      "Id": "Preview.Details",
+      "Text": "Thông tin",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.Fit",
+      "Text": "Vừa khung (100%)",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HelpDesktop",
+      "Text": "Kéo hình để xem • Ctrl + cuộn chuột để zoom • Bấm % để vừa khung • Esc để đóng",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HelpTouch",
+      "Text": "Chụm hai ngón để phóng to, kéo để xem. Bấm % để hình vừa khung.",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HideDetails",
+      "Text": "Ẩn thông tin",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.Title",
+      "Text": "Hình minh họa",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.ZoomIn",
+      "Text": "Phóng to hình",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.ZoomOut",
+      "Text": "Thu nhỏ hình",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.035",
+      "Text": "Mục “{labels_firstRow}” nhiều hơn mục “{labels_secondRow}” bao nhiêu {unit}?",
+      "Variables": [
+        "labels_firstRow",
+        "labels_secondRow",
+        "unit"
+      ]
+    },
+    {
       "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
       "Text": "Xếp đầy các {container} thì còn lại bao nhiêu {item}?",
       "Variables": [
@@ -8979,6 +9028,79 @@
     }
   ],
   "Lists": {
+    "Narrative.FractionQuantity.Phrasings": [
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001",
+            "Alternatives":  [
+                                 "Hai phần {a} và {b} {unit} được gộp thành lượng đã cho. ",
+                                 "Lượng được cung cấp gồm hai phần: {a} và {b} {unit}. "
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002",
+            "Alternatives":  [
+                                 "Gộp hai phần {a} và {b} {unit}, rồi lấy bớt {removed} {unit} trước khi tính phân số. ",
+                                 "Từ hai phần {a} và {b} {unit}, trừ đi {removed} {unit} để có lượng dùng xét phân số. "
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.003",
+            "Alternatives":  [
+                                 "Lượng sau khi gộp và điều chỉnh",
+                                 "Lượng đã cho để tính phân số"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.004",
+            "Alternatives":  [
+                                 "Phần còn lại sau khi dùng phần thứ nhất",
+                                 "Tỉ phần còn lại sau lần đầu"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.005",
+            "Alternatives":  [
+                                 "Lượng sau khi dùng phần thứ nhất",
+                                 "Lượng chưa dùng sau lần đầu"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.006",
+            "Alternatives":  [
+                                 "Tỉ phần của lượng ban đầu dùng trong lần sau",
+                                 "Phần dùng lần sau tính theo lượng ban đầu"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.017",
+            "Alternatives":  [
+                                 "{context_PartLabel} chiếm {fraction} lượng đã cho ở trên. Hỏi {context_PartLabel_ToLowerInvariant} là bao nhiêu {unit}?",
+                                 "{context_PartLabel} tương ứng với {fraction} lượng trên. Hỏi {context_PartLabel_ToLowerInvariant} là bao nhiêu {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.018",
+            "Alternatives":  [
+                                 "Phần đã cho là {context_PartLabel_ToLowerInvariant}, chiếm {fraction} của {context_WholeLabel_ToLowerInvariant}. Hỏi {context_WholeLabel_ToLowerInvariant} là bao nhiêu {unit}?",
+                                 "Lượng đã cho biểu thị {context_PartLabel_ToLowerInvariant}, tương ứng với {fraction} của {context_WholeLabel_ToLowerInvariant}. Hỏi {context_WholeLabel_ToLowerInvariant} là bao nhiêu {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019",
+            "Alternatives":  [
+                                 "{context_WholeLabel} có {quantity} {unit}. Sau khi dùng {removedNumerator}/{removedDenominator} lượng ban đầu ở lần thứ nhất, vẫn còn một phần. {context_PartLabel} bằng {n}/{d} phần còn lại đó. Hỏi {context_PartLabel_ToLowerInvariant} là bao nhiêu {unit}?",
+                                 "{context_WholeLabel} gồm {quantity} {unit}. Lần đầu lấy đi {removedNumerator}/{removedDenominator} lượng ban đầu. {context_PartLabel} được tính bằng {n}/{d} lượng còn lại sau lần đầu. Hỏi {context_PartLabel_ToLowerInvariant} là bao nhiêu {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020",
+            "Alternatives":  [
+                                 "Lần đầu dùng {removedNumerator}/{removedDenominator} của {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} bằng {n}/{d} phần còn lại sau lần đầu và có {quantity} {unit}. Hỏi {context_WholeLabel_ToLowerInvariant} là bao nhiêu {unit}?",
+                                 "Phần đã dùng đầu tiên là {removedNumerator}/{removedDenominator} của {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} tương ứng với {n}/{d} lượng chưa dùng sau lần đầu và có {quantity} {unit}. Hỏi {context_WholeLabel_ToLowerInvariant} là bao nhiêu {unit}?"
+                             ]
+        }
+    ],
+
     "MeasurementStoryContexts": [
       {
         "Id": "kitchen",
@@ -21567,156 +21689,276 @@
       }
     ],
     "FractionQuantityContexts": [
-      {
-        "Unit": "quyển sách",
-        "PartLabel": "Số sách truyện",
-        "WholeLabel": "Tổng số sách",
-        "PartProblemTemplate": "Thư viện có {0} quyển sách, trong đó {1} là sách truyện. Thư viện có bao nhiêu quyển sách truyện?",
-        "WholeProblemTemplate": "Thư viện có {0} quyển sách truyện, chiếm {1} tổng số sách. Thư viện có tất cả bao nhiêu quyển sách?",
-        "Capacity": 1000,
-        "ContextId": "library-books",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "quả cam",
-        "PartLabel": "Số cam đã bán",
-        "WholeLabel": "Số cam ban đầu",
-        "PartProblemTemplate": "Cửa hàng có {0} quả cam và đã bán {1} số cam đó. Cửa hàng đã bán bao nhiêu quả cam?",
-        "WholeProblemTemplate": "Cửa hàng đã bán {0} quả cam, bằng {1} số cam ban đầu. Lúc đầu cửa hàng có bao nhiêu quả cam?",
-        "Capacity": 1000,
-        "ContextId": "shop-oranges",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "cây bút",
-        "PartLabel": "Số bút đã tặng",
-        "WholeLabel": "Số bút ban đầu",
-        "PartProblemTemplate": "Một hộp có {0} cây bút. Cô giáo lấy {1} số bút trong hộp để tặng học sinh. Cô giáo đã tặng bao nhiêu cây bút?",
-        "WholeProblemTemplate": "Cô giáo lấy {0} cây bút để tặng học sinh, bằng {1} số bút trong hộp lúc đầu. Lúc đầu hộp có bao nhiêu cây bút?",
-        "Capacity": 100,
-        "ContextId": "gift-pens",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "học sinh",
-        "PartLabel": "Số học sinh tham gia câu lạc bộ",
-        "WholeLabel": "Tổng số học sinh đăng ký hoạt động ngoại khóa",
-        "PartProblemTemplate": "Một trường có {0} học sinh đăng ký hoạt động ngoại khóa, trong đó {1} số học sinh tham gia câu lạc bộ đọc sách. Có bao nhiêu học sinh tham gia câu lạc bộ?",
-        "WholeProblemTemplate": "Có {0} học sinh tham gia câu lạc bộ đọc sách, chiếm {1} số học sinh đăng ký hoạt động ngoại khóa của trường. Có tất cả bao nhiêu học sinh đăng ký hoạt động ngoại khóa?",
-        "Capacity": 600,
-        "ContextId": "school-club",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "cây",
-        "PartLabel": "Số cây đã trồng",
-        "WholeLabel": "Tổng số cây giống",
-        "PartProblemTemplate": "Vườn ươm có {0} cây giống và đã trồng {1} số cây đó. Vườn ươm đã trồng bao nhiêu cây?",
-        "WholeProblemTemplate": "Vườn ươm đã trồng {0} cây, bằng {1} tổng số cây giống. Ban đầu vườn ươm có tất cả bao nhiêu cây giống?",
-        "Capacity": 1000,
-        "ContextId": "nursery-trees",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "m",
-        "PartLabel": "Số mét vải đã dùng",
-        "WholeLabel": "Độ dài tấm vải ban đầu",
-        "PartProblemTemplate": "Một tấm vải dài {0} m. Thợ may dùng {1} tấm vải để may áo. Thợ may đã dùng bao nhiêu mét vải?",
-        "WholeProblemTemplate": "Thợ may đã dùng {0} m vải để may áo, bằng {1} chiều dài tấm vải ban đầu. Tấm vải ban đầu dài bao nhiêu mét?",
-        "Capacity": 200,
-        "ContextId": "tailoring-fabric",
-        "Quantity": "Distance"
-      },
-      {
-        "Unit": "kg",
-        "PartLabel": "Khối lượng gạo đã bán",
-        "WholeLabel": "Khối lượng gạo ban đầu",
-        "PartProblemTemplate": "Một bao có {0} kg gạo. Cửa hàng bán {1} lượng gạo trong bao. Cửa hàng đã bán bao nhiêu ki-lô-gam gạo?",
-        "WholeProblemTemplate": "Cửa hàng bán {0} kg gạo, bằng {1} lượng gạo trong bao lúc đầu. Lúc đầu bao có bao nhiêu ki-lô-gam gạo?",
-        "Capacity": 50,
-        "ContextId": "shop-rice",
-        "Quantity": "Mass"
-      },
-      {
-        "Unit": "lít",
-        "PartLabel": "Số lít nước đã dùng",
-        "WholeLabel": "Số lít nước ban đầu",
-        "PartProblemTemplate": "Một bể chứa {0} lít nước. Người ta dùng {1} lượng nước trong bể để tưới cây. Đã dùng bao nhiêu lít nước?",
-        "WholeProblemTemplate": "Người ta dùng {0} lít nước để tưới cây, bằng {1} lượng nước trong bể lúc đầu. Lúc đầu bể chứa bao nhiêu lít nước?",
-        "Capacity": 1000,
-        "ContextId": "watering-tank",
-        "Quantity": "Capacity"
-      },
-      {
-        "Unit": "viên bi",
-        "PartLabel": "Số bi đã cho",
-        "WholeLabel": "Số bi ban đầu",
-        "PartProblemTemplate": "Một bạn có {0} viên bi và cho em {1} số bi của mình. Bạn đã cho em bao nhiêu viên bi?",
-        "WholeProblemTemplate": "Một bạn cho em {0} viên bi, bằng {1} số bi của mình lúc đầu. Lúc đầu bạn có bao nhiêu viên bi?",
-        "Capacity": 1000,
-        "ContextId": "share-marbles",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "quả trứng",
-        "PartLabel": "Số trứng đã dùng",
-        "WholeLabel": "Số trứng ban đầu",
-        "PartProblemTemplate": "Một khay có {0} quả trứng. Đầu bếp dùng {1} số trứng trong khay để làm bánh. Đầu bếp đã dùng bao nhiêu quả trứng?",
-        "WholeProblemTemplate": "Đầu bếp dùng {0} quả trứng để làm bánh, bằng {1} số trứng trong khay lúc đầu. Lúc đầu khay có bao nhiêu quả trứng?",
-        "Capacity": 1000,
-        "ContextId": "baking-eggs",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "suất ăn",
-        "PartLabel": "Lượng đã hoàn thành",
-        "WholeLabel": "Tổng lượng cần hoàn thành",
-        "PartProblemTemplate": "Trong chuẩn bị suất ăn, cần hoàn thành {0} suất ăn. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu suất ăn?",
-        "WholeProblemTemplate": "Trong chuẩn bị suất ăn, đã hoàn thành {0} suất ăn, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu suất ăn?",
-        "Capacity": 1000,
-        "ContextId": "kitchen",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "bông hoa giấy",
-        "PartLabel": "Lượng đã hoàn thành",
-        "WholeLabel": "Tổng lượng cần hoàn thành",
-        "PartProblemTemplate": "Trong gấp hoa giấy, cần hoàn thành {0} bông hoa giấy. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu bông hoa giấy?",
-        "WholeProblemTemplate": "Trong gấp hoa giấy, đã hoàn thành {0} bông hoa giấy, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu bông hoa giấy?",
-        "Capacity": 200,
-        "ContextId": "craft",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "gói quà",
-        "PartLabel": "Lượng đã hoàn thành",
-        "WholeLabel": "Tổng lượng cần hoàn thành",
-        "PartProblemTemplate": "Trong đóng gói quà, cần hoàn thành {0} gói quà. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu gói quà?",
-        "WholeProblemTemplate": "Trong đóng gói quà, đã hoàn thành {0} gói quà, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu gói quà?",
-        "Capacity": 500,
-        "ContextId": "distribution",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "quyển sách",
-        "PartLabel": "Lượng đã hoàn thành",
-        "WholeLabel": "Tổng lượng cần hoàn thành",
-        "PartProblemTemplate": "Trong quyên góp sách, cần hoàn thành {0} quyển sách. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu quyển sách?",
-        "WholeProblemTemplate": "Trong quyên góp sách, đã hoàn thành {0} quyển sách, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu quyển sách?",
-        "Capacity": 500,
-        "ContextId": "community",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "phiếu trả lời",
-        "PartLabel": "Lượng đã hoàn thành",
-        "WholeLabel": "Tổng lượng cần hoàn thành",
-        "PartProblemTemplate": "Trong khảo sát sở thích, cần hoàn thành {0} phiếu trả lời. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu phiếu trả lời?",
-        "WholeProblemTemplate": "Trong khảo sát sở thích, đã hoàn thành {0} phiếu trả lời, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu phiếu trả lời?",
-        "Capacity": 500,
-        "ContextId": "survey",
-        "Quantity": "Count"
-      }
+        {
+            "Unit":  "quyển sách",
+            "PartLabel":  "Số sách truyện",
+            "WholeLabel":  "Tổng số sách",
+            "PartProblemTemplate":  "Thư viện có {0} quyển sách, trong đó {1} là sách truyện. Thư viện có bao nhiêu quyển sách truyện?",
+            "WholeProblemTemplate":  "Thư viện có {0} quyển sách truyện, chiếm {1} tổng số sách. Thư viện có tất cả bao nhiêu quyển sách?",
+            "Capacity":  1000,
+            "ContextId":  "library-books",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Thư viện lưu giữ {0} quyển sách, sách truyện chiếm {1} số sách này. Thư viện có bao nhiêu quyển sách truyện?",
+                                            "Trong {0} quyển sách của thư viện, {1} là sách truyện. Thư viện có bao nhiêu quyển sách truyện?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số sách truyện của thư viện là {0} quyển, tương ứng với {1} tổng số sách. Thư viện có tất cả bao nhiêu quyển sách?",
+                                             "Thư viện có {0} quyển sách truyện và số này bằng {1} toàn bộ số sách. Thư viện có tất cả bao nhiêu quyển sách?"
+                                         ]
+        },
+        {
+            "Unit":  "quả cam",
+            "PartLabel":  "Số cam đã bán",
+            "WholeLabel":  "Số cam ban đầu",
+            "PartProblemTemplate":  "Cửa hàng có {0} quả cam và đã bán {1} số cam đó. Cửa hàng đã bán bao nhiêu quả cam?",
+            "WholeProblemTemplate":  "Cửa hàng đã bán {0} quả cam, bằng {1} số cam ban đầu. Lúc đầu cửa hàng có bao nhiêu quả cam?",
+            "Capacity":  1000,
+            "ContextId":  "shop-oranges",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong {0} quả cam của cửa hàng, số đã bán chiếm {1} lượng cam đó. Cửa hàng đã bán bao nhiêu quả cam?",
+                                            "Cửa hàng có sẵn {0} quả cam và bán đi {1} số cam này. Cửa hàng đã bán bao nhiêu quả cam?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số cam cửa hàng bán đi là {0} quả, chiếm {1} lượng cam lúc đầu. Lúc đầu cửa hàng có bao nhiêu quả cam?",
+                                             "Có {0} quả cam đã được cửa hàng bán, tương ứng với {1} số cam ban đầu. Lúc đầu cửa hàng có bao nhiêu quả cam?"
+                                         ]
+        },
+        {
+            "Unit":  "cây bút",
+            "PartLabel":  "Số bút đã tặng",
+            "WholeLabel":  "Số bút ban đầu",
+            "PartProblemTemplate":  "Một hộp có {0} cây bút. Cô giáo lấy {1} số bút trong hộp để tặng học sinh. Cô giáo đã tặng bao nhiêu cây bút?",
+            "WholeProblemTemplate":  "Cô giáo lấy {0} cây bút để tặng học sinh, bằng {1} số bút trong hộp lúc đầu. Lúc đầu hộp có bao nhiêu cây bút?",
+            "Capacity":  100,
+            "ContextId":  "gift-pens",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong hộp đựng {0} cây bút. Cô giáo dành {1} số bút này để tặng học sinh. Cô giáo đã tặng bao nhiêu cây bút?",
+                                            "Hộp bút chứa {0} cây bút. Cô giáo tặng học sinh {1} số bút trong hộp. Cô giáo đã tặng bao nhiêu cây bút?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số bút cô giáo tặng học sinh là {0} cây, chiếm {1} số bút ban đầu trong hộp. Lúc đầu hộp có bao nhiêu cây bút?",
+                                             "Cô giáo tặng học sinh {0} cây bút và số bút này bằng {1} số bút trong hộp lúc đầu. Lúc đầu hộp có bao nhiêu cây bút?"
+                                         ]
+        },
+        {
+            "Unit":  "học sinh",
+            "PartLabel":  "Số học sinh tham gia câu lạc bộ",
+            "WholeLabel":  "Tổng số học sinh đăng ký hoạt động ngoại khóa",
+            "PartProblemTemplate":  "Một trường có {0} học sinh đăng ký hoạt động ngoại khóa, trong đó {1} số học sinh tham gia câu lạc bộ đọc sách. Có bao nhiêu học sinh tham gia câu lạc bộ?",
+            "WholeProblemTemplate":  "Có {0} học sinh tham gia câu lạc bộ đọc sách, chiếm {1} số học sinh đăng ký hoạt động ngoại khóa của trường. Có tất cả bao nhiêu học sinh đăng ký hoạt động ngoại khóa?",
+            "Capacity":  600,
+            "ContextId":  "school-club",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong {0} học sinh đăng ký hoạt động ngoại khóa của trường, {1} tham gia câu lạc bộ đọc sách. Có bao nhiêu học sinh tham gia câu lạc bộ?",
+                                            "Trường có {0} học sinh đăng ký ngoại khóa và câu lạc bộ đọc sách thu hút {1} số học sinh đó. Có bao nhiêu học sinh tham gia câu lạc bộ?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Câu lạc bộ đọc sách có {0} học sinh, bằng {1} số học sinh đăng ký hoạt động ngoại khóa của trường. Có tất cả bao nhiêu học sinh đăng ký hoạt động ngoại khóa?",
+                                             "Số học sinh trong câu lạc bộ đọc sách là {0}, tương ứng với {1} tổng số học sinh đăng ký ngoại khóa. Có tất cả bao nhiêu học sinh đăng ký hoạt động ngoại khóa?"
+                                         ]
+        },
+        {
+            "Unit":  "cây",
+            "PartLabel":  "Số cây đã trồng",
+            "WholeLabel":  "Tổng số cây giống",
+            "PartProblemTemplate":  "Vườn ươm có {0} cây giống và đã trồng {1} số cây đó. Vườn ươm đã trồng bao nhiêu cây?",
+            "WholeProblemTemplate":  "Vườn ươm đã trồng {0} cây, bằng {1} tổng số cây giống. Ban đầu vườn ươm có tất cả bao nhiêu cây giống?",
+            "Capacity":  1000,
+            "ContextId":  "nursery-trees",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong {0} cây giống của vườn ươm, số đã trồng chiếm {1} lượng cây đó. Vườn ươm đã trồng bao nhiêu cây?",
+                                            "Vườn ươm có sẵn {0} cây giống và đem trồng {1} số cây này. Vườn ươm đã trồng bao nhiêu cây?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số cây giống vườn ươm đem trồng là {0} cây, chiếm {1} số cây giống ban đầu. Ban đầu vườn ươm có tất cả bao nhiêu cây giống?",
+                                             "Vườn ươm trồng {0} cây giống và lượng này bằng {1} tổng số cây giống lúc đầu. Ban đầu vườn ươm có tất cả bao nhiêu cây giống?"
+                                         ]
+        },
+        {
+            "Unit":  "m",
+            "PartLabel":  "Số mét vải đã dùng",
+            "WholeLabel":  "Độ dài tấm vải ban đầu",
+            "PartProblemTemplate":  "Một tấm vải dài {0} m. Thợ may dùng {1} tấm vải để may áo. Thợ may đã dùng bao nhiêu mét vải?",
+            "WholeProblemTemplate":  "Thợ may đã dùng {0} m vải để may áo, bằng {1} chiều dài tấm vải ban đầu. Tấm vải ban đầu dài bao nhiêu mét?",
+            "Capacity":  200,
+            "ContextId":  "tailoring-fabric",
+            "Quantity":  "Distance",
+            "PartProblemAlternatives":  [
+                                            "Chiều dài tấm vải là {0} m. Phần vải thợ may dùng để may áo chiếm {1} tấm vải. Thợ may đã dùng bao nhiêu mét vải?",
+                                            "Tấm vải có chiều dài {0} m. Thợ may lấy {1} chiều dài tấm vải để may áo. Thợ may đã dùng bao nhiêu mét vải?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Phần vải dùng để may áo dài {0} m, chiếm {1} chiều dài tấm vải lúc đầu. Tấm vải ban đầu dài bao nhiêu mét?",
+                                             "Thợ may lấy {0} m vải để may áo và phần này bằng {1} tấm vải ban đầu. Tấm vải ban đầu dài bao nhiêu mét?"
+                                         ]
+        },
+        {
+            "Unit":  "kg",
+            "PartLabel":  "Khối lượng gạo đã bán",
+            "WholeLabel":  "Khối lượng gạo ban đầu",
+            "PartProblemTemplate":  "Một bao có {0} kg gạo. Cửa hàng bán {1} lượng gạo trong bao. Cửa hàng đã bán bao nhiêu ki-lô-gam gạo?",
+            "WholeProblemTemplate":  "Cửa hàng bán {0} kg gạo, bằng {1} lượng gạo trong bao lúc đầu. Lúc đầu bao có bao nhiêu ki-lô-gam gạo?",
+            "Capacity":  50,
+            "ContextId":  "shop-rice",
+            "Quantity":  "Mass",
+            "PartProblemAlternatives":  [
+                                            "Lượng gạo trong bao cân được {0} kg. Cửa hàng bán đi {1} lượng gạo đó. Cửa hàng đã bán bao nhiêu ki-lô-gam gạo?",
+                                            "Khối lượng gạo trong bao là {0} kg. Phần gạo cửa hàng bán chiếm {1} lượng gạo trong bao. Cửa hàng đã bán bao nhiêu ki-lô-gam gạo?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Lượng gạo cửa hàng đã bán cân được {0} kg, chiếm {1} lượng gạo trong bao ban đầu. Lúc đầu bao có bao nhiêu ki-lô-gam gạo?",
+                                             "Phần gạo cửa hàng bán có khối lượng {0} kg, tương ứng với {1} lượng gạo ban đầu trong bao. Lúc đầu bao có bao nhiêu ki-lô-gam gạo?"
+                                         ]
+        },
+        {
+            "Unit":  "lít",
+            "PartLabel":  "Số lít nước đã dùng",
+            "WholeLabel":  "Số lít nước ban đầu",
+            "PartProblemTemplate":  "Một bể chứa {0} lít nước. Người ta dùng {1} lượng nước trong bể để tưới cây. Đã dùng bao nhiêu lít nước?",
+            "WholeProblemTemplate":  "Người ta dùng {0} lít nước để tưới cây, bằng {1} lượng nước trong bể lúc đầu. Lúc đầu bể chứa bao nhiêu lít nước?",
+            "Capacity":  1000,
+            "ContextId":  "watering-tank",
+            "Quantity":  "Capacity",
+            "PartProblemAlternatives":  [
+                                            "Lượng nước trong bể có dung tích {0} lít. Phần nước dùng để tưới cây chiếm {1} lượng nước đó. Đã dùng bao nhiêu lít nước?",
+                                            "Bể chứa lượng nước có dung tích {0} lít. Người ta lấy {1} lượng nước trong bể để tưới cây. Đã dùng bao nhiêu lít nước?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Nước dùng để tưới cây có dung tích {0} lít, chiếm {1} lượng nước trong bể ban đầu. Lúc đầu bể chứa bao nhiêu lít nước?",
+                                             "Lượng nước đã lấy để tưới cây có dung tích {0} lít, tương ứng với {1} lượng nước ban đầu trong bể. Lúc đầu bể chứa bao nhiêu lít nước?"
+                                         ]
+        },
+        {
+            "Unit":  "viên bi",
+            "PartLabel":  "Số bi đã cho",
+            "WholeLabel":  "Số bi ban đầu",
+            "PartProblemTemplate":  "Một bạn có {0} viên bi và cho em {1} số bi của mình. Bạn đã cho em bao nhiêu viên bi?",
+            "WholeProblemTemplate":  "Một bạn cho em {0} viên bi, bằng {1} số bi của mình lúc đầu. Lúc đầu bạn có bao nhiêu viên bi?",
+            "Capacity":  1000,
+            "ContextId":  "share-marbles",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong {0} viên bi của một bạn, phần cho em chiếm {1} số bi đó. Bạn đã cho em bao nhiêu viên bi?",
+                                            "Một bạn giữ {0} viên bi và đem {1} số bi của mình cho em. Bạn đã cho em bao nhiêu viên bi?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số bi một bạn cho em là {0} viên, chiếm {1} số bi ban đầu của bạn. Lúc đầu bạn có bao nhiêu viên bi?",
+                                             "Một bạn đã cho em {0} viên bi và lượng này bằng {1} số bi bạn có lúc đầu. Lúc đầu bạn có bao nhiêu viên bi?"
+                                         ]
+        },
+        {
+            "Unit":  "quả trứng",
+            "PartLabel":  "Số trứng đã dùng",
+            "WholeLabel":  "Số trứng ban đầu",
+            "PartProblemTemplate":  "Một khay có {0} quả trứng. Đầu bếp dùng {1} số trứng trong khay để làm bánh. Đầu bếp đã dùng bao nhiêu quả trứng?",
+            "WholeProblemTemplate":  "Đầu bếp dùng {0} quả trứng để làm bánh, bằng {1} số trứng trong khay lúc đầu. Lúc đầu khay có bao nhiêu quả trứng?",
+            "Capacity":  1000,
+            "ContextId":  "baking-eggs",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Khay trứng chứa {0} quả trứng. Đầu bếp lấy {1} số trứng đó để làm bánh. Đầu bếp đã dùng bao nhiêu quả trứng?",
+                                            "Có {0} quả trứng trên khay. Phần trứng đầu bếp dùng làm bánh chiếm {1} số trứng trong khay. Đầu bếp đã dùng bao nhiêu quả trứng?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Số trứng đầu bếp dùng làm bánh là {0} quả, chiếm {1} số trứng ban đầu trên khay. Lúc đầu khay có bao nhiêu quả trứng?",
+                                             "Đầu bếp lấy {0} quả trứng để làm bánh và lượng này bằng {1} số trứng lúc đầu trong khay. Lúc đầu khay có bao nhiêu quả trứng?"
+                                         ]
+        },
+        {
+            "Unit":  "suất ăn",
+            "PartLabel":  "Lượng đã hoàn thành",
+            "WholeLabel":  "Tổng lượng cần hoàn thành",
+            "PartProblemTemplate":  "Trong chuẩn bị suất ăn, cần hoàn thành {0} suất ăn. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu suất ăn?",
+            "WholeProblemTemplate":  "Trong chuẩn bị suất ăn, đã hoàn thành {0} suất ăn, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu suất ăn?",
+            "Capacity":  1000,
+            "ContextId":  "kitchen",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong chuẩn bị suất ăn, mục tiêu là {0} suất ăn. Phần đã hoàn thành chiếm {1} mục tiêu đó. Hỏi đã hoàn thành bao nhiêu suất ăn?",
+                                            "Trong chuẩn bị suất ăn, dự kiến hoàn thành {0} suất ăn. Phần hoàn thành bằng {1} lượng dự kiến. Hỏi đã hoàn thành bao nhiêu suất ăn?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Trong chuẩn bị suất ăn, phần hoàn thành đạt {0} suất ăn, chiếm {1} mục tiêu đặt ra. Hỏi cần hoàn thành tất cả bao nhiêu suất ăn?",
+                                             "Trong chuẩn bị suất ăn, đã thực hiện được {0} suất ăn, tương ứng với {1} lượng dự kiến. Hỏi cần hoàn thành tất cả bao nhiêu suất ăn?"
+                                         ]
+        },
+        {
+            "Unit":  "bông hoa giấy",
+            "PartLabel":  "Lượng đã hoàn thành",
+            "WholeLabel":  "Tổng lượng cần hoàn thành",
+            "PartProblemTemplate":  "Trong gấp hoa giấy, cần hoàn thành {0} bông hoa giấy. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu bông hoa giấy?",
+            "WholeProblemTemplate":  "Trong gấp hoa giấy, đã hoàn thành {0} bông hoa giấy, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu bông hoa giấy?",
+            "Capacity":  200,
+            "ContextId":  "craft",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong gấp hoa giấy, mục tiêu là {0} bông hoa giấy. Phần đã hoàn thành chiếm {1} mục tiêu đó. Hỏi đã hoàn thành bao nhiêu bông hoa giấy?",
+                                            "Trong gấp hoa giấy, dự kiến hoàn thành {0} bông hoa giấy. Phần hoàn thành bằng {1} lượng dự kiến. Hỏi đã hoàn thành bao nhiêu bông hoa giấy?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Trong gấp hoa giấy, phần hoàn thành đạt {0} bông hoa giấy, chiếm {1} mục tiêu đặt ra. Hỏi cần hoàn thành tất cả bao nhiêu bông hoa giấy?",
+                                             "Trong gấp hoa giấy, đã thực hiện được {0} bông hoa giấy, tương ứng với {1} lượng dự kiến. Hỏi cần hoàn thành tất cả bao nhiêu bông hoa giấy?"
+                                         ]
+        },
+        {
+            "Unit":  "gói quà",
+            "PartLabel":  "Lượng đã hoàn thành",
+            "WholeLabel":  "Tổng lượng cần hoàn thành",
+            "PartProblemTemplate":  "Trong đóng gói quà, cần hoàn thành {0} gói quà. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu gói quà?",
+            "WholeProblemTemplate":  "Trong đóng gói quà, đã hoàn thành {0} gói quà, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu gói quà?",
+            "Capacity":  500,
+            "ContextId":  "distribution",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong đóng gói quà, mục tiêu là {0} gói quà. Phần đã hoàn thành chiếm {1} mục tiêu đó. Hỏi đã hoàn thành bao nhiêu gói quà?",
+                                            "Trong đóng gói quà, dự kiến hoàn thành {0} gói quà. Phần hoàn thành bằng {1} lượng dự kiến. Hỏi đã hoàn thành bao nhiêu gói quà?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Trong đóng gói quà, phần hoàn thành đạt {0} gói quà, chiếm {1} mục tiêu đặt ra. Hỏi cần hoàn thành tất cả bao nhiêu gói quà?",
+                                             "Trong đóng gói quà, đã thực hiện được {0} gói quà, tương ứng với {1} lượng dự kiến. Hỏi cần hoàn thành tất cả bao nhiêu gói quà?"
+                                         ]
+        },
+        {
+            "Unit":  "quyển sách",
+            "PartLabel":  "Lượng đã hoàn thành",
+            "WholeLabel":  "Tổng lượng cần hoàn thành",
+            "PartProblemTemplate":  "Trong quyên góp sách, cần hoàn thành {0} quyển sách. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu quyển sách?",
+            "WholeProblemTemplate":  "Trong quyên góp sách, đã hoàn thành {0} quyển sách, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu quyển sách?",
+            "Capacity":  500,
+            "ContextId":  "community",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong quyên góp sách, mục tiêu là {0} quyển sách. Phần đã hoàn thành chiếm {1} mục tiêu đó. Hỏi đã hoàn thành bao nhiêu quyển sách?",
+                                            "Trong quyên góp sách, dự kiến hoàn thành {0} quyển sách. Phần hoàn thành bằng {1} lượng dự kiến. Hỏi đã hoàn thành bao nhiêu quyển sách?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Trong quyên góp sách, phần hoàn thành đạt {0} quyển sách, chiếm {1} mục tiêu đặt ra. Hỏi cần hoàn thành tất cả bao nhiêu quyển sách?",
+                                             "Trong quyên góp sách, đã thực hiện được {0} quyển sách, tương ứng với {1} lượng dự kiến. Hỏi cần hoàn thành tất cả bao nhiêu quyển sách?"
+                                         ]
+        },
+        {
+            "Unit":  "phiếu trả lời",
+            "PartLabel":  "Lượng đã hoàn thành",
+            "WholeLabel":  "Tổng lượng cần hoàn thành",
+            "PartProblemTemplate":  "Trong khảo sát sở thích, cần hoàn thành {0} phiếu trả lời. Đã hoàn thành {1} lượng đó. Hỏi đã hoàn thành bao nhiêu phiếu trả lời?",
+            "WholeProblemTemplate":  "Trong khảo sát sở thích, đã hoàn thành {0} phiếu trả lời, bằng {1} lượng cần hoàn thành. Hỏi cần hoàn thành tất cả bao nhiêu phiếu trả lời?",
+            "Capacity":  500,
+            "ContextId":  "survey",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Trong khảo sát sở thích, mục tiêu là {0} phiếu trả lời. Phần đã hoàn thành chiếm {1} mục tiêu đó. Hỏi đã hoàn thành bao nhiêu phiếu trả lời?",
+                                            "Trong khảo sát sở thích, dự kiến hoàn thành {0} phiếu trả lời. Phần hoàn thành bằng {1} lượng dự kiến. Hỏi đã hoàn thành bao nhiêu phiếu trả lời?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "Trong khảo sát sở thích, phần hoàn thành đạt {0} phiếu trả lời, chiếm {1} mục tiêu đặt ra. Hỏi cần hoàn thành tất cả bao nhiêu phiếu trả lời?",
+                                             "Trong khảo sát sở thích, đã thực hiện được {0} phiếu trả lời, tương ứng với {1} lượng dự kiến. Hỏi cần hoàn thành tất cả bao nhiêu phiếu trả lời?"
+                                         ]
+        }
     ],
     "DataChartContexts": [
       {
@@ -21729,7 +21971,12 @@
         "Unit": "quả",
         "QuantityName": "số trái cây",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "fruit-stall",
+        "CategoryIds": [
+          "oranges",
+          "apples",
+          "mangoes"
+        ]
       },
       {
         "Description": "số vật nuôi ở một trang trại",
@@ -21741,7 +21988,12 @@
         "Unit": "con",
         "QuantityName": "số vật nuôi",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "farm-animals",
+        "CategoryIds": [
+          "chickens",
+          "ducks",
+          "geese"
+        ]
       },
       {
         "Description": "số sách trong thư viện theo thể loại",
@@ -21753,7 +22005,12 @@
         "Unit": "quyển sách",
         "QuantityName": "số sách",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "library-genres",
+        "CategoryIds": [
+          "stories",
+          "science",
+          "history"
+        ]
       },
       {
         "Description": "số bút trong một cửa hàng",
@@ -21765,7 +22022,12 @@
         "Unit": "cây bút",
         "QuantityName": "số bút",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "stationery-types",
+        "CategoryIds": [
+          "pencils",
+          "ink-pens",
+          "colour-pens"
+        ]
       },
       {
         "Description": "số học sinh chọn một môn thể thao yêu thích",
@@ -21777,7 +22039,12 @@
         "Unit": "học sinh",
         "QuantityName": "số học sinh",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "sport-preferences",
+        "CategoryIds": [
+          "football",
+          "swimming",
+          "badminton"
+        ]
       },
       {
         "Description": "số chậu hoa ở một vườn ươm",
@@ -21789,7 +22056,12 @@
         "Unit": "chậu",
         "QuantityName": "số chậu hoa",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "nursery-flowers",
+        "CategoryIds": [
+          "roses",
+          "chrysanthemums",
+          "orchids"
+        ]
       },
       {
         "Description": "số phương tiện trong một bãi đỗ xe",
@@ -21801,7 +22073,12 @@
         "Unit": "xe",
         "QuantityName": "số phương tiện",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "parking-vehicles",
+        "CategoryIds": [
+          "bicycles",
+          "motorbikes",
+          "cars"
+        ]
       },
       {
         "Description": "khối lượng gạo một cửa hàng bán trong ba ngày",
@@ -21813,7 +22090,12 @@
         "Unit": "kg",
         "QuantityName": "khối lượng gạo",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "rice-sales-days",
+        "CategoryIds": [
+          "monday",
+          "tuesday",
+          "wednesday"
+        ]
       },
       {
         "Description": "lượng nước tưới cho ba nhóm cây trong vườn",
@@ -21825,7 +22107,12 @@
         "Unit": "lít",
         "QuantityName": "lượng nước",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "watering-groups",
+        "CategoryIds": [
+          "vegetables",
+          "flowers",
+          "fruit-trees"
+        ]
       },
       {
         "Description": "số gói hàng theo loại trong một cửa hàng",
@@ -21837,7 +22124,12 @@
         "Unit": "gói",
         "QuantityName": "số gói hàng",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "shop-package-types",
+        "CategoryIds": [
+          "biscuits",
+          "sweets",
+          "jam"
+        ]
       },
       {
         "Description": "thư viện nhận sách quyên góp trong ba ngày riêng biệt",
@@ -21849,7 +22141,12 @@
         "Unit": "quyển sách",
         "QuantityName": "quyển sách",
         "Capacity": 300,
-        "ContextId": "library"
+        "ContextId": "library",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "chuẩn bị suất ăn trong ba ngày riêng biệt",
@@ -21861,7 +22158,12 @@
         "Unit": "suất ăn",
         "QuantityName": "suất ăn",
         "Capacity": 1000,
-        "ContextId": "kitchen"
+        "ContextId": "kitchen",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "thu trứng ở trang trại trong ba ngày riêng biệt",
@@ -21873,7 +22175,12 @@
         "Unit": "quả trứng",
         "QuantityName": "quả trứng",
         "Capacity": 500,
-        "ContextId": "livestock"
+        "ContextId": "livestock",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "thu hoạch rau trong ba ngày riêng biệt",
@@ -21885,7 +22192,12 @@
         "Unit": "kg rau",
         "QuantityName": "kg rau",
         "Capacity": 2000,
-        "ContextId": "agriculture"
+        "ContextId": "agriculture",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "gấp hoa giấy trong ba ngày riêng biệt",
@@ -21897,7 +22209,12 @@
         "Unit": "bông hoa giấy",
         "QuantityName": "bông hoa giấy",
         "Capacity": 200,
-        "ContextId": "craft"
+        "ContextId": "craft",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "đóng gói quà trong ba ngày riêng biệt",
@@ -21909,7 +22226,12 @@
         "Unit": "gói quà",
         "QuantityName": "gói quà",
         "Capacity": 500,
-        "ContextId": "distribution"
+        "ContextId": "distribution",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "khách đi xe trong ba ngày riêng biệt",
@@ -21921,7 +22243,12 @@
         "Unit": "lượt khách",
         "QuantityName": "lượt khách",
         "Capacity": 500,
-        "ContextId": "traffic"
+        "ContextId": "traffic",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "thi đấu thể thao trong ba trận riêng biệt",
@@ -21933,7 +22260,12 @@
         "Unit": "điểm",
         "QuantityName": "điểm",
         "Capacity": 100,
-        "ContextId": "sports"
+        "ContextId": "sports",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "chuẩn bị chỗ ngồi cho văn nghệ trong ba khu riêng biệt",
@@ -21945,7 +22277,12 @@
         "Unit": "chiếc ghế",
         "QuantityName": "chiếc ghế",
         "Capacity": 500,
-        "ContextId": "events"
+        "ContextId": "events",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "khách tham quan trong ba ngày riêng biệt",
@@ -21957,7 +22294,12 @@
         "Unit": "lượt khách",
         "QuantityName": "lượt khách",
         "Capacity": 1000,
-        "ContextId": "tourism"
+        "ContextId": "tourism",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "quyên góp sách trong ba ngày riêng biệt",
@@ -21969,7 +22311,12 @@
         "Unit": "quyển sách",
         "QuantityName": "quyển sách",
         "Capacity": 500,
-        "ContextId": "community"
+        "ContextId": "community",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "thu gom giấy tái chế trong ba ngày riêng biệt",
@@ -21981,7 +22328,12 @@
         "Unit": "kg giấy",
         "QuantityName": "kg giấy",
         "Capacity": 200,
-        "ContextId": "environment"
+        "ContextId": "environment",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "cắt ruy băng trang trí trong ba ngày riêng biệt",
@@ -21993,7 +22345,12 @@
         "Unit": "m ruy băng",
         "QuantityName": "m ruy băng",
         "Capacity": 50,
-        "ContextId": "decoration"
+        "ContextId": "decoration",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "lát nền công trình trong ba ngày riêng biệt",
@@ -22005,7 +22362,12 @@
         "Unit": "m² nền",
         "QuantityName": "m² nền",
         "Capacity": 200,
-        "ContextId": "construction"
+        "ContextId": "construction",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "tiết kiệm nước tưới trong ba ngày riêng biệt",
@@ -22017,7 +22379,12 @@
         "Unit": "lít nước",
         "QuantityName": "lít nước",
         "Capacity": 1000,
-        "ContextId": "water"
+        "ContextId": "water",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "lịch sinh hoạt trong ba ngày riêng biệt",
@@ -22029,7 +22396,12 @@
         "Unit": "phút",
         "QuantityName": "phút",
         "Capacity": 120,
-        "ContextId": "schedule"
+        "ContextId": "schedule",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "khảo sát sở thích trong ba ngày riêng biệt",
@@ -22041,7 +22413,12 @@
         "Unit": "phiếu trả lời",
         "QuantityName": "phiếu trả lời",
         "Capacity": 500,
-        "ContextId": "survey"
+        "ContextId": "survey",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       }
     ],
     "AverageQuizGenerator.DirectContexts": [

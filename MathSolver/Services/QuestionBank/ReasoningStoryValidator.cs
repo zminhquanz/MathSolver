@@ -64,6 +64,9 @@ public static class ReasoningStoryValidator
             return (vi ? "Viết MẪU bài toán có lời văn bằng tiếng Việt, dùng cách diễn đạt tương đương đã duyệt. C# sinh số và tính đáp án. Giữ nguyên từng role, step, biến {f...}/{v...}, đơn vị, thứ tự sự việc và đối tượng hỏi. Không điền số hay tên vào biến; không thêm sự kiện, điều kiện hoặc phép tính. Chỉ trả JSON đầy đủ như ví dụ, không giải bài. Khi mẫu cũ đã có, đổi câu dữ kiện theo lựa chọn hợp lệ; chỉ đổi câu dẫn lời giải không tạo đề mới."
                 : "Write a word-problem TEMPLATE in English using reviewed equivalent wording. C# generates numbers and calculates answers. Keep every role, step, literal {f...}/{v...} placeholder, unit, chronology and target. Do not fill variables, add events, conditions or formulas. Return only complete JSON as shown; do not solve. If wording already exists, choose different approved fact clauses; changing only solution leads is not novel.")
                 + "\n" + c.Family + "; stars=" + (int)c.Tier + "; context=" + lesson.Context
+                + (c.Family != BankQuestionFamily.FractionQuantity ? "" : vi
+                    ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
+                    : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
                 + "\n" + QuestionBankStore.SerializeDraft(example)
                 + (correction is null ? "" : "\nRejected: " + correction + ". Return complete corrected JSON.");
         }

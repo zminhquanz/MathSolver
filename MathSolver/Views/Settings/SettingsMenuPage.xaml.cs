@@ -620,6 +620,7 @@ public partial class SettingsMenuPage : ContentView
         OverlaySettingsIcon.RefreshThemeColor();
         FontMenuIcon.RefreshThemeColor();
         LanguageMenuIcon.RefreshThemeColor();
+        DataMenuIcon.RefreshThemeColor();
         HardwareMenuIcon.RefreshThemeColor();
         AboutMenuIcon.RefreshThemeColor();
         ResetMenuIcon.RefreshThemeColor();
@@ -778,6 +779,11 @@ public partial class SettingsMenuPage : ContentView
     {
         await RequestNavigationAsync(
             nameof(SettingsPage));
+    }
+
+    private async void OnDataManagementTapped(object? sender, TappedEventArgs e)
+    {
+        await RequestNavigationAsync(nameof(DataManagementPage));
     }
 
     private async void OnHardwarePerformanceTapped(

@@ -55,7 +55,7 @@ public static partial class QuizContentValidation
             }
             if (categories.Count != 3) Fail("Missing measurement story dimension.");
         }
-        foreach (string listName in new[] { ReviewedNarrativePhrasings.ListName, ReviewedNarrativePhrasings.MotionListName, ReviewedNarrativePhrasings.ProportionListName, ReviewedNarrativePhrasings.DecimalListName, ReviewedNarrativePhrasings.MeasurementListName, ReviewedNarrativePhrasings.RemainderListName, ReviewedNarrativePhrasings.TimeListName })
+        foreach (string listName in new[] { ReviewedNarrativePhrasings.ListName, ReviewedNarrativePhrasings.MotionListName, ReviewedNarrativePhrasings.ProportionListName, ReviewedNarrativePhrasings.DecimalListName, ReviewedNarrativePhrasings.MeasurementListName, ReviewedNarrativePhrasings.RemainderListName, ReviewedNarrativePhrasings.TimeListName, ReviewedNarrativePhrasings.FractionQuantityListName })
         if (pack.Lists.TryGetValue(listName, out var phrasings))
         {
             var texts = pack.Texts.ToDictionary(text => text.Id, StringComparer.Ordinal);
@@ -70,6 +70,7 @@ public static partial class QuizContentValidation
                     : listName == ReviewedNarrativePhrasings.MeasurementListName ? "ElementaryQuizGenerator.MeasurementStories."
                     : listName == ReviewedNarrativePhrasings.RemainderListName ? "ElementaryQuizGenerator.ContextStories.CreateRemainderStory."
                     : listName == ReviewedNarrativePhrasings.TimeListName ? "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty."
+                    : listName == ReviewedNarrativePhrasings.FractionQuantityListName ? "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty."
                     : "ElementaryQuizGenerator.MultiStep.CreateMultiStep.";
                 if (!ids.Add(id) || !id.StartsWith(prefix, StringComparison.Ordinal)
                     || !texts.TryGetValue(id, out var source)) Fail("Unknown or duplicate reviewed narrative: " + id);
@@ -171,19 +172,45 @@ public static partial class QuizContentValidation
                     Fail("Unsupported fraction quantity: " + contextId);
                 foreach (string field in new[] { "Unit", "PartLabel", "WholeLabel" }) _ = RequiredString(context, field);
                 foreach (string field in new[] { "PartProblemTemplate", "WholeProblemTemplate" })
-                    if (!Slots(RequiredString(context, field)).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
+                {
+                    string template = RequiredString(context, field);
+                    if (!Slots(template).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
+                    string alternativesField = field.Replace("Template", "Alternatives", StringComparison.Ordinal);
+                    var alternatives = RequiredArray(context, alternativesField);
+                    if (alternatives.GetArrayLength() < 2) Fail("Fraction quantity facts need reviewed alternatives.");
+                    var seen = new HashSet<string>(StringComparer.Ordinal) { template.Trim() };
+                    string[] original = Regex.Split(template.Trim(), @"(?<=[.!?])\s+");
+                    foreach (var alternative in alternatives.EnumerateArray())
+                    {
+                        if (alternative.ValueKind != JsonValueKind.String) Fail("Invalid fraction quantity phrasing.");
+                        string text = alternative.GetString()!;
+                        string[] parts = Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
+                        if (!seen.Add(text.Trim()) || text.Any(char.IsControl) || text.Length > 700 || parts.Length != original.Length
+                            || Regex.Replace(text, @"\{[01]\}", "").Any(char.IsDigit)) Fail("Invalid fraction quantity phrasing.");
+                        for (int i = 0; i < parts.Length; i++)
+                            if (!Placeholder().Matches(parts[i]).Select(m => m.Value).SequenceEqual(Placeholder().Matches(original[i]).Select(m => m.Value))
+                                || parts[i].EndsWith('?') != original[i].EndsWith('?')) Fail("Changed fraction quantity roles or target.");
+                    }
+                }
                 CheckCapacity(context);
             }
         }
         if (pack.Lists.TryGetValue("DataChartContexts", out var charts))
+        {
+            var contextIds = new HashSet<string>(StringComparer.Ordinal);
             foreach (var context in charts.EnumerateArray())
             {
+                if (!contextIds.Add(RequiredString(context, "ContextId"))) Fail("Duplicate chart context ID.");
                 foreach (string field in new[] { "Description", "Unit", "QuantityName" }) _ = RequiredString(context, field);
                 var labels = RequiredArray(context, "Labels").EnumerateArray().Select(x => x.GetString()).ToArray();
-                if (labels.Length < 3 || labels.Any(string.IsNullOrWhiteSpace) || labels.Distinct(StringComparer.Ordinal).Count() != labels.Length)
-                    Fail("Chart categories must contain at least three distinct labels.");
+                var categoryIds = RequiredArray(context, "CategoryIds").EnumerateArray().Select(x => x.GetString()).ToArray();
+                if (labels.Length != 3 || labels.Any(string.IsNullOrWhiteSpace) || labels.Distinct(StringComparer.Ordinal).Count() != labels.Length
+                    || categoryIds.Length != labels.Length || categoryIds.Any(string.IsNullOrWhiteSpace)
+                    || categoryIds.Distinct(StringComparer.Ordinal).Count() != categoryIds.Length)
+                    Fail("Chart categories need three distinct labels and stable IDs in the same order.");
                 CheckCapacity(context);
             }
+        }
     }
 
     /// <summary>Author check: complete keys, stable value slots and the existing mathematical scenarios.</summary>
@@ -210,7 +237,7 @@ public static partial class QuizContentValidation
                     if (list.Value[i].GetProperty("Value").GetInt32() != translated[i].GetProperty("Value").GetInt32())
                         Fail("Changed number vocabulary value.");
             if (list.Key is ReviewedNarrativePhrasings.ListName or ReviewedNarrativePhrasings.MotionListName
-                or ReviewedNarrativePhrasings.ProportionListName or ReviewedNarrativePhrasings.DecimalListName or ReviewedNarrativePhrasings.MeasurementListName or ReviewedNarrativePhrasings.RemainderListName or ReviewedNarrativePhrasings.TimeListName)
+                or ReviewedNarrativePhrasings.ProportionListName or ReviewedNarrativePhrasings.DecimalListName or ReviewedNarrativePhrasings.MeasurementListName or ReviewedNarrativePhrasings.RemainderListName or ReviewedNarrativePhrasings.TimeListName or ReviewedNarrativePhrasings.FractionQuantityListName)
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                     if (RequiredString(list.Value[i], "Id") != RequiredString(translated[i], "Id"))
                         Fail("Changed reviewed narrative ID.");
@@ -262,7 +289,7 @@ public static partial class QuizContentValidation
         ["MotionQuizGenerator.UnitProfiles"] = ["Kind", "SpeedUnit", "TimeUnit", "DistanceUnit"],
         ["MotionQuizGenerator.MovingSubjects"] = ["Kind", "Name"]
     };
-    private static readonly string[] FixedContextFields = ["Id", "ContextId", "ShapeId", "Measurement", "Type", "Scenario", "Category",
+    private static readonly string[] FixedContextFields = ["Id", "ContextId", "CategoryIds", "ShapeId", "Measurement", "Type", "Scenario", "Category",
         "RateProfile", "Kind", "Capacity", "MaximumSize", "MaximumDimension", "DistanceScale", "TimeDivisor",
         "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity", "Quantity"];
 

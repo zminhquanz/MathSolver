@@ -60,6 +60,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
 {
     public string? StoryContextId { get; init; }
     public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
+    public DataChartQuestionContract? DataChart { get; init; }
     public ElementaryQuizReasoning? Reasoning { get; init; }
     public int? RoundingDecimalPlaces { get; init; }
     public bool RequiresCalculation { get; init; } = true;

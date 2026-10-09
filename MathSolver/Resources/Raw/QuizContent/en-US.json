@@ -3,6 +3,55 @@
   "Culture": "en-US",
   "Texts": [
     {
+      "Id": "Preview.Details",
+      "Text": "Details",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.Fit",
+      "Text": "Fit to view (100%)",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HelpDesktop",
+      "Text": "Drag to explore • Ctrl + mouse wheel to zoom • Click % to fit • Esc to close",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HelpTouch",
+      "Text": "Pinch to zoom and drag to explore. Tap % to fit the diagram.",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.HideDetails",
+      "Text": "Hide details",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.Title",
+      "Text": "Diagram",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.ZoomIn",
+      "Text": "Zoom in",
+      "Variables": []
+    },
+    {
+      "Id": "Preview.ZoomOut",
+      "Text": "Zoom out",
+      "Variables": []
+    },
+    {
+      "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.035",
+      "Text": "How many more {unit} does “{labels_firstRow}” have than “{labels_secondRow}”?",
+      "Variables": [
+        "labels_firstRow",
+        "labels_secondRow",
+        "unit"
+      ]
+    },
+    {
       "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.018",
       "Text": "After filling the {container}, how many {item} are left over?",
       "Variables": [
@@ -8950,6 +8999,79 @@
     }
   ],
   "Lists": {
+    "Narrative.FractionQuantity.Phrasings": [
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001",
+            "Alternatives":  [
+                                 "The portions {a} and {b} {unit} together form the supplied quantity. ",
+                                 "The supplied quantity consists of two portions: {a} and {b} {unit}. "
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002",
+            "Alternatives":  [
+                                 "Combine the portions {a} and {b} {unit}, then take away {removed} {unit} before calculating the fraction. ",
+                                 "From the two portions {a} and {b} {unit}, subtract {removed} {unit} to obtain the quantity for the fraction. "
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.003",
+            "Alternatives":  [
+                                 "Quantity after combining and adjusting",
+                                 "Supplied quantity for the fraction calculation"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.004",
+            "Alternatives":  [
+                                 "Share left after using the first portion",
+                                 "Remaining fraction after the first use"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.005",
+            "Alternatives":  [
+                                 "Quantity left after the first use",
+                                 "Unused quantity after the first portion"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.006",
+            "Alternatives":  [
+                                 "Second-use fraction expressed relative to the original quantity",
+                                 "Share of the original amount used on the second occasion"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.017",
+            "Alternatives":  [
+                                 "{context_PartLabel} accounts for {fraction} of the supplied quantity above. What is {context_PartLabel_ToLowerInvariant} in {unit}?",
+                                 "{context_PartLabel} represents {fraction} of this supplied amount. What is {context_PartLabel_ToLowerInvariant} in {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.018",
+            "Alternatives":  [
+                                 "The supplied portion is {context_PartLabel_ToLowerInvariant}, accounting for {fraction} of {context_WholeLabel_ToLowerInvariant}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?",
+                                 "The given amount represents {context_PartLabel_ToLowerInvariant}, making up {fraction} of {context_WholeLabel_ToLowerInvariant}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.019",
+            "Alternatives":  [
+                                 "{context_WholeLabel} contains {quantity} {unit}. After using {removedNumerator}/{removedDenominator} of the original amount first, some remains. {context_PartLabel} is {n}/{d} of that remaining amount. What is {context_PartLabel_ToLowerInvariant} in {unit}?",
+                                 "{context_WholeLabel} amounts to {quantity} {unit}. The first use takes {removedNumerator}/{removedDenominator} of the initial quantity. {context_PartLabel} is calculated as {n}/{d} of what remains after that first use. What is {context_PartLabel_ToLowerInvariant} in {unit}?"
+                             ]
+        },
+        {
+            "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.020",
+            "Alternatives":  [
+                                 "The first use takes {removedNumerator}/{removedDenominator} of {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} is {n}/{d} of what remains after the first use and contains {quantity} {unit}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?",
+                                 "The first portion used makes up {removedNumerator}/{removedDenominator} of {context_WholeLabel_ToLowerInvariant}. {context_PartLabel} accounts for {n}/{d} of the unused remainder and amounts to {quantity} {unit}. What is {context_WholeLabel_ToLowerInvariant} in {unit}?"
+                             ]
+        }
+    ],
+
     "MeasurementStoryContexts": [
       {
         "Id": "kitchen",
@@ -21200,156 +21322,276 @@
       }
     ],
     "FractionQuantityContexts": [
-      {
-        "Unit": "books",
-        "PartLabel": "Number of storybooks",
-        "WholeLabel": "Total number of books",
-        "PartProblemTemplate": "A library has {0} books; {1} of them are storybooks. How many storybooks are there?",
-        "WholeProblemTemplate": "A library has {0} storybooks, representing {1} of all its books. How many books does the library have in total?",
-        "Capacity": 1000,
-        "ContextId": "library-books",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "oranges",
-        "PartLabel": "Number of oranges sold",
-        "WholeLabel": "Initial number of oranges",
-        "PartProblemTemplate": "A shop has {0} oranges and sells {1} of them. How many oranges does it sell?",
-        "WholeProblemTemplate": "A shop sells {0} oranges, representing {1} of its initial stock. How many oranges did it have at first?",
-        "Capacity": 1000,
-        "ContextId": "shop-oranges",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "pens",
-        "PartLabel": "Number of pens given away",
-        "WholeLabel": "Initial number of pens",
-        "PartProblemTemplate": "A box contains {0} pens. A teacher gives {1} of them to students. How many pens does the teacher give away?",
-        "WholeProblemTemplate": "A teacher gives students {0} pens, representing {1} of the pens initially in a box. How many pens were in the box at first?",
-        "Capacity": 100,
-        "ContextId": "gift-pens",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "students",
-        "PartLabel": "Number of students joining the club",
-        "WholeLabel": "Total number of students registering for activities",
-        "PartProblemTemplate": "At a school, {0} students register for extracurricular activities; {1} of them join the reading club. How many students join the club?",
-        "WholeProblemTemplate": "At a school, {0} students join the reading club, representing {1} of the students registering for extracurricular activities. How many students register for activities in total?",
-        "Capacity": 600,
-        "ContextId": "school-club",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "seedlings",
-        "PartLabel": "Number of seedlings planted",
-        "WholeLabel": "Total number of seedlings",
-        "PartProblemTemplate": "A nursery has {0} seedlings and plants {1} of them. How many seedlings does it plant?",
-        "WholeProblemTemplate": "A nursery plants {0} seedlings, representing {1} of its initial stock. How many seedlings did it have in total?",
-        "Capacity": 1000,
-        "ContextId": "nursery-trees",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "m",
-        "PartLabel": "Length of fabric used",
-        "WholeLabel": "Initial length of fabric",
-        "PartProblemTemplate": "A piece of fabric is {0} m long. A tailor uses {1} of it to make shirts. How many metres of fabric does the tailor use?",
-        "WholeProblemTemplate": "A tailor uses {0} m of fabric, representing {1} of the original piece. How many metres long was the original piece?",
-        "Capacity": 200,
-        "ContextId": "tailoring-fabric",
-        "Quantity": "Distance"
-      },
-      {
-        "Unit": "kg",
-        "PartLabel": "Mass of rice sold",
-        "WholeLabel": "Initial mass of rice",
-        "PartProblemTemplate": "A sack contains {0} kg of rice. A shop sells {1} of the rice. How many kilograms of rice does it sell?",
-        "WholeProblemTemplate": "A shop sells {0} kg of rice, representing {1} of the rice initially in a sack. How many kilograms of rice were in the sack at first?",
-        "Capacity": 50,
-        "ContextId": "shop-rice",
-        "Quantity": "Mass"
-      },
-      {
-        "Unit": "litres",
-        "PartLabel": "Amount of water used",
-        "WholeLabel": "Initial amount of water",
-        "PartProblemTemplate": "A tank holds {0} litres of water. A gardener uses {1} of it to water plants. How many litres of water does the gardener use?",
-        "WholeProblemTemplate": "A gardener uses {0} litres of water, representing {1} of the water initially in a tank. How many litres did the tank hold at first?",
-        "Capacity": 1000,
-        "ContextId": "watering-tank",
-        "Quantity": "Capacity"
-      },
-      {
-        "Unit": "marbles",
-        "PartLabel": "Number of marbles given away",
-        "WholeLabel": "Initial number of marbles",
-        "PartProblemTemplate": "A child has {0} marbles and gives {1} of them to a younger sibling. How many marbles does the child give away?",
-        "WholeProblemTemplate": "A child gives a younger sibling {0} marbles, representing {1} of the initial collection. How many marbles did the child have at first?",
-        "Capacity": 1000,
-        "ContextId": "share-marbles",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "eggs",
-        "PartLabel": "Number of eggs used",
-        "WholeLabel": "Initial number of eggs",
-        "PartProblemTemplate": "A tray contains {0} eggs. A cook uses {1} of them to make cakes. How many eggs does the cook use?",
-        "WholeProblemTemplate": "A cook uses {0} eggs to make cakes, representing {1} of the eggs initially in a tray. How many eggs were on the tray at first?",
-        "Capacity": 1000,
-        "ContextId": "baking-eggs",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "meals",
-        "PartLabel": "Completed quantity",
-        "WholeLabel": "Total target quantity",
-        "PartProblemTemplate": "For meal preparation, the target is {0} meals. {1} of this target is complete. How many meals are complete?",
-        "WholeProblemTemplate": "For meal preparation, {0} meals are complete, representing {1} of the target. What is the total target in meals?",
-        "Capacity": 1000,
-        "ContextId": "kitchen",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "paper flowers",
-        "PartLabel": "Completed quantity",
-        "WholeLabel": "Total target quantity",
-        "PartProblemTemplate": "For paper flower making, the target is {0} paper flowers. {1} of this target is complete. How many paper flowers are complete?",
-        "WholeProblemTemplate": "For paper flower making, {0} paper flowers are complete, representing {1} of the target. What is the total target in paper flowers?",
-        "Capacity": 200,
-        "ContextId": "craft",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "gift packs",
-        "PartLabel": "Completed quantity",
-        "WholeLabel": "Total target quantity",
-        "PartProblemTemplate": "For gift packing, the target is {0} gift packs. {1} of this target is complete. How many gift packs are complete?",
-        "WholeProblemTemplate": "For gift packing, {0} gift packs are complete, representing {1} of the target. What is the total target in gift packs?",
-        "Capacity": 500,
-        "ContextId": "distribution",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "books",
-        "PartLabel": "Completed quantity",
-        "WholeLabel": "Total target quantity",
-        "PartProblemTemplate": "For book donations, the target is {0} books. {1} of this target is complete. How many books are complete?",
-        "WholeProblemTemplate": "For book donations, {0} books are complete, representing {1} of the target. What is the total target in books?",
-        "Capacity": 500,
-        "ContextId": "community",
-        "Quantity": "Count"
-      },
-      {
-        "Unit": "responses",
-        "PartLabel": "Completed quantity",
-        "WholeLabel": "Total target quantity",
-        "PartProblemTemplate": "For preference surveys, the target is {0} responses. {1} of this target is complete. How many responses are complete?",
-        "WholeProblemTemplate": "For preference surveys, {0} responses are complete, representing {1} of the target. What is the total target in responses?",
-        "Capacity": 500,
-        "ContextId": "survey",
-        "Quantity": "Count"
-      }
+        {
+            "Unit":  "books",
+            "PartLabel":  "Number of storybooks",
+            "WholeLabel":  "Total number of books",
+            "PartProblemTemplate":  "A library has {0} books; {1} of them are storybooks. How many storybooks are there?",
+            "WholeProblemTemplate":  "A library has {0} storybooks, representing {1} of all its books. How many books does the library have in total?",
+            "Capacity":  1000,
+            "ContextId":  "library-books",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "The library\u0027s collection contains {0} books, with storybooks making up {1} of the collection. How many storybooks are there?",
+                                            "Of the library\u0027s {0} books, {1} are storybooks. How many storybooks are there?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The storybook collection contains {0} books, accounting for {1} of all the library\u0027s books. How many books does the library have in total?",
+                                             "There are {0} storybooks in the library, and these make up {1} of its entire collection. How many books does the library have in total?"
+                                         ]
+        },
+        {
+            "Unit":  "oranges",
+            "PartLabel":  "Number of oranges sold",
+            "WholeLabel":  "Initial number of oranges",
+            "PartProblemTemplate":  "A shop has {0} oranges and sells {1} of them. How many oranges does it sell?",
+            "WholeProblemTemplate":  "A shop sells {0} oranges, representing {1} of its initial stock. How many oranges did it have at first?",
+            "Capacity":  1000,
+            "ContextId":  "shop-oranges",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Of the shop\u0027s {0} oranges, the portion sold makes up {1} of the stock. How many oranges does it sell?",
+                                            "The shop starts with {0} oranges and sells a fraction of {1} of this stock. How many oranges does it sell?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The {0} oranges sold by the shop account for {1} of its original stock. How many oranges did it have at first?",
+                                             "The shop\u0027s sales amount to {0} oranges, which make up {1} of the starting stock. How many oranges did it have at first?"
+                                         ]
+        },
+        {
+            "Unit":  "pens",
+            "PartLabel":  "Number of pens given away",
+            "WholeLabel":  "Initial number of pens",
+            "PartProblemTemplate":  "A box contains {0} pens. A teacher gives {1} of them to students. How many pens does the teacher give away?",
+            "WholeProblemTemplate":  "A teacher gives students {0} pens, representing {1} of the pens initially in a box. How many pens were in the box at first?",
+            "Capacity":  100,
+            "ContextId":  "gift-pens",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "There are {0} pens in a box. The teacher takes {1} of these pens to give to students. How many pens does the teacher give away?",
+                                            "The box holds {0} pens. The portion given to students by a teacher is {1} of the pens in the box. How many pens does the teacher give away?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The {0} pens given to students account for {1} of the original contents of a box. How many pens were in the box at first?",
+                                             "The teacher hands students {0} pens, and these make up {1} of the pens in the box originally. How many pens were in the box at first?"
+                                         ]
+        },
+        {
+            "Unit":  "students",
+            "PartLabel":  "Number of students joining the club",
+            "WholeLabel":  "Total number of students registering for activities",
+            "PartProblemTemplate":  "At a school, {0} students register for extracurricular activities; {1} of them join the reading club. How many students join the club?",
+            "WholeProblemTemplate":  "At a school, {0} students join the reading club, representing {1} of the students registering for extracurricular activities. How many students register for activities in total?",
+            "Capacity":  600,
+            "ContextId":  "school-club",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Of the school\u0027s {0} students registered for extracurricular activities, {1} join the reading club. How many students join the club?",
+                                            "Extracurricular activities have {0} registered students at a school, and the reading club accounts for {1} of these students. How many students join the club?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The reading club\u0027s {0} students make up {1} of the school\u0027s extracurricular registrations. How many students register for activities in total?",
+                                             "There are {0} students in the reading club, accounting for {1} of all students registering for extracurricular activities at the school. How many students register for activities in total?"
+                                         ]
+        },
+        {
+            "Unit":  "seedlings",
+            "PartLabel":  "Number of seedlings planted",
+            "WholeLabel":  "Total number of seedlings",
+            "PartProblemTemplate":  "A nursery has {0} seedlings and plants {1} of them. How many seedlings does it plant?",
+            "WholeProblemTemplate":  "A nursery plants {0} seedlings, representing {1} of its initial stock. How many seedlings did it have in total?",
+            "Capacity":  1000,
+            "ContextId":  "nursery-trees",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Of the nursery\u0027s {0} seedlings, the portion planted makes up {1} of its stock. How many seedlings does it plant?",
+                                            "The nursery starts with {0} seedlings and plants a fraction of {1} of these seedlings. How many seedlings does it plant?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The {0} seedlings planted by the nursery account for {1} of its starting stock. How many seedlings did it have in total?",
+                                             "The nursery plants {0} seedlings, and these make up {1} of the original stock. How many seedlings did it have in total?"
+                                         ]
+        },
+        {
+            "Unit":  "m",
+            "PartLabel":  "Length of fabric used",
+            "WholeLabel":  "Initial length of fabric",
+            "PartProblemTemplate":  "A piece of fabric is {0} m long. A tailor uses {1} of it to make shirts. How many metres of fabric does the tailor use?",
+            "WholeProblemTemplate":  "A tailor uses {0} m of fabric, representing {1} of the original piece. How many metres long was the original piece?",
+            "Capacity":  200,
+            "ContextId":  "tailoring-fabric",
+            "Quantity":  "Distance",
+            "PartProblemAlternatives":  [
+                                            "The length of a piece of fabric is {0} m. The portion a tailor uses for shirts makes up {1} of this piece. How many metres of fabric does the tailor use?",
+                                            "The fabric measures {0} m in length. A tailor takes {1} of its length to make shirts. How many metres of fabric does the tailor use?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The fabric used for shirts is {0} m long, accounting for {1} of the original length. How many metres long was the original piece?",
+                                             "A tailor takes {0} m of fabric for shirts, and this makes up {1} of the original piece. How many metres long was the original piece?"
+                                         ]
+        },
+        {
+            "Unit":  "kg",
+            "PartLabel":  "Mass of rice sold",
+            "WholeLabel":  "Initial mass of rice",
+            "PartProblemTemplate":  "A sack contains {0} kg of rice. A shop sells {1} of the rice. How many kilograms of rice does it sell?",
+            "WholeProblemTemplate":  "A shop sells {0} kg of rice, representing {1} of the rice initially in a sack. How many kilograms of rice were in the sack at first?",
+            "Capacity":  50,
+            "ContextId":  "shop-rice",
+            "Quantity":  "Mass",
+            "PartProblemAlternatives":  [
+                                            "The rice in a sack weighs {0} kg. The portion sold by a shop is {1} of this rice. How many kilograms of rice does it sell?",
+                                            "A sack holds rice with a mass of {0} kg. A shop sells {1} of the sack\u0027s rice. How many kilograms of rice does it sell?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The rice sold by the shop weighs {0} kg, accounting for {1} of the sack\u0027s original rice. How many kilograms of rice were in the sack at first?",
+                                             "The portion sold has a mass of {0} kg and makes up {1} of the rice originally in the sack. How many kilograms of rice were in the sack at first?"
+                                         ]
+        },
+        {
+            "Unit":  "litres",
+            "PartLabel":  "Amount of water used",
+            "WholeLabel":  "Initial amount of water",
+            "PartProblemTemplate":  "A tank holds {0} litres of water. A gardener uses {1} of it to water plants. How many litres of water does the gardener use?",
+            "WholeProblemTemplate":  "A gardener uses {0} litres of water, representing {1} of the water initially in a tank. How many litres did the tank hold at first?",
+            "Capacity":  1000,
+            "ContextId":  "watering-tank",
+            "Quantity":  "Capacity",
+            "PartProblemAlternatives":  [
+                                            "The volume of water in a tank is {0} litres. A gardener takes {1} of this water for watering plants. How many litres of water does the gardener use?",
+                                            "The tank contains a water volume of {0} litres. The portion used by a gardener to water plants is {1} of this volume. How many litres of water does the gardener use?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The water used by a gardener has a volume of {0} litres, accounting for {1} of the water initially in the tank. How many litres did the tank hold at first?",
+                                             "A gardener takes a water volume of {0} litres, making up {1} of the original water in the tank. How many litres did the tank hold at first?"
+                                         ]
+        },
+        {
+            "Unit":  "marbles",
+            "PartLabel":  "Number of marbles given away",
+            "WholeLabel":  "Initial number of marbles",
+            "PartProblemTemplate":  "A child has {0} marbles and gives {1} of them to a younger sibling. How many marbles does the child give away?",
+            "WholeProblemTemplate":  "A child gives a younger sibling {0} marbles, representing {1} of the initial collection. How many marbles did the child have at first?",
+            "Capacity":  1000,
+            "ContextId":  "share-marbles",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "Of a child\u0027s {0} marbles, the portion given to a younger sibling is {1} of the collection. How many marbles does the child give away?",
+                                            "A child starts with {0} marbles and gives a fraction of {1} of these to a younger sibling. How many marbles does the child give away?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The {0} marbles given to a younger sibling account for {1} of the child\u0027s original collection. How many marbles did the child have at first?",
+                                             "A child hands a younger sibling {0} marbles, and these make up {1} of the starting collection. How many marbles did the child have at first?"
+                                         ]
+        },
+        {
+            "Unit":  "eggs",
+            "PartLabel":  "Number of eggs used",
+            "WholeLabel":  "Initial number of eggs",
+            "PartProblemTemplate":  "A tray contains {0} eggs. A cook uses {1} of them to make cakes. How many eggs does the cook use?",
+            "WholeProblemTemplate":  "A cook uses {0} eggs to make cakes, representing {1} of the eggs initially in a tray. How many eggs were on the tray at first?",
+            "Capacity":  1000,
+            "ContextId":  "baking-eggs",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "There are {0} eggs on a tray. A cook takes {1} of these eggs for cakes. How many eggs does the cook use?",
+                                            "The tray holds {0} eggs. The portion used by a cook for cakes makes up {1} of the tray\u0027s eggs. How many eggs does the cook use?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "The {0} eggs used for cakes account for {1} of the tray\u0027s original eggs. How many eggs were on the tray at first?",
+                                             "A cook takes {0} eggs for cakes, and these make up {1} of the eggs originally on the tray. How many eggs were on the tray at first?"
+                                         ]
+        },
+        {
+            "Unit":  "meals",
+            "PartLabel":  "Completed quantity",
+            "WholeLabel":  "Total target quantity",
+            "PartProblemTemplate":  "For meal preparation, the target is {0} meals. {1} of this target is complete. How many meals are complete?",
+            "WholeProblemTemplate":  "For meal preparation, {0} meals are complete, representing {1} of the target. What is the total target in meals?",
+            "Capacity":  1000,
+            "ContextId":  "kitchen",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "For meal preparation, the planned total is {0} meals. The completed portion represents {1} of the target. How many meals are complete?",
+                                            "For meal preparation, the goal consists of {0} meals. The portion already completed amounts to {1} of this goal. How many meals are complete?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "For meal preparation, the completed number is {0} meals, accounting for {1} of the planned total. What is the total target in meals?",
+                                             "For meal preparation, {0} meals have been completed, making up {1} of the overall goal. What is the total target in meals?"
+                                         ]
+        },
+        {
+            "Unit":  "paper flowers",
+            "PartLabel":  "Completed quantity",
+            "WholeLabel":  "Total target quantity",
+            "PartProblemTemplate":  "For paper flower making, the target is {0} paper flowers. {1} of this target is complete. How many paper flowers are complete?",
+            "WholeProblemTemplate":  "For paper flower making, {0} paper flowers are complete, representing {1} of the target. What is the total target in paper flowers?",
+            "Capacity":  200,
+            "ContextId":  "craft",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "For paper flower making, the planned total is {0} paper flowers. The completed portion represents {1} of the target. How many paper flowers are complete?",
+                                            "For paper flower making, the goal consists of {0} paper flowers. The portion already completed amounts to {1} of this goal. How many paper flowers are complete?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "For paper flower making, {0} paper flowers are complete, accounting for {1} of the planned total. What is the total target in paper flowers?",
+                                             "For paper flower making, {0} paper flowers have been completed, making up {1} of the overall goal. What is the total target in paper flowers?"
+                                         ]
+        },
+        {
+            "Unit":  "gift packs",
+            "PartLabel":  "Completed quantity",
+            "WholeLabel":  "Total target quantity",
+            "PartProblemTemplate":  "For gift packing, the target is {0} gift packs. {1} of this target is complete. How many gift packs are complete?",
+            "WholeProblemTemplate":  "For gift packing, {0} gift packs are complete, representing {1} of the target. What is the total target in gift packs?",
+            "Capacity":  500,
+            "ContextId":  "distribution",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "For gift packing, the planned total is {0} gift packs. The completed portion represents {1} of the target. How many gift packs are complete?",
+                                            "For gift packing, the goal consists of {0} gift packs. The portion already completed amounts to {1} of this goal. How many gift packs are complete?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "For gift packing, {0} gift packs are complete, accounting for {1} of the planned total. What is the total target in gift packs?",
+                                             "For gift packing, {0} gift packs have been completed, making up {1} of the overall goal. What is the total target in gift packs?"
+                                         ]
+        },
+        {
+            "Unit":  "books",
+            "PartLabel":  "Completed quantity",
+            "WholeLabel":  "Total target quantity",
+            "PartProblemTemplate":  "For book donations, the target is {0} books. {1} of this target is complete. How many books are complete?",
+            "WholeProblemTemplate":  "For book donations, {0} books are complete, representing {1} of the target. What is the total target in books?",
+            "Capacity":  500,
+            "ContextId":  "community",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "For book donations, the planned total is {0} books. The completed portion represents {1} of the target. How many books are complete?",
+                                            "For book donations, the goal consists of {0} books. The portion already completed amounts to {1} of this goal. How many books are complete?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "For book donations, {0} books are complete, accounting for {1} of the planned total. What is the total target in books?",
+                                             "For book donations, {0} books have been completed, making up {1} of the overall goal. What is the total target in books?"
+                                         ]
+        },
+        {
+            "Unit":  "responses",
+            "PartLabel":  "Completed quantity",
+            "WholeLabel":  "Total target quantity",
+            "PartProblemTemplate":  "For preference surveys, the target is {0} responses. {1} of this target is complete. How many responses are complete?",
+            "WholeProblemTemplate":  "For preference surveys, {0} responses are complete, representing {1} of the target. What is the total target in responses?",
+            "Capacity":  500,
+            "ContextId":  "survey",
+            "Quantity":  "Count",
+            "PartProblemAlternatives":  [
+                                            "For preference surveys, the planned total is {0} responses. The completed portion represents {1} of the target. How many responses are complete?",
+                                            "For preference surveys, the goal consists of {0} responses. The portion already completed amounts to {1} of this goal. How many responses are complete?"
+                                        ],
+            "WholeProblemAlternatives":  [
+                                             "For preference surveys, {0} responses are complete, accounting for {1} of the planned total. What is the total target in responses?",
+                                             "For preference surveys, {0} responses have been completed, making up {1} of the overall goal. What is the total target in responses?"
+                                         ]
+        }
     ],
     "DataChartContexts": [
       {
@@ -21362,7 +21604,12 @@
         "Unit": "fruit",
         "QuantityName": "number of fruit",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "fruit-stall",
+        "CategoryIds": [
+          "oranges",
+          "apples",
+          "mangoes"
+        ]
       },
       {
         "Description": "the numbers of animals on a farm",
@@ -21374,7 +21621,12 @@
         "Unit": "animals",
         "QuantityName": "number of animals",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "farm-animals",
+        "CategoryIds": [
+          "chickens",
+          "ducks",
+          "geese"
+        ]
       },
       {
         "Description": "the numbers of library books by genre",
@@ -21386,7 +21638,12 @@
         "Unit": "books",
         "QuantityName": "number of books",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "library-genres",
+        "CategoryIds": [
+          "stories",
+          "science",
+          "history"
+        ]
       },
       {
         "Description": "the numbers of pens and pencils in a shop",
@@ -21398,7 +21655,12 @@
         "Unit": "items",
         "QuantityName": "number of writing tools",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "stationery-types",
+        "CategoryIds": [
+          "pencils",
+          "ink-pens",
+          "colour-pens"
+        ]
       },
       {
         "Description": "the numbers of students choosing one favourite sport",
@@ -21410,7 +21672,12 @@
         "Unit": "students",
         "QuantityName": "number of students",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "sport-preferences",
+        "CategoryIds": [
+          "football",
+          "swimming",
+          "badminton"
+        ]
       },
       {
         "Description": "the numbers of flower pots at a nursery",
@@ -21422,7 +21689,12 @@
         "Unit": "pots",
         "QuantityName": "number of flower pots",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "nursery-flowers",
+        "CategoryIds": [
+          "roses",
+          "chrysanthemums",
+          "orchids"
+        ]
       },
       {
         "Description": "the numbers of vehicles in a parking area",
@@ -21434,7 +21706,12 @@
         "Unit": "vehicles",
         "QuantityName": "number of vehicles",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "parking-vehicles",
+        "CategoryIds": [
+          "bicycles",
+          "motorbikes",
+          "cars"
+        ]
       },
       {
         "Description": "the mass of rice sold by a shop over three days",
@@ -21446,7 +21723,12 @@
         "Unit": "kg",
         "QuantityName": "mass of rice",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "rice-sales-days",
+        "CategoryIds": [
+          "monday",
+          "tuesday",
+          "wednesday"
+        ]
       },
       {
         "Description": "the water used for three groups of plants in a garden",
@@ -21458,7 +21740,12 @@
         "Unit": "litres",
         "QuantityName": "amount of water",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "watering-groups",
+        "CategoryIds": [
+          "vegetables",
+          "flowers",
+          "fruit-trees"
+        ]
       },
       {
         "Description": "the numbers of packets by type in a shop",
@@ -21470,7 +21757,12 @@
         "Unit": "packets",
         "QuantityName": "number of packets",
         "Capacity": 5000,
-        "ContextId": null
+        "ContextId": "shop-package-types",
+        "CategoryIds": [
+          "biscuits",
+          "sweets",
+          "jam"
+        ]
       },
       {
         "Description": "library book donations across three separate days",
@@ -21482,7 +21774,12 @@
         "Unit": "books",
         "QuantityName": "books",
         "Capacity": 300,
-        "ContextId": "library"
+        "ContextId": "library",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "meal preparation across three separate days",
@@ -21494,7 +21791,12 @@
         "Unit": "meals",
         "QuantityName": "meals",
         "Capacity": 1000,
-        "ContextId": "kitchen"
+        "ContextId": "kitchen",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "farm egg collection across three separate days",
@@ -21506,7 +21808,12 @@
         "Unit": "eggs",
         "QuantityName": "eggs",
         "Capacity": 500,
-        "ContextId": "livestock"
+        "ContextId": "livestock",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "vegetable harvests across three separate days",
@@ -21518,7 +21825,12 @@
         "Unit": "kg of vegetables",
         "QuantityName": "kg of vegetables",
         "Capacity": 2000,
-        "ContextId": "agriculture"
+        "ContextId": "agriculture",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "paper flower making across three separate days",
@@ -21530,7 +21842,12 @@
         "Unit": "paper flowers",
         "QuantityName": "paper flowers",
         "Capacity": 200,
-        "ContextId": "craft"
+        "ContextId": "craft",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "gift packing across three separate days",
@@ -21542,7 +21859,12 @@
         "Unit": "gift packs",
         "QuantityName": "gift packs",
         "Capacity": 500,
-        "ContextId": "distribution"
+        "ContextId": "distribution",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "passenger travel across three separate days",
@@ -21554,7 +21876,12 @@
         "Unit": "passenger journeys",
         "QuantityName": "passenger journeys",
         "Capacity": 500,
-        "ContextId": "traffic"
+        "ContextId": "traffic",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "sports matches across three separate matches",
@@ -21566,7 +21893,12 @@
         "Unit": "points",
         "QuantityName": "points",
         "Capacity": 100,
-        "ContextId": "sports"
+        "ContextId": "sports",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "event seating across three separate sections",
@@ -21578,7 +21910,12 @@
         "Unit": "chairs",
         "QuantityName": "chairs",
         "Capacity": 500,
-        "ContextId": "events"
+        "ContextId": "events",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "visitor admissions across three separate days",
@@ -21590,7 +21927,12 @@
         "Unit": "visits",
         "QuantityName": "visits",
         "Capacity": 1000,
-        "ContextId": "tourism"
+        "ContextId": "tourism",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "book donations across three separate days",
@@ -21602,7 +21944,12 @@
         "Unit": "books",
         "QuantityName": "books",
         "Capacity": 500,
-        "ContextId": "community"
+        "ContextId": "community",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "paper recycling across three separate days",
@@ -21614,7 +21961,12 @@
         "Unit": "kg of paper",
         "QuantityName": "kg of paper",
         "Capacity": 200,
-        "ContextId": "environment"
+        "ContextId": "environment",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "ribbon cutting across three separate days",
@@ -21626,7 +21978,12 @@
         "Unit": "m of ribbon",
         "QuantityName": "m of ribbon",
         "Capacity": 50,
-        "ContextId": "decoration"
+        "ContextId": "decoration",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "floor tiling across three separate days",
@@ -21638,7 +21995,12 @@
         "Unit": "m² of flooring",
         "QuantityName": "m² of flooring",
         "Capacity": 200,
-        "ContextId": "construction"
+        "ContextId": "construction",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "irrigation water savings across three separate days",
@@ -21650,7 +22012,12 @@
         "Unit": "litres of water",
         "QuantityName": "litres of water",
         "Capacity": 1000,
-        "ContextId": "water"
+        "ContextId": "water",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "daily schedules across three separate days",
@@ -21662,7 +22029,12 @@
         "Unit": "minutes",
         "QuantityName": "minutes",
         "Capacity": 120,
-        "ContextId": "schedule"
+        "ContextId": "schedule",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       },
       {
         "Description": "preference surveys across three separate days",
@@ -21674,7 +22046,12 @@
         "Unit": "responses",
         "QuantityName": "responses",
         "Capacity": 500,
-        "ContextId": "survey"
+        "ContextId": "survey",
+        "CategoryIds": [
+          "group-1",
+          "group-2",
+          "group-3"
+        ]
       }
     ],
     "AverageQuizGenerator.DirectContexts": [

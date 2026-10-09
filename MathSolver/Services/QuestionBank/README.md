@@ -472,6 +472,18 @@ only for historical records and is not a difficulty or problem-type selector.
 
 ## SQLite inquiry and Excel interchange
 
+Open **Settings → Data management** (below Language in the settings menu). The
+separate `Views/Settings/DataManagementPage` owns browsing, row editing, SQL,
+Excel import/export and deleting the bank; the AI page owns generation, preview,
+saving and sharing a generated question. This destination is available without
+developer mode or loading a model. Both pages use the same app-owned store.
+The data page uses the Settings/Hardware title bar and theme, a bounded layout
+on desktop and wrapping actions on phones. It opens the editable table directly;
+SQL and contextual help are collapsed by default. Returning with a draft offers
+to discard it, and active database work is cancelled and awaited before returning.
+Future user data, scores or achievements can have their own sections/services in
+this destination; they should not depend on AI generation or question contracts.
+
 The advanced inquiry panel accepts one `SELECT`, `INSERT`, `UPDATE` or `DELETE` statement, including a `WITH` clause and SQL comments. Multiple statements, DDL and attaching databases are not supported. A write runs in a transaction and rolls back on errors, cancellation or timeout. Inquiry results show at most 100 rows, 32 columns and 4,000 characters per cell; the query timeout is three seconds. Direct single-table SELECTs containing Hash support cell editing and row insertion/deletion; aggregate and ambiguous projections remain read-only. On Windows the result grid uses scrollbar-style mouse dragging: dragging right reveals later columns. Native scrollbars and Android touch scrolling retain their platform behavior.
 
 ```sql
@@ -503,6 +515,14 @@ Version 5 requires `KnowledgeGroup` (enum name in Excel; stable IDs 0–11 in SQ
 `ModelName`, ISO 8601 `CreatedUtc` and `RawJson` are optional import metadata. `Answer` and `ProblemText` are export previews and are not trusted as mathematical facts. Import skips duplicate/invalid rows and reports row errors. Accepted inserts commit together; cancellation or a database failure rolls back the import. Limits are 20 MB compressed, 40 MB expanded and 10,000 imported rows. Data columns must contain values rather than Excel formulas.
 
 ## Inline SQL row insertion and editing
+
+The data page opens the table directly. **SQL** reveals the compact query editor;
+**Open table** restores the editable view after a custom query.
+**Help** is collapsed by default, with one topic visible at a time: SQL,
+table actions, columns or limits. Short table hints follow the current state
+(viewing, inserting, editing or read-only), rather than repeating a full manual.
+Open table is disabled while a draft or database operation is in progress.
+All captions and help use the localization JSON packs, including live language changes.
 
 New SQL-grid rows are entered inline below the column headers, sharing the
 table's horizontal viewport. Save/Cancel stay in the table toolbar. The draft
@@ -568,3 +588,10 @@ Packing (family 11) and time (family 12) use reviewed JSON wording. Packing
 separates minimum groups, leftovers only and the complete quotient/remainder
 tuple. ExactAnswers retains every result; display/grading checks all components
 and units. See [PACKING_TIME_AI.md](../../PACKING_TIME_AI.md).
+
+Fraction quantity (family 13) adds finding a fractional part and recovering the
+whole, including the existing five-star remainder-based structures. Fifteen
+stable contexts carry Count/Mass/Distance/Capacity policies. Reviewed direct
+templates and multi-step phrasings are stored in QuizContent JSON. Exact answers,
+fresh facts, validation, prose deduplication and SQLite reuse the version 8 story
+pipeline. See [FRACTION_QUANTITY_AI.md](../../FRACTION_QUANTITY_AI.md).

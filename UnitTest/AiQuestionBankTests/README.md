@@ -406,3 +406,15 @@ Evidence is written under `artifacts/verification/decimal-model-*`.
 `--decimal-model-resume <model.gguf> <evidence-directory>` revalidates prior
 saved rows before continuing a partially completed run. Installed user data is
 not modified. See [DECIMAL_AI.md](../../MathSolver/DECIMAL_AI.md).
+
+`--fraction-quantity-bank` tests all 300 bilingual context/subtype/star profiles,
+exact fractions, integer object quantities, unsafe relations/targets/units,
+novelty/exhaustion, SQLite/Excel round trips and fresh three-mode grading.
+It is included in the default full regression run.
+
+`--fraction-quantity-model <model.gguf> <directory>` samples 60 native profiles:
+both types/languages and all 15 contexts, with stars stratified 1–5. It also runs
+four two-question auto-save jobs, checking release of weights. Reuse the same
+directory to resume. `--fraction-quantity-evidence <directory>` revalidates model
+outputs and native SQLite rows using fresh data. This is native sampling of 60
+profiles, not the full 300-profile Cartesian matrix.

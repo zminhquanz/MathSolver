@@ -1,0 +1,231 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage x:Class="MathSolver.Views.DataManagementPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    Title="{localization:Translate DataManagement.Title}"
+    Shell.NavBarIsVisible="True" Shell.TabBarIsVisible="False"
+    BackgroundColor="{DynamicResource PageBackgroundColor}">
+    <ContentPage.Resources>
+        <Style x:Key="DataGridActionStyle" TargetType="Button" BasedOn="{StaticResource SolverOutlinedActionStyle}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,0,6,4" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+        <Style x:Key="DataGridSaveStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Margin" Value="0,0,6,4" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+        <Style x:Key="DataDeleteAllStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource DangerSoftColor}" />
+            <Setter Property="TextColor" Value="{DynamicResource DangerColor}" />
+            <Setter Property="BorderColor" Value="{DynamicResource DangerBorderColor}" />
+            <Setter Property="BorderWidth" Value="1" />
+            <Setter Property="VisualStateManager.VisualStateGroups">
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CommonStates">
+                        <VisualState x:Name="Normal" />
+                        <VisualState x:Name="PointerOver" />
+                        <VisualState x:Name="Focused">
+                            <VisualState.Setters>
+                                <Setter Property="BorderColor" Value="{DynamicResource DangerColor}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Disabled">
+                            <VisualState.Setters>
+                                <Setter Property="BackgroundColor" Value="{DynamicResource BorderColor}" />
+                                <Setter Property="TextColor" Value="{DynamicResource TextSecondaryColor}" />
+                                <Setter Property="BorderColor" Value="{DynamicResource BorderColor}" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </Setter>
+        </Style>
+        <Style x:Key="DataDiagnosticCardStyle" TargetType="Border">
+            <Setter Property="Padding" Value="12" />
+            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
+            <Setter Property="Stroke" Value="{DynamicResource PrimaryBorderBrush}" />
+            <Setter Property="StrokeThickness" Value="1" />
+            <Setter Property="StrokeShape">
+                <Setter.Value>
+                    <RoundRectangle CornerRadius="10" />
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </ContentPage.Resources>
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior
+            IsVisible="False"
+            IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+
+    <Shell.TitleView>
+        <Grid
+            Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
+            ColumnDefinitions="Auto,*"
+            ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
+
+            <Grid
+                Grid.Column="0"
+                WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+
+                <Button
+                    x:Name="DataBackButton"
+                    Style="{StaticResource PlatformBackButtonStyle}"
+                    controls:InteractiveButtonAnimation.IsScopeEnabled="True"
+                    controls:InteractiveButtonAnimation.IsPlatformBackButton="True"
+                    SemanticProperties.Description="{localization:Translate DataManagement.Back}"
+                    Clicked="OnCloseClicked" />
+
+                <controls:ThemedSvgPathIcon
+                    Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
+                    WidthRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
+                    HeightRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
+                    Opacity="{Binding Source={x:Reference DataBackButton}, Path=Opacity, x:DataType='Button'}"
+                    TranslationX="{OnPlatform Android=-2, WinUI=0, Default=0}"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center" />
+            </Grid>
+
+            <VerticalStackLayout
+                Grid.Column="1"
+                Spacing="0"
+                VerticalOptions="Center">
+
+                <Label
+                    Text="{localization:Translate DataManagement.Title}"
+                    TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
+                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
+                    FontAttributes="Bold"
+                    LineBreakMode="NoWrap"
+                    MaxLines="1"
+                    TextColor="{DynamicResource TextPrimaryColor}" />
+
+                <Label
+                    Text="{localization:Translate DataManagement.Subtitle}"
+                    IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
+                    FontSize="11"
+                    LineBreakMode="TailTruncation"
+                    TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
+
+
+    <ScrollView>
+        <VerticalStackLayout Padding="{OnPlatform Android=12, WinUI=16, Default=16}" Spacing="14"
+                             MaximumWidthRequest="1120" HorizontalOptions="Center">
+            <!-- Each data area owns its controls; future user data can add another section. -->
+            <Border Style="{StaticResource HardwareSectionStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{localization:Translate DataManagement.QuestionBank}" Style="{StaticResource HardwareSectionTitleStyle}" />
+                    <Label Text="{localization:Translate DataManagement.BankHint}" FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Label Text="{localization:Translate AiBank.DataTransferHint}" FontSize="13" LineBreakMode="WordWrap"
+                               TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8" controls:AdaptiveColumns.MinimumColumnWidth="220" controls:AdaptiveColumns.MaximumColumns="2">
+                            <Button x:Name="ImportExcelButton" Text="{localization:Translate AiBank.ImportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnImportExcelClicked" />
+                            <Button x:Name="ExportExcelButton" Grid.Column="1" Text="{localization:Translate AiBank.ExportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnExportExcelClicked" />
+                        </Grid>
+                        <Label x:Name="DataTransferStatusLabel" LineBreakMode="WordWrap" />
+                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                        <Button x:Name="DeleteAllButton" Text="{localization:Translate AiBank.DeleteAll}"
+                                Style="{StaticResource DataDeleteAllStyle}" Clicked="OnDeleteAllClicked" Margin="0,0,8,0" />
+                        <Button x:Name="CancelDataButton" Text="{localization:Translate AiBank.CancelData}"
+                                Style="{StaticResource DataGridActionStyle}" Clicked="OnCancelDataClicked" IsVisible="False" />
+                    </FlexLayout>
+                </VerticalStackLayout>
+            </Border>
+            <Border Style="{StaticResource HardwareSectionStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                        <Label Text="{localization:Translate DataManagement.SavedQuestions}" Style="{StaticResource HardwareSectionTitleStyle}" FlexLayout.Grow="1" />
+                        <Button x:Name="OpenSqlTableButton" Text="{localization:Translate AiBank.GridLoadEditable}"
+                                Style="{StaticResource DataGridActionStyle}" Clicked="OnLoadEditableSqlClicked" />
+                        <Button x:Name="InquiryToggleButton" Text="{localization:Translate DataManagement.ShowSql}"
+                                Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleInquiryClicked" />
+                    </FlexLayout>
+                    <VerticalStackLayout x:Name="InquiryPanel" Spacing="8" IsVisible="False">
+                            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                                <Label Text="{localization:Translate AiBank.SqlQueryTitle}" FontAttributes="Bold"
+                                       SemanticProperties.HeadingLevel="Level2" FlexLayout.Grow="1" Margin="0,0,12,4" />
+                                <Button x:Name="SqlHelpToggleButton" Text="{localization:Translate AiBank.SqlHelpShow}"
+                                        Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleSqlHelpClicked" />
+                            </FlexLayout>
+                            <Label Text="{localization:Translate AiBank.InquiryHint}" LineBreakMode="WordWrap" FontSize="13"
+                                   TextColor="{DynamicResource TextSecondaryColor}" />
+                            <Border Style="{StaticResource DataDiagnosticCardStyle}">
+                                <Editor x:Name="QueryEditor" HeightRequest="110" AutoSize="Disabled" BackgroundColor="Transparent" FontSize="14"
+                                        FontFamily="{DynamicResource AppFontFamily}" SemanticProperties.Description="{localization:Translate AiBank.SqlQueryTitle}" />
+                            </Border>
+                            <Grid>
+                                <Button x:Name="QueryButton" Text="{localization:Translate AiBank.RunInquiry}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnRunInquiryClicked" />
+                            </Grid>
+                            <Border x:Name="SqlHelpPanel" Padding="12" Style="{StaticResource DataDiagnosticCardStyle}" IsVisible="False">
+                                <VerticalStackLayout Spacing="6">
+                                    <FlexLayout x:Name="SqlHelpTopics" Direction="Row" Wrap="Wrap" AlignItems="Center">
+                                        <Button Text="{localization:Translate AiBank.SqlHelpQueryTitle}" CommandParameter="SqlHelpQuery"
+                                                Style="{StaticResource DataGridActionStyle}" Clicked="OnSqlHelpTopicClicked" />
+                                        <Button Text="{localization:Translate AiBank.SqlHelpEditTitle}" CommandParameter="SqlHelpEdit"
+                                                Style="{StaticResource DataGridActionStyle}" Clicked="OnSqlHelpTopicClicked" />
+                                        <Button Text="{localization:Translate AiBank.SqlHelpColumnsTitle}" CommandParameter="SqlHelpColumns"
+                                                Style="{StaticResource DataGridActionStyle}" Clicked="OnSqlHelpTopicClicked" />
+                                        <Button Text="{localization:Translate AiBank.SqlHelpLimitsTitle}" CommandParameter="SqlHelpLimits"
+                                                Style="{StaticResource DataGridActionStyle}" Clicked="OnSqlHelpTopicClicked" />
+                                    </FlexLayout>
+                                    <Label x:Name="SqlHelpBodyLabel" Text="{localization:Translate AiBank.SqlHelpQuery}"
+                                           FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                    </VerticalStackLayout>
+                            <Label x:Name="InquiryStatusLabel" LineBreakMode="WordWrap" />
+                            <Border x:Name="QueryResultsPanel" Padding="10" Style="{StaticResource DataDiagnosticCardStyle}" IsVisible="False">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label x:Name="QueryResultMessageLabel" LineBreakMode="WordWrap" IsVisible="False" />
+                                    <Label x:Name="QueryEditHintLabel" LineBreakMode="WordWrap" FontSize="13" FontAttributes="None"
+                                           TextColor="{DynamicResource TextSecondaryColor}" />
+                                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                                        <Button x:Name="AddSqlRowButton" Text="{localization:Translate AiBank.GridAddRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnAddSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="EditSqlRowButton" Text="{localization:Translate AiBank.GridEditRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnEditSqlRowClicked" IsVisible="False" IsEnabled="False" />
+                                        <Button x:Name="SaveNewSqlRowButton" Text="{localization:Translate AiBank.GridInsertRow}" Style="{StaticResource DataGridSaveStyle}" Clicked="OnSaveNewSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="CancelNewSqlRowButton" Text="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCancelNewSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="SaveSqlRowButton" Text="{localization:Translate AiBank.GridSaveRow}" Style="{StaticResource DataGridSaveStyle}" Clicked="OnSaveSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="CancelSqlRowButton" Text="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCancelSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="DeleteSqlRowButton" Text="{localization:Translate AiBank.GridDeleteRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnDeleteSqlRowClicked" IsVisible="False" />
+                                        <Button x:Name="ReloadSqlGridButton" Text="{localization:Translate AiBank.GridReload}" Style="{StaticResource DataGridActionStyle}" Clicked="OnReloadSqlGridClicked" />
+                                        <Button x:Name="LoadEditableSqlButton" Text="{localization:Translate AiBank.GridLoadEditable}" Style="{StaticResource DataGridActionStyle}" Clicked="OnLoadEditableSqlClicked" IsVisible="False" />
+                                    </FlexLayout>
+                                    <controls:SqlResultTableView x:Name="QueryResultsTable" CellSelected="OnSqlCellSelected" EditChanged="OnSqlRowDraftChanged" IsVisible="False" />
+                                    <Label x:Name="QueryGridHintLabel" Text="{localization:Translate AiBank.SqlGridHint}" FontSize="13" IsVisible="False"
+                                           LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border x:Name="QueryCellDetailPanel" Padding="10" Style="{StaticResource DataDiagnosticCardStyle}" IsVisible="False" SizeChanged="OnSqlCellInfoSizeChanged">
+                                <VerticalStackLayout Spacing="4">
+                                    <Label x:Name="QueryCellTitleLabel" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                    <Label x:Name="QueryCellReadOnlyLabel" Text="{localization:Translate AiBank.GridKeyReadOnly}" LineBreakMode="WordWrap" FontSize="13" IsVisible="False" />
+                                    <Editor x:Name="QueryCellEditor" IsReadOnly="True" HeightRequest="48" AutoSize="Disabled"
+                                            BackgroundColor="Transparent" FontSize="13" FontFamily="{DynamicResource AppFontFamily}" />
+                                    <FlexLayout Direction="Row" Wrap="Wrap">
+                                        <Button x:Name="CopySqlCellButton" Text="{localization:Translate AiBank.CopySqlCell}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCopySqlCellClicked" />
+                                        <Button x:Name="CloseSqlCellButton" Text="{localization:Translate AiBank.GridCloseInfo}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCloseSqlCellClicked" />
+                                    </FlexLayout>
+                                </VerticalStackLayout>
+                            </Border>
+
+                </VerticalStackLayout>
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

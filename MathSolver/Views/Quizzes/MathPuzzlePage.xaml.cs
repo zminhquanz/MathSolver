@@ -1688,6 +1688,8 @@ public partial class MathPuzzlePage : ContentPage
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Time } time
                     && ElementaryQuizGenerator.TimeStoryTypes.Contains(time.Type)
+                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionQuantity
+                    && ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionQuantity.Type)
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurement
                     && ElementaryQuizGenerator.MeasurementStoryTypes.Contains(measurement.Type))
             {

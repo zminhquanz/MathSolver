@@ -1670,6 +1670,11 @@ public partial class SettingsPage : ContentPage
         button.FontAttributes = FontAttributes.Bold;
     }
 
+    private async void OnDataManagementClicked(object? sender, EventArgs e)
+    {
+        await Shell.Current.GoToAsync(nameof(DataManagementPage));
+    }
+
     private async void OnCloseClicked(
         object? sender,
         EventArgs e)

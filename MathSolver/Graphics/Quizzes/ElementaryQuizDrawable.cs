@@ -6,12 +6,13 @@ using System.Globalization;
 namespace MathSolver.Graphics;
 
 /// <summary>Responsive diagrams generated from the same immutable data as the grader.</summary>
-public sealed partial class ElementaryQuizDrawable(QuizVisualData? data) : IDrawable
+public sealed partial class ElementaryQuizDrawable(QuizVisualData? source) : IDrawable
 {
     private static readonly Color[] Series = [Color.FromArgb("#16A34A"), Color.FromArgb("#2563EB"), Color.FromArgb("#F97316")];
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
+        QuizVisualData? data = source is null ? null : QuizChartPresentation.ForDisplay(source, false);
         if (data is null || dirtyRect.Width < 80) return;
         canvas.SaveState();
         try

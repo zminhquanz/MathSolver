@@ -72,6 +72,27 @@ if (args is ["--packing-time-bank"])
     return;
 }
 
+if (args is ["--fraction-quantity-bank"])
+{
+    try { await FractionQuantityBankTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--fraction-quantity-model", var fractionQuantityModel, var fractionQuantityDirectory])
+{
+    try { await FractionQuantityBankTests.RunModelAsync(fractionQuantityModel, fractionQuantityDirectory); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--fraction-quantity-evidence", var fractionQuantityEvidence])
+{
+    try { await FractionQuantityBankTests.CheckEvidenceAsync(fractionQuantityEvidence); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--packing-time-model", var packingModel, var packingDirectory, var packingPart])
 {
     try { await PackingTimeBankTests.RunModelAsync(packingModel, packingDirectory, packingPart); }
@@ -569,6 +590,7 @@ try
     await DecimalBankTests.RunAsync();
     await MeasurementBankTests.RunAsync();
     await PackingTimeBankTests.RunAsync();
+    await FractionQuantityBankTests.RunAsync();
 }
 finally { Directory.Delete(directory, true); }
 

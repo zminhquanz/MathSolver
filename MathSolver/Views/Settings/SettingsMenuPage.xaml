@@ -295,6 +295,22 @@
                                 </Border>
                         </VerticalStackLayout>
 
+                        <Border Style="{StaticResource ThemeMenuRowStyle}">
+                            <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
+                                <controls:ThemedSvgPathIcon x:Name="DataMenuIcon" Grid.Column="0"
+                                    Data="M480-880C680-880 840-820 840-740C840-660 680-600 480-600C280-600 120-660 120-740C120-820 280-880 480-880Z M120-600C280-490 680-490 840-600V-440C840-360 680-300 480-300C280-300 120-360 120-440Z M120-300C280-190 680-190 840-300V-180C840-100 680-40 480-40C280-40 120-100 120-180Z"
+                                    WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                    <Label Text="{localization:Translate DataManagement.Title}" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label Text="{localization:Translate DataManagement.MenuHint}" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="2" Text="›" Style="{StaticResource ThemeMenuChevronStyle}" />
+                                <Grid.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnDataManagementTapped" />
+                                </Grid.GestureRecognizers>
+                            </Grid>
+                        </Border>
+
                         <Label
                             Margin="0,6,0,0"
                             Text="{localization:Translate SettingsMenu.SystemSection}"

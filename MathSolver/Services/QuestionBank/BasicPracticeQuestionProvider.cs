@@ -25,11 +25,14 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             && !ElementaryQuizGenerator.MeasurementStoryTypes.Contains(measurementProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Time } timeProblem
             && !ElementaryQuizGenerator.TimeStoryTypes.Contains(timeProblem.Type)) return generated;
-        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time } elementary
+        if (generated.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionProblem
+            && !ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionProblem.Type)) return generated;
+        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills } elementary
             ? (elementary.Kind switch { QuizProblemKind.MultiStep => BankQuestionFamily.MultiStep,
                 QuizProblemKind.Measurement => BankQuestionFamily.Measurement,
                 QuizProblemKind.Remainder => BankQuestionFamily.Remainder,
                 QuizProblemKind.Time => BankQuestionFamily.Time,
+                QuizProblemKind.FractionSkills => BankQuestionFamily.FractionQuantity,
                 QuizProblemKind.Decimal => BankQuestionFamily.Decimal, _ => BankQuestionFamily.TwoNumbers }, (int)elementary.Type)
             : generated.AverageProblem is { } average ? (BankQuestionFamily.Average, (int)average.Type)
             : generated.PercentageProblem is { } percentage ? (BankQuestionFamily.Percentage, (int)percentage.Type)

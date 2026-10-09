@@ -5,6 +5,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:services="clr-namespace:MathSolver.Services"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     Title="Cài đặt"
     Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True"
@@ -890,6 +891,15 @@
                                     InputTransparent="True" />
                             </Grid>
                         </Border>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Button Text="{localization:Translate DataManagement.Title}"
+                                Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDataManagementClicked" />
+                        <Label Text="{localization:Translate DataManagement.MenuHint}" FontSize="13"
+                               TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Border>
 

@@ -1,18 +1,93 @@
 using MathSolver.Models;
+using System.Collections.Frozen;
 
 namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateDataDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    public static readonly ElementaryQuizType[] DataChartTypes = [ElementaryQuizType.ReadTable,
+        ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal,
+        ElementaryQuizType.ChartDifference];
+
+    public ArithmeticQuizQuestion GenerateDataChart(ArithmeticQuizMode mode, ElementaryQuizType type,
+        AppLanguage language, CurriculumTier tier, string contextId,
+        DataChartQuestionKind? questionKind = null)
     {
+        for (int attempt = 0; attempt < 128; attempt++)
+        {
+            var contract = CreateDataChart(type, language, tier, _random.Next(int.MaxValue), contextId, questionKind: questionKind);
+            if (!HasDirectedChartOrder(contract)) continue;
+            return CompleteQuestion(mode, contract, [], null);
+        }
+        throw new InvalidOperationException("DataChartProfileUnavailable");
+    }
+
+    public ArithmeticQuizQuestion GenerateDataChart(ArithmeticQuizMode mode, DataChartProfile profile)
+    {
+        DataChartQuestionValidator.ValidateProfile(profile);
+        for (int attempt = 0; attempt < 128; attempt++)
+        {
+            var contract = CreateDataChart(profile.Type, profile.Language, profile.Tier, _random.Next(int.MaxValue),
+                profile.ContextId, profile);
+            // A directed question keeps its two subjects in place. Resample numbers
+            // if their ordering no longer satisfies the supplied "more than" relation.
+            if (!HasDirectedChartOrder(contract)) continue;
+            return CompleteQuestion(mode, contract, [], null);
+        }
+        throw new InvalidOperationException("DataChartProfileUnavailable");
+    }
+
+    internal static ElementaryQuizContract RebuildDataChart(DataChartQuestionContract chart) =>
+        CreateDataChart(chart.Profile.Type, chart.Profile.Language, chart.Profile.Tier,
+            chart.DataSeed, chart.Profile.ContextId, chart.Profile);
+
+    public ArithmeticQuizQuestion RecreateDataChart(ArithmeticQuizMode mode, DataChartQuestionContract chart)
+    {
+        DataChartQuestionValidator.ValidateProfile(chart.Profile);
+        if (chart.Version != 1 || chart.DataSeed < 0) throw new InvalidDataException("Unsupported chart contract.");
+        return CompleteQuestion(mode, RebuildDataChart(chart), [], null);
+    }
+
+    private static bool HasDirectedChartOrder(ElementaryQuizContract contract)
+    {
+        var profile = contract.DataChart!.Profile;
+        if (profile.QuestionKind != DataChartQuestionKind.MoreThan) return true;
+        int first = profile.CategoryIds.ToList().IndexOf(profile.TargetCategoryIds[0]);
+        int second = profile.CategoryIds.ToList().IndexOf(profile.TargetCategoryIds[1]);
+        return contract.Visual!.Values[first] > contract.Visual.Values[second];
+    }
+
+    private ElementaryQuizContract CreateDataDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+        => CreateDataChart(type, language, tier, _random.Next(int.MaxValue));
+
+    private static ElementaryQuizContract CreateDataChart(ElementaryQuizType type, AppLanguage language,
+        CurriculumTier tier, int seed, string? contextId = null, DataChartProfile? profile = null,
+        DataChartQuestionKind? questionKind = null) => new ElementaryQuizGenerator(new Random(seed))
+            .CreateDataChartCore(type, language, tier, seed, contextId, profile, questionKind);
+
+    private ElementaryQuizContract CreateDataChartCore(ElementaryQuizType type, AppLanguage language,
+        CurriculumTier tier, int seed, string? contextId, DataChartProfile? profile, DataChartQuestionKind? questionKind)
+    {
+        if (!DataChartTypes.Contains(type) || !Enum.IsDefined(tier) || seed < 0)
+            throw new ArgumentException("InvalidDataChartProfile");
         var t = new DifficultyBuilder(QuizProblemKind.Data, type, language, tier);
         t.Constant(2);
         int level = (int)tier;
         var contexts = DataChartStoryContextCatalog.GetProfile(language);
-        var context = contexts[_random.Next(contexts.Count)];
-        string[] labels = context.Labels.ToArray();
-        _random.Shuffle(labels);
+        int contextIndex = _random.Next(contexts.Count); // Also consumed on replay.
+        var context = contextId is null ? contexts[contextIndex]
+            : contexts.SingleOrDefault(c => c.ContextId == contextId) ?? throw new ArgumentException("InvalidDataChartContext");
+        string[] categoryIds = context.CategoryIds!.ToArray();
+        _random.Shuffle(categoryIds);
+        if (profile is not null) categoryIds = profile.CategoryIds.ToArray();
+        string[] labels = categoryIds.Select(id => context.Labels[context.CategoryIds!.ToList().IndexOf(id)]).ToArray();
+        DataChartQuestionKind targetKind = questionKind ?? profile?.QuestionKind ?? (type == ElementaryQuizType.ChartTotal
+            ? DataChartQuestionKind.Total : type == ElementaryQuizType.ChartDifference
+                ? DataChartQuestionKind.AbsoluteDifference : DataChartQuestionKind.CategoryValue);
+        if (type == ElementaryQuizType.ChartDifference ? targetKind is not (DataChartQuestionKind.AbsoluteDifference or DataChartQuestionKind.MoreThan)
+            : targetKind != (type == ElementaryQuizType.ChartTotal ? DataChartQuestionKind.Total : DataChartQuestionKind.CategoryValue))
+            throw new ArgumentException("InvalidDataChartTarget");
+        string[] targetIds = [];
         bool pie = type == ElementaryQuizType.ReadPieChart;
         int maxFirst = Math.Min(40, (context.Capacity - 10) / 2);
         int[] values = [_random.Next(2, Math.Max(3, maxFirst / 5 + 1)) * 5, _random.Next(2, 7) * 5, 0];
@@ -26,6 +101,8 @@ public sealed partial class ElementaryQuizGenerator
         if (pie)
         {
             int selected = _random.Next(3);
+            if (profile is not null) selected = Array.IndexOf(categoryIds, profile.TargetCategoryIds[0]);
+            targetIds = [categoryIds[selected]];
             int[] others = Enumerable.Range(0, 3).Where(index => index != selected).ToArray();
             int total = _random.Next(1, Math.Max(2, Math.Min(40, context.Capacity / 20) + 1)) * 20;
             if (level == 1)
@@ -166,6 +243,7 @@ public sealed partial class ElementaryQuizGenerator
             }
             if (type == ElementaryQuizType.ChartTotal)
             {
+                targetIds = categoryIds.ToArray();
                 expression = string.Join("+", expressions);
                 answerLabel = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.025", ("context_QuantityName", $"{context.QuantityName}"));
                 problem = introduction + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.026", ("unit", $"{unit}"));
@@ -175,15 +253,31 @@ public sealed partial class ElementaryQuizGenerator
                 // At five stars, comparing the two hidden categories would merely
                 // repeat the supplied difference. Compare across the linked relations instead.
                 int firstRow = level == 5 ? 0 : 1, secondRow = level == 5 ? 1 : 2;
+                if (profile is not null)
+                {
+                    firstRow = Array.IndexOf(categoryIds, profile.TargetCategoryIds[0]);
+                    secondRow = Array.IndexOf(categoryIds, profile.TargetCategoryIds[1]);
+                }
                 int high = values[firstRow] > values[secondRow] ? firstRow : secondRow;
                 int low = high == firstRow ? secondRow : firstRow;
+                if (targetKind == DataChartQuestionKind.MoreThan)
+                {
+                    if (profile is null) { firstRow = high; secondRow = low; }
+                    high = firstRow; low = secondRow;
+                }
+                targetIds = [categoryIds[firstRow], categoryIds[secondRow]];
                 expression = $"({expressions[high]})-({expressions[low]})";
                 answerLabel = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.027");
-                problem = introduction + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.028", ("labels_firstRow", $"{labels[firstRow]}"), ("labels_secondRow", $"{labels[secondRow]}"), ("unit", $"{unit}"));
+                problem = introduction + QuizContentCatalog.Text(t.Language,
+                    targetKind == DataChartQuestionKind.MoreThan ? "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.035"
+                        : "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.028",
+                    ("labels_firstRow", labels[firstRow]), ("labels_secondRow", labels[secondRow]), ("unit", unit));
             }
             else
             {
                 int selected = level >= 3 ? 2 : _random.Next(3);
+                if (profile is not null) selected = Array.IndexOf(categoryIds, profile.TargetCategoryIds[0]);
+                targetIds = [categoryIds[selected]];
                 expression = expressions[selected];
                 answerLabel = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.029", ("labels_selected", $"{labels[selected]}"));
                 problem = introduction + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.030", ("labels_selected", $"{labels[selected]}"), ("unit", $"{unit}"));
@@ -198,7 +292,11 @@ public sealed partial class ElementaryQuizGenerator
         }
         t.Answer(answerLabel, expression, unit);
         var visual = new QuizVisualData(kind, labels, values.Select(value => (decimal)value).ToArray(), pie ? "%" : context.Unit,
-            ScenarioId: context.Description, HiddenValueIndices: hidden);
-        return t.Build(scenario, problem, visual) with { StoryContextId = context.ContextId };
+            ScenarioId: context.ContextId, HiddenValueIndices: hidden.ToFrozenSet());
+        var boundProfile = new DataChartProfile(context.ContextId, type, tier, language,
+            Array.AsReadOnly(categoryIds), Array.AsReadOnly(targetIds),
+            Array.AsReadOnly(hidden.Order().Select(i => categoryIds[i]).ToArray()), targetKind);
+        return t.Build(scenario, problem, visual) with { StoryContextId = context.ContextId,
+            DataChart = new(boundProfile, seed) };
     }
 }

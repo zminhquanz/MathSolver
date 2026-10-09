@@ -124,6 +124,7 @@ public partial class AppShell : Shell
             typeof(AboutPage));
 
         Routing.RegisterRoute(nameof(AiQuestionBankPage), typeof(AiQuestionBankPage));
+        Routing.RegisterRoute(nameof(DataManagementPage), typeof(DataManagementPage));
 
         // Chặn navigation ở cấp Shell trước khi native TabBar commit route.
         // IsEnabled trên ShellContent không đủ tin cậy trên WinUI: native tab
@@ -491,8 +492,16 @@ public partial class AppShell : Shell
         AddAndroidSettingsMenuItem(
             popup,
             anchorContext,
-            itemId: 2,
+            itemId: 5,
             order: 1,
+            title: LocalizationService.TranslateKey("DataManagement.Title"),
+            iconResource: Resource.Drawable.database);
+
+        AddAndroidSettingsMenuItem(
+            popup,
+            anchorContext,
+            itemId: 2,
+            order: 2,
             title: useEnglish ? "Hardware information" : "Thông tin phần cứng",
             iconResource: Resource.Drawable.benchmark);
 
@@ -500,7 +509,7 @@ public partial class AppShell : Shell
             popup,
             anchorContext,
             itemId: 3,
-            order: 2,
+            order: 3,
             title: useEnglish ? "About" : "Giới thiệu",
             iconResource: Resource.Drawable.info);
 
@@ -508,12 +517,12 @@ public partial class AppShell : Shell
             popup,
             anchorContext,
             itemId: 4,
-            order: 3,
+            order: 4,
             title: useEnglish ? "Reset settings" : "Đặt lại cài đặt",
             iconResource: Resource.Drawable.reset_settings);
 
         // Framework PopupMenu exposes this from API 29 onward. Pixel 9/API 36
-        // therefore shows all four leading icons without reflection/custom UI.
+        // therefore shows the leading icons without reflection/custom UI.
         if (OperatingSystem.IsAndroidVersionAtLeast(29))
         {
             popup.SetForceShowIcon(true);
@@ -591,6 +600,9 @@ public partial class AppShell : Shell
     {
         switch (e.Item?.ItemId)
         {
+            case 5:
+                await NavigateFromAndroidSettingsPopupAsync(nameof(DataManagementPage));
+                break;
             case 1:
                 await NavigateFromAndroidSettingsPopupAsync(
                     nameof(SettingsPage));
@@ -2024,6 +2036,9 @@ public partial class AppShell : Shell
             string.Empty;
 
         return location.Contains(
+                   nameof(DataManagementPage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
                    nameof(SettingsPage),
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(

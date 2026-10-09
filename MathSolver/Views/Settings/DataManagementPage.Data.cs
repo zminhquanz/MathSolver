@@ -1,11 +1,12 @@
 using CommunityToolkit.Maui.Storage;
 using MathSolver.Controls;
+using MathSolver.Services;
 using MathSolver.Services.QuestionBank;
 using System.Globalization;
 
 namespace MathSolver.Views;
 
-public partial class AiQuestionBankPage
+public partial class DataManagementPage
 {
     private CancellationTokenSource? _dataCancellation;
     private bool _confirmingDeleteAll;
@@ -15,6 +16,7 @@ public partial class AiQuestionBankPage
     private BankGridRow? _selectedSqlRow;
     private BankGridRow? _editingSqlRow;
     private string? _selectedSqlColumn;
+    private string _sqlHelpTopic = "SqlHelpQuery";
     private static readonly FilePickerFileType ExcelType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
     {
         [DevicePlatform.WinUI] = [".xlsx"],
@@ -25,16 +27,17 @@ public partial class AiQuestionBankPage
 
     private void UpdateDataActions()
     {
-        bool idle = _dataCancellation is null && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll;
+        if (!_appeared) return;
+        bool idle = !_closing && _dataCancellation is null && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll;
         bool inserting = QueryResultsTable.IsInserting;
         bool editing = QueryResultsTable.IsEditing;
         bool draft = inserting || editing;
-        DeleteAllButton.IsEnabled = idle && !draft && !_saving && !_bank.Generation.IsRunning;
+        DeleteAllButton.IsEnabled = idle && !draft && !_bank.Generation.IsRunning;
         QueryButton.IsEnabled = ImportExcelButton.IsEnabled = idle && !draft;
         QueryEditor.IsEnabled = ExportExcelButton.IsEnabled = idle;
-        CancelDataButton.IsEnabled = _dataCancellation is not null;
+        CancelDataButton.IsVisible = CancelDataButton.IsEnabled = _dataCancellation is not null;
         QueryResultsTable.IsEnabled = idle;
-        ReloadSqlGridButton.IsEnabled = LoadEditableSqlButton.IsEnabled = idle && !draft;
+        ReloadSqlGridButton.IsEnabled = LoadEditableSqlButton.IsEnabled = OpenSqlTableButton.IsEnabled = idle && !draft;
         AddSqlRowButton.IsEnabled = idle && !draft && _sqlResults?.EditableColumns is not null;
         EditSqlRowButton.IsVisible = !draft && _sqlResults?.EditableColumns is not null;
         EditSqlRowButton.IsEnabled = idle && !draft && _selectedSqlRow is not null && _selectedSqlCell is not null
@@ -46,15 +49,53 @@ public partial class AiQuestionBankPage
         DeleteSqlRowButton.IsEnabled = idle && canDelete;
         DeleteSqlRowButton.IsVisible = canDelete;
         SaveNewSqlRowButton.IsEnabled = CancelNewSqlRowButton.IsEnabled = CloseSqlCellButton.IsEnabled = idle;
-        SaveNewSqlRowButton.IsVisible = CancelNewSqlRowButton.IsVisible = NewSqlRowHintLabel.IsVisible = inserting;
+        SaveNewSqlRowButton.IsVisible = CancelNewSqlRowButton.IsVisible = inserting;
         QueryCellEditor.IsEnabled = idle;
-        InquiryToggleButton.Text = T(InquiryPanel.IsVisible ? "InquiryHide" : "InquiryShow");
+        InquiryToggleButton.Text = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
+        UpdateSqlEditHint();
+    }
+
+    private void UpdateSqlEditHint()
+    {
+        QueryEditHintLabel.IsVisible = _sqlResults is not null;
+        if (_sqlResults is null) { QueryEditHintLabel.Text = ""; return; }
+        QueryEditHintLabel.Text = T(QueryResultsTable.IsInserting ? "GridInsertHint"
+            : QueryResultsTable.IsEditing ? "GridEditingHint"
+            : _sqlResults.EditableColumns is not null ? "GridEditableHint" : "GridReadOnlyHint");
+    }
+
+    private void OnToggleSqlHelpClicked(object? sender, EventArgs e)
+    {
+        SqlHelpPanel.IsVisible = !SqlHelpPanel.IsVisible;
+        RefreshSqlHelp();
+    }
+
+    private void OnSqlHelpTopicClicked(object? sender, EventArgs e)
+    {
+        if (sender is not Button { CommandParameter: string topic }) return;
+        _sqlHelpTopic = topic;
+        RefreshSqlHelp();
+    }
+
+    private void RefreshSqlHelp()
+    {
+        SqlHelpToggleButton.Text = T(SqlHelpPanel.IsVisible ? "SqlHelpHide" : "SqlHelpShow");
+        SqlHelpBodyLabel.Text = T(_sqlHelpTopic);
+        foreach (var button in SqlHelpTopics.Children.OfType<Button>())
+        {
+            bool selected = (string?)button.CommandParameter == _sqlHelpTopic;
+            button.SetDynamicResource(Button.BackgroundColorProperty, selected ? "PrimarySoftColor" : "SurfaceAltColor");
+            button.SetDynamicResource(Button.BorderColorProperty, selected ? "PrimaryColor" : "BorderColor");
+            button.SetDynamicResource(Button.TextColorProperty, selected ? "PrimaryColor" : "TextPrimaryColor");
+            SemanticProperties.SetDescription(button, button.Text);
+            SemanticProperties.SetHint(button, selected ? T("SqlHelpSelected") : "");
+        }
     }
 
     private void OnToggleInquiryClicked(object? sender, EventArgs e)
     {
         InquiryPanel.IsVisible = !InquiryPanel.IsVisible;
-        InquiryToggleButton.Text = T(InquiryPanel.IsVisible ? "InquiryHide" : "InquiryShow");
+        InquiryToggleButton.Text = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
     }
 
     private void OnCancelDataClicked(object? sender, EventArgs e) => _dataCancellation?.Cancel();
@@ -63,7 +104,7 @@ public partial class AiQuestionBankPage
     {
         if (!DeleteAllButton.IsEnabled) return;
         _confirmingDeleteAll = true;
-        Render();
+        UpdateDataActions();
         try
         {
             bool confirmed = await DisplayAlertAsync(T("DeleteAllTitle"), T("DeleteAllConfirm"),
@@ -79,13 +120,15 @@ public partial class AiQuestionBankPage
             });
         }
         catch (Exception error) { await ShowErrorAsync(error); }
-        finally { _confirmingDeleteAll = false; Render(); }
+        finally { _confirmingDeleteAll = false; UpdateDataActions(); }
     }
 
     private async Task RunDataOperationAsync(bool transfer, Func<CancellationToken, Task> work)
     {
         if (_dataCancellation is not null) return;
         using var cancellation = new CancellationTokenSource();
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        _dataCompletion = completion;
         _dataCancellation = cancellation;
         UpdateDataActions();
         var status = transfer ? DataTransferStatusLabel : InquiryStatusLabel;
@@ -93,7 +136,7 @@ public partial class AiQuestionBankPage
         try { await work(cancellation.Token); }
         catch (OperationCanceledException) { status.Text = T("DataCancelled"); }
         catch (Exception error) { status.Text = T("DataFailed") + ": " + ErrorText(error.Message); }
-        finally { _dataCancellation = null; UpdateDataActions(); }
+        finally { _dataCancellation = null; UpdateDataActions(); completion.TrySetResult(); }
     }
 
     private async void OnRunInquiryClicked(object? sender, EventArgs e)
@@ -108,7 +151,7 @@ public partial class AiQuestionBankPage
                 string detail = result.SqliteErrorCode is int sqliteCode
                     ? $"SQLite ({sqliteCode}): {result.ErrorMessage}"
                     : ErrorText(result.ErrorCode!);
-                InquiryStatusLabel.Text = T("DataFailed") + ": " + detail;
+                InquiryStatusLabel.Text = T("DataFailed");
                 QueryResultsPanel.IsVisible = QueryResultMessageLabel.IsVisible = true;
                 QueryResultMessageLabel.Text = detail;
                 return;
@@ -245,8 +288,7 @@ public partial class AiQuestionBankPage
             QueryCellTitleLabel.Text = string.Format(CultureInfo.CurrentCulture, T("SqlCellTitle"), cell.RowNumber, cell.ColumnName);
         CopySqlCellButton.Text = T("CopySqlCell");
         QueryResultsTable.UpdateInsertLabels(T("GridNull"), T("GridAutoKey"));
-        if (_sqlResults is not null)
-            QueryEditHintLabel.Text = T(_sqlResults.EditableColumns is not null ? "GridEditableHint" : "GridReadOnlyHint");
+        UpdateSqlEditHint();
     }
 
     private async void OnCopySqlCellClicked(object? sender, EventArgs e)
@@ -324,8 +366,12 @@ public partial class AiQuestionBankPage
     private async void OnReloadSqlGridClicked(object? sender, EventArgs e) =>
         await RunDataOperationAsync(false, cancellation => RefreshSqlGridAsync(cancellation));
 
-    private async void OnLoadEditableSqlClicked(object? sender, EventArgs e)
+    private async void OnLoadEditableSqlClicked(object? sender, EventArgs e) => await LoadEditableSqlAsync();
+
+    private async Task LoadEditableSqlAsync()
     {
+        if (_dataCancellation is not null || _confirmingDeleteAll || _bank.Generation.IsDeletingAll
+            || QueryResultsTable.IsInserting || QueryResultsTable.IsEditing) return;
         QueryEditor.Text = "SELECT *\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
         await RunDataOperationAsync(false, async cancellation =>
         {

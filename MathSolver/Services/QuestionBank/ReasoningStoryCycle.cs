@@ -21,7 +21,7 @@ internal sealed class ReasoningStoryCycle
             if (repetitions < bestCount) { best = c; bestCount = repetitions; }
             if (repetitions == 0) break;
         }
-        if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time && excludedProse is not null
+        if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity && excludedProse is not null
             && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
         {
             // One exhausted context must not stop a batch while other compatible
@@ -32,6 +32,7 @@ internal sealed class ReasoningStoryCycle
                 BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementContexts(language, (ElementaryQuizType)variant).Select(c => c.Id),
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
                 BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryContextIds(tier),
+                BankQuestionFamily.FractionQuantity => FractionQuantityStoryContextCatalog.GetProfile(language).Select(c => c.ContextId),
                 _ => ProportionQuizGenerator.NarrativeIds((ProportionQuizType)variant, tier, language)
             };
             best = narrativeIds

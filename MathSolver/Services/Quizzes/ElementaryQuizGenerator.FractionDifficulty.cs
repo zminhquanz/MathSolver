@@ -5,6 +5,9 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
+    public static readonly ElementaryQuizType[] FractionQuantityStoryTypes =
+        [ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction];
+
     public ArithmeticQuizQuestion GenerateFractionQuantityStory(ArithmeticQuizMode mode, ElementaryQuizType type,
         AppLanguage language, CurriculumTier tier, string contextId)
     {
@@ -59,6 +62,8 @@ public sealed partial class ElementaryQuizGenerator
                 string expression = findPart ? $"{given}*{n}/{d}" : $"{given}/{n}*{d}";
                 problem = string.Format(System.Globalization.CultureInfo.InvariantCulture,
                     findPart ? context.PartProblemTemplate : context.WholeProblemTemplate, given, fraction);
+                QuizNarrativeCapture.Current?.Record(findPart ? context.PartProblemTemplate : context.WholeProblemTemplate,
+                    new Dictionary<string, string> { ["0"] = given, ["1"] = fraction }, problem);
                 t.Answer(findPart ? context.PartLabel : context.WholeLabel, expression, unit);
                 return t.Build("direct-fraction-" + level, problem) with { StoryContextId = context.ContextId };
             }

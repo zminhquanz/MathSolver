@@ -70,10 +70,33 @@ internal static class QuizContentTests
         Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["ContextId"] = null)), "missing fraction context ID");
         Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[1]!["ContextId"] = rows[0]!["ContextId"]!.GetValue<string>())), "duplicate fraction context ID");
         Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["Quantity"] = "Unspecified")), "missing quantity policy");
+        Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["PartProblemAlternatives"] = null)), "missing reviewed fraction facts");
+        Reject(() => QuizContentCatalog.Validate(ChangeFractionContexts(rows => rows[0]!["WholeProblemAlternatives"]![0] = "Hỏi lượng còn lại?")), "changed fraction target/placeholders");
         Reject(() => QuizContentValidation.CheckTranslation(ChangeFractionContexts(rows => rows[5]!["Quantity"] = "Count"), en), "translation changed a measured quantity to count");
         QuizContentPack FractionMetadata(QuizContentPack pack) => new() { Version = 1, Culture = pack.Culture,
-            Lists = new() { ["FractionQuantityContexts"] = pack.Lists["FractionQuantityContexts"] } };
+            Texts = pack.Texts.Where(text => text.Id.StartsWith("ElementaryQuizGenerator.FractionDifficulty.", StringComparison.Ordinal)).ToList(),
+            Lists = new() { ["FractionQuantityContexts"] = pack.Lists["FractionQuantityContexts"],
+                [ReviewedNarrativePhrasings.FractionQuantityListName] = pack.Lists[ReviewedNarrativePhrasings.FractionQuantityListName] } };
         QuizContentValidation.CheckTranslation(FractionMetadata(en), FractionMetadata(vi));
+        QuizContentPack ChangeCharts(Action<JsonArray> change)
+        {
+            var rows = JsonNode.Parse(en.Lists["DataChartContexts"].GetRawText())!.AsArray();
+            change(rows);
+            return new() { Version = 1, Culture = "fr-FR", Lists = new() { ["DataChartContexts"] = JsonSerializer.SerializeToElement(rows) } };
+        }
+        Reject(() => QuizContentCatalog.Validate(ChangeCharts(rows => rows[0]!["ContextId"] = null)), "missing chart context ID");
+        Reject(() => QuizContentCatalog.Validate(ChangeCharts(rows => rows[1]!["ContextId"] = rows[0]!["ContextId"]!.GetValue<string>())), "duplicate chart context ID");
+        Reject(() => QuizContentCatalog.Validate(ChangeCharts(rows => rows[0]!["CategoryIds"] = null)), "missing chart category IDs");
+        Reject(() => QuizContentCatalog.Validate(ChangeCharts(rows => rows[0]!["CategoryIds"]![1] = rows[0]!["CategoryIds"]![0]!.GetValue<string>())), "duplicate chart category ID");
+        QuizContentPack ChartMetadata(QuizContentPack pack) => new() { Version = 1, Culture = pack.Culture,
+            Lists = new() { ["DataChartContexts"] = pack.Lists["DataChartContexts"] } };
+        QuizContentValidation.CheckTranslation(ChartMetadata(en), ChartMetadata(vi));
+        Reject(() => QuizContentValidation.CheckTranslation(ChangeCharts(rows =>
+        {
+            string firstId = rows[0]!["CategoryIds"]![0]!.GetValue<string>();
+            rows[0]!["CategoryIds"]![0] = rows[0]!["CategoryIds"]![1]!.GetValue<string>();
+            rows[0]!["CategoryIds"]![1] = firstId;
+        }), ChartMetadata(en)), "translation shuffled stable chart roles");
         var charts = QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN");
         Check(ReferenceEquals(charts, QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN")), "Lists are not cached.");
         Check(QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes").Count == 241, "Lost applied scenes.");
