@@ -125,8 +125,7 @@ public partial class DataManagementPage
             int? familyIndex = await ChooseExcelOptionAsync(T("TemplateProblem"), familyKeys.Select(L).ToArray(), cancellation, familyKeys);
             if (familyIndex is null) { DataTransferStatusLabel.Text = ""; return; }
             var family = families[familyIndex.Value];
-            var starLabels = Enumerable.Range(1, 5).Select(i => new string('★', i) + "  "
-                + (i == 1 ? T("TemplateOneStar") : string.Format(CultureInfo.CurrentCulture, T("TemplateStarCount"), i))).ToArray();
+            var starLabels = IllustratedQuizPicker.DifficultyLabels();
             int? stars = await ChooseExcelOptionAsync(T("TemplateStars"), starLabels, cancellation);
             if (stars is null) { DataTransferStatusLabel.Text = ""; return; }
             var tier = (CurriculumTier)(stars.Value + 1);

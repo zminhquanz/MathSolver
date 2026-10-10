@@ -32,6 +32,8 @@ public partial class AiQuestionBankPage : ContentPage
         IllustratedQuizPicker.Attach(ProblemPicker, "Choice.SelectProblem");
         IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectSubtype");
         IllustratedQuizPicker.Attach(FindXRolePicker, "Choice.SelectSubtype");
+        IllustratedQuizPicker.Attach(LearningGroupPicker, "Choice.SelectGroup");
+        IllustratedQuizPicker.Attach(StarsPicker, "Choice.SelectDifficulty");
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         RefreshPickerLabels();
@@ -51,7 +53,14 @@ public partial class AiQuestionBankPage : ContentPage
         LocalizationService.CultureChanged += OnCultureChanged;
         DeveloperModeManager.DeveloperModeChanged += OnDeveloperModeChanged;
         var options = _bank.Generation.Snapshot.Options;
-        if (options is not null)
+        // Returning from our modal chooser must preserve edits to all fields,
+        // rather than restoring the options of the previous generation batch.
+        bool choosing = IllustratedQuizPicker.IsChoosing(ProblemPicker)
+            || IllustratedQuizPicker.IsChoosing(OperationPicker)
+            || IllustratedQuizPicker.IsChoosing(FindXRolePicker)
+            || IllustratedQuizPicker.IsChoosing(LearningGroupPicker)
+            || IllustratedQuizPicker.IsChoosing(StarsPicker);
+        if (options is not null && !choosing)
         {
             _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;
             _family = options.Family;
@@ -112,7 +121,8 @@ public partial class AiQuestionBankPage : ContentPage
             LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage"),
             LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime"), LocalizationService.TranslateKey("Quiz.ProblemFractionSkills"), LocalizationService.TranslateKey("Quiz.ProblemGeometry"), LocalizationService.TranslateKey("Quiz.ProblemData"), LocalizationService.TranslateKey("Quiz.ProblemProbability") }; ProblemPicker.SelectedIndex = (int)_family;
         IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime", "Quiz.ProblemFractionSkills", "Quiz.ProblemGeometry", "Quiz.ProblemData", "Quiz.ProblemProbability" });
-        StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
+        StarsPicker.ItemsSource = IllustratedQuizPicker.DifficultyLabels();
+        IllustratedQuizPicker.SetTextOptions(StarsPicker);
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
         DownloadModelPicker.ItemsSource = AiModelLibrary.Downloads.Select(m => m.Name).ToArray();

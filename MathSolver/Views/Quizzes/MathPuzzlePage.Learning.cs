@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.QuestionBank;
@@ -25,12 +26,12 @@ public partial class MathPuzzlePage
                 _learningGroup = QuestionKnowledgeGroup.Measurement;
             if (!_learningGroups.Contains(_learningGroup)) _learningGroup = QuestionKnowledgeGroup.Objects;
             LearningGroupPicker.ItemsSource = _learningGroups.Select(g => L("Group." + g)).ToArray();
+            IllustratedQuizPicker.SetKeys(LearningGroupPicker, _learningGroups.Select(g => "Learning.Group." + g));
             LearningGroupPicker.SelectedIndex = Array.IndexOf(_learningGroups, _learningGroup);
         }
         finally { _updatingLearning = false; }
         RefreshPracticeFormatPicker(GetSelectedFixedProblemRequest()?.Kind);
 #if ANDROID
-        AndroidPickerVisualHelper.Attach(LearningGroupPicker);
         AndroidPickerVisualHelper.Attach(PracticeFormatPicker);
 #endif
     }

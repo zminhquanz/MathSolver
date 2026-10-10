@@ -65,6 +65,7 @@ public partial class AiQuestionBankPage
                 _learningGroup = QuestionKnowledgeGroup.Measurement;
             if (!_learningGroups.Contains(_learningGroup)) _learningGroup = QuestionKnowledgeGroup.Objects;
             LearningGroupPicker.ItemsSource = _learningGroups.Select(g => L("Group." + g)).ToArray();
+            IllustratedQuizPicker.SetKeys(LearningGroupPicker, _learningGroups.Select(g => "Learning.Group." + g));
             LearningGroupPicker.SelectedIndex = Array.IndexOf(_learningGroups, _learningGroup);
             _learningOperations = Enum.GetValues<ArithmeticOperation>();
             OperationPicker.ItemsSource = _learningOperations.Select(op => T(op.ToString())).ToArray();

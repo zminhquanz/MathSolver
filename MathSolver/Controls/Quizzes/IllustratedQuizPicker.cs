@@ -101,6 +101,20 @@ public sealed class IllustratedQuizPicker : ContentView
         instance.UpdateSelection();
     }
 
+    /// <summary>Uses the shared chooser for text choices without a catalogue illustration.</summary>
+    public static void SetTextOptions(Picker picker)
+        => SetKeys(picker, Enumerable.Repeat("", picker.Items.Count));
+
+    public static bool IsChoosing(Picker picker)
+        => Instances.TryGetValue(picker, out var instance) && instance._opening;
+
+    /// <summary>The same difficulty labels are used by AI setup and Excel authoring.</summary>
+    public static string[] DifficultyLabels() => Enumerable.Range(1, 5).Select(stars =>
+        new string('★', stars) + "  " + (stars == 1
+            ? LocalizationService.TranslateKey("AiBank.TemplateOneStar")
+            : string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                LocalizationService.TranslateKey("AiBank.TemplateStarCount"), stars))).ToArray();
+
     /// <summary>Uses the same searchable, responsive selector for flows without a backing Picker.</summary>
     public static Task<int?> ChooseAsync(INavigation navigation, string title,
         IReadOnlyList<QuizChoiceOption> choices, CancellationToken cancellation = default)
@@ -126,7 +140,8 @@ public sealed class IllustratedQuizPicker : ContentView
         _open.IsEnabled = _picker.IsEnabled;
         _title.Opacity = _illustration.Opacity = _picker.IsEnabled ? 1 : 0.5;
         string description = "";
-        if (index >= 0 && index < _keys.Length)
+        _illustration.IsVisible = index >= 0 && index < _keys.Length && !string.IsNullOrEmpty(_keys[index]);
+        if (_illustration.IsVisible)
         {
             var option = QuizChoiceCatalog.Create(index, _keys[index], _title.Text,
                 AppLanguageManager.CurrentLanguage, true);
@@ -146,9 +161,10 @@ public sealed class IllustratedQuizPicker : ContentView
         try
         {
             // Freeze options for this dialog. Original indexes survive filtering and resizing.
-            var choices = _keys.Select((key, index) => QuizChoiceCatalog.Create(index, key,
-                _picker.Items[index],
-                AppLanguageManager.CurrentLanguage, index == _picker.SelectedIndex)).ToArray();
+            var choices = _keys.Select((key, index) => string.IsNullOrEmpty(key)
+                ? new QuizChoiceOption(index, "", _picker.Items[index], "", "", index == _picker.SelectedIndex)
+                : QuizChoiceCatalog.Create(index, key, _picker.Items[index],
+                    AppLanguageManager.CurrentLanguage, index == _picker.SelectedIndex)).ToArray();
             page = new QuizChoicePage(Text(_captionKey), choices);
             int? selected = await page.ChooseAsync(Navigation);
             if (selected.HasValue && IsEnabled && _picker.IsEnabled) _picker.SelectedIndex = selected.Value;

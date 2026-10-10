@@ -68,6 +68,13 @@ public partial class MathPuzzlePage : ContentPage
     private int _questionGenerationVersion;
     private bool _openingAiQuestionBank;
 
+    private Picker[] IllustratedSubtypePickers =>
+    [
+        ElementaryTypePicker, ExpressionTypePicker, AverageTypePicker,
+        PercentageTypePicker, FindXTypePicker, GeometryShapePicker,
+        GeometryMeasurementPicker, MotionTypePicker
+    ];
+
     private Button[] ChoiceButtons =>
     [
         ChoiceAButton,
@@ -94,8 +101,8 @@ public partial class MathPuzzlePage : ContentPage
         foreach (var view in ChoiceFractionViews) AutomationProperties.SetExcludedWithChildren(view, true);
 
         IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectProblem");
-        foreach (var picker in new[] { ElementaryTypePicker, ExpressionTypePicker, AverageTypePicker,
-                     PercentageTypePicker, FindXTypePicker, GeometryShapePicker, GeometryMeasurementPicker, MotionTypePicker })
+        IllustratedQuizPicker.Attach(LearningGroupPicker, "Choice.SelectGroup");
+        foreach (var picker in IllustratedSubtypePickers)
             IllustratedQuizPicker.Attach(picker, "Choice.SelectSubtype");
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
@@ -185,7 +192,10 @@ public partial class MathPuzzlePage : ContentPage
         _diagramScrollVersion++;
         AiQuestionBank.Current.Generation.Changed -= OnAiQuestionBankProgress;
         LiveWallpaper.Pause();
-        if (_openingAiQuestionBank || _diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive)
+        if (_openingAiQuestionBank || _diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive
+            || IllustratedQuizPicker.IsChoosing(OperationPicker)
+            || IllustratedQuizPicker.IsChoosing(LearningGroupPicker)
+            || IllustratedSubtypePickers.Any(IllustratedQuizPicker.IsChoosing))
         {
             base.OnDisappearing();
             return;

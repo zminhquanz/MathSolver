@@ -276,6 +276,8 @@
     {"Id":"Choice.Selected","Text":"Selected","Variables":[]},
     {"Id":"Choice.SelectProblem","Text":"Choose a topic","Variables":[]},
     {"Id":"Choice.SelectSubtype","Text":"Choose a skill","Variables":[]},
+    {"Id":"Choice.SelectGroup","Text":"Choose knowledge group","Variables":[]},
+    {"Id":"Choice.SelectDifficulty","Text":"Choose difficulty","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageAverageToTotal","Text":"Find the total from a mean and a count.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageDirect","Text":"Find the mean of known values.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageIndirectData","Text":"Work out missing information before finding the mean.","Variables":[]},

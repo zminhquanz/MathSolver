@@ -59,7 +59,8 @@ internal static partial class PuzzleTests
                 if (string.IsNullOrWhiteSpace(choice.Description) || string.IsNullOrWhiteSpace(choice.IllustrationId))
                     throw new Exception("Invalid choice content: " + definition.Key);
             }
-            foreach (string key in new[] { "Choice.SelectProblem", "Choice.SelectSubtype", "Choice.SelectShape", "Choice.Search",
+            foreach (string key in new[] { "Choice.SelectProblem", "Choice.SelectSubtype", "Choice.SelectShape",
+                         "Choice.SelectGroup", "Choice.SelectDifficulty", "Choice.Search",
                          "Choice.Empty", "Choice.Close", "Choice.Selected" })
                 if (string.IsNullOrWhiteSpace(QuizContentCatalog.Text(language, key))) throw new Exception("Missing chooser text: " + key);
         }
