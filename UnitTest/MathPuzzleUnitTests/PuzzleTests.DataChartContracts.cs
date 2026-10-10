@@ -39,8 +39,9 @@ internal static partial class PuzzleTests
             var g = c.Reasoning!.Givens.ToDictionary(f => f.Role, f => decimal.Parse(f.Value, CultureInfo.InvariantCulture));
             decimal expected = profile.QuestionKind switch
             {
-                DataChartQuestionKind.Total => visual.Values.Sum(),
+                DataChartQuestionKind.Total => profile.TargetCategoryIds.Sum(id => visual.Values[Row(id)]),
                 DataChartQuestionKind.AbsoluteDifference => Math.Abs(visual.Values[Row(profile.TargetCategoryIds[0])] - visual.Values[Row(profile.TargetCategoryIds[1])]),
+                DataChartQuestionKind.CombinedDifference => visual.Values[0] + visual.Values[1] - visual.Values[2],
                 _ => type == ElementaryQuizType.ReadPieChart && tier > CurriculumTier.OneStar
                     ? visual.Values[Row(profile.TargetCategoryIds[0])] * (tier <= CurriculumTier.ThreeStars ? g["total"]
                         : tier == CurriculumTier.FourStars ? g["other-count"] * 100 / (100 - visual.Values[Row(profile.TargetCategoryIds[0])])
@@ -77,7 +78,9 @@ internal static partial class PuzzleTests
                 Reject(() => DataChartQuestionValidator.Validate(c with { Visual = visual with { Labels = visual.Labels.Reverse().ToArray() } }), "Swapped chart labels accepted.");
                 Reject(() => DataChartQuestionValidator.Validate(c with { Visual = visual with { Unit = "invalid-unit" } }), "Changed chart unit accepted.");
                 Reject(() => DataChartQuestionValidator.Validate(c with { Visual = visual with { Values = visual.Values.Select(n => n + 1).ToArray() } }), "Detached chart numbers accepted.");
-                Reject(() => DataChartQuestionValidator.Validate(c with { Visual = visual with { HiddenValueIndices = new HashSet<int> { 0, 1, 2 } } }), "Changed hidden cells accepted.");
+                var changedHidden = visual.HiddenValueIndices!.ToHashSet();
+                if (!changedHidden.Add(0)) changedHidden.Remove(0);
+                Reject(() => DataChartQuestionValidator.Validate(c with { Visual = visual with { HiddenValueIndices = changedHidden } }), "Changed hidden cells accepted.");
                 Reject(() => DataChartQuestionValidator.Validate(c with { Reasoning = c.Reasoning with { Explanation = "SECRET " + c.AnswerText } }), "Detached explanation accepted.");
                 Reject(() => DataChartQuestionValidator.Validate(c with { DataChart = c.DataChart with { Version = 99 } }), "Unknown chart contract version accepted.");
                 Require(!DataChartQuestionValidator.IsValidQuestionText(c, c.ProblemText + " Answer: " + c.AnswerText), "Prose leaking the answer accepted.");

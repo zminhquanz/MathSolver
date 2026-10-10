@@ -60,7 +60,7 @@ internal static class MeasurementBankTests
                 string text = p.ProblemText.ToLowerInvariant();
                 string wording = p.Type switch { ElementaryQuizType.MassConversion => "cân được",
                     ElementaryQuizType.CapacityConversion => "dung tích", _ => "độ dài" };
-                Check(text.Contains(wording), "Quantity wording does not match its dimension");
+                Check(text.Contains(wording) || p.Type == ElementaryQuizType.MassConversion && text.Contains("khối lượng"), "Quantity wording does not match its dimension");
                 if (p.Type != ElementaryQuizType.LengthConversion)
                     Check(!text.Contains("số đo") && !text.Contains("đo được"), "Generic measurement verb used for mass/capacity");
             }

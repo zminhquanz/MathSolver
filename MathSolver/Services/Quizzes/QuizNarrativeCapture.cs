@@ -33,7 +33,12 @@ internal sealed class QuizNarrativeCapture : IDisposable
             projectedArguments[m.Groups[1].Value] = argument;
             return argument;
         });
-        projected = Numbers.Replace(projected, number => Slot("constant", number.Value));
+        var constants = new List<(string Value, string Slot)>();
+        projected = Numbers.Replace(projected, number => {
+            string slot = Slot("constant", number.Value);
+            constants.Add((number.Value, slot));
+            return slot;
+        });
         _fragments[rendered] = projected;
         if (alternatives is null) return;
         string[] original = Sentences(projected);
@@ -42,6 +47,13 @@ internal sealed class QuizNarrativeCapture : IDisposable
         {
             string text = Regex.Replace(alternative, @"\{([A-Za-z0-9_.-]+)\}", m =>
                 projectedArguments.GetValueOrDefault(m.Groups[1].Value, m.Value));
+            int constantIndex = 0;
+            text = Numbers.Replace(text, number => {
+                if (constantIndex >= constants.Count || constants[constantIndex].Value != number.Value)
+                    throw new InvalidDataException("Reviewed numeric constant changed.");
+                return constants[constantIndex++].Slot;
+            });
+            if (constantIndex != constants.Count) throw new InvalidDataException("Reviewed numeric constant missing.");
             var parts = Sentences(text);
             if (parts.Length != original.Length) throw new InvalidDataException("Reviewed clause count changed.");
             for (int i = 0; i < parts.Length; i++) choices[i].Add(parts[i]);

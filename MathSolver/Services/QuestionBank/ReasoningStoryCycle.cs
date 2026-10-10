@@ -29,6 +29,9 @@ internal sealed class ReasoningStoryCycle
             var narrativeIds = family switch
             {
                 BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalContexts(language).Select(c => c.Id),
+                BankQuestionFamily.Measurement when variant == (int)ElementaryQuizType.MapScale =>
+                    ElementaryQuizGenerator.MapScaleContexts(language)
+                        .Where(c => (int)tier >= c.MinimumStar && (int)tier <= c.MaximumStar).Select(c => c.Id),
                 BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementContexts(language, (ElementaryQuizType)variant).Select(c => c.Id),
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
                 BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryContextIds(tier),

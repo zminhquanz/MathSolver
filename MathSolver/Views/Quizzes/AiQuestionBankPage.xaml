@@ -220,20 +220,27 @@
                 <Border x:Name="PreviewCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{localization:Translate AiBank.Preview}" Style="{StaticResource SolverSectionTitleStyle}" HorizontalTextAlignment="Center" />
-                        <Label x:Name="PreviewStatusLabel" HorizontalTextAlignment="Center" />
-                        <Button x:Name="ShareButton" Text="{localization:Translate AiBank.Share}"
-                                    Padding="12,10" LineBreakMode="WordWrap" Style="{StaticResource SolverOutlinedActionStyle}"
-                                    Clicked="OnShareClicked" IsEnabled="False" />
+                        <Label x:Name="PreviewStatusLabel" HorizontalTextAlignment="Center" FontSize="13" />
                         <controls:QuestionFactTableView x:Name="PreviewFactTable" />
-                        <controls:FractionExpressionView x:Name="PreviewText" MathFontSize="22" WrapContent="True" HorizontalTextAlignment="Center" />
+                        <controls:FractionExpressionView x:Name="PreviewText" IsVisible="False" MathFontSize="22" WrapContent="True" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewSolutionLabel" IsVisible="False" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
                         <controls:FractionExpressionView x:Name="PreviewFractionSolution" IsVisible="False" MathFontSize="18"
                             ParseArithmeticExpressions="True" WrapContent="True" HorizontalTextAlignment="Center" />
                         <Label x:Name="PreviewStreamingTextLabel" IsVisible="False" FontSize="22" LineBreakMode="WordWrap"
                                HorizontalTextAlignment="Center" TextColor="{DynamicResource WallpaperTextPrimaryColor}" FontFamily="{DynamicResource AppFontFamily}" />
-                        <Label Text="{localization:Translate AiBank.ReadOnlyHint}" HorizontalTextAlignment="Center" FontSize="13" />
-                        <Button x:Name="InsertButton" Text="{localization:Translate AiBank.Insert}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
-
+                        <Label x:Name="PreviewReadOnlyHint" IsVisible="False" Text="{localization:Translate AiBank.ReadOnlyHint}" HorizontalTextAlignment="Center" FontSize="13" />
+                        <VerticalStackLayout x:Name="PreviewActionFooter" IsVisible="False" Spacing="12">
+                            <BoxView HeightRequest="1" Color="{DynamicResource BorderColor}" />
+                            <Grid x:Name="PreviewActions" ColumnDefinitions="*" RowDefinitions="Auto,Auto"
+                                  ColumnSpacing="8" RowSpacing="8" SizeChanged="OnPreviewActionsSizeChanged">
+                                <Button x:Name="InsertButton" Text="{localization:Translate AiBank.Insert}"
+                                        Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
+                                        Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
+                                <Button x:Name="ShareButton" Grid.Row="1" Text="{localization:Translate AiBank.Share}"
+                                        Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
+                                        Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
+                            </Grid>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
             </VerticalStackLayout>

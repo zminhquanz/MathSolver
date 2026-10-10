@@ -5,7 +5,7 @@ namespace MathSolver.Services;
 public sealed partial class ElementaryQuizGenerator
 {
     internal static readonly ElementaryQuizType[] RemainderStoryTypes =
-        [ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers, ElementaryQuizType.QuotientRemainder];
+        [ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers, ElementaryQuizType.QuotientRemainder, ElementaryQuizType.FullGroups];
     internal static readonly ElementaryQuizType[] TimeStoryTypes =
         [ElementaryQuizType.TimeAddition, ElementaryQuizType.ElapsedTime];
 
@@ -22,6 +22,6 @@ public sealed partial class ElementaryQuizGenerator
     {
         if (!Enum.IsDefined(tier) || !TimeStoryTypes.Contains(type))
             throw new ArgumentException("InvalidTimeStoryProfile");
-        return CompleteQuestion(mode, AddTimeStory(CreateTimeDifficulty(type, language, tier), contextId), [], null);
+        return CompleteQuestion(mode, CreateTimeStory(type, language, tier, contextId), [], null);
     }
 }

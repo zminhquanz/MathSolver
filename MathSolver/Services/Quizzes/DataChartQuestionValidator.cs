@@ -18,6 +18,29 @@ public static class DataChartQuestionValidator
         var targets = profile.TargetCategoryIds;
         if (targets is null || targets.Count == 0 || targets.Distinct(StringComparer.Ordinal).Count() != targets.Count
             || targets.Any(id => !ids.Contains(id))) Fail("Invalid chart target.");
+        if (ElementaryQuizGenerator.IsAdditionalDataType(profile.Type))
+        {
+            int level = (int)profile.Tier;
+            if (profile.Type == ElementaryQuizType.ReadPictograph)
+            {
+                var kind = level <= 2 ? DataChartQuestionKind.CategoryValue : level <= 4
+                    ? DataChartQuestionKind.Total : DataChartQuestionKind.CombinedDifference;
+                if (profile.QuestionKind != kind || (level <= 2 ? targets.Count != 1
+                    : !targets.SequenceEqual(ids.Take(level == 3 ? 2 : 3)))
+                    || profile.HiddenCategoryIds is null || profile.HiddenCategoryIds.Count != 0)
+                    Fail("Changed pictograph key or target.");
+            }
+            else if (profile.Type == ElementaryQuizType.SortData)
+            {
+                if (profile.QuestionKind != DataChartQuestionKind.CategoryCounts || !targets.SequenceEqual(ids)
+                    || profile.HiddenCategoryIds is null || !profile.HiddenCategoryIds.SequenceEqual(ids))
+                    Fail("Changed classification target.");
+            }
+            else if (profile.QuestionKind != DataChartQuestionKind.CategoryValue || targets.Count != 1
+                || profile.HiddenCategoryIds is null || !profile.HiddenCategoryIds.SequenceEqual(targets))
+                Fail("Changed missing bar target.");
+            return;
+        }
         bool difference = profile.Type == ElementaryQuizType.ChartDifference;
         if (difference)
         {
@@ -65,8 +88,13 @@ public static class DataChartQuestionValidator
             || !visual.Values.SequenceEqual(expectedVisual.Values)
             || visual.HiddenValueIndices is null || !visual.HiddenValueIndices.SetEquals(expectedVisual.HiddenValueIndices!)
             || visual.AccessibleDescription is not null || visual.Annotations is not null || visual.Polygons is not null
-            || visual.Lines is not null || visual.PictographKey is not null || visual.RotationDegrees != 0)
+            || visual.Lines is not null || visual.PictographKey != expectedVisual.PictographKey || visual.RotationDegrees != 0)
             Fail("Chart labels, data, units or hidden cells disagree.");
+        var supplied = chart.Observations ?? [];
+        var original = expected.DataChart!.Observations ?? [];
+        if (supplied.Count != original.Count || supplied.Zip(original).Any(pair => pair.First.Role != pair.Second.Role
+            || pair.First.Excluded != pair.Second.Excluded || !pair.First.CategoryIds.SequenceEqual(pair.Second.CategoryIds)))
+            Fail("Changed observation lists or exclusions.");
         bool originalProse = contract.ProblemText.Equals(expected.ProblemText, StringComparison.Ordinal)
             && contract.Reasoning!.Steps.SequenceEqual(expected.Reasoning!.Steps);
         if (!contract.Facts.SequenceEqual(expected.Facts) || !contract.Constants.ToHashSet().SetEquals(expected.Constants)

@@ -54,7 +54,7 @@ internal static partial class PuzzleTests
                 Require(visual.Kind == "pictograph" && visual.PictographKey == G("key"), "Missing pictograph key.");
                 for (int row = 0; row < 3; row++)
                     Require(visual.Values[row] == G("icons-" + row) * G("key") && G("icons-" + row) <= 7, "Pictograph disagrees with the legend.");
-                expected = level <= 2 ? visual.Values[0] : level == 3 ? visual.Values[0] + visual.Values[1]
+                expected = level <= 2 ? visual.Values[c.DataChart!.Profile.CategoryIds.ToList().IndexOf(c.DataChart.Profile.TargetCategoryIds[0])] : level == 3 ? visual.Values[0] + visual.Values[1]
                     : level == 4 ? visual.Values.Sum() : visual.Values[0] + visual.Values[1] - visual.Values[2];
             }
             else

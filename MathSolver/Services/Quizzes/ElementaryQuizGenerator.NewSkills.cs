@@ -4,13 +4,17 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateMapScale(AppLanguage language, CurriculumTier tier)
+    private ElementaryQuizContract CreateMapScale(AppLanguage language, CurriculumTier tier, string contextId = "")
     {
         var t = new DifficultyBuilder(QuizProblemKind.Measurement, ElementaryQuizType.MapScale, language, tier);
         int level = (int)tier;
+        var contexts = MapScaleContexts(language).Where(c => c.MinimumStar <= level && c.MaximumStar >= level).ToArray();
+        var context = contextId.Length == 0 ? contexts[_random.Next(contexts.Length)]
+            : contexts.SingleOrDefault(c => c.Id == contextId) ?? throw new ArgumentException("InvalidMapScaleContext");
         int denominator = level == 1 ? 100 : level == 2 ? _random.Next(5, 21) * 100
             : _random.Next(1, 6) * 100_000;
         if (level == 5) denominator = new[] { 100_000, 200_000, 500_000 }[_random.Next(3)];
+        denominator = Math.Min(denominator, context.MaximumScale);
         string scale = t.Given("scale-denominator", denominator);
         string first = t.Given(level == 5 ? "actual-km" : "map-cm", _random.Next(2, 7), level == 5 ? "km" : "cm");
         string expression, problem, unit;
@@ -22,12 +26,12 @@ public sealed partial class ElementaryQuizGenerator
             t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.001"), $"{next}/1000", "km");
             t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.002"), km, "km");
             expression = $"({km})*100000/{scale}"; unit = "cm";
-            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.003", ("scale", $"{scale}"), ("first", $"{first}"), ("next", $"{next}"));
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.003", ("one", "1"), ("scale", $"{scale}"), ("first", $"{first}"), ("next", $"{next}"));
         }
         else
         {
             string length = first;
-            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.004", ("scale", $"{scale}"));
+            problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.004", ("one", "1"), ("scale", $"{scale}"));
             if (level == 4)
             {
                 string second = t.Given("second-map-cm", _random.Next(1, 5), "cm");
@@ -46,41 +50,8 @@ public sealed partial class ElementaryQuizGenerator
             problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.010", ("unit", $"{unit}"));
         }
         t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.011"), expression, unit);
-        return t.Build("map-scale-" + level, problem) with { StoryContextId = "tourism" };
-    }
-
-    private ElementaryQuizContract CreatePictograph(AppLanguage language, CurriculumTier tier)
-    {
-        var t = new DifficultyBuilder(QuizProblemKind.Data, ElementaryQuizType.ReadPictograph, language, tier);
-        int level = (int)tier;
-        string[] contexts = ["library", "craft", "community"];
-        var context = QuizStoryContextCatalog.Find(contexts[NextContextVariant(t.Type, language, "pictograph", contexts.Length)]);
-        string unit = context.Unit(language);
-        int key = new[] { 1, 2, 5, 10, 20 }[level - 1];
-        int[] counts = [_random.Next(3, 8), _random.Next(3, 8), _random.Next(2, 5)];
-        string[] labels = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.022"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.023"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.024") };
-        string[] symbols = counts.Select((count, i) => t.Given("icons-" + i, count)).ToArray();
-        string multiplier = t.Given("key", key, unit);
-        string expression, question;
-        if (level <= 2)
-        {
-            expression = $"{symbols[0]}*{multiplier}";
-            question = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.012", ("unit", $"{unit}"));
-        }
-        else
-        {
-            string total = level == 3 ? $"{symbols[0]}+{symbols[1]}" : $"{symbols[0]}+{symbols[1]}+{symbols[2]}";
-            if (level == 5) total = $"({symbols[0]}+{symbols[1]})-{symbols[2]}";
-            t.Step((level == 5 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.036") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.037")), total);
-            expression = $"({total})*{multiplier}";
-            question = level == 3 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.013", ("unit", $"{unit}"))
-                : level == 4 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.014", ("unit", $"{unit}"))
-                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.015", ("unit", $"{unit}"));
-        }
-        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.016"), expression, unit);
-        string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreatePictograph.017", ("context_Setting_language", $"{context.Setting(language)}"), ("multiplier", $"{multiplier}"), ("unit", $"{unit}"), ("question", $"{question}"));
-        return t.Build("pictograph-" + level, problem, new("pictograph", labels,
-            counts.Select(count => (decimal)(count * key)).ToArray(), unit, PictographKey: key)) with { StoryContextId = context.Id };
+        problem = QuizContentCatalog.Text(language, "ElementaryQuizGenerator.NewSkills.CreateMapScale.Context." + context.Id) + problem;
+        return t.Build("map-scale-" + level, problem) with { StoryContextId = context.Id };
     }
 
     private ElementaryQuizContract CreateShapeRecognition(AppLanguage language, CurriculumTier tier)

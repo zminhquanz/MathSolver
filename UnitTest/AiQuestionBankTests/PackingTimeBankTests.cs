@@ -49,9 +49,10 @@ internal static class PackingTimeBankTests
                 Check(f.Total > 0 && f.Size >= 2 && f.Remainder >= 0 && f.Remainder < f.Size, "Invalid packing facts");
                 int[] expected = p.Type switch {
                     ElementaryQuizType.MinimumGroups => [f.Quotient + (f.Remainder == 0 ? 0 : 1)],
+                    ElementaryQuizType.FullGroups => [f.Quotient],
                     ElementaryQuizType.Leftovers => [f.Remainder], _ => [f.Quotient, f.Remainder] };
                 string[] units = p.Type switch {
-                    ElementaryQuizType.MinimumGroups => [context.Container], ElementaryQuizType.Leftovers => [context.Item],
+                    ElementaryQuizType.MinimumGroups or ElementaryQuizType.FullGroups => [context.Container], ElementaryQuizType.Leftovers => [context.Item],
                     _ => [context.Container, context.Item] };
                 Check(p.Answers.Count == expected.Length && p.Answers.Select(a => (int)a.Value.Numerator).SequenceEqual(expected)
                     && p.Answers.All(a => a.Value.Denominator.IsOne) && p.Answers.Select(a => a.Unit).SequenceEqual(units),
@@ -77,11 +78,12 @@ internal static class PackingTimeBankTests
                 if (p.Type == ElementaryQuizType.ElapsedTime)
                 {
                     int start = F("start-hour") * 60 + F("start-minute"), end = F("end-hour") * 60 + F("end-minute");
-                    if (end < start) end += 1440;
+                    bool overnight = end < start;
+                    if (overnight) end += 1440;
                     expected = end - start - F("pause-minutes") + F("second-session");
                     string marker = c.Language == AppLanguage.Vietnamese
-                        ? c.Tier >= CurriculumTier.ThreeStars ? "ngày hôm sau" : "cùng ngày"
-                        : c.Tier >= CurriculumTier.ThreeStars ? "the next day" : "on the same day";
+                        ? overnight ? "ngày hôm sau" : "cùng ngày"
+                        : overnight ? "the next day" : "on the same day";
                     Check(p.ProblemText.Contains(marker), "Time story lost same-day/next-day constraint");
                 }
                 else
@@ -184,7 +186,7 @@ internal static class PackingTimeBankTests
             catch (InvalidOperationException e) when (e.Message == "DuplicateProseRetriesExhausted") { }
         }
         await CheckStoreAsync();
-        Console.WriteLine($"Packing/time: {count} bilingual context/type/star profiles, 18 packing boundaries; all results/units, fresh facts, three modes/grading, unsafe prose, exhaustion, SQLite/Excel/provider passed.");
+        Console.WriteLine($"Packing/time: {count} bilingual context/type/star profiles, {ElementaryQuizGenerator.RemainderStoryTypes.Length * 6} packing boundaries; all results/units, fresh facts, three modes/grading, unsafe prose, exhaustion, SQLite/Excel/provider passed.");
     }
 
     private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue == 2 ? 1 : base.Next(maxValue); }

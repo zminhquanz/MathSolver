@@ -7,7 +7,7 @@ public sealed record QuizNumberName(int Value, string Words);
 
 public sealed partial class ElementaryQuizGenerator
 {
-    public static bool IsFoundationSkill(ElementaryQuizType type) => type >= ElementaryQuizType.Counting;
+    public static bool IsFoundationSkill(ElementaryQuizType type) => type is >= ElementaryQuizType.Counting and <= ElementaryQuizType.CompleteBarChart;
 
     private ElementaryQuizContract CreateFoundation(QuizProblemKind kind, ElementaryQuizType type,
         AppLanguage language, CurriculumTier tier)
@@ -216,26 +216,6 @@ public sealed partial class ElementaryQuizGenerator
                 int degrees = _random.Next(0, 21) * 2; Direct(degrees, "°C");
                 problem = L("ReadThermometer"); visual = new("foundation-thermometer", [], [degrees], "°C",
                     AccessibleDescription: L("ThermometerDescription", ("degrees", N(degrees)))); break;
-            }
-            case ElementaryQuizType.SortData:
-            case ElementaryQuizType.CompleteBarChart:
-            {
-                string[] categories = [L("Red"), L("Blue"), L("Yellow")];
-                int[] values = [_random.Next(1, 6), _random.Next(1, 6), _random.Next(1, 6)];
-                var items = Enumerable.Range(0, 3).SelectMany(i => Enumerable.Repeat(categories[i], values[i])).OrderBy(_ => _random.Next()).ToArray();
-                if (type == ElementaryQuizType.SortData)
-                {
-                    for (int i = 0; i < 3; i++) t.Answer(categories[i], t.Given("category-" + i, values[i]));
-                    problem = L("SortData", ("items", string.Join(", ", items)));
-                }
-                else
-                {
-                    int hidden = _random.Next(3); Direct(values[hidden]);
-                    problem = L("CompleteBarChart", ("items", string.Join(", ", items)), ("category", categories[hidden]));
-                    visual = new("bar", categories, values.Select(v => (decimal)v).ToArray(), "",
-                        HiddenValueIndices: new HashSet<int> { hidden });
-                }
-                break;
             }
             default: throw new ArgumentOutOfRangeException(nameof(type));
         }

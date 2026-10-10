@@ -4,6 +4,37 @@ using MathSolver.Services.QuestionBank;
 using System.Text.Json;
 using System.Text;
 
+if (args is ["--next-ai-evidence", var nextEvidence])
+{
+    try { NextAiFormsTests.CheckModelEvidence(nextEvidence); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--next-ai"] or ["--next-ai-model", _] or ["--next-ai-model", _, _])
+{
+    try { if (args.Length == 1) await NextAiFormsTests.RunAsync(); else await NextAiFormsTests.RunModelAsync(args[1], args.Length == 3 ? args[2] : null); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--activity-depth-evidence", .. var activityDirectories] && activityDirectories.Length > 0)
+{
+    try { ActivityDepthTests.CheckModelEvidence(activityDirectories); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--activity-depth"] or ["--activity-depth-model", _] or ["--activity-depth-packing-english-model", _])
+{
+    try {
+        if (args.Length == 1) await ActivityDepthTests.RunAsync();
+        else await ActivityDepthTests.RunModelAsync(args[1], args[0] == "--activity-depth-packing-english-model");
+    }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--quantity-depth"] or ["--quantity-depth-model", _])
 {
     try {
@@ -616,12 +647,14 @@ try
     await PracticeFormatTests.RunAsync(directory);
     await FractionBankTests.RunAsync(directory);
     await ReasoningStoryTests.RunAsync();
+    await NextAiFormsTests.RunAsync();
     await MultiStepBankTests.RunAsync();
     await MotionBankTests.RunAsync();
     await ProportionBankTests.RunAsync();
     await DecimalBankTests.RunAsync();
     await MeasurementBankTests.RunAsync();
     await PackingTimeBankTests.RunAsync();
+    await ActivityDepthTests.RunAsync();
     await FractionQuantityBankTests.RunAsync();
     await ProseExpansionTests.RunAsync();
     await NarrativeDepthTests.RunAsync();

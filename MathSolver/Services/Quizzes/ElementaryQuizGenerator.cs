@@ -5,10 +5,11 @@ using System.Globalization;
 namespace MathSolver.Services;
 
 /// <summary>C# math puzzle data and rules.</summary>
-public sealed partial class ElementaryQuizGenerator(Random? random = null, bool expandNarratives = true)
+public sealed partial class ElementaryQuizGenerator(Random? random = null, bool expandNarratives = true, bool expandActivityStories = true)
 {
     private readonly Random _random = random ?? Random.Shared;
     private readonly bool _expandNarratives = expandNarratives;
+    private readonly bool _expandActivityStories = expandActivityStories;
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
     public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
     {
@@ -20,7 +21,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         QuizProblemKind.TwoNumbers => [ElementaryQuizType.SumDifference, ElementaryQuizType.SumRatio, ElementaryQuizType.DifferenceRatio],
         QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.MapScale, ElementaryQuizType.ReadRuler, ElementaryQuizType.ReadProtractor, ElementaryQuizType.ReadThermometer],
         QuizProblemKind.Time => [ElementaryQuizType.ElapsedTime, ElementaryQuizType.TimeAddition, ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar],
-        QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers],
+        QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers, ElementaryQuizType.FullGroups],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare],
         QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction, ElementaryQuizType.FractionPicture, ElementaryQuizType.FractionTerms, ElementaryQuizType.EquivalentFraction, ElementaryQuizType.OrderFractions],
         QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph, ElementaryQuizType.SortData, ElementaryQuizType.CompleteBarChart],

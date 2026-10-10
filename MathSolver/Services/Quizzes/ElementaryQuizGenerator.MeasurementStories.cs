@@ -7,8 +7,9 @@ public sealed partial class ElementaryQuizGenerator
 {
     internal static readonly ElementaryQuizType[] MeasurementStoryTypes =
         [ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.LengthConversion];
+    internal static readonly ElementaryQuizType[] MeasurementBankTypes = [.. MeasurementStoryTypes, ElementaryQuizType.MapScale];
     internal const string MeasurementContextsList = "MeasurementStoryContexts";
-    internal sealed record MeasurementStoryContext(string Id, string Category, string Subject);
+    internal sealed record MeasurementStoryContext(string Id, string Category, string Subject, string Activity = "", int MaximumQuantity = 20);
     internal static string MeasurementCategory(ElementaryQuizType type) => type switch
     {
         ElementaryQuizType.MassConversion => "mass",
@@ -16,8 +17,8 @@ public sealed partial class ElementaryQuizGenerator
         ElementaryQuizType.LengthConversion => "length",
         _ => throw new ArgumentException("InvalidMeasurementStoryProfile")
     };
-    internal static IReadOnlyList<MeasurementStoryContext> MeasurementContexts(AppLanguage language, ElementaryQuizType type) =>
-        QuizContentCatalog.LoadList<MeasurementStoryContext>(MeasurementContextsList, QuizContentCatalog.Culture(language))
+    internal static IReadOnlyList<MeasurementStoryContext> MeasurementContexts(AppLanguage language, ElementaryQuizType type, bool expanded = true) =>
+        NarrativeContextExpansion.Load<MeasurementStoryContext>(MeasurementContextsList, language, expanded)
             .Where(context => context.Category == MeasurementCategory(type)).ToArray();
 
     public ArithmeticQuizQuestion GenerateMeasurementStory(ArithmeticQuizMode mode, ElementaryQuizType type,
@@ -32,7 +33,7 @@ public sealed partial class ElementaryQuizGenerator
     private ElementaryQuizContract CreateMeasurementStory(ElementaryQuizType type, AppLanguage language,
         CurriculumTier tier, string contextId = "")
     {
-        var contexts = MeasurementContexts(language, type);
+        var contexts = MeasurementContexts(language, type, _expandActivityStories);
         var context = contextId.Length == 0 ? contexts[NextContextVariant(type, language, "measurement-story", contexts.Count)]
             : contexts.FirstOrDefault(context => context.Id == contextId)
                 ?? throw new ArgumentException("InvalidMeasurementStoryProfile");
@@ -48,7 +49,8 @@ public sealed partial class ElementaryQuizGenerator
         decimal factor = MeasurementEngine.Convert(1, large, small);
         t.Constants.Add(factor.ToString(CultureInfo.InvariantCulture));
         string Text(string id, params (string Key, string Value)[] values) =>
-            QuizContentCatalog.TextForUnit(language, context.Category, "ElementaryQuizGenerator.MeasurementStories." + id, values);
+            QuizContentCatalog.TextForUnit(language, context.Category, "ElementaryQuizGenerator.MeasurementStories."
+                + (_expandActivityStories && context.Activity.Length > 0 ? "Activity." + context.Activity + "." : "") + id, values);
         string label = Text("001"), expression, problem;
         string a = t.Given("large-quantity", _random.Next(2, 10), large.Symbol);
         if (level == 1)

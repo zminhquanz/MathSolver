@@ -4,14 +4,20 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateProbabilityDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    internal ArithmeticQuizQuestion GenerateProbabilityStory(ArithmeticQuizMode mode, ElementaryQuizType type,
+        AppLanguage language, CurriculumTier tier, Random facts) => CompleteQuestion(mode,
+            CreateProbabilityDifficulty(type, language, tier, facts), [], null);
+
+    private ElementaryQuizContract CreateProbabilityDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier,
+        Random? factsRandom = null)
     {
         var t = new DifficultyBuilder(QuizProblemKind.Probability, type, language, tier);
         int level = (int)tier;
+        var facts = factsRandom ?? _random;
         t.RequiresSolution = false;
         if (type == ElementaryQuizType.Likelihood)
         {
-            var original = CreateLikelihoodTask(language, _random.Next(3, 12), _random.Next(3, 12));
+            var original = CreateLikelihoodTask(language, facts.Next(3, 12), facts.Next(3, 12));
             int n = original.Scenario.TotalCount, k = original.Scenario.EventCount;
             t.Given("outcomes", n); t.Given("favorable", k);
             string setup = original.SetupText!, classificationEvent = original.Scenario.EventText;
@@ -52,7 +58,7 @@ public sealed partial class ElementaryQuizGenerator
                 : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.016");
             string problem = setup + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.017", ("classificationEvent", $"{classificationEvent}"));
             return t.Build("likelihood-relations-" + level, problem,
-                probability: new(original.Scenario.ContextId, classificationEvent, favorable, total, false));
+                probability: new(original.Scenario.ContextId, classificationEvent, favorable, total, false)) with { StoryContextId = original.Scenario.ContextId };
         }
 
         var source = CreateExperimentalProbabilityTask(language, _random.Next(10, 30));
@@ -63,8 +69,8 @@ public sealed partial class ElementaryQuizGenerator
         string text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.018", ("source_ActionText", $"{source.ActionText}"));
         for (int index = 0; index < batchCount; index++)
         {
-            int total = _random.Next(10, 31);
-            int success = boundary == 0 ? 0 : boundary == 1 ? total : _random.Next(1, total);
+            int total = facts.Next(10, 31);
+            int success = boundary == 0 ? 0 : boundary == 1 ? total : facts.Next(1, total);
             actualTotal[index] = total; actualSuccess[index] = success;
             totals[index] = t.Given("total-" + index, total);
             if (level >= 4 && index == batchCount - 1)
@@ -101,6 +107,6 @@ public sealed partial class ElementaryQuizGenerator
         int valid = actualTotal.Sum() - invalid, favorableTrials = complement ? valid - actualSuccess.Sum() : actualSuccess.Sum();
         text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.027", ("eventText", $"{eventText}"));
         return t.Build("observed-relations-" + level, text,
-            probability: new(source.Scenario.ContextId, eventText, favorableTrials, valid, true));
+            probability: new(source.Scenario.ContextId, eventText, favorableTrials, valid, true)) with { StoryContextId = source.Scenario.ContextId };
     }
 }

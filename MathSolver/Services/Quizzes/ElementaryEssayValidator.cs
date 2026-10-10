@@ -66,19 +66,27 @@ internal static partial class ElementaryEssayValidator
             {
                 BigInteger dividend = BigInteger.Parse(division.Groups["a"].Value), divisor = BigInteger.Parse(division.Groups["b"].Value);
                 BigInteger quotient = BigInteger.Parse(division.Groups["q"].Value), remainder = BigInteger.Parse(division.Groups["r"].Value);
+                var quotientOrigins = ReadOrigins($"({dividend}-{remainder})/{divisor}");
+                var remainderOrigins = ReadOrigins($"{dividend}-{quotient}*{divisor}");
                 bool okay = divisor > 0 && remainder >= 0 && remainder < divisor && dividend == divisor * quotient + remainder
-                    && contract.Facts.Contains(dividend.ToString()) && contract.Facts.Contains(divisor.ToString());
+                    && (contract.Kind == QuizProblemKind.Remainder
+                        ? ReadOrigins(dividend.ToString()).Count > 0 && ReadOrigins(divisor.ToString()).Count > 0
+                        : contract.Facts.Contains(dividend.ToString()) && contract.Facts.Contains(divisor.ToString()));
                 reports.Add(new(index + 1, line, okay, okay ? EssayAnswerError.None : EssayAnswerError.WrongEquationResult,
                     divisor > 0 ? $"{dividend / divisor} ({(QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.004"))} {dividend % divisor})" : (QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.005")),
                     $"{quotient} ({(QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.006"))} {remainder})"));
                 if (okay)
                 {
-                    tracker.Remember(V.Create(quotient, 1), tracker.Read($"({dividend}-{remainder})/{divisor}"));
-                    tracker.Remember(V.Create(remainder, 1), tracker.Read($"{dividend}-{quotient}*{divisor}"));
-                    for (int target = 0; contract.Type != ElementaryQuizType.MinimumGroups && target < achieved.Length; target++)
+                    tracker.Remember(V.Create(quotient, 1), quotientOrigins);
+                    tracker.Remember(V.Create(remainder, 1), remainderOrigins);
+                    for (int target = 0; (contract.Type != ElementaryQuizType.MinimumGroups || remainder.IsZero) && target < achieved.Length; target++)
                         if (contract.Type == ElementaryQuizType.MixedNumber
                             ? contract.Answers[target].Value == new ReducedFraction(dividend, divisor)
-                            : contract.Answers[target].Value == new ReducedFraction(quotient, 1) || contract.Answers[target].Value == new ReducedFraction(remainder, 1))
+                            : (contract.Type == ElementaryQuizType.Leftovers || target == 1
+                                ? contract.Answers[target].Value == new ReducedFraction(remainder, 1)
+                                    && remainderOrigins.Any(origin => targets[target].Any(origin.Equivalent))
+                                : contract.Answers[target].Value == new ReducedFraction(quotient, 1)
+                                    && quotientOrigins.Any(origin => targets[target].Any(origin.Equivalent))))
                         { achieved[target] = true; tracker.Remember(ToValue(contract.Answers[target].Value), targets[target]); }
                 }
                 continue;

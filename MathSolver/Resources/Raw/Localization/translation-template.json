@@ -1677,7 +1677,8 @@
     "Quiz.Elementary.ReadProtractor": "Đọc thước đo góc",
     "Quiz.Elementary.ReadThermometer": "Đọc nhiệt kế",
     "Quiz.Elementary.SortData": "Phân loại và kiểm đếm số liệu",
-    "Quiz.Elementary.CompleteBarChart": "Hoàn thiện số liệu biểu đồ cột"
+    "Quiz.Elementary.CompleteBarChart": "Hoàn thiện số liệu biểu đồ cột",
+    "Quiz.Elementary.FullGroups": "Số nhóm đầy"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

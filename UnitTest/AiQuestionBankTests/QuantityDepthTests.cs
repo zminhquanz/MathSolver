@@ -75,7 +75,7 @@ internal static class QuantityDepthTests
         foreach (var c in NativeCases())
         {
             var saved = await restored.TakeReasoningAsync(c.Family, c.BankVariant, c.Tier, c.Language);
-            Check(saved?.Contract.Story?.ContextVersion == 2, "Lost quantity catalogue version");
+            Check(saved?.Contract.Story?.ContextVersion == NarrativeContextExpansion.Version, "Lost quantity catalogue version");
             ProseExpansionTests.VerifyPractice(saved!.Contract.FreshFacts(new(31)), saved.Draft);
         }
         Console.WriteLine($"Quantity depth: PASS {count} current/legacy profiles, 1–5 stars, Vietnamese/English; conservation, capacities, semantic rejection, grading, SQLite and Excel.");

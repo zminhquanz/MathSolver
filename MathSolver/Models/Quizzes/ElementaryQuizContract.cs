@@ -21,7 +21,8 @@ public enum ElementaryQuizType
     Parity, RomanNumerals, OrderNumbers, RoundWholeNumber, EstimateSum, LetterExpression,
     FractionPicture, FractionTerms, EquivalentFraction, OrderFractions,
     SpatialPosition, IdentifyLine, Midpoint, CircleParts, ShapeNet, TriangleKind,
-    ReadRuler, ReadProtractor, ReadThermometer, SortData, CompleteBarChart
+    ReadRuler, ReadProtractor, ReadThermometer, SortData, CompleteBarChart,
+    FullGroups
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,

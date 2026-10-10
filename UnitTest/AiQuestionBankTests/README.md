@@ -482,3 +482,51 @@ Evidence is written under `artifacts/verification/quantity-depth-model-*`.
 
 `--narrative-depth-evidence <model.db3>` can replay those saved outputs against
 the current source without modifying the evidence database or rerunning inference.
+
+## Packing, time and measurement activity depth
+
+`--activity-depth` covers 1,598 profiles: all current packing/time/measurement
+contexts, supported subtypes, five tiers and both languages, plus historical
+versions 0–2. It independently checks floor/remainder/ceiling answers, total and
+working capacities, next-day clock arithmetic, included pauses, distinct sessions
+and dimensional conversion. Fresh values are graded in all answer modes. It also
+rejects changed targets, day relationships, variable roles and foreign text, and
+checks 45 SQLite/Excel records, prose deduplication and context-version preservation.
+Included in the default full regression run.
+
+`--activity-depth-model <model.gguf>` runs 45 actual native cases: four packing
+targets, two time types and three measurement dimensions at each star tier.
+Languages alternate by profile; new packing activities rotate, higher-star
+elapsed time uses night travel, and measurements sample the new material
+activities. This is representative sampling, not the full bilingual context
+matrix. Token streaming and metrics, validation, SQLite reuse, fresh calculation
+and grading, and model disposal are checked. Evidence is written under
+`artifacts/verification/activity-depth-model-*`.
+
+`--activity-depth-packing-english-model <model.gguf>` reruns the ten English
+packing cases after an English wording edit. `--activity-depth-evidence <dir1>
+<dir2> ...` reads native SQLite evidence against the current source. Later
+directories replace earlier results for the same profile; all 45 profiles must
+validate and grade with fresh numbers. It never writes the evidence databases.
+
+## Next AI forms
+
+`--next-ai` checks 2,160 profiles across pictographs, classification, missing bars,
+map scale, likelihood and experimental frequency at all five stars in VI/EN.
+It independently checks legend arithmetic, observation counts/exclusions, hidden
+answers, map direction/units/scale limits, sampling and observed-frequency math.
+It verifies grammar, rejects changed conditions/literal answers/foreign prose,
+grades fresh data in every answer mode, and round-trips 60 templates through
+SQLite, Excel and bank practice. Included in the default regression run.
+
+`--next-ai-model <model.gguf> [evidence-directory]` runs 30 representative native
+profiles: each of the six subtypes at every star tier, alternating VI/EN. It checks
+streamed text and token metrics, validation, SQLite insertion, fresh answers and
+grading, and deterministic model disposal. The full context/language matrix is
+covered by C# tests; native inference is representative sampling. Evidence goes
+under `artifacts/verification/next-ai-model-*`, including per-attempt results.
+An optional existing evidence directory resumes an interrupted test: stored
+native outputs must validate and grade against the current schema before reuse.
+`--next-ai-evidence <directory>` replays all 30 native SQLite outputs against the
+current source with independent arithmetic and fresh-data grading, without
+modifying the evidence database or running inference again.

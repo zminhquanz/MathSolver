@@ -1684,7 +1684,7 @@ public partial class MathPuzzlePage : ContentPage
                 _currentQuestion = selected;
             }
 
-            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry
+            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry or QuizProblemKind.Probability
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: not null }
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Time } time
@@ -1692,7 +1692,7 @@ public partial class MathPuzzlePage : ContentPage
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionQuantity
                     && ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionQuantity.Type)
                 || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurement
-                    && ElementaryQuizGenerator.MeasurementStoryTypes.Contains(measurement.Type))
+                    && ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurement.Type))
             {
                 var selected = await AiQuestionBank.Current.Practice.SelectReasoningAsync(_currentQuestion,
                     curriculumContext.Tier, AppLanguageManager.CurrentLanguage);

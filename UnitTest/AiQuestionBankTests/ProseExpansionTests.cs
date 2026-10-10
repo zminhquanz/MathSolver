@@ -35,7 +35,8 @@ internal static class ProseExpansionTests
             foreach (var draft in drafts)
             {
                 var validation = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), c);
-                Check(validation.IsValid, $"Reviewed variant rejected: {family}/{variant}: {validation.ErrorCode}/{validation.ErrorDetails}");
+                Check(validation.IsValid, $"Reviewed variant rejected: {family}/{variant}/{tier}/{language}: {validation.ErrorCode}/{validation.ErrorDetails}\n"
+                    + QuestionBankStore.SerializeDraft(draft) + "\n" + JsonSerializer.Serialize(ReasoningStoryCatalogue.Lesson(c).FactPhrasings));
                 VerifyPractice(c, draft);
             }
             BasicQuestionContract fresh;

@@ -610,9 +610,9 @@ decimal practice, comparison and rounding are not replaced by bank prose.
 The six added activities and their physical limits are described below.
 
 Packing (family 11) and time (family 12) use reviewed JSON wording. Packing
-separates minimum groups, leftovers only and the complete quotient/remainder
+separates full groups, minimum groups, leftovers only and the complete quotient/remainder
 tuple. ExactAnswers retains every result; display/grading checks all components
-and units. See [PACKING_TIME_AI.md](../../PACKING_TIME_AI.md).
+and units. The activity-depth policy is described below.
 
 Fraction quantity (family 13) adds finding a fractional part and recovering the
 whole, including the existing five-star remainder-based structures. Twenty-three
@@ -634,7 +634,8 @@ with every available setting. Geometry/data remain limited to the supported appl
 variants; direct numerical and visual recognition exercises continue to use C#.
 
 `Story.ContextVersion=1` selects the six priority families' extended context lists.
-Version 2 also selects the decimal and fraction-quantity extensions. A missing property
+Version 2 also selects the decimal and fraction-quantity extensions. Version 3
+adds packing, time and measurement activity clauses and context lists. A missing property
 deserializes as zero, retaining the original seeded catalogue for existing SQLite
 and Excel records. Base lists must keep their order and meaning. Future context
 expansions must retain each historical catalogue version, rather than appending
@@ -676,3 +677,86 @@ Run `--quantity-depth` for all current and historical profiles, both languages,
 all five tiers, role/language rejection, physical limits, grading and storage.
 Run `--quantity-depth-model <model.gguf>` for streamed native inference of thirty
 representative cases, validation, SQLite reuse, fresh answers and model disposal.
+
+## Packing, time and measurement activity depth
+
+Context version 3 uses ten packing situations, nine time activities and fourteen
+measurement situations. Both C# practice and AI use the same selected activity,
+typed quantity roles, units and exact calculation. The prompt contains one
+scenario and the relevant target guard; grammar and validation preserve that
+target. SQLite/Excel store the context version and prose, then practice generates
+fresh quantities. Versions 0–2 retain their previous seeded packing/time/measurement
+catalogues and wording.
+
+Packing has four targets: full groups only, unplaced items only, minimum groups
+including a partly filled group, and a full-group/remainder tuple. `FullGroups`
+is appended to the enum to preserve every existing numeric subtype ID and has
+its own picker label and thumbnail. New contexts add school teams, nursery trays,
+sports teams, shirts packed into boxes and fruit crates. One star divides exactly;
+two stars always has a nonzero remainder; three combines distinct batches; four
+removes an explicitly served quantity; five also subtracts reserved spaces from
+nominal capacity. Physical group/total capacities apply independently of stars.
+Essay grading accepts school division-with-remainder after intermediate totals or
+working capacities have been calculated. It tracks their derivation and checks
+whether the requested result is the quotient, remainder or rounded-up group count.
+
+Time activities supply the factual clauses rather than a generic introduction.
+Reading, training, craft work, scheduled tasks, performances, cooking and workshop
+shifts have daytime ranges. Tourism and night travel become available at three
+stars and may cross midnight. Clock times retain explicit same-day/next-day
+wording. Converted durations are separate consecutive intervals; included rest
+is removed once, and an extra session lies outside the preceding interval.
+Reading clocks and calendar exercises retain their existing C# path.
+
+Measurement activities add animal feed, harvested mangoes, orange juice, watering,
+fencing wire and gift cord. Existing rice, flour, vegetables, collected paper,
+water, milk, ribbon and fabric contexts now have their own actions. One star
+converts a large unit to a small unit; two reverses the conversion; three combines
+mixed units and an addition; four uses some prepared material; five converts the
+remaining quantity back to the large unit. Mass, capacity and length remain
+separate dimensions. No implicit bottle counts, cutting yields or new rounding
+relations are introduced into these conversion models.
+
+Run `--activity-depth` for the bilingual 1–5-star matrix and historical replay.
+Run `--activity-depth-model <model.gguf>` for 45 representative native cases;
+the test streams tokens, validates/saves prose, checks fresh-number grading and
+unloads the model in `finally`. See the test README for evidence replay commands.
+
+## Pictographs, classification, missing bars, map scale and probability
+
+The AI picker now exposes all eight data subtypes, map scale under Measurement,
+and a separate Probability family. Existing family/subtype IDs are preserved.
+The numeric and visual generators remain shared with ordinary C# practice.
+
+| Form | 1–2 stars | 3–5 stars |
+| --- | --- | --- |
+| Pictograph | Read a category using its symbol key | Total selected categories, total all categories, then combined difference |
+| Classification | Count the three categories in one observation list | Combine distinct batches, then exclude explicitly invalid entries |
+| Complete bar chart | Infer one hidden category from observations | Combine batches and remove invalid entries before filling the bar |
+| Map scale | Map centimetres to actual metres | Convert to kilometres, combine sections, then find map length from mixed actual units |
+| Probability | Classify an event and its complement; observed frequency | Keep replacement/without-replacement conditions, combine trial batches, derive failures and exclude invalid failed trials |
+
+Data contracts retain category IDs, target IDs, hidden cells and typed observation
+batches. C# generates the symbol key, lists, chart values and answers. Observation
+lists are immutable prose bindings; the LLM cannot reorder, invent or remove
+entries. A measurement/point record explicitly defines the amount represented by
+one entry. Classification hides all three counts before grading; completion hides
+only the requested bar. Rebuilding the seeded data contract checks visual values,
+legend, observations, exclusions, units and the target independently of prose.
+
+Map contexts have star limits and realistic scale caps: playground/garden/park
+plans for 1–2 stars, and walking, town and regional maps for 3–5 stars. Map and
+actual units and conversion direction remain C# facts.
+
+Probability uses two subtypes: likelihood classification and experimental
+frequency. C# retains the event, equal-likelihood/sampling assumptions, complement
+and validity rules. Zero/all observed successes never assert impossibility or
+certainty of the next trial. A separate fact seed refreshes counts while retaining
+the chosen experiment and event; C# supplies the classification explanation.
+
+Prompts contain one selected situation and JSON example. Reviewed clause grammar
+and semantic validation preserve roles, placeholders, units and question targets;
+they reject extra conditions, literal answers and foreign prose. SQLite and Excel
+keep the language template and story seed. Practice reuses it with fresh C# data,
+keeping charts and requested categories aligned. This remains controlled wording
+generation, rather than unrestricted generation of new mathematical relations.

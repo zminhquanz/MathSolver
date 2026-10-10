@@ -1691,6 +1691,11 @@
       "context": "Math puzzles > Time > Read clock > Written answer.",
       "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
+    },
+    "Quiz.Elementary.FullGroups": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
     }
   },
   "placeholderNotes": {
@@ -9538,6 +9543,11 @@
     {
       "key": "Quiz.Elementary.MultiStepShare",
       "source": "Tổng hợp lượng rồi chia đều",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.FullGroups",
+      "source": "Số nhóm đầy",
       "mode": "exact"
     }
   ],

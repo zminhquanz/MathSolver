@@ -110,8 +110,8 @@ public partial class AiQuestionBankPage : ContentPage
         ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
             LocalizationService.TranslateKey("FractionBank.Title"), LocalizationService.TranslateKey("Quiz.ProblemTwoNumbers"),
             LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage"),
-            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime"), LocalizationService.TranslateKey("Quiz.ProblemFractionSkills"), LocalizationService.TranslateKey("Quiz.ProblemGeometry"), LocalizationService.TranslateKey("Quiz.ProblemData") }; ProblemPicker.SelectedIndex = (int)_family;
-        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime", "Quiz.ProblemFractionSkills", "Quiz.ProblemGeometry", "Quiz.ProblemData" });
+            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime"), LocalizationService.TranslateKey("Quiz.ProblemFractionSkills"), LocalizationService.TranslateKey("Quiz.ProblemGeometry"), LocalizationService.TranslateKey("Quiz.ProblemData"), LocalizationService.TranslateKey("Quiz.ProblemProbability") }; ProblemPicker.SelectedIndex = (int)_family;
+        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime", "Quiz.ProblemFractionSkills", "Quiz.ProblemGeometry", "Quiz.ProblemData", "Quiz.ProblemProbability" });
         StarsPicker.ItemsSource = Enumerable.Range(1, 5).Select(n => new string('★', n)).ToArray();
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
@@ -171,8 +171,10 @@ public partial class AiQuestionBankPage : ContentPage
         bool streaming = item?.Question is null && preview.Length > 0;
         PreviewStreamingTextLabel.IsVisible = streaming;
         PreviewStreamingTextLabel.Text = streaming ? preview : "";
-        PreviewText.IsVisible = !streaming;
-        PreviewText.Expression = item?.Question?.WordProblem.ProblemText ?? T("NoPreview");
+        PreviewText.IsVisible = item?.Question is not null;
+        PreviewText.Expression = item?.Question?.WordProblem.ProblemText ?? "";
+        PreviewReadOnlyHint.IsVisible = item?.Question is not null || streaming;
+        PreviewActionFooter.IsVisible = item?.Question is not null;
         PreviewFactTable.Table = item?.Question?.WordProblem.FactTable;
         bool fractionStory = item?.Question?.Contract.Family == BankQuestionFamily.Fraction;
         PreviewFractionSolution.IsVisible = fractionStory;
@@ -190,6 +192,25 @@ public partial class AiQuestionBankPage : ContentPage
                 && (!_bank.Generation.IsRunning || _bank.Generation.Snapshot.Options?.AutoInsert != true));
         ShareButton.IsEnabled = item?.Question is not null;
         RenderDiagnostics(item);
+    }
+
+    private void OnPreviewActionsSizeChanged(object? sender, EventArgs e)
+    {
+        if (PreviewActions.Width <= 0 || InsertButton is null || ShareButton is null) return;
+        // Use the available card width so resizing a desktop window also stacks the actions.
+        bool wide = PreviewActions.Width >= 520;
+        if (wide == (PreviewActions.ColumnDefinitions.Count == 2)) return;
+
+        Grid.SetRow(ShareButton, 0);
+        Grid.SetColumn(ShareButton, 0);
+        PreviewActions.ColumnDefinitions.Clear();
+        PreviewActions.ColumnDefinitions.Add(new() { Width = GridLength.Star });
+        if (wide) PreviewActions.ColumnDefinitions.Add(new() { Width = GridLength.Star });
+        PreviewActions.RowDefinitions.Clear();
+        PreviewActions.RowDefinitions.Add(new() { Height = GridLength.Auto });
+        if (!wide) PreviewActions.RowDefinitions.Add(new() { Height = GridLength.Auto });
+        Grid.SetRow(ShareButton, wide ? 0 : 1);
+        Grid.SetColumn(ShareButton, wide ? 1 : 0);
     }
 
     private void RenderDiagnostics(AiQuestionItem? item)

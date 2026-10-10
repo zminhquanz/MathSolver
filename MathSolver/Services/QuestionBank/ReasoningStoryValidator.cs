@@ -64,6 +64,7 @@ public static class ReasoningStoryValidator
             return (vi ? "Viết MẪU bài toán có lời văn bằng tiếng Việt, dùng cách diễn đạt tương đương đã duyệt. C# sinh số và tính đáp án. Giữ nguyên từng role, step, biến {f...}/{v...}, đơn vị, thứ tự sự việc và đối tượng hỏi. Không điền số hay tên vào biến; không thêm sự kiện, điều kiện hoặc phép tính. Chỉ trả JSON đầy đủ như ví dụ, không giải bài. Khi mẫu cũ đã có, đổi câu dữ kiện theo lựa chọn hợp lệ; chỉ đổi câu dẫn lời giải không tạo đề mới."
                 : "Write a word-problem TEMPLATE in English using reviewed equivalent wording. C# generates numbers and calculates answers. Keep every role, step, literal {f...}/{v...} placeholder, unit, chronology and target. Do not fill variables, add events, conditions or formulas. Return only complete JSON as shown; do not solve. If wording already exists, choose different approved fact clauses; changing only solution leads is not novel.")
                 + "\n" + c.Family + "; stars=" + (int)c.Tier + "; context=" + lesson.Context
+                + ActivityGuidance(c, vi)
                 + (c.Family != BankQuestionFamily.FractionQuantity ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
                     : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
@@ -83,6 +84,40 @@ public static class ReasoningStoryValidator
             + "\nRoles: " + string.Join("; ", lesson.Quantities.Select(q => "{" + q.Id + "}=" + q.Role))
             + "\nReturn only JSON following this example:\n" + QuestionBankStore.SerializeDraft(ReasoningStoryCatalogue.Draft(c))
             + (correction is null ? "" : "\nRejected: " + correction + ". Rewrite the full JSON.");
+    }
+
+    private static string ActivityGuidance(BasicQuestionContract c, bool vi)
+    {
+        if (c.Family == BankQuestionFamily.Data)
+            return "\n" + (vi ? "C# giữ danh sách quan sát, chú giải và hình. Không đổi giá trị mỗi biểu tượng, nhóm hỏi hoặc các mục bị loại; không tiết lộ cột ẩn."
+                : "C# owns observations, legend and figure. Preserve symbol value, target categories and excluded entries; do not reveal hidden bars.");
+        if (c.Family == BankQuestionFamily.Measurement && c.BankVariant == (int)MathSolver.Models.ElementaryQuizType.MapScale)
+            return "\n" + (vi ? "Giữ rõ độ dài trên bản đồ và ngoài thực tế, tỉ lệ cùng đơn vị; không đảo chiều đại lượng cần tìm."
+                : "Keep map length and actual distance distinct; preserve scale, units and the requested direction of conversion.");
+        if (c.Family == BankQuestionFamily.Probability)
+            return "\n" + (vi ? "Giữ nguyên biến cố, có/không hoàn lại và kết quả quan sát. Tần suất quan sát không khẳng định lần thử tiếp theo chắc chắn hay không thể xảy ra."
+                : "Preserve the event, replacement conditions and observed results. Observed frequency does not make the next trial certain or impossible.");
+        if (c.Family == BankQuestionFamily.Remainder)
+        {
+            string target = (MathSolver.Models.ElementaryQuizType)c.BankVariant switch
+            {
+                MathSolver.Models.ElementaryQuizType.FullGroups => vi ? "Chỉ hỏi số nhóm đầy." : "Ask only for full groups.",
+                MathSolver.Models.ElementaryQuizType.Leftovers => vi ? "Chỉ hỏi lượng chưa xếp." : "Ask only for unplaced items.",
+                MathSolver.Models.ElementaryQuizType.MinimumGroups => vi ? "Hỏi số nhóm tối thiểu để xếp hết, kể cả nhóm chưa đầy." : "Ask for the minimum groups for everything, including a partly filled group.",
+                _ => vi ? "Hỏi cả số nhóm đầy và lượng chưa xếp." : "Ask for both full groups and unplaced items."
+            };
+            return "\n" + target + (c.Tier != MathSolver.Models.CurriculumTier.FiveStars ? "" : vi
+                ? " Chỗ dành riêng không dùng để xếp lượng đang xét." : " Reserved spaces are unavailable for this batch.");
+        }
+        if (c.Family != BankQuestionFamily.Time) return "";
+        bool clockTimes = c.BankVariant == (int)MathSolver.Models.ElementaryQuizType.ElapsedTime;
+        bool pause = (int)c.Tier >= (clockTimes ? 4 : 3);
+        return "\n" + (clockTimes
+            ? vi ? "Giữ rõ thời điểm bắt đầu/kết thúc và cùng ngày/ngày hôm sau." : "Preserve start/end clock times and same-day/next-day wording."
+            : vi ? "Các khoảng thời gian nối tiếp, không trùng nhau." : "Durations follow one another without overlap.")
+            + (!pause ? "" : vi ? " Khoảng nghỉ đã nằm trong tổng, chỉ trừ một lần." : " Rest is already included; subtract it once.")
+            + (!clockTimes || c.Tier != MathSolver.Models.CurriculumTier.FiveStars ? "" : vi
+                ? " Lượt bổ sung nằm ngoài khoảng trước." : " The extra session is outside the earlier interval.");
     }
 
     internal static string Grammar(BasicQuestionContract c, IReadOnlySet<string>? excluded = null)

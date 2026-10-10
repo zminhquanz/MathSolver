@@ -9,6 +9,9 @@ internal static partial class PuzzleTests
     {
         string[] earlyContexts = ["library", "sports", "craft", "schedule"];
         string[] lateContexts = ["tourism", "events", "schedule"];
+        string[] Allowed(ElementaryQuizType type, CurriculumTier tier) => ElementaryQuizGenerator.TimeStoryTypes.Contains(type)
+            ? ElementaryQuizGenerator.TimeStoryContextIds(tier)
+            : tier >= CurriculumTier.ThreeStars ? lateContexts : earlyContexts;
         CurriculumTier[] changes = [CurriculumTier.OneStar, CurriculumTier.ThreeStars,
             CurriculumTier.TwoStars, CurriculumTier.FiveStars, CurriculumTier.FourStars,
             CurriculumTier.OneStar, CurriculumTier.FiveStars, CurriculumTier.TwoStars];
@@ -26,7 +29,7 @@ internal static partial class PuzzleTests
 
                 foreach (var tier in Enum.GetValues<CurriculumTier>())
                 {
-                    var allowed = tier >= CurriculumTier.ThreeStars ? lateContexts : earlyContexts;
+                    var allowed = Allowed(type, tier);
                     var seen = new HashSet<string>();
                     // Two cycles include a full cycle even if the first starts midway.
                     for (int index = 0; index < allowed.Length * 2; index++)
@@ -47,7 +50,7 @@ internal static partial class PuzzleTests
         void Check(ArithmeticQuizQuestion question, CurriculumTier tier)
         {
             var contract = question.ElementaryProblem!;
-            var allowed = tier >= CurriculumTier.ThreeStars ? lateContexts : earlyContexts;
+            var allowed = Allowed(contract.Type, tier);
             Require(allowed.Contains(contract.StoryContextId), "Time story does not belong to the selected star range.");
             Require(contract.Reasoning?.Tier == tier && contract.Answers.Count > 0,
                 "Switching time contexts lost the selected difficulty or answers.");

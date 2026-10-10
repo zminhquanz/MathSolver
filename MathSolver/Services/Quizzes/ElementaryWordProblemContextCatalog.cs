@@ -27,7 +27,7 @@ internal static class FractionQuantityActivityCatalog
 
 public sealed record DataChartStoryContext(string Description, IReadOnlyList<string> Labels,
     string Unit, string QuantityName, int Capacity = 5000, string ContextId = "",
-    IReadOnlyList<string>? CategoryIds = null);
+    IReadOnlyList<string>? CategoryIds = null, bool RequiresObservationUnit = false);
 
 public static class DataChartStoryContextCatalog
 {

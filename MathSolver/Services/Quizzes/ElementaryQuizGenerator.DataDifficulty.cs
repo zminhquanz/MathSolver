@@ -7,7 +7,8 @@ public sealed partial class ElementaryQuizGenerator
 {
     public static readonly ElementaryQuizType[] DataChartTypes = [ElementaryQuizType.ReadTable,
         ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal,
-        ElementaryQuizType.ChartDifference];
+        ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph,
+        ElementaryQuizType.SortData, ElementaryQuizType.CompleteBarChart];
 
     public ArithmeticQuizQuestion GenerateDataChart(ArithmeticQuizMode mode, ElementaryQuizType type,
         AppLanguage language, CurriculumTier tier, string contextId,
@@ -70,6 +71,8 @@ public sealed partial class ElementaryQuizGenerator
     {
         if (!DataChartTypes.Contains(type) || !Enum.IsDefined(tier) || seed < 0)
             throw new ArgumentException("InvalidDataChartProfile");
+        if (type is ElementaryQuizType.ReadPictograph or ElementaryQuizType.SortData or ElementaryQuizType.CompleteBarChart)
+            return CreateAdditionalDataChart(type, language, tier, seed, contextId, profile, questionKind);
         var t = new DifficultyBuilder(QuizProblemKind.Data, type, language, tier);
         t.Constant(2);
         int level = (int)tier;

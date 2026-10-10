@@ -251,6 +251,10 @@ internal sealed partial class QuizChoiceDrawable
                 Text("−", 52, 14, 25); break;
             case "remainder-minimum":
                 Cells(2, 2, 4, 10, 28, 16); Cells(2, 2, 1, 57, 28, 16); Text("+ 1", y: 72); break;
+            case "remainder-full":
+                Cells(2, 2, 4, 10, 20, 16); Cells(2, 2, 4, 57, 20, 16);
+                c.DrawRectangle(6, 16, 42, 42); c.DrawRectangle(53, 16, 42, 42);
+                Text("2", y: 71); break;
             case "remainder-leftovers":
                 c.DrawRectangle(8, 15, 48, 68);
                 for (int i = 0; i < 6; i++) c.FillCircle(20 + (i % 2) * 22, 29 + (i / 2) * 20, 5);

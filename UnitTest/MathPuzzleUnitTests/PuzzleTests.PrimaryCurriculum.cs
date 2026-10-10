@@ -55,7 +55,7 @@ internal static partial class PuzzleTests
         {
             var q = new ElementaryQuizGenerator(new Random(seed)).Generate(mode, kind, type, language, tier);
             var c = q.ElementaryProblem!;
-            Require(!c.RequiresSolution && PrimaryCurriculumCatalog.ForQuestion(q) is not null,
+            Require((!c.RequiresSolution || kind == QuizProblemKind.Data && tier >= CurriculumTier.ThreeStars) && PrimaryCurriculumCatalog.ForQuestion(q) is not null,
                 "Foundation tasks need a curriculum reference without invented solution sentences.");
             Require(c.ChoiceTexts is { Count: 4 } && c.ChoiceTexts.Distinct().Count() == 4
                 && c.ChoiceTexts.Count(choice => ElementaryEssayValidator.CheckAnswers(q, choice)) == 1,
@@ -95,8 +95,9 @@ internal static partial class PuzzleTests
             if (type == ElementaryQuizType.SortData)
             {
                 int sum = c.Answers.Sum(answer => (int)answer.Value.Numerator);
-                string source = c.ProblemText[(c.ProblemText.IndexOf(':') + 1)..].Split('.')[0];
-                Require(source.Split(',').Length == sum, "Tallies disagree with the observed list.");
+                var batches = c.DataChart!.Observations!;
+                Require(batches.Sum(batch => (batch.Excluded ? -1 : 1) * batch.CategoryIds.Count) == sum,
+                    "Tallies disagree with the observed and excluded lists.");
             }
             tested++;
         }

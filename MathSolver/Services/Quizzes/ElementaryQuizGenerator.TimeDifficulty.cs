@@ -4,11 +4,12 @@ namespace MathSolver.Services;
 
 public sealed partial class ElementaryQuizGenerator
 {
-    private ElementaryQuizContract CreateTimeDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
+    private ElementaryQuizContract CreateTimeDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier, TimeActivityContext? activity = null)
     {
         var t = new DifficultyBuilder(QuizProblemKind.Time, type, language, tier);
         int level = (int)tier;
-        string min = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.001"), hours = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.002"), days = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.003");
+        string Text(string suffix, params (string Key, string Value)[] values) => TimeActivityText(language, activity, suffix, values);
+        string min = Text("001"), hours = Text("002"), days = Text("003");
         t.Constant(60, 24);
         if (type == ElementaryQuizType.Calendar)
         {
@@ -27,25 +28,25 @@ public sealed partial class ElementaryQuizGenerator
                 int length = DateTime.DaysInMonth(year, month);
                 t.Constant(length);
                 expression = $"({length}-{start})";
-                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.004"), expression, days);
+                t.Step(Text("004"), expression, days);
                 for (int current = month + 1; current < endMonth; current++)
                 {
                     int fullMonth = DateTime.DaysInMonth(year, current);
                     t.Constant(fullMonth);
                     expression += $"+{fullMonth}";
-                    t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.005"), expression, days);
+                    t.Step(Text("005"), expression, days);
                 }
                 expression += $"+{end}";
             }
-            string text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.034", ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
+            string text = Text("034", ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
             if (level == 5)
             {
                 string paused = t.Given("paused-days", _random.Next(2, 7), days);
-                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.006"), expression, days);
+                t.Step(Text("006"), expression, days);
                 expression = $"({expression})-{paused}";
-                text = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.035", ("paused", $"{paused}"), ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
+                text = Text("035", ("paused", $"{paused}"), ("from_dd_MM_yyyy", $"{from:dd/MM/yyyy}"), ("to_dd_MM_yyyy", $"{to:dd/MM/yyyy}"), ("from_yyyy_MM_dd", $"{from:yyyy-MM-dd}"), ("to_yyyy_MM_dd", $"{to:yyyy-MM-dd}"));
             }
-            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.007"), expression, days);
+            t.Answer(Text("007"), expression, days);
             return t.Build(level switch { 1 => "same-month", 2 => "adjacent-months", 3 => "multiple-months", 4 => "leap-february", _ => "leap-interval-minus-pauses" }, text);
         }
         if (type == ElementaryQuizType.ReadClock)
@@ -54,11 +55,11 @@ public sealed partial class ElementaryQuizGenerator
             int minute = level switch { 1 => 0, 2 => _random.Next(1, 4) * 15, 3 => _random.Next(12) * 5, 4 => _random.Next(45, 60), _ => _random.Next(40, 60) };
             string h = t.Given("start-hour", hour), m = t.Given("start-minute", minute);
             var clock = new QuizVisualData("clock", [], [hour, minute], "", ScenarioId: "starting-clock");
-            string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.008");
+            string problem = Text("008");
             if (level <= 3)
             {
-                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.009"), h);
-                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.010"), m);
+                t.Answer(Text("009"), h);
+                t.Answer(Text("010"), m);
                 t.RequiresSolution = false;
             }
             else
@@ -69,59 +70,60 @@ public sealed partial class ElementaryQuizGenerator
                 if (level == 4)
                 {
                     elapsed = t.Given("advance-minutes", 15, min);
-                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.011", ("elapsed", $"{elapsed}"));
+                    problem = Text("011", ("elapsed", $"{elapsed}"));
                 }
                 else
                 {
                     string hourPart = t.Given("advance-hours", 1, hours), minutePart = t.Given("advance-minutes", 30, min);
                     string reduction = t.Given("subtract-minutes", 10, min);
                     elapsed = $"({hourPart}*60+{minutePart}-{reduction})";
-                    problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.012", ("hourPart", $"{hourPart}"), ("minutePart", $"{minutePart}"), ("reduction", $"{reduction}"));
-                    t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.013"), elapsed, min);
+                    problem = Text("012", ("hourPart", $"{hourPart}"), ("minutePart", $"{minutePart}"), ("reduction", $"{reduction}"));
+                    t.Step(Text("013"), elapsed, min);
                 }
-                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.014"), $"{m}+{elapsed}", min);
-                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.015"), $"{h}+{carry}/60");
-                t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.016"), $"{m}+{elapsed}-{carry}");
+                t.Step(Text("014"), $"{m}+{elapsed}", min);
+                t.Answer(Text("015"), $"{h}+{carry}/60");
+                t.Answer(Text("016"), $"{m}+{elapsed}-{carry}");
             }
             return t.Build(level <= 3 ? "read-clock-precision-" + level : "clock-after-interval-" + level, problem, clock);
         }
         if (type == ElementaryQuizType.TimeAddition)
         {
-            string h = t.Given("first-hours", _random.Next(1, 4), hours), m = t.Given("first-minutes", _random.Next(1, 5) * 10, min);
+            string h = t.Given("first-hours", _random.Next(1, activity is null ? 4 : activity.MaximumHours + 1), hours), m = t.Given("first-minutes", _random.Next(1, 5) * 10, min);
             string expression = $"{h}*60+{m}";
-            string problem = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.017", ("h", $"{h}"), ("m", $"{m}"));
-            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.018"), expression, min);
+            string problem = Text("017", ("h", $"{h}"), ("m", $"{m}"));
+            t.Step(Text("018"), expression, min);
             if (level >= 2)
             {
                 string extra = t.Given("extra-minutes", _random.Next(1, 5) * 10, min);
                 expression = $"({expression})+{extra}";
-                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.019", ("extra", $"{extra}"));
+                problem += Text("019", ("extra", $"{extra}"));
             }
             if (level >= 4)
             {
                 string other = t.Given("second-hours", _random.Next(1, 3), hours);
                 expression = $"({expression})+{other}*60";
-                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.020", ("other", $"{other}"));
-                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.021"), expression, min);
+                problem += Text("020", ("other", $"{other}"));
+                t.Step(Text("021"), expression, min);
             }
             if (level >= 3)
             {
                 string pause = t.Given("pause-minutes", _random.Next(1, 4) * 5, min);
                 expression = $"({expression})-{pause}";
-                problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.022", ("pause", $"{pause}"));
+                problem += Text("022", ("pause", $"{pause}"));
             }
             string unit = level == 5 ? hours : min;
             if (level == 5)
             {
-                t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.023"), expression, min);
+                t.Step(Text("023"), expression, min);
                 expression = $"({expression})/60";
             }
-            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.024"), expression, unit);
+            t.Answer(Text("024"), expression, unit);
             return t.Build("intervals-and-conversion-" + level,
-                problem + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.025", ("unit", $"{unit}")));
+                problem + Text("025", ("unit", $"{unit}")));
         }
         // Elapsed time uses explicit next-day wording, then excludes pauses or combines sessions.
-        int startHour = level <= 2 ? _random.Next(7, 10) : _random.Next(21, 24);
+        int startHour = activity is null ? level <= 2 ? _random.Next(7, 10) : _random.Next(21, 24)
+            : _random.Next(activity.StartHourMinimum, activity.StartHourMaximum + 1);
         int startMinute = level == 1 ? 10 : _random.Next(25, 50);
         int duration = level == 1 ? 20 : level == 2 ? 95 : 180;
         int ending = startHour * 60 + startMinute + duration;
@@ -131,24 +133,24 @@ public sealed partial class ElementaryQuizGenerator
         string endExpression = $"{eh}*60+{em}";
         if (ending >= 24 * 60) endExpression = $"24*60+{endExpression}";
         string elapsedExpression = $"({endExpression})-({sh}*60+{sm})";
-        string wording = QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.036", ("startHour", $"{startHour}"), ("endHour", $"{endHour}"), ("ending_24_60_ng_y_h_m_sau_c_ng_ng_y", $"{(ending >= 24 * 60 ? "ngày hôm sau" : "cùng ngày")}"), ("ending_24_60_the_next_day_on_the_same_day", $"{(ending >= 24 * 60 ? "the next day" : "on the same day")}"), ("startMinute_00", $"{startMinute:00}"), ("endMinute_00", $"{endMinute:00}"));
-        t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.026"), $"{sh}*60+{sm}", min);
-        t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.027"), endExpression, min);
+        string wording = Text("036", ("startHour", $"{startHour}"), ("endHour", $"{endHour}"), ("ending_24_60_ng_y_h_m_sau_c_ng_ng_y", $"{(ending >= 24 * 60 ? "ngày hôm sau" : "cùng ngày")}"), ("ending_24_60_the_next_day_on_the_same_day", $"{(ending >= 24 * 60 ? "the next day" : "on the same day")}"), ("startMinute_00", $"{startMinute:00}"), ("endMinute_00", $"{endMinute:00}"));
+        t.Step(Text("026"), $"{sh}*60+{sm}", min);
+        t.Step(Text("027"), endExpression, min);
         if (level >= 4)
         {
-            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.028"), elapsedExpression, min);
+            t.Step(Text("028"), elapsedExpression, min);
             string pause = t.Given("pause-minutes", _random.Next(10, 31), min);
             elapsedExpression = $"({elapsedExpression})-{pause}";
-            wording += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.029", ("pause", $"{pause}"));
+            wording += Text("029", ("pause", $"{pause}"));
         }
         if (level == 5)
         {
             string second = t.Given("second-session", _random.Next(20, 61), min);
-            t.Step(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.030"), elapsedExpression, min);
+            t.Step(Text("030"), elapsedExpression, min);
             elapsedExpression = $"({elapsedExpression})+{second}";
-            wording += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.031", ("second", $"{second}"));
+            wording += Text("031", ("second", $"{second}"));
         }
-        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.032"), elapsedExpression, min);
-        return t.Build("elapsed-" + level, wording + QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.033"));
+        t.Answer(Text("032"), elapsedExpression, min);
+        return t.Build("elapsed-" + level, wording + Text("033"));
     }
 }

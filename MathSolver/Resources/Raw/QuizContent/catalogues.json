@@ -164,7 +164,12 @@
       {"Key":"FindXBank.Role.Subtrahend","IllustrationId":"find-x-difference","DescriptionKey":"Choice.Description.find-x"},
       {"Key":"FindXBank.Role.Factor","IllustrationId":"find-x-product","DescriptionKey":"Choice.Description.find-x"},
       {"Key":"FindXBank.Role.Dividend","IllustrationId":"find-x-dividend","DescriptionKey":"Choice.Description.find-x"},
-      {"Key":"FindXBank.Role.Divisor","IllustrationId":"find-x-quotient","DescriptionKey":"Choice.Description.find-x"}
+      {"Key":"FindXBank.Role.Divisor","IllustrationId":"find-x-quotient","DescriptionKey":"Choice.Description.find-x"},
+      {
+        "Key": "Quiz.Elementary.FullGroups",
+        "IllustrationId": "remainder-full",
+        "DescriptionKey": "Curriculum.Requirement.Remainder.FullGroups"
+      }
     ],
     "AppliedScenes": [
       {
@@ -6046,7 +6051,22 @@
         "Coverage":  "Planned",
         "Constraints":  "Not yet implemented as a student-controlled interactive activity.",
         "SourcePages":  "21-46"
-    }
-]
+    },
+      {
+        "Id": "Remainder.FullGroups",
+        "Kind": "Remainder",
+        "Subtype": "FullGroups",
+        "Grades": [
+          3,
+          4,
+          5
+        ],
+        "RequirementId": "Curriculum.Requirement.Remainder.FullGroups",
+        "Scope": "Core",
+        "Coverage": "Partial",
+        "Constraints": "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages": "21-46"
+      }
+    ]
   }
 }

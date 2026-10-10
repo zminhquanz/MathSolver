@@ -1792,7 +1792,8 @@
     "Quiz.Elementary.ReadProtractor": "Read a protractor",
     "Quiz.Elementary.ReadThermometer": "Read a thermometer",
     "Quiz.Elementary.SortData": "Classify and tally data",
-    "Quiz.Elementary.CompleteBarChart": "Complete bar-chart data"
+    "Quiz.Elementary.CompleteBarChart": "Complete bar-chart data",
+    "Quiz.Elementary.FullGroups": "Full groups"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

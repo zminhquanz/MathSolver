@@ -6,13 +6,12 @@ namespace MathSolver.Services;
 public sealed partial class ElementaryQuizGenerator
 {
     private ElementaryQuizContract? CreateDifficultyContract(QuizProblemKind kind, ElementaryQuizType type,
-        AppLanguage language, CurriculumTier tier) => IsFoundationSkill(type)
+        AppLanguage language, CurriculumTier tier) => kind == QuizProblemKind.Data
+        ? CreateDataDifficulty(type, language, tier) : IsFoundationSkill(type)
         ? CreateFoundation(kind, type, language, tier) : kind switch
     {
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
-        QuizProblemKind.Data when type == ElementaryQuizType.ReadPictograph => CreatePictograph(language, tier),
-        QuizProblemKind.Data => CreateDataDifficulty(type, language, tier),
-        QuizProblemKind.Time => AddTimeStory(CreateTimeDifficulty(type, language, tier)),
+        QuizProblemKind.Time => TimeStoryTypes.Contains(type) ? CreateTimeStory(type, language, tier) : AddTimeStory(CreateTimeDifficulty(type, language, tier)),
         QuizProblemKind.Measurement when type == ElementaryQuizType.MapScale => CreateMapScale(language, tier),
         QuizProblemKind.Measurement when MeasurementStoryTypes.Contains(type) => CreateMeasurementStory(type, language, tier),
         QuizProblemKind.Measurement => CreateMeasurementDifficulty(type, language, tier),

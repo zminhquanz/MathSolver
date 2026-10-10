@@ -40,6 +40,8 @@ internal static partial class PuzzleTests
                     Require(c.Answers[0].Value.Numerator == quotient + (remainder == 0 ? 0 : 1), "Minimum containers must round up only when needed.");
                 else if (type == ElementaryQuizType.Leftovers)
                     Require(c.Answers.Count == 1 && c.Answers[0].Value.Numerator == remainder, "Leftovers must ask for the remainder only.");
+                else if (type == ElementaryQuizType.FullGroups)
+                    Require(c.Answers.Count == 1 && c.Answers[0].Value.Numerator == quotient, "Full groups must use the integer quotient only.");
                 else Require(c.Answers.Count == 2 && c.Answers[0].Value.Numerator == quotient && c.Answers[1].Value.Numerator == remainder, "Full containers must not round up.");
                 CheckExample(question);
                 var sample = EssayCombinedInputParser.Parse(c.SolutionText, c.RequiresSolution, true);

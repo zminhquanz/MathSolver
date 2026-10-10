@@ -61,15 +61,56 @@ public static partial class QuizContentValidation
         {
             var ids = new HashSet<string>(StringComparer.Ordinal);
             var categories = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var row in measurementContexts.EnumerateArray())
+            foreach (var row in measurementContexts.EnumerateArray().Concat(
+                pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList + ".Extensions", out var measuredExtra)
+                    ? measuredExtra.EnumerateArray().AsEnumerable() : []))
             {
                 if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate measurement story context.");
                 _ = RequiredString(row, "Subject");
                 string category = RequiredString(row, "Category");
                 if (category is not ("mass" or "capacity" or "length")) Fail("Invalid measurement story dimension.");
                 categories.Add(category);
+                if (row.TryGetProperty("Activity", out _))
+                {
+                    string activity = RequiredString(row, "Activity");
+                    if (activity != RequiredString(row, "Id") || row.GetProperty("MaximumQuantity").GetInt32() < 20)
+                        Fail("Invalid measurement activity limits.");
+                    for (int clause = 1; clause <= 10; clause++)
+                        if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.MeasurementStories.Activity." + activity + "." + clause.ToString("000")))
+                            Fail("Incomplete measurement activity: " + activity);
+                }
             }
             if (categories.Count != 3) Fail("Missing measurement story dimension.");
+        }
+        foreach (string key in new[] { "ElementaryQuizGenerator.PackingStories", "ElementaryQuizGenerator.PackingStories.Extensions" })
+        if (pack.Lists.TryGetValue(key, out var packing))
+        foreach (var row in packing.EnumerateArray())
+        {
+            if (!row.TryGetProperty("Activity", out _)) continue;
+            string id = RequiredString(row, "Id");
+            int capacity = row.GetProperty("Capacity").GetInt32(), size = row.GetProperty("MaximumSize").GetInt32();
+            if (RequiredString(row, "Activity") != id || size < 5 || capacity < size * 2 - 1)
+                Fail("Invalid packing activity capacity.");
+            foreach (int clause in Enumerable.Range(1, 11).Concat([18, 19]))
+                if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.Activity." + id + "." + clause.ToString("000")))
+                    Fail("Incomplete packing activity: " + id);
+        }
+        if (pack.Lists.TryGetValue("TimeActivityContexts", out var timeActivities))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (timeActivities.GetArrayLength() == 0 || !timeActivities.EnumerateArray().Any(row => row.GetProperty("MinimumStar").GetInt32() == 1))
+                Fail("Time activities need at least one introductory context.");
+            foreach (var row in timeActivities.EnumerateArray())
+            {
+                string id = RequiredString(row, "Id");
+                int minimum = row.GetProperty("MinimumStar").GetInt32(), first = row.GetProperty("StartHourMinimum").GetInt32(), last = row.GetProperty("StartHourMaximum").GetInt32();
+                if (!ids.Add(id) || minimum is < 1 or > 5 || first < 0 || last > 23 || first > last
+                    || last > 20 && minimum < 3 || row.GetProperty("MaximumHours").GetInt32() is < 1 or > 3)
+                    Fail("Invalid time activity range.");
+                foreach (string clause in ElementaryQuizGenerator.TimeActivityClauses)
+                    if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.Activity." + id + "." + clause))
+                        Fail("Incomplete time activity: " + id);
+            }
         }
         foreach (string listName in ReviewedNarrativePhrasings.ListNames)
         if (pack.Lists.TryGetValue(listName, out var phrasings))
@@ -86,6 +127,8 @@ public static partial class QuizContentValidation
                     : listName == ReviewedNarrativePhrasings.PercentageListName ? "PercentageQuizGenerator."
                     : listName == ReviewedNarrativePhrasings.GeometryListName ? "GeometryQuizGenerator.Difficulty."
                     : listName == ReviewedNarrativePhrasings.DataListName ? "ElementaryQuizGenerator.DataDifficulty."
+                    : listName == ReviewedNarrativePhrasings.MapScaleListName ? "ElementaryQuizGenerator.NewSkills.CreateMapScale."
+                    : listName == ReviewedNarrativePhrasings.ProbabilityListName ? "ElementaryQuizGenerator.Probability"
                     : listName == ReviewedNarrativePhrasings.ProportionListName ? "ProportionQuizGenerator.Narrative."
                     : listName == ReviewedNarrativePhrasings.DecimalListName ? "ElementaryQuizGenerator.DecimalStories."
                     : listName == ReviewedNarrativePhrasings.MeasurementListName ? "ElementaryQuizGenerator.MeasurementStories."
@@ -120,7 +163,10 @@ public static partial class QuizContentValidation
                         string text = choice.GetString()!;
                         string[] alternative = Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
                         if (!distinct.Add(text.Trim()) || text.Any(char.IsControl) || text.Length > 700
-                            || alternative.Length != parts.Length || Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", "").Any(char.IsDigit))
+                            || alternative.Length != parts.Length || (listName == ReviewedNarrativePhrasings.ProbabilityListName
+                                ? !Regex.Matches(Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", ""), @"\d+").Select(m => m.Value)
+                                    .SequenceEqual(Regex.Matches(Regex.Replace(texts[id].Text, @"\{[A-Za-z0-9_.-]+\}", ""), @"\d+").Select(m => m.Value))
+                                : Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", "").Any(char.IsDigit)))
                             Fail("Invalid reviewed phrasing: " + id);
                         for (int i = 0; i < parts.Length; i++)
                             if (!Placeholder().Matches(parts[i]).Select(m => m.Value)
@@ -260,6 +306,20 @@ public static partial class QuizContentValidation
                 CheckCapacity(context);
             }
         }
+        if (pack.Lists.TryGetValue("MapScaleContexts", out var maps))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var context in maps.EnumerateArray())
+            {
+                string id = RequiredString(context, "Id");
+                if (!ids.Add(id) || context.GetProperty("MinimumStar").GetInt32() is < 1 or > 5
+                    || context.GetProperty("MaximumStar").GetInt32() is < 1 or > 5
+                    || context.GetProperty("MinimumStar").GetInt32() > context.GetProperty("MaximumStar").GetInt32()
+                    || context.GetProperty("MaximumScale").GetInt32() < 100
+                    || !pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.NewSkills.CreateMapScale.Context." + id))
+                    Fail("Invalid map scale context or limits.");
+            }
+        }
     }
 
     /// <summary>Author check: complete keys, stable value slots and the existing mathematical scenarios.</summary>
@@ -290,7 +350,7 @@ public static partial class QuizContentValidation
                     if (RequiredString(list.Value[i], "Id") != RequiredString(translated[i], "Id"))
                         Fail("Changed reviewed narrative ID.");
             if (ContextFields.ContainsKey(list.Key) || list.Key is "FractionQuantityContexts" or "FractionQuantityContexts.Extensions"
-                or "DecimalStoryContexts" or "DecimalStoryContexts.Extensions" or "FractionQuantityActivities" or "DataChartContexts")
+                or "DecimalStoryContexts" or "DecimalStoryContexts.Extensions" or "FractionQuantityActivities" or "DataChartContexts" or "TimeActivityContexts" or "MapScaleContexts")
                 for (int i = 0; i < list.Value.GetArrayLength(); i++)
                 {
                     var originalRow = list.Value[i]; var translatedRow = translated[i];
@@ -298,7 +358,7 @@ public static partial class QuizContentValidation
                         if (originalRow.TryGetProperty(field, out var expected) &&
                             (!translatedRow.TryGetProperty(field, out var actual) || expected.GetRawText() != actual.GetRawText()))
                             Fail("Changed mathematical metadata: " + list.Key + "." + field);
-                    foreach (string field in new[] { "Activity", "ConversionFactor", "MaximumQuantity", "GroupMaximum", "SmallUnit" })
+                    foreach (string field in new[] { "Activity", "ConversionFactor", "MaximumQuantity", "GroupMaximum", "SmallUnit", "MinimumStar", "StartHourMinimum", "StartHourMaximum", "MaximumHours" })
                         if (originalRow.TryGetProperty(field, out var expected) &&
                             (!translatedRow.TryGetProperty(field, out var actual) || expected.GetRawText() != actual.GetRawText()))
                             Fail("Changed quantity activity metadata: " + list.Key + "." + field);
@@ -344,13 +404,14 @@ public static partial class QuizContentValidation
     };
     private static readonly string[] FixedContextFields = ["Id", "ContextId", "CategoryIds", "ShapeId", "Measurement", "Type", "Scenario", "Category",
         "RateProfile", "Kind", "Capacity", "MaximumSize", "MaximumDimension", "DistanceScale", "TimeDivisor",
-        "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity", "Quantity"];
+        "EnglishOnly", "Money", "AsksForAdditionalPeople", "ConversionFactor", "MaximumQuantity", "Quantity",
+        "RequiresObservationUnit", "MinimumStar", "MaximumStar", "MaximumScale"];
 
     static QuizContentValidation()
     {
         foreach (string key in new[] { "AverageQuizGenerator.DirectContexts", "AverageQuizGenerator.DistributionContexts",
             "AverageQuizGenerator.TwoGroupContexts", "PercentageQuizGenerator.Contexts", "PercentageQuizGenerator.PercentageStories",
-            "MotionQuizGenerator.MovingSubjects", "ProportionQuizGenerator.Templates" })
+            "MotionQuizGenerator.MovingSubjects", "ProportionQuizGenerator.Templates", "ElementaryQuizGenerator.PackingStories", ElementaryQuizGenerator.MeasurementContextsList })
             ContextFields.Add(key + ".Extensions", ContextFields[key]);
     }
 
