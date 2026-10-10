@@ -20,23 +20,38 @@ public partial class MultiplicationTablePage : ContentPage
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
-        if (width <= 0d || TablesCollectionView is null)
+        if (width <= 0d || TablesPageContent is null)
             return;
-        TablesCollectionView.WidthRequest = Math.Max(1d,
-            Math.Min(1320d, width - MultiplicationPageContentRoot.Padding.HorizontalThickness));
+        TablesPageContent.WidthRequest = Math.Max(1d, Math.Min(1320d, width));
         UpdateTableColumns();
     }
 
     private void OnTablesSizeChanged(object? sender, EventArgs e) => UpdateTableColumns();
 
+    private void OnTableCardsChanged(object? sender, ElementEventArgs e) => UpdateTableColumns();
+
     private void UpdateTableColumns()
     {
-        if (TablesCollectionView.Width <= 0d || TablesCollectionView.ItemsLayout is not GridItemsLayout layout)
+        if (TablesLayout.Width <= 0d)
             return;
-        int columns = ResponsiveLayoutPolicy.Columns(TablesCollectionView.Width, 220d, 5,
-            layout.HorizontalItemSpacing);
-        if (layout.Span != columns)
-            layout.Span = columns;
+        int columns = ResponsiveLayoutPolicy.Columns(TablesLayout.Width, 220d, 5, TablesLayout.ColumnSpacing);
+        if (TablesLayout.ColumnDefinitions.Count != columns)
+        {
+            TablesLayout.ColumnDefinitions.Clear();
+            for (int column = 0; column < columns; column++)
+                TablesLayout.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+        }
+        int rows = (TablesLayout.Children.Count + columns - 1) / columns;
+        while (TablesLayout.RowDefinitions.Count < rows)
+            TablesLayout.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        while (TablesLayout.RowDefinitions.Count > rows)
+            TablesLayout.RowDefinitions.RemoveAt(TablesLayout.RowDefinitions.Count - 1);
+        for (int index = 0; index < TablesLayout.Children.Count; index++)
+        {
+            if (TablesLayout.Children[index] is not View card) continue;
+            Grid.SetRow(card, index / columns);
+            Grid.SetColumn(card, index % columns);
+        }
     }
 
     private void OnRangeCardTapped(object? sender, TappedEventArgs e)
@@ -53,6 +68,8 @@ public partial class MultiplicationTablePage : ContentPage
     public MultiplicationTablePage()
     {
         InitializeComponent();
+        TablesLayout.ChildAdded += OnTableCardsChanged;
+        TablesLayout.ChildRemoved += OnTableCardsChanged;
 
         InteractiveButtonAnimation.SetIsScopeEnabled(
             this,
@@ -60,8 +77,7 @@ public partial class MultiplicationTablePage : ContentPage
 
         // This page uses stable-key bindings for static text and rebuilds
         // dynamic card text itself. Keep the legacy visual-tree translator
-        // away from CollectionView cells because cell recycling can otherwise
-        // overwrite a bound title with text from another card.
+        // away from bound cards so it cannot overwrite their dynamic text.
         LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
 
@@ -81,7 +97,7 @@ public partial class MultiplicationTablePage : ContentPage
 
         Range1To10Radio.IsChecked = true;
 
-        // Dựng trạng thái và CollectionView đúng một lần. Sự kiện
+        // Dựng trạng thái và danh sách bảng đúng một lần. Sự kiện
         // CheckedChanged phát sinh trong lúc gán IsChecked sẽ bị bỏ qua.
         UpdateOperationButtons();
         UpdateRangeCards();
@@ -166,10 +182,8 @@ public partial class MultiplicationTablePage : ContentPage
     private async Task PlayPreparedMainTabTransitionAsync(
         int animationVersion)
     {
-        // CollectionView dựng cell theo cơ chế ảo hóa. Giữ toàn bộ root ở
-        // trạng thái ẩn cho tới khi layout và nhóm cell đầu tiên ổn định,
-        // nếu không phần header hiện trước rồi danh sách hiện sau sẽ trông
-        // như animation chạy hai lần.
+        // Wait for the header and responsive table cards to finish layout
+        // before revealing the page in a single transition.
         bool layoutReady =
             await WaitForTableLayoutAsync(
                 animationVersion);
@@ -228,16 +242,15 @@ public partial class MultiplicationTablePage : ContentPage
                 return false;
             }
 
-            bool collectionReady =
+            bool tablesReady =
                 TableCards.Count > 0 &&
-                TablesCollectionView.Handler is not null &&
-                TablesCollectionView.Width > 0d &&
-                TablesCollectionView.Height > 0d;
+                TablesLayout.Handler is not null &&
+                TablesLayout.Width > 0d &&
+                TablesLayout.Height > 0d;
 
-            if (collectionReady)
+            if (tablesReady)
             {
-                // Cho CollectionView thêm một frame để hiện thực hóa các
-                // item đầu tiên. Root vẫn Opacity = 0 nên không gây nháy.
+                // Allow one more layout frame without flashing the page.
                 await Task.Delay(
                     16);
 
@@ -374,6 +387,7 @@ public partial class MultiplicationTablePage : ContentPage
                 });
         }
 
+        UpdateTableColumns();
         UpdateStatusText(start, end);
     }
 
@@ -513,7 +527,7 @@ public partial class MultiplicationTablePage : ContentPage
 }
 
 /// <summary>
-/// Strongly typed item model for the multiplication-table CollectionView.
+/// Strongly typed item model for the multiplication-table cards.
 /// Kept top-level so XamlC can compile bindings in the item template.
 /// </summary>
 public sealed class TableCardModel

@@ -145,21 +145,19 @@
         </Style>
     </ContentPage.Resources>
 
-    <Grid
-        x:Name="MultiplicationPageContentRoot"
-        Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}">
+    <Grid x:Name="MultiplicationPageContentRoot">
         <controls:LiveWallpaperView
-            x:Name="LiveWallpaper"
-            Margin="{OnPlatform Android='-12,-10,-12,-20', WinUI='-20,-16', Default='-20,-16'}" />
-        <CollectionView
-            x:Name="TablesCollectionView"
-            HorizontalOptions="Center" MaximumWidthRequest="1320" SizeChanged="OnTablesSizeChanged"
-            x:DataType="views:MultiplicationTablePage"
-            ItemsSource="{Binding TableCards}"
-            SelectionMode="None"
-            BackgroundColor="Transparent">
+            x:Name="LiveWallpaper" />
+        <!-- Keep the scrollbar at the page edge; only the content is width-limited. -->
+        <ScrollView Orientation="Vertical"
+                    HorizontalOptions="Fill" VerticalOptions="Fill"
+                    VerticalScrollBarVisibility="Default">
+            <VerticalStackLayout
+                x:Name="TablesPageContent"
+                HorizontalOptions="Center" MaximumWidthRequest="1320"
+                Padding="{OnPlatform Android='12,10,12,20', WinUI='20,16', Default='20,16'}"
+                Spacing="12">
 
-            <CollectionView.Header>
                 <VerticalStackLayout Spacing="16">
 
                     <!-- Hero -->
@@ -400,17 +398,15 @@
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
-            </CollectionView.Header>
-
-            <CollectionView.ItemsLayout>
-                <GridItemsLayout
-                    Orientation="Vertical"
-                    Span="1"
-                    HorizontalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}"
-                    VerticalItemSpacing="{OnPlatform Android=8, WinUI=12, Default=12}" />
-            </CollectionView.ItemsLayout>
-
-            <CollectionView.ItemTemplate>
+            <!-- At most 20 cards, arranged within the centered scroll content. -->
+            <Grid x:Name="TablesLayout"
+                  ColumnSpacing="{OnPlatform Android=8, WinUI=12, Default=12}"
+                  RowSpacing="{OnPlatform Android=8, WinUI=12, Default=12}"
+                  HorizontalOptions="Fill" VerticalOptions="Start"
+                  SizeChanged="OnTablesSizeChanged"
+                  x:DataType="views:MultiplicationTablePage"
+                  BindableLayout.ItemsSource="{Binding TableCards}">
+            <BindableLayout.ItemTemplate>
                 <DataTemplate x:DataType="views:TableCardModel">
                     <Border Style="{StaticResource CardBorderStyle}">
                         <VerticalStackLayout Spacing="12">
@@ -443,7 +439,9 @@
                         </VerticalStackLayout>
                     </Border>
                 </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+            </BindableLayout.ItemTemplate>
+            </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
     </Grid>
 </ContentPage>
