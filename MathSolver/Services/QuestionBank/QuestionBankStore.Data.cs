@@ -177,7 +177,17 @@ public sealed partial class QuestionBankStore
 
     public async Task<BankImportReport> ImportExcelAsync(Stream input, CancellationToken cancellationToken = default)
     {
-        var rows = await Task.Run(() => QuestionBankWorkbook.Read(input, cancellationToken), cancellationToken).ConfigureAwait(false);
+        var rows = await PreviewExcelAsync(input, cancellationToken).ConfigureAwait(false);
+        return await ImportReviewedAsync(rows, cancellationToken).ConfigureAwait(false);
+    }
+
+    public Task<IReadOnlyList<BankWorkbookRow>> PreviewExcelAsync(Stream input, CancellationToken cancellationToken = default)
+        => Task.Run(() => QuestionBankWorkbook.Read(input, cancellationToken), cancellationToken);
+
+    public async Task<BankImportReport> ImportReviewedAsync(IReadOnlyList<BankWorkbookRow> reviewedRows, CancellationToken cancellationToken = default)
+    {
+        // Snapshot the reviewed payload: never reopen a file that could change between review and confirmation.
+        var rows = reviewedRows.ToArray();
         return await WithDatabaseAsync(db =>
         {
             int inserted = 0, duplicates = 0, rejected = 0;
@@ -201,7 +211,8 @@ public sealed partial class QuestionBankStore
         }, cancellationToken).ConfigureAwait(false);
     }
 
-    public Task<BankExportReport> ExportExcelAsync(Stream output, CancellationToken cancellationToken = default)
+    public Task<BankExportReport> ExportExcelAsync(Stream output, CancellationToken cancellationToken = default,
+        AppLanguage workbookLanguage = AppLanguage.Vietnamese)
         => WithDatabaseAsync(db =>
         {
             int skipped = 0;
@@ -221,9 +232,10 @@ public sealed partial class QuestionBankStore
                             && (contract.Version is not (AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version or ReasoningStoryCatalogue.Version) || (int)contract.Structure == row.Structure
                                 && contract.TopicId == row.TopicId && contract.SceneId == row.SceneId))
                         {
-                            var checkedDraft = BasicQuestionValidator.Validate(row.DraftJson, contract);
+                            bool userAuthored = IsUserAuthored(db, row.Hash);
+                            var checkedDraft = ValidateDraft(row.DraftJson, contract, userAuthored);
                             if (checkedDraft.IsValid && (checkedDraft.Contract is null || checkedDraft.Contract == contract))
-                                question = new(contract, checkedDraft.Draft!, row.RawJson, row.ModelName, row.CreatedUtc);
+                                question = new(contract, checkedDraft.Draft!, row.RawJson, row.ModelName, row.CreatedUtc) { UserAuthored = userAuthored };
                         }
                     }
                     catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException) { }
@@ -231,7 +243,7 @@ public sealed partial class QuestionBankStore
                     else skipped++;
                 }
             }
-            int count = QuestionBankWorkbook.Write(output, Questions(), cancellationToken);
+            int count = QuestionBankWorkbook.WriteBackup(output, Questions(), workbookLanguage, cancellationToken);
             return new BankExportReport(count, skipped);
         }, cancellationToken);
 }

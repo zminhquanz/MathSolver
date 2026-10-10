@@ -52,7 +52,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (saved is null || saved.Contract is not { Version: ReasoningStoryCatalogue.Version } c
             || c.Family != family || c.BankVariant != variant || c.Tier != tier || c.Language != language
             || !ReasoningStoryCatalogue.MatchesVisualProfile(c, generated)
-            || !BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c).IsValid) return generated;
+            || !QuestionBankStore.ValidateSavedQuestion(saved).IsValid) return generated;
         try
         {
             var fresh = c.FreshFacts(_random);
@@ -84,7 +84,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         cancellationToken.ThrowIfCancellationRequested();
         if (saved is null) return BuiltIn();
         var c = saved.Contract;
-        var validation = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c);
+        var validation = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validation.IsValid || c.Family != BankQuestionFamily.Fraction || c.Operation != operation
             || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group) return BuiltIn();
         var fresh = c.FreshFacts(_random);
@@ -112,7 +112,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (saved is null) return BuiltIn();
         // Never trust an arbitrary provider's family/profile, even if it returns a record.
         var c = saved.Contract;
-        var validated = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c);
+        var validated = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validated.IsValid || c.Family != BankQuestionFamily.FindX || c.Operation != operation
             || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group) return BuiltIn();
         var fresh = c.FreshFacts();
@@ -150,7 +150,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         cancellationToken.ThrowIfCancellationRequested();
         if (saved is null) return BuiltIn();
         var c = saved.Contract;
-        var validation = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(saved.Draft), c);
+        var validation = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validation.IsValid || c.Family != BankQuestionFamily.Arithmetic
             || c.Operation != generated.Expression.Operation || c.Tier != tier || c.Language != language
             || profile is not null && !profile.Includes(c.KnowledgeGroup)) return BuiltIn();

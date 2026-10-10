@@ -2,6 +2,17 @@
   "Version": 1,
   "Lists": {
     "QuizChoices": [
+      {"Key":"Language.Vietnamese","IllustrationId":"language-vietnamese","DescriptionKey":"Choice.Language.Vietnamese"},
+      {"Key":"Language.English","IllustrationId":"language-english","DescriptionKey":"Choice.Language.English"},
+      {"Key":"Learning.Group.Objects","IllustrationId":"number-counting","DescriptionKey":"Choice.Group.Objects"},
+      {"Key":"Learning.Group.Money","IllustrationId":"knowledge-money","DescriptionKey":"Choice.Group.Money"},
+      {"Key":"Learning.Group.Time","IllustrationId":"clock","DescriptionKey":"Choice.Group.Time"},
+      {"Key":"Learning.Group.Measurement","IllustrationId":"measurement","DescriptionKey":"Choice.Group.Measurement"},
+      {"Key":"Learning.Group.Geometry","IllustrationId":"geometry","DescriptionKey":"Choice.Group.Geometry"},
+      {"Key":"Learning.Group.Packaging","IllustrationId":"knowledge-packaging","DescriptionKey":"Choice.Group.Packaging"},
+      {"Key":"Learning.Group.Production","IllustrationId":"knowledge-production","DescriptionKey":"Choice.Group.Production"},
+      {"Key":"Learning.Group.Data","IllustrationId":"data-table","DescriptionKey":"Choice.Group.Data"},
+      {"Key":"Learning.Group.Motion","IllustrationId":"motion","DescriptionKey":"Choice.Group.Motion"},
       {"Key":"Calculator.Geometry.square","IllustrationId":"geometry-square","DescriptionKey":"Choice.Shape.square"},
       {"Key":"Calculator.Geometry.rectangle","IllustrationId":"geometry-rectangle","DescriptionKey":"Choice.Shape.rectangle"},
       {"Key":"Calculator.Geometry.triangle","IllustrationId":"geometry-triangle","DescriptionKey":"Choice.Shape.triangle"},

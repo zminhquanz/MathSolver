@@ -39,6 +39,10 @@ public partial class App : Application
         };
 #endif
 
+#if !ANDROID
+        bool windowDestroyed = false;
+#endif
+
 #if WINDOWS
         // .NET MAUI 10 has a first-class TitleBar control. On Windows use it
         // as the visible title text instead of relying on DWM to recolor the
@@ -68,11 +72,17 @@ public partial class App : Application
                 AppThemeManager.ThemeChanged -=
                     titleBarThemeChanged;
 
-        MathSolver.Platforms.Windows.WindowStateManager.Attach(window);
+        MathSolver.Platforms.Windows.WindowStateManager.Attach(window, () =>
+        {
+            windowDestroyed = true;
+            AppThemeManager.ThemeChanged -= titleBarThemeChanged;
+            // Resetting TitleBar makes MAUI unsubscribe its LayoutUpdated
+            // handler before the native window and its input source disappear.
+            window.TitleBar = null;
+        });
 #endif
 
 #if !ANDROID
-        bool windowDestroyed = false;
         window.Destroying += (_, _) => windowDestroyed = true;
         splashPage.Loaded += async (_, _) =>
         {

@@ -72,7 +72,7 @@ public sealed partial class QuestionBankStore
                     var contract = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
                     if (contract?.IsValid == true)
                     {
-                        var validation = BasicQuestionValidator.Validate(row.DraftJson, contract);
+                        var validation = ValidateDraft(row.DraftJson, contract, IsUserAuthored(db, row.Hash));
                         if (validation.IsValid)
                             proseHash = QuestionProseIdentity.Hash(validation.Contract ?? contract, validation.Draft!);
                     }

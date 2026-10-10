@@ -7,10 +7,14 @@ using System.Xml.Linq;
 
 namespace MathSolver.Services.QuestionBank;
 
-public sealed record BankWorkbookRow(int RowNumber, ValidatedBankQuestion? Question, string? ErrorCode);
+public sealed record BankWorkbookIssue(string Column, string ErrorCode, string? Details = null);
+public sealed record BankWorkbookRow(int RowNumber, ValidatedBankQuestion? Question, string? ErrorCode)
+{
+    public IReadOnlyList<BankWorkbookIssue> Issues { get; init; } = [];
+}
 
 /// <summary>A small SpreadsheetML interchange format using ZIP/XML, with no Excel installation or native dependencies.</summary>
-public static class QuestionBankWorkbook
+public static partial class QuestionBankWorkbook
 {
     public const long MaxImportBytes = 20 * 1024 * 1024;
     public const int MaxImportRows = 10000;
@@ -21,7 +25,7 @@ public static class QuestionBankWorkbook
     {
         "Version", "Operation", "Stars", "Language", "Left", "Right", "Subject", "Unit", "GroupUnit",
         "GivenA", "GivenB", "Question", "ModelName", "CreatedUtc", "RawJson", "Answer", "ProblemText",
-        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator", "StorySeedJson", "FactsJson", "SolutionLeadsJson"
+        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator", "StorySeedJson", "FactsJson", "SolutionLeadsJson", "UserAuthored"
     });
 
     public static int Write(Stream output, IEnumerable<ValidatedBankQuestion> questions, CancellationToken cancellationToken = default)
@@ -83,7 +87,8 @@ public static class QuestionBankWorkbook
                 c.TopicId, c.SceneId, c.PartA, c.PartB, c.Grade.ToString(CultureInfo.InvariantCulture), c.KnowledgeGroup.ToString(), c.UnknownRole.ToString(), c.LeftDenominator.ToString(CultureInfo.InvariantCulture), c.RightDenominator.ToString(CultureInfo.InvariantCulture),
                 c.Story is null ? "" : JsonSerializer.Serialize(c.Story),
                 question.Draft.Facts is null ? "" : JsonSerializer.Serialize(question.Draft.Facts),
-                question.Draft.SolutionLeads is null ? "" : JsonSerializer.Serialize(question.Draft.SolutionLeads)]);
+                question.Draft.SolutionLeads is null ? "" : JsonSerializer.Serialize(question.Draft.SolutionLeads),
+                question.UserAuthored ? "true" : "false"]);
         }
         xml.WriteEndElement();
         xml.WriteStartElement("autoFilter", Main); xml.WriteAttributeString("ref", $"A1:{ColumnName(Columns.Count - 1)}{rowNumber - 1}"); xml.WriteEndElement();
@@ -94,6 +99,7 @@ public static class QuestionBankWorkbook
     public static IReadOnlyList<BankWorkbookRow> Read(Stream input, CancellationToken cancellationToken = default)
     {
         if (!input.CanSeek || input.Length > MaxImportBytes) throw new InvalidDataException("ExcelFileTooLarge");
+        if (QuestionAuthoringWorkbook.TryRead(input, cancellationToken) is { } authored) return authored;
         using var archive = new ZipArchive(input, ZipArchiveMode.Read, true);
         if (archive.Entries.Sum(e => e.Length) > 40 * 1024 * 1024 || archive.Entries.Count > 1000) throw new InvalidDataException("ExcelFileTooLarge");
         XmlReader Reader(string path)
@@ -143,6 +149,7 @@ public static class QuestionBankWorkbook
             int number = (int?)row.Attribute("r") ?? result.Count + 2;
             var cells = new Dictionary<int, string>();
             bool formula = false;
+            string formulaColumn = "";
             foreach (var cell in row.Elements(Ns + "c"))
             {
                 string reference = (string?)cell.Attribute("r") ?? throw new InvalidDataException("InvalidExcelFile");
@@ -159,7 +166,11 @@ public static class QuestionBankWorkbook
                 else if (type == "inlineStr") value = cell.Element(Ns + "is") is { } inline ? Text(inline) : "";
                 if (value.Length > 32767) throw new InvalidDataException("ExcelCellTooLong");
                 cells[column - 1] = value;
-                if (cell.Element(Ns + "f") is not null && header?.GetValueOrDefault(column - 1)?.ToLowerInvariant() is not ("answer" or "problemtext")) formula = true;
+                if (cell.Element(Ns + "f") is not null && header?.GetValueOrDefault(column - 1)?.ToLowerInvariant() is not ("answer" or "problemtext"))
+                {
+                    formula = true;
+                    if (formulaColumn.Length == 0) formulaColumn = header?.GetValueOrDefault(column - 1) ?? reference;
+                }
             }
             if (cells.Values.All(string.IsNullOrWhiteSpace)) continue;
             if (header is null)
@@ -172,10 +183,15 @@ public static class QuestionBankWorkbook
             }
             if (result.Count >= MaxImportRows) throw new InvalidDataException("ExcelImportRowLimit");
             var values = header.ToDictionary(h => h.Value, h => cells.GetValueOrDefault(h.Key, ""), StringComparer.OrdinalIgnoreCase);
-            if (formula) { result.Add(new(number, null, "ExcelFormulaNotAllowed")); continue; }
+            if (formula)
+            {
+                result.Add(new(number, null, "ExcelFormulaNotAllowed") { Issues = [new(formulaColumn, "ExcelFormulaNotAllowed")] });
+                continue;
+            }
+            string readingColumn = "";
             try
             {
-                string Get(string key) => values.GetValueOrDefault(key, "");
+                string Get(string key) { readingColumn = key; return values.GetValueOrDefault(key, ""); }
                 int Integer(string key)
                 {
                     decimal value = decimal.Parse(Get(key), NumberStyles.Float, CultureInfo.InvariantCulture);
@@ -205,17 +221,23 @@ public static class QuestionBankWorkbook
                 if (draft.Facts?.Any(f => f is null) == true || draft.SolutionLeads?.Any(s => s is null) == true)
                     throw new FormatException("Invalid narrative clause");
                 string json = QuestionBankStore.SerializeDraft(draft);
-                var validation = BasicQuestionValidator.Validate(json, contract);
-                if (!validation.IsValid) { result.Add(new(number, null, validation.ErrorCode)); continue; }
+                // New backups preserve provenance. Historical template files are user imports.
+                bool userAuthored = contract.IsTemplate && (string.IsNullOrWhiteSpace(Get("UserAuthored")) || bool.Parse(Get("UserAuthored")));
+                var validation = QuestionBankStore.ValidateDraft(json, contract, userAuthored);
+                if (!validation.IsValid)
+                {
+                    result.Add(new(number, null, validation.ErrorCode) { Issues = [new(validation.ErrorDetails ?? "GivenA / GivenB / Question", validation.ErrorCode!)] });
+                    continue;
+                }
                 if (validation.Contract is { } resolved && resolved != contract)
                 { result.Add(new(number, null, "ChangedUnits")); continue; }
                 DateTime created = string.IsNullOrWhiteSpace(Get("CreatedUtc")) ? DateTime.UtcNow
                     : DateTime.Parse(Get("CreatedUtc"), CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal);
                 result.Add(new(number, new(contract, validation.Draft!, string.IsNullOrWhiteSpace(Get("RawJson")) ? json : Get("RawJson"),
-                    string.IsNullOrWhiteSpace(Get("ModelName")) ? "Excel import" : Get("ModelName"), created), null));
+                    string.IsNullOrWhiteSpace(Get("ModelName")) ? "Excel import" : Get("ModelName"), created) { UserAuthored = userAuthored }, null));
             }
             catch (Exception error) when (error is FormatException or OverflowException or ArgumentException or JsonException)
-            { result.Add(new(number, null, "InvalidExcelRow")); }
+            { result.Add(new(number, null, "InvalidExcelRow") { Issues = [new(readingColumn, "InvalidExcelRow")] }); }
         }
         if (header is null) throw new InvalidDataException("ExcelColumnsMissing");
         return result;

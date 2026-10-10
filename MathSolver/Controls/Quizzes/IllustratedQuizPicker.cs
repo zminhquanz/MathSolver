@@ -101,6 +101,15 @@ public sealed class IllustratedQuizPicker : ContentView
         instance.UpdateSelection();
     }
 
+    /// <summary>Uses the same searchable, responsive selector for flows without a backing Picker.</summary>
+    public static Task<int?> ChooseAsync(INavigation navigation, string title,
+        IReadOnlyList<QuizChoiceOption> choices, CancellationToken cancellation = default)
+    {
+        cancellation.ThrowIfCancellationRequested();
+        return choices.Count == 0 ? Task.FromResult<int?>(null)
+            : new QuizChoicePage(title, choices).ChooseAsync(navigation, cancellation);
+    }
+
     private void OnPickerChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(Picker.SelectedIndex) or nameof(Picker.SelectedItem)
@@ -322,10 +331,18 @@ internal sealed class QuizChoicePage : ContentPage
         ApplyFilter();
     }
 
-    public async Task<int?> ChooseAsync(INavigation navigation)
+    public async Task<int?> ChooseAsync(INavigation navigation, CancellationToken cancellation = default)
     {
+        cancellation.ThrowIfCancellationRequested();
         await navigation.PushModalAsync(this);
-        return await _completion.Task;
+        // Register after the push so cancellation cannot pop the underlying page.
+        using var registration = cancellation.Register(() => Dispatcher.Dispatch(async () =>
+        {
+            if (!_dismissed) await CloseAsync(null);
+        }));
+        int? selected = await _completion.Task;
+        cancellation.ThrowIfCancellationRequested();
+        return selected;
     }
 
     private void Resize()
@@ -437,7 +454,9 @@ internal sealed class QuizChoicePage : ContentPage
             if (card.BindingContext is not QuizChoiceOption option) return;
             title.Text = option.Title;
             description.Text = option.Description;
+            description.IsVisible = !string.IsNullOrWhiteSpace(option.Description);
             icon.IllustrationId = option.IllustrationId;
+            icon.IsVisible = !string.IsNullOrWhiteSpace(option.IllustrationId);
             check.IsVisible = option.IsSelected;
             card.StrokeThickness = option.IsSelected ? 2 : 1;
             card.SetDynamicResource(Border.StrokeProperty, option.IsSelected ? "PrimaryBorderBrush" : "BorderBrush");

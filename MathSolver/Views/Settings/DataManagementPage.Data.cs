@@ -31,10 +31,13 @@ public partial class DataManagementPage
         bool idle = !_closing && _dataCancellation is null && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll;
         bool inserting = QueryResultsTable.IsInserting;
         bool editing = QueryResultsTable.IsEditing;
-        bool draft = inserting || editing;
+        bool draft = inserting || editing || _pendingImport is not null;
         DeleteAllButton.IsEnabled = idle && !draft && !_bank.Generation.IsRunning;
         QueryButton.IsEnabled = ImportExcelButton.IsEnabled = idle && !draft;
         QueryEditor.IsEnabled = ExportExcelButton.IsEnabled = idle;
+        DownloadTemplateButton.IsEnabled = idle && !draft;
+        ConfirmImportButton.IsEnabled = idle && _pendingImport?.Any(row => row.Question is not null) == true;
+        DiscardImportButton.IsEnabled = idle;
         CancelDataButton.IsVisible = CancelDataButton.IsEnabled = _dataCancellation is not null;
         QueryResultsTable.IsEnabled = idle;
         ReloadSqlGridButton.IsEnabled = LoadEditableSqlButton.IsEnabled = OpenSqlTableButton.IsEnabled = idle && !draft;
@@ -134,8 +137,8 @@ public partial class DataManagementPage
         var status = transfer ? DataTransferStatusLabel : InquiryStatusLabel;
         status.Text = T("DataWorking");
         try { await work(cancellation.Token); }
-        catch (OperationCanceledException) { status.Text = T("DataCancelled"); }
-        catch (Exception error) { status.Text = T("DataFailed") + ": " + ErrorText(error.Message); }
+        catch (OperationCanceledException) { if (_appeared) status.Text = T("DataCancelled"); }
+        catch (Exception error) { if (_appeared) status.Text = T("DataFailed") + ": " + ErrorText(error.Message); }
         finally { _dataCancellation = null; UpdateDataActions(); completion.TrySetResult(); }
     }
 
@@ -439,11 +442,11 @@ public partial class DataManagementPage
                     }
                 }
                 await using var input = File.OpenRead(path);
-                var report = await _bank.Store.ImportExcelAsync(input, cancellation);
-                DataTransferStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("ImportResult"), report.Inserted, report.Duplicates, report.Rejected)
-                    + (report.Issues.Count == 0 ? "" : "\n" + string.Join("\n", report.Issues.Select(issue =>
-                        string.Format(CultureInfo.CurrentCulture, T("ImportRowError"), issue.RowNumber, ErrorText(issue.ErrorCode)))))
-                    + (report.Rejected > report.Issues.Count ? "\n" + T("ImportIssuesTruncated") : "");
+                var rows = await _bank.Store.PreviewExcelAsync(input, cancellation);
+                cancellation.ThrowIfCancellationRequested();
+                if (!_appeared) return;
+                _pendingImport = rows;
+                RenderImportReview();
             }
             finally { if (File.Exists(path)) File.Delete(path); }
         });
@@ -458,10 +461,10 @@ public partial class DataManagementPage
             {
                 BankExportReport report;
                 await using (var output = File.Open(path, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None))
-                    report = await _bank.Store.ExportExcelAsync(output, cancellation);
+                    report = await _bank.Store.ExportExcelAsync(output, cancellation, AppLanguageManager.CurrentLanguage);
                 cancellation.ThrowIfCancellationRequested();
                 await using var input = File.OpenRead(path);
-                var saved = await FileSaver.Default.SaveAsync($"MathSolver-question-bank-{DateTime.Now:yyyyMMdd-HHmmss}.xlsx", input, cancellation);
+                var saved = await FileSaver.Default.SaveAsync($"MathSolver-bank-backup-{DateTime.Now:yyyyMMdd-HHmmss}.xlsx", input, cancellation);
                 if (!saved.IsSuccessful)
                 {
                     if (saved.Exception is OperationCanceledException) throw new OperationCanceledException(cancellation);

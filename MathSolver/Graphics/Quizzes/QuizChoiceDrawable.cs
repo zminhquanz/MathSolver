@@ -31,7 +31,7 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
                 for (int i = 0; i < 3; i++) canvas.FillRectangle(17 + i * 24, 65 - i * 17, 15, 20 + i * 17);
                 canvas.DrawLine(10, 87, 91, 87);
             }
-            if (DrawSkill(canvas)) return;
+            if (DrawPresentation(canvas) || DrawSkill(canvas)) return;
             switch (id)
             {
                 case "fraction":

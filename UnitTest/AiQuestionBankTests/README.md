@@ -1,5 +1,21 @@
 # AI question bank checks
 
+## Excel authoring and backups
+
+`--excel-authoring` checks 800 bilingual subtype/star authoring configurations,
+1,080 knowledge-group/operation selections, SpreadsheetML schema validation,
+readable multi-step variables, default Skip examples, required columns and
+variable diagnostics, malformed braces, syntax-only user wording, formula rejection, reordered columns,
+preview without SQLite writes, reviewed commit, duplicates and backup/legacy
+restore. It covers the reported “và {other}” / “Hỏi cả hai” phrasing, user
+provenance after reopening SQLite and restoring backups, and fresh C# facts for
+all families. AI semantic/language validation remains separate and strict.
+Example workbooks are saved under `artifacts/verification/excel-authoring`.
+
+The default suite also exercises bank import/export, validation at insertion,
+transaction rollback and all existing family round trips. Neither suite needs
+model inference for Excel IO.
+
 ## Reviewed prose expansion and visual families
 
 `--prose-expansion` covers 1,220 subtype/star/language/seed cases for the

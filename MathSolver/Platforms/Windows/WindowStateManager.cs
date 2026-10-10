@@ -51,6 +51,8 @@ public static class WindowStateManager
         PersistedWindowState.Restored;
 
     private static bool _isRestoring;
+    private static bool _isClosing;
+    private static Action? _prepareForClose;
 
     // The active page can install one asynchronous close guard.
     // This manager owns the native AppWindow.Closing subscription from
@@ -61,7 +63,8 @@ public static class WindowStateManager
     private static bool _allowCloseOnce;
 
     public static void Attach(
-        MauiWindow window)
+        MauiWindow window,
+        Action? prepareForClose = null)
     {
         ArgumentNullException.ThrowIfNull(
             window);
@@ -80,6 +83,8 @@ public static class WindowStateManager
 
         _mauiWindow =
             window;
+        _isClosing = false;
+        _prepareForClose = prepareForClose;
 
         _lastRestoredBounds =
             LoadRestoredBounds();
@@ -153,6 +158,8 @@ public static class WindowStateManager
     private static void TryAttachNativeWindow(
         MauiWindow window)
     {
+        if (_isClosing) return;
+
         if (window.Handler?.PlatformView
             is not MauiWinUIWindow nativeWindow)
         {
@@ -208,7 +215,7 @@ public static class WindowStateManager
         AppWindow? appWindow =
             _appWindow;
 
-        if (appWindow is null)
+        if (appWindow is null || _isClosing)
         {
             return;
         }
@@ -281,7 +288,7 @@ public static class WindowStateManager
         AppWindow sender,
         AppWindowChangedEventArgs args)
     {
-        if (_isRestoring)
+        if (_isRestoring || _isClosing)
         {
             return;
         }
@@ -330,6 +337,8 @@ public static class WindowStateManager
         AppWindow sender,
         AppWindowClosingEventArgs args)
     {
+        if (args.Cancel) return;
+
         // This is the second close request issued after the user confirmed.
         // Let it continue without displaying the dialog again.
         if (_allowCloseOnce)
@@ -339,6 +348,7 @@ public static class WindowStateManager
 
             SaveCurrentWindowState(
                 sender);
+            PrepareForClose();
 
             return;
         }
@@ -350,6 +360,7 @@ public static class WindowStateManager
         {
             SaveCurrentWindowState(
                 sender);
+            PrepareForClose();
 
             return;
         }
@@ -379,24 +390,25 @@ public static class WindowStateManager
                 return;
             }
 
-            // Reissue the close request only after the page has stopped and
-            // awaited every benchmark worker.
-            _allowCloseOnce =
-                true;
-
             MauiWindow? windowToClose =
                 _mauiWindow;
 
-            if (Application.Current is Application application &&
-                windowToClose is not null)
+            if (windowToClose is null) return;
+
+            // Use the owning window's dispatcher even if an asynchronous guard
+            // completed on a worker thread. CloseWindow may bypass the native
+            // Closing event, so prepare here as well as in that callback.
+            await windowToClose.Dispatcher.DispatchAsync(() =>
             {
-                application.CloseWindow(
-                    windowToClose);
-            }
-            else
-            {
-                sender.Destroy();
-            }
+                if (!ReferenceEquals(_mauiWindow, windowToClose) || _isClosing) return;
+                SaveCurrentWindowState(sender);
+                PrepareForClose();
+                _allowCloseOnce = true;
+                if (Application.Current is Application application)
+                    application.CloseWindow(windowToClose);
+                else
+                    sender.Destroy();
+            });
         }
         catch
         {
@@ -409,6 +421,19 @@ public static class WindowStateManager
             _isCloseGuardRunning =
                 false;
         }
+    }
+
+    private static void PrepareForClose()
+    {
+        if (_isClosing) return;
+        _isClosing = true;
+        AppThemeManager.ThemeChanged -= OnAppThemeChanged;
+
+        // MAUI's custom TitleBar has a LayoutUpdated callback that queries the
+        // native WindowId. Remove it while that ID is still valid, rather than
+        // waiting for Destroying (when WinUI may already have destroyed HWND).
+        _prepareForClose?.Invoke();
+        _prepareForClose = null;
     }
 
     private static void OnWindowDestroying(
@@ -682,7 +707,7 @@ public static class WindowStateManager
         AppWindow? appWindow =
             _appWindow;
 
-        if (appWindow is null)
+        if (appWindow is null || _isClosing)
         {
             return;
         }
@@ -733,6 +758,7 @@ public static class WindowStateManager
 
         _mauiWindow =
             null;
+        _prepareForClose = null;
     }
 
     private static void DetachAppWindow()

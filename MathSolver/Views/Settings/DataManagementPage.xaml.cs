@@ -27,8 +27,9 @@ public partial class DataManagementPage : ContentPage
         LocalizationService.CultureChanged += OnCultureChanged;
         _bank.Generation.Changed += OnBankStateChanged;
         RefreshSqlHelp();
+        if (_pendingImport is not null) RenderImportReview();
         UpdateDataActions();
-        if (!_loadedTable)
+        if (!_loadedTable && _dataCancellation is null)
         {
             _loadedTable = true;
             await LoadEditableSqlAsync();
@@ -40,7 +41,9 @@ public partial class DataManagementPage : ContentPage
         _appeared = false;
         LocalizationService.CultureChanged -= OnCultureChanged;
         _bank.Generation.Changed -= OnBankStateChanged;
-        _dataCancellation?.Cancel();
+        // An Excel wizard selector temporarily covers this page; its Close/Back
+        // completes that choice instead of cancelling the entire data operation.
+        if (!_choosingExcelOption) _dataCancellation?.Cancel();
         base.OnDisappearing();
     }
 
@@ -49,6 +52,7 @@ public partial class DataManagementPage : ContentPage
         if (!_appeared) return;
         RefreshSqlCellLabels();
         RefreshSqlHelp();
+        if (_pendingImport is not null) RenderImportReview();
         UpdateDataActions();
     });
 
@@ -72,9 +76,9 @@ public partial class DataManagementPage : ContentPage
         try
         {
             if (_confirmingDeleteAll) return;
-            if ((QueryResultsTable.IsEditing || QueryResultsTable.IsInserting)
+            if ((QueryResultsTable.IsEditing || QueryResultsTable.IsInserting || _pendingImport is not null)
                 && !await DisplayAlertAsync(LocalizationService.TranslateKey("DataManagement.Title"),
-                    LocalizationService.TranslateKey("DataManagement.DiscardHint"),
+                    _pendingImport is not null ? T("ImportLeaveHint") : LocalizationService.TranslateKey("DataManagement.DiscardHint"),
                     LocalizationService.TranslateKey("DataManagement.Discard"), T("Cancel"))) return;
             DataBackButton.IsEnabled = false;
             if (_dataCancellation is { } cancellation && _dataCompletion is { } completion)
@@ -83,6 +87,7 @@ public partial class DataManagementPage : ContentPage
                 await completion.Task;
             }
             await Shell.Current.GoToAsync("..");
+            _pendingImport = null;
         }
         finally
         {

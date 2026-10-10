@@ -1709,17 +1709,61 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
-    { "key": "DataManagement.Title", "source": "Quản lý dữ liệu", "mode": "exact" },
-    { "key": "DataManagement.Subtitle", "source": "Ngân hàng đề · SQLite", "mode": "exact" },
-    { "key": "DataManagement.MenuHint", "source": "Xem, chỉnh sửa và nhập/xuất đề đã lưu", "mode": "exact" },
-    { "key": "DataManagement.QuestionBank", "source": "Ngân hàng đề", "mode": "exact" },
-    { "key": "DataManagement.BankHint", "source": "Quản lý đề đã lưu, không cần nạp model AI.", "mode": "exact" },
-    { "key": "DataManagement.SavedQuestions", "source": "Đề đã lưu", "mode": "exact" },
-    { "key": "DataManagement.ShowSql", "source": "SQL", "mode": "exact" },
-    { "key": "DataManagement.HideSql", "source": "Ẩn SQL", "mode": "exact" },
-    { "key": "DataManagement.Back", "source": "Quay lại", "mode": "exact" },
-    { "key": "DataManagement.DiscardHint", "source": "Dòng đang sửa chưa được lưu. Bỏ thay đổi và quay lại?", "mode": "exact" },
-    { "key": "DataManagement.Discard", "source": "Bỏ thay đổi", "mode": "exact" },
+    {
+      "key": "DataManagement.Title",
+      "source": "Quản lý dữ liệu",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.Subtitle",
+      "source": "Ngân hàng đề · SQLite",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.MenuHint",
+      "source": "Xem, chỉnh sửa và nhập/xuất đề đã lưu",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.QuestionBank",
+      "source": "Ngân hàng đề",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.BankHint",
+      "source": "Quản lý đề đã lưu, không cần nạp model AI.",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.SavedQuestions",
+      "source": "Đề đã lưu",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.ShowSql",
+      "source": "SQL",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.HideSql",
+      "source": "Ẩn SQL",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.Back",
+      "source": "Quay lại",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.DiscardHint",
+      "source": "Dòng đang sửa chưa được lưu. Bỏ thay đổi và quay lại?",
+      "mode": "exact"
+    },
+    {
+      "key": "DataManagement.Discard",
+      "source": "Bỏ thay đổi",
+      "mode": "exact"
+    },
     {
       "key": "AiBank.InquiryShow",
       "source": "Quản lý đề trong SQLite",
@@ -9207,17 +9251,17 @@
     },
     {
       "key": "AiBank.DataTransferHint",
-      "source": "Nhập/xuất toàn bộ ngân hàng đề bằng Excel (.xlsx), không cần load model. Xuất khi ngân hàng rỗng để lấy file mẫu. File nhập tối đa 20 MB và 10.000 dòng; dữ liệu sai bị bỏ qua, đề trùng không được thêm lại. Đáp số do C# tính lại.",
+      "source": "Soạn mẫu lời văn: tải file mẫu theo dạng toán. Sao lưu: xuất ngân hàng đề để nhập lại. File .xlsx tối đa 20 MB / 10.000 dòng; mọi dữ liệu nhập được xem trước trước khi lưu.",
       "mode": "exact"
     },
     {
       "key": "AiBank.ImportExcel",
-      "source": "Nhập dữ liệu đề bài",
+      "source": "Nhập Excel · xem trước",
       "mode": "exact"
     },
     {
       "key": "AiBank.ExportExcel",
-      "source": "Xuất dữ liệu đề bài",
+      "source": "Xuất ngân hàng đề để sao lưu",
       "mode": "exact"
     },
     {
@@ -9277,7 +9321,7 @@
     },
     {
       "key": "AiBank.Error.ExcelColumnsMissing",
-      "source": "File Excel thiếu cột bắt buộc hoặc có tiêu đề cột trùng. Hãy dùng mẫu xuất từ ứng dụng.",
+      "source": "File thiếu cột bắt buộc hoặc có tiêu đề trùng. Giữ nguyên tên cột trong file mẫu; bản sao lưu phải giữ trang Questions.",
       "mode": "exact"
     },
     {
@@ -9548,6 +9592,176 @@
     {
       "key": "Quiz.Elementary.FullGroups",
       "source": "Số nhóm đầy",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DownloadTemplate",
+      "source": "Tải mẫu Excel để soạn đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportReviewTitle",
+      "source": "Xem trước dữ liệu nhập",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportReviewHint",
+      "source": "Chọn một dòng để xem đề và lời giải do app tính, hoặc lỗi cần sửa. Chưa có dữ liệu nào được lưu. Khi xác nhận, chỉ các dòng hợp lệ được nhập; đề trùng được bỏ qua.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportReviewSummary",
+      "source": "Đã đọc {0} dòng · Hợp lệ {1} · Có lỗi {2} · Chưa lưu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportColumnError",
+      "source": "Dòng {0}, cột {1}: {2}",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportExcelRow",
+      "source": "Dòng Excel",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportRowState",
+      "source": "Kết quả kiểm tra",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportProblem",
+      "source": "Đề bài xem trước",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportAnswer",
+      "source": "Đáp án do app tính",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportErrors",
+      "source": "Lỗi cần sửa",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportValid",
+      "source": "Hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportInvalid",
+      "source": "Có lỗi",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportEmpty",
+      "source": "Không có dòng nào được chọn nhập. Trong file mẫu, chọn Nhập ở cột Xử lý dòng.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ConfirmImport",
+      "source": "Nhập các dòng hợp lệ",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.DiscardImport",
+      "source": "Hủy nhập",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportDiscarded",
+      "source": "Đã hủy nhập; ngân hàng đề chưa thay đổi.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateProblem",
+      "source": "Chọn bài toán cho file mẫu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateStars",
+      "source": "Chọn độ khó cho file mẫu",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateOneStar",
+      "source": "1 sao",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateStarCount",
+      "source": "{0} sao",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateLanguage",
+      "source": "Chọn ngôn ngữ đề",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateSubtype",
+      "source": "Chọn dạng toán",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateGroup",
+      "source": "Chọn nhóm kiến thức",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateRole",
+      "source": "Chọn đại lượng X cần tìm",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateUnavailable",
+      "source": "Không có tình huống phù hợp với lựa chọn này.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateDownloaded",
+      "source": "Đã tải mẫu. Đọc trang Hướng dẫn, chỉnh trang Nhập đề và chọn Nhập ở cột Xử lý dòng, rồi nhập file để xem trước.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelAuthoringSchemaInvalid",
+      "source": "File mẫu mất hoặc sai cấu trúc. Hãy tải lại mẫu và sao chép phần lời văn sang file mới.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelChooseImport",
+      "source": "Chọn Nhập hoặc Bỏ qua trong danh sách.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelRequiredCell",
+      "source": "Ô bắt buộc chưa có nội dung.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelMissingVariable",
+      "source": "Thiếu biến bắt buộc:",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelUnexpectedVariable",
+      "source": "Biến không được C# hỗ trợ trong mẫu này:",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.TemplateScene",
+      "source": "Chọn tình huống và quan hệ toán",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.ImportLeaveHint",
+      "source": "Bỏ lượt xem trước dữ liệu nhập và quay lại? Các dòng này chưa được lưu.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ExcelInvalidVariableSyntax",
+      "source": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
       "mode": "exact"
     }
   ],

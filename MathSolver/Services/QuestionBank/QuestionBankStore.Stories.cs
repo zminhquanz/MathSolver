@@ -44,12 +44,13 @@ public sealed partial class QuestionBankStore
                             || row.Grade != c.Grade || row.KnowledgeGroup != (int)c.KnowledgeGroup) continue;
                         if (profile is not null && (c.Story?.ChartProfile is not { } chart
                             || !IQuestionBankStore.ChartProfilesMatch(chart, profile))) continue;
-                        var validation = BasicQuestionValidator.Validate(row.DraftJson, c);
+                        bool userAuthored = IsUserAuthored(db, row.Hash);
+                        var validation = ValidateDraft(row.DraftJson, c, userAuthored);
                         if (!validation.IsValid) continue;
                         db.Execute("UPDATE BasicQuestionBank SET UseCount=UseCount+1,LastUsedUtc=? WHERE Hash=?", DateTime.UtcNow, row.Hash);
                         history.Enqueue(c.SceneId);
                         if (history.Count > 32) history.Dequeue();
-                        return new(c, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc);
+                        return new(c, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc) { UserAuthored = userAuthored };
                     }
                     catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException)
                     { Debug.WriteLine($"Reasoning bank row skipped: {error.GetType().Name}"); }

@@ -1,5 +1,19 @@
 # Local AI question templates
 
+## User-authored Excel templates
+
+Authoring imports use `UserQuestionTemplateValidator`: required cells, balanced
+known placeholders, numeric fact slots and intact C# role/step structure. User
+wording is not restricted by AI phrase lists, relation recognition or language
+filters. C# still controls facts, units and calculations; the author reviews
+whether the text matches those calculations before saving.
+
+`ValidatedBankQuestion.UserAuthored` is persisted in the separate
+`QuestionUserAuthorship` table, leaving the public bank/grid schema unchanged.
+Selection, providers, prose indexing and backups retain this policy. Backup
+`UserAuthored` is optional for historical Excel files. AI generation and rows
+without user provenance continue through `BasicQuestionValidator` unchanged.
+
 ## Shared reviewed language and visual lessons
 
 The existing 14 AI families retain their stored IDs. Reviewed factual and
@@ -406,7 +420,11 @@ The validator checks JSON fields, bounded text, placeholder counts and roles, ap
 
 Native GBNF constrains output to the five fields, known placeholders and catalogue IDs. It does not constrain prose to the example's exact sentences. Streaming previews render provisional slots from the C# preview contract; a unit choice arriving later can update the display. Partial or rejected output is never inserted. Retry limits, background generation, cancellation and developer diagnostics remain unchanged.
 
-SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Excel exports have 33 columns: the original 17, version 2's `Structure`, `OtherSubject`, `SolutionLead`, `UnitId`, version 3's `TopicId`, `SceneId`, `PartA`, `PartB`, version 5's `Grade`, `KnowledgeGroup`, version 6's `UnknownRole`, version 7's `LeftDenominator` and `RightDenominator`, and version 8's three structured-story JSON columns described above. Old workbooks still import. Numeric answers in imported workbooks never override C# calculations.
+SQLite keeps the existing `BasicQuestionBank` table. Version 1 fixed-fact rows remain readable and retain their original values. Deduplication of templates excludes random preview numbers and actors. Bank backups retain all 33 interchange columns on a separate hidden `Questions` sheet, alongside a readable overview and a guide. Old single-sheet workbooks still import. Numeric answers in imported workbooks never override C# calculations.
+
+User authoring is separate from backup export. Settings → Data management offers **Download Excel authoring template**, **Import Excel · review first**, and **Export question bank backup**. Authoring files have Guide/Input/Examples sheets, localized prose headers, an Import/Skip dropdown and one selected mathematical situation. Numeric roles use readable placeholder aliases; multi-step facts and solution introductions are separate prose columns, never user-authored JSON. An OOXML custom property retains the validated C# contract so Excel can save the file without losing its schema. Input examples default to Skip; Examples is never imported.
+
+`PreviewExcelAsync` parses and validates without touching SQLite. The UI shows all row results, complete selected prose/solution and column-level errors, then requires **Import valid rows** to call `ImportReviewedAsync` with that exact in-memory snapshot. Discard performs no writes. Confirmation retains storage validation, transaction cancellation and deduplication; no model is loaded. Workbook formulas, missing/unknown variables, changed relations and invalid schemas are rejected. See [the authoring guide](../../EXCEL_QUESTION_BANK.md) and run `AiQuestionBankTests --excel-authoring` for the bilingual schema/preview/restore regression suite.
 
 ## Fraction word problems (version 7)
 

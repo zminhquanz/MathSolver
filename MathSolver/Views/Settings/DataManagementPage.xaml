@@ -133,11 +133,29 @@
                     <Label Text="{localization:Translate DataManagement.BankHint}" FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
                         <Label Text="{localization:Translate AiBank.DataTransferHint}" FontSize="13" LineBreakMode="WordWrap"
                                TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Button x:Name="DownloadTemplateButton" Text="{localization:Translate AiBank.DownloadTemplate}"
+                                Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnDownloadTemplateClicked" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8" controls:AdaptiveColumns.MinimumColumnWidth="220" controls:AdaptiveColumns.MaximumColumns="2">
                             <Button x:Name="ImportExcelButton" Text="{localization:Translate AiBank.ImportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnImportExcelClicked" />
                             <Button x:Name="ExportExcelButton" Grid.Column="1" Text="{localization:Translate AiBank.ExportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnExportExcelClicked" />
                         </Grid>
                         <Label x:Name="DataTransferStatusLabel" LineBreakMode="WordWrap" />
+                        <VerticalStackLayout x:Name="ImportReviewPanel" IsVisible="False" Spacing="10">
+                            <Label Text="{localization:Translate AiBank.ImportReviewTitle}" Style="{StaticResource HardwareSectionTitleStyle}" />
+                            <Label Text="{localization:Translate AiBank.ImportReviewHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            <controls:SqlResultTableView x:Name="ImportReviewTable" CellSelected="OnImportReviewCellSelected" />
+                            <Label x:Name="ImportSelectedRowLabel" FontAttributes="Bold" />
+                            <controls:FractionExpressionView x:Name="ImportProblemPreview" MathFontSize="20" WrapContent="True" />
+                            <Label x:Name="ImportSupportingDataPreview" LineBreakMode="WordWrap" />
+                            <Label x:Name="ImportSolutionPreview" LineBreakMode="WordWrap" />
+                            <Label x:Name="ImportErrorsPreview" LineBreakMode="WordWrap" TextColor="{DynamicResource DangerColor}" />
+                            <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowSpacing="8" controls:AdaptiveColumns.MinimumColumnWidth="220" controls:AdaptiveColumns.MaximumColumns="2">
+                                <Button x:Name="ConfirmImportButton" Text="{localization:Translate AiBank.ConfirmImport}"
+                                        Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnConfirmImportClicked" />
+                                <Button x:Name="DiscardImportButton" Grid.Column="1" Text="{localization:Translate AiBank.DiscardImport}"
+                                        Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDiscardImportClicked" />
+                            </Grid>
+                        </VerticalStackLayout>
                     <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
                         <Button x:Name="DeleteAllButton" Text="{localization:Translate AiBank.DeleteAll}"
                                 Style="{StaticResource DataDeleteAllStyle}" Clicked="OnDeleteAllClicked" Margin="0,0,8,0" />

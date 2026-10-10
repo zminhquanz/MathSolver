@@ -10,6 +10,7 @@ namespace MathSolver.Services.QuestionBank;
 public sealed record ValidatedBankQuestion(BasicQuestionContract Contract, BasicQuestionDraft Draft,
     string RawJson, string ModelName, DateTime CreatedUtc)
 {
+    public bool UserAuthored { get; init; }
     public MathWordProblem WordProblem => Draft.ToWordProblem(Contract);
 }
 
@@ -110,9 +111,9 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
 
     private static bool Insert(SQLiteConnection db, ValidatedBankQuestion question)
     {
-        // Validate again at the storage boundary, including manual insertion.
+        // Recheck syntax for user templates; retain strict semantic validation for AI.
         string draftJson = SerializeDraft(question.Draft);
-        var checkedDraft = BasicQuestionValidator.Validate(draftJson, question.Contract);
+        var checkedDraft = ValidateSavedQuestion(question);
         if (!checkedDraft.IsValid) throw new InvalidOperationException(checkedDraft.ErrorCode);
         if (checkedDraft.Contract is { } resolved && resolved != question.Contract)
             throw new InvalidOperationException("ChangedUnits");
@@ -144,7 +145,10 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 question.Contract.Version, contractJson, draftJson, question.RawJson, question.ModelName,
                 question.CreatedUtc, DateTime.MinValue, 0, (int)c.Structure, c.TopicId, c.SceneId, c.Grade, (int)c.KnowledgeGroup, (int)c.Family, c.BankVariant) == 1;
             if (inserted)
+            {
+                if (question.UserAuthored) db.Execute("INSERT INTO QuestionUserAuthorship(Hash) VALUES (?)", hash);
                 db.Execute("INSERT OR REPLACE INTO QuestionProseIndex(Hash,ProseHash) VALUES (?,?)", hash, proseHash);
+            }
         });
         return inserted;
     }
@@ -176,7 +180,8 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                             || contract.TopicId != row.TopicId || contract.SceneId != row.SceneId)) continue;
                         if (contract.Grade != row.Grade || (int)contract.KnowledgeGroup != row.KnowledgeGroup
                             || profile is not null && !profile.Includes(contract.KnowledgeGroup)) continue;
-                        var validation = BasicQuestionValidator.Validate(row.DraftJson, contract);
+                        bool userAuthored = IsUserAuthored(db, row.Hash);
+                        var validation = ValidateDraft(row.DraftJson, contract, userAuthored);
                         if (!validation.IsValid) continue;
                         if (validation.Contract is { } resolved && resolved != contract) continue;
                         db.Execute("UPDATE BasicQuestionBank SET UseCount=UseCount+1,LastUsedUtc=? WHERE Hash=?", DateTime.UtcNow, row.Hash);
@@ -184,7 +189,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                         if (!_selectionHistory.TryGetValue(key, out var history)) _selectionHistory[key] = history = [];
                         history.Add(new() { Structure = (int)contract.Structure, TopicId = contract.TopicId, SceneId = contract.SceneId });
                         if (history.Count > 64) history.RemoveAt(0);
-                        return new(contract, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc);
+                        return new(contract, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc) { UserAuthored = userAuthored };
                     }
                     catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException)
                     { Debug.WriteLine($"Question bank row skipped: {error.GetType().Name}"); }
@@ -247,6 +252,15 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 [.. args, bucket.Structure, bucket.TopicId, bucket.SceneId])) yield return row;
     }
 
+    public static BasicDraftValidation ValidateSavedQuestion(ValidatedBankQuestion question)
+        => ValidateDraft(SerializeDraft(question.Draft), question.Contract, question.UserAuthored);
+
+    internal static BasicDraftValidation ValidateDraft(string json, BasicQuestionContract contract, bool userAuthored)
+        => userAuthored ? UserQuestionTemplateValidator.Validate(json, contract) : BasicQuestionValidator.Validate(json, contract);
+
+    private static bool IsUserAuthored(SQLiteConnection db, string hash)
+        => db.ExecuteScalar<int>("SELECT EXISTS(SELECT 1 FROM QuestionUserAuthorship WHERE Hash=?)", hash) != 0;
+
     public static string SerializeDraft(BasicQuestionDraft draft) => draft.Facts is not null
         ? JsonSerializer.Serialize(new { facts = draft.Facts.Select(f => new { role = f.Role, text = f.Text }), question = draft.Question,
             solution_leads = (draft.SolutionLeads ?? []).Select(l => new { step = l.Role, text = l.Text }) }, JsonOptions)
@@ -280,6 +294,10 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                     db.Execute("CREATE INDEX IF NOT EXISTS KnowledgeSelection ON BasicQuestionBank(Operation,Stars,Language,KnowledgeGroup,SceneId)");
                     db.Execute("CREATE INDEX IF NOT EXISTS FindXSelection ON BasicQuestionBank(ProblemType,Operation,Stars,Language,KnowledgeGroup,ProblemVariant,SceneId)");
                     db.Execute("CREATE INDEX IF NOT EXISTS StorySelection ON BasicQuestionBank(ProblemType,ProblemVariant,Stars,Language,SceneId)");
+                    // Keep provenance outside the public grid schema and old SELECT * imports.
+                    db.Execute("CREATE TABLE IF NOT EXISTS QuestionUserAuthorship(Hash TEXT PRIMARY KEY NOT NULL)");
+                    db.Execute("CREATE TRIGGER IF NOT EXISTS QuestionUserAuthorshipDeleted AFTER DELETE ON BasicQuestionBank BEGIN DELETE FROM QuestionUserAuthorship WHERE Hash=OLD.Hash; END");
+                    db.Execute("CREATE TRIGGER IF NOT EXISTS QuestionUserAuthorshipRenamed AFTER UPDATE OF Hash ON BasicQuestionBank BEGIN UPDATE OR REPLACE QuestionUserAuthorship SET Hash=NEW.Hash WHERE Hash=OLD.Hash; END");
                     InitializeProseIndex(db);
                     _initialized = true;
                 }

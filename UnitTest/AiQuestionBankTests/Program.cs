@@ -4,6 +4,13 @@ using MathSolver.Services.QuestionBank;
 using System.Text.Json;
 using System.Text;
 
+if (args is ["--excel-authoring"])
+{
+    try { await ExcelAuthoringTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--next-ai-evidence", var nextEvidence])
 {
     try { NextAiFormsTests.CheckModelEvidence(nextEvidence); }

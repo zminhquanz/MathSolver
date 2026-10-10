@@ -37,12 +37,13 @@ public sealed partial class QuestionBankStore
                                 || row.ProblemVariant != (int)c.UnknownRole || row.Version != c.Version || c.Operation != operation
                                 || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group
                                 || c.SceneId != row.SceneId || c.TopicId != row.TopicId || row.Structure != (int)c.Structure || c.Grade != row.Grade) continue;
-                            var validation = BasicQuestionValidator.Validate(row.DraftJson, c);
+                            bool userAuthored = IsUserAuthored(db, row.Hash);
+                            var validation = ValidateDraft(row.DraftJson, c, userAuthored);
                             if (!validation.IsValid || validation.Contract != c) continue;
                             db.Execute("UPDATE BasicQuestionBank SET UseCount=UseCount+1,LastUsedUtc=? WHERE Hash=?", DateTime.UtcNow, row.Hash);
                             history.Enqueue(c.SceneId);
                             if (history.Count > 64) history.Dequeue();
-                            return new(c, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc);
+                            return new(c, validation.Draft!, row.RawJson, row.ModelName, row.CreatedUtc) { UserAuthored = userAuthored };
                         }
                         catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException)
                         { Debug.WriteLine($"Find-X bank row skipped: {error.GetType().Name}"); }

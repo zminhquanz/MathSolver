@@ -894,15 +894,6 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource ThemeCardStyle}">
-                    <VerticalStackLayout Spacing="8">
-                        <Button Text="{localization:Translate DataManagement.Title}"
-                                Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDataManagementClicked" />
-                        <Label Text="{localization:Translate DataManagement.MenuHint}" FontSize="13"
-                               TextColor="{DynamicResource TextSecondaryColor}" />
-                    </VerticalStackLayout>
-                </Border>
-
                 <!-- HIỂN THỊ KẾT QUẢ -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">
