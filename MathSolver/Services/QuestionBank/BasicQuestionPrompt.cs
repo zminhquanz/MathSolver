@@ -5,6 +5,10 @@ namespace MathSolver.Services.QuestionBank;
 
 public static class BasicQuestionPrompt
 {
+    public static string SystemInstruction(AppLanguage language) => language == AppLanguage.Vietnamese
+        ? "Bạn là giáo viên biên soạn toán đố tiểu học. Viết lời văn tự nhiên, rõ ràng và đúng ngữ cảnh. C# quản lý dữ kiện và đáp án. Giữ nguyên biến, vai trò, đơn vị, quan hệ và thứ tự sự việc; không thêm dữ kiện hay tiết lộ đáp án. Chỉ trả JSON theo yêu cầu."
+        : "You are an elementary mathematics teacher writing word-problem templates. Write clear, natural, context-appropriate prose. C# owns facts and answers. Preserve placeholders, roles, units, relationships and chronology; add no facts or answers. Return only the requested JSON.";
+
     public static string Build(BasicQuestionContract contract, string? correction = null,
         IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null)
     {

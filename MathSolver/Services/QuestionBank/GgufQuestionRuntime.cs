@@ -159,6 +159,29 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
         => GenerateNovelAsync(contract, prompt, new HashSet<string>(StringComparer.Ordinal), cancellationToken, onText, onMetrics);
 
+    internal static string FormatChatPrompt(LLamaWeights weights, BasicQuestionContract contract, string prompt)
+    {
+        weights.Metadata.TryGetValue("general.architecture", out string? architecture);
+        string system = BasicQuestionPrompt.SystemInstruction(contract.Language);
+        if (architecture == "gemma4")
+        {
+            // Gemma 4 supports a real system turn. Omit <|think|> for E2B/E4B
+            // text-only, thinking-off inference; the executor adds BOS itself.
+            // https://huggingface.co/google/gemma-4-E4B-it/raw/main/chat_template.jinja
+            return $"<|turn>system\n{system}<turn|>\n<|turn>user\n{prompt}<turn|>\n<|turn>model\n";
+        }
+        var template = new LLamaTemplate(weights.NativeHandle) { AddAssistant = true };
+        if (architecture?.StartsWith("gemma", StringComparison.Ordinal) == true)
+            // Earlier Gemma templates accept only user/model turns.
+            template.Add("user", system + "\n\n" + prompt);
+        else
+        {
+            template.Add("system", system);
+            template.Add("user", prompt);
+        }
+        return PromptTemplateTransformer.ToModelPrompt(template);
+    }
+
     public async Task<string> GenerateNovelAsync(BasicQuestionContract contract, string prompt, IReadOnlySet<string> excludedProse,
         CancellationToken cancellationToken,
         Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
@@ -170,18 +193,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             if (_weights is null || _parameters is null) throw new InvalidOperationException("ModelNotLoaded");
             return await Task.Run(async () =>
             {
-                bool gemma4 = _weights.Metadata.TryGetValue("general.architecture", out string? architecture) && architecture == "gemma4";
-                // Google's newer Gemma 4 GGUF chat template is full Jinja, which
-                // llama_chat_apply_template in this backend cannot interpret.
-                // Use the documented E2B/E4B text-only, thinking-off framing.
-                // https://ai.google.dev/gemma/docs/capabilities/thinking
-                string input = gemma4 ? $"<|turn>user\n{prompt}<turn|>\n<|turn>model\n" : prompt;
-                if (!gemma4)
-                {
-                    var template = new LLamaTemplate(_weights.NativeHandle) { AddAssistant = true };
-                    template.Add("user", prompt);
-                    input = PromptTemplateTransformer.ToModelPrompt(template);
-                }
+                string input = FormatChatPrompt(_weights, contract, prompt);
                 // Count the exact chat framing without allocating a KV cache first.
                 int tokens = _weights.Tokenize(input, true, true, _parameters.Encoding).Length;
                 int contextTokens = GetContextTokens(tokens);
@@ -189,7 +201,13 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 LastContextTokens = contextTokens;
                 // Sampling owns native grammar/sampler chains too; release them
                 // deterministically before the job releases the model weights.
-                using var sampling = new DefaultSamplingPipeline { Temperature = 0.65f, TopP = 0.9f,
+                using var sampling = new DefaultSamplingPipeline {
+                    Temperature = 0.5f, TopP = 0.9f, TopK = 40, MinP = 0.05f,
+                    // Mild within-response repetition control: JSON keys and role
+                    // slots legitimately recur. SQLite handles cross-question duplication.
+                    RepeatPenalty = 1.05f,
+                    // Leave Seed unset: LLamaSharp generates a fresh random seed
+                    // for every pipeline, including retries within the same job.
                     // Validate the sampled candidate first; fall back to the full
                     // vocabulary when it violates the grammar. Grammar remains enforced.
                     GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.Basic,

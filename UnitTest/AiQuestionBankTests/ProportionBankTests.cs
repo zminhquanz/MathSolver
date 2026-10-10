@@ -20,7 +20,7 @@ internal static class ProportionBankTests
             var original = ReasoningStoryCatalogue.Draft(c);
             var excluded = new HashSet<string> { QuestionProseIdentity.Hash(c, original) };
             string prompt = BasicQuestionPrompt.Build(c, "DuplicateProse", [original.ProblemText], excluded);
-            int tokens = weights.Tokenize($"<|turn>user\n{prompt}<turn|>\n<|turn>model\n", true, true, Encoding.UTF8).Length;
+            int tokens = weights.Tokenize(GgufQuestionRuntime.FormatChatPrompt(weights, c, prompt), true, true, Encoding.UTF8).Length;
             GgufQuestionRuntime.GetContextTokens(tokens); maximum = Math.Max(maximum, tokens); count++;
         }
         Console.WriteLine($"Proportion actual Gemma tokenizer: {count} retry prompts; maximum {maximum} input tokens; context 2048/output 700/margin 64.");

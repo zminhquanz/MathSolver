@@ -11,7 +11,7 @@ internal static class ReasoningStoryTests
         using var weights = await LLama.LLamaWeights.LoadFromFileAsync(new LLama.Common.ModelParams(path)
             { GpuLayerCount = 0, UseMemorymap = true });
         int maximum = 0, count = 0;
-        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
+        foreach (var family in Enum.GetValues<BankQuestionFamily>().Where(ReasoningStoryCatalogue.Supports))
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var variant in ReasoningStoryCatalogue.Variants(family, tier))
@@ -22,7 +22,7 @@ internal static class ReasoningStoryTests
             foreach (string prompt in new[] { BasicQuestionPrompt.Build(c, "ChangedRelationOrTarget"),
                 BasicQuestionPrompt.Build(c, "DuplicateProse", [prose, "According to the report, " + prose]) })
             {
-                int tokens = weights.Tokenize($"<|turn>user\n{prompt}<turn|>\n<|turn>model\n", true, true, System.Text.Encoding.UTF8).Length;
+                int tokens = weights.Tokenize(GgufQuestionRuntime.FormatChatPrompt(weights, c, prompt), true, true, System.Text.Encoding.UTF8).Length;
                 GgufQuestionRuntime.GetContextTokens(tokens);
                 maximum = Math.Max(maximum, tokens);
             }
