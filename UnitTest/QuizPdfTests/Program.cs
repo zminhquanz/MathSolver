@@ -109,7 +109,9 @@ var fractionSet = batch with { Questions = Array.AsReadOnly(new[] { fractionQues
 File.WriteAllBytes(Path.Combine(directory, "textbook-fractions.pdf"), QuizPdfWriter.Write(fractionSet, false));
 File.WriteAllText(Path.Combine(directory, "cases.json"), JsonSerializer.Serialize(traces, new JsonSerializerOptions { WriteIndented = true }));
 await CalculationSolutionTests.Run(factory, directory);
+await FactSummaryTests.Run(factory, directory);
 await WorksheetSettingsTests.Run(factory);
+await MixedKnowledgeGroupsTests.Run(directory);
 FractionOperandLayoutTests.Run(directory);
 Console.WriteLine($"PASS {cases} family/star/language/mode cases + {subtypeCases} elementary subtype/language/mode cases; {visualItems.Count} essential drawings. A4 PDF parsing, choices, masked data, vector diagrams, embedded fonts, frozen 20-question batch, count limits, bounded deduplication and cancellation. Output: {directory}");
 static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }

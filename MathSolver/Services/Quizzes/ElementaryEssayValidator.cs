@@ -197,7 +197,8 @@ internal static partial class ElementaryEssayValidator
         {
             if (EssayCombinedInputParser.TryNormalizeClockAnswer(text, out string clockAnswer)) text = clockAnswer;
         }
-        var entries = (text ?? "").Split([';', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var entries = EssayAnswerListParser.Split(text, contract.Answers.Count,
+            EssayAnswerListParser.PreserveDecimalCommas(contract));
         bool correct = entries.Length == contract.Answers.Count;
         if (!correct) details?.Add(QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.CheckAnswers.013", ("contract_Answers_Count", $"{contract.Answers.Count}"), ("entries_Length", $"{entries.Length}")));
         var used = new HashSet<int>();
@@ -222,16 +223,23 @@ internal static partial class ElementaryEssayValidator
             var expected = contract.Answers[target];
             if (expected.IsText)
             {
-                bool matches = string.Equals(entry.Trim().TrimEnd('.'), expected.Text, StringComparison.OrdinalIgnoreCase)
-                    || expected.Aliases?.Any(alias => string.Equals(entry.Trim().TrimEnd('.'), alias, StringComparison.OrdinalIgnoreCase)) == true
-                    || MatchesLineNames(contract, entry, expected.Text!);
+                bool matches = expected.Aliases?.Any(alias => string.Equals(entry.Trim().TrimEnd('.'), alias, StringComparison.OrdinalIgnoreCase)) == true
+                    || (contract.Type == ElementaryQuizType.OrderNumbers
+                        ? MatchesNaturalNumberOrder(entry, expected.Text!)
+                        : string.Equals(entry.Trim().TrimEnd('.'), expected.Text, StringComparison.OrdinalIgnoreCase)
+                            || MatchesLineNames(contract, entry, expected.Text!));
                 if (!matches) { correct = false; details?.Add(QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.CheckAnswers.015", ("expected_Label", $"{expected.Label}"), ("entry", $"{entry}"), ("expected_Text", $"{expected.Text}"))); }
                 continue;
             }
             var parsed = SplitValueUnit(entry);
             bool valueOkay = TryValue(parsed.Number, out V value, contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement) && value == ToValue(expected.Value);
             bool formOkay = CorrectForm(parsed.Number, expected);
-            bool unitOkay = UnitsMatch(question, parsed.Unit, expected.Unit);
+            // The chart or missing-side question already supplies the answer's unit. A numeric answer
+            // may omit it, but an explicitly written unit must still match.
+            bool unitOkay = (contract.Type is ElementaryQuizType.ReadBarChart
+                or ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart
+                or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide) && parsed.Unit.Length == 0
+                || UnitsMatch(question, parsed.Unit, expected.Unit);
             if (!valueOkay || !formOkay || !unitOkay)
             {
                 correct = false;
@@ -241,6 +249,19 @@ internal static partial class ElementaryEssayValidator
             }
         }
         return correct;
+    }
+    private static bool MatchesNaturalNumberOrder(string entered, string expected)
+    {
+        // Accept keyboard-friendly separators only for natural-number ordering.
+        // Do not strip punctuation from other text answers or interpret subtraction
+        // and negative numbers as an ordered list in calculation questions.
+        entered = entered.Trim().TrimEnd('.');
+        if (entered.Length > 4096 || expected.Length > 4096
+            || !NaturalNumberOrderRegex().IsMatch(entered) || !NaturalNumberOrderRegex().IsMatch(expected)) return false;
+        string[] actual = NaturalNumberOrderSeparatorRegex().Split(entered);
+        string[] required = NaturalNumberOrderSeparatorRegex().Split(expected);
+        return actual.Length == required.Length && actual.Select(number => BigInteger.Parse(number, CultureInfo.InvariantCulture))
+            .SequenceEqual(required.Select(number => BigInteger.Parse(number, CultureInfo.InvariantCulture)));
     }
     private static string NormalizeWorkExpression(string expression)
     {
@@ -281,9 +302,13 @@ internal static partial class ElementaryEssayValidator
     private static bool ContainsCue(string? text, string cue) => (text ?? "").Contains(cue, StringComparison.OrdinalIgnoreCase);
     private static bool UnitsMatch(ArithmeticQuizQuestion question, string entered, string expected) => expected.Length == 0 ? entered.Length == 0
         : EssayAnswerValidator.IsExpectedUnitForFeedback(question with { WordProblem = new(question.ElementaryProblem!.ProblemText, "", expected, "") }, entered);
-    [GeneratedRegex(@"^\s*(?<number>[+-]?\d+(?:[.,]\d+)?(?:\s+\d+\s*/\s*\d+|\s*/\s*\d+)?)(?<unit>.*)$")]
+    [GeneratedRegex(@"^\s*(?<number>[+-]?\d+(?:[.,]\d+)?(?:\s+(?:(?:và|va|and)\s+)?\d+\s*/\s*\d+|\s*/\s*\d+)?)(?<unit>.*)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ResultRegex();
-    [GeneratedRegex(@"^\s*(?<whole>\d+)\s+(?<n>\d+)\s*/\s*(?<d>[1-9]\d*)\s*$")]
+    [GeneratedRegex(@"\A[0-9]+(?:\s*(?:->|-)\s*[0-9]+)+\z", RegexOptions.CultureInvariant)]
+    private static partial Regex NaturalNumberOrderRegex();
+    [GeneratedRegex(@"\s*(?:->|-)\s*", RegexOptions.CultureInvariant)]
+    private static partial Regex NaturalNumberOrderSeparatorRegex();
+    [GeneratedRegex(@"^\s*(?<whole>\d+)\s+(?:(?:và|va|and)\s+)?(?<n>\d+)\s*/\s*(?<d>[1-9]\d*)\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex MixedRegex();
     [GeneratedRegex(@"^\s*(?<a>\d+)\s*(?:÷|/|:)\s*(?<b>\d+)\s*=\s*(?<q>\d+)\s*(?:dư|du|remainder|r)\s*(?<r>\d+)\s*$", RegexOptions.IgnoreCase)]
     private static partial Regex DivisionRegex();

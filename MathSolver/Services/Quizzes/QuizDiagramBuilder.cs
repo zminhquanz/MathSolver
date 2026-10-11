@@ -93,9 +93,9 @@ public static class QuizDiagramBuilder
                     new QuizDiagramRow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.012"), Parts(large)) };
                 string caption = elementary.Type switch
                 {
-                    ElementaryQuizType.SumDifference => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.013") + " = " + facts[0] + "; " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.014") + " = " + facts[1],
-                    ElementaryQuizType.SumRatio => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.015") + " = " + facts[0] + "; " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.016") + " = " + facts[1] + "/" + facts[2],
-                    _ => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.017") + " = " + facts[0] + "; " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.018") + " = " + facts[1] + "/" + facts[2]
+                    ElementaryQuizType.SumDifference => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.013") + " = " + facts[0] + ", " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.014") + " = " + facts[1],
+                    ElementaryQuizType.SumRatio => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.015") + " = " + facts[0] + ", " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.016") + " = " + facts[1] + "/" + facts[2],
+                    _ => QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.017") + " = " + facts[0] + ", " + QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.018") + " = " + facts[1] + "/" + facts[2]
                 };
                 if (!ratio)
                 {
@@ -156,10 +156,10 @@ public static class QuizDiagramBuilder
             switch (motion.QuestionKind)
             {
                 case MotionQuestionKind.CatchUpTime:
-                    caption = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.022") + ": " + V(0, distanceUnit) + "; " + caption;
+                    caption = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.022") + ": " + V(0, distanceUnit) + ", " + caption;
                     Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.023"), 2, 1); Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.024"), 1, 1); break;
                 case MotionQuestionKind.MeetingTime:
-                    caption = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.025") + ": " + V(0, distanceUnit) + "; " + caption;
+                    caption = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.025") + ": " + V(0, distanceUnit) + ", " + caption;
                     Arrow("A", 1, 1); Arrow("B", 2, -1); break;
                 case MotionQuestionKind.RiverDownstreamSpeed:
                 case MotionQuestionKind.RiverUpstreamSpeed:

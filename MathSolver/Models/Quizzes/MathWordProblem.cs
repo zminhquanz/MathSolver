@@ -13,7 +13,11 @@ public sealed record MathWordProblem(
     AppliedArithmeticReasoning? ArithmeticReasoning = null,
     QuestionFactTable? FactTable = null);
 
-public sealed record QuestionFactTable(string LabelHeader, string ValueHeader, IReadOnlyList<QuestionFactRow> Rows);
+public sealed record QuestionFactTable(string LabelHeader, string ValueHeader, IReadOnlyList<QuestionFactRow> Rows)
+{
+    /// <summary>A reading aid that repeats facts already stated in the problem, rather than required table data.</summary>
+    public bool IsSummary { get; init; }
+}
 public sealed record QuestionFactRow(string Label, string Value);
 
 /// <summary>Algorithm-owned interpretation of the two facts, independent of AI prose.</summary>

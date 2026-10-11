@@ -7,6 +7,8 @@ public sealed partial class ElementaryQuizGenerator
     private ElementaryQuizContract CreateTimeDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier, TimeActivityContext? activity = null)
     {
         var t = new DifficultyBuilder(QuizProblemKind.Time, type, language, tier);
+        if (type is ElementaryQuizType.ElapsedTime or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar)
+            t.RequiresSolution = false;
         int level = (int)tier;
         string Text(string suffix, params (string Key, string Value)[] values) => TimeActivityText(language, activity, suffix, values);
         string min = Text("001"), hours = Text("002"), days = Text("003");

@@ -86,8 +86,8 @@ internal static partial class PuzzleTests
                     Require(length > 0 && length == decimal.Truncate(length), "Missing-side data must have a positive integer answer.");
                     Require(visual.Annotations!.Count(label => label.Text.Contains('?')) == 1,
                         "A missing-side drawing must mark exactly one unknown measurement.");
-                    Require(contract.RequiresSolution && contract.Answers.Single().Unit == visual.Unit,
-                        "Missing-side solution/unit requirements changed.");
+                    Require(!contract.RequiresSolution && contract.Answers.Single().Unit == visual.Unit,
+                        "Missing sides must allow direct results and retain the requested length unit.");
                     if (id == "triangle-perimeter")
                     {
                         decimal first = facts[1], second = facts[2];
@@ -145,8 +145,9 @@ internal static partial class PuzzleTests
                     "Shape example was rejected: " + contract.SolutionText);
                 if (type != ElementaryQuizType.CountSides)
                 {
-                    Require(!grader.Validate(question, parts.Solution, parts.Equation, expected.ToString()).IsCorrect,
-                        "A measurement answer without its unit must be rejected.");
+                    Require(grader.Validate(question, parts.Solution, parts.Equation, expected.ToString()).IsCorrect
+                        == (type == ElementaryQuizType.RectangleSide),
+                        "Only missing-side final results may omit their measurement unit.");
                     string wrongUnit = type == ElementaryQuizType.CompositeArea ? visual.Unit : visual.Unit + "²";
                     Require(!ElementaryEssayValidator.CheckAnswers(question, expected + " " + wrongUnit),
                         "Length and area units must not be interchangeable.");

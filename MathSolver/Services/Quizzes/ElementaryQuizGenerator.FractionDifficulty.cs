@@ -162,12 +162,13 @@ public sealed partial class ElementaryQuizGenerator
             }
             // The required common denominator is the LCM, so the instruction has one definite target.
             string problem = level <= 2
-                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.013", ("string_Join_fractionTexts", $"{string.Join("; ", fractionTexts)}"), ("common", $"{common}"))
-                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.014", ("string_Join_fractionTexts", $"{string.Join("; ", fractionTexts)}"));
+                ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.013", ("string_Join_fractionTexts", $"{string.Join(", ", fractionTexts)}"), ("common", $"{common}"))
+                : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.014", ("string_Join_fractionTexts", $"{string.Join(", ", fractionTexts)}"));
             t.RequiresSolution = false;
             return t.Build("common-denominator-" + level, problem);
         }
         // Mixed numbers combine fractions before normalization at higher levels.
+        t.RequiresSolution = false;
         string den = t.Given("denominator", denominator);
         string num = t.Given("numerator", denominator * _random.Next(2, 6) + 1);
         string mixedExpression = $"{num}/{den}";

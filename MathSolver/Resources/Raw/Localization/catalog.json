@@ -32,6 +32,30 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "Quiz.TablePieAnswerInputHint": {"context": "Math puzzles > Reading tables and pie charts: optional worked solution and answer unit.", "translatorNote": "A direct number is sufficient at every difficulty. Any explicit unit must match the requested answer unit. Explanation, calculation and final-answer prefix are optional."},
+    "Quiz.TablePieAnswerInputPlaceholder": {"context": "Math puzzles > Reading tables and pie charts: optional worked solution and answer unit.", "translatorNote": "A direct number is sufficient at every difficulty. Any explicit unit must match the requested answer unit. Explanation, calculation and final-answer prefix are optional."},
+    "Quiz.MissingSideInputHint": {"context": "Math puzzles > Finding missing sides: direct result with an optional length unit.", "translatorNote": "A number alone is accepted at every difficulty. If a unit is included it must match the requested length unit. Worked solutions are optional; compact unit spelling is allowed."},
+    "Quiz.MissingSideInputPlaceholder": {"context": "Math puzzles > Finding missing sides: direct result with an optional length unit.", "translatorNote": "A number alone is accepted at every difficulty. If a unit is included it must match the requested length unit. Worked solutions are optional; compact unit spelling is allowed."},
+    "Quiz.PictographInputHint": {"context": "Math puzzles > Reading a pictograph: direct final result with an optional unit.", "translatorNote": "A number alone is accepted at every difficulty. If a unit is included it must match the requested answer unit. Worked solutions are optional."},
+    "Quiz.PictographInputPlaceholder": {"context": "Math puzzles > Reading a pictograph: direct final result with an optional unit.", "translatorNote": "A number alone is accepted at every difficulty. If a unit is included it must match the requested answer unit. Worked solutions are optional."},
+    "Quiz.BarChartAnswerInputHint": {"context": "Math puzzles > Reading a bar chart: direct numeric answer with an optional unit.", "translatorNote": "A number alone is accepted. If a unit is included it must match the chart. No separate final-answer prefix is required."},
+    "Quiz.BarChartAnswerInputPlaceholder": {"context": "Math puzzles > Reading a bar chart: direct numeric answer with an optional unit.", "translatorNote": "A number alone is accepted. If a unit is included it must match the chart. No separate final-answer prefix is required."},
+    "Quiz.MeasurementResultInputHint": {"context": "Math puzzles > Measurement: direct answers for unit conversions and map scale.", "translatorNote": "Allow optional explanation and calculations. Keep compact unit examples and keyboard-friendly square/cubic notation cm2 and cm3."},
+    "Quiz.MeasurementResultInputPlaceholder": {"context": "Math puzzles > Measurement: direct answers for unit conversions and map scale.", "translatorNote": "Allow optional explanation and calculations. Keep compact unit examples and keyboard-friendly square/cubic notation cm2 and cm3."},
+    "Quiz.TimeResultInputHint": {"context": "Math puzzles > Time: optional worked solution for elapsed time, time conversion and calendar intervals.", "translatorNote": "The final result must include the requested time unit. Keep examples of minutes, fractional hours and days."},
+    "Quiz.TimeResultInputPlaceholder": {"context": "Math puzzles > Time: optional worked solution for elapsed time, time conversion and calendar intervals.", "translatorNote": "The final result must include the requested time unit. Keep examples of minutes, fractional hours and days."},
+    "Quiz.MixedMeasurementInputHint": {"context": "Math puzzles > Measurements with two units: optional worked solution.", "translatorNote": "Keep the example 89 dm and clarify that the result must use the requested unit."},
+    "Quiz.MixedMeasurementInputPlaceholder": {"context": "Math puzzles > Measurements with two units: optional worked solution.", "translatorNote": "Keep the example 89 dm and clarify that the result must use the requested unit."},
+
+    "Quiz.ProtractorInputHint": {"context": "Math puzzles > Reading a protractor.", "translatorNote": "Use the spelled-out angle unit for keyboard entry. Keep the numeric examples 90 and 180 unchanged."},
+    "Quiz.ProtractorInputPlaceholder": {"context": "Math puzzles > Reading a protractor.", "translatorNote": "Use the spelled-out angle unit for keyboard entry. Keep the numeric examples 90 and 180 unchanged."},
+
+    "Quiz.ThermometerInputHint": {"context": "Math puzzles > Reading a thermometer.", "translatorNote": "Use a keyboard-friendly Celsius unit in the input example, keeping the numeric value 34 unchanged."},
+    "Quiz.ThermometerInputPlaceholder": {"context": "Math puzzles > Reading a thermometer.", "translatorNote": "Use a keyboard-friendly Celsius unit in the input example, keeping the numeric value 34 unchanged."},
+
+    "Quiz.MixedNumberInputHint": {"context": "Math puzzles > Mixed number answer entry.", "translatorNote": "Keep both keyboard mixed-number examples: 5 1/2 and 5 and 1/2. A space or conjunction separates the whole number and fraction, not multiplication."},
+    "Quiz.MixedNumberInputPlaceholder": {"context": "Math puzzles > Mixed number answer entry.", "translatorNote": "Keep both keyboard mixed-number examples: 5 1/2 and 5 and 1/2. A space or conjunction separates the whole number and fraction, not multiplication."},
+
     "Quiz.EssayResultOnlyLabel": {
       "context": "Math puzzles > Direct numeric practice; only the result is graded.",
       "description": "Input guidance or result feedback for optional calculation work.",
@@ -1613,6 +1637,10 @@
       "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
       "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
+    "Learning.Group.Mixed": {
+      "context": "Nhóm kiến thức ở luyện tập toán đố và tạo bộ đề PDF.",
+      "description": "Mỗi câu chọn ngẫu nhiên một nhóm phù hợp với dạng toán, phép tính và mức sao."
+    },
     "Learning.Group.Objects": {
       "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
@@ -1699,27 +1727,27 @@
     },
     "Quiz.ClockAnswerLabel": {
       "context": "Math puzzles > Time > Read clock > Written answer.",
-      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "description": "Clock reading input guidance; the Answer prefix is optional before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     },
     "Quiz.ClockAnswerHint": {
       "context": "Math puzzles > Time > Read clock > Written answer.",
-      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "description": "Clock reading input guidance; the Answer prefix is optional before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     },
     "Quiz.ClockAnswerPlaceholder": {
       "context": "Math puzzles > Time > Read clock > Written answer.",
-      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "description": "Clock reading input guidance; the Answer prefix is optional before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     },
     "Quiz.ClockEssayHint": {
       "context": "Math puzzles > Time > Read clock > Written answer.",
-      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "description": "Clock reading input guidance; the Answer prefix is optional before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     },
     "Quiz.ClockEssayPlaceholder": {
       "context": "Math puzzles > Time > Read clock > Written answer.",
-      "description": "Clock reading input guidance; an Answer label is required before the hour and minute.",
+      "description": "Clock reading input guidance; the Answer prefix is optional before the hour and minute.",
       "translatorNote": "Keep the colon separator in labeled examples. Translate hour/minute labels and time units."
     },
     "Quiz.Elementary.FullGroups": {
@@ -1739,6 +1767,30 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key": "Quiz.TablePieAnswerInputHint", "source": "Chỉ cần nhập kết quả, không bắt buộc ghi đơn vị. Nếu ghi thêm đơn vị, hãy dùng đúng đơn vị đề bài yêu cầu. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.TablePieAnswerInputPlaceholder", "source": "Nhập kết quả, có hoặc không có đơn vị", "mode": "exact"},
+    {"key": "Quiz.MissingSideInputHint", "source": "Chỉ cần nhập độ dài cạnh còn thiếu, có hoặc không có đơn vị, ví dụ: 3, 3m hoặc 3 m. Nếu ghi thêm đơn vị, hãy dùng đúng đơn vị đề bài yêu cầu. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.MissingSideInputPlaceholder", "source": "Ví dụ: 3, 3m hoặc 3 m", "mode": "exact"},
+    {"key": "Quiz.PictographInputHint", "source": "Chỉ cần nhập kết quả, có hoặc không có đơn vị, ví dụ: 6 hoặc 6 gói quà. Nếu ghi thêm đơn vị, hãy dùng đúng đơn vị đề bài yêu cầu. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.PictographInputPlaceholder", "source": "Ví dụ: 6 hoặc 6 gói quà", "mode": "exact"},
+    {"key": "Quiz.BarChartAnswerInputHint", "source": "Chỉ cần nhập số đọc được từ biểu đồ. Có thể ghi thêm đơn vị, ví dụ: 10 hoặc 10 điểm. Không cần dòng đáp số riêng.", "mode": "exact"},
+    {"key": "Quiz.BarChartAnswerInputPlaceholder", "source": "Nhập số đọc được, ví dụ: 10", "mode": "exact"},
+    {"key": "Quiz.MeasurementResultInputHint", "source": "Chỉ cần nhập kết quả kèm đơn vị đề bài yêu cầu, có thể viết liền như 5m, 5cm, 5kg, 5g hoặc 5ml. Diện tích và thể tích có thể nhập cm2, cm3. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.MeasurementResultInputPlaceholder", "source": "Ví dụ: 5m, 5kg, 5ml, 5cm2 hoặc 5cm3", "mode": "exact"},
+    {"key": "Quiz.TimeResultInputHint", "source": "Chỉ cần nhập kết quả kèm đơn vị đề bài yêu cầu, ví dụ: 20 phút, 1/2 giờ hoặc 7 ngày. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.TimeResultInputPlaceholder", "source": "Ví dụ: 20 phút, 1/2 giờ hoặc 7 ngày", "mode": "exact"},
+    {"key": "Quiz.MixedMeasurementInputHint", "source": "Chỉ cần nhập kết quả kèm đơn vị đề bài yêu cầu, ví dụ: 89 dm. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
+    {"key": "Quiz.MixedMeasurementInputPlaceholder", "source": "Ví dụ: 89 dm", "mode": "exact"},
+
+    {"key": "Quiz.ProtractorInputHint", "source": "Nhập số đo góc kèm chữ độ, ví dụ: 90 độ hoặc 180 độ. Không cần gõ ký hiệu °.", "mode": "exact"},
+    {"key": "Quiz.ProtractorInputPlaceholder", "source": "Ví dụ: 90 độ", "mode": "exact"},
+
+    {"key": "Quiz.ThermometerInputHint", "source": "Nhập nhiệt độ kèm đơn vị độ C, ví dụ: 34 độ C. Không cần gõ ký hiệu °.", "mode": "exact"},
+    {"key": "Quiz.ThermometerInputPlaceholder", "source": "Ví dụ: 34 độ C", "mode": "exact"},
+
+    {"key": "Quiz.MixedNumberInputHint", "source": "Nhập hỗn số như 5 1/2 hoặc 5 và 1/2. Chỉ cần nhập kết quả, không cần dòng đáp số hay phép tính riêng.", "mode": "exact"},
+    {"key": "Quiz.MixedNumberInputPlaceholder", "source": "Ví dụ: 5 1/2 hoặc 5 và 1/2", "mode": "exact"},
+
     {
       "key": "Quiz.EssayResultOnlyLabel",
       "source": "Kết quả",
@@ -8621,7 +8673,7 @@
     },
     {
       "key": "Quiz.ElementaryEssayHint",
-      "source": "Có thể gộp hoặc tách bước; mỗi phép tính một dòng. Ghi đủ kết quả và đơn vị. Nếu có hai đáp số, ngăn cách bằng dấu chấm phẩy và có thể ghi nhãn từng kết quả.",
+      "source": "Có thể gộp hoặc tách bước; mỗi phép tính một dòng. Ghi đủ kết quả và đơn vị. Nếu có nhiều đáp số, ngăn cách bằng dấu phẩy hoặc dấu chấm phẩy; có thể ghi nhãn từng kết quả. Với số thập phân dùng dấu phẩy, thêm khoảng trắng sau dấu phẩy phân cách hoặc dùng dấu chấm phẩy.",
       "mode": "exact"
     },
     {
@@ -9591,22 +9643,22 @@
     },
     {
       "key": "Quiz.ClockAnswerHint",
-      "source": "Bắt buộc ghi Đáp số: trước giờ và phút, ví dụ: Đáp số: Giờ: 3, phút: 35 hoặc Đáp số: 3 giờ 35 phút. Không cần lời giải hay phép tính.",
+      "source": "Nhập trực tiếp giờ và phút, ví dụ: 3 giờ 0 phút hoặc Giờ: 3, phút: 0. Có thể ghi thêm Đáp số: nếu muốn. Không cần lời giải hay phép tính.",
       "mode": "exact"
     },
     {
       "key": "Quiz.ClockAnswerPlaceholder",
-      "source": "Đáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+      "source": "Ví dụ: 3 giờ 0 phút\nHoặc: Giờ: 3, phút: 0",
       "mode": "exact"
     },
     {
       "key": "Quiz.ClockEssayHint",
-      "source": "Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi đáp số theo mẫu: Đáp số: Giờ: …, phút: … hoặc Đáp số: … giờ … phút.",
+      "source": "Ghi lời giải và phép tính cho thời gian cần tìm, rồi ghi kết quả, ví dụ: 3 giờ 0 phút hoặc Giờ: 3, phút: 0. Không bắt buộc ghi Đáp số:.",
       "mode": "exact"
     },
     {
       "key": "Quiz.ClockEssayPlaceholder",
-      "source": "Lời giải và phép tính cho thời gian cần tìm\nĐáp số: Giờ: …, phút: …\nHoặc: Đáp số: … giờ … phút",
+      "source": "Lời giải và phép tính cho thời gian cần tìm\nGiờ: ..., phút: ...\nHoặc: ... giờ ... phút",
       "mode": "exact"
     },
     {

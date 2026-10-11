@@ -5,9 +5,12 @@ namespace MathSolver.Services.QuestionBank;
 /// <summary>The knowledge group selects dimensions; stars select numeric and reasoning difficulty.</summary>
 public sealed record QuestionLearningProfile(QuestionKnowledgeGroup Group)
 {
-    public bool IsValid => Enum.IsDefined(Group);
-    public bool Allows(ArithmeticOperation operation) => IsValid && Enum.IsDefined(operation);
-    public static QuestionKnowledgeGroup[] Groups() => [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Money,
+    public bool IsMixed => Group == QuestionKnowledgeGroup.Mixed;
+    public bool IsValid => !IsMixed && Enum.IsDefined(Group);
+    public bool Allows(ArithmeticOperation operation) => (IsValid || IsMixed) && Enum.IsDefined(operation);
+    public static QuestionKnowledgeGroup[] Groups(bool includeMixed = false) => includeMixed
+        ? [QuestionKnowledgeGroup.Mixed, .. Groups()]
+        : [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Money,
         QuestionKnowledgeGroup.Time, QuestionKnowledgeGroup.Measurement, QuestionKnowledgeGroup.Geometry,
         QuestionKnowledgeGroup.Packaging, QuestionKnowledgeGroup.Production, QuestionKnowledgeGroup.Data, QuestionKnowledgeGroup.Motion];
     public bool Includes(QuestionKnowledgeGroup group) => group == Group || Group == QuestionKnowledgeGroup.Measurement

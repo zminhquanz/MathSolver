@@ -15,7 +15,7 @@ internal sealed class QuizWorksheetSettingsView : ContentView
     private readonly Label _formatTitle = new(), _formatHint = new();
     private IReadOnlyList<QuizWorksheetChoices.Subtype> _subtypes = [];
     private GeometryMeasurement?[] _measurements = [];
-    private readonly QuestionKnowledgeGroup[] _groups = QuestionLearningProfile.Groups();
+    private readonly QuestionKnowledgeGroup[] _groups = QuestionLearningProfile.Groups(includeMixed: true);
     private readonly QuizProblemTypeCatalog _catalog = new();
     private bool _updating;
     public QuizWorksheetSettings Settings { get; private set; }

@@ -21,7 +21,7 @@ public partial class MathPuzzlePage
         try
         {
             string L(string key) => LocalizationService.TranslateKey("Learning." + key);
-            _learningGroups = QuestionLearningProfile.Groups();
+            _learningGroups = QuestionLearningProfile.Groups(includeMixed: true);
             if (_learningGroup is QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Length or QuestionKnowledgeGroup.Transport)
                 _learningGroup = QuestionKnowledgeGroup.Measurement;
             if (!_learningGroups.Contains(_learningGroup)) _learningGroup = QuestionKnowledgeGroup.Objects;

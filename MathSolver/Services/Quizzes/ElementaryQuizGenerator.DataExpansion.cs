@@ -32,6 +32,7 @@ public sealed partial class ElementaryQuizGenerator
         int[] values;
         if (type == ElementaryQuizType.ReadPictograph)
         {
+            t.RequiresSolution = false;
             int multiplier = Math.Min(new[] { 1, 2, 5, 10, 20 }[level - 1], Math.Max(1, context.Capacity / 18));
             key = multiplier;
             int[] icons = [_random.Next(2, 7), _random.Next(2, 7), _random.Next(1, 4)];

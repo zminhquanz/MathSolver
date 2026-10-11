@@ -1,6 +1,7 @@
 using global::Windows.Graphics;
 using MathSolver.Services;
 using Microsoft.UI.Windowing;
+using Microsoft.Maui.Platform;
 using System.Runtime.InteropServices;
 using WinRT.Interop;
 using MauiWindow = Microsoft.Maui.Controls.Window;
@@ -53,6 +54,7 @@ public static class WindowStateManager
     private static bool _isRestoring;
     private static bool _isClosing;
     private static Action? _prepareForClose;
+    private static readonly List<WeakReference<NavigationRootManager>> _navigationRoots = [];
 
     // The active page can install one asynchronous close guard.
     // This manager owns the native AppWindow.Closing subscription from
@@ -94,6 +96,7 @@ public static class WindowStateManager
 
         window.Destroying +=
             OnWindowDestroying;
+        window.ModalPushed += OnModalPushed;
 
         TryAttachNativeWindow(
             window);
@@ -191,6 +194,8 @@ public static class WindowStateManager
 
         _nativeWindowHandle =
             nativeWindowHandle;
+
+        RememberNavigationRoot(window.Handler?.MauiContext);
 
         _lastObservedState =
             ReadSavedState();
@@ -430,16 +435,54 @@ public static class WindowStateManager
         AppThemeManager.ThemeChanged -= OnAppThemeChanged;
 
         // MAUI's custom TitleBar has a LayoutUpdated callback that queries the
-        // native WindowId. Remove it while that ID is still valid, rather than
-        // waiting for Destroying (when WinUI may already have destroyed HWND).
+        // native WindowId. Remove it while that ID is still valid.
         _prepareForClose?.Invoke();
         _prepareForClose = null;
+        DisconnectNavigationRoots();
+    }
+
+    private static void DisconnectNavigationRoots()
+    {
+        // Setting Window.TitleBar = null only removes LayoutUpdated. MAUI
+        // 10.0.110 keeps the title-bar container's SizeChanged callback, which
+        // still calls GetForWindowId even when the title bar is hidden.
+        // Disconnect clears its cached AppWindowId and detaches navigation
+        // callbacks using MAUI's public API, before the HWND is destroyed.
+        // Modal previews have their own scoped navigation manager. Disconnecting
+        // only the window's manager leaves their LayoutUpdated callbacks pointing
+        // at the destroyed HWND. Keep weak references for cached/popped previews
+        // too, and cover programmatic close even if MAUI already cleared the stack.
+        RememberNavigationRoot(_mauiWindow?.Handler?.MauiContext);
+        if (_mauiWindow is { } window)
+            foreach (var modal in window.Navigation.ModalStack)
+                RememberNavigationRoot(modal.Handler?.MauiContext);
+
+        foreach (var reference in _navigationRoots)
+            if (reference.TryGetTarget(out var navigationRoot))
+                navigationRoot.Disconnect();
+    }
+
+    private static void OnModalPushed(object? sender, ModalPushedEventArgs args) =>
+        RememberNavigationRoot(args.Modal.Handler?.MauiContext);
+
+    private static void RememberNavigationRoot(IMauiContext? context)
+    {
+        if (context?.Services.GetService(typeof(NavigationRootManager)) is not NavigationRootManager manager)
+            return;
+        _navigationRoots.RemoveAll(reference => !reference.TryGetTarget(out _));
+        if (!_navigationRoots.Any(reference => reference.TryGetTarget(out var existing) && ReferenceEquals(existing, manager)))
+            _navigationRoots.Add(new(manager));
     }
 
     private static void OnWindowDestroying(
         object? sender,
         EventArgs e)
     {
+        // Also cover programmatic close paths that bypass AppWindow.Closing.
+        // Do not reset TitleBar here: its mapper would query an already closed
+        // native window. Disconnect only clears the existing root's state.
+        _isClosing = true;
+        DisconnectNavigationRoots();
         // Closing normally saves from AppWindow.Closing. At this later stage
         // the native presenter may already be changing, so preserve the last
         // observed state instead of querying the window again.
@@ -752,6 +795,7 @@ public static class WindowStateManager
 
             _mauiWindow.Destroying -=
                 OnWindowDestroying;
+            _mauiWindow.ModalPushed -= OnModalPushed;
         }
 
         DetachAppWindow();
@@ -759,6 +803,7 @@ public static class WindowStateManager
         _mauiWindow =
             null;
         _prepareForClose = null;
+        _navigationRoots.Clear();
     }
 
     private static void DetachAppWindow()

@@ -38,6 +38,7 @@ public sealed partial class ElementaryQuizGenerator
             : contexts.FirstOrDefault(context => context.Id == contextId)
                 ?? throw new ArgumentException("InvalidMeasurementStoryProfile");
         var t = new DifficultyBuilder(QuizProblemKind.Measurement, type, language, tier);
+        t.RequiresSolution = false;
         int level = (int)tier;
         (string largeId, string smallId) = context.Category switch
         {

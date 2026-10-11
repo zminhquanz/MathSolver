@@ -20,9 +20,9 @@ public sealed partial class ElementaryQuizGenerator
         QuizVisualData? visual = null;
         string[]? choices = null;
         void Direct(int value, string unit = "") => t.Answer(label, t.Given("reading", value, unit), unit);
-        void TextChoice(string text, IEnumerable<string> alternatives)
+        void TextChoice(string text, IEnumerable<string> alternatives, params string[] aliases)
         {
-            t.TextAnswer(label, text);
+            t.TextAnswer(label, text, aliases);
             choices = alternatives.Prepend(text).Distinct().Take(4).ToArray();
         }
         int maximum = level switch { 1 => 100, 2 => 1000, 3 => 100000, _ => 1000000 };
@@ -94,7 +94,7 @@ public sealed partial class ElementaryQuizGenerator
                 string Item(int value) => denominator == 1 ? N(value) : $"{value}/{denominator}";
                 bool descending = _random.Next(2) == 0;
                 int[] sorted = descending ? values.OrderDescending().ToArray() : values.Order().ToArray();
-                string Format(IEnumerable<int> items) => string.Join(" → ", items.Select(Item));
+                string Format(IEnumerable<int> items) => string.Join(" -> ", items.Select(Item));
                 var wrong = new List<string>();
                 for (int i = 0; i < 3; i++) { var copy = sorted.ToArray(); int right = 1 + i % (copy.Length - 1); (copy[0], copy[right]) = (copy[right], copy[0]); wrong.Add(Format(copy)); }
                 // Three-element lists only have two first-element swaps; reversing supplies the third distractor.
@@ -154,7 +154,8 @@ public sealed partial class ElementaryQuizGenerator
             {
                 int position = _random.Next(4);
                 string[] names = [L("Left"), L("Right"), L("Above"), L("Below")];
-                TextChoice(names[position], names);
+                string[] shortNames = [L("LeftShort"), L("RightShort"), L("AboveShort"), L("BelowShort")];
+                TextChoice(names[position], names, shortNames[position]);
                 problem = L("SpatialPosition");
                 visual = new("foundation-position", ["A", "B"], [position], "", AccessibleDescription: L("PositionDescription", ("position", names[position])));
                 break;

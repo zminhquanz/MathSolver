@@ -7,6 +7,7 @@ public sealed partial class ElementaryQuizGenerator
     private ElementaryQuizContract CreateMapScale(AppLanguage language, CurriculumTier tier, string contextId = "")
     {
         var t = new DifficultyBuilder(QuizProblemKind.Measurement, ElementaryQuizType.MapScale, language, tier);
+        t.RequiresSolution = false;
         int level = (int)tier;
         var contexts = MapScaleContexts(language).Where(c => c.MinimumStar <= level && c.MaximumStar >= level).ToArray();
         var context = contextId.Length == 0 ? contexts[_random.Next(contexts.Length)]

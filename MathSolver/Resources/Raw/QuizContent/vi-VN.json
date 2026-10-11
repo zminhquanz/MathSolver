@@ -2,6 +2,10 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id": "Foundation.LeftShort", "Text": "trái", "Variables": []},
+    {"Id": "Foundation.RightShort", "Text": "phải", "Variables": []},
+    {"Id": "Foundation.AboveShort", "Text": "trên", "Variables": []},
+    {"Id": "Foundation.BelowShort", "Text": "dưới", "Variables": []},
     {
       "Id": "Preview.Details",
       "Text": "Thông tin",
@@ -240,6 +244,7 @@
     {"Id":"Choice.Close","Text":"Đóng","Variables":[]},
     {"Id":"Choice.Language.Vietnamese","Text":"Soạn mẫu đề và lời giải bằng tiếng Việt.","Variables":[]},
     {"Id":"Choice.Language.English","Text":"Soạn mẫu đề và lời giải bằng tiếng Anh.","Variables":[]},
+    {"Id":"Choice.Group.Mixed","Text":"Mỗi câu chọn ngẫu nhiên một nhóm kiến thức phù hợp dạng toán và mức sao.","Variables":[]},
     {"Id":"Choice.Group.Objects","Text":"Số người, con vật, đồ dùng; tổng và chênh lệch số lượng.","Variables":[]},
     {"Id":"Choice.Group.Money","Text":"Mua bán, tiết kiệm, đơn giá và tiền trả lại.","Variables":[]},
     {"Id":"Choice.Group.Time","Text":"Lịch hoạt động, khoảng thời gian và quan hệ tuổi.","Variables":[]},
@@ -2470,7 +2475,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.008",
-      "Text": "Mục “{labels_others_0}” có {firstCount} {context_Unit}; mục “{labels_others_1}” có {secondCount} {context_Unit}. ",
+      "Text": "Mục “{labels_others_0}” có {firstCount} {context_Unit}, mục “{labels_others_1}” có {secondCount} {context_Unit}. ",
       "Variables": [
         "labels_others_0",
         "firstCount",
@@ -2581,7 +2586,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.023",
-      "Text": "Tổng ba mục là {total} {unit}; tỉ số “{labels_1}” và “{labels_2}” là {r1}/{r2}. ",
+      "Text": "Tổng ba mục là {total} {unit}, tỉ số “{labels_1}” và “{labels_2}” là {r1}/{r2}. ",
       "Variables": [
         "total",
         "unit",
@@ -2646,7 +2651,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.031",
-      "Text": " Cộng thêm {added} {unit} vào lượng vừa hỏi; tính kết quả sau khi thêm.",
+      "Text": " Cộng thêm {added} {unit} vào lượng vừa hỏi, tính kết quả sau khi thêm.",
       "Variables": [
         "added",
         "unit"
@@ -2951,7 +2956,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002",
-      "Text": "Hai phần có {a} và {b} {unit}; bớt {removed} {unit} trước khi xét phân số. ",
+      "Text": "Hai phần có {a} và {b} {unit}, bớt {removed} {unit} trước khi xét phân số. ",
       "Variables": [
         "a",
         "b",
@@ -3268,7 +3273,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.025",
-      "Text": "Một nhóm không được sử dụng; chỉ lấy lượng của các nhóm còn lại. ",
+      "Text": "Một nhóm không được sử dụng, chỉ lấy lượng của các nhóm còn lại. ",
       "Variables": []
     },
     {
@@ -3490,7 +3495,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.002",
-      "Text": " Thực hiện độc lập hai lần; nếu lấy đồ vật thì trả lại trước lần sau.",
+      "Text": " Thực hiện độc lập hai lần, nếu lấy đồ vật thì trả lại trước lần sau.",
       "Variables": []
     },
     {
@@ -6147,7 +6152,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.025",
-      "Text": "Ghép hai hình chữ nhật không chồng lấn: hình I dài {a} {unit}, rộng {b} {unit}; hình II dài {c} {unit}, rộng {a} {unit}. Tính tổng diện tích hình ghép.",
+      "Text": "Ghép hai hình chữ nhật không chồng lấn: hình I dài {a} {unit}, rộng {b} {unit}, hình II dài {c} {unit}, rộng {a} {unit}. Tính tổng diện tích hình ghép.",
       "Variables": [
         "a",
         "unit",
@@ -6204,7 +6209,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.031",
-      "Text": "Hình chữ T ghép từ hai hình chữ nhật không chồng lấn: thanh ngang I dài {topWidth} {unit}, rộng {c} {unit}; thanh dọc II rộng {b} {unit}, dài {a} {unit}. Tính diện tích hình chữ T.",
+      "Text": "Hình chữ T ghép từ hai hình chữ nhật không chồng lấn: thanh ngang I dài {topWidth} {unit}, rộng {c} {unit}, thanh dọc II rộng {b} {unit}, dài {a} {unit}. Tính diện tích hình chữ T.",
       "Variables": [
         "topWidth",
         "unit",
@@ -6215,7 +6220,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.032",
-      "Text": "Tấm bìa hình chữ nhật dài {boardWidth} {unit}, rộng {boardHeight} {unit}. Cắt bỏ hai phần rỗng hình chữ nhật không chồng lấn nằm hoàn toàn bên trong: phần I có kích thước {a} {unit} và {b} {unit}; phần II có kích thước {b} {unit} và {c} {unit}. Tính diện tích bìa còn lại.",
+      "Text": "Tấm bìa hình chữ nhật dài {boardWidth} {unit}, rộng {boardHeight} {unit}. Cắt bỏ hai phần rỗng hình chữ nhật không chồng lấn nằm hoàn toàn bên trong: phần I có kích thước {a} {unit} và {b} {unit}, phần II có kích thước {b} {unit} và {c} {unit}. Tính diện tích bìa còn lại.",
       "Variables": [
         "boardWidth",
         "unit",
@@ -6227,7 +6232,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.033",
-      "Text": "Ba hình chữ nhật I, II, III ghép cạnh nhau, không chồng lấn, cùng rộng {strip} {unit}; chiều cao lần lượt {a} {unit}, {b} {unit}, {c} {unit}. Tính tổng diện tích hình ghép.",
+      "Text": "Ba hình chữ nhật I, II, III ghép cạnh nhau, không chồng lấn, cùng rộng {strip} {unit}, chiều cao lần lượt {a} {unit}, {b} {unit}, {c} {unit}. Tính tổng diện tích hình ghép.",
       "Variables": [
         "strip",
         "unit",
@@ -6489,7 +6494,7 @@
     },
     {
       "Id": "QuizDiagramBuilder.Build.010",
-      "Text": "Các phân số đã cho; suy ra phần còn thiếu",
+      "Text": "Các phân số đã cho, suy ra phần còn thiếu",
       "Variables": []
     },
     {
@@ -7525,7 +7530,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.069",
-      "Text": "Một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô.",
+      "Text": "Một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô.",
       "Variables": [
         "total",
         "a",
@@ -7536,7 +7541,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.070",
-      "Text": "Một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô.",
+      "Text": "Một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô.",
       "Variables": [
         "total",
         "a",
@@ -7803,7 +7808,7 @@
     },
     {
         "Id":  "Foundation.Order",
-        "Text":  "Sắp xếp các số theo thứ tự {direction}: {numbers}. Dùng dấu → giữa các số.",
+        "Text":  "Sắp xếp các số theo thứ tự {direction}: {numbers}. Dùng dấu -> giữa các số.",
         "Variables":  [
                           "direction",
                           "numbers"
@@ -7988,7 +7993,7 @@
     },
     {
         "Id":  "Foundation.MidpointDescription",
-        "Text":  "A, M, B thẳng hàng theo thứ tự đó; AM = {left} cm, MB = {right} cm.",
+        "Text":  "A, M, B thẳng hàng theo thứ tự đó, AM = {left} cm, MB = {right} cm.",
         "Variables":  [
                           "left",
                           "right"
@@ -8023,7 +8028,7 @@
     },
     {
         "Id":  "Foundation.CircleDescription",
-        "Text":  "O nằm chính giữa đường tròn. A, B là hai điểm đối diện trên đường tròn; AB đi qua O. C nằm trên đường tròn, OC nối O với C.",
+        "Text":  "O nằm chính giữa đường tròn. A, B là hai điểm đối diện trên đường tròn, AB đi qua O. C nằm trên đường tròn, OC nối O với C.",
         "Variables": []
     },
     {
@@ -8058,7 +8063,7 @@
     },
     {
         "Id":  "Foundation.NetDescription1",
-        "Text":  "Bốn mặt bên hình chữ nhật nối liên tiếp, thêm hai mặt chữ nhật bằng nhau ở trên và dưới mặt thứ hai; chiều rộng và chiều cao khác nhau.",
+        "Text":  "Bốn mặt bên hình chữ nhật nối liên tiếp, thêm hai mặt chữ nhật bằng nhau ở trên và dưới mặt thứ hai, chiều rộng và chiều cao khác nhau.",
         "Variables": []
     },
     {
@@ -8126,12 +8131,12 @@
     },
     {
         "Id":  "Foundation.ReadProtractor",
-        "Text":  "Đọc số đo góc trên thước đo góc; tia gốc hướng sang phải và dùng vạch 0 ở bên phải.",
+        "Text":  "Đọc số đo góc trên thước đo góc, tia gốc hướng sang phải và dùng vạch 0 ở bên phải.",
         "Variables": []
     },
     {
         "Id":  "Foundation.ProtractorDescription",
-        "Text":  "Tia gốc hướng sang phải; tia còn lại trùng vạch {degrees}° của thang bắt đầu từ 0 ở bên phải.",
+        "Text":  "Tia gốc hướng sang phải, tia còn lại trùng vạch {degrees}° của thang bắt đầu từ 0 ở bên phải.",
         "Variables":  [
                           "degrees"
                       ]
@@ -8204,7 +8209,7 @@
     },
     {
         "Id":  "Curriculum.AnswerHint",
-        "Text":  "Nhập đáp án trực tiếp. Nếu có nhiều kết quả, ghi nhãn và ngăn cách bằng dấu chấm phẩy.",
+        "Text":  "Nhập đáp án trực tiếp. Nếu có nhiều kết quả, ngăn cách bằng dấu phẩy hoặc dấu chấm phẩy; có thể ghi nhãn từng kết quả.",
         "Variables": []
     },
     {
@@ -12965,7 +12970,7 @@
         "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.005",
         "Alternatives": [
           "Sức chứa của mỗi {container} là {nominal} {item}, trong đó chỗ cho {excluded} {item} khác được dành riêng và không dùng để xếp số đang xét. ",
-          "Mỗi {container} chứa được {nominal} {item}; chỗ cho {excluded} {item} khác đã dành riêng nên phải trừ phần sức chứa này. "
+          "Mỗi {container} chứa được {nominal} {item}, chỗ cho {excluded} {item} khác đã dành riêng nên phải trừ phần sức chứa này. "
         ]
       },
       {
@@ -15972,8 +15977,8 @@
       {
         "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.025",
         "Alternatives": [
-          "Một nhóm được để lại không dùng; chỉ dùng lượng của những nhóm còn lại. ",
-          "Không dùng một nhóm; chỉ sử dụng lượng trong các nhóm còn lại. "
+          "Một nhóm được để lại không dùng, chỉ dùng lượng của những nhóm còn lại. ",
+          "Không dùng một nhóm, chỉ sử dụng lượng trong các nhóm còn lại. "
         ]
       },
       {
@@ -30084,8 +30089,8 @@
       {
         "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.016",
         "Alternatives": [
-          "Chỉ {second_ToLowerInvariant} nhận thêm {F_added} {unit}; bên còn lại không thay đổi. ",
-          "Chỉ {second_ToLowerInvariant} được thêm {F_added} {unit}; bên còn lại không thay đổi. "
+          "Chỉ {second_ToLowerInvariant} nhận thêm {F_added} {unit}, bên còn lại không thay đổi. ",
+          "Chỉ {second_ToLowerInvariant} được thêm {F_added} {unit}, bên còn lại không thay đổi. "
         ]
       },
       {
@@ -30388,7 +30393,7 @@
       {
         "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.008",
         "Alternatives": [
-          "Mục “{labels_others_0}” ghi {firstCount} {context_Unit}; mục “{labels_others_1}” ghi {secondCount} {context_Unit}. "
+          "Mục “{labels_others_0}” ghi {firstCount} {context_Unit}, mục “{labels_others_1}” ghi {secondCount} {context_Unit}. "
         ]
       },
       {
@@ -30424,7 +30429,7 @@
       {
         "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.023",
         "Alternatives": [
-          "Ba mục có tổng {total} {unit}; số liệu “{labels_1}” so với “{labels_2}” có tỉ số {r1}/{r2}. "
+          "Ba mục có tổng {total} {unit}, số liệu “{labels_1}” so với “{labels_2}” có tỉ số {r1}/{r2}. "
         ]
       },
       {
@@ -31553,8 +31558,8 @@
       {
         "Id": "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.002",
         "Alternatives": [
-          "Theo ghi nhận,  Thực hiện độc lập hai lần; nếu lấy đồ vật thì trả lại trước lần sau.",
-          "Theo thông tin của bài,  Thực hiện độc lập hai lần; nếu lấy đồ vật thì trả lại trước lần sau."
+          "Theo ghi nhận,  Thực hiện độc lập hai lần, nếu lấy đồ vật thì trả lại trước lần sau.",
+          "Theo thông tin của bài,  Thực hiện độc lập hai lần, nếu lấy đồ vật thì trả lại trước lần sau."
         ]
       },
       {
@@ -32155,15 +32160,15 @@
       {
         "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.069",
         "Alternatives": [
-          "Theo ghi nhận, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô.",
-          "Theo thông tin của bài, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô."
+          "Theo ghi nhận, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô.",
+          "Theo thông tin của bài, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0} và {b} ô màu {colors_1}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô."
         ]
       },
       {
         "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.070",
         "Alternatives": [
-          "Theo ghi nhận, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô.",
-          "Theo thông tin của bài, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần; kim luôn dừng trong một ô."
+          "Theo ghi nhận, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô.",
+          "Theo thông tin của bài, một vòng quay có {total} ô bằng nhau: {a} ô màu {colors_0}. Không có ô màu khác. Quay một lần, kim luôn dừng trong một ô."
         ]
       },
       {

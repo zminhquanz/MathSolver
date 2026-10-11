@@ -58,7 +58,7 @@ internal static class WorksheetSettingsTests
                 }
             }
         }
-        foreach (var group in QuestionLearningProfile.Groups())
+        foreach (var group in QuestionLearningProfile.Groups(includeMixed: true))
         {
             Check(QuizChoiceCatalog.Definitions.ContainsKey("Learning.Group." + group), "Missing group illustration.");
             foreach (var family in new[] { 1, 2, 4 })

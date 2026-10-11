@@ -178,7 +178,7 @@ public sealed record AiGenerationOptions(ArithmeticOperation Operation, Curricul
             || Family == BankQuestionFamily.Fraction && !FractionQuestionCatalogue.Available(Profile ?? new(QuestionKnowledgeGroup.Objects), Operation, Tier).Any()
             || !Enum.IsDefined(Operation) || !Enum.IsDefined(Tier)
             || Language is not (AppLanguage.Vietnamese or AppLanguage.English) || Count is < 1 or > 100
-            || !ReasoningStoryCatalogue.Supports(Family) && Profile is not null && !Profile.Allows(Operation))
+            || !ReasoningStoryCatalogue.Supports(Family) && Profile is not null && (!Profile.IsValid || !Profile.Allows(Operation)))
             throw new ArgumentOutOfRangeException(nameof(Count));
     }
 }

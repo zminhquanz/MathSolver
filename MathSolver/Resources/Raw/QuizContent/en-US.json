@@ -2,6 +2,10 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id": "Foundation.LeftShort", "Text": "Left", "Variables": []},
+    {"Id": "Foundation.RightShort", "Text": "Right", "Variables": []},
+    {"Id": "Foundation.AboveShort", "Text": "Above", "Variables": []},
+    {"Id": "Foundation.BelowShort", "Text": "Below", "Variables": []},
     {
       "Id": "Preview.Details",
       "Text": "Details",
@@ -240,6 +244,7 @@
     {"Id":"Choice.Close","Text":"Close","Variables":[]},
     {"Id":"Choice.Language.Vietnamese","Text":"Write question and solution templates in Vietnamese.","Variables":[]},
     {"Id":"Choice.Language.English","Text":"Write question and solution templates in English.","Variables":[]},
+    {"Id":"Choice.Group.Mixed","Text":"Each question draws a knowledge group suitable for the selected problem and difficulty.","Variables":[]},
     {"Id":"Choice.Group.Objects","Text":"People, animals and objects; totals and differences in counts.","Variables":[]},
     {"Id":"Choice.Group.Money","Text":"Shopping, savings, unit prices and change.","Variables":[]},
     {"Id":"Choice.Group.Time","Text":"Activity schedules, durations and age relationships.","Variables":[]},
@@ -2470,7 +2475,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.008",
-      "Text": "Category “{labels_others_0}” contains {firstCount} {context_Unit}; “{labels_others_1}” contains {secondCount} {context_Unit}. ",
+      "Text": "Category “{labels_others_0}” contains {firstCount} {context_Unit}, “{labels_others_1}” contains {secondCount} {context_Unit}. ",
       "Variables": [
         "labels_others_0",
         "firstCount",
@@ -2581,7 +2586,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.023",
-      "Text": "The three-category total is {total} {unit}; the ratio of “{labels_1}” to “{labels_2}” is {r1}/{r2}. ",
+      "Text": "The three-category total is {total} {unit}, the ratio of “{labels_1}” to “{labels_2}” is {r1}/{r2}. ",
       "Variables": [
         "total",
         "unit",
@@ -2922,7 +2927,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.002",
-      "Text": "Two portions contain {a} and {b} {unit}; remove {removed} {unit} before considering the fraction. ",
+      "Text": "Two portions contain {a} and {b} {unit}, remove {removed} {unit} before considering the fraction. ",
       "Variables": [
         "a",
         "b",
@@ -3239,7 +3244,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.025",
-      "Text": "One group is not used; only take the amount in the remaining groups. ",
+      "Text": "One group is not used, only take the amount in the remaining groups. ",
       "Variables": []
     },
     {
@@ -3461,7 +3466,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.002",
-      "Text": " Repeat independently twice; if selecting an item, replace it before the next trial.",
+      "Text": " Repeat independently twice, if selecting an item, replace it before the next trial.",
       "Variables": []
     },
     {
@@ -6118,7 +6123,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.025",
-      "Text": "Join two non-overlapping rectangles: I measures {a} {unit} by {b} {unit}; II measures {c} {unit} by {a} {unit}. Find their combined area.",
+      "Text": "Join two non-overlapping rectangles: I measures {a} {unit} by {b} {unit}, II measures {c} {unit} by {a} {unit}. Find their combined area.",
       "Variables": [
         "a",
         "unit",
@@ -6175,7 +6180,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.031",
-      "Text": "A T-shaped figure joins two non-overlapping rectangles: top bar I is {topWidth} {unit} by {c} {unit}; stem II is {b} {unit} wide and {a} {unit} long. Find the T-shaped area.",
+      "Text": "A T-shaped figure joins two non-overlapping rectangles: top bar I is {topWidth} {unit} by {c} {unit}, stem II is {b} {unit} wide and {a} {unit} long. Find the T-shaped area.",
       "Variables": [
         "topWidth",
         "unit",
@@ -6186,7 +6191,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.032",
-      "Text": "A rectangular board measures {boardWidth} {unit} by {boardHeight} {unit}. Cut out two non-overlapping rectangular openings entirely inside it: I measures {a} {unit} by {b} {unit}; II measures {b} {unit} by {c} {unit}. Find the remaining board area.",
+      "Text": "A rectangular board measures {boardWidth} {unit} by {boardHeight} {unit}. Cut out two non-overlapping rectangular openings entirely inside it: I measures {a} {unit} by {b} {unit}, II measures {b} {unit} by {c} {unit}. Find the remaining board area.",
       "Variables": [
         "boardWidth",
         "unit",
@@ -6198,7 +6203,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.033",
-      "Text": "Three non-overlapping rectangles I, II and III are joined side by side. Each is {strip} {unit} wide; their heights are {a} {unit}, {b} {unit} and {c} {unit}, respectively. Find their combined area.",
+      "Text": "Three non-overlapping rectangles I, II and III are joined side by side. Each is {strip} {unit} wide, their heights are {a} {unit}, {b} {unit} and {c} {unit}, respectively. Find their combined area.",
       "Variables": [
         "strip",
         "unit",
@@ -6308,7 +6313,7 @@
     },
     {
       "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.008",
-      "Text": "The {Name_first} consists of consecutive segments; the first is {x} {unit}.",
+      "Text": "The {Name_first} consists of consecutive segments, the first is {x} {unit}.",
       "Variables": [
         "Name_first",
         "x",
@@ -6351,7 +6356,7 @@
     },
     {
       "Id": "GeometryQuizGenerator.Difficulty.CreateReasoning.014",
-      "Text": "The {Name_second} consists of two consecutive segments; the first is {x} {unit}.",
+      "Text": "The {Name_second} consists of two consecutive segments, the first is {x} {unit}.",
       "Variables": [
         "Name_second",
         "x",
@@ -6460,7 +6465,7 @@
     },
     {
       "Id": "QuizDiagramBuilder.Build.010",
-      "Text": "Given fractions; infer missing components",
+      "Text": "Given fractions, infer missing components",
       "Variables": []
     },
     {
@@ -7496,7 +7501,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.069",
-      "Text": "A spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once; the pointer always stops inside a sector.",
+      "Text": "A spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once, the pointer always stops inside a sector.",
       "Variables": [
         "total",
         "a",
@@ -7507,7 +7512,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.070",
-      "Text": "A spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once; the pointer always stops inside a sector.",
+      "Text": "A spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once, the pointer always stops inside a sector.",
       "Variables": [
         "total",
         "a",
@@ -7583,7 +7588,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.016",
-      "Text": "Only {second_ToLowerInvariant} receives {F_added} additional {unit}; the other is unchanged. ",
+      "Text": "Only {second_ToLowerInvariant} receives {F_added} additional {unit}, the other is unchanged. ",
       "Variables": [
         "second_ToLowerInvariant",
         "F_added",
@@ -7774,7 +7779,7 @@
     },
     {
         "Id":  "Foundation.Order",
-        "Text":  "Arrange in {direction} order: {numbers}. Use → between numbers.",
+        "Text":  "Arrange in {direction} order: {numbers}. Use -> between numbers.",
         "Variables":  [
                           "direction",
                           "numbers"
@@ -7849,7 +7854,7 @@
     },
     {
         "Id":  "Foundation.FractionDescription",
-        "Text":  "The picture has {denominator} equal parts; {numerator} are shaded.",
+        "Text":  "The picture has {denominator} equal parts, {numerator} are shaded.",
         "Variables":  [
                           "denominator",
                           "numerator"
@@ -7959,7 +7964,7 @@
     },
     {
         "Id":  "Foundation.MidpointDescription",
-        "Text":  "A, M, B are collinear in that order; AM = {left} cm, MB = {right} cm.",
+        "Text":  "A, M, B are collinear in that order, AM = {left} cm, MB = {right} cm.",
         "Variables":  [
                           "left",
                           "right"
@@ -7994,7 +7999,7 @@
     },
     {
         "Id":  "Foundation.CircleDescription",
-        "Text":  "O is at the centre of the circle. A and B are opposite points on the circle; AB passes through O. C lies on the circle; OC joins O to C.",
+        "Text":  "O is at the centre of the circle. A and B are opposite points on the circle, AB passes through O. C lies on the circle, OC joins O to C.",
         "Variables": []
     },
     {
@@ -8029,7 +8034,7 @@
     },
     {
         "Id":  "Foundation.NetDescription1",
-        "Text":  "Four joined rectangular side faces, with two matching rectangles above and below the second face; the side lengths differ.",
+        "Text":  "Four joined rectangular side faces, with two matching rectangles above and below the second face, the side lengths differ.",
         "Variables": []
     },
     {
@@ -8097,12 +8102,12 @@
     },
     {
         "Id":  "Foundation.ReadProtractor",
-        "Text":  "Read the angle using the protractor scale with zero on the right; the baseline ray points right.",
+        "Text":  "Read the angle using the protractor scale with zero on the right, the baseline ray points right.",
         "Variables": []
     },
     {
         "Id":  "Foundation.ProtractorDescription",
-        "Text":  "The baseline ray points right; the other ray meets {degrees}° on the scale starting at zero on the right.",
+        "Text":  "The baseline ray points right, the other ray meets {degrees}° on the scale starting at zero on the right.",
         "Variables":  [
                           "degrees"
                       ]
@@ -8175,7 +8180,7 @@
     },
     {
         "Id":  "Curriculum.AnswerHint",
-        "Text":  "Enter the answer directly. Label multiple results and separate them with semicolons.",
+        "Text":  "Enter the answer directly. Separate multiple results with commas or semicolons; labels may identify each result.",
         "Variables": []
     },
     {
@@ -12704,7 +12709,7 @@
     },
     {
       "Id": "ElementaryQuizGenerator.DataDifficulty.Expansion.MissingBar",
-      "Text": "The bar for {label} is hidden; how many valid {unit} should it show?",
+      "Text": "The bar for {label} is hidden, how many valid {unit} should it show?",
       "Variables": [
         "label",
         "unit"
@@ -12919,7 +12924,7 @@
       {
         "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.002",
         "Alternatives": [
-          "The first batch has {a} and the second has {b} {item}; combine these separate batches. ",
+          "The first batch has {a} and the second has {b} {item}, combine these separate batches. ",
           "The two separate batches contain {a} and {b} {item} respectively. ",
           "The two separate batches contain {a} and {b} {item} in that order. "
         ]
@@ -12935,7 +12940,7 @@
         "Id": "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.005",
         "Alternatives": [
           "Each {container} has a capacity of {nominal} {item}, but space for {excluded} other {item} is reserved and unavailable for this batch. ",
-          "The capacity of each {container} is {nominal} {item}; subtract the space reserved for {excluded} other {item}. "
+          "The capacity of each {container} is {nominal} {item}, subtract the space reserved for {excluded} other {item}. "
         ]
       },
       {
@@ -15923,8 +15928,8 @@
       {
         "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.025",
         "Alternatives": [
-          "One group is left unused; use only the amount in the other groups. ",
-          "Exclude one unused group; take only the amount in the remaining groups. "
+          "One group is left unused, use only the amount in the other groups. ",
+          "Exclude one unused group, take only the amount in the remaining groups. "
         ]
       },
       {
@@ -27806,7 +27811,7 @@
             "Unit":  "books",
             "PartLabel":  "Number of storybooks",
             "WholeLabel":  "Total number of books",
-            "PartProblemTemplate":  "A library has {0} books; {1} of them are storybooks. How many storybooks are there?",
+            "PartProblemTemplate":  "A library has {0} books, {1} of them are storybooks. How many storybooks are there?",
             "WholeProblemTemplate":  "A library has {0} storybooks, representing {1} of all its books. How many books does the library have in total?",
             "Capacity":  1000,
             "ContextId":  "library-books",
@@ -27860,7 +27865,7 @@
             "Unit":  "students",
             "PartLabel":  "Number of students joining the club",
             "WholeLabel":  "Total number of students registering for activities",
-            "PartProblemTemplate":  "At a school, {0} students register for extracurricular activities; {1} of them join the reading club. How many students join the club?",
+            "PartProblemTemplate":  "At a school, {0} students register for extracurricular activities, {1} of them join the reading club. How many students join the club?",
             "WholeProblemTemplate":  "At a school, {0} students join the reading club, representing {1} of the students registering for extracurricular activities. How many students register for activities in total?",
             "Capacity":  600,
             "ContextId":  "school-club",
@@ -29575,7 +29580,7 @@
       {
         "Id": "ElementaryQuizGenerator.TwoNumberStories.TwoNumberStory.016",
         "Alternatives": [
-          "Only {second_ToLowerInvariant} gets {F_added} extra {unit}; the other quantity stays the same. "
+          "Only {second_ToLowerInvariant} gets {F_added} extra {unit}, the other quantity stays the same. "
         ]
       },
       {
@@ -29874,7 +29879,7 @@
       {
         "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.008",
         "Alternatives": [
-          "Category “{labels_others_0}” records {firstCount} {context_Unit}; category “{labels_others_1}” records {secondCount} {context_Unit}. "
+          "Category “{labels_others_0}” records {firstCount} {context_Unit}, category “{labels_others_1}” records {secondCount} {context_Unit}. "
         ]
       },
       {
@@ -29910,7 +29915,7 @@
       {
         "Id": "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.023",
         "Alternatives": [
-          "The three categories total {total} {unit}; the ratio of “{labels_1}” to “{labels_2}” is {r1}/{r2}. "
+          "The three categories total {total} {unit}, the ratio of “{labels_1}” to “{labels_2}” is {r1}/{r2}. "
         ]
       },
       {
@@ -30020,8 +30025,8 @@
       {
         "Id": "ElementaryQuizGenerator.DataDifficulty.Expansion.MissingBar",
         "Alternatives": [
-          "Using the given information, the bar for {label} is hidden; how many valid {unit} should it show?",
-          "From these records, the bar for {label} is hidden; how many valid {unit} should it show?"
+          "Using the given information, the bar for {label} is hidden, how many valid {unit} should it show?",
+          "From these records, the bar for {label} is hidden, how many valid {unit} should it show?"
         ]
       },
       {
@@ -31039,8 +31044,8 @@
       {
         "Id": "ElementaryQuizGenerator.ProbabilityDifficulty.CreateProbabilityDifficulty.002",
         "Alternatives": [
-          "According to the record,  Repeat independently twice; if selecting an item, replace it before the next trial.",
-          "In this record,  Repeat independently twice; if selecting an item, replace it before the next trial."
+          "According to the record,  Repeat independently twice, if selecting an item, replace it before the next trial.",
+          "In this record,  Repeat independently twice, if selecting an item, replace it before the next trial."
         ]
       },
       {
@@ -31641,15 +31646,15 @@
       {
         "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.069",
         "Alternatives": [
-          "According to the record, a spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once; the pointer always stops inside a sector.",
-          "In this record, a spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once; the pointer always stops inside a sector."
+          "According to the record, a spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once, the pointer always stops inside a sector.",
+          "In this record, a spinner has {total} equal sectors: {a} {colors_0} sectors and {b} {colors_1} sectors. There are no other colors. Spin once, the pointer always stops inside a sector."
         ]
       },
       {
         "Id": "ElementaryQuizGenerator.Probability.CreateLikelihoodTask.070",
         "Alternatives": [
-          "According to the record, a spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once; the pointer always stops inside a sector.",
-          "In this record, a spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once; the pointer always stops inside a sector."
+          "According to the record, a spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once, the pointer always stops inside a sector.",
+          "In this record, a spinner has {total} equal sectors: {a} {colors_0} sectors. There are no other colors. Spin once, the pointer always stops inside a sector."
         ]
       },
       {

@@ -113,7 +113,7 @@ internal static class CalculationSolutionTests
     }
 
     // Decode PDFsharp's actual drawing text using each embedded font's Unicode map.
-    private static string ExtractText(byte[] bytes)
+    internal static string ExtractText(byte[] bytes)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         using var pdf = PdfReader.Open(new MemoryStream(bytes), PdfDocumentOpenMode.Import);

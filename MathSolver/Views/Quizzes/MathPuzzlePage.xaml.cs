@@ -525,11 +525,40 @@ public partial class MathPuzzlePage : ContentPage
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
+        if (question?.ElementaryProblem?.Type == ElementaryQuizType.ReadBarChart && !requiresSolution)
+        {
+            EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            EssayValidationHintLabel.Text = TranslateQuiz("Quiz.BarChartAnswerInputHint");
+            EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.BarChartAnswerInputPlaceholder");
+            return;
+        }
         if (question is not null && EssayAnswerValidator.IsResultOnlyPractice(question))
         {
             EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
-            EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyHint");
-            EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayResultOnlyPlaceholder");
+            bool mixedNumber = question.ElementaryProblem?.Type == ElementaryQuizType.MixedNumber;
+            bool mixedMeasurement = question.ElementaryProblem?.Type == ElementaryQuizType.MixedLength;
+            bool measurementResult = question.ElementaryProblem?.Type is ElementaryQuizType.MapScale
+                or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
+                or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion;
+            bool timeResult = question.ElementaryProblem?.Type is ElementaryQuizType.ElapsedTime
+                or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar;
+            bool pictograph = question.ElementaryProblem?.Type == ElementaryQuizType.ReadPictograph;
+            bool tableOrPieChart = question.ElementaryProblem?.Type is ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart;
+            bool missingSide = question.ElementaryProblem?.Type == ElementaryQuizType.RectangleSide;
+            EssayValidationHintLabel.Text = TranslateQuiz(mixedNumber ? "Quiz.MixedNumberInputHint"
+                : mixedMeasurement ? "Quiz.MixedMeasurementInputHint"
+                : measurementResult ? "Quiz.MeasurementResultInputHint"
+                : timeResult ? "Quiz.TimeResultInputHint"
+                : pictograph ? "Quiz.PictographInputHint"
+                : tableOrPieChart ? "Quiz.TablePieAnswerInputHint"
+                : missingSide ? "Quiz.MissingSideInputHint" : "Quiz.EssayResultOnlyHint");
+            EssayWorkEditor.Placeholder = TranslateQuiz(mixedNumber ? "Quiz.MixedNumberInputPlaceholder"
+                : mixedMeasurement ? "Quiz.MixedMeasurementInputPlaceholder"
+                : measurementResult ? "Quiz.MeasurementResultInputPlaceholder"
+                : timeResult ? "Quiz.TimeResultInputPlaceholder"
+                : pictograph ? "Quiz.PictographInputPlaceholder"
+                : tableOrPieChart ? "Quiz.TablePieAnswerInputPlaceholder"
+                : missingSide ? "Quiz.MissingSideInputPlaceholder" : "Quiz.EssayResultOnlyPlaceholder");
             return;
         }
         // Mixed can resolve to any kind on each new question. Once generated,
@@ -645,6 +674,18 @@ public partial class MathPuzzlePage : ContentPage
                 if (!requiresSolution) EssayWorkLabel.Text = TranslateQuiz("Quiz.ClockAnswerLabel");
                 EssayValidationHintLabel.Text = TranslateQuiz(requiresSolution ? "Quiz.ClockEssayHint" : "Quiz.ClockAnswerHint");
                 EssayWorkEditor.Placeholder = TranslateQuiz(requiresSolution ? "Quiz.ClockEssayPlaceholder" : "Quiz.ClockAnswerPlaceholder");
+            }
+            else if (elementary.Type == ElementaryQuizType.ReadThermometer)
+            {
+                EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ThermometerInputHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ThermometerInputPlaceholder");
+            }
+            else if (elementary.Type == ElementaryQuizType.ReadProtractor)
+            {
+                EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayAnswerLabel");
+                EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ProtractorInputHint");
+                EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ProtractorInputPlaceholder");
             }
             else if (elementary.IsDecimalArithmetic && !elementary.IsNumericDecimalCalculation)
             {

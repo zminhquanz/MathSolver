@@ -68,12 +68,18 @@ internal static class MeasurementBankTests
             {
                 var input = EssayCombinedInputParser.Parse(p.SolutionText, true, preserveAllCalculations: true);
                 var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
+                Check(EssayAnswerValidator.IsResultOnlyPractice(q)
+                    && validator.ValidateSubmission(q, p.AnswerText.Replace(" ", "")).IsCorrect
+                    && validator.ValidateSubmission(q, p.SolutionText).IsCorrect,
+                    "Bank measurement rejected a direct result or optional worked solution");
                 Check(validator.Validate(q, input.Solution, input.Equation, input.Answer).IsCorrect,
                     "Measurement model solution failed grading: " + p.SolutionText);
                 Check(!validator.Validate(q, input.Solution, input.Equation,
                     (expected + .1m).ToString(CultureInfo.InvariantCulture) + " " + expectedUnit).IsCorrect,
                     "Wrong measurement amount passed grading");
                 string wrongUnit = expectedUnit is "m" or "cm" or "dm" ? "kg" : "m";
+                Check(!validator.ValidateSubmission(q, expected.ToString(CultureInfo.InvariantCulture) + wrongUnit).IsCorrect,
+                    "Direct bank measurement ignored the requested unit");
                 Check(!validator.Validate(q, input.Solution, input.Equation,
                     expected.ToString(CultureInfo.InvariantCulture) + " " + wrongUnit).IsCorrect,
                     "Wrong measurement unit passed grading");

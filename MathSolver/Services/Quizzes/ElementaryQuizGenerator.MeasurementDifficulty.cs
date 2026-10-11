@@ -8,6 +8,7 @@ public sealed partial class ElementaryQuizGenerator
     private ElementaryQuizContract CreateMeasurementDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
     {
         var t = new DifficultyBuilder(QuizProblemKind.Measurement, type, language, tier);
+        t.RequiresSolution = false;
         int level = (int)tier;
         (string category, string largeId, string smallId) = type switch
         {

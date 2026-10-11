@@ -151,7 +151,8 @@ public sealed partial class ElementaryQuizGenerator
         string[] leads = new[] { "", QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Shapes.CreateMissingSideTask.023"), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Shapes.CreateMissingSideTask.024") };
         var visual = new QuizVisualData("missing-side", [], facts.Select(value => decimal.Parse(value, CultureInfo.InvariantCulture)).ToArray(), unit,
             Polygons: polygons, Annotations: annotations, ScenarioId: id);
-        return new(leads[_random.Next(leads.Length)] + problem, answerLabel, expression, unit, visual, facts, constants);
+        return new(leads[_random.Next(leads.Length)] + problem, answerLabel, expression, unit, visual, facts, constants,
+            RequiresSolution: false);
     }
 
     private ShapeTask CreateCompositeAreaTask(AppLanguage language, int a, int b, int c, int level)

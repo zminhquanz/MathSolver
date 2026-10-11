@@ -4,6 +4,7 @@
     "QuizChoices": [
       {"Key":"Language.Vietnamese","IllustrationId":"language-vietnamese","DescriptionKey":"Choice.Language.Vietnamese"},
       {"Key":"Language.English","IllustrationId":"language-english","DescriptionKey":"Choice.Language.English"},
+      {"Key":"Learning.Group.Mixed","IllustrationId":"mixed","DescriptionKey":"Choice.Group.Mixed"},
       {"Key":"Learning.Group.Objects","IllustrationId":"number-counting","DescriptionKey":"Choice.Group.Objects"},
       {"Key":"Learning.Group.Money","IllustrationId":"knowledge-money","DescriptionKey":"Choice.Group.Money"},
       {"Key":"Learning.Group.Time","IllustrationId":"clock","DescriptionKey":"Choice.Group.Time"},

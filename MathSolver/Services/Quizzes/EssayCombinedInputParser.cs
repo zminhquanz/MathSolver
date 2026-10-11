@@ -14,7 +14,10 @@ public static partial class EssayCombinedInputParser
         bool preserveAllCalculations = false,
         bool requireAnswerLabel = false,
         bool allowTextAnswer = false,
-        bool allowEquationAnswer = false)
+        bool allowEquationAnswer = false,
+        int expectedAnswerCount = 1,
+        bool preserveDecimalAnswerCommas = false,
+        bool allowClockAnswer = false)
     {
         string[] lines = (input ?? string.Empty).Normalize()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -38,6 +41,23 @@ public static partial class EssayCombinedInputParser
             answers.Add(line[(label.Index + label.Length)..].Trim());
         }
 
+        // Clock readings may omit the final-answer prefix. Keep all direct
+        // input, including incomplete or conflicting fields, visible to grading.
+        // For interval problems, leave the explanation and calculations as work.
+        if (allowClockAnswer && !requireAnswerLabel)
+        {
+            for (int index = 0; index < work.Count;)
+            {
+                string line = work[index];
+                if (!requiresSolution || TryNormalizeClockAnswer(line, out _) || ClockFieldRegex().IsMatch(line))
+                {
+                    answers.Add(line);
+                    work.RemoveAt(index);
+                }
+                else index++;
+            }
+        }
+
         // Identification tasks can consist of a single textual answer.
         // Keep multi-line submissions intact so conflicting answers are not hidden.
         if (allowTextAnswer && !requireAnswerLabel && !requiresSolution && answers.Count == 0 && work.Count == 1)
@@ -46,10 +66,23 @@ public static partial class EssayCombinedInputParser
             work.Clear();
         }
 
+        // An answer-only task can provide a pair without an "Answer:" prefix.
+        // Also accept a final pair after worked calculations. Equations cannot
+        // masquerade as list entries.
+        if (!requireAnswerLabel && expectedAnswerCount > 1 && answers.Count == 0 && work.Count > 0)
+        {
+            string[] entries = EssayAnswerListParser.Split(work[^1], expectedAnswerCount, preserveDecimalAnswerCommas);
+            if (entries.Length == expectedAnswerCount && entries.All(IsBareAnswerEntry))
+            {
+                answers.Add(work[^1]);
+                work.RemoveAt(work.Count - 1);
+            }
+        }
+
         // A bare final value with an optional unit is also accepted. Worked
         // essays do not infer an omitted final answer from a calculation.
         if (!requireAnswerLabel && answers.Count == 0 && work.Count > 0 &&
-            (BareAnswerRegex().IsMatch(work[^1]) || work[^1] is "<" or ">" or "="))
+            (IsBareAnswer(work[^1]) || work[^1] is "<" or ">" or "="))
         {
             answers.Add(work[^1]);
             work.RemoveAt(work.Count - 1);
@@ -63,7 +96,7 @@ public static partial class EssayCombinedInputParser
             string finalLine = work[^1];
             int equals = finalLine.LastIndexOf('=');
             string result = equals >= 0 ? finalLine[(equals + 1)..].Trim() : string.Empty;
-            if (equals >= 0 && BareAnswerRegex().IsMatch(result))
+            if (equals >= 0 && IsBareAnswer(result))
                 answers.Add(result);
         }
 
@@ -76,6 +109,16 @@ public static partial class EssayCombinedInputParser
         // choosing a correct answer and hiding a conflicting one.
         return (parts.Solution, parts.Equation, string.Join(Environment.NewLine, answers));
     }
+
+    private static bool IsBareAnswerEntry(string entry)
+    {
+        int colon = entry.IndexOf(':');
+        if (colon >= 0 && entry[..colon].Any(char.IsLetter)) entry = entry[(colon + 1)..].Trim();
+        return IsBareAnswer(entry);
+    }
+
+    private static bool IsBareAnswer(string text) =>
+        BareAnswerRegex().IsMatch(text) || MixedNumberAnswerRegex().IsMatch(text);
 
     internal static bool TryNormalizeClockAnswer(string? input, out string answer)
     {
@@ -222,7 +265,12 @@ public static partial class EssayCombinedInputParser
     [GeneratedRegex(@"^\s*(?:(?<hour>giờ|gio|hours?)|phút|phut|minutes?)\s*[:=]\s*(?<value>\d{1,2})\s*[.!]?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex ClockFieldRegex();
 
-    [GeneratedRegex(@"^[+\-−]?\d(?:[\d.,\u00A0\u202F ]*\d)?(?:\s*/\s*[+\-−]?\d+)?\s*(?:%|\p{L}[\p{L}\p{N}\s²³^/.'’\-]*)?[.!]?$",
+    [GeneratedRegex(@"^[+\-−]?\d(?:[\d.,\u00A0\u202F ]*\d)?(?:\s*/\s*[+\-−]?\d+)?\s*(?:%|℃|°|°?\s*\p{L}[\p{L}\p{N}\s²³^/.'’\-]*)?[.!]?$",
         RegexOptions.CultureInvariant)]
     private static partial Regex BareAnswerRegex();
+
+    // Keyboard mixed-number notation may use any whitespace or an explicit
+    // conjunction. The validator still checks the numeric value and reduced form.
+    [GeneratedRegex(@"^\s*\d+\s+(?:(?:và|va|and)\s+)?\d+\s*/\s*[1-9]\d*\s*[.!]?\s*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex MixedNumberAnswerRegex();
 }

@@ -53,10 +53,10 @@ internal static partial class PuzzleTests
 
     private static ArithmeticQuizQuestion Generate(
         QuizProblemKind kind, object subtype, ArithmeticQuizMode mode,
-        AppLanguage language, int seed)
+        AppLanguage language, int seed, CurriculumTier tier = CurriculumTier.FiveStars)
     {
         AppLanguageManager.CurrentLanguage = language;
-        var curriculum = new QuizCurriculumContext(CurriculumTier.FiveStars, false);
+        var curriculum = new QuizCurriculumContext(tier, false);
         return kind switch
         {
             QuizProblemKind.Arithmetic =>

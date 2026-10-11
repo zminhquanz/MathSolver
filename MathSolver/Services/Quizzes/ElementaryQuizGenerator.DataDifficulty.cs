@@ -293,6 +293,8 @@ public sealed partial class ElementaryQuizGenerator
                 problem += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DataDifficulty.CreateDataDifficulty.031", ("added", $"{added}"), ("unit", $"{unit}"));
             }
         }
+        if (type is ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart)
+            t.RequiresSolution = false;
         t.Answer(answerLabel, expression, unit);
         var visual = new QuizVisualData(kind, labels, values.Select(value => (decimal)value).ToArray(), pie ? "%" : context.Unit,
             ScenarioId: context.ContextId, HiddenValueIndices: hidden.ToFrozenSet());

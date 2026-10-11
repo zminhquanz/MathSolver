@@ -84,12 +84,32 @@ internal static partial class PuzzleTests
             var rounding = new ElementaryQuizGenerator(new Random(623)).Generate(ArithmeticQuizMode.Essay,
                 QuizProblemKind.Decimal, ElementaryQuizType.DecimalRound, language, tier);
             Check(rounding, rounding.ElementaryProblem!.AnswerText);
+            var letters = new ElementaryQuizGenerator(new Random(627)).Generate(ArithmeticQuizMode.Essay,
+                QuizProblemKind.NumberSense, ElementaryQuizType.LetterExpression, language, tier);
+            var letterContract = letters.ElementaryProblem!;
+            string letterAnswer = letterContract.AnswerText;
+            Check(letters, letterAnswer);
+            foreach (string input in new[] { letterContract.Answers[0].Expression + " = " + letterAnswer,
+                (tier <= CurriculumTier.TwoStars ? "a + b" : "(a + b) × c") + " = "
+                    + letterContract.Answers[0].Expression + " = " + letterAnswer,
+                letterContract.SolutionText })
+                Require(grader.ValidateSubmission(letters, input).IsCorrect,
+                    "A complete letter-expression calculation was rejected: " + input);
+            foreach (string input in new[] { "a + b", letterContract.Answers[0].Expression,
+                "a + b =", "Đáp số:", letterAnswer + " m" })
+                Require(!grader.ValidateSubmission(letters, input).IsCorrect,
+                    "Missing result or an unrelated unit passed letter-expression grading: " + input);
+            // Independent worked validation remains available for generated examples.
+            var workedLetters = EssayCombinedInputParser.Parse(letterContract.SolutionText, false, true);
+            Require(grader.Validate(letters, workedLetters.Solution, workedLetters.Equation, workedLetters.Answer).IsCorrect,
+                "Letter-expression examples lost independent calculation validation.");
             var clock = new ElementaryQuizGenerator(new Random(631)).Generate(ArithmeticQuizMode.Essay,
                 QuizProblemKind.Time, ElementaryQuizType.ReadClock, language, tier);
             Require(!EssayAnswerValidator.IsResultOnlyPractice(clock)
-                && !grader.ValidateSubmission(clock, clock.ElementaryProblem!.AnswerText).IsCorrect
+                && grader.ValidateSubmission(clock, clock.ElementaryProblem!.AnswerText).IsCorrect
+                    == !clock.ElementaryProblem.RequiresSolution
                 && grader.ValidateSubmission(clock, clock.ElementaryProblem.SolutionText).IsCorrect,
-                "The explicit clock answer policy changed with numeric practice.");
+                "Clock readings accept direct answers; time-interval problems retain worked grading.");
         }
 
         // All other essay contracts keep the existing calculation and answer policy.

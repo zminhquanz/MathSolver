@@ -84,7 +84,7 @@ internal static class QuizDiagramDescriptionFormatter
                 parts.AddRange(dimensions.Select(pair => $"{pair.Key}: {pair.Value}"));
             foreach (var row in diagram.Rows)
             {
-                parts.Add(row.Label + ": " + string.Join("; ", row.Segments.Select(segment => segment.Text)));
+                parts.Add(row.Label + ": " + string.Join(", ", row.Segments.Select(segment => segment.Text)));
                 if (row.FractionNumerator is { } numerator && row.FractionDenominator is { } denominator)
                     parts.Add($"{numerator}/{denominator}");
             }

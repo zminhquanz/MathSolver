@@ -131,9 +131,12 @@ public sealed partial class EssayAnswerValidator
             preserveAllCalculations: question.WordProblem?.ConversionStep is not null
                 || question.GeometryProblem?.Reasoning is not null || question.ElementaryProblem is not null
                 || question.AverageProblem?.Type == AverageQuizType.IndirectData,
-            requireAnswerLabel: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
             allowTextAnswer: question.ElementaryProblem?.Answers.Any(answer => answer.IsText) == true,
-            allowEquationAnswer: resultOnly);
+            allowEquationAnswer: resultOnly,
+            expectedAnswerCount: question.ElementaryProblem?.Answers.Count ?? 1,
+            preserveDecimalAnswerCommas: question.ElementaryProblem is { } contract
+                && EssayAnswerListParser.PreserveDecimalCommas(contract),
+            allowClockAnswer: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock);
         if (!resultOnly)
             return Validate(question, submission.Solution, submission.Equation, submission.Answer);
 
@@ -152,7 +155,13 @@ public sealed partial class EssayAnswerValidator
         ArgumentNullException.ThrowIfNull(question);
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
-                || question.ElementaryProblem.Type == ElementaryQuizType.DecimalRound);
+                || question.ElementaryProblem.Type is ElementaryQuizType.DecimalRound or ElementaryQuizType.LetterExpression
+                    or ElementaryQuizType.MixedNumber or ElementaryQuizType.MixedLength
+                    or ElementaryQuizType.MapScale or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
+                    or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion
+                    or ElementaryQuizType.ElapsedTime or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar
+                    or ElementaryQuizType.ReadPictograph or ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart
+                    or ElementaryQuizType.RectangleSide);
     }
 
     public static bool RequiresSolution(ArithmeticQuizQuestion question)
@@ -349,9 +358,7 @@ public sealed partial class EssayAnswerValidator
             ContainsNormalizedPhrase(
                 normalizedSolution,
                 NormalizeEnglishUnitToSingular(expectedUnit)) ||
-            (GetMetricUnitSymbol(expectedUnit, allowDescriptiveSuffix: true)
-                 is string metricSymbol &&
-             ContainsNormalizedPhrase(normalizedSolution, metricSymbol)))
+            ContainsMetricUnitPhrase(normalizedSolution, expectedUnit))
         {
             return true;
         }
@@ -993,6 +1000,9 @@ public sealed partial class EssayAnswerValidator
                 .TrimEnd('.', '!', '?', ':', ';')
                 .ToLowerInvariant();
 
+        if (CelsiusUnitRegex().IsMatch(normalized)) return "°c";
+        if (AngleDegreeUnitRegex().IsMatch(normalized)) return "°";
+
         normalized = Regex.Replace(
             normalized,
             @"\b(km|dm|cm|mm|m)\s*(?:\^\s*)?2\b",
@@ -1012,6 +1022,12 @@ public sealed partial class EssayAnswerValidator
                 StringSplitOptions.RemoveEmptyEntries));
     }
 
+    [GeneratedRegex(@"\A(?:°\s*c|℃|(?:độ|do)\s*c|degrees?\s*(?:c|celsius)|celsius)\z", RegexOptions.CultureInvariant)]
+    private static partial Regex CelsiusUnitRegex();
+
+    [GeneratedRegex(@"\A(?:°|độ|do|degrees?)\z", RegexOptions.CultureInvariant)]
+    private static partial Regex AngleDegreeUnitRegex();
+
     private static bool UnitsMatch(
         string enteredUnit,
         string expectedUnit,
@@ -1024,6 +1040,10 @@ public sealed partial class EssayAnswerValidator
         {
             return true;
         }
+
+        // Angle and temperature units must match as complete units. Suffix
+        // matching would accept unrelated compounds such as "kg °C".
+        if (enteredUnit is "°c" or "°" || expectedUnit is "°c" or "°") return false;
 
         if (MetricUnitsMatch(enteredUnit, expectedUnit))
         {
@@ -1087,6 +1107,18 @@ public sealed partial class EssayAnswerValidator
         return enteredSymbol is not null &&
                enteredSymbol == GetMetricUnitSymbol(
                    expectedUnit, allowDescriptiveSuffix: true);
+    }
+
+    private static bool ContainsMetricUnitPhrase(string solution, string expectedUnit)
+    {
+        string? expectedSymbol = GetMetricUnitSymbol(expectedUnit, allowDescriptiveSuffix: true);
+        if (expectedSymbol is null) return false;
+
+        // Use the same aliases in a solution sentence as in its calculation
+        // and final answer, e.g. l = lít = lit. Match complete Unicode words
+        // so a fragment of a Vietnamese word cannot become a unit symbol.
+        return Regex.Matches(solution, @"[\p{L}\p{N}]+", RegexOptions.CultureInvariant)
+            .Any(word => GetMetricUnitSymbol(word.Value, allowDescriptiveSuffix: false) == expectedSymbol);
     }
 
     private static string? GetMetricUnitSymbol(
@@ -1238,7 +1270,7 @@ public sealed partial class EssayAnswerValidator
         if (!Regex.IsMatch(expectedUnit, @"\A[a-z]+(?: [a-z]+)*\z", RegexOptions.CultureInvariant)) return false;
         string singular = NormalizeEnglishUnitToSingular(expectedUnit);
         int length = expectedUnit.Split(' ').Length;
-        string[] words = Regex.Matches(solution, @"[a-z]+", RegexOptions.CultureInvariant).Select(m => m.Value).ToArray();
+        string[] words = Regex.Matches(solution, @"[\p{L}\p{N}]+", RegexOptions.CultureInvariant).Select(m => m.Value).ToArray();
         for (int i = 0; i + length <= words.Length; i++)
             if (NormalizeEnglishUnitToSingular(string.Join(" ", words.Skip(i).Take(length))) == singular) return true;
         return false;

@@ -72,11 +72,14 @@ internal static partial class PuzzleTests
             "Unanswered fraction comparisons must retain their placeholder.");
         Require(ParseLine("Ngày 03/10/2026, vận tốc 10 m/s.").All(fragment => fragment.Math is null),
             "Dates and unit slashes must remain plain text.");
-        const string fractionList = "Sắp xếp: 3/11, 8/11, 9/11.";
-        var listParts = ParseLine(fractionList);
-        Require(listParts.Count(part => part.Math is not null) == 3 &&
-            string.Concat(listParts.Select(part => part.Text)) == fractionList,
-            "Comma-separated fractions must retain textbook formatting and list punctuation.");
+        foreach (string fractionList in new[] { "Sắp xếp: 3/11, 8/11, 9/11.",
+            "Sắp xếp: 3/11 -> 8/11 -> 9/11.", "Sắp xếp: 3/11->8/11->9/11." })
+        {
+            var listParts = ParseLine(fractionList);
+            Require(listParts.Count(part => part.Math is not null) == 3 &&
+                string.Concat(listParts.Select(part => part.Text)) == fractionList,
+                "Fraction lists must retain textbook formatting and their original separators.");
+        }
         foreach (string paragraph in new[] { "Giá trị (phân số 1/2+1/3).", "Đáp số “Phân số”: em ghi 2/3; đúng là 3/4.",
             "Phép tính: (1/2+1/3)=7/6; kết quả chưa đúng." })
         {

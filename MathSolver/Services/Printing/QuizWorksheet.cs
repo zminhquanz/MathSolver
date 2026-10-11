@@ -66,8 +66,10 @@ public static class QuizWorksheetBuilder
         if (e is null && unit.Length > 0) options = options.Select(value => value + " " + unit).ToArray();
         var visual = e?.Visual is { } v ? QuizChartPresentation.ForDisplay(v, false) : null;
         var diagram = QuizDiagramBuilder.Build(q, language, revealSolution: false);
+        // Preview and PDF share this item: omit repeated story facts, keep required table data.
+        var table = q.WordProblem?.FactTable is { IsSummary: false } facts ? facts : null;
         string identity = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(prompt + JsonSerializer.Serialize(visual)
-            + JsonSerializer.Serialize(diagram) + JsonSerializer.Serialize(q.WordProblem?.FactTable))));
+            + JsonSerializer.Serialize(diagram) + JsonSerializer.Serialize(table))));
         string solution = e?.SolutionText ?? (q.WordProblem is not null
             ? ElementaryWordProblemSolutionFormatter.Format(q, language, culture)
             : q.ProportionProblem is { } p ? ProportionQuizSolutionFormatter.Format(p, language, culture)
@@ -103,6 +105,6 @@ public static class QuizWorksheetBuilder
             if (correct < 0) throw new InvalidOperationException("MissingPrintedCorrectChoice");
             answer = $"{(char)('A' + correct)}. {options[correct]}";
         }
-        return new(q, prompt, options, answer, solution, visual, diagram, q.WordProblem?.FactTable, identity);
+        return new(q, prompt, options, answer, solution, visual, diagram, table, identity);
     }
 }
