@@ -10,9 +10,10 @@ public static class BasicQuestionPrompt
         : "You are an elementary mathematics teacher writing word-problem templates. Write clear, natural, context-appropriate prose. C# owns facts and answers. Preserve placeholders, roles, units, relationships and chronology; add no facts or answers. Return only the requested JSON.";
 
     public static string Build(BasicQuestionContract contract, string? correction = null,
-        IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null)
+        IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null, string? errorDetails = null)
     {
         string prompt = contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryValidator.Prompt(contract, correction, excludedProse) : BuildCore(contract, correction, excludedProse);
+        prompt += QuestionProseRepair.Instructions(contract, correction, errorDetails);
         if (ReasoningStoryCatalogue.UsesReviewedPhrasings(contract.Family) && excludedProse is not null) return prompt;
         if (duplicateProse is not { Count: > 0 }) return prompt;
         string instruction = contract.Language == AppLanguage.Vietnamese
@@ -29,8 +30,8 @@ public static class BasicQuestionPrompt
         if (contract.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prompt(contract, correction, novelExample);
         if (contract.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Prompt(contract, correction, novelExample);
         if (contract.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Prompt(contract, correction, novelExample);
-        if (contract.Version == AdditionQuestionCatalogue.Version) return BuildAddition(contract, correction);
-        if (contract.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmetic(contract, correction);
+        if (contract.Version == AdditionQuestionCatalogue.Version) return BuildAddition(contract, correction, novelExample);
+        if (contract.Version == ArithmeticQuestionCatalogue.Version) return BuildArithmetic(contract, correction, novelExample);
         if (contract.IsTemplate) return BuildTemplate(contract, correction);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         string rule = contract.Operation switch
@@ -118,7 +119,7 @@ public static class BasicQuestionPrompt
             + (string.IsNullOrEmpty(correction) ? "" : "\nRejected previous template: " + correction + ". " + Correction(correction) + " Rewrite the complete JSON.");
     }
 
-    private static string BuildArithmetic(BasicQuestionContract c, string? correction)
+    private static string BuildArithmetic(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)
     {
         var scale = ArithmeticQuestionCatalogue.Scale(c.SceneId, c.Operation, c.Tier)!;
         var unit = QuestionUnits.Find(c)!;
@@ -160,7 +161,7 @@ public static class BasicQuestionPrompt
             Bối cảnh: {{c.TopicId}}/{{c.SceneId}}. {name}/{other} là chủ thể đầy đủ: {{actor}}. {{scope}}
             Vai trò: {{role}}.
             unit_id="{{unit.Id}}"; {unit}={{unit.Vietnamese}}; {group}={{c.GroupUnit}}; {group_one}={{unit.GroupFor(c, true)}}.
-            Giữ đúng biến và vai trò; không thêm tên, danh xưng, đồ vật quanh biến, số cụ thể, dữ kiện, phủ định hoặc bước giải.
+            Được đổi cấu trúc câu theo grammar; bất biến là chủ thể, vai trò, đơn vị và mục tiêu hỏi. Không thêm dữ kiện hay điền biến.
             given_a: một mệnh đề kết thúc dấu phẩy; given_b: nối tiếp đầu chữ thường, cuối dấu chấm.
             {a} chỉ trong given_a, {b} chỉ trong given_b, mỗi biến đúng một lần. question chỉ hỏi; solution_lead là câu dẫn đúng đại lượng, cuối dấu hai chấm.
             """ : $$"""
@@ -168,16 +169,16 @@ public static class BasicQuestionPrompt
             Setting: {{c.TopicId}}/{{c.SceneId}}. {name}/{other} are complete actors: {{actor}}. {{scope}}
             Roles: {{role}}.
             unit_id="{{unit.Id}}"; {unit}={{unit.Plural}}; {group}={{c.GroupUnit}}; {group_one}={{unit.GroupFor(c, true)}}.
-            Keep slots and roles; add no names, titles, nouns around slots, concrete numbers, facts, negations or solution steps.
+            Vary sentence structure within the grammar; owners, roles, units and target are fixed. Add no facts or placeholder values.
             given_a: one clause ending with a comma; given_b: continuing lowercase clause ending with a period.
             {a} occurs once only in given_a; {b} once only in given_b. question asks only; solution_lead names the same target and ends with a colon.
             """;
-        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(OneStepQuestionCatalogue.Draft(c));
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(example ?? OneStepQuestionCatalogue.Draft(c));
         if (!string.IsNullOrEmpty(correction)) prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
         return prompt;
     }
 
-    private static string BuildAddition(BasicQuestionContract c, string? correction)
+    private static string BuildAddition(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)
     {
         var scene = AdditionQuestionCatalogue.Find(c.SceneId)!;
         var scale = scene.Scale(c.Tier)!;
@@ -198,7 +199,7 @@ public static class BasicQuestionPrompt
             Bối cảnh: {{c.TopicId}}/{{c.SceneId}}; hoạt động: {{scene.VietnameseAction}}.
             Chủ thể đầy đủ {name}/{other}: {{actor}}. {{scale.VietnameseScope}}
             Quan hệ: {{relationship}}. unit_id="{{unit.Id}}"; {unit}={{unit.Vietnamese}}.
-            Giữ biến của mẫu; không thêm tên, danh xưng, đồ vật quanh biến, số cụ thể, dữ kiện, phủ định hay quan hệ mới.
+            Được đổi cấu trúc câu theo grammar; bất biến là chủ thể, vai trò, đơn vị, thứ tự và mục tiêu hỏi. Không thêm dữ kiện hay điền biến.
             given_a: một mệnh đề kết thúc dấu phẩy. given_b: mệnh đề nối tiếp đầu chữ thường, cuối dấu chấm.
             question: một câu hỏi, không lặp dữ kiện. solution_lead: câu dẫn phép tính, cuối dấu hai chấm, không đáp số.
             {a} chỉ trong given_a, {b} chỉ trong given_b, mỗi biến đúng một lần. Đổi câu chữ/động từ cùng hoạt động.
@@ -207,7 +208,7 @@ public static class BasicQuestionPrompt
             Setting: {{c.TopicId}}/{{c.SceneId}}; activity: {{scene.EnglishAction}}.
             {name}/{other} each represent an entire {{actor}}. {{scale.EnglishScope}}
             Relation: {{relationship}}. unit_id="{{unit.Id}}"; {unit}={{unit.Plural}}.
-            Preserve slots; add no names, titles, object nouns around slots, numerical values, facts, negations or relationships.
+            Vary sentence structure within the grammar; owners, roles, units, chronology and target are fixed. Add no facts or placeholder values.
             given_a: one clause ending with a comma. given_b: a continuing lowercase clause ending with a period.
             question: one question, no repeated facts. solution_lead: one calculation lead ending with a colon, no answer.
             {a} occurs once in given_a, {b} once in given_b, neither elsewhere. Vary wording/verbs within this activity.
@@ -217,7 +218,7 @@ public static class BasicQuestionPrompt
             var parts = scale.Parts(c.Language);
             prompt += $"\n{{part_a}}={parts.A}; {{part_b}}={parts.B}; " + scale.Span(c.Language) + ".";
         }
-        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(OneStepQuestionCatalogue.Draft(c));
+        prompt += "\nJSON: " + QuestionBankStore.SerializeDraft(example ?? OneStepQuestionCatalogue.Draft(c));
         if (!string.IsNullOrEmpty(correction))
             prompt += "\n" + correction + ": " + Correction(correction) + " Rewrite the complete JSON.";
         return prompt;

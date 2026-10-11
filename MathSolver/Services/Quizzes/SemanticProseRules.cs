@@ -14,9 +14,11 @@ internal static class SemanticProseRules
         "was", "were", "these", "those", "according", "to", "records", "report", "during", "this", "activity", "today"];
     private static string[][] Synonyms(AppLanguage language) => language == AppLanguage.Vietnamese
         ? [["có", "sở hữu"], ["tổng", "tổng cộng", "tất cả"], ["trung bình", "trung bình cộng"],
-            ["số", "số lượng"], ["sau đó", "tiếp theo"], ["xét", "xem xét"], ["dùng", "áp dụng"]]
+            ["số", "số lượng"], ["sau đó", "tiếp theo"], ["xét", "xem xét"], ["dùng", "áp dụng"],
+            ["quyên góp", "đóng góp"], ["thu gom", "gom"], ["tiết kiệm", "để dành"], ["chứa", "đựng"],
+            ["nhận thêm", "được bổ sung thêm"]]
         : [["has", "owns", "possesses"], ["total", "altogether", "in all", "in total"],
-            ["average", "mean"], ["each", "every"]];
+            ["average", "mean"], ["each", "every"], ["contributes", "donates"], ["contains", "holds"]];
     private static string Normalize(string text, AppLanguage language)
     {
         text = text.ToLowerInvariant();
@@ -39,6 +41,7 @@ internal static class SemanticProseRules
     {
         if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > 1400 || candidate.Any(char.IsControl)) return false;
         string withoutSlots = Regex.Replace(candidate, @"\{[A-Za-z0-9_.-]+\}", "");
+        if (withoutSlots.IndexOfAny(['{', '}']) >= 0) return false;
         // Template quantities and computations always belong to C#.
         if (!rendered && withoutSlots.Any(char.IsDigit)) return false;
         var links = language == AppLanguage.Vietnamese ? VietnameseLinks : EnglishLinks;
@@ -52,7 +55,7 @@ internal static class SemanticProseRules
         // Variable names are case-sensitive in the renderer. Lowercasing them
         // with the surrounding prose could otherwise accept an unrenderable {F0}.
         string[] Numbers(string text) => Regex.Matches(text, @"(?<![\p{L}\p{N}])[-+]?\d+(?:[.,]\d+)?").Select(m => m.Value).ToArray();
-        return examples.Any(example => (!rendered || Numbers(example).SequenceEqual(Numbers(candidate))) && Slots(example).SequenceEqual(slots)
+        return (rendered ? examples : EquivalentProseStructures.Expand(examples, language)).Any(example => (!rendered || Numbers(example).SequenceEqual(Numbers(candidate))) && Slots(example).SequenceEqual(slots)
             && Signature(example).SequenceEqual(actual));
     }
 
@@ -61,8 +64,8 @@ internal static class SemanticProseRules
         => string.Join(", ", fields.Where(field => !Matches(field.Text, field.Examples, language)).Select(field => field.Field));
 
     internal static string PromptGuidance(AppLanguage language) => language == AppLanguage.Vietnamese
-        ? "Chỉ thay từ tương đương và từ nối trung tính; giữ nguyên các cụm chủ thể, đại lượng, đơn vị và mọi biến đúng vị trí. Không thêm diễn giải về phân số hay phép tính. Ví dụ:"
-        : "Use only equivalent phrase substitutions or neutral links; preserve owners, quantities, units and every placeholder's position. No extra explanations or formulas. Example:";
+        ? "Bất biến: chủ thể, vai trò tổng/lượng mỗi nhóm/số nhóm, đơn vị, thứ tự sự việc, lượng làm gốc và đại lượng hỏi. Được đổi từ tương đương trong cùng hoạt động, cấu trúc chủ động/bị động và vị trí trạng ngữ theo grammar; thêm lời nối ngắn trung tính. Không đổi nhận thêm thành mượn thêm, gộp hai lượng thành lượng lũy kế, thêm điều kiện, điền biến hay tiết lộ đáp án. Câu dẫn gọi đúng đại lượng hỏi. Ví dụ:"
+        : "Fixed: owners, total/per-group/group-count roles, units, chronology, reference amount and target. Vary equivalent activity verbs, active/passive structures and adverbial position allowed by the grammar; use short neutral links. Never change receiving into borrowing, separate amounts into cumulative amounts, add conditions, fill placeholders or reveal answers. Leads name the requested quantity. Example:";
 
     internal static string ClauseRule(string name, IEnumerable<string> examples, AppLanguage language)
     {
@@ -94,7 +97,7 @@ internal static class SemanticProseRules
             ? "(\"\" | " + L("Theo bản ghi, ") + " | " + L("Theo báo cáo, ") + ")"
             : "(\"\" | " + L("According to the report, ") + ")";
         return name.Replace('_', '-') + " ::= \"\\\"\" " + prefix + " ("
-            + string.Join(" | ", examples.Select(Branch).Distinct()) + ") \"\\\"\"\n";
+            + string.Join(" | ", EquivalentProseStructures.Expand(examples, language).Select(Branch).Distinct()) + ") \"\\\"\"\n";
     }
 
 }

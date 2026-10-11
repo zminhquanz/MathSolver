@@ -115,6 +115,14 @@ public static class AppThemeManager
             ? Colors.White
             : Colors.Black;
 
+    // Match learning-area glass: only MP4 frame contrast can override the theme.
+    public static Color WallpaperMonochromeIconColor =>
+        (LiveWallpaperManager.IsMp4Enabled
+            ? _liveWallpaperUseLightText ?? IsDarkThemeEffective
+            : IsDarkThemeEffective)
+                ? Colors.White
+                : Colors.Black;
+
     public static void Initialize(Application application)
     {
         ArgumentNullException.ThrowIfNull(application);

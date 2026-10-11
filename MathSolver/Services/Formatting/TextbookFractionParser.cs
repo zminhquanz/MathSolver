@@ -36,7 +36,7 @@ public static partial class TextbookFractionParser
             while (text.EndsWith(')') && text.Count(character => character == ')') > text.Count(character => character == '('))
                 text = text[..^1].TrimEnd();
             if (!text.Contains('/') || DateRegex().IsMatch(text) ||
-                !TryParse(text, out Node? node) || !ContainsFraction(node!)) continue;
+                !TryParseCore(text, bindFractionOperands: true, out Node? node) || !ContainsFraction(node!)) continue;
             if (match.Index > plainStart) result.Add(new(line[plainStart..match.Index]));
             result.Add(new(text, node));
             plainStart = match.Index + text.Length;
@@ -47,12 +47,15 @@ public static partial class TextbookFractionParser
     }
 
     public static bool TryParse(string expression, out Node? node)
+        => TryParseCore(expression, bindFractionOperands: false, out node);
+
+    private static bool TryParseCore(string expression, bool bindFractionOperands, out Node? node)
     {
         node = null;
         if (expression.Length > 4096) return false;
         try
         {
-            var reader = new Reader(expression);
+            var reader = new Reader(expression, bindFractionOperands);
             node = reader.Relation();
             reader.SkipSpace();
             if (reader.Position != expression.Length) { node = null; return false; }
@@ -61,7 +64,7 @@ public static partial class TextbookFractionParser
         catch (FormatException) { node = null; return false; }
     }
 
-    private sealed class Reader(string text)
+    private sealed class Reader(string text, bool bindFractionOperands)
     {
         internal int Position;
         private int _depth;
@@ -113,6 +116,18 @@ public static partial class TextbookFractionParser
                             Integer(denominator.Text, out var d) && n > 0 && n < d)
                             return new Mixed(whole, numerator, denominator);
                     }
+                    Position = afterWhole;
+                }
+                // Display a numeric a/b as a single textbook operand of × or ÷.
+                // Otherwise "3/4 × 2/5" becomes ((3/4) × 2)/5: a nested
+                // fraction with the multiplication incorrectly placed above its bar.
+                // Keep ordinary expression parsing unchanged for callers that
+                // need left-associative arithmetic rather than display notation.
+                if (bindFractionOperands)
+                {
+                    Position = afterWhole;
+                    if (Take('/') && Peek() is >= '0' and <= '9')
+                        return new Binary("/", whole, ReadNumber());
                     Position = afterWhole;
                 }
                 return whole;

@@ -1028,13 +1028,13 @@ public partial class SettingsPage : ContentPage
                     : "Animation Math Solver (Mathematical Style)";
             MathAnimationSummaryLabel.Text =
                 useEnglish
-                    ? "GraphicsView • 24 FPS • geometry 2D/3D • Find X • linear/quadratic equations"
-                    : "GraphicsView • 24 FPS • hình học phẳng/không gian • Tìm X • phương trình bậc 1/2";
+                    ? "Geometric constructions • rotating solids • circle tracer • quadratic graph"
+                    : "Hình học có đường dựng • khối không gian xoay • điểm chạy trên đường tròn • đồ thị parabol";
 
             LiveWallpaperEnabledSummaryLabel.Text =
                 useEnglish
-                    ? "The lightweight 24 FPS GraphicsView animation keeps running while the tab is active and stops only when the tab is inactive."
-                    : "Animation GraphicsView nhẹ ở 24 FPS chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
+                    ? "A mathematical sketchbook with gentle motion and a calm reading area. Animation pauses when you leave the tab."
+                    : "Nền bản vẽ toán học chuyển động nhẹ, giữ vùng đọc thoáng. Chuyển động tạm dừng khi bạn rời tab.";
         }
         else if (mode == LiveWallpaperMode.MathAnimation2)
         {
@@ -1044,8 +1044,8 @@ public partial class SettingsPage : ContentPage
                     : "Animation Math Solver 2 (Neural network + Mathematical Space)";
             MathAnimationSummaryLabel.Text =
                 useEnglish
-                    ? "GraphicsView • 24 FPS • soft neural network • mathematical space • AI brain + open book"
-                    : "GraphicsView • 24 FPS • neural network mờ nhẹ • mathematical space • bộ não AI + cuốn sách";
+                    ? "Layered neural network • AI processor • travelling signals • rotating geometry and flowing graphs"
+                    : "Mạng nơ-ron nhiều lớp • bộ xử lý AI • tín hiệu truyền sáng • hình học xoay và đồ thị chuyển động";
 
             LiveWallpaperEnabledSummaryLabel.Text =
                 useEnglish
@@ -1199,8 +1199,8 @@ public partial class SettingsPage : ContentPage
 
             MathAnimationSummaryLabel.Text =
                 useEnglish
-                    ? "GraphicsView • 24 FPS • soft neural network • mathematical space • AI brain + open book"
-                    : "GraphicsView • 24 FPS • neural network mờ nhẹ • mathematical space • bộ não AI + cuốn sách";
+                    ? "Layered neural network • AI processor • travelling signals • rotating geometry and flowing graphs"
+                    : "Mạng nơ-ron nhiều lớp • bộ xử lý AI • tín hiệu truyền sáng • hình học xoay và đồ thị chuyển động";
         }
         else
         {
@@ -1211,8 +1211,8 @@ public partial class SettingsPage : ContentPage
 
             MathAnimationSummaryLabel.Text =
                 useEnglish
-                    ? "GraphicsView • 24 FPS • geometry 2D/3D • Find X • linear/quadratic equations"
-                    : "GraphicsView • 24 FPS • hình học phẳng/không gian • Tìm X • phương trình bậc 1/2";
+                    ? "Geometric constructions • rotating solids • circle tracer • quadratic graph"
+                    : "Hình học có đường dựng • khối không gian xoay • điểm chạy trên đường tròn • đồ thị parabol";
         }
 
         LiveWallpaperDecodeTitleLabel.Text =

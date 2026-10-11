@@ -246,7 +246,7 @@ internal static partial class ElementaryEssayValidator
     {
         string text = Regex.Replace(expression, @"\s", "").Replace("\u00d7", "*", StringComparison.Ordinal)
             .Replace("\u00f7", "/", StringComparison.Ordinal).Replace("\u2212", "-", StringComparison.Ordinal)
-            .Replace(',', '.');
+            .Replace(':', '/').Replace(',', '.');
         // Parentheses around one numeric intermediate do not change its role.
         while (true)
         {

@@ -46,6 +46,7 @@ public static class BasicQuestionValidator
             if (contextual && unit.Id != QuestionUnits.Find(c)!.Id) return new(null, "ChangedUnits");
             c = BasicQuestionTemplates.ApplyUnit(c, unit);
             if (!c.IsValid) return new(null, "ChangedUnits");
+            if (contextual && ReviewedQuestionProse.For(c)!.Matches(draft, c.Language)) return new(draft, null, c);
             string[] text = [draft.GivenA, draft.GivenB, draft.Question, draft.SolutionLead!];
             if (text.Any(s => s.Length is < 10 or > 700 || s.Any(char.IsControl))) return new(null, "InvalidText");
             foreach (string s in text)
@@ -99,7 +100,8 @@ public static class BasicQuestionValidator
             if (!Has(draft.Question, vi ? @"\b(?:hỏi|bao nhiêu)\b" : @"\b(?:how many|what|find)\b")
                 || vi && !draft.ProblemText.Any(ch => ch > 127)) return new(null, "WrongLanguage");
             if (!RolesAndRelation(draft, c.Structure, vi) || !SolutionActorsMatch(draft, c.Structure))
-                return new(null, "ChangedRelationOrTarget");
+                return new(null, "ChangedRelationOrTarget", ErrorDetails: contextual
+                    ? ReviewedQuestionProse.For(c)!.MismatchedFields(draft, c.Language) : null);
             if (contextual && !ContextMatches(draft, c, unit, vi)) return new(null, "InvalidContext");
             // Stored contracts carry preview values only; template semantics cannot depend on those values.
             // Re-render with small, large and unit quantities to catch unsupported slots before insertion.

@@ -22,6 +22,7 @@ public partial class MathPuzzlePage
         && PracticeSummaryGrid.Handler?.MauiContext is not null
         && ChangePracticeSettingsButton.Handler?.MauiContext is not null
         && OpenAiQuestionBankButton.Handler?.MauiContext is not null
+        && ExportQuizPdfButton.Handler?.MauiContext is not null
         && PracticeSummaryLabel.Handler?.MauiContext is not null;
 
     private void OnPracticePageLoaded(object? sender, EventArgs e)
@@ -124,6 +125,9 @@ public partial class MathPuzzlePage
             string.Join(" · ", selections.Where(value => !string.IsNullOrWhiteSpace(value)));
         ChangePracticeSettingsButton.Text = TranslateQuiz(_practiceSettingsExpanded
             ? "Quiz.HideSettingsCompact" : "Quiz.ChangeSettingsCompact");
+        PracticeSettingsIcon.Source = _practiceSettingsExpanded
+            ? "quiz_collapse.png"
+            : "quiz_expand.png";
         string settingsDescription = TranslateQuiz(_practiceSettingsExpanded ? "Quiz.HideSettings" : "Quiz.ChangeSettings");
         SemanticProperties.SetDescription(ChangePracticeSettingsButton, settingsDescription);
         ToolTipProperties.SetText(ChangePracticeSettingsButton, settingsDescription);
@@ -210,7 +214,8 @@ public partial class MathPuzzlePage
         {
             actionsWidth = ((IView)ChangePracticeSettingsButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
                 + ((IView)OpenAiQuestionBankButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
-                + PracticeSummaryActionsGrid.ColumnSpacing;
+                + ((IView)ExportQuizPdfButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
+                + PracticeSummaryActionsGrid.ColumnSpacing * 2;
             summaryWidth = ((IView)PracticeSummaryLabel).Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
         }
         catch (ObjectDisposedException)
@@ -235,11 +240,20 @@ public partial class MathPuzzlePage
         PracticeSummaryActionsGrid.RowDefinitions.Clear();
         PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
         if (!stackActions)
+        {
             PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
+            PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
+        }
         PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        if (stackActions) PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        if (stackActions)
+        {
+            PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        }
         Grid.SetRow(OpenAiQuestionBankButton, stackActions ? 1 : 0);
         Grid.SetColumn(OpenAiQuestionBankButton, stackActions ? 0 : 1);
+        Grid.SetRow(ExportQuizPdfButton, stackActions ? 2 : 0);
+        Grid.SetColumn(ExportQuizPdfButton, stackActions ? 0 : 2);
         Grid.SetRow(AiQuestionBankProgressLabel, inline ? 1 : 2);
     }
 

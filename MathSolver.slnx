@@ -2,6 +2,8 @@
   <Folder Name="/UnitTest/">
     <Project Path="UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj" />
     <Project Path="UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj" />
+    <Project Path="UnitTest/QuizPdfTests/QuizPdfTests.csproj" />
+    <Project Path="UnitTest/WallpaperAnimationTests/WallpaperAnimationTests.csproj" />
   </Folder>
   <Project Path="MathSolver/MathSolver.csproj" />
 </Solution>

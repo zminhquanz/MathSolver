@@ -23,6 +23,14 @@ public sealed class ThemedSvgPathIcon : ContentView
             string.Empty,
             propertyChanged: OnDataChanged);
 
+    public static readonly BindableProperty FollowWallpaperContrastProperty =
+        BindableProperty.Create(
+            nameof(FollowWallpaperContrast),
+            typeof(bool),
+            typeof(ThemedSvgPathIcon),
+            false,
+            propertyChanged: (bindable, _, _) => ((ThemedSvgPathIcon)bindable).ApplyThemeColor());
+
     private readonly MauiPath _path;
     private bool _isThemeSubscribed;
 
@@ -78,6 +86,13 @@ public sealed class ThemedSvgPathIcon : ContentView
                 value);
     }
 
+    /// <summary>Use the learning area's wallpaper contrast instead of the app-wide theme.</summary>
+    public bool FollowWallpaperContrast
+    {
+        get => (bool)GetValue(FollowWallpaperContrastProperty);
+        set => SetValue(FollowWallpaperContrastProperty, value);
+    }
+
     private static void OnDataChanged(
         BindableObject bindable,
         object oldValue,
@@ -122,6 +137,9 @@ public sealed class ThemedSvgPathIcon : ContentView
             AppThemeManager.ThemeChanged +=
                 OnThemeChanged;
 
+            AppThemeManager.WallpaperVisualResourcesChanged +=
+                OnWallpaperContrastChanged;
+
             _isThemeSubscribed =
                 true;
         }
@@ -142,6 +160,9 @@ public sealed class ThemedSvgPathIcon : ContentView
         AppThemeManager.ThemeChanged -=
             OnThemeChanged;
 
+        AppThemeManager.WallpaperVisualResourcesChanged -=
+            OnWallpaperContrastChanged;
+
         _isThemeSubscribed =
             false;
     }
@@ -154,6 +175,12 @@ public sealed class ThemedSvgPathIcon : ContentView
         // Dispatcher ở control này. Việc bỏ Dispatcher cũng tránh phụ thuộc API
         // platform/dispatcher không cần thiết.
         ApplyThemeColor();
+    }
+
+    private void OnWallpaperContrastChanged(object? sender, EventArgs e)
+    {
+        if (FollowWallpaperContrast)
+            ApplyThemeColor();
     }
 
     /// <summary>
@@ -169,7 +196,9 @@ public sealed class ThemedSvgPathIcon : ContentView
     private void ApplyThemeColor()
     {
         Color iconColor =
-            AppThemeManager.MonochromeIconColor;
+            FollowWallpaperContrast
+                ? AppThemeManager.WallpaperMonochromeIconColor
+                : AppThemeManager.MonochromeIconColor;
 
         // Gán Brush mới để native Shape chắc chắn invalidates rendering ngay cả
         // khi Popup/TitleView vừa được attach lại.

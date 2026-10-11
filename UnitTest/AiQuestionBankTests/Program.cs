@@ -4,6 +4,27 @@ using MathSolver.Services.QuestionBank;
 using System.Text.Json;
 using System.Text;
 
+if (args is ["--equivalent-prose"])
+{
+    try { await EquivalentProseTests.RunAsync(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--equivalent-prose-model", var equivalentProseModel])
+{
+    try { await EquivalentProseModelTests.RunAsync(equivalentProseModel); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
+if (args is ["--equivalent-prose-evidence", var equivalentProseEvidence])
+{
+    try { EquivalentProseModelTests.CheckEvidence(equivalentProseEvidence); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--excel-authoring"])
 {
     try { await ExcelAuthoringTests.RunAsync(); }

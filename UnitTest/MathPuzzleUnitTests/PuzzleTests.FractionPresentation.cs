@@ -44,6 +44,30 @@ internal static partial class PuzzleTests
         }
         Require(TryParse("6/8", out var unreduced) && unreduced is Binary { Left: Number { Text: "6" }, Right: Number { Text: "8" } },
             "Display must preserve unreduced operands rather than silently solve the exercise.");
+        foreach (string text in new[] { "3/4 × 2/5", "3/4*2/5", "3 / 4 × 2 / 5 = ?", "2/3 × 2/3 = 4/9" })
+        {
+            var node = ParseLine(text).Single(part => part.Math is not null).Math!;
+            var product = node is Binary { Operator: "=" } equation ? equation.Left : node;
+            Require(product is Binary { Operator: "×" or "*",
+                Left: Binary { Operator: "/", Left: Number, Right: Number },
+                Right: Binary { Operator: "/", Left: Number, Right: Number } },
+                "Multiplication must display two separate simple fractions: " + text);
+        }
+        foreach (var (text, expected) in new (string, ReducedFraction)[]
+        {
+            ("3/4 × 2/5", new(3, 10)), ("3/4 ÷ 2/5", new(15, 8)),
+            ("2 1/3 × 2/5", new(14, 15)), ("2 1/3 ÷ 2/5", new(35, 6)),
+            ("-3/4 × 2/5", new(-3, 10)), ("(1/2+1/3) ÷ 7/9", new(15, 14)),
+            ("(4×6)/(5×7)", new(24, 35)), ("3/4 × 2/5 + 1/2", new(4, 5))
+        })
+        {
+            var fragments = ParseLine(text);
+            Require(fragments.Count(part => part.Math is not null) == 1 && Evaluate(fragments.Single(part => part.Math is not null).Math!) == expected,
+                "Textbook operand binding changed the displayed value: " + text);
+            Require(string.Concat(fragments.Select(part => part.Text)) == text, "Display binding lost original wording.");
+        }
+        Require(TryParse("3/4 ÷ 2/5", out var rawDivision) && Evaluate(rawDivision!) == new ReducedFraction(3, 40),
+            "Display-only fraction binding must not change ordinary left-associative expression parsing.");
         Require(TryParse("1/2 ? (1/3+1/4)", out var comparison) && comparison is Binary { Operator: "?" },
             "Unanswered fraction comparisons must retain their placeholder.");
         Require(ParseLine("Ngày 03/10/2026, vận tốc 10 m/s.").All(fragment => fragment.Math is null),

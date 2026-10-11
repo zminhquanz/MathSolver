@@ -50,18 +50,36 @@
                             <Label x:Name="PracticeSummaryLabel" FontSize="13" FontAttributes="Bold"
                                    VerticalOptions="Center" LineBreakMode="WordWrap"
                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                            <Grid x:Name="PracticeSummaryActionsGrid" Grid.Column="1" ColumnDefinitions="Auto,Auto"
+                            <Grid x:Name="PracticeSummaryActionsGrid" Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto"
                                   RowDefinitions="Auto" ColumnSpacing="6" RowSpacing="6">
-                                <Button x:Name="ChangePracticeSettingsButton"
-                                        Text="{localization:QuizTranslate Quiz.ChangeSettingsCompact}"
-                                        Style="{StaticResource PracticeToolbarButtonStyle}"
-                                        Clicked="OnChangePracticeSettingsClicked" />
+                                <Grid>
+                                    <Button x:Name="ChangePracticeSettingsButton"
+                                            Text="{localization:QuizTranslate Quiz.ChangeSettingsCompact}"
+                                            Padding="32,4,10,4"
+                                            Style="{StaticResource PracticeToolbarButtonStyle}"
+                                            Clicked="OnChangePracticeSettingsClicked" />
+                                    <controls:ThemedImageIcon x:Name="PracticeSettingsIcon"
+                                            Source="quiz_collapse.png"
+                                            FollowWallpaperContrast="True"
+                                            WidthRequest="16" HeightRequest="16" Margin="10,0,0,0"
+                                            HorizontalOptions="Start" VerticalOptions="Center"
+                                            AutomationProperties.IsInAccessibleTree="False"
+                                            Opacity="{Binding Source={x:Reference ChangePracticeSettingsButton}, Path=Opacity, x:DataType='Button'}" />
+                                </Grid>
                                 <Button x:Name="OpenAiQuestionBankButton" Grid.Column="1"
                                         Text="{localization:Translate AiBank.OpenCompact}"
                                         SemanticProperties.Description="{localization:Translate AiBank.Open}"
                                         ToolTipProperties.Text="{localization:Translate AiBank.Open}"
                                         Style="{StaticResource PracticeToolbarButtonStyle}"
                                         Clicked="OnOpenAiQuestionBankClicked" />
+                                <Button x:Name="ExportQuizPdfButton" Grid.Column="2"
+                                        Text="{localization:Translate QuizPdf.Export}"
+                                        ImageSource="quiz_export_pdf.png"
+                                        ContentLayout="Left,6"
+                                        SemanticProperties.Description="{localization:Translate QuizPdf.Title}"
+                                        ToolTipProperties.Text="{localization:Translate QuizPdf.Title}"
+                                        Style="{StaticResource PracticeToolbarButtonStyle}"
+                                        Clicked="OnExportQuizPdfClicked" />
                             </Grid>
                             <Label x:Name="AiQuestionBankProgressLabel" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,6,0,0"
                                    IsVisible="False" FontSize="12" LineBreakMode="WordWrap"
@@ -880,7 +898,6 @@
                                 <Button
                                     x:Name="TrueAnswerButton"
                                     Grid.Column="0"
-                                    Text="{localization:Translate Quiz.TrueAnswer}"
                                     CommandParameter="true"
                                     MinimumHeightRequest="54"
                                     CornerRadius="12"
@@ -895,7 +912,6 @@
                                 <Button
                                     x:Name="FalseAnswerButton"
                                     Grid.Column="1"
-                                    Text="{localization:Translate Quiz.FalseAnswer}"
                                     CommandParameter="false"
                                     MinimumHeightRequest="54"
                                     CornerRadius="12"

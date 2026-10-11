@@ -1,0 +1,33 @@
+# Printable quiz worksheets
+
+The **Export PDF** toolbar action sits beside **Add AI questions**. It opens a dedicated CollectionView preview initially populated from practice. The Change selection action expands a local settings form with the shared illustrated CollectionView pickers for family, knowledge group, subtype, geometry measurement and difficulty. Practice format (numeric or word problems) uses the stock MAUI Picker, matching the practice tab. `QuizWorksheetSettings` is immutable and owned by this page; edits never change practice selections or scores. PDF creation always uses written answers (`Essay`), including when practice is currently in True/False or Multiple Choice mode. Mixed selections use the existing curriculum policy for each question.
+
+Choose 10, 20, 30 or a custom count from 2 to 100. Creating a set runs the same `PracticeQuestionFactory` as practice: C# computes facts, answers and diagrams, optionally with previously saved prose from SQLite. No LLM inference is started. Duplicate student problems are rejected within a bounded attempt budget; narrow selections report that the user should reduce the count or choose Mixed. Cancellation retains the previous complete set.
+
+The immutable `QuizWorksheet` holds the ordered questions, masked visuals, answers and solutions. Replacing one question changes the set ID; saving, sharing or opening a PDF never regenerates a question. Editing the form affects the next complete set. Replacements use the displayed set's frozen settings, so its content and metadata stay consistent. Cancellation retains both the previous set and its settings. Practice questions and scores are independent of worksheet generation.
+
+In written-answer PDFs, numeric practice uses only the worked calculation, without separate Answer/Final answer lines. Find x includes the original equation, the inverse calculation and the solved value. Fraction addition/subtraction shows conversions to the least common denominator when necessary, the numerator calculation and reduction. Numeric comparisons show the full relation. Word problems retain their solution leads, units and final answers; fraction word problems also receive the common-denominator steps.
+
+The page groups settings, export/print actions and preview into cards. Inputs have visible frames and a default title/placeholder. Fields use two columns from 800 logical pixels, generation actions from 480 and export actions from 620; narrower layouts stack them. Open/print spans the final export row. The circular back action shares its style and interaction policy with AI creation and remains available while generating. Header controls remain interactive when the preview is empty.
+
+The shared `LiveWallpaperView` spans the page behind the heading and transparent preview, resumes on appearance and pauses on disappearance. Preview cards derive their width from the viewport after subtracting margins; their single-column grids, wrapping question views and buttons also have explicit inner width limits after padding/stroke. This prevents a native CollectionView's initial unconstrained measurement of long prose from widening a cell and clipping its question or replacement button.
+
+Separate save/share actions are provided for the student worksheet and answer key, plus an action to open the student PDF in a system viewer for printing. The answers toggle controls whether answer actions are shown; answers are never appended to the student file. Platform file pickers and PDF viewers handle save/print integration.
+
+PDFsharp 6.2.4 (MIT) writes A4 documents with embedded Open Sans fonts, textbook stacked fractions, `×` / `÷`, work lines and vector illustrations. `QuizPdfCanvas` adapts the existing elementary/geometry/bar drawings; it fixes ink colors for grayscale printing and deliberately excludes decorative shadows. `ThemeResource.UsePrintPalette` supplies light fallback colors inside the background export only. `QuizChartPresentation.ForDisplay(..., false)` and `QuizDiagramBuilder.Build(..., false)` preserve missing values and exclude solution explanations.
+
+`TextbookFractionParser.ParseLine` supplies the same display tree to the preview and PDF writer. Numeric fractions bind as individual operands of multiplication/division (`3/4 × 2/5`), while explicit compound numerator/denominator groups remain stacked. Ordinary `TryParse` retains its arithmetic precedence; this presentation rule never changes grading or computed answers. Fraction layout regressions check operand trees and actual PDF line heights, including mixed numbers and explicit compound fractions; `textbook-fraction-products.pdf` is the inspection fixture.
+
+Questions, choices and work space stay together when the block fits on an A4 page; long content wraps and continues onto subsequent pages. Headers and footers identify the set and page. Cached files used by system viewers/sharing are under the app cache directory, not the question database.
+
+## Verification
+
+Run `dotnet run --project UnitTest/QuizPdfTests/QuizPdfTests.csproj -- artifacts/verification/quiz-pdf`.
+
+The suite generates actual PDFs, reopens them with PDFsharp, checks A4 pages, all registered families over five difficulties, both languages and three modes, all elementary subtypes, essential drawings, masked chart data, choice-letter answers, assertion operands, a frozen 20-question set, count limits, cancellation and bounded duplicate rejection. The database is isolated inside the artifact directory.
+
+Calculation-answer regressions cover exact arithmetic and Find x fixtures (both operand positions for each operation), fraction conversion/reduction, generated numeric practice over all five difficulties, and mixed numeric/story sets. The tests decode the exported PDF's text using its font maps to verify that numeric answers omit redundant labels while story answers remain present. Sample PDFs are saved alongside the coverage artifacts.
+
+`WorksheetSettingsTests` (in the PDF suite) checks all available worksheet subtype selections over five difficulties and both languages, illustration registration, knowledge groups, numeric/story formats, compatible geometry measurements and cancellation. It also checks that editing the next set leaves the initial practice snapshot and in-progress/displayed set settings unchanged. The writer's broader coverage of three modes is internal compatibility coverage; the app's PDF creation UI exposes only written answers.
+
+Windows build and Android compile are also required for changes to the UI or graphics adapter. Actual hover, scrolling, dialogs and printer/system-viewer behavior require testing on the target device.

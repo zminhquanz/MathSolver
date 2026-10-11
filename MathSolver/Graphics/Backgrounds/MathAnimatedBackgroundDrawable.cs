@@ -1,48 +1,67 @@
-using MathSolver.Services;
+﻿using MathSolver.Services;
 using Microsoft.Maui.Graphics;
 
 namespace MathSolver.Graphics;
 
 /// <summary>
-/// Low-cost ambient math animation used when the user wants an animated
-/// background without an external MP4. It intentionally avoids bitmaps,
-/// shaders, blur passes and allocations inside Draw().
+/// An ambient mathematical sketchbook: geometric constructions, a unit-circle
+/// tracer, rotating solids and a quadratic graph. Bounded native primitives and
+/// reusable projection buffers keep the centre quiet and drawing work predictable.
 /// </summary>
 public sealed class MathAnimatedBackgroundDrawable : ITimeDrivenDrawable
 {
-    private static readonly MathGlyph[] Glyphs =
+    private static readonly (int A, int B)[] CubeEdges =
     [
-        new("P = 4a", 0.10f, 0.18f, 0.010f, 0.2f, 22f),
-        new("S = a x a", 0.23f, 0.34f, 0.008f, 1.0f, 21f),
-        new("S = pi x r x r", 0.80f, 0.22f, 0.009f, 1.8f, 19f),
-        new("V = a x a x a", 0.74f, 0.84f, 0.006f, 2.4f, 18f),
-        new("x + 7 = 19", 0.17f, 0.80f, 0.007f, 3.0f, 20f),
-        new("x = (c - b) / a", 0.42f, 0.70f, 0.008f, 3.7f, 18f),
-        new("ax + b = 0", 0.52f, 0.28f, 0.007f, 4.3f, 22f),
-        new("ax2 + bx + c = 0", 0.63f, 0.56f, 0.006f, 4.9f, 20f),
-        new("Delta = b2 - 4ac", 0.84f, 0.44f, 0.005f, 5.5f, 18f),
-        new("x1,2 = (-b +/- sqrt(Delta)) / 2a", 0.48f, 0.94f, 0.004f, 6.1f, 16f)
+        (0, 1), (1, 3), (3, 2), (2, 0), (4, 5), (5, 7),
+        (7, 6), (6, 4), (0, 4), (1, 5), (2, 6), (3, 7)
     ];
+    private static readonly Glyph[] Glyphs =
+    [
+        new("a² + b² = c²", .15f, .38f, 17),
+        new("πr²", .86f, .40f, 17),
+        new("S = a × b", .12f, .53f, 16),
+        new("V = a³", .15f, .92f, 17),
+        new("ax + b = 0", .44f, .08f, 16),
+        new("x = −b / a", .58f, .93f, 16),
+        new("Δ = b² − 4ac", .85f, .60f, 17),
+        new("(a + b)² = a² + 2ab + b²", .46f, .97f, 15)
+    ];
+
+    private readonly PointF[] _cube = new PointF[8];
+    private readonly float[] _depth = new float[8];
+    private Color? _sourceAccent;
+    private Color? _sourceInk;
+    private Color _accent = Colors.Purple;
+    private Color _construction = Colors.SlateGray;
+    private Color _highlight = Colors.Teal;
+    private float _visibility = 1;
 
     public double TimeSeconds { get; set; }
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        if (dirtyRect.Width < 80f || dirtyRect.Height < 80f)
-        {
+        if (!float.IsFinite(dirtyRect.X) || !float.IsFinite(dirtyRect.Y) ||
+            !float.IsFinite(dirtyRect.Width) || !float.IsFinite(dirtyRect.Height) ||
+            dirtyRect.Width < 80 || dirtyRect.Height < 80)
             return;
-        }
 
+        double time = double.IsFinite(TimeSeconds) ? Math.Max(0, TimeSeconds) : 0;
+        bool compact = dirtyRect.Width < 600 || dirtyRect.Height < 480;
+        RefreshPalette();
         canvas.SaveState();
-
         try
         {
+            canvas.ClipRectangle(dirtyRect.X, dirtyRect.Y, dirtyRect.Width, dirtyRect.Height);
+            canvas.Antialias = true;
+            canvas.StrokeLineCap = LineCap.Round;
             canvas.Font = Microsoft.Maui.Graphics.Font.Default;
-            DrawMovingGrid(canvas, dirtyRect);
-            DrawFlatGeometry(canvas, dirtyRect);
-            DrawSpatialGeometry(canvas, dirtyRect);
-            DrawEquationGraph(canvas, dirtyRect);
-            DrawGlyphs(canvas, dirtyRect);
+            DrawDraftingGrid(canvas, dirtyRect, time, compact);
+            DrawTriangle(canvas, dirtyRect, time, compact);
+            DrawCircleConstruction(canvas, dirtyRect, time, compact);
+            DrawSolids(canvas, dirtyRect, time, compact);
+            DrawQuadraticGraph(canvas, dirtyRect, time, compact);
+            if (!compact) DrawRectangleConstruction(canvas, dirtyRect, time);
+            DrawGlyphs(canvas, dirtyRect, time, compact);
         }
         finally
         {
@@ -50,320 +69,271 @@ public sealed class MathAnimatedBackgroundDrawable : ITimeDrivenDrawable
         }
     }
 
-    private void DrawMovingGrid(ICanvas canvas, RectF rect)
+    private void RefreshPalette()
     {
-        const float spacing = 72f;
-        float offsetX = (float)((TimeSeconds * 5.5) % spacing);
-        float offsetY = (float)((TimeSeconds * 3.0) % spacing);
+        Color accent = ThemeResource.GetColor("PrimaryColor", "#6D28D9");
+        Color ink = ThemeResource.GetColor("TextPrimaryColor", "#1E293B");
+        if (accent.Equals(_sourceAccent) && ink.Equals(_sourceInk)) return;
+        _sourceAccent = accent;
+        _sourceInk = ink;
+        bool dark = ink.Red * .299f + ink.Green * .587f + ink.Blue * .114f > .65f;
+        _accent = dark ? Mix(accent, Colors.White, .45f) : accent;
+        _construction = Mix(ink, _accent, .35f);
+        _highlight = Mix(_accent, Color.FromArgb(dark ? "#7DD3FC" : "#0284C7"), .65f);
+        _visibility = dark ? 1.18f : 1;
+    }
 
-        canvas.StrokeColor = WithAlpha(
-            ThemeResource.GetColor("PrimaryColor", "#2563EB"),
-            0.08f);
-        canvas.StrokeSize = 1f;
-
-        for (float x = rect.Left - spacing + offsetX;
-             x <= rect.Right + spacing;
-             x += spacing)
+    private void DrawDraftingGrid(ICanvas canvas, RectF rect, double time, bool compact)
+    {
+        // A stationary grid avoids wrap jumps; its brightness breathes slowly.
+        float spacing = MathF.Max(compact ? 44 : 64, MathF.Max(rect.Width, rect.Height) / 48);
+        canvas.StrokeColor = _accent;
+        canvas.StrokeSize = .65f;
+        float breath = .92f + .08f * Wave(time, .16);
+        for (int column = 0; column * spacing <= rect.Width; column++)
         {
+            float x = rect.Left + column * spacing;
+            canvas.Alpha = .055f * breath * _visibility * EdgeWeight(column * spacing / rect.Width);
             canvas.DrawLine(x, rect.Top, x, rect.Bottom);
         }
-
-        for (float y = rect.Top - spacing + offsetY;
-             y <= rect.Bottom + spacing;
-             y += spacing)
+        for (int row = 0; row * spacing <= rect.Height; row++)
         {
-            canvas.DrawLine(rect.Left, y, rect.Right, y);
-        }
-    }
-
-    private void DrawGlyphs(ICanvas canvas, RectF rect)
-    {
-        Color primary = ThemeResource.GetColor("PrimaryColor", "#2563EB");
-        Color secondary = ThemeResource.GetColor("TextSecondaryColor", "#64748B");
-
-        for (int index = 0; index < Glyphs.Length; index++)
-        {
-            MathGlyph glyph = Glyphs[index];
-            double t = TimeSeconds;
-
-            float x =
-                rect.Left +
-                rect.Width * glyph.X +
-                MathF.Sin((float)(t * 0.42 + glyph.Phase)) *
-                MathF.Min(18f, rect.Width * 0.014f);
-
-            float yCycle =
-                (glyph.Y - (float)(t * glyph.Speed)) % 1.14f;
-
-            if (yCycle < -0.10f)
+            float y = rect.Top + row * spacing;
+            for (int segment = 0; segment < 8; segment++)
             {
-                yCycle += 1.14f;
+                float start = segment / 8f;
+                canvas.Alpha = .055f * breath * _visibility * EdgeWeight(start + 1 / 16f);
+                canvas.DrawLine(rect.Left + start * rect.Width, y,
+                    rect.Left + (start + 1 / 8f) * rect.Width, y);
             }
-
-            float y = rect.Top + rect.Height * yCycle;
-
-            float pulse =
-                0.68f +
-                0.32f * MathF.Sin((float)(t * 0.58 + glyph.Phase));
-
-            canvas.FontSize = glyph.FontSize;
-            canvas.FontColor = WithAlpha(
-                index % 3 == 0 ? primary : secondary,
-                0.13f + pulse * 0.07f);
-
-            canvas.DrawString(
-                glyph.Text,
-                x - 130f,
-                y - 18f,
-                260f,
-                36f,
-                HorizontalAlignment.Center,
-                VerticalAlignment.Center);
+        }
+        canvas.StrokeColor = _construction;
+        canvas.Alpha = .10f * _visibility;
+        for (int side = 0; side < 2; side++)
+        for (int i = 0; i < (compact ? 3 : 5); i++)
+        {
+            float x = rect.Left + rect.Width * (side == 0 ? .045f : .955f);
+            float y = rect.Top + rect.Height * (.12f + i * .18f);
+            canvas.DrawLine(x - 3, y, x + 3, y);
+            canvas.DrawLine(x, y - 3, x, y + 3);
         }
     }
 
-    private void DrawFlatGeometry(ICanvas canvas, RectF rect)
+    private void DrawTriangle(ICanvas canvas, RectF rect, double time, bool compact)
     {
-        Color primary = WithAlpha(
-            ThemeResource.GetColor("PrimaryColor", "#2563EB"),
-            0.20f);
-        Color secondary = WithAlpha(
-            ThemeResource.GetColor("TextSecondaryColor", "#64748B"),
-            0.16f);
-
-        float minSide = MathF.Min(rect.Width, rect.Height);
-        float drift = MathF.Sin((float)(TimeSeconds * 0.34)) * 12f;
-
-        canvas.StrokeSize = 2f;
-        canvas.StrokeColor = primary;
-
-        float squareSize = MathF.Max(58f, minSide * 0.12f);
-        float squareX = rect.Left + rect.Width * 0.18f + drift;
-        float squareY = rect.Top + rect.Height * 0.22f;
-        canvas.DrawRectangle(
-            squareX - squareSize / 2f,
-            squareY - squareSize / 2f,
-            squareSize,
-            squareSize);
-        DrawAnnotation(canvas, "a", squareX, squareY - squareSize * 0.62f, secondary, 16f);
-
-        float triSize = MathF.Max(70f, minSide * 0.14f);
-        float tx = rect.Left + rect.Width * 0.74f - drift;
-        float ty = rect.Top + rect.Height * 0.28f;
-        float triangleTopY = ty - triSize * 0.54f;
-        float triangleBottomY = ty + triSize * 0.42f;
-        float triangleLeftX = tx - triSize * 0.56f;
-        float triangleRightX = tx + triSize * 0.56f;
-        canvas.DrawLine(tx, triangleTopY, triangleLeftX, triangleBottomY);
-        canvas.DrawLine(triangleLeftX, triangleBottomY, triangleRightX, triangleBottomY);
-        canvas.DrawLine(triangleRightX, triangleBottomY, tx, triangleTopY);
-
-        canvas.StrokeColor = secondary;
-        float radius = MathF.Max(34f, minSide * 0.068f);
-        float cx = rect.Left + rect.Width * 0.28f;
-        float cy = rect.Top + rect.Height * 0.66f + drift * 0.25f;
-        canvas.DrawCircle(cx, cy, radius);
-        canvas.DrawLine(cx, cy, cx + radius, cy);
-        DrawAnnotation(canvas, "r", cx + radius * 0.56f, cy - 18f, secondary, 16f);
-
-        float rectWidth = MathF.Max(82f, minSide * 0.16f);
-        float rectHeight = MathF.Max(52f, minSide * 0.10f);
-        float rx = rect.Left + rect.Width * 0.56f;
-        float ry = rect.Top + rect.Height * 0.77f;
-        canvas.DrawRoundedRectangle(
-            rx - rectWidth / 2f,
-            ry - rectHeight / 2f,
-            rectWidth,
-            rectHeight,
-            10f);
-        DrawAnnotation(canvas, "a", rx, ry - rectHeight * 0.82f, secondary, 16f);
-        DrawAnnotation(canvas, "b", rx + rectWidth * 0.62f, ry, secondary, 16f);
+        float size = MotifSize(rect, compact, 170, .31f);
+        PointF centre = Anchor(rect, compact ? .25f : .15f, .21f, size * .68f);
+        PointF left = new(centre.X - size * .52f, centre.Y + size * .35f);
+        PointF right = new(centre.X + size * .52f, left.Y);
+        PointF apex = new(centre.X + size * .16f * Wave(time, .20), centre.Y - size * .45f);
+        PointF foot = new(apex.X, left.Y);
+        Style(canvas, _accent, 1.5f, .25f);
+        Line(canvas, left, right); Line(canvas, left, apex); Line(canvas, apex, right);
+        Style(canvas, _construction, .9f, .15f);
+        DashedLine(canvas, apex, foot, 10);
+        float corner = size * .055f;
+        canvas.DrawLine(foot.X, foot.Y - corner, foot.X + corner, foot.Y - corner);
+        canvas.DrawLine(foot.X + corner, foot.Y - corner, foot.X + corner, foot.Y);
+        Arc(canvas, left, size * .17f, MathF.Atan2(apex.Y - left.Y, apex.X - left.X), 0, 12);
+        Style(canvas, _highlight, 1, .30f);
+        Node(canvas, apex, compact ? 2.4f : 3.2f);
+        Label(canvas, rect, "A", apex.X, apex.Y - 13, compact ? 11 : 13, .22f);
+        Label(canvas, rect, "B", left.X - 8, left.Y + 12, compact ? 11 : 13, .18f);
+        Label(canvas, rect, "C", right.X + 8, right.Y + 12, compact ? 11 : 13, .18f);
+        Label(canvas, rect, "h", foot.X + 12, (apex.Y + foot.Y) / 2, 12, .19f);
+        Label(canvas, rect, "S = ½bh", centre.X, left.Y + 32, compact ? 12 : 15, .22f, size + 28);
     }
 
-    private void DrawSpatialGeometry(ICanvas canvas, RectF rect)
+    private void DrawCircleConstruction(ICanvas canvas, RectF rect, double time, bool compact)
     {
-        Color primary = WithAlpha(
-            ThemeResource.GetColor("PrimaryColor", "#2563EB"),
-            0.18f);
-        Color secondary = WithAlpha(
-            ThemeResource.GetColor("TextSecondaryColor", "#64748B"),
-            0.15f);
-
-        float minSide = MathF.Min(rect.Width, rect.Height);
-        float drift = MathF.Sin((float)(TimeSeconds * 0.29 + 1.3)) * 10f;
-
-        canvas.StrokeSize = 2f;
-        canvas.StrokeColor = primary;
-
-        float cubeSize = MathF.Max(62f, minSide * 0.11f);
-        float cubeX = rect.Left + rect.Width * 0.82f + drift;
-        float cubeY = rect.Top + rect.Height * 0.72f;
-        DrawCube(canvas, cubeX, cubeY, cubeSize);
-
-        canvas.StrokeColor = secondary;
-        float cylinderW = MathF.Max(70f, minSide * 0.12f);
-        float cylinderH = MathF.Max(98f, minSide * 0.18f);
-        float cylX = rect.Left + rect.Width * 0.46f - drift * 0.6f;
-        float cylY = rect.Top + rect.Height * 0.24f;
-        DrawCylinder(canvas, cylX, cylY, cylinderW, cylinderH);
-
-        canvas.StrokeColor = primary;
-        float pyramidSize = MathF.Max(74f, minSide * 0.13f);
-        float px = rect.Left + rect.Width * 0.08f;
-        float py = rect.Top + rect.Height * 0.86f;
-        DrawPyramid(canvas, px, py, pyramidSize);
+        float radius = MotifSize(rect, compact, 170, .31f) * .45f;
+        PointF centre = Anchor(rect, compact ? .77f : .85f, .23f, radius + 26);
+        Style(canvas, _construction, .8f, .12f);
+        canvas.DrawLine(centre.X - radius * 1.2f, centre.Y, centre.X + radius * 1.2f, centre.Y);
+        canvas.DrawLine(centre.X, centre.Y - radius * 1.2f, centre.X, centre.Y + radius * 1.2f);
+        Style(canvas, _accent, 1.4f, .24f);
+        canvas.DrawCircle(centre.X, centre.Y, radius);
+        float angle = Angle(time, .19);
+        PointF tracer = new(centre.X + MathF.Cos(angle) * radius, centre.Y - MathF.Sin(angle) * radius);
+        PointF projection = new(tracer.X, centre.Y);
+        Line(canvas, centre, tracer);
+        Style(canvas, _construction, .8f, .16f);
+        DashedLine(canvas, tracer, projection, 8);
+        Style(canvas, _highlight, 1.6f, .26f);
+        Line(canvas, centre, projection);
+        Arc(canvas, centre, radius, -angle, -angle + .46f, 12);
+        Node(canvas, tracer, compact ? 2.8f : 3.8f);
+        Style(canvas, _construction, 1, .18f);
+        Node(canvas, centre, 1.5f);
+        Label(canvas, rect, "O", centre.X - 10, centre.Y + 12, 11, .18f);
+        Label(canvas, rect, "r", (centre.X + tracer.X) / 2, (centre.Y + tracer.Y) / 2 - 10, 12, .22f);
+        Label(canvas, rect, "x² + y² = r²", centre.X, centre.Y + radius + 25, compact ? 11 : 15, .21f, radius * 2 + 40);
     }
 
-    private void DrawEquationGraph(ICanvas canvas, RectF rect)
+    private void DrawSolids(ICanvas canvas, RectF rect, double time, bool compact)
     {
-        Color secondary = WithAlpha(
-            ThemeResource.GetColor("TextSecondaryColor", "#64748B"),
-            0.16f);
-        Color primary = WithAlpha(
-            ThemeResource.GetColor("PrimaryColor", "#2563EB"),
-            0.20f);
+        float size = MotifSize(rect, compact, 150, .27f);
+        PointF centre = Anchor(rect, compact ? .25f : .15f, .78f, size * .85f);
+        float yaw = Angle(time, .105);
+        float tilt = .37f + .09f * Wave(time, .13);
+        float cy = MathF.Cos(yaw), sy = MathF.Sin(yaw), ct = MathF.Cos(tilt), st = MathF.Sin(tilt);
+        for (int i = 0; i < 8; i++)
+        {
+            float x = (i & 1) == 0 ? -.5f : .5f;
+            float y = (i & 2) == 0 ? -.5f : .5f;
+            float z = (i & 4) == 0 ? -.5f : .5f;
+            float rx = x * cy + z * sy;
+            float rz = z * cy - x * sy;
+            float ry = y * ct - rz * st;
+            _depth[i] = y * st + rz * ct;
+            _cube[i] = new(centre.X + rx * size, centre.Y + ry * size);
+        }
+        foreach (var (a, b) in CubeEdges)
+        {
+            float near = (_depth[a] + _depth[b] + 1.5f) / 3;
+            Style(canvas, _accent, 1.25f, .10f + .16f * near);
+            Line(canvas, _cube[a], _cube[b]);
+        }
+        Style(canvas, _highlight, 1, .22f);
+        for (int i = 0; i < 8; i++) Node(canvas, _cube[i], 1.6f);
+        Label(canvas, rect, "V = a³", centre.X, centre.Y + size * .78f, compact ? 12 : 15, .22f, size + 30);
+        if (compact) return;
 
-        float plotLeft = rect.Left + rect.Width * 0.42f;
-        float plotTop = rect.Top + rect.Height * 0.46f;
-        float plotWidth = MathF.Min(260f, rect.Width * 0.24f);
-        float plotHeight = MathF.Min(150f, rect.Height * 0.18f);
+        float pyramidSize = size * .57f;
+        PointF pc = Anchor(rect, .12f, .60f, pyramidSize);
+        PointF top = new(pc.X, pc.Y - pyramidSize * .65f);
+        PointF previous = default, first = default;
+        Style(canvas, _construction, 1, .17f);
+        for (int i = 0; i < 4; i++)
+        {
+            float theta = Angle(time, -.08) + i * MathF.PI / 2;
+            PointF p = new(pc.X + MathF.Cos(theta) * pyramidSize * .60f,
+                pc.Y + pyramidSize * .20f + MathF.Sin(theta) * pyramidSize * .21f);
+            if (i == 0) first = p;
+            else Line(canvas, previous, p);
+            Line(canvas, top, p);
+            previous = p;
+        }
+        Line(canvas, previous, first);
+    }
 
-        canvas.StrokeSize = 1.8f;
-        canvas.StrokeColor = secondary;
-        canvas.DrawLine(
-            plotLeft,
-            plotTop + plotHeight / 2f,
-            plotLeft + plotWidth,
-            plotTop + plotHeight / 2f);
-        canvas.DrawLine(
-            plotLeft + plotWidth / 2f,
-            plotTop,
-            plotLeft + plotWidth / 2f,
-            plotTop + plotHeight);
-
-        canvas.StrokeColor = primary;
-        float lineOffset = MathF.Sin((float)(TimeSeconds * 0.42)) * 6f;
-        canvas.DrawLine(
-            plotLeft + plotWidth * 0.10f,
-            plotTop + plotHeight * 0.78f - lineOffset,
-            plotLeft + plotWidth * 0.88f,
-            plotTop + plotHeight * 0.20f - lineOffset);
-
-        canvas.StrokeColor = secondary;
-        const int segments = 30;
-        float previousX = 0f;
-        float previousY = 0f;
+    private void DrawQuadraticGraph(ICanvas canvas, RectF rect, double time, bool compact)
+    {
+        float width = MotifSize(rect, compact, 225, .40f);
+        float height = width * .72f;
+        PointF centre = Anchor(rect, compact ? .76f : .85f, .77f, width * .58f);
+        float bottom = centre.Y + height * .36f;
+        Style(canvas, _construction, .85f, .15f);
+        canvas.DrawLine(centre.X - width / 2, bottom, centre.X + width / 2, bottom);
+        canvas.DrawLine(centre.X, bottom + height * .12f, centre.X, centre.Y - height * .58f);
+        for (int i = -2; i <= 2; i++)
+            canvas.DrawLine(centre.X + i * width * .20f, bottom - 3, centre.X + i * width * .20f, bottom + 3);
+        const int segments = 40;
+        Style(canvas, _accent, 1.5f, .25f);
+        PointF previous = default;
         for (int i = 0; i <= segments; i++)
         {
-            float normalized = i / (float)segments * 2f - 1f;
-            float x = plotLeft + (normalized + 1f) * plotWidth / 2f;
-            float y =
-                plotTop +
-                plotHeight * 0.84f -
-                normalized * normalized * plotHeight * 0.62f +
-                MathF.Sin((float)(TimeSeconds * 0.48)) * 3.5f;
+            PointF point = GraphPoint(centre.X, bottom, width, height, i / (float)segments * 2 - 1);
+            if (i > 0) Line(canvas, previous, point);
+            previous = point;
+        }
+        float probeX = Wave(time, .24);
+        PointF probe = GraphPoint(centre.X, bottom, width, height, probeX);
+        Style(canvas, _construction, .85f, .16f);
+        DashedLine(canvas, probe, new(probe.X, bottom), 8);
+        Style(canvas, _highlight, 1, .32f);
+        Node(canvas, probe, compact ? 2.8f : 3.6f);
+        Label(canvas, rect, "x", centre.X + width / 2 + 8, bottom, 11, .20f);
+        Label(canvas, rect, "y", centre.X + 10, centre.Y - height * .58f, 11, .20f);
+        Label(canvas, rect, "y = x²", centre.X, bottom + 26, compact ? 12 : 15, .22f, width);
+    }
 
-            if (i > 0)
-            {
-                canvas.DrawLine(previousX, previousY, x, y);
-            }
+    private void DrawRectangleConstruction(ICanvas canvas, RectF rect, double time)
+    {
+        float width = MathF.Min(145, rect.Width * .12f);
+        float height = width * (.55f + .045f * Wave(time, .17));
+        PointF c = Anchor(rect, .87f, .50f, width * .7f);
+        PointF a = new(c.X - width / 2, c.Y - height / 2);
+        PointF b = new(c.X + width / 2, a.Y);
+        PointF d = new(a.X, c.Y + height / 2);
+        PointF e = new(b.X, d.Y);
+        Style(canvas, _accent, 1.2f, .20f);
+        Line(canvas, a, b); Line(canvas, b, e); Line(canvas, e, d); Line(canvas, d, a);
+        Style(canvas, _construction, .8f, .12f);
+        DashedLine(canvas, a, e, 12); DashedLine(canvas, b, d, 12);
+        Label(canvas, rect, "a", c.X, a.Y - 13, 12, .18f);
+        Label(canvas, rect, "b", b.X + 12, c.Y, 12, .18f);
+    }
 
-            previousX = x;
-            previousY = y;
+    private void DrawGlyphs(ICanvas canvas, RectF rect, double time, bool compact)
+    {
+        for (int i = 0; i < Glyphs.Length; i++)
+        {
+            if (compact && i is not (4 or 5)) continue;
+            Glyph glyph = Glyphs[i];
+            float x = rect.Left + rect.Width * glyph.X + 6 * Wave(time, .12, i);
+            float y = rect.Top + rect.Height * (compact ? (i == 4 ? .46f : .54f) : glyph.Y) + 4 * Wave(time, .15, i * 1.4);
+            float fontSize = compact ? 12 : glyph.Size;
+            float alpha = .105f + .035f * Wave(time, .25, i);
+            Label(canvas, rect, glyph.Text, x, y, fontSize, alpha, glyph.Text.Length * fontSize * .62f + 14);
         }
     }
 
-    private static void DrawCube(ICanvas canvas, float centerX, float centerY, float size)
+    private void Style(ICanvas canvas, Color color, float stroke, float alpha)
     {
-        float half = size / 2f;
-        float offset = size * 0.28f;
-
-        RectF front = new(centerX - half, centerY - half, size, size);
-        RectF back = new(centerX - half + offset, centerY - half - offset, size, size);
-
-        canvas.DrawRectangle(front);
-        canvas.DrawRectangle(back);
-        canvas.DrawLine(front.Left, front.Top, back.Left, back.Top);
-        canvas.DrawLine(front.Right, front.Top, back.Right, back.Top);
-        canvas.DrawLine(front.Left, front.Bottom, back.Left, back.Bottom);
-        canvas.DrawLine(front.Right, front.Bottom, back.Right, back.Bottom);
+        canvas.StrokeColor = color;
+        canvas.FillColor = color;
+        canvas.StrokeSize = stroke;
+        canvas.Alpha = alpha * _visibility;
     }
 
-    private static void DrawCylinder(ICanvas canvas, float centerX, float centerY, float width, float height)
+    private void Label(ICanvas canvas, RectF rect, string text, float x, float y,
+        float size, float alpha, float width = 28)
     {
-        float halfW = width / 2f;
-        float halfH = height / 2f;
-        float ellipseHeight = MathF.Max(16f, width * 0.24f);
-
-        canvas.DrawEllipse(centerX - halfW, centerY - halfH, width, ellipseHeight);
-        canvas.DrawLine(centerX - halfW, centerY - halfH + ellipseHeight / 2f, centerX - halfW, centerY + halfH - ellipseHeight / 2f);
-        canvas.DrawLine(centerX + halfW, centerY - halfH + ellipseHeight / 2f, centerX + halfW, centerY + halfH - ellipseHeight / 2f);
-        canvas.DrawArc(
-            centerX - halfW,
-            centerY + halfH - ellipseHeight,
-            width,
-            ellipseHeight,
-            0f,
-            180f,
-            false,
-            false);
+        width = MathF.Min(width, rect.Width - 8);
+        const float height = 24;
+        float left = Math.Clamp(x - width / 2, rect.Left + 4, rect.Right - width - 4);
+        float top = Math.Clamp(y - height / 2, rect.Top + 4, rect.Bottom - height - 4);
+        canvas.FontColor = _accent;
+        canvas.FontSize = size;
+        canvas.Alpha = alpha * _visibility;
+        canvas.DrawString(text, left, top, width, height, HorizontalAlignment.Center, VerticalAlignment.Center);
     }
 
-    private static void DrawPyramid(ICanvas canvas, float centerX, float centerY, float size)
+    private static PointF GraphPoint(float x, float bottom, float width, float height, float value) =>
+        new(x + value * width * .46f, bottom - value * value * height * .84f);
+    private static float MotifSize(RectF rect, bool compact, float maximum, float fraction) =>
+        MathF.Min(maximum, MathF.Min(rect.Width * (compact ? fraction : .19f), rect.Height * .22f));
+    private static PointF Anchor(RectF rect, float x, float y, float margin) =>
+        new(rect.Left + Math.Clamp(rect.Width * x, margin, rect.Width - margin),
+            rect.Top + Math.Clamp(rect.Height * y, margin, rect.Height - margin));
+    private static float EdgeWeight(float x) => .25f + .75f * MathF.Pow(MathF.Abs(2 * x - 1), 1.6f);
+    private static float Angle(double time, double speed) => (float)((time * speed) % Math.Tau);
+    private static float Wave(double time, double speed, double phase = 0) =>
+        MathF.Sin((float)(((time * speed) % Math.Tau + phase) % Math.Tau));
+    private static Color Mix(Color a, Color b, float t) =>
+        new(a.Red + (b.Red - a.Red) * t, a.Green + (b.Green - a.Green) * t, a.Blue + (b.Blue - a.Blue) * t);
+    private static void Line(ICanvas canvas, PointF a, PointF b) => canvas.DrawLine(a.X, a.Y, b.X, b.Y);
+    private static void Node(ICanvas canvas, PointF point, float radius) => canvas.FillCircle(point.X, point.Y, radius);
+    private static void DashedLine(ICanvas canvas, PointF a, PointF b, int segments)
     {
-        float half = size / 2f;
-        float offset = size * 0.22f;
-
-        PointF apex = new(centerX, centerY - size * 0.70f);
-        PointF left = new(centerX - half, centerY - half * 0.08f);
-        PointF right = new(centerX + half, centerY - half * 0.08f);
-        PointF back = new(centerX + offset, centerY - size * 0.34f);
-        PointF baseLeft = new(centerX - half + offset, centerY + half * 0.36f);
-        PointF baseRight = new(centerX + half + offset, centerY + half * 0.36f);
-
-        canvas.DrawLine(left.X, left.Y, right.X, right.Y);
-        canvas.DrawLine(left.X, left.Y, baseLeft.X, baseLeft.Y);
-        canvas.DrawLine(baseLeft.X, baseLeft.Y, baseRight.X, baseRight.Y);
-        canvas.DrawLine(right.X, right.Y, baseRight.X, baseRight.Y);
-        canvas.DrawLine(apex.X, apex.Y, left.X, left.Y);
-        canvas.DrawLine(apex.X, apex.Y, right.X, right.Y);
-        canvas.DrawLine(apex.X, apex.Y, back.X, back.Y);
-        canvas.DrawLine(back.X, back.Y, baseLeft.X, baseLeft.Y);
-        canvas.DrawLine(back.X, back.Y, baseRight.X, baseRight.Y);
+        for (int i = 0; i < segments; i++)
+        {
+            float t = i / (float)segments, end = (i + .48f) / segments;
+            canvas.DrawLine(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t,
+                a.X + (b.X - a.X) * end, a.Y + (b.Y - a.Y) * end);
+        }
     }
-
-    private static void DrawAnnotation(
-        ICanvas canvas,
-        string text,
-        float centerX,
-        float centerY,
-        Color color,
-        float fontSize)
+    private static void Arc(ICanvas canvas, PointF centre, float radius, float start, float end, int segments)
     {
-        canvas.FontSize = fontSize;
-        canvas.FontColor = color;
-        canvas.DrawString(
-            text,
-            centerX - 24f,
-            centerY - 12f,
-            48f,
-            24f,
-            HorizontalAlignment.Center,
-            VerticalAlignment.Center);
+        PointF previous = new(centre.X + MathF.Cos(start) * radius, centre.Y + MathF.Sin(start) * radius);
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = start + (end - start) * i / segments;
+            PointF p = new(centre.X + MathF.Cos(angle) * radius, centre.Y + MathF.Sin(angle) * radius);
+            Line(canvas, previous, p);
+            previous = p;
+        }
     }
-
-    private static Color WithAlpha(Color color, float alpha) =>
-        new(
-            color.Red,
-            color.Green,
-            color.Blue,
-            Math.Clamp(alpha, 0f, 1f));
-
-    private readonly record struct MathGlyph(
-        string Text,
-        float X,
-        float Y,
-        float Speed,
-        float Phase,
-        float FontSize);
+    private readonly record struct Glyph(string Text, float X, float Y, float Size);
 }

@@ -179,7 +179,7 @@ public static class FindXQuestionCatalogue
         return (QuizContentCatalog.Text(c.Language, "FindXQuestionCatalogue.Prompt.001"))
             + $"\nScene={s.SourceScene.Id}; group={s.Group}; stars={(int)c.Tier}; unknown={s.Role}."
             + $"\nGiven A: {s.KnownARole} [{units.A}]; given B: {s.KnownBRole} [{units.B}]; target: {s.TargetRole} [{c.AnswerUnit}]."
-            + "\nUse only the placeholders and roles of this selected example; keep its target and affirmative facts:\n"
+            + "\n" + SemanticProseRules.PromptGuidance(c.Language) + "\n"
             + QuestionBankStore.SerializeDraft(example ?? Draft(c))
             + "\nReturn only JSON: given_a, given_b, question, solution_lead, unit_id."
             + (correction is null ? "" : "\nCorrect rejected output: " + correction);

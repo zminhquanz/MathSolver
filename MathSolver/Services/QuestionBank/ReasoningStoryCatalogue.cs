@@ -138,6 +138,8 @@ public static partial class ReasoningStoryCatalogue
     public static string Render(string text, BasicQuestionContract c)
     {
         var quantities = Lesson(c).Quantities.ToDictionary(q => q.Id, q => q.Value);
+        if (c.Language == AppLanguage.English)
+            text = EquivalentProseStructures.WithEnglishAgreement(text, slot => quantities.GetValueOrDefault(slot.Trim('{', '}')) == "1");
         return Regex.Replace(text, @"\{([fv]\d+)\}", m => quantities.GetValueOrDefault(m.Groups[1].Value, m.Value));
     }
 
@@ -359,9 +361,11 @@ public static partial class ReasoningStoryCatalogue
         }
         string[] originalSentences = Regex.Split(projectedTemplate.Trim(), @"(?<=[.!?])\s+");
         var factPhrasings = facts.Select((f, i) => (f.Role, Choices: capture.Phrasings(originalSentences[i])
-            .Select(NormalizePhrasing).Distinct(StringComparer.Ordinal).ToArray())).ToDictionary(f => f.Role, f => f.Choices);
+            .Select(NormalizePhrasing).Distinct(StringComparer.Ordinal).ToArray())).ToDictionary(f => f.Role,
+                f => EquivalentProseStructures.Expand(f.Choices, c.Language));
         var questionPhrasings = capture.Phrasings(string.Join(" ", originalSentences.Skip(questionIndex)))
             .Select(NormalizePhrasing).Distinct(StringComparer.Ordinal).ToArray();
+        questionPhrasings = EquivalentProseStructures.Expand(questionPhrasings, c.Language);
         var leadPhrasings = steps.Select((s, i) => (s.Id, Choices: capture.Phrasings(originalLeads[i])
             .Select(NormalizePhrasing).Distinct(StringComparer.Ordinal).ToArray())).ToDictionary(s => s.Id, s => s.Choices);
         // The signature excludes values and includes context/roles/units/target.

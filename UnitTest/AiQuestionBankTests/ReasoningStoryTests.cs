@@ -19,7 +19,8 @@ internal static class ReasoningStoryTests
         {
             var c = ReasoningStoryCatalogue.Create(family, variant, tier, language, new(seed));
             string prose = ReasoningStoryCatalogue.Draft(c).ProblemText;
-            foreach (string prompt in new[] { BasicQuestionPrompt.Build(c, "ChangedRelationOrTarget"),
+            foreach (string prompt in new[] { BasicQuestionPrompt.Build(c, "ChangedRelationOrTarget",
+                    errorDetails: "facts.fact_0, facts.fact_1, question, solution_leads.step_0"),
                 BasicQuestionPrompt.Build(c, "DuplicateProse", [prose, "According to the report, " + prose]) })
             {
                 int tokens = weights.Tokenize(GgufQuestionRuntime.FormatChatPrompt(weights, c, prompt), true, true, System.Text.Encoding.UTF8).Length;

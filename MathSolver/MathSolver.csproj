@@ -4,6 +4,7 @@
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.27.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
     <PackageReference Include="LLamaSharp.Backend.Cpu.Android" Version="0.27.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'" />
     <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
     <PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
     <PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls" Version="10.0.110" />
@@ -98,6 +99,8 @@
     <MauiImage Include="Resources\Splash\splashicon.png" />
     <MauiImage Include="Resources\Images\*" />
     <MauiFont Include="Resources\Fonts\*" />
+    <EmbeddedResource Include="Resources\Fonts\OpenSans-Regular.ttf" LogicalName="QuizPdf.Regular.ttf" />
+    <EmbeddedResource Include="Resources\Fonts\OpenSans-SemiBold.ttf" LogicalName="QuizPdf.Bold.ttf" />
     <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\QuizContent\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
 

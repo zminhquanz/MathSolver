@@ -34,6 +34,7 @@ public partial class AiQuestionBankPage : ContentPage
         IllustratedQuizPicker.Attach(FindXRolePicker, "Choice.SelectSubtype");
         IllustratedQuizPicker.Attach(LearningGroupPicker, "Choice.SelectGroup");
         IllustratedQuizPicker.Attach(StarsPicker, "Choice.SelectDifficulty");
+        IllustratedQuizPicker.Attach(LanguagePicker, "Choice.SelectLanguage");
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         RefreshPickerLabels();
@@ -59,7 +60,8 @@ public partial class AiQuestionBankPage : ContentPage
             || IllustratedQuizPicker.IsChoosing(OperationPicker)
             || IllustratedQuizPicker.IsChoosing(FindXRolePicker)
             || IllustratedQuizPicker.IsChoosing(LearningGroupPicker)
-            || IllustratedQuizPicker.IsChoosing(StarsPicker);
+            || IllustratedQuizPicker.IsChoosing(StarsPicker)
+            || IllustratedQuizPicker.IsChoosing(LanguagePicker);
         if (options is not null && !choosing)
         {
             _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;
@@ -112,6 +114,9 @@ public partial class AiQuestionBankPage : ContentPage
 
     private void RefreshPickerLabels()
     {
+        string shareLabel = T("Share");
+        ShareButton.Text = $"📤 {shareLabel}";
+        SemanticProperties.SetDescription(ShareButton, shareLabel);
         _updating = true;
         var operation = SelectedLearningOperation;
         int stars = Math.Max(0, StarsPicker.SelectedIndex);
@@ -124,6 +129,7 @@ public partial class AiQuestionBankPage : ContentPage
         StarsPicker.ItemsSource = IllustratedQuizPicker.DifficultyLabels();
         IllustratedQuizPicker.SetTextOptions(StarsPicker);
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
+        IllustratedQuizPicker.SetKeys(LanguagePicker, ["Language.Vietnamese", "Language.English"]);
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
         DownloadModelPicker.ItemsSource = AiModelLibrary.Downloads.Select(m => m.Name).ToArray();
         if (DownloadModelPicker.SelectedIndex < 0) DownloadModelPicker.SelectedIndex = 0;

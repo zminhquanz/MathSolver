@@ -114,6 +114,47 @@ public sealed partial class EssayAnswerValidator
             answerError) { Steps = steps };
     }
 
+    /// <summary>
+    /// Grades the user's combined editor submission. Direct numeric practice
+    /// grades only the result; contextual tasks still validate the worked solution.
+    /// Validate remains the independent worked-solution check used by generators.
+    /// </summary>
+    public EssayAnswerValidationResult ValidateSubmission(ArithmeticQuizQuestion question, string? input) =>
+        ValidateSubmission(question, input, out _);
+
+    public EssayAnswerValidationResult ValidateSubmission(ArithmeticQuizQuestion question, string? input,
+        out (string Solution, string Equation, string Answer) submission)
+    {
+        ArgumentNullException.ThrowIfNull(question);
+        bool resultOnly = IsResultOnlyPractice(question);
+        submission = EssayCombinedInputParser.Parse(input, RequiresSolution(question),
+            preserveAllCalculations: question.WordProblem?.ConversionStep is not null
+                || question.GeometryProblem?.Reasoning is not null || question.ElementaryProblem is not null
+                || question.AverageProblem?.Type == AverageQuizType.IndirectData,
+            requireAnswerLabel: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
+            allowTextAnswer: question.ElementaryProblem?.Answers.Any(answer => answer.IsText) == true,
+            allowEquationAnswer: resultOnly);
+        if (!resultOnly)
+            return Validate(question, submission.Solution, submission.Equation, submission.Answer);
+
+        (bool correct, EssayAnswerError error) = question.ElementaryProblem is not null
+            ? (ElementaryEssayValidator.CheckAnswers(question, submission.Answer),
+                string.IsNullOrWhiteSpace(submission.Answer) ? EssayAnswerError.InvalidAnswerFormat : EssayAnswerError.WrongAnswer)
+            : question.UsesFractionFormatting
+                ? ValidateFractionAnswer(question, question.ExactAnswer, submission.Answer)
+                : ValidateAnswer(question, submission.Answer);
+        return new(true, true, correct, EssayAnswerError.None, EssayAnswerError.None,
+            correct ? EssayAnswerError.None : error);
+    }
+
+    public static bool IsResultOnlyPractice(ArithmeticQuizQuestion question)
+    {
+        ArgumentNullException.ThrowIfNull(question);
+        return !RequiresSolution(question) && question.WordProblem is null
+            && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
+                || question.ElementaryProblem.Type == ElementaryQuizType.DecimalRound);
+    }
+
     public static bool RequiresSolution(ArithmeticQuizQuestion question)
     {
         ArgumentNullException.ThrowIfNull(question);
@@ -254,7 +295,8 @@ public sealed partial class EssayAnswerValidator
              ContainsNormalizedPhrase(solution, "percentage")) ||
             WordProblemUnitEquivalence.ContainsVietnameseUnit(
                 solution,
-                expectedUnit) ||
+                expectedUnit,
+                question.WordProblem?.ProblemText) ||
             ContainsNormalizedPhrase(solution, expectedUnit) ||
             ContainsNormalizedPhrase(
                 solution,
@@ -301,7 +343,7 @@ public sealed partial class EssayAnswerValidator
         }
 
         if (WordProblemUnitEquivalence.ContainsVietnameseUnit(
-                normalizedSolution, expectedUnit) ||
+                normalizedSolution, expectedUnit, question.WordProblem?.ProblemText) ||
             ContainsEnglishUnitPhrase(normalizedSolution, expectedUnit) ||
             ContainsNormalizedPhrase(normalizedSolution, expectedUnit) ||
             ContainsNormalizedPhrase(
@@ -994,7 +1036,8 @@ public sealed partial class EssayAnswerValidator
         if (WordProblemUnitEquivalence
             .AreVietnameseUnitsEquivalent(
                 enteredUnit,
-                expectedUnit))
+                expectedUnit,
+                problemText))
         {
             return true;
         }

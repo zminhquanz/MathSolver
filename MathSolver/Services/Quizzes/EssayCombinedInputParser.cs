@@ -13,7 +13,8 @@ public static partial class EssayCombinedInputParser
         bool requiresSolution,
         bool preserveAllCalculations = false,
         bool requireAnswerLabel = false,
-        bool allowTextAnswer = false)
+        bool allowTextAnswer = false,
+        bool allowEquationAnswer = false)
     {
         string[] lines = (input ?? string.Empty).Normalize()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -45,13 +46,25 @@ public static partial class EssayCombinedInputParser
             work.Clear();
         }
 
-        // A bare final value with an optional unit is also accepted. Never
-        // infer the answer from an equation: an omitted answer must be reported.
+        // A bare final value with an optional unit is also accepted. Worked
+        // essays do not infer an omitted final answer from a calculation.
         if (!requireAnswerLabel && answers.Count == 0 && work.Count > 0 &&
             (BareAnswerRegex().IsMatch(work[^1]) || work[^1] is "<" or ">" or "="))
         {
             answers.Add(work[^1]);
             work.RemoveAt(work.Count - 1);
+        }
+
+        // Direct calculation practice only grades the submitted result. It may
+        // be written after an equality (including "x = ...") without a separate
+        // answer line. Never evaluate unfinished work or replace an explicit answer.
+        if (allowEquationAnswer && answers.Count == 0 && work.Count > 0)
+        {
+            string finalLine = work[^1];
+            int equals = finalLine.LastIndexOf('=');
+            string result = equals >= 0 ? finalLine[(equals + 1)..].Trim() : string.Empty;
+            if (equals >= 0 && BareAnswerRegex().IsMatch(result))
+                answers.Add(result);
         }
 
         // Numeric questions can also include an optional written explanation.
@@ -125,16 +138,11 @@ public static partial class EssayCombinedInputParser
                 string stepEquation = line;
                 // A colon may mean division. Only separate a sentence when
                 // its suffix is a complete arithmetic expression.
-                for (int colon = line.IndexOf(':'); colon >= 0 && colon < equals;
-                     colon = line.IndexOf(':', colon + 1))
+                int colon = FindSolutionColon(line);
+                if (colon >= 0)
                 {
-                    if (line[..colon].Any(char.IsLetter) &&
-                        EssayCalculationEvaluator.TryEvaluate(line[(colon + 1)..equals], out _, out bool operation) && operation)
-                    {
-                        solutions.Add(line[..(colon + 1)]);
-                        stepEquation = line[(colon + 1)..].Trim();
-                        break;
-                    }
+                    solutions.Add(line[..(colon + 1)]);
+                    stepEquation = line[(colon + 1)..].Trim();
                 }
                 equations.Add(stepEquation);
             }
@@ -160,8 +168,8 @@ public static partial class EssayCombinedInputParser
         // "Số quả cam là: 2 + 3 = 5 quả cam".
         if (solution.Length == 0)
         {
-            int colon = equation.IndexOf(':');
-            if (colon >= 0 && equation[(colon + 1)..].Contains('='))
+            int colon = FindSolutionColon(equation);
+            if (colon >= 0)
             {
                 solution = equation[..(colon + 1)].Trim();
                 equation = equation[(colon + 1)..].Trim();
@@ -171,12 +179,37 @@ public static partial class EssayCombinedInputParser
         return (solution, equation);
     }
 
+    private static int FindSolutionColon(string line)
+    {
+        // A sentence separator must precede the first equality. In particular,
+        // never cut a named calculation such as "x = 8 : 2 = 4" at its division.
+        int equals = line.IndexOf('=');
+        for (int colon = line.IndexOf(':'); colon >= 0 && colon < equals;
+             colon = line.IndexOf(':', colon + 1))
+        {
+            string prefix = line[..colon];
+            if (!prefix.Any(char.IsLetter) || EssayCalculationEvaluator.TryEvaluate(prefix, out _, out _))
+                continue;
+            string expression = line[(colon + 1)..equals].Trim();
+            // A sentence can introduce a named calculation on the same line.
+            if (expression.Length > 0 && expression.All(character => char.IsLetter(character) || char.IsWhiteSpace(character)))
+            {
+                int nextEquals = line.IndexOf('=', equals + 1);
+                if (nextEquals < 0) continue;
+                expression = line[(equals + 1)..nextEquals];
+            }
+            if (EssayCalculationEvaluator.TryEvaluate(expression, out _, out bool operation) && operation)
+                return colon;
+        }
+        return -1;
+    }
+
     private static bool LooksLikeCalculation(string line)
     {
         string trimmed = line.TrimStart();
         return trimmed.Length > 0 &&
                (char.IsDigit(trimmed[0]) || trimmed[0] == '(') &&
-               line.Any(character => character is '+' or '-' or '−' or '×' or '*' or '÷' or '/');
+               line.Any(character => character is '+' or '-' or '−' or '×' or '*' or '÷' or '/' or ':');
     }
 
     [GeneratedRegex(@"(?<!\p{L})(?:đáp\s*số|dap\s*so|đáp\s*án|dap\s*an|final\s+answer|answer)\s*[:=]\s*",

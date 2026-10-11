@@ -12,20 +12,8 @@ namespace MathSolver.Views;
 public partial class MathPuzzlePage : ContentPage
 {
     private readonly BasicArithmeticEngine _arithmeticEngine = new();
-    private readonly FractionCalculationEngine _fractionEngine = new();
-    private readonly GeometryCalculationEngine _geometryEngine = new();
-    private readonly FindXEngine _findXEngine = new();
-    private readonly ArithmeticQuizGenerator _quizGenerator;
-    private readonly FractionQuizGenerator _fractionQuizGenerator;
-    private readonly GeometryQuizGenerator _geometryQuizGenerator;
-    private readonly FindXQuizGenerator _findXQuizGenerator;
-    private readonly ProportionQuizGenerator _proportionQuizGenerator;
-    private readonly MotionQuizGenerator _motionQuizGenerator;
-    private readonly AverageQuizGenerator _averageQuizGenerator;
-    private readonly PercentageQuizGenerator _percentageQuizGenerator;
+    private PracticeQuestionFactory? _practiceFactory;
     private readonly QuizProblemTypeCatalog _quizProblemTypeCatalog = new();
-    private readonly ExpressionQuizGenerator _expressionQuizGenerator = new();
-    private readonly ElementaryQuizGenerator _elementaryQuizGenerator = new();
     private ElementaryQuizType? _selectedElementaryType;
     private bool _selectedBasicComparison;
     private bool _selectedFractionComparison;
@@ -109,37 +97,9 @@ public partial class MathPuzzlePage : ContentPage
             this,
             true);
 
-        _quizGenerator =
-            new ArithmeticQuizGenerator(
-                _arithmeticEngine);
-
-        _fractionQuizGenerator =
-            new FractionQuizGenerator(
-                _fractionEngine);
-
         _essayAnswerValidator =
             new EssayAnswerValidator(
                 _arithmeticEngine);
-
-        _geometryQuizGenerator =
-            new GeometryQuizGenerator(
-                _geometryEngine);
-
-        _findXQuizGenerator =
-            new FindXQuizGenerator(
-                _findXEngine);
-
-        _proportionQuizGenerator =
-            new ProportionQuizGenerator();
-
-        _motionQuizGenerator =
-            new MotionQuizGenerator();
-
-        _averageQuizGenerator =
-            new AverageQuizGenerator();
-
-        _percentageQuizGenerator =
-            new PercentageQuizGenerator();
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(
             this);
@@ -275,6 +235,7 @@ public partial class MathPuzzlePage : ContentPage
     {
         Dispatcher.Dispatch(() =>
         {
+            UpdateTrueFalseAnswerLabels();
             ResetQuizSessionState();
             RefreshLearningPickers();
             UpdateOperationPickerItems();
@@ -371,6 +332,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateModeStyles()
     {
+        UpdateTrueFalseAnswerLabels();
         SelectionButtonStyler.Select(
             _selectedMode switch
             {
@@ -403,6 +365,16 @@ public partial class MathPuzzlePage : ContentPage
         UpdateEssayAnswerPresentation();
 
         QuestionPromptLabel.Text = GetQuestionPromptTitle();
+    }
+
+    private void UpdateTrueFalseAnswerLabels()
+    {
+        string trueAnswer = Translate("Quiz.TrueAnswer");
+        string falseAnswer = Translate("Quiz.FalseAnswer");
+        TrueAnswerButton.Text = $"✅ {trueAnswer}";
+        FalseAnswerButton.Text = $"❌ {falseAnswer}";
+        SemanticProperties.SetDescription(TrueAnswerButton, trueAnswer);
+        SemanticProperties.SetDescription(FalseAnswerButton, falseAnswer);
     }
 
     private void OnCurriculumOneStarClicked(object? sender, EventArgs e) =>
@@ -553,6 +525,13 @@ public partial class MathPuzzlePage : ContentPage
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
+        if (question is not null && EssayAnswerValidator.IsResultOnlyPractice(question))
+        {
+            EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            EssayValidationHintLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyHint");
+            EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.EssayResultOnlyPlaceholder");
+            return;
+        }
         // Mixed can resolve to any kind on each new question. Once generated,
         // the question contract, not the picker, owns the essay presentation.
         bool isFindX = question is not null
@@ -1600,116 +1579,13 @@ public partial class MathPuzzlePage : ContentPage
             QuizCurriculumContext curriculumContext =
                 GetCurriculumContext();
 
-            _currentQuestion =
-                problemRequest.Kind switch
-                {
-                    _ when problemRequest.IsComparison => _elementaryQuizGenerator.GenerateComparison(
-                        _selectedMode, problemRequest.Kind, AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
-                    QuizProblemKind.Decimal when problemRequest.ElementaryType is
-                        (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
-                        or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)
-                        && GetPracticeFormat(QuizProblemKind.Decimal) != PracticeQuestionFormat.Mixed =>
-                        _elementaryQuizGenerator.GenerateDecimalArithmetic(_selectedMode, problemRequest.ElementaryType.Value,
-                            AppLanguageManager.CurrentLanguage, curriculumContext.Tier, _decimalWordProblems),
-                    _ when ElementaryQuizGenerator.Supports(problemRequest.Kind) => _elementaryQuizGenerator.Generate(
-                        _selectedMode, problemRequest.Kind, problemRequest.ElementaryType,
-                        AppLanguageManager.CurrentLanguage, curriculumContext.Tier),
-                    QuizProblemKind.Expression => _expressionQuizGenerator.Generate(
-                        _selectedMode, problemRequest.ExpressionType, curriculumContext.Tier),
-                    QuizProblemKind.Geometry =>
-                        _geometryQuizGenerator.GenerateAlgorithm(
-                            _selectedMode,
-                            AppLanguageManager.CurrentLanguage,
-                            problemRequest.GeometryShape,
-                            curriculumContext,
-                            problemRequest.GeometryMeasurement),
-                    QuizProblemKind.Arithmetic =>
-                        _quizGenerator.Generate(
-                            _selectedMode,
-                            problemRequest.ArithmeticOperation,
-                            curriculumContext),
-                    QuizProblemKind.Fraction =>
-                        _fractionQuizGenerator.Generate(
-                            _selectedMode,
-                            problemRequest.FractionOperation,
-                            curriculumContext),
-                    QuizProblemKind.FindX =>
-                        _findXQuizGenerator.Generate(
-                            _selectedMode,
-                            problemRequest.FindXOperation,
-                            curriculumContext),
-                    QuizProblemKind.Proportion =>
-                        _proportionQuizGenerator.GenerateAlgorithm(
-                            _selectedMode,
-                            problemRequest.ProportionType,
-                            AppLanguageManager.CurrentLanguage,
-                            curriculumContext),
-                    QuizProblemKind.Motion =>
-                        _motionQuizGenerator.GenerateAlgorithm(
-                            _selectedMode,
-                            AppLanguageManager.CurrentLanguage,
-                            problemRequest.MotionType,
-                            curriculumContext),
-                    QuizProblemKind.Average =>
-                        _averageQuizGenerator.GenerateAlgorithm(
-                            _selectedMode,
-                            problemRequest.AverageType,
-                            AppLanguageManager.CurrentLanguage,
-                            curriculumContext),
-                    QuizProblemKind.Percentage =>
-                        _percentageQuizGenerator.GenerateAlgorithm(
-                            _selectedMode,
-                            problemRequest.PercentageType,
-                            AppLanguageManager.CurrentLanguage,
-                            curriculumContext),
-                    _ => throw new ArgumentOutOfRangeException(
-                        nameof(problemRequest))
-                };
-
-            if (problemRequest.Kind == QuizProblemKind.Arithmetic && !problemRequest.IsComparison)
-            {
-                var selected = await AiQuestionBank.Current.Practice.SelectAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, profile: learning,
-                    format: GetPracticeFormat(QuizProblemKind.Arithmetic));
-                // Selection, language and answer mode can change during the SQLite read.
-                if (version != _questionGenerationVersion) return;
-                _currentQuestion = selected;
-            }
-
-            if (problemRequest.Kind == QuizProblemKind.FindX)
-            {
-                var selected = await AiQuestionBank.Current.Practice.SelectFindXAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, CurrentLearningProfile,
-                    format: GetPracticeFormat(QuizProblemKind.FindX));
-                if (version != _questionGenerationVersion) return;
-                _currentQuestion = selected;
-            }
-
-            if (problemRequest.Kind == QuizProblemKind.Fraction && !problemRequest.IsComparison && _fractionWordProblems
-                && GetSelectedFixedProblemRequest()?.Kind == QuizProblemKind.Fraction)
-            {
-                var selected = await AiQuestionBank.Current.Practice.SelectFractionAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage, CurrentLearningProfile);
-                if (version != _questionGenerationVersion) return;
-                _currentQuestion = selected;
-            }
-
-            if (problemRequest.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry or QuizProblemKind.Probability
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: not null }
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Time } time
-                    && ElementaryQuizGenerator.TimeStoryTypes.Contains(time.Type)
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionQuantity
-                    && ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionQuantity.Type)
-                || _currentQuestion.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurement
-                    && ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurement.Type))
-            {
-                var selected = await AiQuestionBank.Current.Practice.SelectReasoningAsync(_currentQuestion,
-                    curriculumContext.Tier, AppLanguageManager.CurrentLanguage);
-                if (version != _questionGenerationVersion) return;
-                _currentQuestion = selected;
-            }
-
+            _practiceFactory ??= new PracticeQuestionFactory(AiQuestionBank.Current.Practice);
+            var generatedQuestion = await _practiceFactory.CreateAsync(
+                problemRequest, _selectedMode, curriculumContext, AppLanguageManager.CurrentLanguage,
+                problemRequest.Kind == QuizProblemKind.Arithmetic ? learning : CurrentLearningProfile, GetPracticeFormat(problemRequest.Kind),
+                _fractionWordProblems && GetSelectedFixedProblemRequest()?.Kind == QuizProblemKind.Fraction);
+            if (version != _questionGenerationVersion) return;
+            _currentQuestion = generatedQuestion;
             CommitGeneratedQuestionNumber(
                 questionNumberOnSuccess);
             RenderCurrentQuestion(
@@ -1718,6 +1594,7 @@ public partial class MathPuzzlePage : ContentPage
         }
         catch (InvalidOperationException)
         {
+            if (version != _questionGenerationVersion) return;
             _currentQuestion = null;
             SetQuestionContent(
                 Translate("Quiz.GenerationError"),
@@ -1730,9 +1607,12 @@ public partial class MathPuzzlePage : ContentPage
             // Câu vừa được tạo mới hoặc tạo lại nên trạng thái đã trả lời đã
             // được xóa. Bật lại nút Tạo đề lại; nếu không, trạng thái Disabled
             // của câu trước sẽ còn giữ nguyên sau khi bấm Câu tiếp theo.
-            UpdateRegenerateQuestionButtonState();
-            UpdatePracticeSummary();
-            if (_currentQuestion is null) SetPracticeSettingsExpanded(true);
+            if (version == _questionGenerationVersion)
+            {
+                UpdateRegenerateQuestionButtonState();
+                UpdatePracticeSummary();
+                if (_currentQuestion is null) SetPracticeSettingsExpanded(true);
+            }
         }
     }
 
@@ -2363,22 +2243,9 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        (string solutionText, string equationText, string answerText) =
-            EssayCombinedInputParser.Parse(
-                EssayWorkEditor.Text,
-                EssayAnswerValidator.RequiresSolution(_currentQuestion),
-                preserveAllCalculations: _currentQuestion.WordProblem?.ConversionStep is not null
-                    || _currentQuestion.GeometryProblem?.Reasoning is not null || _currentQuestion.ElementaryProblem is not null
-                    || _currentQuestion.AverageProblem?.Type == AverageQuizType.IndirectData,
-                requireAnswerLabel: _currentQuestion.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
-                allowTextAnswer: _currentQuestion.ElementaryProblem?.Answers.Any(answer => answer.IsText) == true);
-
         EssayAnswerValidationResult validation =
-            _essayAnswerValidator.Validate(
-                _currentQuestion,
-                solutionText,
-                equationText,
-                answerText);
+            _essayAnswerValidator.ValidateSubmission(_currentQuestion, EssayWorkEditor.Text, out var submission);
+        (string solutionText, string equationText, string answerText) = submission;
 
         CompleteAnswer(
             validation.IsCorrect,
@@ -2511,6 +2378,14 @@ public partial class MathPuzzlePage : ContentPage
         string? equationText,
         string? answerText)
     {
+        if (EssayAnswerValidator.IsResultOnlyPractice(question))
+        {
+            if (validation.IsCorrect) return TranslateQuiz("Quiz.EssayResultOnlyCorrectFeedback");
+            if (validation.AnswerError == EssayAnswerError.InvalidAnswerFormat)
+                return TranslateQuiz("Quiz.EssayResultOnlyInvalidFeedback");
+            string expected = question.ElementaryProblem?.AnswerText ?? question.ExactAnswer.ToString();
+            return string.Format(CultureInfo.CurrentCulture, TranslateQuiz("Quiz.EssayResultOnlyWrongFeedback"), expected);
+        }
         if (validation.IsCorrect)
         {
             return TranslateQuiz(

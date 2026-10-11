@@ -61,9 +61,12 @@ public static class ReasoningStoryValidator
         {
             var example = ReviewedReasoningProse.NovelDrafts(c, excluded ?? new HashSet<string>()).FirstOrDefault()
                 ?? ReasoningStoryCatalogue.Draft(c);
-            return (vi ? "Viết MẪU bài toán có lời văn bằng tiếng Việt, dùng cách diễn đạt tương đương đã duyệt. C# sinh số và tính đáp án. Giữ nguyên từng role, step, biến {f...}/{v...}, đơn vị, thứ tự sự việc và đối tượng hỏi. Không điền số hay tên vào biến; không thêm sự kiện, điều kiện hoặc phép tính. Chỉ trả JSON đầy đủ như ví dụ, không giải bài. Khi mẫu cũ đã có, đổi câu dữ kiện theo lựa chọn hợp lệ; chỉ đổi câu dẫn lời giải không tạo đề mới."
-                : "Write a word-problem TEMPLATE in English using reviewed equivalent wording. C# generates numbers and calculates answers. Keep every role, step, literal {f...}/{v...} placeholder, unit, chronology and target. Do not fill variables, add events, conditions or formulas. Return only complete JSON as shown; do not solve. If wording already exists, choose different approved fact clauses; changing only solution leads is not novel.")
+            return (vi ? "Viết mẫu toán đố bằng tiếng Việt tự nhiên. C# sinh số và tính đáp án. Giữ nguyên role, step và biến {f...}/{v...}. Chỉ trả JSON như ví dụ, không giải bài. Khi mẫu cũ đã có, đổi câu dữ kiện; chỉ đổi câu dẫn lời giải không tạo đề mới."
+                : "Write a natural English word-problem template. C# generates numbers and answers. Keep role, step and {f...}/{v...} placeholders. Return only JSON as shown, no calculation. For existing wording, vary fact clauses; changing only leads is not novel.")
                 + "\n" + c.Family + "; stars=" + (int)c.Tier + "; context=" + lesson.Context
+                + "\nRoles: " + string.Join("; ", lesson.Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "answer_unit")
+                    .Select(q => "{" + q.Id + "}=" + q.Role))
+                + "\n" + SemanticProseRules.PromptGuidance(c.Language)
                 + ActivityGuidance(c, vi)
                 + (c.Family != BankQuestionFamily.FractionQuantity ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."

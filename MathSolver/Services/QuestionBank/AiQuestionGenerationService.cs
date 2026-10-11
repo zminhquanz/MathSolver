@@ -188,12 +188,13 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
             Append(new(number, contract, AiItemState.Generating, []));
             string? correction = null;
+            string? errorDetails = null;
             var duplicateProse = new List<string>();
             for (int attempt = 1; attempt <= 3; attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 SetState(AiJobState.Generating);
-                string prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse);
+                string prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse, errorDetails);
                 UpdateItem(number, i => i with { State = AiItemState.Generating,
                     Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -222,6 +223,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     correction = "GenerationTimeout";
+                    errorDetails = null;
                     UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction, IsComplete = true, Metrics = metrics });
                     UpdateItem(number, i => i with { Error = correction });
                     continue;
@@ -241,6 +243,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     Attempts = i.Attempts.Select(a => a.Number == attempt ? a with { RawJson = raw, Metrics = metrics } : a).ToArray() });
                 var validation = BasicQuestionValidator.Validate(raw, contract);
                 correction = validation.ErrorCode;
+                errorDetails = validation.ErrorDetails;
                 UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, ErrorDetails = validation.ErrorDetails, IsComplete = true });
                 UpdateItem(number, i => i with { Error = correction });
                 if (!validation.IsValid) continue;
@@ -272,6 +275,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 void RejectDuplicate()
                 {
                     correction = "DuplicateProse";
+                    errorDetails = null;
                     excludedProse.Add(proseHash);
                     duplicateProse.Add(question.Draft.ProblemText);
                     UpdateAttempt(number, attempt, a => a with { ErrorCode = correction });

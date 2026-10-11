@@ -286,6 +286,9 @@ public static partial class AppliedQuestionCatalogue
                 "trucks" => "truck", "journeys" => "journey", "bags" => "bag", "legs" => "leg",
                 "pencils" => "pencil", "cards" => "card", _ => unit };
         // Quantity-specific units; question/solution units remain plural.
+        if (c.Language == AppLanguage.English)
+            template = EquivalentProseStructures.WithEnglishAgreement(template,
+                slot => slot == "{a}" && (decimal)c.Left / s.Conversion == 1 || slot == "{b}" && c.Right * s.RightDisplayFactor == 1);
         template = template.Replace("{a} {unit}", "{a} " + Singular(c.Unit, (decimal)c.Left / s.Conversion))
             .Replace("{b} {unit}", "{b} " + Singular(c.Unit, c.Right));
         template = template.Replace("{a} {unit_a}", "{a} " + Singular(units.A, (decimal)c.Left / s.Conversion))
@@ -308,7 +311,7 @@ public static partial class AppliedQuestionCatalogue
             + (Find(c.SceneId)!.StoryContextId is { } id ? "; activity=" + QuizStoryContextCatalog.Find(id).Setting(c.Language) : "")
             + "; input units=" + JsonSerializer.Serialize(new { GivenA = InputUnits(c).A, GivenB = InputUnits(c).B },
                 new JsonSerializerOptions { Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "; answer unit=" + c.AnswerUnit
-            + "\nPreserve the facts and target of this example. Equivalent wording is allowed; do not copy wording rejected as duplicate:\n"
+            + "\n" + SemanticProseRules.PromptGuidance(c.Language) + "\n"
             + QuestionBankStore.SerializeDraft(example ?? Draft(c))
             + "\nReturn only JSON with given_a, given_b, question, solution_lead, unit_id."
             + (correction is null ? "" : "\nCorrect the rejected output: " + correction);

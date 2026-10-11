@@ -43,6 +43,9 @@ public static class AdditionQuestionValidator
             if (unit is null || !scale.UnitIds.Contains(unit.Id)) return new(null, "ChangedUnits");
             c = BasicQuestionTemplates.ApplyUnit(c, unit);
             if (!c.IsValid) return new(null, "InvalidContract");
+            // Explicit equivalent structures bind actor/quantity/unit together,
+            // even when their order differs from legacy action-verb heuristics.
+            if (ReviewedQuestionProse.For(c)!.Matches(d, c.Language)) return new(d, null, c);
             string[] text = [d.GivenA, d.GivenB, d.Question, d.SolutionLead!];
             if (Has(d.GivenA + " " + d.GivenB, c.Language == AppLanguage.Vietnamese
                 ? @"\b(?:lũy kế|bao gồm|đã tính|tính cả|trong đó)\b"
@@ -105,7 +108,8 @@ public static class AdditionQuestionValidator
                     || d.GivenA.Contains("{part_b}") || d.GivenB.Contains("{part_a}")
                 : text.Any(s => s.Contains("{part_a}") || s.Contains("{part_b}"))) return new(null, "InvalidPlaceholders");
             if (parts && !MatchesPartsScale(text, scene, scale, vi)) return new(null, "InvalidContext");
-            if (!RolesMatch(d, c, scene, vi)) return new(null, "ChangedRelationOrTarget");
+            if (!RolesMatch(d, c, scene, vi)) return new(null, "ChangedRelationOrTarget",
+                ErrorDetails: ReviewedQuestionProse.For(c)!.MismatchedFields(d, c.Language));
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }

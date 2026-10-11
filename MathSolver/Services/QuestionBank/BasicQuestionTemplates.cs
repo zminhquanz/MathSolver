@@ -143,6 +143,8 @@ public static class BasicQuestionTemplates
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Render(template, c);
         if (c.Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Render(template, c);
         var unit = QuestionUnits.Find(c);
+        if (c.Language == AppLanguage.English)
+            template = EquivalentProseStructures.WithEnglishAgreement(template, slot => slot == "{a}" && c.Left == 1 || slot == "{b}" && c.Right == 1);
         string text = template.Replace("{part_a}", c.PartA).Replace("{part_b}", c.PartB)
             .Replace("{name}", c.Subject).Replace("{other}", c.OtherSubject)
             .Replace("{a}", c.Left.ToString(CultureInfo.InvariantCulture)).Replace("{b}", c.Right.ToString(CultureInfo.InvariantCulture))

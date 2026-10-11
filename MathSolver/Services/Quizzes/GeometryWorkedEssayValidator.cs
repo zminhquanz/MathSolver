@@ -62,7 +62,8 @@ internal static class GeometryWorkedEssayValidator
     }
 
     private static string Normalize(string expression) => Regex.Replace(expression, @"\s", "")
-        .Replace("×", "*", StringComparison.Ordinal).Replace("÷", "/", StringComparison.Ordinal).Replace("−", "-", StringComparison.Ordinal);
+        .Replace("×", "*", StringComparison.Ordinal).Replace("÷", "/", StringComparison.Ordinal)
+        .Replace(':', '/').Replace("−", "-", StringComparison.Ordinal);
 
     private static bool MatchesUnit(ArithmeticQuizQuestion question, string entered, string expected)
     {

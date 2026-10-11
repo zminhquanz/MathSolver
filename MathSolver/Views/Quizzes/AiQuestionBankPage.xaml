@@ -6,37 +6,7 @@
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     Shell.NavBarIsVisible="True" BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
-        <Style x:Key="AiBankBackButtonStyle" TargetType="Button" BasedOn="{StaticResource PlatformBackButtonStyle}">
-            <Setter Property="WidthRequest" Value="48" />
-            <Setter Property="HeightRequest" Value="48" />
-            <Setter Property="MinimumWidthRequest" Value="48" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-            <Setter Property="CornerRadius" Value="24" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
-            <Setter Property="VisualStateManager.VisualStateGroups">
-                <VisualStateGroupList>
-                    <VisualStateGroup x:Name="CommonStates">
-                        <VisualState x:Name="Normal">
-                            <VisualState.Setters>
-                                <Setter Property="BorderWidth" Value="0" />
-                            </VisualState.Setters>
-                        </VisualState>
-                        <VisualState x:Name="PointerOver" />
-                        <VisualState x:Name="Focused">
-                            <VisualState.Setters>
-                                <Setter Property="BorderWidth" Value="1" />
-                                <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
-                            </VisualState.Setters>
-                        </VisualState>
-                        <VisualState x:Name="Disabled">
-                            <VisualState.Setters>
-                                <Setter Property="Opacity" Value="0.45" />
-                            </VisualState.Setters>
-                        </VisualState>
-                    </VisualStateGroup>
-                </VisualStateGroupList>
-            </Setter>
-        </Style>
+        <Style x:Key="AiBankBackButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundPlatformBackButtonStyle}" />
 
 
 
@@ -236,7 +206,7 @@
                                 <Button x:Name="InsertButton" Text="{localization:Translate AiBank.Insert}"
                                         Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
                                         Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
-                                <Button x:Name="ShareButton" Grid.Row="1" Text="{localization:Translate AiBank.Share}"
+                                <Button x:Name="ShareButton" Grid.Row="1"
                                         Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
                                         Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
                             </Grid>

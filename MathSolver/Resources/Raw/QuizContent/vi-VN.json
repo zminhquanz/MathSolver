@@ -278,6 +278,7 @@
     {"Id":"Choice.SelectSubtype","Text":"Chọn dạng toán","Variables":[]},
     {"Id":"Choice.SelectGroup","Text":"Chọn nhóm kiến thức","Variables":[]},
     {"Id":"Choice.SelectDifficulty","Text":"Chọn độ khó","Variables":[]},
+    {"Id":"Choice.SelectLanguage","Text":"Chọn ngôn ngữ đề bài","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageAverageToTotal","Text":"Biết trung bình và số lượng, tìm tổng.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageDirect","Text":"Tính trung bình cộng từ các giá trị đã biết.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.AverageIndirectData","Text":"Suy ra các dữ kiện trước khi tính trung bình.","Variables":[]},

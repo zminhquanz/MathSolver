@@ -165,6 +165,7 @@
       {"Key":"AiBank.BasicArithmetic","IllustrationId":"arithmetic","DescriptionKey":"Choice.Description.arithmetic"},
       {"Key":"FindXBank.Title","IllustrationId":"find-x","DescriptionKey":"Choice.Description.find-x"},
       {"Key":"FractionBank.Title","IllustrationId":"fraction","DescriptionKey":"Choice.Description.fraction"},
+      {"Key":"Quiz.ComparisonSubtype","IllustrationId":"decimal-compare","DescriptionKey":"Curriculum.Requirement.Arithmetic.IntegerCompare"},
       {"Key":"AiBank.Add","IllustrationId":"arithmetic-add","DescriptionKey":"Choice.Description.arithmetic"},
       {"Key":"AiBank.Subtract","IllustrationId":"arithmetic-subtract","DescriptionKey":"Choice.Description.arithmetic"},
       {"Key":"AiBank.Multiply","IllustrationId":"arithmetic-multiply","DescriptionKey":"Choice.Description.arithmetic"},

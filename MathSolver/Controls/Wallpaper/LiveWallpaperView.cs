@@ -33,6 +33,7 @@ public sealed class LiveWallpaperView : Grid
     private BoxView? _readabilityScrim;
     private MediaElement? _mediaElement;
     private IDispatcherTimer? _animationTimer;
+    private long _mathAnimationStartedAt;
     private IDispatcherTimer? _contrastTimer;
     private LiveWallpaperFrameProfile? _frameProfile;
 
@@ -540,6 +541,7 @@ public sealed class LiveWallpaperView : Grid
 
         if (_animationTimer?.IsRunning == false)
         {
+            _mathAnimationStartedAt = System.Diagnostics.Stopwatch.GetTimestamp();
             _animationTimer.Start();
         }
 
@@ -588,6 +590,7 @@ public sealed class LiveWallpaperView : Grid
 
         _mathAnimationView = null;
         _mathDrawable = null;
+        _mathAnimationStartedAt = 0;
     }
 
     private void OnAnimationTick(
@@ -603,8 +606,10 @@ public sealed class LiveWallpaperView : Grid
             return;
         }
 
-        _mathDrawable.TimeSeconds +=
-            AnimationInterval.TotalSeconds;
+        // Both built-in styles use elapsed time, so delayed UI frames do not
+        // slow their construction tracers and rotating geometry.
+        _mathDrawable.TimeSeconds = System.Diagnostics.Stopwatch
+            .GetElapsedTime(_mathAnimationStartedAt).TotalSeconds;
         _mathAnimationView.Invalidate();
     }
 

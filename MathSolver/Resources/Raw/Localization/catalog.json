@@ -32,6 +32,36 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "Quiz.EssayResultOnlyLabel": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
+    "Quiz.EssayResultOnlyHint": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
+    "Quiz.EssayResultOnlyPlaceholder": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
+    "Quiz.EssayResultOnlyCorrectFeedback": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
+    "Quiz.EssayResultOnlyInvalidFeedback": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
+    "Quiz.EssayResultOnlyWrongFeedback": {
+      "context": "Math puzzles > Direct numeric practice; only the result is graded.",
+      "description": "Input guidance or result feedback for optional calculation work.",
+      "translatorNote": "Keep {0} unchanged where present."
+    },
     "AiBank.SqlQueryTitle": {
       "context": "AI question bank > SQLite: compact contextual help.",
       "translatorNote": "Keep button labels short. Preserve SQL commands, column names, NULL and numeric limits. Help appears one topic at a time."
@@ -1709,6 +1739,36 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {
+      "key": "Quiz.EssayResultOnlyLabel",
+      "source": "Kết quả",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayResultOnlyHint",
+      "source": "Chỉ cần nhập kết quả. Có thể ghi thêm phép tính nếu muốn; ứng dụng chỉ chấm kết quả. Không cần dòng đáp số riêng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayResultOnlyPlaceholder",
+      "source": "Nhập kết quả ở đây…",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayResultOnlyCorrectFeedback",
+      "source": "Chính xác! Kết quả đúng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayResultOnlyInvalidFeedback",
+      "source": "Chưa có kết quả hợp lệ. Hãy nhập một số hoặc phân số.",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayResultOnlyWrongFeedback",
+      "source": "Kết quả chưa đúng. Kết quả đúng là {0}.",
+      "mode": "exact"
+    },
     {
       "key": "DataManagement.Title",
       "source": "Quản lý dữ liệu",
@@ -8771,7 +8831,7 @@
     },
     {
       "key": "AiBank.Description",
-      "source": "AI viết mẫu đề và câu lời giải; C# thay tên, sinh số và tính đáp án khi luyện tập. Mẫu hợp lệ được lưu vào ngân hàng đề, bên cạnh bộ tạo đề C# có sẵn.",
+      "source": "AI giúp viết đề bài và lời giải với cách diễn đạt đa dạng. Các mẫu phù hợp được lưu vào ngân hàng đề. Khi luyện tập, ứng dụng thay số, tên và tính lại đáp án để tạo câu hỏi mới.",
       "mode": "exact"
     },
     {
@@ -8806,7 +8866,7 @@
     },
     {
       "key": "AiBank.CancelModelAction",
-      "source": "Dừng tải / chọn model",
+      "source": "■ Dừng tải / chọn model",
       "mode": "exact"
     },
     {
