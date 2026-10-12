@@ -1,5 +1,11 @@
 # AI question bank checks
 
+`--area-measurement-foundation` checks the staged C#/JSON area contracts before
+AI integration: 120 bilingual reviewed templates in a separate SQLite test
+table, deduplication across fresh facts and replay in all three grading modes.
+Area remains absent from the production AI measurement variants. See
+`MathSolver/AREA_MEASUREMENT_FOUNDATION.md` for JSON authoring and quantity rules.
+
 ## Excel authoring and backups
 
 `--excel-authoring` checks 800 bilingual subtype/star authoring configurations,

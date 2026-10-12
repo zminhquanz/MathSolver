@@ -12,6 +12,7 @@ namespace MathSolver
         public static MauiApp CreateMauiApp()
         {
             ConfigureNativeInputChrome();
+            EmojiLabel.ConfigureNativeFont();
             InteractiveColorFeedback.Configure();
 
             ButtonHandler.Mapper.AppendToMapping(

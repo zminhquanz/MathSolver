@@ -4,6 +4,13 @@ using MathSolver.Services.QuestionBank;
 using System.Text.Json;
 using System.Text;
 
+if (args is ["--area-measurement-foundation"])
+{
+    try { AreaMeasurementFoundationTests.Run(); }
+    catch (Exception error) { Console.Error.WriteLine(error); Environment.ExitCode = 1; }
+    return;
+}
+
 if (args is ["--equivalent-prose"])
 {
     try { await EquivalentProseTests.RunAsync(); }

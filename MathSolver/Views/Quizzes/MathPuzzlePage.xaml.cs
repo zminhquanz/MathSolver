@@ -82,6 +82,9 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+        // The hero remains visible when the settings card is collapsed.
+        // Native emoji fonts provide colour glyphs independently of the app's text font.
+        PracticeHeroEmojiLabel.Text = "\U0001F9E0 \U0001F9E9"; // Brain + puzzle: mathematical reasoning.
         Loaded += OnPracticePageLoaded;
         Unloaded += OnPracticePageUnloaded;
 

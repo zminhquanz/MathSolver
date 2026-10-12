@@ -2,6 +2,105 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+{
+    "Id":  "AreaMeasurementStories.InitialLarge",
+    "Text":  "Diện tích {subject} ban đầu là {initial_large} {large_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_large",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialSmall",
+    "Text":  "Diện tích {subject} ban đầu là {initial_small} {small_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialMixed",
+    "Text":  "Diện tích {subject} ban đầu gồm {initial_large} {large_unit} và {initial_small} {small_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_large",
+                      "large_unit",
+                      "initial_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.Added",
+    "Text":  "Bổ sung thêm phần {subject} có diện tích {added_large} {large_unit}.",
+    "Variables":  [
+                      "subject",
+                      "added_large",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.Removed",
+    "Text":  "Sau đó bớt phần {subject} có diện tích {removed_small} {small_unit}.",
+    "Variables":  [
+                      "subject",
+                      "removed_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.QuestionSmall",
+    "Text":  "Hỏi diện tích hiện có của {subject} là bao nhiêu {small_unit}?",
+    "Variables":  [
+                      "subject",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.QuestionLarge",
+    "Text":  "Hỏi diện tích hiện có của {subject} là bao nhiêu {large_unit}?",
+    "Variables":  [
+                      "subject",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialConversionLead",
+    "Text":  "Đổi phần diện tích ban đầu ở đơn vị lớn sang {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.AddedConversionLead",
+    "Text":  "Đổi diện tích thêm vào sang {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.CombinedLead",
+    "Text":  "Diện tích còn lại tính theo {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.ResultLead",
+    "Text":  "Diện tích hiện có của {subject}",
+    "Variables":  [
+                      "subject"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.AnswerLabel",
+    "Text":  "Diện tích",
+    "Variables":  [
+
+                  ]
+},
+
     {"Id": "Foundation.LeftShort", "Text": "trái", "Variables": []},
     {"Id": "Foundation.RightShort", "Text": "phải", "Variables": []},
     {"Id": "Foundation.AboveShort", "Text": "trên", "Variables": []},
@@ -3051,9 +3150,14 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.001",
-      "Text": "Số đo sau khi đổi",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.001",
+        "Text":  "Số đo sau khi đổi",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Thể tích sau khi đổi"
+                       }
     },
     {
       "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.002",
@@ -3087,42 +3191,66 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.005",
-      "Text": "Đổi phần đơn vị lớn",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.005",
+        "Text":  "Đổi phần đơn vị lớn",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Đổi phần thể tích ban đầu sang đơn vị nhỏ"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006",
-      "Text": "Cộng thêm {c} {large_Symbol}. ",
-      "Variables": [
-        "c",
-        "large_Symbol"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006",
+        "Text":  "Cộng thêm {c} {large_Symbol}. ",
+        "Variables":  [
+                          "c",
+                          "large_Symbol"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Thêm {c} {large_Symbol} thể tích vật liệu. "
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.007",
-      "Text": "Đổi phần thêm vào",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.007",
+        "Text":  "Đổi phần thêm vào",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Đổi thể tích thêm vào"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008",
-      "Text": "Sau đó bớt {used} {small_Symbol}. ",
-      "Variables": [
-        "used",
-        "small_Symbol"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008",
+        "Text":  "Sau đó bớt {used} {small_Symbol}. ",
+        "Variables":  [
+                          "used",
+                          "small_Symbol"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Sau đó bớt {used} {small_Symbol} thể tích vật liệu. "
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.009",
-      "Text": "Số đo còn lại ở đơn vị nhỏ",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.009",
+        "Text":  "Số đo còn lại ở đơn vị nhỏ",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Thể tích còn lại tính theo đơn vị nhỏ"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010",
-      "Text": "Kết quả là bao nhiêu {answerUnit}?",
-      "Variables": [
-        "answerUnit"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010",
+        "Text":  "Kết quả là bao nhiêu {answerUnit}?",
+        "Variables":  [
+                          "answerUnit"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Hỏi thể tích hiện có là bao nhiêu {answerUnit}?"
+                       }
     },
     {
       "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.001",
@@ -12784,6 +12912,140 @@
     }
   ],
   "Lists": {
+    "AreaMeasurementVocabulary": [
+    {
+        "AreaTerms":  [
+                          "diện tích"
+                      ],
+        "OtherQuantityTerms":  [
+                                   "chu vi",
+                                   "chiều dài",
+                                   "thể tích",
+                                   "dung tích",
+                                   "khối lượng"
+                               ]
+    }
+],
+
+    "AreaMeasurementContexts": [
+    {
+        "Id":  "area-craft-paper",
+        "Subject":  "giấy thủ công",
+        "LargeUnitId":  "cm2",
+        "SmallUnitId":  "mm2",
+        "MaximumQuantity":  1000
+    },
+    {
+        "Id":  "area-fabric",
+        "Subject":  "vải",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  50
+    },
+    {
+        "Id":  "area-tarpaulin",
+        "Subject":  "bạt",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  500
+    },
+    {
+        "Id":  "area-flooring-material",
+        "Subject":  "vật liệu lát sàn",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  1000
+    },
+    {
+        "Id":  "area-garden-plots",
+        "Subject":  "các mảnh đất trồng cây",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  50000
+    },
+    {
+        "Id":  "area-farmland",
+        "Subject":  "đất canh tác",
+        "LargeUnitId":  "ha",
+        "SmallUnitId":  "m2",
+        "MaximumQuantity":  50
+    }
+],
+    "Narrative.AreaMeasurement.Phrasings": [
+    {
+        "Id":  "AreaMeasurementStories.InitialLarge",
+        "Alternatives":  [
+                             "Ban đầu, {subject} có diện tích {initial_large} {large_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialSmall",
+        "Alternatives":  [
+                             "Ban đầu, {subject} có diện tích {initial_small} {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialMixed",
+        "Alternatives":  [
+                             "Ban đầu, tổng diện tích các phần {subject} là {initial_large} {large_unit} cộng với {initial_small} {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.Added",
+        "Alternatives":  [
+                             "Sau đó, thêm phần {subject} có diện tích {added_large} {large_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.Removed",
+        "Alternatives":  [
+                             "Tiếp theo, lấy bớt phần {subject} có diện tích {removed_small} {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.QuestionSmall",
+        "Alternatives":  [
+                             "Tính diện tích hiện có của {subject} theo {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.QuestionLarge",
+        "Alternatives":  [
+                             "Tính diện tích hiện có của {subject} theo {large_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialConversionLead",
+        "Alternatives":  [
+                             "Phần diện tích ban đầu đổi sang {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.AddedConversionLead",
+        "Alternatives":  [
+                             "Diện tích được bổ sung tính theo {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.CombinedLead",
+        "Alternatives":  [
+                             "Tính diện tích sau khi thêm và bớt theo {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.ResultLead",
+        "Alternatives":  [
+                             "Diện tích của {subject} cần tìm"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.AnswerLabel",
+        "Alternatives":  [
+                             "Diện tích"
+                         ]
+    }
+],
+
     "Narrative.FractionQuantity.Phrasings": [
       {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001",

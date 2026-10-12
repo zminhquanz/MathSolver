@@ -254,6 +254,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         List<string> work, string[]? textChoices)
     {
         if (contract.DataChart is not null) DataChartQuestionValidator.Validate(contract);
+        if (contract.AreaMeasurement is not null) AreaMeasurementQuestionValidator.Validate(contract);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
         var answers = contract.Answers.ToList();

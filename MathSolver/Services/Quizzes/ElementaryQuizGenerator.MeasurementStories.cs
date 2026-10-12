@@ -47,7 +47,7 @@ public sealed partial class ElementaryQuizGenerator
         var units = MeasurementEngine.GetCategory(context.Category).Units;
         var large = units.Single(unit => unit.Id == largeId);
         var small = units.Single(unit => unit.Id == smallId);
-        decimal factor = MeasurementEngine.Convert(1, large, small);
+        decimal factor = MeasurementQuantityRules.Convert(1, context.Category, largeId, context.Category, smallId);
         t.Constants.Add(factor.ToString(CultureInfo.InvariantCulture));
         string Text(string id, params (string Key, string Value)[] values) =>
             QuizContentCatalog.TextForUnit(language, context.Category, "ElementaryQuizGenerator.MeasurementStories."

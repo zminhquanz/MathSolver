@@ -2,6 +2,105 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+{
+    "Id":  "AreaMeasurementStories.InitialLarge",
+    "Text":  "The initial area of {subject} is {initial_large} {large_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_large",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialSmall",
+    "Text":  "The initial area of {subject} is {initial_small} {small_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialMixed",
+    "Text":  "The initial area of {subject} consists of {initial_large} {large_unit} plus {initial_small} {small_unit}.",
+    "Variables":  [
+                      "subject",
+                      "initial_large",
+                      "large_unit",
+                      "initial_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.Added",
+    "Text":  "More {subject} with an area of {added_large} {large_unit} is added.",
+    "Variables":  [
+                      "subject",
+                      "added_large",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.Removed",
+    "Text":  "After that, {subject} with an area of {removed_small} {small_unit} is removed.",
+    "Variables":  [
+                      "subject",
+                      "removed_small",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.QuestionSmall",
+    "Text":  "What is the current area of {subject} in {small_unit}?",
+    "Variables":  [
+                      "subject",
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.QuestionLarge",
+    "Text":  "What is the current area of {subject} in {large_unit}?",
+    "Variables":  [
+                      "subject",
+                      "large_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.InitialConversionLead",
+    "Text":  "Convert the initial area in the larger unit to {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.AddedConversionLead",
+    "Text":  "Convert the added area to {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.CombinedLead",
+    "Text":  "The remaining area in {small_unit}",
+    "Variables":  [
+                      "small_unit"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.ResultLead",
+    "Text":  "The current area of {subject}",
+    "Variables":  [
+                      "subject"
+                  ]
+},
+{
+    "Id":  "AreaMeasurementStories.AnswerLabel",
+    "Text":  "Area",
+    "Variables":  [
+
+                  ]
+},
+
     {"Id": "Foundation.LeftShort", "Text": "Left", "Variables": []},
     {"Id": "Foundation.RightShort", "Text": "Right", "Variables": []},
     {"Id": "Foundation.AboveShort", "Text": "Above", "Variables": []},
@@ -3022,9 +3121,14 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.001",
-      "Text": "Converted measurement",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.001",
+        "Text":  "Converted measurement",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Converted volume"
+                       }
     },
     {
       "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.002",
@@ -3058,42 +3162,66 @@
       ]
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.005",
-      "Text": "Convert the larger unit",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.005",
+        "Text":  "Convert the larger unit",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Convert the initial volume to the smaller unit"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006",
-      "Text": "Add {c} {large_Symbol}. ",
-      "Variables": [
-        "c",
-        "large_Symbol"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006",
+        "Text":  "Add {c} {large_Symbol}. ",
+        "Variables":  [
+                          "c",
+                          "large_Symbol"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "An additional volume of {c} {large_Symbol} of material is added. "
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.007",
-      "Text": "Convert the added quantity",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.007",
+        "Text":  "Convert the added quantity",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Convert the added volume"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008",
-      "Text": "Then subtract {used} {small_Symbol}. ",
-      "Variables": [
-        "used",
-        "small_Symbol"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008",
+        "Text":  "Then subtract {used} {small_Symbol}. ",
+        "Variables":  [
+                          "used",
+                          "small_Symbol"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "Then a volume of {used} {small_Symbol} of material is removed. "
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.009",
-      "Text": "Remaining measurement in the smaller unit",
-      "Variables": []
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.009",
+        "Text":  "Remaining measurement in the smaller unit",
+        "Variables":  [
+
+                      ],
+        "TextByUnit":  {
+                           "volume":  "The remaining volume in the smaller unit"
+                       }
     },
     {
-      "Id": "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010",
-      "Text": "What is the result in {answerUnit}?",
-      "Variables": [
-        "answerUnit"
-      ]
+        "Id":  "ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010",
+        "Text":  "What is the result in {answerUnit}?",
+        "Variables":  [
+                          "answerUnit"
+                      ],
+        "TextByUnit":  {
+                           "volume":  "What is the current volume in {answerUnit}?"
+                       }
     },
     {
       "Id": "ElementaryQuizGenerator.MultiStep.CreateMultiStep.001",
@@ -12755,6 +12883,140 @@
     }
   ],
   "Lists": {
+    "AreaMeasurementVocabulary": [
+    {
+        "AreaTerms":  [
+                          "area"
+                      ],
+        "OtherQuantityTerms":  [
+                                   "perimeter",
+                                   "length",
+                                   "volume",
+                                   "capacity",
+                                   "mass"
+                               ]
+    }
+],
+
+    "AreaMeasurementContexts": [
+    {
+        "Id":  "area-craft-paper",
+        "Subject":  "craft paper",
+        "LargeUnitId":  "cm2",
+        "SmallUnitId":  "mm2",
+        "MaximumQuantity":  1000
+    },
+    {
+        "Id":  "area-fabric",
+        "Subject":  "fabric",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  50
+    },
+    {
+        "Id":  "area-tarpaulin",
+        "Subject":  "tarpaulin",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  500
+    },
+    {
+        "Id":  "area-flooring-material",
+        "Subject":  "flooring material",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  1000
+    },
+    {
+        "Id":  "area-garden-plots",
+        "Subject":  "garden plots",
+        "LargeUnitId":  "m2",
+        "SmallUnitId":  "dm2",
+        "MaximumQuantity":  50000
+    },
+    {
+        "Id":  "area-farmland",
+        "Subject":  "farmland",
+        "LargeUnitId":  "ha",
+        "SmallUnitId":  "m2",
+        "MaximumQuantity":  50
+    }
+],
+    "Narrative.AreaMeasurement.Phrasings": [
+    {
+        "Id":  "AreaMeasurementStories.InitialLarge",
+        "Alternatives":  [
+                             "Initially, {subject} has an area of {initial_large} {large_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialSmall",
+        "Alternatives":  [
+                             "Initially, {subject} has an area of {initial_small} {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialMixed",
+        "Alternatives":  [
+                             "Initially, the combined area of the pieces of {subject} is {initial_large} {large_unit} plus {initial_small} {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.Added",
+        "Alternatives":  [
+                             "Then, an additional area of {added_large} {large_unit} of {subject} is added."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.Removed",
+        "Alternatives":  [
+                             "Next, an area of {removed_small} {small_unit} of {subject} is taken away."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.QuestionSmall",
+        "Alternatives":  [
+                             "Find the current area of {subject} in {small_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.QuestionLarge",
+        "Alternatives":  [
+                             "Find the current area of {subject} in {large_unit}."
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.InitialConversionLead",
+        "Alternatives":  [
+                             "The initial larger-unit area expressed in {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.AddedConversionLead",
+        "Alternatives":  [
+                             "The added area expressed in {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.CombinedLead",
+        "Alternatives":  [
+                             "Calculate the area after adding and removing in {small_unit}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.ResultLead",
+        "Alternatives":  [
+                             "The requested area of {subject}"
+                         ]
+    },
+    {
+        "Id":  "AreaMeasurementStories.AnswerLabel",
+        "Alternatives":  [
+                             "Area"
+                         ]
+    }
+],
+
     "Narrative.FractionQuantity.Phrasings": [
       {
             "Id":  "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty.001",

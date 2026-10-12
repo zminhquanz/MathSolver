@@ -7,6 +7,7 @@ public static partial class QuizContentValidation
 {
     public static void CheckLists(QuizContentPack pack)
     {
+        CheckAreaMeasurementLists(pack);
         foreach (string key in new[] { "ProportionQuizGenerator.Templates", "ProportionQuizGenerator.Templates.Extensions" })
         if (pack.Lists.TryGetValue(key, out var proportionTemplates))
         {

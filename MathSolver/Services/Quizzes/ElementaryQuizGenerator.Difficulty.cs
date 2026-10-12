@@ -13,6 +13,9 @@ public sealed partial class ElementaryQuizGenerator
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
         QuizProblemKind.Time => TimeStoryTypes.Contains(type) ? CreateTimeStory(type, language, tier) : AddTimeStory(CreateTimeDifficulty(type, language, tier)),
         QuizProblemKind.Measurement when type == ElementaryQuizType.MapScale => CreateMapScale(language, tier),
+        QuizProblemKind.Measurement when type == ElementaryQuizType.AreaConversion => BuildAreaMeasurement(new(
+            new(AreaMeasurementTemplates.Contexts(language)[_random.Next(AreaMeasurementTemplates.Contexts(language).Count)].Id,
+                tier, language), _random.Next())),
         QuizProblemKind.Measurement when MeasurementStoryTypes.Contains(type) => CreateMeasurementStory(type, language, tier),
         QuizProblemKind.Measurement => CreateMeasurementDifficulty(type, language, tier),
         QuizProblemKind.Remainder => CreateRemainderStory(type, language, tier),

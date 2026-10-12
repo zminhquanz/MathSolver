@@ -115,6 +115,17 @@ internal static partial class PuzzleTests
                 };
                 decimal expected = (Get("large-quantity") + Get("extra-quantity")) * factor
                     + Get("small-quantity") - Get("removed-quantity");
+                if (contract.AreaMeasurement is { Context: { } area })
+                {
+                    // The new area contexts own their unit pairs. Check the dimensions
+                    // independently, rather than assuming one pair from the star count.
+                    var squareMetres = new Dictionary<string, decimal> {
+                        ["m2"] = 1m, ["dm2"] = .01m, ["cm2"] = .0001m, ["mm2"] = .000001m, ["ha"] = 10000m
+                    };
+                    factor = squareMetres[area.LargeUnitId] / squareMetres[area.SmallUnitId];
+                    expected = (Get("initial-large") + Get("added-large")) * factor
+                        + Get("initial-small") - Get("removed-small");
+                }
                 if (level == 2 || level == 5) expected /= factor;
                 Require(Value() == expected, "Length/area/volume conversion uses the wrong dimension factor or operation order.");
             }
@@ -195,7 +206,8 @@ internal static partial class PuzzleTests
                     var conversion = contract.Reasoning.Steps[0];
                     string[] factors = conversion.Expression.Split('*');
                     string equivalent = factors[1] + "*" + factors[0];
-                    string largeUnit = contract.Reasoning.Givens.First(given => given.Role == "large-quantity").Unit;
+                    string largeUnit = contract.Reasoning.Givens.First(given => given.Role ==
+                        (contract.AreaMeasurement is null ? "large-quantity" : "initial-large")).Unit;
                     Require(!grader.Validate(question, parsed.Solution,
                         parsed.Equation + "\n" + equivalent + "=" + conversion.DisplayValue + " " + largeUnit, parsed.Answer).IsCorrect,
                         "Reversing multiplication must not bypass the intermediate conversion unit.");

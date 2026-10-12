@@ -197,6 +197,9 @@ public static class AppFontManager
     {
         switch (element)
         {
+            case MathSolver.Controls.EmojiLabel:
+                // Keep the native colour font when the user changes the app's text font.
+                break;
             case Label label:
                 label.FontFamily =
                     fontFamily;

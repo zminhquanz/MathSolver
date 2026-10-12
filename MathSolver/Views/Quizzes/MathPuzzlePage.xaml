@@ -87,13 +87,13 @@
                         </Grid>
                     </Border>
 
-                    <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Fill">
                     <VerticalStackLayout
+                        x:Name="PracticeHero"
                         Margin="0,4,0,4"
                         Spacing="3">
 
-                        <Label
-                            Text="?  + − × ÷"
+                        <controls:EmojiLabel
+                            x:Name="PracticeHeroEmojiLabel"
                             Style="{StaticResource SolverHeroSymbolStyle}" />
 
                         <Label
@@ -106,6 +106,7 @@
 
                     </VerticalStackLayout>
 
+                    <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Fill">
                     <Border Style="{StaticResource SolverCardStyle}">
                         <VerticalStackLayout Spacing="14">
 

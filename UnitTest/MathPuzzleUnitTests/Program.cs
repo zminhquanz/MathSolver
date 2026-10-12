@@ -25,6 +25,7 @@ var tests = new (string Name, Action Run)[]
     ("Curriculum expansion and Mixed subtype policy", PuzzleTests.CheckCurriculumExpansion),
     ("Textbook fraction presentation", PuzzleTests.CheckFractionPresentation),
     ("Fraction quantity context IDs and exact answers", PuzzleTests.CheckFractionQuantityContexts),
+    ("Area measurement foundation and quantity boundaries", PuzzleTests.CheckAreaMeasurementFoundation),
     ("Data chart contracts and hidden data", PuzzleTests.CheckDataChartContracts),
     ("Optional answer units when reading bar charts", PuzzleTests.CheckBarChartAnswerUnits),
     ("Direct pictograph answer input", PuzzleTests.CheckPictographInput),
