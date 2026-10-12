@@ -234,11 +234,14 @@ internal static partial class ElementaryEssayValidator
             var parsed = SplitValueUnit(entry);
             bool valueOkay = TryValue(parsed.Number, out V value, contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement) && value == ToValue(expected.Value);
             bool formOkay = CorrectForm(parsed.Number, expected);
-            // The chart or missing-side question already supplies the answer's unit. A numeric answer
+            // These readings and unit-conversion tasks already supply the answer's unit. A numeric answer
             // may omit it, but an explicitly written unit must still match.
             bool unitOkay = (contract.Type is ElementaryQuizType.ReadBarChart
                 or ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart
-                or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide) && parsed.Unit.Length == 0
+                or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide
+                or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
+                or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion
+                or ElementaryQuizType.VolumeConversion) && parsed.Unit.Length == 0
                 || UnitsMatch(question, parsed.Unit, expected.Unit);
             if (!valueOkay || !formOkay || !unitOkay)
             {

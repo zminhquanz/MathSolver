@@ -18,6 +18,8 @@
     "Quiz.PictographInputPlaceholder": "Example: 6 or 6 gift packages",
     "Quiz.BarChartAnswerInputHint": "Enter the number read from the chart. You may include its unit, for example: 10 or 10 points. No separate answer line is required.",
     "Quiz.BarChartAnswerInputPlaceholder": "Enter the number read from the chart, for example: 10",
+    "Quiz.UnitConversionInputHint": "Enter the converted result with or without a unit, for example: 5, 5m or 5 m. If you include a unit, use the one requested in the question. For area and volume, you can type cm2 or cm3. You may also include an explanation, calculation and final answer.",
+    "Quiz.UnitConversionInputPlaceholder": "Example: 5, 5m, 5kg, 5ml, 5cm2 or 5cm3",
     "Quiz.MeasurementResultInputHint": "Enter the result with the unit requested in the question. You can write it without a space, such as 5m, 5cm, 5kg, 5g or 5ml. For area and volume, you can type cm2 or cm3. You may also include an explanation, calculation and final answer.",
     "Quiz.MeasurementResultInputPlaceholder": "Example: 5m, 5kg, 5ml, 5cm2 or 5cm3",
     "Quiz.TimeResultInputHint": "Enter the result with the unit requested in the question, for example: 20 minutes, 1/2 hour or 7 days. You may also include an explanation, calculation and final answer.",

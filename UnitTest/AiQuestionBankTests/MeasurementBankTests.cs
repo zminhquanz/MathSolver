@@ -68,8 +68,10 @@ internal static partial class MeasurementBankTests
                 var validator = new EssayAnswerValidator(new BasicArithmeticEngine());
                 Check(EssayAnswerValidator.IsResultOnlyPractice(q)
                     && validator.ValidateSubmission(q, p.AnswerText.Replace(" ", "")).IsCorrect
+                    && validator.ValidateSubmission(q, expected.ToString(CultureInfo.InvariantCulture)).IsCorrect
+                    && validator.ValidateSubmission(q, expected.ToString(CultureInfo.InvariantCulture).Replace('.', ',')).IsCorrect
                     && validator.ValidateSubmission(q, p.SolutionText).IsCorrect,
-                    "Bank measurement rejected a direct result or optional worked solution");
+                    "Bank measurement rejected a direct result with optional units or an optional worked solution");
                 Check(validator.Validate(q, input.Solution, input.Equation, input.Answer).IsCorrect,
                     "Measurement model solution failed grading: " + p.SolutionText);
                 Check(!validator.Validate(q, input.Solution, input.Equation,

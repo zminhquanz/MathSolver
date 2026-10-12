@@ -24,6 +24,7 @@ internal static partial class PuzzleTests
             var contract = question.ElementaryProblem!;
             Require(EssayAnswerValidator.IsResultOnlyPractice(question), "Measurement still requires worked steps: " + type);
             string answer = contract.AnswerText;
+            string number = contract.Answers[0].DisplayValue ?? contract.Answers[0].Value.ToString();
             string compact = answer.Replace(" ", "");
             var worked = EssayCombinedInputParser.Parse(contract.SolutionText, false, true);
             foreach (string input in new[] { answer, compact, compact.Replace('.', ','),
@@ -36,13 +37,31 @@ internal static partial class PuzzleTests
                     "Direct or worked measurement rejected: " + type + "\n" + input);
                 count++;
             }
+            if (type != ElementaryQuizType.MapScale)
+            {
+                foreach (string input in new[] { number, number.Replace('.', ','), contract.Answers[0].Value.ToString(),
+                    "Đáp số: " + number, "Answer: " + number, "Kết quả = " + number,
+                    contract.Answers[0].Expression + " = " + number,
+                    worked.Solution + "\n" + worked.Equation + "\nAnswer: " + number })
+                {
+                    Require(grader.ValidateSubmission(question, input).IsCorrect,
+                        "Unit conversion rejected a unitless final result: " + type + "\n" + input);
+                    count++;
+                }
+                Require(grader.Validate(question, worked.Solution, worked.Equation, number).IsCorrect,
+                    "Worked unit conversion rejected a unitless final answer: " + type);
+            }
             string wrongUnit = contract.Answers[0].Unit == "kg" ? "cm" : "kg";
-            foreach (string input in new[] { "", contract.Answers[0].Expression, "Kết quả =",
-                contract.Answers[0].Value.ToString(), contract.Answers[0].DisplayValue + wrongUnit,
+            foreach (string input in new[] { "", contract.Answers[0].Expression + " =", "Kết quả =",
+                "0", contract.Answers[0].DisplayValue + wrongUnit,
                 "0" + contract.Answers[0].Unit, "Answer: " + compact + "\nAnswer: 0" + contract.Answers[0].Unit,
-                worked.Equation + "\nAnswer: 0" + contract.Answers[0].Unit })
+                worked.Equation + "\nAnswer: 0" + contract.Answers[0].Unit,
+                "Answer: " + number + "\nAnswer: 0" })
                 Require(!grader.ValidateSubmission(question, input).IsCorrect,
                     "Missing, wrong or conflicting measurement answer passed: " + type + "\n" + input);
+            if (type == ElementaryQuizType.MapScale)
+                Require(!grader.ValidateSubmission(question, number).IsCorrect,
+                    "Optional conversion units changed the map-scale unit requirement.");
 
             Require(grader.Validate(question, worked.Solution, worked.Equation, worked.Answer).IsCorrect,
                 "Generated measurement steps lost independent calculation validation: " + type);
@@ -69,11 +88,12 @@ internal static partial class PuzzleTests
                 "5" + unit.Replace("²", "2").Replace("³", "3"),
                 "5" + unit.Replace("²", "^2").Replace("³", "^3"), "Kết quả = 5" + unit })
                 Require(grader.ValidateSubmission(question, input).IsCorrect, "Compact example rejected: " + input);
-            Require(!grader.ValidateSubmission(question, "5").IsCorrect, "Required target unit was omitted.");
+            Require(grader.ValidateSubmission(question, "5").IsCorrect == (type != ElementaryQuizType.MapScale),
+                "Unit conversions should accept a unitless result; map scale must retain its unit.");
             Require(!grader.ValidateSubmission(question, "5" + unit + "kg").IsCorrect, "An invalid compound unit was accepted.");
             if (unit is "cm²" or "cm³")
                 Require(!grader.ValidateSubmission(question, "5cm").IsCorrect, "Length was accepted instead of area/volume.");
         }
-        Console.WriteLine($"  Checked {count} direct and worked unit-conversion/map-scale submissions across both languages, five stars and legacy/expanded contexts; requested units and incorrect answers checked.");
+        Console.WriteLine($"  Checked {count} direct and worked unit-conversion/map-scale submissions across both languages, five stars and legacy/expanded contexts; optional conversion units, explicit units, decimal spellings and incorrect answers checked.");
     }
 }

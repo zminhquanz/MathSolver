@@ -540,8 +540,8 @@ public partial class MathPuzzlePage : ContentPage
             EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
             bool mixedNumber = question.ElementaryProblem?.Type == ElementaryQuizType.MixedNumber;
             bool mixedMeasurement = question.ElementaryProblem?.Type == ElementaryQuizType.MixedLength;
-            bool measurementResult = question.ElementaryProblem?.Type is ElementaryQuizType.MapScale
-                or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
+            bool mapScale = question.ElementaryProblem?.Type == ElementaryQuizType.MapScale;
+            bool unitConversion = question.ElementaryProblem?.Type is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion;
             bool timeResult = question.ElementaryProblem?.Type is ElementaryQuizType.ElapsedTime
                 or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar;
@@ -550,14 +550,16 @@ public partial class MathPuzzlePage : ContentPage
             bool missingSide = question.ElementaryProblem?.Type == ElementaryQuizType.RectangleSide;
             EssayValidationHintLabel.Text = TranslateQuiz(mixedNumber ? "Quiz.MixedNumberInputHint"
                 : mixedMeasurement ? "Quiz.MixedMeasurementInputHint"
-                : measurementResult ? "Quiz.MeasurementResultInputHint"
+                : mapScale ? "Quiz.MeasurementResultInputHint"
+                : unitConversion ? "Quiz.UnitConversionInputHint"
                 : timeResult ? "Quiz.TimeResultInputHint"
                 : pictograph ? "Quiz.PictographInputHint"
                 : tableOrPieChart ? "Quiz.TablePieAnswerInputHint"
                 : missingSide ? "Quiz.MissingSideInputHint" : "Quiz.EssayResultOnlyHint");
             EssayWorkEditor.Placeholder = TranslateQuiz(mixedNumber ? "Quiz.MixedNumberInputPlaceholder"
                 : mixedMeasurement ? "Quiz.MixedMeasurementInputPlaceholder"
-                : measurementResult ? "Quiz.MeasurementResultInputPlaceholder"
+                : mapScale ? "Quiz.MeasurementResultInputPlaceholder"
+                : unitConversion ? "Quiz.UnitConversionInputPlaceholder"
                 : timeResult ? "Quiz.TimeResultInputPlaceholder"
                 : pictograph ? "Quiz.PictographInputPlaceholder"
                 : tableOrPieChart ? "Quiz.TablePieAnswerInputPlaceholder"
