@@ -12,6 +12,7 @@ internal static partial class PuzzleTests
 
     private static async Task CheckMemoryAsync()
     {
+        await CheckIdleArchiveCancellationAsync();
         await CheckPowerResultLifetimeAsync();
         string directory = Path.Combine(Path.GetTempPath(), $"mathsolver-memory-tests-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -130,6 +131,47 @@ internal static partial class PuzzleTests
         var owner = new TestMemoryOwner();
         registry.Register(owner);
         return new(owner);
+    }
+
+    private static async Task CheckIdleArchiveCancellationAsync()
+    {
+        var view = new MathSolver.Views.PowerRootView();
+        BigInteger value = BigInteger.One << 1024;
+        int cancellationExceptions = 0;
+        EventHandler<System.Runtime.ExceptionServices.FirstChanceExceptionEventArgs> onException = (_, args) =>
+        {
+            if (args.Exception is OperationCanceledException)
+                Interlocked.Increment(ref cancellationExceptions);
+        };
+        AppDomain.CurrentDomain.FirstChanceException += onException;
+        try
+        {
+            AppMemoryPolicy.IsInBackground = false;
+            view.SetResult(value);
+            // Exercise the production archive path that navigation cancels,
+            // including repeated lifecycle callbacks and an already canceled wait.
+            for (int attempt = 0; attempt < 12; attempt++)
+            {
+                using var cancellation = new CancellationTokenSource();
+                if (attempt == 0) cancellation.Cancel();
+                Task archive = view.ArchiveWhenIdleAsync(cancellation);
+                if (attempt != 0) cancellation.Cancel();
+                await archive.WaitAsync(TimeSpan.FromSeconds(5));
+                Require(view.StoredPath is null && view.ResidentValue == value,
+                    "Canceling an idle archive changed or discarded the result.");
+            }
+
+            Require(await MathSolver.Views.PowerRootView.WaitForArchiveIdleForTestAsync(
+                TimeSpan.FromMilliseconds(10), CancellationToken.None).WaitAsync(TimeSpan.FromSeconds(5)),
+                "An uninterrupted idle interval did not allow archiving.");
+            Require(cancellationExceptions == 0,
+                "Normal navigation cancellation still throws a first-chance exception.");
+        }
+        finally
+        {
+            AppDomain.CurrentDomain.FirstChanceException -= onException;
+            view.ClearResult();
+        }
     }
 
     private static async Task CheckPowerResultLifetimeAsync()

@@ -12,6 +12,18 @@
         <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type ScrollView}}, Path=Width, x:DataType='ScrollView'}" />
     </Style>
 
+    <!-- Fixed titles share the content width without depending on a ScrollView. -->
+    <Style x:Key="SolverFixedHeaderStyle" TargetType="VerticalStackLayout">
+        <Setter Property="Padding" Value="{OnPlatform Android='12,10,12,10', WinUI='20,16,20,14', Default='20,16,20,14'}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="MaximumWidthRequest" Value="1320" />
+        <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type Grid}}, Path=Width, x:DataType='Grid'}" />
+    </Style>
+
+    <Style x:Key="SolverScrollableContentStyle" TargetType="VerticalStackLayout" BasedOn="{StaticResource SolverContentStyle}">
+        <Setter Property="Padding" Value="{OnPlatform Android='12,0,12,20', WinUI='20,0,20,24', Default='20,0,20,24'}" />
+    </Style>
+
     <!-- Diagrams and plots get more room than ordinary reading/input pages. -->
     <Style x:Key="SolverWideContentStyle" TargetType="VerticalStackLayout" BasedOn="{StaticResource SolverContentStyle}">
         <Setter Property="MaximumWidthRequest" Value="1440" />

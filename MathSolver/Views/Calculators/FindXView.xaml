@@ -10,14 +10,8 @@
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
-    <ScrollView
-        HorizontalOptions="Fill"
-        VerticalOptions="Fill">
-
-        <VerticalStackLayout
-            x:Name="FindXContent"
-            Style="{StaticResource SolverContentStyle}">
-            <!-- Tiêu đề -->
+    <Grid RowDefinitions="Auto,*">
+        <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
 
@@ -37,559 +31,569 @@
                     Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
+        </VerticalStackLayout>
 
-            <!-- 1. Chọn phép tính và vị trí của x -->
-            <Border
-                Style="{StaticResource SolverCardStyle}">
+        <ScrollView Grid.Row="1"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill">
 
-                <VerticalStackLayout Spacing="14">
+            <VerticalStackLayout
+                x:Name="FindXContent"
+                Style="{StaticResource SolverScrollableContentStyle}">
+                <!-- Tiêu đề -->
 
-                    <Label
-                        Text="1. Chọn phép tính"
-                        Style="{StaticResource SolverSectionTitleStyle}" />
+                <!-- 1. Chọn phép tính và vị trí của x -->
+                <Border
+                    Style="{StaticResource SolverCardStyle}">
 
-                    <Grid
-                        Style="{StaticResource SolverCardStyle}"
-                        Padding="{OnPlatform Android=0, WinUI=16, Default=16}"
-                        ColumnDefinitions="*,*,*,*"
-                        ColumnSpacing="8">
-
-                        <Button
-                            x:Name="FindXAddButton"
-                            Grid.Column="0"
-                            Text="+"
-                            Style="{StaticResource SolverOperationButtonStyle}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXAddClicked" />
-
-                        <Button
-                            x:Name="FindXSubtractButton"
-                            Grid.Column="1"
-                            Text="−"
-                            Style="{StaticResource SolverOperationButtonStyle}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXSubtractClicked" />
-
-                        <Button
-                            x:Name="FindXMultiplyButton"
-                            Grid.Column="2"
-                            Text="×"
-                            Style="{StaticResource SolverOperationButtonStyle}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXMultiplyClicked" />
-
-                        <Button
-                            x:Name="FindXDivideButton"
-                            Grid.Column="3"
-                            Text="÷"
-                            Style="{StaticResource SolverOperationButtonStyle}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXDivideClicked" />
-
-                    </Grid>
-
-                    <BoxView
-                        HeightRequest="1"
-                        Margin="0,2"
-                        BackgroundColor="{DynamicResource WallpaperDividerColor}" />
-
-                    <VerticalStackLayout Spacing="6">
+                    <VerticalStackLayout Spacing="14">
 
                         <Label
-                            Text="Vị trí của x"
+                            Text="1. Chọn phép tính"
+                            Style="{StaticResource SolverSectionTitleStyle}" />
+
+                        <Grid
+                            Style="{StaticResource SolverCardStyle}"
+                            Padding="{OnPlatform Android=0, WinUI=16, Default=16}"
+                            ColumnDefinitions="*,*,*,*"
+                            ColumnSpacing="8">
+
+                            <Button
+                                x:Name="FindXAddButton"
+                                Grid.Column="0"
+                                Text="+"
+                                Style="{StaticResource SolverOperationButtonStyle}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXAddClicked" />
+
+                            <Button
+                                x:Name="FindXSubtractButton"
+                                Grid.Column="1"
+                                Text="−"
+                                Style="{StaticResource SolverOperationButtonStyle}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXSubtractClicked" />
+
+                            <Button
+                                x:Name="FindXMultiplyButton"
+                                Grid.Column="2"
+                                Text="×"
+                                Style="{StaticResource SolverOperationButtonStyle}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXMultiplyClicked" />
+
+                            <Button
+                                x:Name="FindXDivideButton"
+                                Grid.Column="3"
+                                Text="÷"
+                                Style="{StaticResource SolverOperationButtonStyle}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXDivideClicked" />
+
+                        </Grid>
+
+                        <BoxView
+                            HeightRequest="1"
+                            Margin="0,2"
+                            BackgroundColor="{DynamicResource WallpaperDividerColor}" />
+
+                        <VerticalStackLayout Spacing="6">
+
+                            <Label
+                                Text="Vị trí của x"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                            <Label
+                                x:Name="FindXPositionDescriptionLabel"
+                                FontSize="15"
+                                LineHeight="1.2"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                        </VerticalStackLayout>
+
+                        <Grid
+                            Style="{StaticResource SolverCardStyle}"
+                            Padding="{OnPlatform Android=0, WinUI=16, Default=16}"
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="10">
+
+                            <Button
+                                x:Name="FindXUnknownLeftButton"
+                                Grid.Column="0"
+                                Text="x + a = b"
+                                MinimumHeightRequest="48"
+                                Padding="8,0"
+                                FontSize="19"
+                                FontAttributes="Bold"
+                                CornerRadius="12"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Style="{StaticResource SolverChoiceButtonStyle}"
+                                Clicked="OnFindXUnknownLeftClicked" />
+
+                            <Button
+                                x:Name="FindXUnknownRightButton"
+                                Grid.Column="1"
+                                Text="a + x = b"
+                                MinimumHeightRequest="48"
+                                Padding="8,0"
+                                FontSize="19"
+                                FontAttributes="Bold"
+                                CornerRadius="12"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Style="{StaticResource SolverChoiceButtonStyle}"
+                                Clicked="OnFindXUnknownRightClicked" />
+
+                        </Grid>
+
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Loại số và dữ liệu -->
+                <Border Style="{StaticResource SolverCardStyle}">
+
+                    <VerticalStackLayout Spacing="14">
+
+                        <Label
+                            Text="2. Nhập các giá trị đã biết"
+                            Style="{StaticResource SolverSectionTitleStyle}" />
+
+                        <Grid
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="10">
+
+                            <Button
+                                x:Name="FindXIntegerTypeButton"
+                                Grid.Column="0"
+                                Text="{localization:Translate Numbers.Integer}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXIntegerTypeClicked" />
+
+                            <Button
+                                x:Name="FindXDecimalTypeButton"
+                                Grid.Column="1"
+                                Text="{localization:Translate Numbers.Decimal}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                Clicked="OnFindXDecimalTypeClicked" />
+
+                        </Grid>
+
+                        <Grid
+                            x:Name="FindXValueInputGrid"
+                            ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                            ColumnSpacing="12"
+                            RowSpacing="10">
+
+                            <VerticalStackLayout
+                                x:Name="FindXKnownInputPanel"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Spacing="6">
+
+                                <Label
+                                    x:Name="FindXKnownValueLabel"
+                                    Text="Số hạng đã biết"
+                                    FontSize="16"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    HeightRequest="48"
+                                    Padding="10,0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+
+                                    <Entry
+                                        x:Name="FindXKnownValueEntry"
+                                        Placeholder="Ví dụ: 8"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                        Keyboard="Numeric"
+                                        FontSize="19"
+                                        VerticalTextAlignment="Center"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        ClearButtonVisibility="WhileEditing"
+                                        TextChanged="OnFindXNumberEntryTextChanged" />
+
+                                </Border>
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout
+                                x:Name="FindXResultInputPanel"
+                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                Spacing="6">
+
+                                <Label
+                                    x:Name="FindXResultValueLabel"
+                                    Text="Tổng"
+                                    FontSize="16"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Border
+                                    HeightRequest="48"
+                                    Padding="10,0"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                    StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
+
+                                    <Entry
+                                        x:Name="FindXResultValueEntry"
+                                        Placeholder="Ví dụ: 20"
+
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                        Keyboard="Numeric"
+                                        FontSize="19"
+                                        VerticalTextAlignment="Center"
+                                        BackgroundColor="Transparent"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Fill"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        ClearButtonVisibility="WhileEditing"
+                                        TextChanged="OnFindXNumberEntryTextChanged" />
+
+                                </Border>
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <!-- Xem trước phương trình -->
+                        <Border
+                            Padding="14"
+                            MinimumHeightRequest="82"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperDividerBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="5">
+
+                                <Label
+                                    Text="Phương trình đang nhập"
+                                    FontSize="15"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Label
+                                    x:Name="FindXEquationPreviewLabel"
+                                    Text="x + a = b"
+                                    FontSize="23"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                            </VerticalStackLayout>
+                        </Border>
+
+                        <Grid
+                            Margin="0,4,0,0"
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12">
+
+                            <Button
+                                Grid.Column="0"
+                                Text="{localization:Translate FindX.Action}"
+                                Style="{StaticResource SolverPrimaryActionStyle}"
+                                Clicked="OnFindXCalculateClicked" />
+
+                            <Button
+                                Grid.Column="1"
+                                Text="{localization:Translate Actions.Clear}"
+                                Style="{StaticResource SolverSecondaryActionStyle}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnFindXClearClicked" />
+
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Thông báo lỗi riêng của tab tìm x -->
+                <Border
+                    x:Name="FindXErrorBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
+                    Stroke="{DynamicResource DangerBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="10">
+
+                        <Label
+                            Grid.Column="0"
+                            Text="❌"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource DangerColor}" />
+
+                        <Label
+                            x:Name="FindXErrorLabel"
+                            Grid.Column="1"
                             FontSize="17"
+                            LineHeight="1.2"
+                            TextColor="{DynamicResource DangerColor}" />
+
+                    </Grid>
+                </Border>
+
+                <!-- Kết quả và lời giải -->
+                <Border
+                    x:Name="FindXResultBorder"
+                    IsVisible="False"
+                    Padding="16"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label
+                            Text="3. Kết quả"
+                            FontSize="20"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
-                            x:Name="FindXPositionDescriptionLabel"
-                            FontSize="15"
-                            LineHeight="1.2"
-                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                    </VerticalStackLayout>
-
-                    <Grid
-                        Style="{StaticResource SolverCardStyle}"
-                        Padding="{OnPlatform Android=0, WinUI=16, Default=16}"
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="10">
-
-                        <Button
-                            x:Name="FindXUnknownLeftButton"
-                            Grid.Column="0"
-                            Text="x + a = b"
-                            MinimumHeightRequest="48"
-                            Padding="8,0"
-                            FontSize="19"
+                            x:Name="FindXResultEquationLabel"
+                            FontSize="22"
                             FontAttributes="Bold"
-                            CornerRadius="12"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
-                            Clicked="OnFindXUnknownLeftClicked" />
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource PrimaryColor}" />
 
-                        <Button
-                            x:Name="FindXUnknownRightButton"
-                            Grid.Column="1"
-                            Text="a + x = b"
-                            MinimumHeightRequest="48"
-                            Padding="8,0"
-                            FontSize="19"
-                            FontAttributes="Bold"
-                            CornerRadius="12"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Style="{StaticResource SolverChoiceButtonStyle}"
-                            Clicked="OnFindXUnknownRightClicked" />
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
+                            StrokeThickness="1">
 
-                    </Grid>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                </VerticalStackLayout>
-            </Border>
+                            <VerticalStackLayout Spacing="5">
 
-            <!-- Loại số và dữ liệu -->
-            <Border Style="{StaticResource SolverCardStyle}">
+                                <Label
+                                    x:Name="FindXStatusLabel"
+                                    Text="Nghiệm duy nhất"
+                                    FontSize="16"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource SuccessColor}" />
 
-                <VerticalStackLayout Spacing="14">
+                                <Label
+                                    x:Name="FindXAnswerLabel"
+                                    Text="x = 0"
+                                    FontSize="34"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                    <Label
-                        Text="2. Nhập các giá trị đã biết"
-                        Style="{StaticResource SolverSectionTitleStyle}" />
+                                <Label
+                                    x:Name="FindXApproximationLabel"
+                                    IsVisible="False"
+                                    FontSize="16"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                    <Grid
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="10">
+                            </VerticalStackLayout>
+                        </Border>
 
-                        <Button
-                            x:Name="FindXIntegerTypeButton"
-                            Grid.Column="0"
-                            Text="{localization:Translate Numbers.Integer}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            Style="{StaticResource SolverNumberTypeButtonStyle}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXIntegerTypeClicked" />
+                        <Grid HeightRequest="48">
 
-                        <Button
-                            x:Name="FindXDecimalTypeButton"
-                            Grid.Column="1"
-                            Text="{localization:Translate Numbers.Decimal}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            Style="{StaticResource SolverNumberTypeButtonStyle}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnFindXDecimalTypeClicked" />
-
-                    </Grid>
-
-
-                    <Grid
-                        x:Name="FindXValueInputGrid"
-                        ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
-                        RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
-                        ColumnSpacing="12"
-                        RowSpacing="10">
-
-                        <VerticalStackLayout
-                            x:Name="FindXKnownInputPanel"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Spacing="6">
-
-                            <Label
-                                x:Name="FindXKnownValueLabel"
-                                Text="Số hạng đã biết"
-                                FontSize="16"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Border
+                            <controls:ResultCopyButton
+                                x:Name="FindXCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
                                 HeightRequest="48"
-                                Padding="10,0"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Entry
-                                    x:Name="FindXKnownValueEntry"
-                                    Placeholder="Ví dụ: 8"
-                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                    Keyboard="Numeric"
-                                    FontSize="19"
-                                    VerticalTextAlignment="Center"
-                                    BackgroundColor="Transparent"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    ClearButtonVisibility="WhileEditing"
-                                    TextChanged="OnFindXNumberEntryTextChanged" />
-
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <VerticalStackLayout
-                            x:Name="FindXResultInputPanel"
-                            Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                            Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                            Spacing="6">
-
-                            <Label
-                                x:Name="FindXResultValueLabel"
-                                Text="Tổng"
-                                FontSize="16"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Border
-                                HeightRequest="48"
-                                Padding="10,0"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <Entry
-                                    x:Name="FindXResultValueEntry"
-                                    Placeholder="Ví dụ: 20"
-
-                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                    Keyboard="Numeric"
-                                    FontSize="19"
-                                    VerticalTextAlignment="Center"
-                                    BackgroundColor="Transparent"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    ClearButtonVisibility="WhileEditing"
-                                    TextChanged="OnFindXNumberEntryTextChanged" />
-
-                            </Border>
-                        </VerticalStackLayout>
-                    </Grid>
-
-                    <!-- Xem trước phương trình -->
-                    <Border
-                        Padding="14"
-                        MinimumHeightRequest="82"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperDividerBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="5">
-
-                            <Label
-                                Text="Phương trình đang nhập"
-                                FontSize="15"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Label
-                                x:Name="FindXEquationPreviewLabel"
-                                Text="x + a = b"
-                                FontSize="23"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <Grid
-                        Margin="0,4,0,0"
-                        ColumnDefinitions="*,*"
-                        ColumnSpacing="12">
-
-                        <Button
-                            Grid.Column="0"
-                            Text="{localization:Translate FindX.Action}"
-                            Style="{StaticResource SolverPrimaryActionStyle}"
-                            Clicked="OnFindXCalculateClicked" />
-
-                        <Button
-                            Grid.Column="1"
-                            Text="{localization:Translate Actions.Clear}"
-                            Style="{StaticResource SolverSecondaryActionStyle}"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            Clicked="OnFindXClearClicked" />
-
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- Thông báo lỗi riêng của tab tìm x -->
-            <Border
-                x:Name="FindXErrorBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
-                Stroke="{DynamicResource DangerBorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-
-                <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="10">
-
-                    <Label
-                        Grid.Column="0"
-                        Text="❌"
-                        FontSize="22"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource DangerColor}" />
-
-                    <Label
-                        x:Name="FindXErrorLabel"
-                        Grid.Column="1"
-                        FontSize="17"
-                        LineHeight="1.2"
-                        TextColor="{DynamicResource DangerColor}" />
-
-                </Grid>
-            </Border>
-
-            <!-- Kết quả và lời giải -->
-            <Border
-                x:Name="FindXResultBorder"
-                IsVisible="False"
-                Padding="16"
-                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="12">
-
-                    <Label
-                        Text="3. Kết quả"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                    <Label
-                        x:Name="FindXResultEquationLabel"
-                        FontSize="22"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource PrimaryColor}" />
-
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                        Stroke="{DynamicResource PrimarySoftBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="5">
-
-                            <Label
-                                x:Name="FindXStatusLabel"
-                                Text="Nghiệm duy nhất"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource SuccessColor}" />
-
-                            <Label
-                                x:Name="FindXAnswerLabel"
-                                Text="x = 0"
-                                FontSize="34"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            <Label
-                                x:Name="FindXApproximationLabel"
-                                IsVisible="False"
-                                FontSize="16"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <Grid HeightRequest="48">
-
-                        <controls:ResultCopyButton
-                            x:Name="FindXCopyResultButton"
-                            NormalTextKey="PowerRoot.CopyResult"
-                            Text=""
-                            HeightRequest="48"
-                            CornerRadius="12"
-                            FontSize="15"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            Clicked="OnFindXCopyResultClicked" />
-
-                        <HorizontalStackLayout
-                            InputTransparent="True"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center"
-                            Spacing="8">
-
-                            <controls:ThemedCopyIcon
-                                WidthRequest="20"
-                                HeightRequest="20" />
-
-                            <Label
-                                Text="{Binding DisplayText, Source={x:Reference FindXCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                CornerRadius="12"
                                 FontSize="15"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                VerticalTextAlignment="Center" />
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnFindXCopyResultClicked" />
 
-                        </HorizontalStackLayout>
+                            <HorizontalStackLayout
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                Spacing="8">
 
-                    </Grid>
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
 
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                        Stroke="{DynamicResource PrimarySoftBrush}"
-                        StrokeThickness="1">
+                                <Label
+                                    Text="{Binding DisplayText, Source={x:Reference FindXCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
+                            </HorizontalStackLayout>
 
-                        <VerticalStackLayout Spacing="8">
+                        </Grid>
 
-                            <Label
-                                Text="Quy tắc áp dụng"
-                                FontSize="18"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryDarkColor}" />
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
+                            StrokeThickness="1">
 
-                            <Label
-                                x:Name="FindXRuleLabel"
-                                FontSize="17"
-                                LineHeight="1.25"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                        </VerticalStackLayout>
-                    </Border>
+                            <VerticalStackLayout Spacing="8">
 
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
+                                <Label
+                                    Text="Quy tắc áp dụng"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryDarkColor}" />
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
+                                <Label
+                                    x:Name="FindXRuleLabel"
+                                    FontSize="17"
+                                    LineHeight="1.25"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                        <VerticalStackLayout Spacing="8">
+                            </VerticalStackLayout>
+                        </Border>
 
-                            <Label
-                                Text="Lời giải chi tiết"
-                                FontSize="18"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
 
-                            <Label
-                                x:Name="FindXSolutionStepsLabel"
-                                FontSize="17"
-                                LineHeight="1.3"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                        </VerticalStackLayout>
-                    </Border>
+                            <VerticalStackLayout Spacing="8">
 
-                    <Border
-                        x:Name="FindXVerificationBorder"
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSuccessSoftColor}"
-                        Stroke="{DynamicResource SuccessSoftBrush}"
-                        StrokeThickness="1">
+                                <Label
+                                    Text="Lời giải chi tiết"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
+                                <Label
+                                    x:Name="FindXSolutionStepsLabel"
+                                    FontSize="17"
+                                    LineHeight="1.3"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                        <VerticalStackLayout Spacing="8">
+                            </VerticalStackLayout>
+                        </Border>
 
-                            <Label
-                                Text="Kiểm tra lại"
-                                FontSize="18"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource SuccessColor}" />
+                        <Border
+                            x:Name="FindXVerificationBorder"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSuccessSoftColor}"
+                            Stroke="{DynamicResource SuccessSoftBrush}"
+                            StrokeThickness="1">
 
-                            <Label
-                                x:Name="FindXVerificationLabel"
-                                FontSize="17"
-                                LineHeight="1.25"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                        </VerticalStackLayout>
-                    </Border>
-                </VerticalStackLayout>
-            </Border>
+                            <VerticalStackLayout Spacing="8">
 
-            <!-- Hướng dẫn -->
-            <Border
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperWarningSoftColor}"
-                Stroke="{DynamicResource WarningBorderBrush}"
-                StrokeThickness="1">
+                                <Label
+                                    Text="Kiểm tra lại"
+                                    FontSize="18"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource SuccessColor}" />
 
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                                <Label
+                                    x:Name="FindXVerificationLabel"
+                                    FontSize="17"
+                                    LineHeight="1.25"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="10">
-
-                    <Label
-                        Grid.Column="0"
-                        Text="💡"
-                        FontSize="24"
-                        VerticalOptions="Start" />
-
-                    <VerticalStackLayout
-                        Grid.Column="1"
-                        Spacing="4">
-
-                        <Label
-                            Text="Ghi nhớ"
-                            FontSize="17"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource WarningColor}" />
-
-                        <Label
-                            Text="Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra. Nếu phép chia có x ở mẫu số thì x phải khác 0."
-                            FontSize="16"
-                            LineHeight="1.25"
-                            TextColor="{DynamicResource WarningColor}" />
-
+                            </VerticalStackLayout>
+                        </Border>
                     </VerticalStackLayout>
-                </Grid>
-            </Border>
-</VerticalStackLayout>
-    </ScrollView>
+                </Border>
+
+                <!-- Hướng dẫn -->
+                <Border
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperWarningSoftColor}"
+                    Stroke="{DynamicResource WarningBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="10">
+
+                        <Label
+                            Grid.Column="0"
+                            Text="💡"
+                            FontSize="24"
+                            VerticalOptions="Start" />
+
+                        <VerticalStackLayout
+                            Grid.Column="1"
+                            Spacing="4">
+
+                            <Label
+                                Text="Ghi nhớ"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource WarningColor}" />
+
+                            <Label
+                                Text="Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra. Nếu phép chia có x ở mẫu số thì x phải khác 0."
+                                FontSize="16"
+                                LineHeight="1.25"
+                                TextColor="{DynamicResource WarningColor}" />
+
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+    </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 
 </base:LocalizedSolverView>

@@ -45,9 +45,12 @@ public partial class PowerRootView : IRecoverableMemoryOwner, ITemporaryResource
     {
         try
         {
-            if (!AppMemoryPolicy.IsInBackground)
-                await Task.Delay(AppMemoryPolicy.InactiveResultDelay, cancellation.Token);
-            long released = await ArchiveResultAsync(cancellation.Token);
+            CancellationToken token = cancellation.Token;
+            if (!AppMemoryPolicy.IsInBackground &&
+                !await WaitForArchiveIdleAsync(AppMemoryPolicy.InactiveResultDelay, token))
+                return;
+            if (token.IsCancellationRequested) return;
+            long released = await ArchiveResultAsync(token);
             await AppMemoryPolicy.CollectReleasedMemoryAsync(released);
         }
         catch (OperationCanceledException) { }
@@ -58,6 +61,23 @@ public partial class PowerRootView : IRecoverableMemoryOwner, ITemporaryResource
                 _inactiveResultCancellation = null;
             cancellation.Dispose();
         }
+    }
+
+    private static async Task<bool> WaitForArchiveIdleAsync(TimeSpan delay, CancellationToken token)
+    {
+        if (token.IsCancellationRequested) return false;
+
+        // Leaving/returning to a page can replace this idle wait several times.
+        // Cancellation is a normal outcome, not a canceled task that interrupts
+        // the debugger. Dispose the timer when canceled instead of leaving a
+        // Task.Delay alive until the full idle interval has elapsed.
+        var completion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var timer = new Timer(static state =>
+            ((TaskCompletionSource<bool>)state!).TrySetResult(true),
+            completion, delay, Timeout.InfiniteTimeSpan);
+        using var registration = token.Register(static state =>
+            ((TaskCompletionSource<bool>)state!).TrySetResult(false), completion);
+        return await completion.Task && !token.IsCancellationRequested;
     }
 
     public Task<long> ReleaseRecoverableMemoryAsync()

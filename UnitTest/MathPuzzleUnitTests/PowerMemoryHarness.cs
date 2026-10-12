@@ -37,6 +37,9 @@ namespace MathSolver.Views
         internal string? StoredPath => _calculationState?.CachedResultPath;
         internal string? Preview => _calculationState?.CompactResult;
         internal CancellationToken IdleToken => _inactiveResultCancellation?.Token ?? default;
+        internal Task ArchiveWhenIdleAsync(CancellationTokenSource cancellation) => ArchiveAfterIdleAsync(cancellation);
+        internal static Task<bool> WaitForArchiveIdleForTestAsync(TimeSpan delay, CancellationToken token) =>
+            WaitForArchiveIdleAsync(delay, token);
         internal void SetBusy(bool calculating, bool exporting)
         {
             _isCalculating = calculating;

@@ -10,16 +10,8 @@
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
-    <ScrollView
-        x:Name="QuadraticScrollView"
-        HorizontalOptions="Fill"
-        VerticalOptions="Fill">
-
-        <VerticalStackLayout
-            x:Name="QuadraticContent"
-            Style="{StaticResource SolverContentStyle}">
-
-            <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
+    <Grid RowDefinitions="Auto,*">
+        <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
 
@@ -42,762 +34,771 @@
                     Style="{StaticResource SolverHeroSubtitleStyle}" />
 
             </VerticalStackLayout>
-
-            <!-- Chọn dạng phương trình -->
-            <Border Style="{StaticResource SolverCardStyle}">
-                <VerticalStackLayout Spacing="12">
-                    <Label
-                        Text="{localization:Translate Equation.ChooseType}"
-                        Style="{StaticResource SolverSectionTitleStyle}" />
-
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="240">
-
-                        <Button
-                            x:Name="LinearModeButton"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Text="{localization:Translate Equation.Mode.Linear}"
-                            Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                            Clicked="OnLinearModeClicked" />
-
-                        <Button
-                            x:Name="QuadraticModeButton"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Text="{localization:Translate Equation.Mode.Quadratic}"
-                            Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
-                            BackgroundColor="{DynamicResource PrimaryColor}"
-                            TextColor="{DynamicResource OnPrimaryColor}"
-                            Clicked="OnQuadraticModeClicked" />
-                    </Grid>
-                </VerticalStackLayout>
-            </Border>
-
-            <!-- 1. Nhập hệ số -->
-            <Border
-                Style="{StaticResource SolverCardStyle}">
-
-                <VerticalStackLayout Spacing="14">
-
-                    <Label
-                        Text="1. Nhập các hệ số"
-                        Style="{StaticResource SolverSectionTitleStyle}" />
-
-
-                    <Grid
-                        x:Name="CoefficientGrid" SizeChanged="OnCoefficientGridSizeChanged"
-                        ColumnDefinitions="*,*,*"
-                        RowDefinitions="Auto"
-                        ColumnSpacing="12"
-                        RowSpacing="10">
-
-                        <!-- Hệ số a -->
-                        <Border
-                            x:Name="CoefficientAPanel"
-                            Grid.Row="0"
-                            Grid.Column="0"
-                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1"
-                            VerticalOptions="Start">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label
-                                    Text="Hệ số a"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Label
-                                    x:Name="CoefficientADescriptionLabel"
-                                    Text="Hệ số của x²"
-                                    FontSize="14"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                <Border
-                                    MinimumHeightRequest="48"
-                                    Padding="10,0"
-                                    BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="9" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                        x:Name="CoefficientAEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientADescriptionLabel}, x:DataType=Label}"
-                                        Placeholder="Ví dụ: 1"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                        Keyboard="Text"
-                                        MaxLength="52"
-                                        FontSize="19"
-                                        HorizontalTextAlignment="Center"
-                                        VerticalTextAlignment="Center"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        TextChanged="OnCoefficientEntryTextChanged"
-                                        Focused="OnCoefficientEntryFocused"
-                                        Unfocused="OnCoefficientEntryUnfocused" />
-
-                                </Border>
-
-                            </VerticalStackLayout>
-
-                        </Border>
-
-                        <!-- Hệ số b -->
-                        <Border
-                            x:Name="CoefficientBPanel"
-                            Grid.Row="0"
-                            Grid.Column="1"
-                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1"
-                            VerticalOptions="Start">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label
-                                    Text="Hệ số b"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Label
-                                    x:Name="CoefficientBDescriptionLabel"
-                                    Text="Hệ số của x"
-                                    FontSize="14"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                <Border
-                                    MinimumHeightRequest="48"
-                                    Padding="10,0"
-                                    BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="9" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                        x:Name="CoefficientBEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientBDescriptionLabel}, x:DataType=Label}"
-                                        Placeholder="Ví dụ: −3"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                        Keyboard="Text"
-                                        MaxLength="52"
-                                        FontSize="19"
-                                        HorizontalTextAlignment="Center"
-                                        VerticalTextAlignment="Center"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        TextChanged="OnCoefficientEntryTextChanged"
-                                        Focused="OnCoefficientEntryFocused"
-                                        Unfocused="OnCoefficientEntryUnfocused" />
-
-                                </Border>
-
-                            </VerticalStackLayout>
-
-                        </Border>
-
-                        <!-- Hệ số c -->
-                        <Border
-                            x:Name="CoefficientCPanel"
-                            Grid.Row="0"
-                            Grid.Column="2"
-                            Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1"
-                            VerticalOptions="Start">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="12" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="8">
-
-                                <Label
-                                    Text="Hệ số c"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Label
-                                    x:Name="CoefficientCDescriptionLabel" Text="Hệ số tự do"
-                                    FontSize="14"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                <Border
-                                    MinimumHeightRequest="48"
-                                    Padding="10,0"
-                                    BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="9" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                        x:Name="CoefficientCEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientCDescriptionLabel}, x:DataType=Label}"
-                                        Placeholder="Ví dụ: 2"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                        Keyboard="Text"
-                                        MaxLength="52"
-                                        FontSize="19"
-                                        HorizontalTextAlignment="Center"
-                                        VerticalTextAlignment="Center"
-                                        BackgroundColor="Transparent"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        TextChanged="OnCoefficientEntryTextChanged"
-                                        Focused="OnCoefficientEntryFocused"
-                                        Unfocused="OnCoefficientEntryUnfocused" />
-
-                                </Border>
-
-                            </VerticalStackLayout>
-
-                        </Border>
-
-                    </Grid>
-
-                    <!-- Xem trước phương trình -->
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                        Stroke="{DynamicResource PrimarySoftBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="5">
-
-                            <Label
-                                Text="Phương trình đang nhập"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryDarkColor}" />
-
-                            <Label
-                                x:Name="EquationPreviewLabel"
-                                Text="ax² + bx + c = 0"
-                                FontSize="{OnPlatform Android=21, WinUI=25, Default=25}"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
-
-                        <Button
-                            x:Name="CalculateQuadraticButton"
-                            Grid.Column="0"
-                            Text="{localization:Translate Equation.Action}"
-                            Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
-                            Clicked="OnCalculateClicked" />
-
-                        <Button
-                            Grid.Column="1"
-                            Text="{localization:Translate Actions.Clear}"
-                            Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            Clicked="OnClearClicked" />
-
-                    </Grid>
-
-                </VerticalStackLayout>
-
-            </Border>
-
-            <!-- Thông báo lỗi, giống tab Phân số -->
-            <Border
-                x:Name="ErrorBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
-                Stroke="{DynamicResource DangerBorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-                
-                <Grid
-                    ColumnDefinitions="Auto,*"
-                    ColumnSpacing="10">
-
-                    <Label
-                    Grid.Column="0"
-                    Text="❌"
-                    FontSize="22"
-                    FontAttributes="Bold"
-                    TextColor="{DynamicResource DangerColor}" />
-
-                    <Label
-                    Grid.Column="1"
-                    x:Name="ErrorLabel"
-                    FontSize="17"
-                    TextColor="{DynamicResource DangerColor}"
-                    LineBreakMode="WordWrap" />
-                    
-                </Grid>
-
-            </Border>
-
-            <!-- 2. Kết quả -->
-            <Border
-                x:Name="ResultBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="10">
-
-                    <Label
-                        Text="2. Kết quả"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                    <Label
-                        x:Name="ResultEquationLabel"
-                        FontSize="23"
-                        FontAttributes="Bold"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource PrimaryColor}" />
-
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                        Stroke="{DynamicResource PrimarySoftBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="7">
-
-                            <Label
-                                x:Name="ResultMetricCaptionLabel"
-                                Text="Biệt thức"
-                                FontSize="15"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Label
-                                x:Name="DeltaValueLabel"
-                                Text="Δ = 0"
-                                FontSize="27"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <BoxView
-                                HeightRequest="1"
-                                Margin="0,2"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}" />
-
-                            <Label
-                                x:Name="ClassificationLabel"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource SuccessColor}" />
-
-                            <Label
-                                x:Name="RootsLabel"
-                                FontSize="32"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <Grid MinimumHeightRequest="48">
-
-                        <controls:ResultCopyButton
-                            x:Name="QuadraticCopyResultButton"
-                            NormalTextKey="PowerRoot.CopyResult"
-                            Text=""
-                            MinimumHeightRequest="48"
-                            CornerRadius="12"
-                            FontSize="15"
-                            FontAttributes="Bold"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            Clicked="OnQuadraticCopyResultClicked" />
-
-                        <Grid ColumnDefinitions="Auto,*" Padding="12,8"
-                            InputTransparent="True"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center"
-                            ColumnSpacing="8">
-
-                            <controls:ThemedCopyIcon
-                                WidthRequest="20"
-                                HeightRequest="20" />
-
-                            <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                Text="{Binding DisplayText, Source={x:Reference QuadraticCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                FontSize="15"
-                                FontAttributes="Bold"
+        </VerticalStackLayout>
+
+        <ScrollView Grid.Row="1"
+            x:Name="QuadraticScrollView"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill">
+
+            <VerticalStackLayout
+                x:Name="QuadraticContent"
+                Style="{StaticResource SolverScrollableContentStyle}">
+
+                <!-- Tiêu đề đồng bộ với Cơ bản, Phân số và Tìm x -->
+
+                <!-- Chọn dạng phương trình -->
+                <Border Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="{localization:Translate Equation.ChooseType}"
+                            Style="{StaticResource SolverSectionTitleStyle}" />
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="240">
+
+                            <Button
+                                x:Name="LinearModeButton"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Text="{localization:Translate Equation.Mode.Linear}"
+                                Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                VerticalTextAlignment="Center" />
+                                Clicked="OnLinearModeClicked" />
+
+                            <Button
+                                x:Name="QuadraticModeButton"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Text="{localization:Translate Equation.Mode.Quadratic}"
+                                Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                                BackgroundColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource OnPrimaryColor}"
+                                Clicked="OnQuadraticModeClicked" />
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- 1. Nhập hệ số -->
+                <Border
+                    Style="{StaticResource SolverCardStyle}">
+
+                    <VerticalStackLayout Spacing="14">
+
+                        <Label
+                            Text="1. Nhập các hệ số"
+                            Style="{StaticResource SolverSectionTitleStyle}" />
+
+                        <Grid
+                            x:Name="CoefficientGrid" SizeChanged="OnCoefficientGridSizeChanged"
+                            ColumnDefinitions="*,*,*"
+                            RowDefinitions="Auto"
+                            ColumnSpacing="12"
+                            RowSpacing="10">
+
+                            <!-- Hệ số a -->
+                            <Border
+                                x:Name="CoefficientAPanel"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1"
+                                VerticalOptions="Start">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="8">
+
+                                    <Label
+                                        Text="Hệ số a"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <Label
+                                        x:Name="CoefficientADescriptionLabel"
+                                        Text="Hệ số của x²"
+                                        FontSize="14"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        MinimumHeightRequest="48"
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Entry
+                                            x:Name="CoefficientAEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientADescriptionLabel}, x:DataType=Label}"
+                                            Placeholder="Ví dụ: 1"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            Keyboard="Text"
+                                            MaxLength="52"
+                                            FontSize="19"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            TextChanged="OnCoefficientEntryTextChanged"
+                                            Focused="OnCoefficientEntryFocused"
+                                            Unfocused="OnCoefficientEntryUnfocused" />
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                            </Border>
+
+                            <!-- Hệ số b -->
+                            <Border
+                                x:Name="CoefficientBPanel"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1"
+                                VerticalOptions="Start">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="8">
+
+                                    <Label
+                                        Text="Hệ số b"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <Label
+                                        x:Name="CoefficientBDescriptionLabel"
+                                        Text="Hệ số của x"
+                                        FontSize="14"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        MinimumHeightRequest="48"
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Entry
+                                            x:Name="CoefficientBEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientBDescriptionLabel}, x:DataType=Label}"
+                                            Placeholder="Ví dụ: −3"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            Keyboard="Text"
+                                            MaxLength="52"
+                                            FontSize="19"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            TextChanged="OnCoefficientEntryTextChanged"
+                                            Focused="OnCoefficientEntryFocused"
+                                            Unfocused="OnCoefficientEntryUnfocused" />
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                            </Border>
+
+                            <!-- Hệ số c -->
+                            <Border
+                                x:Name="CoefficientCPanel"
+                                Grid.Row="0"
+                                Grid.Column="2"
+                                Padding="{OnPlatform Android=10, WinUI=12, Default=12}"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1"
+                                VerticalOptions="Start">
+
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout Spacing="8">
+
+                                    <Label
+                                        Text="Hệ số c"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <Label
+                                        x:Name="CoefficientCDescriptionLabel" Text="Hệ số tự do"
+                                        FontSize="14"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        MinimumHeightRequest="48"
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="9" />
+                                        </Border.StrokeShape>
+
+                                        <Entry
+                                            x:Name="CoefficientCEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientCDescriptionLabel}, x:DataType=Label}"
+                                            Placeholder="Ví dụ: 2"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            Keyboard="Text"
+                                            MaxLength="52"
+                                            FontSize="19"
+                                            HorizontalTextAlignment="Center"
+                                            VerticalTextAlignment="Center"
+                                            BackgroundColor="Transparent"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            TextChanged="OnCoefficientEntryTextChanged"
+                                            Focused="OnCoefficientEntryFocused"
+                                            Unfocused="OnCoefficientEntryUnfocused" />
+
+                                    </Border>
+
+                                </VerticalStackLayout>
+
+                            </Border>
 
                         </Grid>
 
-                    </Grid>
+                        <!-- Xem trước phương trình -->
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
+                            StrokeThickness="1">
 
-                </VerticalStackLayout>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-            </Border>
-
-
-            
-
-            <!-- 3. Lời giải chi tiết -->
-            <Border
-                x:Name="SolutionBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                Stroke="{DynamicResource WallpaperBorderBrush}"
-                StrokeThickness="1">
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="12">
-
-                    <Label
-                        Text="3. Lời giải chi tiết"
-                        FontSize="20"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="7">
-
-                            <Label
-                                x:Name="Step1TitleLabel"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                x:Name="Step1BodyLabel"
-                                FontSize="16"
-                                LineHeight="1.3"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <Border
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="7">
-
-                            <Label
-                                x:Name="Step2TitleLabel"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                x:Name="Step2BodyLabel"
-                                FontSize="16"
-                                LineHeight="1.3"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <Border
-                        x:Name="Step3Border"
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="7">
-
-                            <Label
-                                x:Name="Step3TitleLabel"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <Label
-                                x:Name="Step3BodyLabel"
-                                FontSize="16"
-                                LineHeight="1.3"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <Border
-                        x:Name="Step4Border"
-                        Padding="14"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="7">
-
-                            <Label
-                                x:Name="Step4TitleLabel"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryColor}" />
-
-                            <VerticalStackLayout
-                                x:Name="Step4ContentLayout"
-                                Spacing="10">
+                            <VerticalStackLayout Spacing="5">
 
                                 <Label
-                                    x:Name="Step4BodyLabel"
+                                    Text="Phương trình đang nhập"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource PrimaryDarkColor}" />
+
+                                <Label
+                                    x:Name="EquationPreviewLabel"
+                                    Text="ax² + bx + c = 0"
+                                    FontSize="{OnPlatform Android=21, WinUI=25, Default=25}"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
+
+                            <Button
+                                x:Name="CalculateQuadraticButton"
+                                Grid.Column="0"
+                                Text="{localization:Translate Equation.Action}"
+                                Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
+                                Clicked="OnCalculateClicked" />
+
+                            <Button
+                                Grid.Column="1"
+                                Text="{localization:Translate Actions.Clear}"
+                                Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnClearClicked" />
+
+                        </Grid>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- Thông báo lỗi, giống tab Phân số -->
+                <Border
+                    x:Name="ErrorBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
+                    Stroke="{DynamicResource DangerBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="10">
+
+                        <Label
+                        Grid.Column="0"
+                        Text="❌"
+                        FontSize="22"
+                        FontAttributes="Bold"
+                        TextColor="{DynamicResource DangerColor}" />
+
+                        <Label
+                        Grid.Column="1"
+                        x:Name="ErrorLabel"
+                        FontSize="17"
+                        TextColor="{DynamicResource DangerColor}"
+                        LineBreakMode="WordWrap" />
+
+                    </Grid>
+
+                </Border>
+
+                <!-- 2. Kết quả -->
+                <Border
+                    x:Name="ResultBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="10">
+
+                        <Label
+                            Text="2. Kết quả"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                        <Label
+                            x:Name="ResultEquationLabel"
+                            FontSize="23"
+                            FontAttributes="Bold"
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource PrimaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource PrimarySoftBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    x:Name="ResultMetricCaptionLabel"
+                                    Text="Biệt thức"
+                                    FontSize="15"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                <Label
+                                    x:Name="DeltaValueLabel"
+                                    Text="Δ = 0"
+                                    FontSize="27"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                                <BoxView
+                                    HeightRequest="1"
+                                    Margin="0,2"
+                                    BackgroundColor="{DynamicResource WallpaperDividerColor}" />
+
+                                <Label
+                                    x:Name="ClassificationLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource SuccessColor}" />
+
+                                <Label
+                                    x:Name="RootsLabel"
+                                    FontSize="32"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <Grid MinimumHeightRequest="48">
+
+                            <controls:ResultCopyButton
+                                x:Name="QuadraticCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="48"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnQuadraticCopyResultClicked" />
+
+                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ColumnSpacing="8">
+
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference QuadraticCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+
+                            </Grid>
+
+                        </Grid>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+                <!-- 3. Lời giải chi tiết -->
+                <Border
+                    x:Name="SolutionBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="12">
+
+                        <Label
+                            Text="3. Lời giải chi tiết"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    x:Name="Step1TitleLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                                <Label
+                                    x:Name="Step1BodyLabel"
                                     FontSize="16"
                                     LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                                <ScrollView
-                                    x:Name="Step4MathScrollView"
-                                    IsVisible="False"
-                                    Orientation="Horizontal"
-                                    HorizontalScrollBarVisibility="Never"
-                                    VerticalScrollBarVisibility="Never">
+                            </VerticalStackLayout>
 
-                                    <VerticalStackLayout
-                                        x:Name="Step4MathLayout"
-                                        Spacing="10" />
+                        </Border>
 
-                                </ScrollView>
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    x:Name="Step2TitleLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                                <Label
+                                    x:Name="Step2BodyLabel"
+                                    FontSize="16"
+                                    LineHeight="1.3"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                             </VerticalStackLayout>
 
-                        </VerticalStackLayout>
+                        </Border>
 
-                    </Border>
+                        <Border
+                            x:Name="Step3Border"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
 
-                </VerticalStackLayout>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-            </Border>
+                            <VerticalStackLayout Spacing="7">
 
-<!-- Đồ thị parabol sau khi có kết quả -->
-            <Border
-                x:Name="GraphBorder"
-                IsVisible="False"
-                Padding="14"
-                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                Stroke="{DynamicResource WallpaperBorderBrush}"
-                StrokeThickness="1">
+                                <Label
+                                    x:Name="Step3TitleLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
 
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
-                </Border.StrokeShape>
+                                <Label
+                                    x:Name="Step3BodyLabel"
+                                    FontSize="16"
+                                    LineHeight="1.3"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <VerticalStackLayout Spacing="10">
+                            </VerticalStackLayout>
 
-                    <Grid
-                        x:Name="GraphToolbarGrid"
-                        ColumnDefinitions="*,Auto"
-                        RowDefinitions="Auto"
-                        ColumnSpacing="12"
-                        RowSpacing="8"
-                        SizeChanged="OnGraphToolbarSizeChanged">
+                        </Border>
 
-                        <VerticalStackLayout
-                            x:Name="GraphCaptionPanel"
-                            Spacing="2"
-                            VerticalOptions="Center">
-                            <Label
-                                x:Name="GraphTitleLabel"
-                                Text="Đồ thị parabol"
-                                FontSize="20"
-                                FontAttributes="Bold"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                        </VerticalStackLayout>
+                        <Border
+                            x:Name="Step4Border"
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="7">
+
+                                <Label
+                                    x:Name="Step4TitleLabel"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource PrimaryColor}" />
+
+                                <VerticalStackLayout
+                                    x:Name="Step4ContentLayout"
+                                    Spacing="10">
+
+                                    <Label
+                                        x:Name="Step4BodyLabel"
+                                        FontSize="16"
+                                        LineHeight="1.3"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <ScrollView
+                                        x:Name="Step4MathScrollView"
+                                        IsVisible="False"
+                                        Orientation="Horizontal"
+                                        HorizontalScrollBarVisibility="Never"
+                                        VerticalScrollBarVisibility="Never">
+
+                                        <VerticalStackLayout
+                                            x:Name="Step4MathLayout"
+                                            Spacing="10" />
+
+                                    </ScrollView>
+
+                                </VerticalStackLayout>
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                    </VerticalStackLayout>
+
+                </Border>
+
+    <!-- Đồ thị parabol sau khi có kết quả -->
+                <Border
+                    x:Name="GraphBorder"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                    StrokeThickness="1">
+
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="10">
 
                         <Grid
-                            x:Name="GraphCommandsPanel"
-                            Grid.Column="1"
-                            ColumnDefinitions="48,Auto,48,48"
-                            ColumnSpacing="8"
-                            VerticalOptions="Center"
-                            HorizontalOptions="End">
+                            x:Name="GraphToolbarGrid"
+                            ColumnDefinitions="*,Auto"
+                            RowDefinitions="Auto"
+                            ColumnSpacing="12"
+                            RowSpacing="8"
+                            SizeChanged="OnGraphToolbarSizeChanged">
+
+                            <VerticalStackLayout
+                                x:Name="GraphCaptionPanel"
+                                Spacing="2"
+                                VerticalOptions="Center">
+                                <Label
+                                    x:Name="GraphTitleLabel"
+                                    Text="Đồ thị parabol"
+                                    FontSize="20"
+                                    FontAttributes="Bold"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            </VerticalStackLayout>
+
+                            <Grid
+                                x:Name="GraphCommandsPanel"
+                                Grid.Column="1"
+                                ColumnDefinitions="48,Auto,48,48"
+                                ColumnSpacing="8"
+                                VerticalOptions="Center"
+                                HorizontalOptions="End">
+                                    <Button
+                                        Text="−"
+                                        MinimumHeightRequest="48"
+                                        Padding="0"
+                                        CornerRadius="10"
+                                        FontSize="24"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomOut}"
+                                        Clicked="OnGraphZoomOutClicked" />
+                                    <Button
+                                        x:Name="GraphResetZoomButton"
+                                        Grid.Column="1"
+                                        Text="100%"
+                                        MinimumWidthRequest="74"
+                                        MinimumHeightRequest="48"
+                                        Padding="10,8"
+                                        CornerRadius="10"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                        TextColor="{DynamicResource PrimaryColor}"
+                                        SemanticProperties.Description="{localization:Translate Equation.Graph.ResetZoom}"
+                                        Clicked="OnGraphResetZoomClicked" />
+                                    <Button
+                                        Grid.Column="2"
+                                        Text="+"
+                                        MinimumHeightRequest="48"
+                                        Padding="0"
+                                        CornerRadius="10"
+                                        FontSize="22"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomIn}"
+                                        Clicked="OnGraphZoomInClicked" />
                                 <Button
-                                    Text="−"
-                                    MinimumHeightRequest="48"
+                                    x:Name="GraphEnlargeButton"
+                                    Grid.Column="3"
+                                    Text="🔍"
+                                    WidthRequest="48"
+                                    HorizontalOptions="End"
+                                    FontSize="22"
+                                    FontAutoScalingEnabled="False"
+                                    SemanticProperties.Description="{localization:Translate Equation.Graph.Enlarge}"
+                                    ToolTipProperties.Text="{localization:Translate Equation.Graph.Enlarge}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}"
                                     Padding="0"
                                     CornerRadius="10"
-                                    FontSize="24"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomOut}"
-                                    Clicked="OnGraphZoomOutClicked" />
-                                <Button
-                                    x:Name="GraphResetZoomButton"
-                                    Grid.Column="1"
-                                    Text="100%"
-                                    MinimumWidthRequest="74"
-                                    MinimumHeightRequest="48"
-                                    Padding="10,8"
-                                    CornerRadius="10"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
+                                    LineBreakMode="WordWrap"
                                     BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                     TextColor="{DynamicResource PrimaryColor}"
-                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ResetZoom}"
-                                    Clicked="OnGraphResetZoomClicked" />
-                                <Button
-                                    Grid.Column="2"
-                                    Text="+"
-                                    MinimumHeightRequest="48"
-                                    Padding="0"
-                                    CornerRadius="10"
-                                    FontSize="22"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    SemanticProperties.Description="{localization:Translate Equation.Graph.ZoomIn}"
-                                    Clicked="OnGraphZoomInClicked" />
-                            <Button
-                                x:Name="GraphEnlargeButton"
-                                Grid.Column="3"
-                                Text="🔍"
-                                WidthRequest="48"
-                                HorizontalOptions="End"
-                                FontSize="22"
-                                FontAutoScalingEnabled="False"
-                                SemanticProperties.Description="{localization:Translate Equation.Graph.Enlarge}"
-                                ToolTipProperties.Text="{localization:Translate Equation.Graph.Enlarge}"
-                                Style="{StaticResource SolverChoiceButtonStyle}"
-                                Padding="0"
-                                CornerRadius="10"
-                                LineBreakMode="WordWrap"
-                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                TextColor="{DynamicResource PrimaryColor}"
-                                Clicked="OnEnlargeGraphClicked" />
+                                    Clicked="OnEnlargeGraphClicked" />
+                            </Grid>
                         </Grid>
-                    </Grid>
-                    <Border
-                        Padding="6"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                        StrokeThickness="1">
+                        <Border
+                            Padding="6"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                            Stroke="{DynamicResource WallpaperBorderBrush}"
+                            StrokeThickness="1">
 
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="12" />
-                        </Border.StrokeShape>
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="12" />
+                            </Border.StrokeShape>
 
-                        <Grid x:Name="GraphViewportGrid" RowDefinitions="Auto,*" RowSpacing="4">
-                        <Label x:Name="GraphSimdBackendLabel"
-                               FontSize="12"
-                               TextColor="{DynamicResource TextSecondaryColor}" />
-                        <GraphicsView Grid.Row="1"
-                            x:Name="ParabolaGraphicsView"
-                            HeightRequest="320" SizeChanged="OnParabolaGraphicsViewSizeChanged"
-                            HorizontalOptions="Fill"
-                            VerticalOptions="Fill"
-                            InputTransparent="False"
-                            StartInteraction="OnGraphStartInteraction"
-                            DragInteraction="OnGraphDragInteraction"
-                            EndInteraction="OnGraphEndInteraction"
-                            CancelInteraction="OnGraphCancelInteraction" />
-                        </Grid>
+                            <Grid x:Name="GraphViewportGrid" RowDefinitions="Auto,*" RowSpacing="4">
+                            <Label x:Name="GraphSimdBackendLabel"
+                                   FontSize="12"
+                                   TextColor="{DynamicResource TextSecondaryColor}" />
+                            <GraphicsView Grid.Row="1"
+                                x:Name="ParabolaGraphicsView"
+                                HeightRequest="320" SizeChanged="OnParabolaGraphicsViewSizeChanged"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill"
+                                InputTransparent="False"
+                                StartInteraction="OnGraphStartInteraction"
+                                DragInteraction="OnGraphDragInteraction"
+                                EndInteraction="OnGraphEndInteraction"
+                                CancelInteraction="OnGraphCancelInteraction" />
+                            </Grid>
 
-                    </Border>
+                        </Border>
 
-                    <Label
-                        x:Name="GraphHelpLabel"
-                        Text="Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%."
-                        FontSize="14"
-                        HorizontalTextAlignment="Center"
-                        LineBreakMode="WordWrap"
-                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        <Label
+                            x:Name="GraphHelpLabel"
+                            Text="Đồ thị trình bày theo dạng SGK: có trục tọa độ, trục đối xứng, đỉnh và nghiệm thực. Kéo chuột để di chuyển; cuộn con lăn lên để phóng to, xuống để thu nhỏ; hoặc dùng −, + và 100%."
+                            FontSize="14"
+                            HorizontalTextAlignment="Center"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                </VerticalStackLayout>
+                    </VerticalStackLayout>
 
-            </Border>
-</VerticalStackLayout>
+                </Border>
+    </VerticalStackLayout>
 
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 
 </base:LocalizedSolverView>

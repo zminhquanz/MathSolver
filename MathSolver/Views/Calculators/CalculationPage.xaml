@@ -239,15 +239,8 @@
             x:Name="CalculationSubTabContentHost"
             Grid.Row="1"
             BackgroundColor="Transparent">
-            <ScrollView
-                BackgroundColor="Transparent"
-                HorizontalOptions="Fill"
-                VerticalOptions="Fill">
-                <VerticalStackLayout
-                    x:Name="BasicTabContent"
-                    Style="{StaticResource SolverContentStyle}">
-
-                    <!-- Tiêu đề -->
+            <Grid x:Name="BasicTabContent" RowDefinitions="Auto,*">
+                <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
                     <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
 
                         <Label
@@ -265,155 +258,215 @@
                         Style="{StaticResource SolverHeroSubtitleStyle}" />
 
                     </VerticalStackLayout>
+                </VerticalStackLayout>
 
-                    <!-- Khung chọn phép tính -->
-                    <Border
-                    Style="{StaticResource SolverCardStyle}">
+                <ScrollView Grid.Row="1"
+                    BackgroundColor="Transparent"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Fill">
+                    <VerticalStackLayout
+                        x:Name="BasicArithmeticContent"
+                        Style="{StaticResource SolverScrollableContentStyle}">
 
-                        <VerticalStackLayout Spacing="14">
+                        <!-- Tiêu đề -->
 
-                            <Label
-                            Text="1. Chọn phép tính"
-                            Style="{StaticResource SolverSectionTitleStyle}" />
+                        <!-- Khung chọn phép tính -->
+                        <Border
+                        Style="{StaticResource SolverCardStyle}">
 
-                            <Grid
-                            x:Name="OperationButtonsGrid"
-                            ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
-                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
-                            ColumnSpacing="8"
-                            RowSpacing="8">
-
-                                <Button
-                                x:Name="AddButton"
-                                Grid.Column="0"
-                                Text="+"
-                                Style="{StaticResource SolverOperationButtonStyle}"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                Clicked="OnAddClicked" />
-
-                                <Button
-                                x:Name="SubtractButton"
-                                Grid.Column="1"
-                                Text="−"
-                                Style="{StaticResource SolverOperationButtonStyle}"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                Clicked="OnSubtractClicked" />
-
-                                <Button
-                                x:Name="MultiplyButton"
-                                Grid.Column="2"
-                                Text="×"
-                                Style="{StaticResource SolverOperationButtonStyle}"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                Clicked="OnMultiplyClicked" />
-
-                                <Button
-                                x:Name="DivideButton"
-                                Grid.Column="3"
-                                Text="÷"
-                                Style="{StaticResource SolverOperationButtonStyle}"
-                                BackgroundColor="{DynamicResource PrimaryColor}"
-                                TextColor="{DynamicResource OnPrimaryColor}"
-                                Clicked="OnDivideClicked" />
-
-                                <Button
-                                x:Name="ExpressionButton"
-                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                                Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
-                                Grid.ColumnSpan="{OnPlatform Android=4, WinUI=1, Default=1}"
-                                Text="{localization:Translate Calculation.Expression.Option}"
-                                Style="{StaticResource SolverOperationButtonStyle}"
-                                FontSize="15"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                Clicked="OnExpressionClicked" />
-
-                            </Grid>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
-                    <!-- Khung nhập số -->
-                    <!-- Khung nhập số và chọn loại số -->
-                    <Border Style="{StaticResource SolverCardStyle}">
-
-                        <VerticalStackLayout Spacing="14">
-
-                            <Label
-                                x:Name="NumberInputTitleLabel"
-                                Text="{localization:Translate Calculation.Arithmetic.InputNumbersTitle}"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
-
-                            <Label
-                                x:Name="ExpressionInputTitleLabel"
-                                IsVisible="False"
-                                Text="{localization:Translate Calculation.Expression.InputTitle}"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
-
-                            <!-- Chọn số nguyên hoặc số thập phân -->
-                            <Grid
-                                x:Name="NumberTypeButtonsGrid"
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
-
-                                <Button
-                                    x:Name="IntegerTypeButton"
-                                    Grid.Column="0"
-                                    Text="{localization:Translate Numbers.Integer}"
-                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    Clicked="OnIntegerTypeClicked" />
-
-                                <Button
-                                    x:Name="DecimalTypeButton"
-                                    Grid.Column="1"
-                                    Text="{localization:Translate Numbers.Decimal}"
-                                    Style="{StaticResource SolverNumberTypeButtonStyle}"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    Clicked="OnDecimalTypeClicked" />
-
-                            </Grid>
-
-
-                            <!-- Hai ô nhập số -->
-                            <Grid
-                                x:Name="NumberInputGrid"
-                                ColumnDefinitions="{OnPlatform Android='*', WinUI='*,Auto,*', Default='*,Auto,*'}"
-                                RowDefinitions="{OnPlatform Android='Auto,Auto,Auto,Auto,Auto', WinUI='Auto,Auto', Default='Auto,Auto'}"
-                                ColumnSpacing="12"
-                                RowSpacing="6">
+                            <VerticalStackLayout Spacing="14">
 
                                 <Label
-                                    x:Name="FirstNumberLabel"
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Text="Số thứ nhất"
-                                    FontSize="16"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                Text="1. Chọn phép tính"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
 
-                                <Border
-                                    x:Name="FirstNumberBorder"
-                                    Grid.Row="1"
+                                <Grid
+                                x:Name="OperationButtonsGrid"
+                                ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
+                                RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                ColumnSpacing="8"
+                                RowSpacing="8">
+
+                                    <Button
+                                    x:Name="AddButton"
                                     Grid.Column="0"
-                                    HeightRequest="48"
-                                    Padding="10,0"
+                                    Text="+"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
                                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    Clicked="OnAddClicked" />
 
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="10" />
-                                    </Border.StrokeShape>
+                                    <Button
+                                    x:Name="SubtractButton"
+                                    Grid.Column="1"
+                                    Text="−"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    Clicked="OnSubtractClicked" />
 
-                                    <Entry
-                                        x:Name="FirstNumberEntry"
-                                        Placeholder="Ví dụ: 25"
+                                    <Button
+                                    x:Name="MultiplyButton"
+                                    Grid.Column="2"
+                                    Text="×"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    Clicked="OnMultiplyClicked" />
+
+                                    <Button
+                                    x:Name="DivideButton"
+                                    Grid.Column="3"
+                                    Text="÷"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
+                                    BackgroundColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource OnPrimaryColor}"
+                                    Clicked="OnDivideClicked" />
+
+                                    <Button
+                                    x:Name="ExpressionButton"
+                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
+                                    Grid.ColumnSpan="{OnPlatform Android=4, WinUI=1, Default=1}"
+                                    Text="{localization:Translate Calculation.Expression.Option}"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
+                                    FontSize="15"
+                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    Clicked="OnExpressionClicked" />
+
+                                </Grid>
+
+                            </VerticalStackLayout>
+
+                        </Border>
+
+                        <!-- Khung nhập số -->
+                        <!-- Khung nhập số và chọn loại số -->
+                        <Border Style="{StaticResource SolverCardStyle}">
+
+                            <VerticalStackLayout Spacing="14">
+
+                                <Label
+                                    x:Name="NumberInputTitleLabel"
+                                    Text="{localization:Translate Calculation.Arithmetic.InputNumbersTitle}"
+                                    Style="{StaticResource SolverSectionTitleStyle}" />
+
+                                <Label
+                                    x:Name="ExpressionInputTitleLabel"
+                                    IsVisible="False"
+                                    Text="{localization:Translate Calculation.Expression.InputTitle}"
+                                    Style="{StaticResource SolverSectionTitleStyle}" />
+
+                                <!-- Chọn số nguyên hoặc số thập phân -->
+                                <Grid
+                                    x:Name="NumberTypeButtonsGrid"
+                                    ColumnDefinitions="*,*"
+                                    ColumnSpacing="10">
+
+                                    <Button
+                                        x:Name="IntegerTypeButton"
+                                        Grid.Column="0"
+                                        Text="{localization:Translate Numbers.Integer}"
+                                        Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                        BackgroundColor="{DynamicResource PrimaryColor}"
+                                        TextColor="{DynamicResource OnPrimaryColor}"
+                                        Clicked="OnIntegerTypeClicked" />
+
+                                    <Button
+                                        x:Name="DecimalTypeButton"
+                                        Grid.Column="1"
+                                        Text="{localization:Translate Numbers.Decimal}"
+                                        Style="{StaticResource SolverNumberTypeButtonStyle}"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        Clicked="OnDecimalTypeClicked" />
+
+                                </Grid>
+
+                                <!-- Hai ô nhập số -->
+                                <Grid
+                                    x:Name="NumberInputGrid"
+                                    ColumnDefinitions="{OnPlatform Android='*', WinUI='*,Auto,*', Default='*,Auto,*'}"
+                                    RowDefinitions="{OnPlatform Android='Auto,Auto,Auto,Auto,Auto', WinUI='Auto,Auto', Default='Auto,Auto'}"
+                                    ColumnSpacing="12"
+                                    RowSpacing="6">
+
+                                    <Label
+                                        x:Name="FirstNumberLabel"
+                                        Grid.Row="0"
+                                        Grid.Column="0"
+                                        Text="Số thứ nhất"
+                                        FontSize="16"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        x:Name="FirstNumberBorder"
+                                        Grid.Row="1"
+                                        Grid.Column="0"
+                                        HeightRequest="48"
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+
+                                        <Entry
+                                            x:Name="FirstNumberEntry"
+                                            Placeholder="Ví dụ: 25"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            Keyboard="Numeric"
+                                            FontSize="19"
+                                            VerticalTextAlignment="Center"
+                                            BackgroundColor="Transparent"
+                                            HorizontalOptions="Fill"
+                                            VerticalOptions="Fill"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            ClearButtonVisibility="WhileEditing"
+                                            TextChanged="OnNumberEntryTextChanged" />
+
+                                    </Border>
+
+                                    <Label
+                                        x:Name="OperatorLabel"
+                                        Grid.Row="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                        Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                        WidthRequest="{OnPlatform Android='36', WinUI='40', Default='40'}"
+                                        Text="+"
+                                        FontSize="27"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        VerticalTextAlignment="Center"
+                                        TextColor="{DynamicResource PrimaryColor}" />
+
+                                    <Label
+                                        x:Name="SecondNumberLabel"
+                                        Grid.Row="{OnPlatform Android=3, WinUI=0, Default=0}"
+                                        Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                                        Text="Số thứ hai"
+                                        FontSize="16"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                    <Border
+                                        x:Name="SecondNumberBorder"
+                                        Grid.Row="{OnPlatform Android=4, WinUI=1, Default=1}"
+                                        Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
+                                        HeightRequest="48"
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+
+                                        <Entry
+                                        x:Name="SecondNumberEntry"
+                                        Placeholder="Ví dụ: 15"
                                         PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                         Keyboard="Numeric"
                                         FontSize="19"
@@ -424,618 +477,569 @@
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         ClearButtonVisibility="WhileEditing"
                                         TextChanged="OnNumberEntryTextChanged" />
+                                    </Border>
+                                </Grid>
 
-                                </Border>
+                                <VerticalStackLayout
+                                    x:Name="ExpressionInputPanel"
+                                    IsVisible="False"
+                                    Spacing="10">
 
-                                <Label
-                                    x:Name="OperatorLabel"
-                                    Grid.Row="{OnPlatform Android=2, WinUI=1, Default=1}"
-                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                                    WidthRequest="{OnPlatform Android='36', WinUI='40', Default='40'}"
-                                    Text="+"
-                                    FontSize="27"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    VerticalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
-
-                                <Label
-                                    x:Name="SecondNumberLabel"
-                                    Grid.Row="{OnPlatform Android=3, WinUI=0, Default=0}"
-                                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
-                                    Text="Số thứ hai"
-                                    FontSize="16"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                <Border
-                                    x:Name="SecondNumberBorder"
-                                    Grid.Row="{OnPlatform Android=4, WinUI=1, Default=1}"
-                                    Grid.Column="{OnPlatform Android=0, WinUI=2, Default=2}"
-                                    HeightRequest="48"
-                                    Padding="10,0"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="10" />
-                                    </Border.StrokeShape>
-
-                                    <Entry
-                                    x:Name="SecondNumberEntry"
-                                    Placeholder="Ví dụ: 15"
-                                    PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                    Keyboard="Numeric"
-                                    FontSize="19"
-                                    VerticalTextAlignment="Center"
-                                    BackgroundColor="Transparent"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    ClearButtonVisibility="WhileEditing"
-                                    TextChanged="OnNumberEntryTextChanged" />
-                                </Border>
-                            </Grid>
-
-                            <VerticalStackLayout
-                                x:Name="ExpressionInputPanel"
-                                IsVisible="False"
-                                Spacing="10">
-
-                                <Label
-                                    Text="{localization:Translate Calculation.Expression.InputHelp}"
-                                    FontSize="15"
-                                    LineHeight="1.25"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                <Border
-                                    Padding="12,8"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                    StrokeThickness="1">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="12" />
-                                    </Border.StrokeShape>
-
-                                    <Editor
-                                        x:Name="ArithmeticExpressionEditor"
-                                        Placeholder="{localization:Translate Calculation.Expression.Placeholder}"
-                                        AutoSize="TextChanges"
-                                        MinimumHeightRequest="132"
-                                        FontSize="19"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                        BackgroundColor="Transparent"
-                                        Focused="OnArithmeticExpressionFocused"
-                                        Unfocused="OnArithmeticExpressionUnfocused"
-                                        TextChanged="OnArithmeticExpressionTextChanged" />
-                                </Border>
-
-                                <Border
-                                    Padding="12,10"
-                                    BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                    StrokeThickness="1">
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="10" />
-                                    </Border.StrokeShape>
                                     <Label
-                                        Text="{localization:Translate Calculation.Expression.PriorityHint}"
-                                        FontSize="14"
+                                        Text="{localization:Translate Calculation.Expression.InputHelp}"
+                                        FontSize="15"
                                         LineHeight="1.25"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                </Border>
-
-                            </VerticalStackLayout>
-
-                            <Grid
-                                Margin="0,8,0,0"
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="12">
-
-                                <Button
-                                    Grid.Column="0"
-                                    Text="{localization:Translate Actions.Calculate}"
-                                    Style="{StaticResource SolverPrimaryActionStyle}"
-                                    Clicked="OnCalculateClicked" />
-
-                                <Button
-                                    Grid.Column="1"
-                                    Text="{localization:Translate Actions.Clear}"
-                                    Style="{StaticResource SolverSecondaryActionStyle}"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    Clicked="OnClearClicked" />
-                            </Grid>
-                        </VerticalStackLayout>
-                    </Border>
-
-                    <!-- Thông báo lỗi -->
-                    <Border
-                    x:Name="ErrorBorder"
-                    IsVisible="False"
-                    Padding="14"
-                    BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
-                    Stroke="{DynamicResource DangerBorderBrush}"
-                    StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-                        <Grid
-                        ColumnDefinitions="Auto,*"
-                        ColumnSpacing="10">
-                            
-                            <Label
-                            Grid.Column="0"
-                            Text="❌"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource DangerColor}" />
-                            
-                            <Label
-                            Grid.Column="1"
-                            x:Name="ErrorLabel"
-                            FontSize="17"
-                            TextColor="{DynamicResource DangerColor}" />
-                        </Grid>
-
-                    </Border>
-
-                    <!-- Kết quả -->
-                    <Border
-                    x:Name="ResultBorder"
-                    IsVisible="False"
-                    Padding="14"
-                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                    StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="10">
-
-                            <Label
-                            Text="3. Kết quả"
-                            FontSize="19"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            <Label
-                            x:Name="ExpressionLabel"
-                            FontSize="23"
-                            FontAttributes="Bold"
-                            HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource PrimaryColor}" />
-
-                            <BoxView
-                            HeightRequest="1"
-                            BackgroundColor="{DynamicResource WallpaperDividerColor}" />
-
-                            <Label
-                            Text="Đáp số"
-                            FontSize="15"
-                            HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Label
-                            x:Name="ResultLabel"
-                            FontSize="32"
-                            FontAttributes="Bold"
-                            HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            <Grid HeightRequest="48">
-
-                                <controls:ResultCopyButton
-                                    x:Name="BasicCopyResultButton"
-                                    NormalTextKey="PowerRoot.CopyResult"
-                                    Text=""
-                                    HeightRequest="48"
-                                    CornerRadius="12"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    Clicked="OnBasicCopyResultClicked" />
-
-                                <HorizontalStackLayout
-                                    InputTransparent="True"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center"
-                                    Spacing="8">
-
-                                    <controls:ThemedCopyIcon
-                                        WidthRequest="20"
-                                        HeightRequest="20" />
-
-                                    <Label
-                                        Text="{Binding DisplayText, Source={x:Reference BasicCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        VerticalTextAlignment="Center" />
-
-                                </HorizontalStackLayout>
-
-                            </Grid>
-
-                            <!-- Chi tiết phép chia -->
-                            <Border
-                            x:Name="DivisionDetailBorder"
-                            IsVisible="False"
-                            Padding="12"
-                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                            Stroke="{DynamicResource PrimarySoftBrush}"
-                            StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="10" />
-                                </Border.StrokeShape>
-
-                                <VerticalStackLayout Spacing="8">
-
-                                    <Label
-                                    x:Name="DivisionTypeLabel"
-                                    FontSize="18"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource SuccessColor}" />
-
-                                    <Grid
-                                    ColumnDefinitions="*,*"
-                                    ColumnSpacing="10">
-                                        <!-- Thương -->
-                                        <Border
-                                        Grid.Column="0"
-                                        Padding="12"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                                        Stroke="{DynamicResource SuccessSoftBrush}"
-                                        StrokeThickness="1">
-
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="10" />
-                                            </Border.StrokeShape>
-
-                                            <VerticalStackLayout Spacing="4">
-
-                                                <Label
-                                                Text="Thương"
-                                                FontSize="16"
-                                                HorizontalTextAlignment="Center"
-                                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                                <Label
-                                                x:Name="QuotientLabel"
-                                                FontSize="30"
-                                                FontAttributes="Bold"
-                                                HorizontalTextAlignment="Center"
-                                                TextColor="{DynamicResource SuccessColor}" />
-
-                                            </VerticalStackLayout>
-
-                                        </Border>
-                                        <!-- Số dư -->
-                                        <Border
-                                        Grid.Column="1"
-                                        Padding="12"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                                        Stroke="{DynamicResource SuccessSoftBrush}"
-                                        StrokeThickness="1">
-
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="10" />
-                                            </Border.StrokeShape>
-
-                                            <VerticalStackLayout Spacing="4">
-
-                                                <Label
-                                        Text="Số dư"
-                                        FontSize="16"
-                                        HorizontalTextAlignment="Center"
                                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                                <Label
-                                        x:Name="RemainderLabel"
-                                        FontSize="30"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource WarningColor}" />
+                                    <Border
+                                        Padding="12,8"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
 
-                                            </VerticalStackLayout>
-                                        </Border>
-                                    </Grid>
+                                        <Editor
+                                            x:Name="ArithmeticExpressionEditor"
+                                            Placeholder="{localization:Translate Calculation.Expression.Placeholder}"
+                                            AutoSize="TextChanges"
+                                            MinimumHeightRequest="132"
+                                            FontSize="19"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            BackgroundColor="Transparent"
+                                            Focused="OnArithmeticExpressionFocused"
+                                            Unfocused="OnArithmeticExpressionUnfocused"
+                                            TextChanged="OnArithmeticExpressionTextChanged" />
+                                    </Border>
+
+                                    <Border
+                                        Padding="12,10"
+                                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <Label
+                                            Text="{localization:Translate Calculation.Expression.PriorityHint}"
+                                            FontSize="14"
+                                            LineHeight="1.25"
+                                            LineBreakMode="WordWrap"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    </Border>
+
                                 </VerticalStackLayout>
-                            </Border>
 
-                            <Border
-                            Padding="14"
-                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                            Stroke="{DynamicResource PrimarySoftBrush}"
-                            StrokeThickness="1">
+                                <Grid
+                                    Margin="0,8,0,0"
+                                    ColumnDefinitions="*,*"
+                                    ColumnSpacing="12">
 
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="14" />
-                                </Border.StrokeShape>
+                                    <Button
+                                        Grid.Column="0"
+                                        Text="{localization:Translate Actions.Calculate}"
+                                        Style="{StaticResource SolverPrimaryActionStyle}"
+                                        Clicked="OnCalculateClicked" />
 
-                                <VerticalStackLayout Spacing="14">
+                                    <Button
+                                        Grid.Column="1"
+                                        Text="{localization:Translate Actions.Clear}"
+                                        Style="{StaticResource SolverSecondaryActionStyle}"
+                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                        Clicked="OnClearClicked" />
+                                </Grid>
+                            </VerticalStackLayout>
+                        </Border>
 
-                                    <Label
-                                Text="Lời giải"
-                                FontSize="18"
+                        <!-- Thông báo lỗi -->
+                        <Border
+                        x:Name="ErrorBorder"
+                        IsVisible="False"
+                        Padding="14"
+                        BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
+                        Stroke="{DynamicResource DangerBorderBrush}"
+                        StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+                            <Grid
+                            ColumnDefinitions="Auto,*"
+                            ColumnSpacing="10">
+
+                                <Label
+                                Grid.Column="0"
+                                Text="❌"
+                                FontSize="22"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryDarkColor}" />
+                                TextColor="{DynamicResource DangerColor}" />
 
-                                    <Label
-                                x:Name="ExplanationLabel"
-                                FontSize="18"
-                                LineHeight="1.3"
+                                <Label
+                                Grid.Column="1"
+                                x:Name="ErrorLabel"
+                                FontSize="17"
+                                TextColor="{DynamicResource DangerColor}" />
+                            </Grid>
+
+                        </Border>
+
+                        <!-- Kết quả -->
+                        <Border
+                        x:Name="ResultBorder"
+                        IsVisible="False"
+                        Padding="14"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                        StrokeThickness="1">
+
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="14" />
+                            </Border.StrokeShape>
+
+                            <VerticalStackLayout Spacing="10">
+
+                                <Label
+                                Text="3. Kết quả"
+                                FontSize="19"
+                                FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                                </VerticalStackLayout>
-                            </Border>
+                                <Label
+                                x:Name="ExpressionLabel"
+                                FontSize="23"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource PrimaryColor}" />
 
-                            <!-- Đặt tính cộng / trừ / nhân. Tách biệt hoàn toàn với LongDivisionBorder. -->
-                            <Border
-                            x:Name="BasicArithmeticBorder"
-                            IsVisible="False"
-                            Padding="14"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1">
+                                <BoxView
+                                HeightRequest="1"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}" />
 
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
+                                <Label
+                                Text="Đáp số"
+                                FontSize="15"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                <VerticalStackLayout Spacing="10">
+                                <Label
+                                x:Name="ResultLabel"
+                                FontSize="32"
+                                FontAttributes="Bold"
+                                HorizontalTextAlignment="Center"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                                    <Label
-                                    x:Name="BasicArithmeticTitleLabel"
-                                    Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Title}"
-                                    FontSize="19"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Grid HeightRequest="48">
 
-                                    <Label
-                                    x:Name="BasicArithmeticSubtitleLabel"
-                                    Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Subtitle}"
-                                    FontSize="15"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    <controls:ResultCopyButton
+                                        x:Name="BasicCopyResultButton"
+                                        NormalTextKey="PowerRoot.CopyResult"
+                                        Text=""
+                                        HeightRequest="48"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                        Clicked="OnBasicCopyResultClicked" />
 
-                                    <Border
-                                        Padding="8"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperDividerBrush}"
-                                        StrokeThickness="1">
+                                    <HorizontalStackLayout
+                                        InputTransparent="True"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center"
+                                        Spacing="8">
 
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10" />
-                                        </Border.StrokeShape>
+                                        <controls:ThemedCopyIcon
+                                            WidthRequest="20"
+                                            HeightRequest="20" />
 
-                                        <ScrollView
-                                            x:Name="BasicArithmeticScrollView"
-                                            Orientation="Horizontal"
-                                            HorizontalScrollBarVisibility="Default">
-
-                                            <GraphicsView
-                                            x:Name="BasicArithmeticGraphicsView"
-                                            HeightRequest="180"
-                                            MinimumHeightRequest="150"
-                                            MinimumWidthRequest="280"
-                                            HorizontalOptions="Start"
-                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}" />
-
-                                        </ScrollView>
-
-                                    </Border>
-
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <!-- Phép chia đặt tính -->
-                            <Border
-                            x:Name="LongDivisionBorder"
-                            IsVisible="False"
-                            Padding="14"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-
-                                <VerticalStackLayout Spacing="10">
-
-                                    <Label
-                                    Text="Phép chia đặt tính"
-                                    FontSize="19"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                    <Label
-                                    Text="Các bước thực hiện phép chia theo cách trình bày ở tiểu học."
-                                    FontSize="15"
-                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                                    <!-- Chọn cách hiển thị riêng cho phép chia đặt tính -->
-                                    <Border
-                                    Padding="12"
-                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                    Stroke="{DynamicResource WallpaperDividerBrush}"
-                                    StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10" />
-                                        </Border.StrokeShape>
-
-                                        <VerticalStackLayout Spacing="10">
-
-                                            <Label
-                                            Text="Hiển thị phép chia"
-                                            FontSize="17"
+                                        <Label
+                                            Text="{Binding DisplayText, Source={x:Reference BasicCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                            FontSize="15"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            VerticalTextAlignment="Center" />
 
-                                            <Grid
-                                            ColumnDefinitions="*,*"
-                                            RowDefinitions="Auto,Auto"
-                                            ColumnSpacing="12"
-                                            RowSpacing="{OnPlatform Android=10, WinUI=0, Default=0}">
+                                    </HorizontalStackLayout>
 
-                                                <Border
-                                                x:Name="ElementaryDivisionModeBorder"
-                                                Grid.Row="0"
-                                                Grid.Column="0"
-                                                Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
-                                                Padding="12"
-                                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                                Stroke="{DynamicResource PrimaryBrush}"
-                                                StrokeThickness="1.5">
+                                </Grid>
 
-                                                    <Border.StrokeShape>
-                                                        <RoundRectangle CornerRadius="10" />
-                                                    </Border.StrokeShape>
+                                <!-- Chi tiết phép chia -->
+                                <Border
+                                x:Name="DivisionDetailBorder"
+                                IsVisible="False"
+                                Padding="12"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource PrimarySoftBrush}"
+                                StrokeThickness="1">
 
-                                                    <Grid
-                                                    ColumnDefinitions="Auto,*"
-                                                    ColumnSpacing="8">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="10" />
+                                    </Border.StrokeShape>
 
-                                                        <RadioButton
-                                                        x:Name="ElementaryDivisionModeRadioButton"
-                                                        Grid.Column="0"
-                                                        GroupName="LongDivisionDisplayMode"
-                                                        IsChecked="True"
-                                                        CheckedChanged="OnLongDivisionDisplayModeChanged"
-                                                        VerticalOptions="Start" />
+                                    <VerticalStackLayout Spacing="8">
 
-                                                        <VerticalStackLayout
-                                                        Grid.Column="1"
-                                                        Spacing="3">
+                                        <Label
+                                        x:Name="DivisionTypeLabel"
+                                        FontSize="18"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource SuccessColor}" />
 
-                                                            <Label
-                                                            Text="Theo chương trình Tiểu học"
-                                                            FontSize="16"
-                                                            FontAttributes="Bold"
-                                                            TextColor="{DynamicResource PrimaryColor}" />
+                                        <Grid
+                                        ColumnDefinitions="*,*"
+                                        ColumnSpacing="10">
+                                            <!-- Thương -->
+                                            <Border
+                                            Grid.Column="0"
+                                            Padding="12"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                            Stroke="{DynamicResource SuccessSoftBrush}"
+                                            StrokeThickness="1">
 
-                                                            <Label
-                                                            Text="Thương và số dư"
-                                                            FontSize="14"
-                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
 
-                                                        </VerticalStackLayout>
+                                                <VerticalStackLayout Spacing="4">
 
-                                                    </Grid>
+                                                    <Label
+                                                    Text="Thương"
+                                                    FontSize="16"
+                                                    HorizontalTextAlignment="Center"
+                                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                                </Border>
+                                                    <Label
+                                                    x:Name="QuotientLabel"
+                                                    FontSize="30"
+                                                    FontAttributes="Bold"
+                                                    HorizontalTextAlignment="Center"
+                                                    TextColor="{DynamicResource SuccessColor}" />
 
-                                                <Border
-                                                x:Name="DecimalDivisionModeBorder"
-                                                Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                                                Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                                                Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
-                                                Padding="12"
-                                                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                                StrokeThickness="1">
+                                                </VerticalStackLayout>
 
-                                                    <Border.StrokeShape>
-                                                        <RoundRectangle CornerRadius="10" />
-                                                    </Border.StrokeShape>
+                                            </Border>
+                                            <!-- Số dư -->
+                                            <Border
+                                            Grid.Column="1"
+                                            Padding="12"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                            Stroke="{DynamicResource SuccessSoftBrush}"
+                                            StrokeThickness="1">
 
-                                                    <Grid
-                                                    ColumnDefinitions="Auto,*"
-                                                    ColumnSpacing="8">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="10" />
+                                                </Border.StrokeShape>
 
-                                                        <RadioButton
-                                                        x:Name="DecimalDivisionModeRadioButton"
-                                                        Grid.Column="0"
-                                                        GroupName="LongDivisionDisplayMode"
-                                                        CheckedChanged="OnLongDivisionDisplayModeChanged"
-                                                        VerticalOptions="Start" />
+                                                <VerticalStackLayout Spacing="4">
 
-                                                        <VerticalStackLayout
-                                                        Grid.Column="1"
-                                                        Spacing="3">
+                                                    <Label
+                                            Text="Số dư"
+                                            FontSize="16"
+                                            HorizontalTextAlignment="Center"
+                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                                            <Label
-                                                            Text="Theo số thập phân"
-                                                            FontSize="16"
-                                                            FontAttributes="Bold"
-                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                                    <Label
+                                            x:Name="RemainderLabel"
+                                            FontSize="30"
+                                            FontAttributes="Bold"
+                                            HorizontalTextAlignment="Center"
+                                            TextColor="{DynamicResource WarningColor}" />
 
-                                                            <Label
-                                                            Text="Tiếp tục chia đến kết quả thập phân"
-                                                            FontSize="14"
-                                                            LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </Grid>
+                                    </VerticalStackLayout>
+                                </Border>
 
-                                                        </VerticalStackLayout>
+                                <Border
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource PrimarySoftBrush}"
+                                StrokeThickness="1">
 
-                                                    </Grid>
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="14" />
+                                    </Border.StrokeShape>
 
-                                                </Border>
+                                    <VerticalStackLayout Spacing="14">
 
-                                            </Grid>
-
-                                        </VerticalStackLayout>
-
-                                    </Border>
-
-                                    <Border
-                                        Padding="8"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperDividerBrush}"
-                                        StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10" />
-                                        </Border.StrokeShape>
-
-                                        <GraphicsView
-                                        x:Name="LongDivisionGraphicsView"
-                                        HeightRequest="620"
-                                        MinimumHeightRequest="180"
-                                        HorizontalOptions="Fill"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}" />
-
-                                    </Border>
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border
-                            x:Name="AdditionalBorder"    
-                            IsVisible="True"
-                            Padding="14"
-                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                            Stroke="{DynamicResource PrimarySoftBrush}"
-                            StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-
-                                <VerticalStackLayout Spacing="10">
-                                    <Label
-                                    Text="Thông tin thêm"
+                                        <Label
+                                    Text="Lời giải"
                                     FontSize="18"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource PrimaryDarkColor}" />
 
-                                    <Label
-                                        x:Name="AdditionalLabel"
+                                        <Label
+                                    x:Name="ExplanationLabel"
+                                    FontSize="18"
+                                    LineHeight="1.3"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <!-- Đặt tính cộng / trừ / nhân. Tách biệt hoàn toàn với LongDivisionBorder. -->
+                                <Border
+                                x:Name="BasicArithmeticBorder"
+                                IsVisible="False"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="10">
+
+                                        <Label
+                                        x:Name="BasicArithmeticTitleLabel"
+                                        Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Title}"
+                                        FontSize="19"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                        <Label
+                                        x:Name="BasicArithmeticSubtitleLabel"
+                                        Text="{localization:Translate Calculation.Arithmetic.Vertical.Generic.Subtitle}"
+                                        FontSize="15"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                        <Border
+                                            Padding="8"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                            Stroke="{DynamicResource WallpaperDividerBrush}"
+                                            StrokeThickness="1">
+
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
+
+                                            <ScrollView
+                                                x:Name="BasicArithmeticScrollView"
+                                                Orientation="Horizontal"
+                                                HorizontalScrollBarVisibility="Default">
+
+                                                <GraphicsView
+                                                x:Name="BasicArithmeticGraphicsView"
+                                                HeightRequest="180"
+                                                MinimumHeightRequest="150"
+                                                MinimumWidthRequest="280"
+                                                HorizontalOptions="Start"
+                                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}" />
+
+                                            </ScrollView>
+
+                                        </Border>
+
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <!-- Phép chia đặt tính -->
+                                <Border
+                                x:Name="LongDivisionBorder"
+                                IsVisible="False"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="10">
+
+                                        <Label
+                                        Text="Phép chia đặt tính"
+                                        FontSize="19"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                        <Label
+                                        Text="Các bước thực hiện phép chia theo cách trình bày ở tiểu học."
+                                        FontSize="15"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                        <!-- Chọn cách hiển thị riêng cho phép chia đặt tính -->
+                                        <Border
+                                        Padding="12"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperDividerBrush}"
+                                        StrokeThickness="1">
+
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
+
+                                            <VerticalStackLayout Spacing="10">
+
+                                                <Label
+                                                Text="Hiển thị phép chia"
+                                                FontSize="17"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                                <Grid
+                                                ColumnDefinitions="*,*"
+                                                RowDefinitions="Auto,Auto"
+                                                ColumnSpacing="12"
+                                                RowSpacing="{OnPlatform Android=10, WinUI=0, Default=0}">
+
+                                                    <Border
+                                                    x:Name="ElementaryDivisionModeBorder"
+                                                    Grid.Row="0"
+                                                    Grid.Column="0"
+                                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                                    Padding="12"
+                                                    BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                                    Stroke="{DynamicResource PrimaryBrush}"
+                                                    StrokeThickness="1.5">
+
+                                                        <Border.StrokeShape>
+                                                            <RoundRectangle CornerRadius="10" />
+                                                        </Border.StrokeShape>
+
+                                                        <Grid
+                                                        ColumnDefinitions="Auto,*"
+                                                        ColumnSpacing="8">
+
+                                                            <RadioButton
+                                                            x:Name="ElementaryDivisionModeRadioButton"
+                                                            Grid.Column="0"
+                                                            GroupName="LongDivisionDisplayMode"
+                                                            IsChecked="True"
+                                                            CheckedChanged="OnLongDivisionDisplayModeChanged"
+                                                            VerticalOptions="Start" />
+
+                                                            <VerticalStackLayout
+                                                            Grid.Column="1"
+                                                            Spacing="3">
+
+                                                                <Label
+                                                                Text="Theo chương trình Tiểu học"
+                                                                FontSize="16"
+                                                                FontAttributes="Bold"
+                                                                TextColor="{DynamicResource PrimaryColor}" />
+
+                                                                <Label
+                                                                Text="Thương và số dư"
+                                                                FontSize="14"
+                                                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                                            </VerticalStackLayout>
+
+                                                        </Grid>
+
+                                                    </Border>
+
+                                                    <Border
+                                                    x:Name="DecimalDivisionModeBorder"
+                                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                                    Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
+                                                    Padding="12"
+                                                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                                    StrokeThickness="1">
+
+                                                        <Border.StrokeShape>
+                                                            <RoundRectangle CornerRadius="10" />
+                                                        </Border.StrokeShape>
+
+                                                        <Grid
+                                                        ColumnDefinitions="Auto,*"
+                                                        ColumnSpacing="8">
+
+                                                            <RadioButton
+                                                            x:Name="DecimalDivisionModeRadioButton"
+                                                            Grid.Column="0"
+                                                            GroupName="LongDivisionDisplayMode"
+                                                            CheckedChanged="OnLongDivisionDisplayModeChanged"
+                                                            VerticalOptions="Start" />
+
+                                                            <VerticalStackLayout
+                                                            Grid.Column="1"
+                                                            Spacing="3">
+
+                                                                <Label
+                                                                Text="Theo số thập phân"
+                                                                FontSize="16"
+                                                                FontAttributes="Bold"
+                                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                                                <Label
+                                                                Text="Tiếp tục chia đến kết quả thập phân"
+                                                                FontSize="14"
+                                                                LineBreakMode="WordWrap"
+                                                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                                                            </VerticalStackLayout>
+
+                                                        </Grid>
+
+                                                    </Border>
+
+                                                </Grid>
+
+                                            </VerticalStackLayout>
+
+                                        </Border>
+
+                                        <Border
+                                            Padding="8"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                            Stroke="{DynamicResource WallpaperDividerBrush}"
+                                            StrokeThickness="1">
+
+                                            <Border.StrokeShape>
+                                                <RoundRectangle CornerRadius="10" />
+                                            </Border.StrokeShape>
+
+                                            <GraphicsView
+                                            x:Name="LongDivisionGraphicsView"
+                                            HeightRequest="620"
+                                            MinimumHeightRequest="180"
+                                            HorizontalOptions="Fill"
+                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}" />
+
+                                        </Border>
+                                    </VerticalStackLayout>
+                                </Border>
+
+                                <Border
+                                x:Name="AdditionalBorder"
+                                IsVisible="True"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource PrimarySoftBrush}"
+                                StrokeThickness="1">
+                                    <Border.StrokeShape>
+                                        <RoundRectangle CornerRadius="12" />
+                                    </Border.StrokeShape>
+
+                                    <VerticalStackLayout Spacing="10">
+                                        <Label
+                                        Text="Thông tin thêm"
                                         FontSize="18"
-                                        LineHeight="1.3"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"/>
-                                </VerticalStackLayout>
-                            </Border>
-                        </VerticalStackLayout>
-                    </Border>
-</VerticalStackLayout>
-            </ScrollView>
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource PrimaryDarkColor}" />
+
+                                        <Label
+                                            x:Name="AdditionalLabel"
+                                            FontSize="18"
+                                            LineHeight="1.3"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"/>
+                                    </VerticalStackLayout>
+                                </Border>
+                            </VerticalStackLayout>
+                        </Border>
+    </VerticalStackLayout>
+                </ScrollView>
+            </Grid>
             <!-- Tab trung bình cộng -->
             <Grid
                 x:Name="AverageTabContent"
