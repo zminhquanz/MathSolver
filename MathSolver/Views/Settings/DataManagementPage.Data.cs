@@ -54,7 +54,7 @@ public partial class DataManagementPage
         SaveNewSqlRowButton.IsEnabled = CancelNewSqlRowButton.IsEnabled = CloseSqlCellButton.IsEnabled = idle;
         SaveNewSqlRowButton.IsVisible = CancelNewSqlRowButton.IsVisible = inserting;
         QueryCellEditor.IsEnabled = idle;
-        InquiryToggleButton.Text = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
+        InquiryToggleButton.Caption = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
         UpdateSqlEditHint();
     }
 
@@ -82,7 +82,7 @@ public partial class DataManagementPage
 
     private void RefreshSqlHelp()
     {
-        SqlHelpToggleButton.Text = T(SqlHelpPanel.IsVisible ? "SqlHelpHide" : "SqlHelpShow");
+        SqlHelpToggleButton.Caption = T(SqlHelpPanel.IsVisible ? "SqlHelpHide" : "SqlHelpShow");
         SqlHelpBodyLabel.Text = T(_sqlHelpTopic);
         foreach (var button in SqlHelpTopics.Children.OfType<Button>())
         {
@@ -90,7 +90,7 @@ public partial class DataManagementPage
             button.SetDynamicResource(Button.BackgroundColorProperty, selected ? "PrimarySoftColor" : "SurfaceAltColor");
             button.SetDynamicResource(Button.BorderColorProperty, selected ? "PrimaryColor" : "BorderColor");
             button.SetDynamicResource(Button.TextColorProperty, selected ? "PrimaryColor" : "TextPrimaryColor");
-            SemanticProperties.SetDescription(button, button.Text);
+            SemanticProperties.SetDescription(button, button is EmojiActionButton action ? action.Caption : button.Text);
             SemanticProperties.SetHint(button, selected ? T("SqlHelpSelected") : "");
         }
     }
@@ -98,7 +98,7 @@ public partial class DataManagementPage
     private void OnToggleInquiryClicked(object? sender, EventArgs e)
     {
         InquiryPanel.IsVisible = !InquiryPanel.IsVisible;
-        InquiryToggleButton.Text = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
+        InquiryToggleButton.Caption = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
     }
 
     private void OnCancelDataClicked(object? sender, EventArgs e) => _dataCancellation?.Cancel();
@@ -289,7 +289,8 @@ public partial class DataManagementPage
     {
         if (_selectedSqlCell is { } cell)
             QueryCellTitleLabel.Text = string.Format(CultureInfo.CurrentCulture, T("SqlCellTitle"), cell.RowNumber, cell.ColumnName);
-        CopySqlCellButton.Text = T("CopySqlCell");
+        CopySqlCellButton.Caption = T("CopySqlCell");
+        CopySqlCellButton.Emoji = "\U0001F4CB";
         QueryResultsTable.UpdateInsertLabels(T("GridNull"), T("GridAutoKey"));
         UpdateSqlEditHint();
     }
@@ -300,7 +301,11 @@ public partial class DataManagementPage
         try
         {
             await Clipboard.Default.SetTextAsync(QueryCellEditor.Text ?? "");
-            if (ReferenceEquals(cell, _selectedSqlCell)) CopySqlCellButton.Text = T("SqlCellCopied");
+            if (ReferenceEquals(cell, _selectedSqlCell))
+            {
+                CopySqlCellButton.Caption = T("SqlCellCopied");
+                CopySqlCellButton.Emoji = "\u2705";
+            }
         }
         catch (Exception error) { await ShowErrorAsync(error); }
     }

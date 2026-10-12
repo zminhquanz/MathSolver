@@ -32,6 +32,9 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
         var question = request.Kind switch
         {
             _ when request.IsComparison => _elementary.GenerateComparison(mode, request.Kind, language, curriculum.Tier),
+            QuizProblemKind.Measurement when ElementaryQuizGenerator.SupportsMeasurementPractice(request.ElementaryType)
+                && format == PracticeQuestionFormat.Numeric
+                => _elementary.GenerateMeasurementPractice(mode, request.ElementaryType!.Value, language, curriculum.Tier),
             QuizProblemKind.Decimal when request.ElementaryType is (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
                 or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide) && format != PracticeQuestionFormat.Mixed
                 => _elementary.GenerateDecimalArithmetic(mode, request.ElementaryType.Value, language, curriculum.Tier, format == PracticeQuestionFormat.WordProblem),
@@ -86,7 +89,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             || question.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
             || question.ElementaryProblem is { Kind: QuizProblemKind.Time } time && ElementaryQuizGenerator.TimeStoryTypes.Contains(time.Type)
             || question.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fraction && ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fraction.Type)
-            || question.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurement && ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurement.Type))
+            || question.ElementaryProblem is { Kind: QuizProblemKind.Measurement, IsNumericMeasurementConversion: false } measurement && ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurement.Type))
             question = await practice.SelectReasoningAsync(question, curriculum.Tier, language, cancellation);
         cancellation.ThrowIfCancellationRequested();
         return question;

@@ -13,7 +13,8 @@ public sealed record QuizWorksheetSettings(
     bool ArithmeticWords = false,
     bool FindXWords = false,
     bool FractionWords = false,
-    bool DecimalWords = false)
+    bool DecimalWords = false,
+    bool MeasurementWords = false)
 {
     public QuizProblemKind? Kind => Request?.Kind;
     public bool UsesWords => Kind switch
@@ -22,6 +23,7 @@ public sealed record QuizWorksheetSettings(
         QuizProblemKind.FindX => FindXWords,
         QuizProblemKind.Fraction => FractionWords,
         QuizProblemKind.Decimal => DecimalWords,
+        QuizProblemKind.Measurement => MeasurementWords,
         _ => false
     };
     public string FormatPrefix => Kind switch
@@ -30,13 +32,15 @@ public sealed record QuizWorksheetSettings(
         QuizProblemKind.FindX => "FindXPractice",
         QuizProblemKind.Fraction => "FractionBank",
         QuizProblemKind.Decimal => "DecimalPractice",
+        QuizProblemKind.Measurement => "MeasurementPractice",
         _ => ""
     };
     public bool CanChooseFormat => Kind == QuizProblemKind.FindX
         || Kind is (QuizProblemKind.Arithmetic or QuizProblemKind.Fraction) && Request?.IsComparison != true
         || Kind == QuizProblemKind.Decimal && Request?.ElementaryType is (ElementaryQuizType.DecimalAdd
-            or ElementaryQuizType.DecimalSubtract or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide);
-    public bool CanChooseGroup => CanChooseFormat && Kind != QuizProblemKind.Decimal && UsesWords;
+            or ElementaryQuizType.DecimalSubtract or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)
+        || Kind == QuizProblemKind.Measurement && ElementaryQuizGenerator.SupportsMeasurementPractice(Request?.ElementaryType);
+    public bool CanChooseGroup => CanChooseFormat && Kind is not (QuizProblemKind.Decimal or QuizProblemKind.Measurement) && UsesWords;
 
     public QuizWorksheetSettings SelectProblem(int index) => this with
     { ProblemIndex = index, Request = new QuizProblemTypeCatalog().GetFixedRequest(index) };
@@ -47,6 +51,7 @@ public sealed record QuizWorksheetSettings(
         QuizProblemKind.FindX => this with { FindXWords = words },
         QuizProblemKind.Fraction => this with { FractionWords = words },
         QuizProblemKind.Decimal => this with { DecimalWords = words },
+        QuizProblemKind.Measurement => this with { MeasurementWords = words },
         _ => this
     };
 

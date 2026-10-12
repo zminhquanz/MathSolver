@@ -65,6 +65,34 @@ public partial class MultiplicationTablePage : ContentPage
         radio.IsChecked = true;
     }
 
+    private void OnRangeRadioPointerEntered(object? sender, PointerEventArgs e) =>
+        FadeRangeRadioHover(sender, hovered: true);
+
+    private void OnRangeRadioPointerExited(object? sender, PointerEventArgs e) =>
+        FadeRangeRadioHover(sender, hovered: false);
+
+    private static void FadeRangeRadioHover(object? sender, bool hovered)
+    {
+        if (sender is not Grid surface ||
+            surface.FindByName<Microsoft.Maui.Controls.Shapes.Ellipse>("HoverVisual") is not { } halo ||
+            halo.Handler?.PlatformView is null)
+            return;
+
+        halo.CancelAnimations();
+        // Match the 120 ms fade and 12% accent layer used by transparent buttons.
+        _ = halo.FadeToAsync(hovered && surface.IsEnabled ? 0.12 : 0, 120, Easing.CubicOut);
+    }
+
+    private void OnRangeRadioFeedbackReset(object? sender, EventArgs e)
+    {
+        if (sender is not Grid surface ||
+            surface.FindByName<Microsoft.Maui.Controls.Shapes.Ellipse>("HoverVisual") is not { } halo)
+            return;
+
+        halo.CancelAnimations();
+        if (halo.Handler?.PlatformView is not null) halo.Opacity = 0;
+    }
+
     public MultiplicationTablePage()
     {
         InitializeComponent();

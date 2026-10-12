@@ -1767,6 +1767,9 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key": "MeasurementPractice.Mode", "source": "Cách luyện đổi đơn vị", "mode": "exact"},
+    {"key": "MeasurementPractice.Numeric", "source": "Luyện đổi đơn vị", "mode": "exact"},
+    {"key": "MeasurementPractice.Hint", "source": "Luyện quy đổi trực tiếp, ví dụ 1 m = ? mm, hoặc chọn bài toán có lời văn.", "mode": "exact"},
     {"key": "Quiz.TablePieAnswerInputHint", "source": "Chỉ cần nhập kết quả, không bắt buộc ghi đơn vị. Nếu ghi thêm đơn vị, hãy dùng đúng đơn vị đề bài yêu cầu. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},
     {"key": "Quiz.TablePieAnswerInputPlaceholder", "source": "Nhập kết quả, có hoặc không có đơn vị", "mode": "exact"},
     {"key": "Quiz.MissingSideInputHint", "source": "Chỉ cần nhập độ dài cạnh còn thiếu, có hoặc không có đơn vị, ví dụ: 3, 3m hoặc 3 m. Nếu ghi thêm đơn vị, hãy dùng đúng đơn vị đề bài yêu cầu. Có thể ghi thêm lời giải, phép tính và đáp số nếu muốn.", "mode": "exact"},

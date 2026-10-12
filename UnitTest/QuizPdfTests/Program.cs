@@ -111,6 +111,7 @@ File.WriteAllText(Path.Combine(directory, "cases.json"), JsonSerializer.Serializ
 await CalculationSolutionTests.Run(factory, directory);
 await FactSummaryTests.Run(factory, directory);
 await WorksheetSettingsTests.Run(factory);
+await MeasurementPracticeTests.Run(directory);
 await MixedKnowledgeGroupsTests.Run(directory);
 FractionOperandLayoutTests.Run(directory);
 Console.WriteLine($"PASS {cases} family/star/language/mode cases + {subtypeCases} elementary subtype/language/mode cases; {visualItems.Count} essential drawings. A4 PDF parsing, choices, masked data, vector diagrams, embedded fonts, frozen 20-question batch, count limits, bounded deduplication and cancellation. Output: {directory}");

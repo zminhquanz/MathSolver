@@ -67,6 +67,16 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     public int? RoundingDecimalPlaces { get; init; }
     public bool RequiresCalculation { get; init; } = true;
 
+    public bool IsNumericMeasurementConversion => Kind == QuizProblemKind.Measurement
+        && StoryContextId is null && Reasoning?.ScenarioId == "numeric-unit-conversion";
+
+    public string FormatMeasurementConversion(string rightHandSide)
+    {
+        if (!IsNumericMeasurementConversion)
+            throw new InvalidOperationException("Expected direct unit-conversion practice.");
+        return $"{Facts[0]} {Reasoning!.Givens[0].Unit} = {rightHandSide}";
+    }
+
     public bool IsDecimalArithmetic => Kind == QuizProblemKind.Decimal && Type is
         ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract or
         ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide;

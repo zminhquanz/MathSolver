@@ -6,6 +6,9 @@
   "author": "Your name",
   "appVersion": "0.2.0",
   "strings": {
+    "MeasurementPractice.Mode": "Cách luyện đổi đơn vị",
+    "MeasurementPractice.Numeric": "Luyện đổi đơn vị",
+    "MeasurementPractice.Hint": "Luyện quy đổi trực tiếp, ví dụ 1 m = ? mm, hoặc chọn bài toán có lời văn.",
     "Quiz.ProtractorInputHint": "Nhập số đo góc kèm chữ độ, ví dụ: 90 độ hoặc 180 độ. Không cần gõ ký hiệu °.",
     "Quiz.ProtractorInputPlaceholder": "Ví dụ: 90 độ",
     "Quiz.ThermometerInputHint": "Nhập nhiệt độ kèm đơn vị độ C, ví dụ: 34 độ C. Không cần gõ ký hiệu °.",

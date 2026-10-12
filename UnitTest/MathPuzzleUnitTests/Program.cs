@@ -53,6 +53,7 @@ var tests = new (string Name, Action Run)[]
     ("Keyboard protractor degree input", PuzzleTests.CheckProtractorInput),
     ("Direct mixed measurement answer input", PuzzleTests.CheckMixedMeasurementInput),
     ("Direct measurement conversion and map scale input", PuzzleTests.CheckMeasurementResultInput),
+    ("Numeric measurement practice", PuzzleTests.CheckMeasurementPractice),
     ("Direct clock hour and minute input", PuzzleTests.CheckDirectClockInput),
     ("Direct elapsed time conversion and calendar input", PuzzleTests.CheckTimeResultInput),
     ("Indirect average solution steps", PuzzleTests.CheckAverageIndirectSteps),

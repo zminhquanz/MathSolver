@@ -22,7 +22,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Decimal } decimalProblem
             && (!decimalProblem.IsDecimalArithmetic || decimalProblem.StoryContextId is null)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurementProblem
-            && !ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurementProblem.Type)) return generated;
+            && (measurementProblem.IsNumericMeasurementConversion || !ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurementProblem.Type))) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Time } timeProblem
             && !ElementaryQuizGenerator.TimeStoryTypes.Contains(timeProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionProblem

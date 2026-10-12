@@ -27,7 +27,7 @@
         <Setter Property="BackgroundColor" Value="{DynamicResource DividerColor}" />
     </Style>
 
-    <Style TargetType="Button">
+    <Style x:Key="AppButtonBaseStyle" TargetType="Button">
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="TextColor" Value="{DynamicResource OnPrimaryColor}" />
@@ -54,6 +54,8 @@
             </VisualStateGroupList>
         </Setter>
     </Style>
+
+    <Style TargetType="Button" BasedOn="{StaticResource AppButtonBaseStyle}" />
 
     <Style x:Key="PlatformBackButtonStyle" TargetType="Button">
         <Setter Property="WidthRequest" Value="{OnPlatform Android=48, WinUI=40, Default=40}" />

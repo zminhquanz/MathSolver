@@ -73,10 +73,20 @@
         -->
         <ControlTemplate x:Key="TimesTableRangeRadioTemplate">
             <Grid
-                WidthRequest="24"
-                HeightRequest="24"
+                WidthRequest="48"
+                HeightRequest="48"
+                BackgroundColor="Transparent"
+                IsEnabled="{Binding IsEnabled, Source={RelativeSource TemplatedParent}, x:DataType='RadioButton'}"
+                Loaded="OnRangeRadioFeedbackReset"
+                Unloaded="OnRangeRadioFeedbackReset"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
+
+                <Grid.GestureRecognizers>
+                    <PointerGestureRecognizer
+                        PointerEntered="OnRangeRadioPointerEntered"
+                        PointerExited="OnRangeRadioPointerExited" />
+                </Grid.GestureRecognizers>
 
                 <VisualStateManager.VisualStateGroups>
                     <VisualStateGroupList>
@@ -102,6 +112,17 @@
                     </VisualStateGroupList>
                 </VisualStateManager.VisualStateGroups>
 
+                <!-- Separate hover layer: selection and theme bindings stay intact. -->
+                <Ellipse
+                    x:Name="HoverVisual"
+                    WidthRequest="32"
+                    HeightRequest="32"
+                    HorizontalOptions="Center"
+                    VerticalOptions="Center"
+                    Fill="{DynamicResource PrimaryColor}"
+                    Opacity="0"
+                    InputTransparent="True" />
+
                 <Ellipse
                     WidthRequest="20"
                     HeightRequest="20"
@@ -109,7 +130,8 @@
                     VerticalOptions="Center"
                     Fill="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderColor}"
-                    StrokeThickness="2" />
+                    StrokeThickness="2"
+                    InputTransparent="True" />
 
                 <Grid
                     x:Name="CheckedVisual"

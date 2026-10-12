@@ -16,6 +16,7 @@ public partial class DataManagementPage : ContentPage
     public DataManagementPage()
     {
         InitializeComponent();
+        ConfigureActionIcons();
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         QueryEditor.Text = QuestionBankStore.DefaultInquiry;
     }

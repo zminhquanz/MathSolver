@@ -35,7 +35,7 @@ public partial class MathPuzzlePage
             }
             var settings = new QuizWorksheetSettings(OperationPicker.SelectedIndex, selected, GetCurriculumContext().Tier,
                 AppLanguageManager.CurrentLanguage, _learningGroup, _arithmeticWordProblems, _findXWordProblems,
-                _fractionWordProblems, _decimalWordProblems);
+                _fractionWordProblems, _decimalWordProblems, _measurementWordProblems);
             await Navigation.PushAsync(new QuizPdfPage(settings, new PracticeQuestionFactory(AiQuestionBank.Current.Practice)));
         }
         catch (Exception error)

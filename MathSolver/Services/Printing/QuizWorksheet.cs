@@ -87,6 +87,7 @@ public static class QuizWorksheetBuilder
                 ?? q.FractionProblem?.PresentedAnswer?.ToString() ?? q.PresentedAnswer?.ToString() ?? throw new InvalidOperationException("MissingPrintedAssertion");
             if (e?.IsComparison == true) assertion = e.FormatComparison(assertion);
             if (e?.IsNumericDecimalCalculation == true) assertion = e.FormatDecimalCalculation(assertion);
+            if (e?.IsNumericMeasurementConversion == true) assertion = e.FormatMeasurementConversion(assertion);
             if (e is null)
                 assertion = q.WordProblem is not null || q.GeometryProblem is not null || q.ProportionProblem is not null
                     || q.MotionProblem is not null || q.AverageProblem is not null || q.PercentageProblem is not null

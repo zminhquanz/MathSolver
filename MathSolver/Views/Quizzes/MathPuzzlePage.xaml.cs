@@ -1298,9 +1298,10 @@ public partial class MathPuzzlePage : ContentPage
             || kind == QuizProblemKind.Fraction && !_selectedFractionComparison
             || kind == QuizProblemKind.Decimal && _selectedElementaryType is
                 (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
-                or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide);
+                or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)
+            || kind == QuizProblemKind.Measurement && ElementaryQuizGenerator.SupportsMeasurementPractice(_selectedElementaryType);
         RefreshPracticeFormatPicker(kind);
-        LearningProfilePanel.IsVisible = PracticeFormatPanel.IsVisible && kind != QuizProblemKind.Decimal && UsesWordProblems(kind);
+        LearningProfilePanel.IsVisible = PracticeFormatPanel.IsVisible && kind is not (QuizProblemKind.Decimal or QuizProblemKind.Measurement) && UsesWordProblems(kind);
         ProportionTypePanel.IsVisible = showProportionType;
         AverageTypePanel.IsVisible = showAverageType;
         PercentageTypePanel.IsVisible = showPercentageType;
@@ -1834,6 +1835,15 @@ public partial class MathPuzzlePage : ContentPage
                     NumericResultLabel.Text = comparisonText;
                     NumericResultLabel.IsVisible = true;
                 }
+                PresentedAnswerLabel.IsVisible = false;
+                PresentedAnswerLabel.Text = string.Empty;
+            }
+            else if (wordProblem is null && elementary.IsNumericMeasurementConversion)
+            {
+                string displayedAnswer = _currentQuestion.Mode == ArithmeticQuizMode.TrueFalse
+                    ? elementary.PresentedText ?? "" : $"? {elementary.Answers[0].Unit}";
+                SetQuestionContent(elementary.FormatMeasurementConversion(displayedAnswer), 34,
+                    "PrimaryColor", useFractionFormatting: false);
                 PresentedAnswerLabel.IsVisible = false;
                 PresentedAnswerLabel.Text = string.Empty;
             }

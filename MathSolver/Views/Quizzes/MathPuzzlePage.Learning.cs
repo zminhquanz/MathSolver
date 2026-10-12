@@ -12,6 +12,7 @@ public partial class MathPuzzlePage
     private bool _findXWordProblems;
     private bool _fractionWordProblems;
     private bool _decimalWordProblems;
+    private bool _measurementWordProblems;
     private QuestionKnowledgeGroup _learningGroup = QuestionKnowledgeGroup.Objects;
     private QuestionKnowledgeGroup[] _learningGroups = [];
     private QuestionLearningProfile CurrentLearningProfile => new(_learningGroup);
@@ -41,10 +42,12 @@ public partial class MathPuzzlePage
         QuizProblemKind.FindX => _findXWordProblems,
         QuizProblemKind.Fraction => _fractionWordProblems,
         QuizProblemKind.Decimal => _decimalWordProblems,
+        QuizProblemKind.Measurement => _measurementWordProblems,
         _ => false
     };
     private PracticeQuestionFormat GetPracticeFormat(QuizProblemKind kind) =>
         GetSelectedFixedProblemRequest()?.Kind == kind
+            && (kind != QuizProblemKind.Measurement || ElementaryQuizGenerator.SupportsMeasurementPractice(_selectedElementaryType))
             ? UsesWordProblems(kind) ? PracticeQuestionFormat.WordProblem : PracticeQuestionFormat.Numeric
             : PracticeQuestionFormat.Mixed;
     private void RefreshPracticeFormatPicker(QuizProblemKind? kind)
@@ -55,6 +58,7 @@ public partial class MathPuzzlePage
             QuizProblemKind.FindX => "FindXPractice",
             QuizProblemKind.Fraction => "FractionBank",
             QuizProblemKind.Decimal => "DecimalPractice",
+            QuizProblemKind.Measurement => "MeasurementPractice",
             _ => ""
         };
         if (prefix.Length == 0) return;
@@ -81,6 +85,7 @@ public partial class MathPuzzlePage
             case QuizProblemKind.FindX: _findXWordProblems = wordProblems; break;
             case QuizProblemKind.Fraction: _fractionWordProblems = wordProblems; break;
             case QuizProblemKind.Decimal: _decimalWordProblems = wordProblems; break;
+            case QuizProblemKind.Measurement: _measurementWordProblems = wordProblems; break;
             default: return;
         }
         RegenerateLearningQuestion();
