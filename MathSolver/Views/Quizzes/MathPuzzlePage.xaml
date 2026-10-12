@@ -24,24 +24,20 @@
 
     <Grid
         x:Name="MathPuzzlePageContentRoot"
-        RowDefinitions="*">
+        RowDefinitions="Auto,*">
 
         <controls:LiveWallpaperView
-            x:Name="LiveWallpaper" />
+            x:Name="LiveWallpaper"
+            Grid.RowSpan="2" />
 
-        <ScrollView
-            x:Name="MathPuzzleScrollView"
-            SizeChanged="OnPracticeViewportSizeChanged"
-            Grid.Row="0"
-            HorizontalOptions="Fill"
-            VerticalOptions="Fill">
-
+                <!-- Keep the status, actions and title outside the scrolling content. -->
                 <VerticalStackLayout
-                    x:Name="QuizContent"
-                    Padding="{OnPlatform Android='12,10,12,20', WinUI='20,12,20,28', Default='20,12,20,28'}"
+                    x:Name="PracticeHeader"
+                    Grid.Row="0"
+                    Padding="{OnPlatform Android='12,10,12,10', WinUI='20,12,20,14', Default='20,12,20,14'}"
                     Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
                     MaximumWidthRequest="1320"
-                    WidthRequest="{Binding Source={x:Reference MathPuzzleScrollView}, Path=Width, x:DataType='ScrollView'}"
+                    WidthRequest="{Binding Source={x:Reference MathPuzzlePageContentRoot}, Path=Width, x:DataType='Grid'}"
                     HorizontalOptions="Center">
 
                     <Border Style="{StaticResource SolverCardStyle}" Padding="12,6">
@@ -105,6 +101,23 @@
                             Style="{StaticResource SolverHeroSubtitleStyle}" />
 
                     </VerticalStackLayout>
+
+                </VerticalStackLayout>
+
+        <ScrollView
+            x:Name="MathPuzzleScrollView"
+            SizeChanged="OnPracticeViewportSizeChanged"
+            Grid.Row="1"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill">
+
+                <VerticalStackLayout
+                    x:Name="QuizContent"
+                    Padding="{OnPlatform Android='12,0,12,20', WinUI='20,0,20,28', Default='20,0,20,28'}"
+                    Spacing="{OnPlatform Android=10, WinUI=14, Default=14}"
+                    MaximumWidthRequest="1320"
+                    WidthRequest="{Binding Source={x:Reference MathPuzzleScrollView}, Path=Width, x:DataType='ScrollView'}"
+                    HorizontalOptions="Center">
 
                     <VerticalStackLayout x:Name="PracticeSettingsPanel" Spacing="14" HorizontalOptions="Fill">
                     <Border Style="{StaticResource SolverCardStyle}">
