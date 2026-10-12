@@ -59,7 +59,7 @@ internal static class FactSummaryTests
             var sheet = new QuizWorksheet("FACTS", "Survey practice", "Data", language, CurriculumTier.OneStar,
                 ArithmeticQuizMode.Essay, [printed, printed]);
             byte[] bytes = QuizPdfWriter.Write(sheet, false);
-            string text = CalculationSolutionTests.ExtractText(bytes);
+            string text = PdfTestReader.ExtractText(bytes);
             foreach (var row in story.WordProblem!.FactTable!.Rows)
                 Check(!text.Contains(row.Label + ":"), "PDF still prints a redundant fact summary.");
             Check(text.Contains(printed.Prompt), "PDF lost the survey question.");
@@ -72,7 +72,7 @@ internal static class FactSummaryTests
             var sportsItem = QuizWorksheetBuilder.Format(sportsQuestion, language);
             dataStories.Insert(0, sportsItem);
             bytes = QuizPdfWriter.Write(sheet with { Questions = dataStories }, false);
-            text = CalculationSolutionTests.ExtractText(bytes);
+            text = PdfTestReader.ExtractText(bytes);
             Check(sportsItem.Prompt.Contains("8 ") && sportsItem.Prompt.Contains("1 ") && text.Contains(sportsItem.Prompt),
                 "Sports survey lost its question or given values.");
             foreach (var item in dataStories)
@@ -86,7 +86,7 @@ internal static class FactSummaryTests
             var tableQuestion = story with { WordProblem = story.WordProblem with { FactTable = required } };
             var tableItem = QuizWorksheetBuilder.Format(tableQuestion, language);
             Check(tableItem.Table == required, "Required fact table removed from preview.");
-            text = CalculationSolutionTests.ExtractText(QuizPdfWriter.Write(sheet with { Questions = [tableItem, printed] }, false));
+            text = PdfTestReader.ExtractText(QuizPdfWriter.Write(sheet with { Questions = [tableItem, printed] }, false));
             Check(text.Contains("Required table row: 17"), "Required table omitted from PDF.");
 
             var visualItems = new List<QuizPrintItem>();
@@ -103,7 +103,7 @@ internal static class FactSummaryTests
             }
             bytes = QuizPdfWriter.Write(sheet with { Questions = visualItems }, false);
             File.WriteAllBytes(Path.Combine(directory, $"required-tables-and-charts-{language}.pdf"), bytes);
-            Check(bytes.Length > 10000, "Essential table/chart PDF lost its content.");
+            PdfAssertions.HasEmbeddedText(bytes);
         }
         Check(QuestionLearningProfile.Groups().All(group => groups.Contains(group)), "A selectable knowledge group was not audited.");
         Console.WriteLine($"PASS fact summary printing: {cases} catalogue cases across all knowledge groups (including legacy groups), supported stars and both languages; every data scene exported without repeated facts, required tables and eight chart types retained.");
@@ -121,6 +121,4 @@ internal static class FactSummaryTests
         Check(printed.Identity == withoutSummary.Identity && printed.Answer == withoutSummary.Answer && printed.Solution == withoutSummary.Solution,
             "Hidden summaries change worksheet deduplication, answers or solutions.");
     }
-
-    private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 }

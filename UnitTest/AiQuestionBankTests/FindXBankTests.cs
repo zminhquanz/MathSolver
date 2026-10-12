@@ -7,8 +7,6 @@ using SQLite;
 
 internal static class FindXBankTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory)
     {

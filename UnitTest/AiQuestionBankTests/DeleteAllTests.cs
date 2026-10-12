@@ -5,8 +5,6 @@ using SQLite;
 
 internal static class DeleteAllTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory)
     {

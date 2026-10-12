@@ -5,12 +5,11 @@ using MathSolver.Services.QuestionBank;
 
 internal static class LearningProfileTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory)
     {
         int checkedQuestions = 0;
+        var checkedProse = new HashSet<string>(StringComparer.Ordinal);
         var math = new BasicArithmeticEngine();
         var quizValidator = new ArithmeticQuizValidator(math);
         var essay = new EssayAnswerValidator(math);
@@ -38,8 +37,6 @@ internal static class LearningProfileTests
                 Check(prompt.Length < 2300 && prompt.Contains("input units={\"GivenA\":") && !prompt.Contains("\"Left\":")
                     && !prompt.Contains("grade="),
                     $"Prompt became large or exposed facts: {scene.Id}/{language} length {prompt.Length}");
-                string grammar = GgufQuestionRuntime.BuildGrammar(c);
-                Check(grammar.StartsWith("root ::=") && grammar.All(ch => ch <= 127), "Grammar is not escaped GBNF.");
                 for (int variant = 0; variant < 2; variant++)
                 {
                     var draft = AppliedQuestionCatalogue.Draft(c, variant);
@@ -49,11 +46,19 @@ internal static class LearningProfileTests
                     var word = validated.Draft!.ToWordProblem(c);
                     Check(!word.ProblemText.Contains('{') && !word.SolutionLead.Contains('{'), "Unrendered slot in prose.");
                     Check(StreamingQuestionPreview.Render(raw, c) == word.ProblemText, "Live preview changed units or roles.");
-                    Check(!BasicQuestionValidator.Validate(raw.Replace("{a}", "{b}"), c).IsValid, "Changed quantity role passed.");
-                    Check(!BasicQuestionValidator.Validate(raw.Replace(draft.GivenB,
-                        draft.GivenB + (language == AppLanguage.Vietnamese ? " Một nhóm khác tham gia." : " Another group joins.")), c).IsValid,
-                        "Extra fact passed.");
-                    Check(!BasicQuestionValidator.Validate(raw.Replace(draft.GivenA, draft.GivenA + " łącznie"), c).IsValid, "Foreign text passed.");
+                    // Numeric seeds change arithmetic, not the same template's mutation.
+                    // Preserve every scene, relation, tier, language and input/output unit.
+                    string proseCase = $"{c.Version}/{group}/{scene.Id}/{c.Structure}/{tier}/{language}/{c.Unit}/{c.AnswerUnit}/{raw}";
+                    if (checkedProse.Add(proseCase))
+                    {
+                        string grammar = GgufQuestionRuntime.BuildGrammar(c);
+                        Check(grammar.StartsWith("root ::=") && grammar.All(ch => ch <= 127), "Grammar is not escaped GBNF.");
+                        Check(!BasicQuestionValidator.Validate(raw.Replace("{a}", "{b}"), c).IsValid, "Changed quantity role passed.");
+                        Check(!BasicQuestionValidator.Validate(raw.Replace(draft.GivenB,
+                            draft.GivenB + (language == AppLanguage.Vietnamese ? " Một nhóm khác tham gia." : " Another group joins.")), c).IsValid,
+                            "Extra fact passed.");
+                        Check(!BasicQuestionValidator.Validate(raw.Replace(draft.GivenA, draft.GivenA + " łącznie"), c).IsValid, "Foreign text passed.");
+                    }
                     foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
                     {
                         var question = c.ToPracticeQuestion(word, mode, new Random(seed));
@@ -117,7 +122,7 @@ internal static class LearningProfileTests
         }
         await PersistenceAndPracticeAsync(directory);
         await ExpandedPersistenceAsync(directory);
-        Console.WriteLine($"PASS {checkedQuestions} bilingual group/stars scene instantiations, semantic rejection, streaming and grading; grade-independent SQLite/Excel and C#/bank mix");
+        Console.WriteLine($"PASS {checkedQuestions} bilingual group/stars scene instantiations, {checkedProse.Count} distinct prose mutation profiles, streaming and grading; grade-independent SQLite/Excel and C#/bank mix");
     }
 
     private static async Task ExpandedPersistenceAsync(string directory)

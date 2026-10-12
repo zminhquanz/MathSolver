@@ -63,9 +63,6 @@ internal static class BackgroundPracticeTests
         Console.WriteLine("PASS practice in every answer mode during paused inference: empty-bank C# fallback, committed SQLite reads, auto-save and cancellation cleanup");
     }
 
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
-
     private sealed class BankSourceRandom : Random
     { public override int Next(int maxValue) => 1; }
 

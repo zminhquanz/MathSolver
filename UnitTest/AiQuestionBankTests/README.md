@@ -1,3 +1,5 @@
+Runner commands are registered under Runner/, native generation checks under Model/, and shared fixtures under Fixtures/. See [test infrastructure and commands](../README.md) for cleanup ownership and PDF isolation. Use --list for accepted arguments; unknown commands and missing arguments return exit code 2.
+
 # AI question bank checks
 
 `--area-measurement-foundation` checks the staged C#/JSON area contracts before

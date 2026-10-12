@@ -8,10 +8,8 @@ using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Services.QuestionBank;
 
-internal static class DecimalBankTests
+internal static partial class DecimalBankTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     internal static IEnumerable<BasicQuestionContract> Cases()
     {
@@ -176,7 +174,8 @@ internal static class DecimalBankTests
     private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue == 2 ? 1 : base.Next(maxValue); }
     private static async Task CheckStoreAsync()
     {
-        string dir = Path.GetFullPath("artifacts/verification/decimal-bank"); Directory.CreateDirectory(dir);
+        using var workspace = TestWorkspace.Temporary("DecimalBankTests");
+        string dir = workspace.DirectoryPath;
         var store = new QuestionBankStore(Path.Combine(dir, Guid.NewGuid() + ".db3"));
         var c = Cases().First(c => !c.ExactAnswer.Denominator.IsOne);
         var d = ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).First();
@@ -195,92 +194,12 @@ internal static class DecimalBankTests
         Check(selected != original && selected.ElementaryProblem?.IsDecimalArithmetic == true, "Bank decimal provider failed");
         Check(await provider.SelectReasoningAsync(original, c.Tier, AppLanguage.English) == original, "Wrong-language fallback failed");
         var generator = new ElementaryQuizGenerator(new(31));
-        ArithmeticQuizQuestion numeric;
-        do { numeric = generator.Generate(ArithmeticQuizMode.Essay, QuizProblemKind.Decimal, ElementaryQuizType.DecimalAdd, c.Language, c.Tier); }
-        while (!numeric.ElementaryProblem!.IsNumericDecimalCalculation);
+        var numeric = generator.GenerateDecimalArithmetic(ArithmeticQuizMode.Essay,
+            ElementaryQuizType.DecimalAdd, c.Language, c.Tier, wordProblems: false);
         Check(await provider.SelectReasoningAsync(numeric, c.Tier, c.Language) == numeric, "Bank replaced numeric practice with prose");
         var comparison = generator.Generate(ArithmeticQuizMode.Essay, QuizProblemKind.Decimal, ElementaryQuizType.DecimalCompare, c.Language, c.Tier);
         Check(await provider.SelectReasoningAsync(comparison, c.Tier, c.Language) == comparison, "Bank replaced decimal comparison");
     }
 
-    public static async Task RunModelAsync(string modelPath, string? resumeDirectory = null)
-    {
-        string dir = resumeDirectory is null ? Path.GetFullPath("artifacts/verification/decimal-model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"))
-            : Path.GetFullPath(resumeDirectory);
-        Directory.CreateDirectory(dir);
-        var runtime = new GgufQuestionRuntime(); var store = new QuestionBankStore(Path.Combine(dir, "model.db3"));
-        var evidence = new List<object>(); var rendered = new StringBuilder();
-        var completed = new HashSet<string>();
-        if (resumeDirectory is not null)
-        {
-            using var prior = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(dir, "results.json")));
-            foreach (var row in prior.RootElement.EnumerateArray())
-            {
-                if (row.GetProperty("ErrorCode").ValueKind != JsonValueKind.Null) continue;
-                string name = row.GetProperty("Case").GetString()!;
-                completed.Add(name[(name.IndexOf('-') + 1)..]); evidence.Add(row.Clone());
-            }
-            using var workbook = new MemoryStream(); await store.ExportExcelAsync(workbook); workbook.Position = 0;
-            foreach (var row in QuestionBankWorkbook.Read(workbook))
-            {
-                var saved = row.Question ?? throw new Exception("Invalid resumed decimal row");
-                CheckPractice(saved.Contract.FreshFacts(new(881)), saved.Draft);
-            }
-            rendered.Append(await File.ReadAllTextAsync(Path.Combine(dir, "rendered-samples.txt")));
-        }
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(60));
-        Console.WriteLine("Real decimal GGUF: " + dir);
-        try
-        {
-            await runtime.LoadAsync(modelPath, timeout.Token);
-            int number = evidence.Count;
-            foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-            foreach (var type in ElementaryQuizGenerator.DecimalStoryTypes)
-            foreach (var tier in Enum.GetValues<CurriculumTier>())
-            {
-                // Rotate all eight continuous-quantity contexts across the 40 real profiles.
-                var contexts = ElementaryQuizGenerator.DecimalContexts(language);
-                var context = contexts[((int)tier - 1 + Array.IndexOf(ElementaryQuizGenerator.DecimalStoryTypes, type) * 2) % contexts.Count];
-                if (completed.Contains($"{language}-{type}-{tier}-{context.Id}")) continue;
-                var c = ReasoningStoryCatalogue.Create(BankQuestionFamily.Decimal, (int)type, tier, language, new(47), context.Id);
-                var original = ReasoningStoryCatalogue.Draft(c);
-                await store.InsertAsync(new(c, original, QuestionBankStore.SerializeDraft(original), "original", DateTime.UtcNow), timeout.Token);
-                var excluded = (await store.GetProseHashesAsync(timeout.Token)).ToHashSet(StringComparer.Ordinal);
-                string prompt = BasicQuestionPrompt.Build(c, "DuplicateProse", [original.ProblemText], excluded);
-                var streamed = new StringBuilder(); AiGenerationMetrics? metrics = null;
-                string raw = await runtime.GenerateNovelAsync(c, prompt, excluded, timeout.Token, t => streamed.Append(t), m => metrics = m);
-                var result = BasicQuestionValidator.Validate(raw, c);
-                string name = $"{++number}-{language}-{type}-{tier}-{context.Id}";
-                await File.WriteAllTextAsync(Path.Combine(dir, name + ".txt"), prompt + "\nRAW\n" + raw + "\nVALIDATION\n" + (result.ErrorCode ?? "Valid"));
-                evidence.Add(new { Case = name, result.ErrorCode, result.ErrorDetails, Metrics = metrics });
-                Check(result.IsValid && metrics?.GeneratedTokens > 1 && raw == streamed.ToString(), "Native decimal generation failed: " + name + " " + result.ErrorCode);
-                Check(ReviewedReasoningProse.HasNewFacts(c, result.Draft!), "Native facts did not vary");
-                var saved = new ValidatedBankQuestion(c, result.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
-                Check(await store.InsertAsync(saved, timeout.Token) && !await store.InsertAsync(saved, timeout.Token), "Native decimal dedup failed");
-                var retrieved = await store.TakeReasoningAsync(c.Family, c.BankVariant, c.Tier, c.Language, timeout.Token);
-                Check(retrieved is not null, "Native decimal retrieval failed");
-                var fresh = retrieved!.Contract.FreshFacts(new(881)); CheckPractice(fresh, retrieved.Draft);
-                var p = ReasoningStoryCatalogue.ToPractice(fresh, retrieved.Draft, ArithmeticQuizMode.Essay).ElementaryProblem!;
-                rendered.AppendLine(name).AppendLine(p.ProblemText).AppendLine(p.SolutionText).AppendLine();
-                Console.WriteLine($"PASS {name}: {metrics!.GeneratedTokens} tokens; native stream/dedup/SQLite/fresh math/grading");
-            }
-            await runtime.ReleaseAsync();
-            var worker = new AiQuestionGenerationService(runtime, store);
-            worker.Start(new(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese, 4, true,
-                Family: BankQuestionFamily.Decimal, StoryVariant: (int)ElementaryQuizType.DecimalDivide));
-            try { await worker.Completion.WaitAsync(timeout.Token); }
-            catch { worker.Stop(); await worker.Completion; throw; }
-            await File.WriteAllTextAsync(Path.Combine(dir, "worker.json"), JsonSerializer.Serialize(worker.Snapshot, new JsonSerializerOptions { WriteIndented = true }));
-            Check(worker.Snapshot.State == AiJobState.Completed && worker.Snapshot.Items.All(i => i.State == AiItemState.Saved), "Decimal worker failed: " + worker.Snapshot.Error);
-            foreach (var item in worker.Snapshot.Items) CheckPractice(item.Contract.FreshFacts(new(105 + item.Number)), item.Question!.Draft);
-            Check(!runtime.IsLoaded && runtime.CanGenerate, "Model weights retained after decimal job");
-        }
-        finally
-        {
-            await runtime.EjectAsync();
-            await File.WriteAllTextAsync(Path.Combine(dir, "results.json"), JsonSerializer.Serialize(evidence, new JsonSerializerOptions { WriteIndented = true }));
-            await File.WriteAllTextAsync(Path.Combine(dir, "rendered-samples.txt"), rendered.ToString());
-        }
-        Console.WriteLine($"Real model decimal verification passed: {evidence.Count} generations; {dir}");
-    }
+
 }

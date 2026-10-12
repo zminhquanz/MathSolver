@@ -7,7 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="../../MathSolver/Resources/Raw/QuizContent/*.json" LogicalName="QuizContent.%(Filename)%(Extension)" />
+    <ProjectReference Include="../TestSupport/TestSupport.csproj" />
     <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/vi-VN.json" LogicalName="QuizLocalization.vi-VN.json" />
     <EmbeddedResource Include="../../MathSolver/Resources/Raw/Localization/en-US.json" LogicalName="QuizLocalization.en-US.json" />
     <EmbeddedResource Include="../../MathSolver/Views/Quizzes/MathPuzzlePage.xaml" LogicalName="QuizLocalization.MathPuzzlePage.xaml" />
@@ -19,19 +19,6 @@
     <Compile Include="../../MathSolver/Services/Diagnostics/UnhandledExceptionLog.cs" Link="Services/Diagnostics/UnhandledExceptionLog.cs" />
     <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
     <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />
-    <Compile Include="../../MathSolver/Models/Arithmetic/*.cs" Link="Models/Arithmetic/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Models/Fractions/*.cs" Link="Models/Fractions/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Models/Formulas/GeometryCalculation.cs" Link="Models/Formulas/GeometryCalculation.cs" />
-    <Compile Include="../../MathSolver/Models/Quizzes/*.cs" Link="Models/Quizzes/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/BigIntegers/*.cs" Link="Numerics/BigIntegers/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/Powers/*.cs" Link="Numerics/Powers/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/FloatingPoint/*.cs" Link="Numerics/FloatingPoint/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/Serialization/*.cs" Link="Numerics/Serialization/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Calculations/*.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="Services/Localization/QuizLocalizationOverrides.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/TextbookFractionParser.cs" Link="Services/Formatting/TextbookFractionParser.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/AccessibleMathText.cs" Link="Services/Formatting/AccessibleMathText.cs" />
-    <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
+    <ProjectReference Include="../TestHost/TestHost.csproj" />
   </ItemGroup>
 </Project>

@@ -12,7 +12,7 @@ The new optional question-bank enrichment has its own
 [checks and model smoke test](../AiQuestionBankTests/README.md); this project
 continues to check C# practice and grading.
 
-The console harness runs 38 test groups against the actual C# generators,
+The console harness runs 59 test groups against the actual C# generators,
 curriculum rules, exact arithmetic, essay graders and presentation helpers.
 It covers every registered problem family, both languages, all five star levels
 and all three answer modes. Checks include independent answers, distinct choices,

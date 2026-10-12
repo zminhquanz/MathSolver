@@ -11,8 +11,6 @@ internal static class NarrativeDepthTests
         BankQuestionFamily.MultiStep, BankQuestionFamily.Average, BankQuestionFamily.Percentage,
         BankQuestionFamily.Proportion, BankQuestionFamily.Motion];
 
-    private static void Check(bool value, string message) { if (!value) throw new InvalidOperationException(message); }
-
     internal static async Task RunAsync()
     {
         QuizContentTests.Run();
@@ -72,30 +70,28 @@ internal static class NarrativeDepthTests
         }
 
         // Save new contexts, replay with fresh values and preserve catalogue version through Excel.
-        string directory = Path.Combine(Path.GetTempPath(), "MathSolver-depth-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
-        try
+        using var workspace = TestWorkspace.Temporary("NarrativeDepthTests");
+        string directory = workspace.DirectoryPath;
+
+        var store = new QuestionBankStore(Path.Combine(directory, "bank.db3"));
+        foreach (var family in Families)
+        foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         {
-            var store = new QuestionBankStore(Path.Combine(directory, "bank.db3"));
-            foreach (var family in Families)
-            foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-            {
-                var c = NativeContract(family, language);
-                var draft = ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).First();
-                Check(await store.InsertAsync(new(c, draft, QuestionBankStore.SerializeDraft(draft), "test", DateTime.UtcNow)), "Context insert failed");
-                var saved = await store.TakeReasoningAsync(family, c.BankVariant, c.Tier, language);
-                Check(saved?.Contract.Story?.ContextVersion == NarrativeContextExpansion.Version, "SQLite lost catalogue version");
-                var fresh = saved!.Contract.FreshFacts(new(192));
-                Check(fresh.SceneId == c.SceneId, "Fresh values changed the situation");
-                ProseExpansionTests.VerifyPractice(fresh, saved.Draft);
-            }
-            using var excel = new MemoryStream();
-            Check((await store.ExportExcelAsync(excel)).Exported == 12, "Excel export lost contexts");
-            excel.Position = 0;
-            var imported = new QuestionBankStore(Path.Combine(directory, "import.db3"));
-            Check((await imported.ImportExcelAsync(excel)).Inserted == 12, "Excel import lost contexts");
+            var c = NativeContract(family, language);
+            var draft = ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).First();
+            Check(await store.InsertAsync(new(c, draft, QuestionBankStore.SerializeDraft(draft), "test", DateTime.UtcNow)), "Context insert failed");
+            var saved = await store.TakeReasoningAsync(family, c.BankVariant, c.Tier, language);
+            Check(saved?.Contract.Story?.ContextVersion == NarrativeContextExpansion.Version, "SQLite lost catalogue version");
+            var fresh = saved!.Contract.FreshFacts(new(192));
+            Check(fresh.SceneId == c.SceneId, "Fresh values changed the situation");
+            ProseExpansionTests.VerifyPractice(fresh, saved.Draft);
         }
-        finally { Directory.Delete(directory, true); }
+        using var excel = new MemoryStream();
+        Check((await store.ExportExcelAsync(excel)).Exported == 12, "Excel export lost contexts");
+        excel.Position = 0;
+        var imported = new QuestionBankStore(Path.Combine(directory, "import.db3"));
+        Check((await imported.ImportExcelAsync(excel)).Inserted == 12, "Excel import lost contexts");
+
         Console.WriteLine($"Narrative depth: PASS {cases} expanded/legacy cases, all six families, 1–5 stars, Vietnamese/English, grammar/roles, grading, SQLite/Excel and fresh values.");
     }
 

@@ -9,8 +9,7 @@ internal static partial class PuzzleTests
 {
     private static void Require(bool condition, string message)
     {
-        if (!condition)
-            throw new InvalidOperationException(message);
+        MathSolver.Testing.TestAssert.That(condition, message);
     }
 
     internal static void CheckCatalog()

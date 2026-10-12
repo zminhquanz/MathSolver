@@ -166,8 +166,4 @@ internal static class MixedKnowledgeGroupsTests
             return Task.FromResult<ValidatedBankQuestion?>(new(contract, draft, QuestionBankStore.SerializeDraft(draft), "mixed-test", DateTime.UtcNow));
         }
     }
-    private static void Check(bool condition, string message)
-    {
-        if (!condition) throw new Exception(message);
-    }
 }

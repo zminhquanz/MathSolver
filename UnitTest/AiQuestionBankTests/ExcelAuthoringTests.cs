@@ -9,7 +9,6 @@ using DocumentFormat.OpenXml.Validation;
 internal static class ExcelAuthoringTests
 {
     private static readonly XNamespace Ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-    private static void Check(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
     private sealed class BankRandom : Random { public override int Next(int maxValue) => Math.Min(1, maxValue - 1); }
     private static byte[] Rewrite(byte[] bytes, string sheet, Action<XElement> edit)
     {
@@ -204,8 +203,8 @@ internal static class ExcelAuthoringTests
             Check(QuestionBankWorkbook.Read(saved).Single().Question is not null, "Editor save lost shared-string prose or authoring metadata");
         }
 
-        string directory = Path.Combine(Path.GetTempPath(), "MathSolver-excel-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
+        using var workspace = TestWorkspace.Temporary("ExcelAuthoringTests");
+        string directory = workspace.DirectoryPath;
         {
             var store = new QuestionBankStore(Path.Combine(directory, "bank.db3"));
             using var stream = new MemoryStream(editable);

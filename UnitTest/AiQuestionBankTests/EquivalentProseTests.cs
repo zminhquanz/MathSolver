@@ -5,8 +5,6 @@ using System.Text.Json;
 
 internal static class EquivalentProseTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     internal static async Task RunAsync()
     {

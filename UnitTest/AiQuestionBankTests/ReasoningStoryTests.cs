@@ -2,7 +2,7 @@ using MathSolver.Services;
 using MathSolver.Models;
 using MathSolver.Services.QuestionBank;
 
-internal static class ReasoningStoryTests
+internal static partial class ReasoningStoryTests
 {
     public static async Task CheckPromptBudgetAsync(string path)
     {
@@ -32,39 +32,7 @@ internal static class ReasoningStoryTests
         Console.WriteLine($"Gemma prompt budget: {count} cases, maximum {maximum} input tokens; fits the 2048-token context with 700 reserved output tokens.");
     }
 
-    public static async Task RunModelAsync(string path)
-    {
-        string directory = Path.Combine("artifacts", "verification", "reasoning-model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
-        Directory.CreateDirectory(directory);
-        var runtime = new GgufQuestionRuntime();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(20));
-        await runtime.LoadAsync(path, timeout.Token);
-        try
-        {
-            foreach (var (family, variant, tier) in new[] {
-                (BankQuestionFamily.TwoNumbers, 0, CurriculumTier.ThreeStars),
-                (BankQuestionFamily.Average, 4, CurriculumTier.FourStars),
-                (BankQuestionFamily.Percentage, 2, CurriculumTier.FiveStars) })
-            {
-                var c = ReasoningStoryCatalogue.Create(family, variant, tier, AppLanguage.Vietnamese, new(19));
-                string? correction = null;
-                bool passed = false;
-                for (int attempt = 1; attempt <= 3; attempt++)
-                {
-                    string prompt = BasicQuestionPrompt.Build(c, correction);
-                    string raw = await runtime.GenerateAsync(c, prompt, timeout.Token);
-                    var validated = BasicQuestionValidator.Validate(raw, c);
-                    await File.WriteAllTextAsync(Path.Combine(directory, $"{family}-{attempt}.txt"), prompt + "\n\n" + raw + "\n" + validated.ErrorCode);
-                    Console.WriteLine($"{family} {attempt}: {validated.ErrorCode ?? "Valid"}");
-                    if (validated.IsValid) { passed = true; break; }
-                    correction = validated.ErrorCode;
-                }
-                if (!passed) throw new Exception("Real model failed: " + family + "; evidence: " + directory);
-            }
-        }
-        finally { await runtime.EjectAsync(); }
-        Console.WriteLine("Real GGUF reasoning prose passed; evidence: " + directory);
-    }
+
 
     public static async Task RunAsync()
     {
@@ -150,64 +118,62 @@ internal static class ReasoningStoryTests
             }
         }
         Console.WriteLine($"Reasoning stories: {count} curriculum/template/fresh-fact cases passed.");
-        string directory = Path.Combine(Path.GetTempPath(), "reasoning-tests-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
-        try
+        using var workspace = TestWorkspace.Temporary("ReasoningStoryTests");
+        string directory = workspace.DirectoryPath;
+
+        var store = new QuestionBankStore(Path.Combine(directory, "stories.db3"));
+        foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
         {
-            var store = new QuestionBankStore(Path.Combine(directory, "stories.db3"));
-            foreach (var family in new[] { BankQuestionFamily.TwoNumbers, BankQuestionFamily.Average, BankQuestionFamily.Percentage, BankQuestionFamily.MultiStep })
+            int variant = ReasoningStoryCatalogue.Variants(family, CurriculumTier.ThreeStars)[0];
+            var c = ReasoningStoryCatalogue.Create(family, variant, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, new(19));
+            var d = ReasoningStoryCatalogue.Draft(c);
+            var saved = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "test", DateTime.UtcNow);
+            if (!await store.InsertAsync(saved) || await store.InsertAsync(saved)) throw new Exception("Storage/deduplication failed");
+            if (await store.TakeReasoningAsync(family, variant, c.Tier, c.Language) is not { } selected
+                || selected.Contract != c) throw new Exception("Stored family or variant was lost");
+            using var excel = new MemoryStream();
+            QuestionBankWorkbook.Write(excel, [saved]);
+            excel.Position = 0;
+            var imported = QuestionBankWorkbook.Read(excel).Single();
+            if (imported.ErrorCode is not null || imported.Question?.Contract != c
+                || QuestionBankStore.SerializeDraft(imported.Question.Draft) != QuestionBankStore.SerializeDraft(d))
+                throw new Exception("Excel lost structured story data: " + imported.ErrorCode);
+            using var malformed = new MemoryStream();
+            malformed.Write(excel.ToArray());
+            using (var archive = new System.IO.Compression.ZipArchive(malformed, System.IO.Compression.ZipArchiveMode.Update, true))
             {
-                int variant = ReasoningStoryCatalogue.Variants(family, CurriculumTier.ThreeStars)[0];
-                var c = ReasoningStoryCatalogue.Create(family, variant, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, new(19));
-                var d = ReasoningStoryCatalogue.Draft(c);
-                var saved = new ValidatedBankQuestion(c, d, QuestionBankStore.SerializeDraft(d), "test", DateTime.UtcNow);
-                if (!await store.InsertAsync(saved) || await store.InsertAsync(saved)) throw new Exception("Storage/deduplication failed");
-                if (await store.TakeReasoningAsync(family, variant, c.Tier, c.Language) is not { } selected
-                    || selected.Contract != c) throw new Exception("Stored family or variant was lost");
-                using var excel = new MemoryStream();
-                QuestionBankWorkbook.Write(excel, [saved]);
-                excel.Position = 0;
-                var imported = QuestionBankWorkbook.Read(excel).Single();
-                if (imported.ErrorCode is not null || imported.Question?.Contract != c
-                    || QuestionBankStore.SerializeDraft(imported.Question.Draft) != QuestionBankStore.SerializeDraft(d))
-                    throw new Exception("Excel lost structured story data: " + imported.ErrorCode);
-                using var malformed = new MemoryStream();
-                malformed.Write(excel.ToArray());
-                using (var archive = new System.IO.Compression.ZipArchive(malformed, System.IO.Compression.ZipArchiveMode.Update, true))
-                {
-                    var entry = archive.GetEntry("xl/worksheets/sheet1.xml")!;
-                    System.Xml.Linq.XElement sheet;
-                    using (var content = entry.Open()) sheet = System.Xml.Linq.XElement.Load(content);
-                    sheet.Descendants().Single(e => e.Name.LocalName == "c" && (string?)e.Attribute("r") == "AF2")
-                        .Descendants().Single(e => e.Name.LocalName == "t").Value = "[null]";
-                    entry.Delete();
-                    using var updated = archive.CreateEntry("xl/worksheets/sheet1.xml").Open();
-                    sheet.Save(updated);
-                }
-                malformed.Position = 0;
-                if (QuestionBankWorkbook.Read(malformed).Single().ErrorCode != "InvalidExcelRow")
-                    throw new Exception("Malformed narrative Excel row was not rejected safely");
-                var worker = new AiQuestionGenerationService(new StoryRuntime(), store);
-                worker.Start(new(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.English, 1, true, Family: family, StoryVariant: variant));
-                await worker.Completion;
-                if (worker.Snapshot.State != AiJobState.Completed || worker.Snapshot.Items.Single().State != AiItemState.Saved)
-                    throw new Exception("New-family background worker failed: " + worker.Snapshot.Error);
-                var original = ReasoningStoryCatalogue.ToPractice(c, d, ArithmeticQuizMode.Essay);
-                var provider = new BasicPracticeQuestionProvider(store, new BankRandom());
-                var bankPractice = await provider.SelectReasoningAsync(original, c.Tier, c.Language);
-                if (bankPractice == original || bankPractice.ElementaryProblem?.Type != original.ElementaryProblem?.Type
-                    || bankPractice.AverageProblem?.Type != original.AverageProblem?.Type
-                    || bankPractice.PercentageProblem?.Type != original.PercentageProblem?.Type)
-                    throw new Exception("Practice did not refresh facts from the matching stored template");
-                if (await store.TakeReasoningAsync(family, variant, c.Tier, AppLanguage.English) is not null)
-                    throw new Exception("Language filter leaked another family/template");
+                var entry = archive.GetEntry("xl/worksheets/sheet1.xml")!;
+                System.Xml.Linq.XElement sheet;
+                using (var content = entry.Open()) sheet = System.Xml.Linq.XElement.Load(content);
+                sheet.Descendants().Single(e => e.Name.LocalName == "c" && (string?)e.Attribute("r") == "AF2")
+                    .Descendants().Single(e => e.Name.LocalName == "t").Value = "[null]";
+                entry.Delete();
+                using var updated = archive.CreateEntry("xl/worksheets/sheet1.xml").Open();
+                sheet.Save(updated);
             }
-            using var allExcel = new MemoryStream();
-            var exported = await store.ExportExcelAsync(allExcel);
-            if (exported.Exported != 8) throw new Exception("Store export lost version 8 rows");
-            await store.DeleteAllAsync();
+            malformed.Position = 0;
+            if (QuestionBankWorkbook.Read(malformed).Single().ErrorCode != "InvalidExcelRow")
+                throw new Exception("Malformed narrative Excel row was not rejected safely");
+            var worker = new AiQuestionGenerationService(new StoryRuntime(), store);
+            worker.Start(new(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.English, 1, true, Family: family, StoryVariant: variant));
+            await worker.Completion;
+            if (worker.Snapshot.State != AiJobState.Completed || worker.Snapshot.Items.Single().State != AiItemState.Saved)
+                throw new Exception("New-family background worker failed: " + worker.Snapshot.Error);
+            var original = ReasoningStoryCatalogue.ToPractice(c, d, ArithmeticQuizMode.Essay);
+            var provider = new BasicPracticeQuestionProvider(store, new BankRandom());
+            var bankPractice = await provider.SelectReasoningAsync(original, c.Tier, c.Language);
+            if (bankPractice == original || bankPractice.ElementaryProblem?.Type != original.ElementaryProblem?.Type
+                || bankPractice.AverageProblem?.Type != original.AverageProblem?.Type
+                || bankPractice.PercentageProblem?.Type != original.PercentageProblem?.Type)
+                throw new Exception("Practice did not refresh facts from the matching stored template");
+            if (await store.TakeReasoningAsync(family, variant, c.Tier, AppLanguage.English) is not null)
+                throw new Exception("Language filter leaked another family/template");
         }
-        finally { Directory.Delete(directory, true); }
+        using var allExcel = new MemoryStream();
+        var exported = await store.ExportExcelAsync(allExcel);
+        if (exported.Exported != 8) throw new Exception("Store export lost version 8 rows");
+        await store.DeleteAllAsync();
+
         Console.WriteLine("Reasoning SQL/Excel/background generation/practice integration passed.");
     }
 

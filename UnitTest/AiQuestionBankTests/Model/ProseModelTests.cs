@@ -1,4 +1,4 @@
-﻿using MathSolver.Models;
+using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Services.QuestionBank;
@@ -6,20 +6,19 @@ using System.Text;
 
 internal static class ProseModelTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string modelPath)
     {
         string directory = Path.GetFullPath(Path.Combine("artifacts", "verification", "prose-model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")));
         Directory.CreateDirectory(directory);
-        var runtime = new GgufQuestionRuntime();
+        await using var modelSession = new ModelTestSession();
+        var runtime = modelSession.Runtime;
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
         var log = new StringBuilder();
         try
         {
             Console.WriteLine($"Loading {Path.GetFileName(modelPath)}; evidence: {directory}");
-            await runtime.LoadAsync(modelPath, timeout.Token);
+            await modelSession.LoadAsync(modelPath, timeout.Token);
             foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
             {
                 var c = AppliedQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Money), ArithmeticOperation.Add,
@@ -104,7 +103,7 @@ internal static class ProseModelTests
         }
         finally
         {
-            await runtime.EjectAsync();
+            await modelSession.DisposeAsync();
             await File.WriteAllTextAsync(Path.Combine(directory, "generation.txt"), log.ToString(), Encoding.UTF8);
         }
     }

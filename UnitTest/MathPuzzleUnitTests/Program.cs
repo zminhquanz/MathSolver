@@ -63,6 +63,18 @@ var tests = new (string Name, Action Run)[]
     ("Structural difficulty across five stars", PuzzleTests.CheckStructuralDifficulty)
 };
 
+if (args is ["--help"] or ["--list"])
+{
+    Console.WriteLine("Usage: MathPuzzleUnitTests [test group name filters]. No arguments: all groups.");
+    foreach (var test in tests) Console.WriteLine(test.Name);
+    return 0;
+}
+if (args.Any(a => a.StartsWith("--")))
+{
+    Console.Error.WriteLine("Unknown option. Use --list or supply test group name filters.");
+    return 2;
+}
+await MathSolver.Testing.HarnessInfrastructureTests.RunAsync();
 if (args.Length > 0)
 {
     tests = tests.Where(test => args.Any(filter =>

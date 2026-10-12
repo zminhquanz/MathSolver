@@ -47,5 +47,4 @@ internal static class MeasurementPracticeTests
     }
 
     private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue - 1; }
-    private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 }

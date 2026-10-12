@@ -6,8 +6,6 @@ using System.Text.Json;
 
 internal static class TemplateTests
 {
-    private static void Check(bool value, string message)
-    { if (!value) throw new InvalidOperationException(message); }
     public static async Task RunAsync(string directory)
     {
         Check(QuestionNames.VietnameseMale.Count == 100 && QuestionNames.VietnameseFemale.Count == 100

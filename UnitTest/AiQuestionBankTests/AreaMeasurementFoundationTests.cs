@@ -12,9 +12,6 @@ internal static class AreaMeasurementFoundationTests
         public string ContractJson { get; set; } = "";
     }
 
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
-
     public static void Run()
     {
         var directory = Path.GetFullPath("artifacts/verification/area-measurement-foundation");

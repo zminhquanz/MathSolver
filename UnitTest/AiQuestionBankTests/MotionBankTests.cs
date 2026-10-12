@@ -7,7 +7,7 @@ using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Services.QuestionBank;
 
-internal static class MotionBankTests
+internal static partial class MotionBankTests
 {
     public static async Task CheckPromptBudgetAsync(string path)
     {
@@ -25,9 +25,6 @@ internal static class MotionBankTests
         }
         Console.WriteLine($"Motion Gemma prompt budget: {count} cases, maximum {maximum} input tokens; fits context 2048, output 700, margin 64.");
     }
-
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new Exception(message); }
 
     internal static IEnumerable<BasicQuestionContract> Cases(int seeds = 8)
     {
@@ -95,9 +92,7 @@ internal static class MotionBankTests
             if (mode == ArithmeticQuizMode.MultipleChoice) Check(q.Choices.Count == 4 && q.Choices.Contains(q.CorrectAnswer), "Broken choices");
             if (mode == ArithmeticQuizMode.Essay)
             {
-                var input = EssayCombinedInputParser.Parse(m.SolutionText, true, preserveAllCalculations: true);
-                var grade = new EssayAnswerValidator(new BasicArithmeticEngine()).Validate(q, input.Solution, input.Equation, input.Answer);
-                Check(grade.IsCorrect, "Motion essay grading failed: " + m.SolutionText + "\n" + grade);
+                PracticeGrading.CheckWorkedSolution(q, m.SolutionText, "Motion essay grading failed");
             }
         }
     }
@@ -166,8 +161,8 @@ internal static class MotionBankTests
 
     private static async Task CheckStoreAsync()
     {
-        string dir = Path.GetFullPath(Path.Combine("artifacts", "verification", "motion-bank"));
-        Directory.CreateDirectory(dir);
+        using var workspace = TestWorkspace.Temporary("MotionBankTests");
+        string dir = workspace.DirectoryPath;
         string path = Path.Combine(dir, Guid.NewGuid() + ".db3");
         try
         {
@@ -216,66 +211,5 @@ internal static class MotionBankTests
         Console.WriteLine("Validated rendered evidence written: " + directory);
     }
 
-    public static async Task RunModelAsync(string modelPath)
-    {
-        string dir = Path.GetFullPath(Path.Combine("artifacts", "verification", "motion-model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")));
-        Directory.CreateDirectory(dir);
-        var runtime = new GgufQuestionRuntime();
-        var store = new QuestionBankStore(Path.Combine(dir, "model.db3"));
-        var evidence = new List<object>();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(60));
-        Console.WriteLine("Real GGUF motion verification: " + dir);
-        try
-        {
-            await runtime.LoadAsync(modelPath, timeout.Token);
-            var cases = Cases(1).ToList();
-            // Also cover any fine-grained target not selected by the first seed.
-            foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-            foreach (var kind in Enum.GetValues<MotionQuestionKind>())
-                if (!cases.Any(c => c.Language == language && ReasoningStoryCatalogue.Lesson(c).QuestionModel.MotionProblem!.QuestionKind == kind))
-                    cases.Add(Cases(20).First(c => c.Language == language && ReasoningStoryCatalogue.Lesson(c).QuestionModel.MotionProblem!.QuestionKind == kind));
-            int number = 0;
-            foreach (var c in cases)
-            {
-                var original = ReasoningStoryCatalogue.Draft(c);
-                await store.InsertAsync(new(c, original, QuestionBankStore.SerializeDraft(original), "original", DateTime.UtcNow), timeout.Token);
-                int repeats = c.Tier == CurriculumTier.FiveStars ? 2 : 1;
-                for (int repeat = 0; repeat < repeats; repeat++)
-                {
-                    var excluded = (await store.GetProseHashesAsync(timeout.Token)).ToHashSet(StringComparer.Ordinal);
-                    string prompt = BasicQuestionPrompt.Build(c, repeat == 0 ? null : "DuplicateProse", excludedProse: excluded);
-                    var streamed = new StringBuilder(); AiGenerationMetrics? metrics = null;
-                    string raw = await runtime.GenerateNovelAsync(c, prompt, excluded, timeout.Token, t => streamed.Append(t), m => metrics = m);
-                    var result = BasicQuestionValidator.Validate(raw, c);
-                    string name = $"{++number}-{c.Language}-{(MotionQuizType)c.BankVariant}-{c.Tier}-{repeat}";
-                    await File.WriteAllTextAsync(Path.Combine(dir, name + ".txt"), prompt + "\nRAW\n" + raw + "\nVALIDATION\n" + (result.ErrorCode ?? "Valid"));
-                    evidence.Add(new { Case = name, Kind = ReasoningStoryCatalogue.Lesson(c).QuestionModel.MotionProblem!.QuestionKind.ToString(), result.ErrorCode, result.ErrorDetails, Metrics = metrics });
-                    Check(result.IsValid && metrics?.GeneratedTokens > 1 && raw == streamed.ToString(), "Native motion rejected: " + name + " " + result.ErrorCode);
-                    Check(ReviewedReasoningProse.HasNewFacts(c, result.Draft!), "Native motion did not change facts");
-                    var saved = new ValidatedBankQuestion(c, result.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
-                    Check(await store.InsertAsync(saved, timeout.Token) && !await store.InsertAsync(saved, timeout.Token), "Native SQLite dedup failed");
-                    CheckPractice(c.FreshFacts(new(881 + repeat)), result.Draft!);
-                    Console.WriteLine($"PASS {name}: {metrics?.GeneratedTokens} tokens; native stream/SQLite/fresh math/grading");
-                }
-            }
-            await runtime.ReleaseAsync();
-            var worker = new AiQuestionGenerationService(runtime, store);
-            worker.Start(new(ArithmeticOperation.Add, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, 4, true,
-                Family: BankQuestionFamily.Motion, StoryVariant: (int)MotionQuizType.Meeting));
-            try { await worker.Completion.WaitAsync(timeout.Token); }
-            catch { worker.Stop(); await worker.Completion; throw; }
-            await File.WriteAllTextAsync(Path.Combine(dir, "worker.json"), JsonSerializer.Serialize(worker.Snapshot, new JsonSerializerOptions { WriteIndented = true }));
-            Check(worker.Snapshot.State == AiJobState.Completed && worker.Snapshot.Items.All(i => i.State == AiItemState.Saved), "Motion worker failed: " + worker.Snapshot.Error);
-            foreach (var item in worker.Snapshot.Items) CheckPractice(item.Contract.FreshFacts(new(103 + item.Number)), item.Question!.Draft);
-            Check(!runtime.IsLoaded && runtime.CanGenerate, "Motion worker retained model");
-            Console.WriteLine("PASS real motion worker batch/save/release");
-        }
-        finally
-        {
-            await runtime.EjectAsync();
-            await File.WriteAllTextAsync(Path.Combine(dir, "results.json"), JsonSerializer.Serialize(evidence, new JsonSerializerOptions { WriteIndented = true }));
-        }
-        Console.WriteLine("Real motion model verification passed: " + evidence.Count + " direct generations; " + dir);
-        await WriteRenderedEvidenceAsync(dir);
-    }
+
 }

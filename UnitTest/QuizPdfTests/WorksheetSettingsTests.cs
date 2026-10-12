@@ -89,6 +89,4 @@ internal static class WorksheetSettingsTests
         Check(JsonSerializer.Serialize(practice) == unchanged, "Practice selections mutated after PDF generation.");
         Console.WriteLine($"PASS independent worksheet settings: {cases} subtype/star/language cases; illustrated choice coverage, story groups, geometry transitions, frozen generation and cancellation.");
     }
-
-    private static void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 }

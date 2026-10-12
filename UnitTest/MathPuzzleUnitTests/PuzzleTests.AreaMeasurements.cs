@@ -27,7 +27,7 @@ internal static partial class PuzzleTests
         Reject(() => MeasurementQuantityRules.Convert(1, "mass", "kg", "capacity", "l", true));
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         {
-            using var stream = typeof(PuzzleTests).Assembly.GetManifestResourceStream("QuizContent." + QuizContentCatalog.Culture(language) + ".json")!;
+            using var stream = typeof(QuizContentCatalog).Assembly.GetManifestResourceStream("QuizContent." + QuizContentCatalog.Culture(language) + ".json")!;
             var pack = QuizContentCatalog.ReadPack(stream);
             var badTexts = pack.Texts.Select(t => t.Id == AreaMeasurementTemplates.Prefix + "QuestionSmall"
                 ? t with { Text = t.Text.Replace("diện tích", "chu vi").Replace("area", "perimeter") } : t).ToList();

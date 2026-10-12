@@ -3,6 +3,8 @@
     <Project Path="UnitTest/AiQuestionBankTests/AiQuestionBankTests.csproj" />
     <Project Path="UnitTest/MathPuzzleUnitTests/MathPuzzleUnitTests.csproj" />
     <Project Path="UnitTest/QuizPdfTests/QuizPdfTests.csproj" />
+    <Project Path="UnitTest/TestHost/TestHost.csproj" />
+    <Project Path="UnitTest/TestSupport/TestSupport.csproj" />
   </Folder>
   <Project Path="MathSolver/MathSolver.csproj" />
 </Solution>

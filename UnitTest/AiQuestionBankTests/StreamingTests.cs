@@ -4,8 +4,6 @@ using MathSolver.Services.QuestionBank;
 
 internal static class StreamingTests
 {
-    private static void Check(bool value, string message)
-    { if (!value) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(Func<BasicQuestionContract, string> prose)
     {

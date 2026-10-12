@@ -5,8 +5,6 @@ using MathSolver.Services.QuestionBank;
 
 internal static class PracticeFormatTests
 {
-    private static void Check(bool condition, string message)
-    { if (!condition) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory)
     {

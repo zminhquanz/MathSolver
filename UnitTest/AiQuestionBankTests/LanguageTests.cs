@@ -7,8 +7,6 @@ using SQLite;
 
 internal static class LanguageTests
 {
-    private static void Check(bool value, string message)
-    { if (!value) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory)
     {
@@ -74,7 +72,13 @@ internal static class LanguageTests
                 string grammar = GgufQuestionRuntime.BuildGrammar(contract);
                 Check(grammar.All(ch => ch < 128) && !grammar.Contains("{PROSE_LETTERS}"), "Native grammar was not fully expanded as ASCII.");
                 string proseClass = Regex.Match(grammar, @"(?:prose|char) ::= (\[[^\r\n]+?\])").Groups[1].Value;
-                Check(proseClass.Length > 0, "Grammar lost its prose character class.");
+                // Legacy templates allow free prose; modern templates enumerate reviewed
+                // clauses instead. Check the alphabet policy in both paths, without requiring
+                // an obsolete grammar rule in a closed set of approved clauses.
+                Check(proseClass.Length > 0 || ReviewedQuestionProse.For(contract) is not null,
+                    "Grammar has neither a prose alphabet nor reviewed clauses.");
+                if (proseClass.Length == 0)
+                    proseClass = "[" + QuestionProseLanguage.GrammarLetters(language) + "]";
                 var accepts = new Regex("^" + proseClass + "$", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
                 foreach (string foreign in new[] { "ł", "ą", "ş", "Ж", "全", "\u200b", "\ufffd", "٢" })
                     Check(!accepts.IsMatch(foreign), "Native grammar alphabet permits: " + foreign);

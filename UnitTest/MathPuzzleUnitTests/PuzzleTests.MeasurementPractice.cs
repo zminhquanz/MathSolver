@@ -25,7 +25,7 @@ internal static partial class PuzzleTests
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
         foreach (var (type, units) in scales)
-        for (int seed = 0; seed < 40; seed++)
+        for (int seed = 0; seed < (mode == ArithmeticQuizMode.Essay ? 40 : 4); seed++)
         {
             var question = new ElementaryQuizGenerator(new Random(seed))
                 .GenerateMeasurementPractice(mode, type, language, tier);

@@ -7,26 +7,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="../../MathSolver/Resources/Raw/QuizContent/*.json" LogicalName="QuizContent.%(Filename)%(Extension)" />
-    <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
-    <PackageReference Include="DocumentFormat.OpenXml" Version="3.5.1" />
+    <ProjectReference Include="../TestSupport/TestSupport.csproj" />
     <PackageReference Include="LLamaSharp" Version="0.27.0" />
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.27.0" />
-    <Compile Include="../../MathSolver/Models/Arithmetic/*.cs" Link="Models/Arithmetic/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Models/Fractions/*.cs" Link="Models/Fractions/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Models/Formulas/GeometryCalculation.cs" Link="Models/Formulas/GeometryCalculation.cs" />
-    <Compile Include="../../MathSolver/Models/Quizzes/*.cs" Link="Models/Quizzes/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/BigIntegers/*.cs" Link="Numerics/BigIntegers/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/Powers/*.cs" Link="Numerics/Powers/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/FloatingPoint/*.cs" Link="Numerics/FloatingPoint/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Numerics/Serialization/*.cs" Link="Numerics/Serialization/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Calculations/*.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />
-    <Compile Include="../../MathSolver/Services/Localization/QuizLocalizationOverrides.cs" Link="QuizLocalizationOverrides.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/RationalDecimalFormatter.cs" Link="Services/Formatting/RationalDecimalFormatter.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/TextbookFractionParser.cs" Link="Services/Formatting/TextbookFractionParser.cs" />
-    <Compile Include="../../MathSolver/Services/Formatting/AccessibleMathText.cs" Link="Services/Formatting/AccessibleMathText.cs" />
-    <Compile Include="../../MathSolver/Services/QuestionBank/*.cs" Exclude="../../MathSolver/Services/QuestionBank/AiQuestionBank.cs" Link="QuestionBank/%(Filename)%(Extension)" />
-    <Compile Include="../MathPuzzleUnitTests/ServicesStub.cs" Link="ServicesStub.cs" />
+    <ProjectReference Include="../TestHost/TestHost.csproj" />
+    <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.cs" Link="QuestionBank/GgufQuestionRuntime.cs" />
   </ItemGroup>
 </Project>

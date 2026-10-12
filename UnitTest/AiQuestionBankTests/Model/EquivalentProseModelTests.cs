@@ -40,7 +40,8 @@ internal static class EquivalentProseModelTests
     {
         string directory = Path.GetFullPath("artifacts/verification/equivalent-prose-model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         Directory.CreateDirectory(directory);
-        var runtime = new GgufQuestionRuntime();
+        await using var modelSession = new ModelTestSession();
+        var runtime = modelSession.Runtime;
         var store = new QuestionBankStore(Path.Combine(directory, "model.db3"));
         var results = new List<object>();
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(20));
@@ -48,7 +49,7 @@ internal static class EquivalentProseModelTests
         Console.WriteLine("Native GGUF, isolated SQLite; evidence: " + directory);
         try
         {
-            await runtime.LoadAsync(path, timeout.Token);
+            await modelSession.LoadAsync(path, timeout.Token);
             var cases = new List<(string Name, BasicQuestionContract Contract)> {
                 ("OneStep-Add-VI", AdditionQuestionCatalogue.Create(CurriculumTier.OneStar, AppLanguage.Vietnamese, new(17), "family-gifts", BasicQuestionStructure.Combine)),
                 ("OneStep-Divide-EN", ArithmeticQuestionCatalogue.Create(ArithmeticOperation.Divide, CurriculumTier.ThreeStars, AppLanguage.English, new(17)))
@@ -108,7 +109,7 @@ internal static class EquivalentProseModelTests
         }
         finally
         {
-            await runtime.EjectAsync();
+            await modelSession.DisposeAsync();
             await File.WriteAllTextAsync(Path.Combine(directory, "results.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
         }
         if (runtime.IsLoaded) throw new Exception("Weights not released");

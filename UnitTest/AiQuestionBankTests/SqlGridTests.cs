@@ -5,8 +5,6 @@ using System.Text.Json;
 
 internal static class SqlGridTests
 {
-    private static void Check(bool value, string message)
-    { if (!value) throw new InvalidOperationException(message); }
 
     public static async Task RunAsync(string directory, ValidatedBankQuestion sample)
     {

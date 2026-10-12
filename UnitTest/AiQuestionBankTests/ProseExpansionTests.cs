@@ -5,9 +5,8 @@ using MathSolver.Services.QuestionBank;
 using System.Text;
 using System.Text.Json;
 
-internal static class ProseExpansionTests
+internal static partial class ProseExpansionTests
 {
-    private static void Check(bool value, string message) { if (!value) throw new Exception(message); }
 
     public static async Task RunAsync()
     {
@@ -51,53 +50,51 @@ internal static class ProseExpansionTests
             _ = ReasoningStoryValidator.Grammar(c);
             cases++;
         }
-        string directory = Path.Combine(Path.GetTempPath(), "MathSolver-prose-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(directory);
-        try
+        using var workspace = TestWorkspace.Temporary("ProseExpansionTests");
+        string directory = workspace.DirectoryPath;
+
+        var store = new QuestionBankStore(Path.Combine(directory, "test.db3"));
+        var generated = new List<ValidatedBankQuestion>();
+        foreach (var family in new[] { BankQuestionFamily.Geometry, BankQuestionFamily.Data })
+        foreach (var tier in Enum.GetValues<CurriculumTier>())
+        foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         {
-            var store = new QuestionBankStore(Path.Combine(directory, "test.db3"));
-            var generated = new List<ValidatedBankQuestion>();
-            foreach (var family in new[] { BankQuestionFamily.Geometry, BankQuestionFamily.Data })
-            foreach (var tier in Enum.GetValues<CurriculumTier>())
-            foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
+            var c = ReasoningStoryCatalogue.Create(family, ReasoningStoryCatalogue.Variants(family, tier)[1], tier, language, new(71));
+            var draft = ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).First();
+            var record = new ValidatedBankQuestion(c, draft, QuestionBankStore.SerializeDraft(draft), "reviewed", DateTime.UtcNow);
+            Check(await store.InsertAsync(record), "Visual prose insert failed");
+            generated.Add(record);
+            var read = family == BankQuestionFamily.Data
+                ? await store.TakeChartAsync(c.Story!.ChartProfile!)
+                : await store.TakeReasoningAsync(family, c.BankVariant, tier, language);
+            Check(read is not null, "Visual prose read failed");
+            var prototype = ReasoningStoryCatalogue.ToPractice(c, ReasoningStoryCatalogue.Draft(c), ArithmeticQuizMode.Essay);
+            var selected = await new BasicPracticeQuestionProvider(store, new BankRandom()).SelectReasoningAsync(prototype, tier, language);
+            Check(selected.WordProblem?.ProblemText != prototype.WordProblem?.ProblemText
+                || selected.ElementaryProblem?.ProblemText != prototype.ElementaryProblem?.ProblemText, "Visual prose not selected");
+            VerifyQuestion(selected);
+            if (family == BankQuestionFamily.Data)
             {
-                var c = ReasoningStoryCatalogue.Create(family, ReasoningStoryCatalogue.Variants(family, tier)[1], tier, language, new(71));
-                var draft = ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).First();
-                var record = new ValidatedBankQuestion(c, draft, QuestionBankStore.SerializeDraft(draft), "reviewed", DateTime.UtcNow);
-                Check(await store.InsertAsync(record), "Visual prose insert failed");
-                generated.Add(record);
-                var read = family == BankQuestionFamily.Data
-                    ? await store.TakeChartAsync(c.Story!.ChartProfile!)
-                    : await store.TakeReasoningAsync(family, c.BankVariant, tier, language);
-                Check(read is not null, "Visual prose read failed");
-                var prototype = ReasoningStoryCatalogue.ToPractice(c, ReasoningStoryCatalogue.Draft(c), ArithmeticQuizMode.Essay);
-                var selected = await new BasicPracticeQuestionProvider(store, new BankRandom()).SelectReasoningAsync(prototype, tier, language);
-                Check(selected.WordProblem?.ProblemText != prototype.WordProblem?.ProblemText
-                    || selected.ElementaryProblem?.ProblemText != prototype.ElementaryProblem?.ProblemText, "Visual prose not selected");
-                VerifyQuestion(selected);
-                if (family == BankQuestionFamily.Data)
-                {
-                    var otherLanguage = c.Story!.ChartProfile! with {
-                        Language = language == AppLanguage.Vietnamese ? AppLanguage.English : AppLanguage.Vietnamese };
-                    Check(!IQuestionBankStore.ChartProfilesMatch(c.Story.ChartProfile!, otherLanguage),
-                        "Chart profiles matched across languages");
-                    var other = await store.TakeChartAsync(otherLanguage);
-                    Check(other is null || other.Contract.Language == otherLanguage.Language,
-                        "Chart prose selected for the wrong language");
-                    var bad = selected.ElementaryProblem! with { Visual = selected.ElementaryProblem!.Visual! with {
-                        Values = selected.ElementaryProblem.Visual!.Values.Select((x, i) => i == 0 ? x + 1 : x).ToArray() } };
-                    try { DataChartQuestionValidator.Validate(bad); throw new Exception("Changed visual data accepted"); }
-                    catch (InvalidDataException) { }
-                }
+                var otherLanguage = c.Story!.ChartProfile! with {
+                    Language = language == AppLanguage.Vietnamese ? AppLanguage.English : AppLanguage.Vietnamese };
+                Check(!IQuestionBankStore.ChartProfilesMatch(c.Story.ChartProfile!, otherLanguage),
+                    "Chart profiles matched across languages");
+                var other = await store.TakeChartAsync(otherLanguage);
+                Check(other is null || other.Contract.Language == otherLanguage.Language,
+                    "Chart prose selected for the wrong language");
+                var bad = selected.ElementaryProblem! with { Visual = selected.ElementaryProblem!.Visual! with {
+                    Values = selected.ElementaryProblem.Visual!.Values.Select((x, i) => i == 0 ? x + 1 : x).ToArray() } };
+                try { DataChartQuestionValidator.Validate(bad); throw new Exception("Changed visual data accepted"); }
+                catch (InvalidDataException) { }
             }
-            using var export = new MemoryStream();
-            Check((await store.ExportExcelAsync(export)).Exported == generated.Count, "Visual prose export lost rows");
-            export.Position = 0;
-            var imported = new QuestionBankStore(Path.Combine(directory, "import.db3"));
-            var result = await imported.ImportExcelAsync(export);
-            Check(result.Inserted == generated.Count, "Visual prose import lost roles or templates");
         }
-        finally { Directory.Delete(directory, true); }
+        using var export = new MemoryStream();
+        Check((await store.ExportExcelAsync(export)).Exported == generated.Count, "Visual prose export lost rows");
+        export.Position = 0;
+        var imported = new QuestionBankStore(Path.Combine(directory, "import.db3"));
+        var result = await imported.ImportExcelAsync(export);
+        Check(result.Inserted == generated.Count, "Visual prose import lost roles or templates");
+
         Console.WriteLine($"Prose expansion: {cases} cases across 1–5 stars and Vietnamese/English; historical/new prose, fresh numbers, grading, visual integrity, SQLite/Excel passed.");
     }
 
@@ -124,70 +121,7 @@ internal static class ProseExpansionTests
         if (q.ElementaryProblem?.DataChart is not null) DataChartQuestionValidator.Validate(q.ElementaryProblem);
     }
 
-    public static async Task RunModelAsync(string model, bool narrativeDepth = false)
-    {
-        string directory = Path.GetFullPath(Path.Combine("artifacts", "verification", (narrativeDepth ? "narrative-depth-model-" : "prose-expansion-model-") + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss")));
-        Directory.CreateDirectory(directory);
-        Console.WriteLine("Actual GGUF inference, isolated SQLite, fresh C# facts. Evidence: " + directory);
-        var runtime = new GgufQuestionRuntime();
-        var store = new QuestionBankStore(Path.Combine(directory, "model.db3"));
-        var results = new List<object>();
-        var failures = new List<string>();
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(50));
-        try
-        {
-            await runtime.LoadAsync(model, timeout.Token);
-            Console.WriteLine($"CPU generation threads: {runtime.InferenceThreadCount}/{Environment.ProcessorCount}");
-            foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
-            foreach (var family in narrativeDepth ? NarrativeDepthTests.Families : Enum.GetValues<BankQuestionFamily>())
-            {
-                var c = narrativeDepth ? NarrativeDepthTests.NativeContract(family, language) : NativeContract(family, language);
-                string name = $"{family}-{(int)c.Tier}-{language}";
-                await File.WriteAllTextAsync(Path.Combine(directory, name + "-contract.json"), JsonSerializer.Serialize(c));
-                string? correction = null;
-                bool passed = false;
-                for (int attempt = 1; attempt <= 3; attempt++)
-                {
-                    string prompt = BasicQuestionPrompt.Build(c, correction);
-                    var streamed = new StringBuilder();
-                    AiGenerationMetrics? metrics = null;
-                    string raw = await runtime.GenerateAsync(c, prompt, timeout.Token, text => streamed.Append(text), m => metrics = m);
-                    Check(streamed.ToString() == raw && metrics?.GeneratedTokens > 0, "Missing real streamed inference");
-                    var validation = BasicQuestionValidator.Validate(raw, c);
-                    await File.WriteAllTextAsync(Path.Combine(directory, $"{name}-{attempt}.txt"), prompt + "\n\n" + raw + "\n\n" + validation.ErrorCode + " " + validation.ErrorDetails, timeout.Token);
-                    results.Add(new { Case = name, Attempt = attempt, validation.ErrorCode, validation.ErrorDetails, Metrics = metrics });
-                    Console.WriteLine($"{name}: attempt {attempt}, {validation.ErrorCode ?? "Valid"}, tokens={metrics!.GeneratedTokens}, tok/s={metrics.TokensPerSecond:F2}");
-                    if (validation.IsValid)
-                    {
-                        var saved = new ValidatedBankQuestion(c, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
-                        Check(await store.InsertAsync(saved, timeout.Token), "Native prose SQLite insert failed");
-                        var read = ReasoningStoryCatalogue.Supports(family)
-                            ? await store.TakeReasoningAsync(family, c.BankVariant, c.Tier, language, timeout.Token)
-                            : family == BankQuestionFamily.Fraction ? await store.TakeFractionAsync(c.Operation, c.Tier, language, new(c.KnowledgeGroup), timeout.Token)
-                            : family == BankQuestionFamily.FindX ? await store.TakeFindXAsync(c.Operation, c.Tier, language, new(c.KnowledgeGroup), timeout.Token)
-                            : await store.TakeForProfileAsync(c.Operation, c.Tier, language, new(c.KnowledgeGroup), timeout.Token);
-                        Check(read is not null, "Native prose SQLite read failed");
-                        var fresh = read!.Contract.FreshFacts(new(193));
-                        Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(read.Draft), fresh).IsValid, "Native prose failed with fresh numbers");
-                        if (ReasoningStoryCatalogue.Supports(family)) VerifyPractice(fresh, read.Draft);
-                        else foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
-                            _ = fresh.ToPracticeQuestion(read.Draft.ToWordProblem(fresh), mode, new(3));
-                        passed = true; break;
-                    }
-                    correction = validation.ErrorCode;
-                }
-                if (!passed) failures.Add(name);
-            }
-        }
-        finally
-        {
-            await runtime.EjectAsync();
-            await File.WriteAllTextAsync(Path.Combine(directory, "results.json"), JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true }));
-        }
-        Check(!runtime.IsLoaded, "Weights not released");
-        Check(failures.Count == 0, "Native failures: " + string.Join(", ", failures));
-        Console.WriteLine($"PASS {results.Count} real inference attempts; SQLite/fresh math/grading, streaming and model disposal verified.");
-    }
+
 
     private static BasicQuestionContract NativeContract(BankQuestionFamily family, AppLanguage language)
     {

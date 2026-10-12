@@ -5,8 +5,6 @@ using MathSolver.Services.QuestionBank;
 
 internal static class OneStepPracticeTests
 {
-    private static void Check(bool value, string message)
-    { if (!value) throw new InvalidOperationException(message); }
 
     public static void Run()
     {
