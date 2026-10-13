@@ -121,7 +121,8 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
 
     public async Task<ArithmeticQuizQuestion> SelectAsync(ArithmeticQuizQuestion generated,
         CurriculumTier tier, AppLanguage language, CancellationToken cancellationToken = default,
-        QuestionLearningProfile? profile = null, PracticeQuestionFormat format = PracticeQuestionFormat.Mixed)
+        QuestionLearningProfile? profile = null, PracticeQuestionFormat format = PracticeQuestionFormat.Mixed,
+        bool expandedPractice = false)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!Enum.IsDefined(format)) throw new ArgumentOutOfRangeException(nameof(format));
@@ -135,6 +136,10 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         ArithmeticQuizQuestion BuiltIn()
         {
             bool numeric = format == PracticeQuestionFormat.Mixed && _csharpFormatRandom.Next(2) == 0;
+            var practiceGroup = profile?.Group ?? QuestionKnowledgeGroup.Objects;
+            if (expandedPractice && (int)tier >= 4 && PracticeArithmeticStoryGenerator.Supports(practiceGroup))
+                return numeric ? generated : new PracticeArithmeticStoryGenerator(_random).Generate(
+                    generated.Expression.Operation, tier, language, practiceGroup, generated.Mode);
             if (profile is null) return numeric ? generated
                 : _builtIn.Next(generated.Expression.Operation, tier, language, generated.Mode);
             var c = _applied.Next(profile, generated.Expression.Operation, tier, language);
@@ -142,6 +147,8 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             return numeric ? question.WordProblem?.ArithmeticReasoning is not null ? generated
                 : question with { WordProblem = null } : question;
         }
+        // Price-bound shopping contexts cannot safely reuse old bank templates without item identity.
+        if (expandedPractice && (int)tier >= 4 && profile?.Group == QuestionKnowledgeGroup.Money) return BuiltIn();
         if (_random.Next(2) == 0) return BuiltIn();
 
         var saved = await (profile is null

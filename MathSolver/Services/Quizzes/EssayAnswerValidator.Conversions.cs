@@ -21,6 +21,14 @@ public sealed partial class EssayAnswerValidator
             EssayAnswerError error;
             if (index == lines.Length - 1)
                 (okay, error) = ValidateCalculatedEquation(question, calculation);
+            else if (question.WordProblem?.PracticeDetails is { } practice && index < practice.Steps.Count - 1)
+            {
+                var expected = practice.Steps[index];
+                (okay, error) = ValidateCalculatedEquation(question with
+                    { Expression = expected.Expression, CorrectAnswer = expected.Answer }, calculation);
+                if (okay && unit.Length > 0 && !IsExpectedUnit(question, NormalizeUnit(unit)))
+                    (okay, error) = (false, EssayAnswerError.WrongEquationUnit);
+            }
             else if (TryConversion(line, question.WordProblem!, out bool converted))
                 (okay, error) = (converted, converted ? EssayAnswerError.None : EssayAnswerError.WrongEquationResult);
             else

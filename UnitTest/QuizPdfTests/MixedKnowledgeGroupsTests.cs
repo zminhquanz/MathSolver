@@ -42,9 +42,16 @@ internal static class MixedKnowledgeGroupsTests
             var seen = new HashSet<QuestionKnowledgeGroup>();
             foreach (var expected in eligible)
             {
+                int beforeRead = store.Reads;
                 var question = await factory.CreateAsync(request, mode, new(tier, false), language, mixed,
                     PracticeQuestionFormat.WordProblem, kind == QuizProblemKind.Fraction);
-                Check(store.Group == expected && seen.Add(store.Group), "Mixed did not select each eligible group or sent the sentinel to SQLite.");
+                if (kind == QuizProblemKind.Arithmetic && (int)tier >= 4 && expected == QuestionKnowledgeGroup.Money)
+                    Check(store.Reads == beforeRead && question.WordProblem is { Quantity: WordProblemQuantity.Money,
+                        PracticeDetails.Purchases.Count: > 0 }, "Mixed shopping escaped reviewed item prices or read the old AI bank.");
+                else
+                    Check(store.Group == expected && store.Reads == beforeRead + 1,
+                        "Mixed did not select each eligible group or sent the sentinel to SQLite.");
+                Check(seen.Add(expected), "Mixed repeated a knowledge group.");
                 // Fraction stories retain rational answers (and sometimes a
                 // multi-step expression), rather than the legacy integer key.
                 var validation = kind == QuizProblemKind.Fraction

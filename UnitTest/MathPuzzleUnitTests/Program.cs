@@ -2,6 +2,8 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Practice number ranges and realistic money", PuzzleTests.CheckPracticeNumberRanges),
+    ("Nine-digit number sense and exact product boundaries", PuzzleTests.CheckLargeNumberSense),
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),
     ("Shutdown exception diagnostics", PuzzleTests.CheckShutdownDiagnostics),
     ("Catalog", PuzzleTests.CheckCatalog),

@@ -114,6 +114,13 @@ public static class ElementaryWordProblemSolutionFormatter
             NormalizeSolutionLeadPunctuation(
                 wordProblem.SolutionLead);
 
+        if (wordProblem.PracticeDetails is { } practice)
+            return string.Join(Environment.NewLine, practice.Steps.Select(step =>
+                $"{NormalizeSolutionLeadPunctuation(step.Lead)}{Environment.NewLine}" +
+                $"{step.Expression.LeftOperand.ToString("N0", culture)} {BasicArithmeticEngine.GetSymbol(step.Expression.Operation)} " +
+                $"{step.Expression.RightOperand.ToString("N0", culture)} = {step.Answer.ToString("N0", culture)} {step.Unit}")) +
+                $"{Environment.NewLine}{answerLabel}: {answer} {wordProblem.AnswerUnit}";
+
         return
             (wordProblem.ConversionStep is { } conversion ? conversion + Environment.NewLine : "") +
             $"{solutionLead}{Environment.NewLine}" +

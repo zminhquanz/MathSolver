@@ -11,7 +11,8 @@ public sealed record MathWordProblem(
     WordProblemQuantity Quantity = WordProblemQuantity.Unspecified,
     string? ConversionStep = null,
     AppliedArithmeticReasoning? ArithmeticReasoning = null,
-    QuestionFactTable? FactTable = null);
+    QuestionFactTable? FactTable = null,
+    PracticeArithmeticDetails? PracticeDetails = null);
 
 public sealed record QuestionFactTable(string LabelHeader, string ValueHeader, IReadOnlyList<QuestionFactRow> Rows)
 {

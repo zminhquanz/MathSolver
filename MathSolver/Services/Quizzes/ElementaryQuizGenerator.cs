@@ -5,11 +5,13 @@ using System.Globalization;
 namespace MathSolver.Services;
 
 /// <summary>C# math puzzle data and rules.</summary>
-public sealed partial class ElementaryQuizGenerator(Random? random = null, bool expandNarratives = true, bool expandActivityStories = true)
+public sealed partial class ElementaryQuizGenerator(Random? random = null, bool expandNarratives = true, bool expandActivityStories = true,
+    bool expandedNumberPractice = false)
 {
     private readonly Random _random = random ?? Random.Shared;
     private readonly bool _expandNarratives = expandNarratives;
     private readonly bool _expandActivityStories = expandActivityStories;
+    private readonly bool _expandedNumberPractice = expandedNumberPractice;
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
     public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
     {
@@ -95,8 +97,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         {
             case ElementaryQuizType.IntegerCompare:
             {
-                a = QuizCurriculumLayer.NextPrimaryOperand(_random, tier);
-                b = QuizCurriculumLayer.NextSecondaryOperand(_random, tier);
+                a = _expandedNumberPractice && scale >= 4 ? PracticeNumberNames.Next(_random, tier) : QuizCurriculumLayer.NextPrimaryOperand(_random, tier);
+                b = _expandedNumberPractice && scale >= 4 ? PracticeNumberNames.Next(_random, tier) : QuizCurriculumLayer.NextSecondaryOperand(_random, tier);
                 int relation = _random.Next(3);
                 if (relation == 0) b = a;
                 else

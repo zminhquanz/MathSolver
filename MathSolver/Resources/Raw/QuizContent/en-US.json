@@ -31989,6 +31989,57 @@
           "In this record, the die shows 6"
         ]
       }
+    ],
+    "PracticeArithmeticContexts": [
+      {"Id":"classroom","Capacity":40,"MaximumPerGroup":20,"GroupUnit":"groups","Actor":"The class","Unit":"students","Group":"Objects"},
+      {"Id":"school-library","Capacity":2000,"MaximumPerGroup":100,"GroupUnit":"shelves","Actor":"The school library","Unit":"books","Group":"Objects"},
+      {"Id":"book-distributor","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"batches","Actor":"The book distribution warehouse","Unit":"books","Group":"Objects"},
+      {"Id":"product-packing","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"batches","Actor":"The packing warehouse","Unit":"products","Group":"Packaging"},
+      {"Id":"factory-production","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"production runs","Actor":"The factory","Unit":"products","Group":"Production"},
+      {"Id":"survey-data","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"survey rounds","Actor":"The survey system","Unit":"survey responses","Group":"Data"},
+      {"Id":"national-book-distribution","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"distribution rounds","Actor":"The national book distribution network","Unit":"books","Group":"Objects"},
+      {"Id":"packing-network","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"packing rounds","Actor":"The packing warehouse network","Unit":"products","Group":"Packaging"},
+      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"production runs","Actor":"The factory network\u0027s finished-goods stores","Unit":"products","Group":"Production"},
+      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"aggregation rounds","Actor":"The national data aggregation system","Unit":"records","Group":"Data"}
+    ],
+    "PracticeMoneyItems": [
+      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":1,"MaximumCount":10,"Buyer":"Alex\u0027s family","Name":"ballpoint pen","MaximumPrice":4,"PriceStep":1,"Unit":"dollars","PluralName":"ballpoint pens"},
+      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":3,"MaximumCount":4,"Buyer":"Alex\u0027s family","Name":"bottle of cooking oil","MaximumPrice":10,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of cooking oil"},
+      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":2,"MaximumCount":4,"Buyer":"Alex\u0027s family","Name":"bottle of fish sauce","MaximumPrice":8,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of fish sauce"},
+      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":100,"MaximumCount":3,"Buyer":"Alex\u0027s family","Name":"children\u0027s bicycle","MaximumPrice":350,"PriceStep":10,"Unit":"dollars","PluralName":"children\u0027s bicycles"},
+      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":20,"MaximumCount":2,"Buyer":"Alex\u0027s family","Name":"school backpack","MaximumPrice":60,"PriceStep":5,"Unit":"dollars","PluralName":"school backpacks"},
+      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":200,"MaximumCount":2,"Buyer":"Alex\u0027s family","MaximumPrice":1000,"Name":"television","PluralName":"televisions","PriceStep":50,"Unit":"dollars"},
+      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":500,"MaximumCount":20,"Buyer":"The school","MaximumPrice":1500,"Name":"laptop","PluralName":"laptops","PriceStep":50,"Unit":"dollars"}
+    ],
+    "PracticeArithmeticTemplates": [
+      {"Lead":"The total quantity is ({unit}):","FirstLead":"","Id":"count-add","Problem":"{actor} has {a} {unit} and receives {b} more {unit}. How many {unit} are there altogether?"},
+      {"Lead":"The remaining quantity is ({unit}):","FirstLead":"","Id":"count-subtract","Problem":"{actor} has {a} {unit} and transfers away {b} {unit}. How many {unit} remain?"},
+      {"Lead":"The total quantity is ({unit}):","FirstLead":"","Id":"count-multiply","Problem":"{actor} has {b} {group}, each with {a} {unit}. How many {unit} are there altogether?"},
+      {"Lead":"The quantity in each group is ({unit}):","FirstLead":"","Id":"count-divide","Problem":"{actor} divides {a} {unit} equally into {b} {group}. How many {unit} are in each group?"},
+      {"Lead":"The final quantity is ({unit}):","FirstLead":"The quantity after the transfer is ({unit}):","Id":"count-add-two","Problem":"{actor} has {initial} {unit}, transfers away {change} {unit}, then receives {b} more {unit}. How many {unit} are there finally?"},
+      {"Lead":"The remaining quantity is ({unit}):","FirstLead":"The quantity after receiving more is ({unit}):","Id":"count-subtract-two","Problem":"{actor} has {initial} {unit}, receives {change} more {unit}, then transfers away {b} {unit}. How many {unit} remain?"},
+      {"Lead":"The total purchase cost is ({unit}):","FirstLead":"","Id":"money-add","Problem":"{actor} buys {count} {items} for {a} {unit}, then buys another {count} {items} for {b} {unit} the next day. How much do both purchases cost altogether?"},
+      {"Lead":"The remaining money is ({unit}):","FirstLead":"","Id":"money-subtract","Problem":"{actor} has {a} {unit} and buys one {item} for {b} {unit}. How much money remains?"},
+      {"Lead":"The remaining money is ({unit}):","FirstLead":"The cost of both items is ({unit}):","Id":"money-subtract-two","Problem":"{actor} has {a} {unit} and buys two of the same item: {items}, at {price} {unit} each. How much money remains?"},
+      {"Lead":"The total payment is ({unit}):","FirstLead":"","Id":"money-multiply","Problem":"{actor} buys {count} of the same item: {items}, at {price} {unit} each. How much must be paid altogether?"},
+      {"Lead":"The price of each item is ({unit}):","FirstLead":"","Id":"money-divide","Problem":"{actor} pays {cost} {unit} for {count} of the same item: {items}, all at the same price. What is the price of each item?"},
+      {"Lead":"The remaining money ({unit}) is:","FirstLead":"The cost of one batch ({unit}) is:","Id":"money-subtract-batches","Problem":"{actor} has {a} {unit} and buys two batches at the same prices. Each batch contains {count} {items}, at {price} {unit} per item. How much money remains?"}
+    ],
+    "Foundation.NumberNameGrammar": [
+      {"PadLowerHundreds":false,"SmallNumbers":["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],"OneAfterTens":"one","FiveAfterTens":"five","PlaceNames":["ones","tens","hundreds","thousands","ten thousands","hundred thousands","millions","ten millions","hundred millions"],"ZeroTens":"","ReadingAliases":{"-":" "," and ":" "},"TensJoin":"-","Ten":"ten","HundredJoin":" and ","Hundred":"hundred","Style":"English","Digits":["zero","one","two","three","four","five","six","seven","eight","nine"],"Tens":["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"],"Scales":["","thousand","million"],"ClassJoin":" ","TensMarker":""}
+    ],
+    "Foundation.NumberNames.Extensions": [
+      {"Words":"ten million","Value":10000000},
+      {"Words":"ten million and one","Value":10000001},
+      {"Words":"twenty million five thousand and six","Value":20005006},
+      {"Words":"forty-five million","Value":45000000},
+      {"Words":"ninety-nine million nine hundred and ninety-nine thousand nine hundred and ninety-nine","Value":99999999},
+      {"Words":"one hundred million","Value":100000000},
+      {"Words":"one hundred million and one","Value":100000001},
+      {"Words":"one hundred and one million and ten","Value":101000010},
+      {"Words":"two hundred million five thousand and six","Value":200005006},
+      {"Words":"seven hundred and twenty million five hundred thousand three hundred and ten","Value":720500310},
+      {"Words":"nine hundred and ninety-nine million nine hundred and ninety-nine thousand nine hundred and ninety-nine","Value":999999999}
     ]
   }
 }

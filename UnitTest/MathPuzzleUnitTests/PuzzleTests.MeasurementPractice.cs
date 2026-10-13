@@ -57,7 +57,8 @@ internal static partial class PuzzleTests
                     "Correct numeric conversion submission rejected: " + c.AnswerText);
                 Require(grader.ValidateSubmission(question, c.AnswerText.Replace('.', ',')).IsCorrect,
                     "Decimal-comma conversion submission rejected.");
-                Require(!grader.ValidateSubmission(question, answer.DisplayValue).IsCorrect, "Missing target unit accepted.");
+                // The conversion prompt supplies the target unit; typing it again is optional.
+                Require(grader.ValidateSubmission(question, answer.DisplayValue).IsCorrect, "Numeric answer with the supplied target unit rejected.");
                 Require(!grader.ValidateSubmission(question, answer.DisplayValue + " " + source.Unit).IsCorrect,
                     "Wrong target unit accepted.");
                 Require(!grader.ValidateSubmission(question, (expected + 1).ToString(CultureInfo.InvariantCulture) + " " + answer.Unit).IsCorrect,

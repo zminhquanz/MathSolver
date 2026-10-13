@@ -26,7 +26,9 @@ public sealed partial class ElementaryQuizGenerator
             choices = alternatives.Prepend(text).Distinct().Take(4).ToArray();
         }
         int maximum = level switch { 1 => 100, 2 => 1000, 3 => 100000, _ => 1000000 };
-        int number = _random.Next(1, maximum);
+        bool largeNumbers = _expandedNumberPractice && kind == QuizProblemKind.NumberSense && level >= 4;
+        if (largeNumbers) maximum = PracticeNumberNames.Maximum;
+        int number = largeNumbers ? PracticeNumberNames.Next(_random, tier, maximum - 1) : _random.Next(1, maximum);
         switch (type)
         {
             case ElementaryQuizType.Counting:
@@ -42,10 +44,18 @@ public sealed partial class ElementaryQuizGenerator
             {
                 var names = QuizContentCatalog.LoadList<QuizNumberName>("Foundation.NumberNames", QuizContentCatalog.Culture(language))
                     .Where(item => item.Value <= maximum).ToArray();
+                if (largeNumbers)
+                {
+                    var reviewed = QuizContentCatalog.LoadList<QuizNumberName>("Foundation.NumberNames.Extensions", QuizContentCatalog.Culture(language));
+                    var generated = Enumerable.Range(0, 4).Select(_ => PracticeNumberNames.Next(_random, tier))
+                        .Distinct().Select(n => new QuizNumberName(n, PracticeNumberNames.Format(n, language)));
+                    names = [.. names, .. reviewed, .. generated];
+                }
                 var selected = names[_random.Next(names.Length)];
                 if (type == ElementaryQuizType.ReadNumber)
                 {
-                    TextChoice(selected.Words, names.Where(item => item.Value != selected.Value).Select(item => item.Words).OrderBy(_ => _random.Next()));
+                    TextChoice(selected.Words, names.Where(item => item.Value != selected.Value).Select(item => item.Words).OrderBy(_ => _random.Next()),
+                        largeNumbers ? PracticeNumberNames.Aliases(selected.Words, language) : []);
                     problem = L("ReadNumber", ("number", N(selected.Value)));
                 }
                 else { Direct(selected.Value); problem = L("WriteNumber", ("words", selected.Words)); }
@@ -56,7 +66,7 @@ public sealed partial class ElementaryQuizGenerator
                 int power = _random.Next(0, N(number).Length), place = (int)Math.Pow(10, power);
                 int digit = number / place % 10;
                 Direct(digit * place);
-                problem = L("PlaceValue", ("number", N(number)), ("place", L("Place" + power)), ("digit", N(digit)));
+                problem = L("PlaceValue", ("number", N(number)), ("place", largeNumbers ? PracticeNumberNames.Grammar(language).PlaceNames[power] : L("Place" + power)), ("digit", N(digit)));
                 break;
             }
             case ElementaryQuizType.AdjacentNumbers:
@@ -66,8 +76,8 @@ public sealed partial class ElementaryQuizGenerator
                 break;
             case ElementaryQuizType.NumberLine:
             {
-                int step = level <= 2 ? 1 : level == 3 ? 10 : 100;
-                int start = _random.Next(0, 8) * step, hidden = _random.Next(1, 5);
+                int step = largeNumbers ? (int)Math.Pow(10, _random.Next(3, 9)) : level <= 2 ? 1 : level == 3 ? 10 : 100;
+                int start = _random.Next(0, largeNumbers ? Math.Min(8, maximum / step - 5) + 1 : 8) * step, hidden = _random.Next(1, 5);
                 Direct(start + hidden * step);
                 problem = L("NumberLine");
                 visual = new("foundation-number-line", [], Enumerable.Range(0, 6).Select(i => (decimal)(start + i * step)).ToArray(), "",
@@ -91,6 +101,13 @@ public sealed partial class ElementaryQuizGenerator
                 int denominator = type == ElementaryQuizType.OrderFractions ? _random.Next(5, 13) : 1;
                 var values = Enumerable.Range(1, denominator == 1 ? 20 : denominator - 1).OrderBy(_ => _random.Next()).Take(level <= 2 ? 3 : 4).ToArray();
                 if (denominator == 1) values = values.Select(i => i * (level < 3 ? 1 : 100)).ToArray();
+                if (largeNumbers && denominator == 1)
+                {
+                    var distinct = new HashSet<int>();
+                    int anchor = PracticeNumberNames.Next(_random, tier, maximum - 100);
+                    while (distinct.Count < 4) distinct.Add(level == 5 ? anchor + _random.Next(100) : PracticeNumberNames.Next(_random, tier));
+                    values = distinct.ToArray();
+                }
                 string Item(int value) => denominator == 1 ? N(value) : $"{value}/{denominator}";
                 bool descending = _random.Next(2) == 0;
                 int[] sorted = descending ? values.OrderDescending().ToArray() : values.Order().ToArray();
@@ -108,8 +125,14 @@ public sealed partial class ElementaryQuizGenerator
             case ElementaryQuizType.RoundWholeNumber:
             case ElementaryQuizType.EstimateSum:
             {
-                int place = (int)Math.Pow(10, Math.Min(level, 5));
+                int place = (int)Math.Pow(10, largeNumbers ? _random.Next(1, level == 4 ? 6 : 9) : Math.Min(level, 5));
                 int first = _random.Next(place, place * 9), second = _random.Next(place, place * 9);
+                if (largeNumbers)
+                {
+                    int limit = type == ElementaryQuizType.EstimateSum ? maximum / 2 : maximum;
+                    limit = Math.Min(limit, limit / place * place + place / 2 - 1);
+                    first = PracticeNumberNames.Next(_random, tier, limit); second = PracticeNumberNames.Next(_random, tier, limit);
+                }
                 int Round(int v) => (int)(Math.Round((decimal)v / place, 0, MidpointRounding.AwayFromZero) * place);
                 Direct(type == ElementaryQuizType.RoundWholeNumber ? Round(first) : Round(first) + Round(second));
                 problem = type == ElementaryQuizType.RoundWholeNumber
@@ -120,6 +143,14 @@ public sealed partial class ElementaryQuizGenerator
             case ElementaryQuizType.LetterExpression:
             {
                 int a = _random.Next(1, 10), b = _random.Next(1, 10), c = _random.Next(1, 10);
+                if (largeNumbers)
+                {
+                    c = _random.Next(2, level == 4 ? 10 : 100);
+                    int cap = maximum / c;
+                    a = PracticeNumberNames.Next(_random, tier, cap - 1);
+                    b = PracticeArithmeticDifficulty.NextRegroupingPartner(_random, tier, a, ArithmeticOperation.Add, cap - a);
+                    if (b == 0) { a = Math.Max(1, a / 10 * 10); b = 1; }
+                }
                 string first = t.Given("a", a), second = t.Given("b", b), third = t.Given("c", c);
                 string expression = level <= 2 ? $"{first}+{second}" : $"({first}+{second})*{third}";
                 t.Answer(label, expression);

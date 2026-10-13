@@ -124,6 +124,7 @@ try
     File.WriteAllBytes(Path.Combine(directory, "textbook-fractions.pdf"), QuizPdfWriter.Write(fractionSet, false));
     File.WriteAllText(Path.Combine(directory, "cases.json"), JsonSerializer.Serialize(traces, new JsonSerializerOptions { WriteIndented = true }));
     await CalculationSolutionTests.Run(factory, directory);
+    await PracticeNumberRangesTests.Run(directory);
     await FactSummaryTests.Run(factory, directory);
     await WorksheetSettingsTests.Run(factory);
     await MeasurementPracticeTests.Run(directory);

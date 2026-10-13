@@ -32503,6 +32503,57 @@
           "Theo thông tin của bài, xuất hiện mặt 6 chấm"
         ]
       }
+    ],
+    "PracticeArithmeticContexts": [
+      {"Id":"classroom","Capacity":40,"MaximumPerGroup":20,"GroupUnit":"nhóm","Actor":"Lớp học","Unit":"học sinh","Group":"Objects"},
+      {"Id":"school-library","Capacity":2000,"MaximumPerGroup":100,"GroupUnit":"kệ","Actor":"Thư viện trường","Unit":"quyển sách","Group":"Objects"},
+      {"Id":"book-distributor","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"lô hàng","Actor":"Kho phân phối sách","Unit":"quyển sách","Group":"Objects"},
+      {"Id":"product-packing","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"lô hàng","Actor":"Kho đóng gói hàng","Unit":"sản phẩm","Group":"Packaging"},
+      {"Id":"factory-production","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"đợt sản xuất","Actor":"Nhà máy sản xuất","Unit":"sản phẩm","Group":"Production"},
+      {"Id":"survey-data","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"đợt khảo sát","Actor":"Hệ thống khảo sát","Unit":"phiếu khảo sát","Group":"Data"},
+      {"Id":"national-book-distribution","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"đợt phân phối","Actor":"Mạng lưới phân phối sách toàn quốc","Unit":"quyển sách","Group":"Objects"},
+      {"Id":"packing-network","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"đợt đóng gói","Actor":"Mạng lưới kho đóng gói","Unit":"sản phẩm","Group":"Packaging"},
+      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt sản xuất","Actor":"Kho thành phẩm của hệ thống nhà máy","Unit":"sản phẩm","Group":"Production"},
+      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt tổng hợp","Actor":"Hệ thống tổng hợp dữ liệu toàn quốc","Unit":"bản ghi","Group":"Data"}
+    ],
+    "PracticeMoneyItems": [
+      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":3000,"MaximumCount":10,"Buyer":"Gia đình An","Name":"bút bi","MaximumPrice":10000,"PriceStep":1000,"Unit":"đồng","PluralName":"bút bi"},
+      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":35000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai dầu ăn","MaximumPrice":70000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai dầu ăn"},
+      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":20000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai nước mắm","MaximumPrice":50000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai nước mắm"},
+      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc xe đạp trẻ em","MaximumPrice":5000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc xe đạp trẻ em"},
+      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":200000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc ba lô học sinh","MaximumPrice":500000,"PriceStep":10000,"Unit":"đồng","PluralName":"chiếc ba lô học sinh"},
+      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":5000000,"MaximumCount":2,"Buyer":"Gia đình An","MaximumPrice":20000000,"Name":"chiếc ti vi","PluralName":"chiếc ti vi","PriceStep":500000,"Unit":"đồng"},
+      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":15000000,"MaximumCount":20,"Buyer":"Nhà trường","MaximumPrice":30000000,"Name":"chiếc máy tính xách tay","PluralName":"chiếc máy tính xách tay","PriceStep":500000,"Unit":"đồng"}
+    ],
+    "PracticeArithmeticTemplates": [
+      {"Lead":"Số lượng tất cả là ({unit}):","FirstLead":"","Id":"count-add","Problem":"{actor} có {a} {unit}, nhận thêm {b} {unit}. Hỏi có tất cả bao nhiêu {unit}?"},
+      {"Lead":"Số lượng còn lại là ({unit}):","FirstLead":"","Id":"count-subtract","Problem":"{actor} có {a} {unit}, chuyển đi {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
+      {"Lead":"Số lượng tất cả là ({unit}):","FirstLead":"","Id":"count-multiply","Problem":"{actor} có {b} {group}, mỗi nhóm có {a} {unit}. Hỏi có tất cả bao nhiêu {unit}?"},
+      {"Lead":"Số lượng trong mỗi nhóm là ({unit}):","FirstLead":"","Id":"count-divide","Problem":"{actor} chia đều {a} {unit} thành {b} {group}. Hỏi mỗi nhóm có bao nhiêu {unit}?"},
+      {"Lead":"Số lượng cuối cùng là ({unit}):","FirstLead":"Số lượng sau khi chuyển đi là ({unit}):","Id":"count-add-two","Problem":"{actor} có {initial} {unit}, chuyển đi {change} {unit}, rồi nhận thêm {b} {unit}. Hỏi cuối cùng có bao nhiêu {unit}?"},
+      {"Lead":"Số lượng còn lại là ({unit}):","FirstLead":"Số lượng sau khi nhận thêm là ({unit}):","Id":"count-subtract-two","Problem":"{actor} có {initial} {unit}, nhận thêm {change} {unit}, rồi chuyển đi {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
+      {"Lead":"Tổng số tiền mua hàng là ({unit}):","FirstLead":"","Id":"money-add","Problem":"{actor} mua {count} {items}, hết {a} {unit}. Hôm sau mua thêm {count} {items}, hết {b} {unit}. Hỏi hai lần mua hết bao nhiêu {unit}?"},
+      {"Lead":"Số tiền còn lại là ({unit}):","FirstLead":"","Id":"money-subtract","Problem":"{actor} có {a} {unit}, mua một {item} với giá {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
+      {"Lead":"Số tiền còn lại là ({unit}):","FirstLead":"Số tiền mua hai món là ({unit}):","Id":"money-subtract-two","Problem":"{actor} có {a} {unit}, mua hai {items}, mỗi món giá {price} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
+      {"Lead":"Số tiền phải trả là ({unit}):","FirstLead":"","Id":"money-multiply","Problem":"{actor} mua {count} {items}, mỗi món giá {price} {unit}. Hỏi phải trả tất cả bao nhiêu {unit}?"},
+      {"Lead":"Giá tiền mỗi món là ({unit}):","FirstLead":"","Id":"money-divide","Problem":"{actor} trả {cost} {unit} để mua {count} {items} cùng giá. Hỏi mỗi món giá bao nhiêu {unit}?"},
+      {"Lead":"Số tiền còn lại là ({unit}):","FirstLead":"Số tiền mua một đợt là ({unit}):","Id":"money-subtract-batches","Problem":"{actor} có {a} {unit}, mua hai đợt máy cùng giá. Mỗi đợt mua {count} {items}, mỗi máy giá {price} {unit}. Hỏi còn lại bao nhiêu {unit}?"}
+    ],
+    "Foundation.NumberNameGrammar": [
+      {"PadLowerHundreds":true,"SmallNumbers":[],"OneAfterTens":"mốt","FiveAfterTens":"lăm","PlaceNames":["đơn vị","chục","trăm","nghìn","chục nghìn","trăm nghìn","triệu","chục triệu","trăm triệu"],"ZeroTens":"linh","ReadingAliases":{"nghìn":"ngàn","linh":"lẻ"},"TensJoin":" ","Ten":"mười","HundredJoin":" ","Hundred":"trăm","Style":"Vietnamese","Digits":["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"],"Tens":[],"Scales":["","nghìn","triệu"],"ClassJoin":" ","TensMarker":"mươi"}
+    ],
+    "Foundation.NumberNames.Extensions": [
+      {"Words":"mười triệu","Value":10000000},
+      {"Words":"mười triệu không trăm linh một","Value":10000001},
+      {"Words":"hai mươi triệu không trăm linh năm nghìn không trăm linh sáu","Value":20005006},
+      {"Words":"bốn mươi lăm triệu","Value":45000000},
+      {"Words":"chín mươi chín triệu chín trăm chín mươi chín nghìn chín trăm chín mươi chín","Value":99999999},
+      {"Words":"một trăm triệu","Value":100000000},
+      {"Words":"một trăm triệu không trăm linh một","Value":100000001},
+      {"Words":"một trăm linh một triệu không trăm mười","Value":101000010},
+      {"Words":"hai trăm triệu không trăm linh năm nghìn không trăm linh sáu","Value":200005006},
+      {"Words":"bảy trăm hai mươi triệu năm trăm nghìn ba trăm mười","Value":720500310},
+      {"Words":"chín trăm chín mươi chín triệu chín trăm chín mươi chín nghìn chín trăm chín mươi chín","Value":999999999}
     ]
   }
 }

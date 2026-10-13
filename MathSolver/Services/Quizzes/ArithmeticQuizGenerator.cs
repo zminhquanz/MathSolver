@@ -46,13 +46,21 @@ public sealed class ArithmeticQuizGenerator
     public ArithmeticQuizQuestion Generate(
         ArithmeticQuizMode mode,
         ArithmeticOperation? requestedOperation = null,
-        QuizCurriculumContext? curriculumContext = null)
+        QuizCurriculumContext? curriculumContext = null,
+        bool expandedPractice = false)
     {
         QuizCurriculumLayer.ArithmeticRules? curriculumRules =
             curriculumContext.HasValue
                 ? QuizCurriculumLayer.GetArithmeticRules(
                     curriculumContext.Value)
                 : null;
+        if (expandedPractice && curriculumRules is not null)
+            curriculumRules = curriculumRules with
+            {
+                MaximumValue = PracticeArithmeticDifficulty.Maximum(curriculumRules.Tier),
+                MaximumMultiplicationFactor = (int)curriculumRules.Tier >= 4 ? 99 : curriculumRules.MaximumMultiplicationFactor,
+                MaximumDivisionFactor = (int)curriculumRules.Tier >= 4 ? 99 : curriculumRules.MaximumDivisionFactor
+            };
         for (int attempt = 0;
              attempt < MaximumGenerationAttempts;
              attempt++)
@@ -71,7 +79,7 @@ public sealed class ArithmeticQuizGenerator
             IntegerArithmeticExpression expression =
                 CreateExpression(
                     operation,
-                    curriculumRules);
+                    curriculumRules, expandedPractice);
 
             IntegerArithmeticResult calculation =
                 _engine.CalculateInteger(
@@ -114,7 +122,8 @@ public sealed class ArithmeticQuizGenerator
 
     private IntegerArithmeticExpression CreateExpression(
         ArithmeticOperation operation,
-        QuizCurriculumLayer.ArithmeticRules? curriculumRules)
+        QuizCurriculumLayer.ArithmeticRules? curriculumRules,
+        bool expandedPractice)
     {
         int left;
         int right;
@@ -125,6 +134,27 @@ public sealed class ArithmeticQuizGenerator
         }
 
         CurriculumTier tier = curriculumRules.Tier;
+
+        if (expandedPractice)
+        {
+            int a = PracticeArithmeticDifficulty.NextPrimary(_random, tier);
+            int b;
+            if (operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+            {
+                b = SelectFactor(operation == ArithmeticOperation.Multiply
+                    ? curriculumRules.AllowedMultiplicationFactors : curriculumRules.AllowedDivisionFactors,
+                    tier, operation == ArithmeticOperation.Multiply
+                    ? curriculumRules.MaximumMultiplicationFactor : curriculumRules.MaximumDivisionFactor);
+                if (operation == ArithmeticOperation.Divide)
+                    a = PracticeArithmeticDifficulty.NextMultiple(_random, tier, b);
+                else
+                    // The school exercise stays within nine digits, irrespective of the engine's BigInteger support.
+                    a = PracticeArithmeticDifficulty.NextPrimary(_random, tier, PracticeArithmeticDifficulty.Maximum(tier) / b);
+            }
+            else b = PracticeArithmeticDifficulty.NextRegroupingPartner(_random, tier, a, operation,
+                operation == ArithmeticOperation.Subtract ? a : PracticeArithmeticDifficulty.Maximum(tier));
+            return new(a, operation, b);
+        }
 
         switch (operation)
         {

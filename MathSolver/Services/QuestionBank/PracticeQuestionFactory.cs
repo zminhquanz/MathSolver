@@ -16,7 +16,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
     private readonly AverageQuizGenerator _average = new();
     private readonly PercentageQuizGenerator _percentage = new();
     private readonly ExpressionQuizGenerator _expression = new();
-    private readonly ElementaryQuizGenerator _elementary = new();
+    private readonly ElementaryQuizGenerator _elementary = new(expandedNumberPractice: true);
 
     public async Task<ArithmeticQuizQuestion> CreateAsync(QuizProblemRequest request, ArithmeticQuizMode mode,
         QuizCurriculumContext curriculum, AppLanguage language, QuestionLearningProfile? learning,
@@ -41,7 +41,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             _ when ElementaryQuizGenerator.Supports(request.Kind) => _elementary.Generate(mode, request.Kind, request.ElementaryType, language, curriculum.Tier),
             QuizProblemKind.Expression => _expression.Generate(mode, request.ExpressionType, curriculum.Tier),
             QuizProblemKind.Geometry => _geometry.GenerateAlgorithm(mode, language, request.GeometryShape, curriculum, request.GeometryMeasurement),
-            QuizProblemKind.Arithmetic => _arithmetic.Generate(mode, request.ArithmeticOperation, curriculum),
+            QuizProblemKind.Arithmetic => _arithmetic.Generate(mode, request.ArithmeticOperation, curriculum, expandedPractice: true),
             QuizProblemKind.Fraction => _fraction.Generate(mode, request.FractionOperation, curriculum),
             QuizProblemKind.FindX => _findX.Generate(mode, request.FindXOperation, curriculum),
             QuizProblemKind.Proportion => _proportion.GenerateAlgorithm(mode, request.ProportionType, language, curriculum),
@@ -78,7 +78,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             }
         }
         if (request.Kind == QuizProblemKind.Arithmetic && !request.IsComparison)
-            question = await practice.SelectAsync(question, curriculum.Tier, language, cancellation, learning, format);
+            question = await practice.SelectAsync(question, curriculum.Tier, language, cancellation, learning, format, expandedPractice: true);
         if (request.Kind == QuizProblemKind.FindX)
             question = await practice.SelectFindXAsync(question, curriculum.Tier, language, learning ?? new(QuestionKnowledgeGroup.Objects), cancellation, format);
         if (request.Kind == QuizProblemKind.Fraction && !request.IsComparison && fractionWordProblems)

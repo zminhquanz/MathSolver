@@ -83,6 +83,7 @@ public sealed partial class EssayAnswerValidator
         bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
         bool geometryWork = question.GeometryProblem?.Reasoning is not null;
         (bool equationIsCorrect, EssayAnswerError equationError) = question.WordProblem?.ConversionStep is not null
+            || question.WordProblem?.PracticeDetails?.Steps.Count > 1
             ? ValidateDimensionCalculations(question, equationText, out steps) : indirect
             ? AverageIndirectEssayValidator.Validate(question, equationText, out steps)
             : geometryWork ? GeometryWorkedEssayValidator.Validate(question, equationText, out steps)
@@ -129,6 +130,7 @@ public sealed partial class EssayAnswerValidator
         bool resultOnly = IsResultOnlyPractice(question);
         submission = EssayCombinedInputParser.Parse(input, RequiresSolution(question),
             preserveAllCalculations: question.WordProblem?.ConversionStep is not null
+                || question.WordProblem?.PracticeDetails?.Steps.Count > 1
                 || question.GeometryProblem?.Reasoning is not null || question.ElementaryProblem is not null
                 || question.AverageProblem?.Type == AverageQuizType.IndirectData,
             allowTextAnswer: question.ElementaryProblem?.Answers.Any(answer => answer.IsText) == true,
