@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Quiz.TimeFractionInputHint": "Enter the result directly or include a worked solution and answer. Examples: 120 seconds, century 20, Monday.",
+    "Quiz.FractionOrderInputHint": "Enter fractions in order, separated by ->, commas or semicolons. Example: 1/4 -> 1/2 -> 3/4.",
+    "Quiz.Elementary.SecondsConversion": "Convert seconds and minutes",
+    "Quiz.Elementary.YearCentury": "Identify the century",
+    "Quiz.Elementary.CalendarWeekday": "Find the weekday",
+    "Quiz.Elementary.OrderRelatedFractions": "Order fractions with different denominators",
     "Quiz.ProtractorInputHint": "Enter the angle in degrees, for example: 90 degrees or 180 degrees. You do not need to type the degree symbol.",
     "Quiz.ProtractorInputPlaceholder": "Example: 90 degrees",
     "Quiz.ThermometerInputHint": "Enter the temperature in degrees C, for example: 34 degrees C. You do not need to type the degree symbol.",

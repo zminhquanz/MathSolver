@@ -1,7 +1,14 @@
 {
   "Version": 1,
   "Lists": {
+    "CenturyPracticeYears": [1, 99, 100, 101, 999, 1000, 1001, 1899, 1900, 1901, 1999, 2000, 2001, 2099, 2100, 2101],
+    "WeekdayPracticeDates": [{"Year": 2024, "Month": 2, "Day": 27}, {"Year": 2024, "Month": 2, "Day": 28}, {"Year": 2024, "Month": 2, "Day": 29}, {"Year": 2024, "Month": 3, "Day": 1}, {"Year": 2023, "Month": 12, "Day": 30}, {"Year": 2023, "Month": 12, "Day": 31}, {"Year": 2024, "Month": 1, "Day": 1}, {"Year": 2025, "Month": 1, "Day": 1}, {"Year": 2025, "Month": 3, "Day": 30}, {"Year": 2025, "Month": 4, "Day": 1}, {"Year": 2025, "Month": 10, "Day": 1}, {"Year": 2025, "Month": 10, "Day": 6}],
+    "FractionOrderPracticeProfiles": [{"Id": "halves", "MinimumStar": 1, "MaximumStar": 1, "Denominators": [2, 4, 8], "Count": 3}, {"Id": "thirds", "MinimumStar": 2, "MaximumStar": 2, "Denominators": [3, 6, 12], "Count": 3}, {"Id": "related", "MinimumStar": 3, "MaximumStar": 3, "Denominators": [2, 3, 6, 12], "Count": 4}, {"Id": "twelfths", "MinimumStar": 4, "MaximumStar": 4, "Denominators": [3, 4, 6, 12], "Count": 4}, {"Id": "general", "MinimumStar": 5, "MaximumStar": 5, "Denominators": [4, 5, 6, 10], "Count": 4}],
     "QuizChoices": [
+      {"Key": "Quiz.Elementary.SecondsConversion", "IllustrationId": "time-seconds", "DescriptionKey": "Curriculum.Requirement.Time.SecondsConversion"},
+      {"Key": "Quiz.Elementary.YearCentury", "IllustrationId": "time-century", "DescriptionKey": "Curriculum.Requirement.Time.YearCentury"},
+      {"Key": "Quiz.Elementary.CalendarWeekday", "IllustrationId": "time-weekday", "DescriptionKey": "Curriculum.Requirement.Time.CalendarWeekday"},
+      {"Key": "Quiz.Elementary.OrderRelatedFractions", "IllustrationId": "fraction-order-different", "DescriptionKey": "Curriculum.Requirement.FractionSkills.OrderRelatedFractions"},
       {"Key":"Language.Vietnamese","IllustrationId":"language-vietnamese","DescriptionKey":"Choice.Language.Vietnamese"},
       {"Key":"Language.English","IllustrationId":"language-english","DescriptionKey":"Choice.Language.English"},
       {"Key":"Learning.Group.Mixed","IllustrationId":"mixed","DescriptionKey":"Choice.Group.Mixed"},
@@ -4037,6 +4044,10 @@
       }
     ],
     "PrimaryCurriculum": [
+      {"Id": "Time.SecondsConversion", "Kind": "Time", "Subtype": "SecondsConversion", "Grades": [4, 5], "RequirementId": "Curriculum.Requirement.Time.SecondsConversion", "Scope": "Core", "Coverage": "Skill", "Constraints": "Dedicated C# skill, keyboard-friendly grading, reviewed bilingual AI templates and frozen PDF answers. School grade configuration remains separate work.", "SourcePages": "21-46"},
+      {"Id": "Time.YearCentury", "Kind": "Time", "Subtype": "YearCentury", "Grades": [4, 5], "RequirementId": "Curriculum.Requirement.Time.YearCentury", "Scope": "Core", "Coverage": "Skill", "Constraints": "Dedicated C# skill, keyboard-friendly grading, reviewed bilingual AI templates and frozen PDF answers. School grade configuration remains separate work.", "SourcePages": "21-46"},
+      {"Id": "Time.CalendarWeekday", "Kind": "Time", "Subtype": "CalendarWeekday", "Grades": [1, 2, 3, 4, 5], "RequirementId": "Curriculum.Requirement.Time.CalendarWeekday", "Scope": "Core", "Coverage": "Skill", "Constraints": "Dedicated C# skill, keyboard-friendly grading, reviewed bilingual AI templates and frozen PDF answers. School grade configuration remains separate work.", "SourcePages": "21-46"},
+      {"Id": "FractionSkills.OrderRelatedFractions", "Kind": "FractionSkills", "Subtype": "OrderRelatedFractions", "Grades": [4, 5], "RequirementId": "Curriculum.Requirement.FractionSkills.OrderRelatedFractions", "Scope": "Core", "Coverage": "Skill", "Constraints": "Dedicated C# skill, keyboard-friendly grading, reviewed bilingual AI templates and frozen PDF answers. School grade configuration remains separate work.", "SourcePages": "21-46"},
     {
         "Id":  "TwoNumbers.SumDifference",
         "Kind":  "TwoNumbers",

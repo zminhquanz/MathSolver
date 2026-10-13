@@ -17,7 +17,7 @@ internal static partial class PackingTimeBankTests
         foreach (var family in new[] { BankQuestionFamily.Remainder, BankQuestionFamily.Time })
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
-        foreach (int type in ReasoningStoryCatalogue.Variants(family, tier))
+        foreach (int type in ReasoningStoryCatalogue.Variants(family, tier).Where(t => family != BankQuestionFamily.Time || ElementaryQuizGenerator.TimeStoryTypes.Contains((ElementaryQuizType)t)))
         foreach (string context in Contexts(family, tier, language))
             yield return ReasoningStoryCatalogue.Create(family, type, tier, language, new(47), context);
     }

@@ -131,6 +131,7 @@ try
     await MeasurementPracticeTests.Run(directory);
     await MixedKnowledgeGroupsTests.Run(directory);
     FractionOperandLayoutTests.Run(directory);
+    await TimeFractionWorksheetTests.Run(factory, directory);
     Console.WriteLine($"PASS {cases} family/star/language/mode cases + {subtypeCases} elementary subtype/language/mode cases; {visualItems.Count} essential drawings. A4 PDF parsing, choices, masked data, vector diagrams, embedded fonts, frozen 20-question batch, count limits, bounded deduplication and cancellation. Output: {directory}");
     return 0;
 

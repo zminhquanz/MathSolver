@@ -6,6 +6,12 @@
   "author": "Your name",
   "appVersion": "0.2.0",
   "strings": {
+    "Quiz.TimeFractionInputHint": "Có thể nhập kết quả trực tiếp hoặc ghi lời giải và đáp số. Ví dụ: 120 giây, thế kỷ 20, thứ hai.",
+    "Quiz.FractionOrderInputHint": "Nhập các phân số theo thứ tự, ngăn cách bằng ->, dấu phẩy hoặc dấu chấm phẩy. Ví dụ: 1/4 -> 1/2 -> 3/4.",
+    "Quiz.Elementary.SecondsConversion": "Đổi giây và phút",
+    "Quiz.Elementary.YearCentury": "Xác định thế kỷ",
+    "Quiz.Elementary.CalendarWeekday": "Xác định thứ trong tuần",
+    "Quiz.Elementary.OrderRelatedFractions": "Sắp xếp phân số khác mẫu",
     "MeasurementPractice.Mode": "Cách luyện đổi đơn vị",
     "MeasurementPractice.Numeric": "Luyện đổi đơn vị",
     "MeasurementPractice.Hint": "Luyện quy đổi trực tiếp, ví dụ 1 m = ? mm, hoặc chọn bài toán có lời văn.",

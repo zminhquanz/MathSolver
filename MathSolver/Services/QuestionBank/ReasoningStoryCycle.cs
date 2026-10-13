@@ -28,6 +28,8 @@ internal sealed class ReasoningStoryCycle
             // contexts still have wording. Search the finite catalog before failing.
             var narrativeIds = family switch
             {
+                BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)variant)
+                    => ElementaryQuizGenerator.TimeFractionContextIds((ElementaryQuizType)variant),
                 BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalContexts(language).Select(c => c.Id),
                 BankQuestionFamily.Measurement when variant == (int)ElementaryQuizType.MapScale =>
                     ElementaryQuizGenerator.MapScaleContexts(language)

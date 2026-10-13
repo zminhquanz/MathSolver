@@ -19,9 +19,10 @@ internal sealed record ReviewedNarrativePhrasings(string Id, string[] Alternativ
     internal const string DataListName = "Narrative.Data.Phrasings";
     internal const string MapScaleListName = "Narrative.MapScale.Phrasings";
     internal const string ProbabilityListName = "Narrative.Probability.Phrasings";
+    internal const string TimeFractionListName = "Narrative.TimeFraction.Phrasings";
     internal static readonly string[] ListNames = [ListName, MotionListName, ProportionListName,
         DecimalListName, MeasurementListName, RemainderListName, TimeListName, FractionQuantityListName,
-        TwoNumbersListName, AverageListName, PercentageListName, GeometryListName, DataListName, MapScaleListName, ProbabilityListName];
+        TwoNumbersListName, AverageListName, PercentageListName, GeometryListName, DataListName, MapScaleListName, ProbabilityListName, TimeFractionListName];
 
     internal static IReadOnlyDictionary<string, string[]> ForFractionQuantity(AppLanguage language)
     {

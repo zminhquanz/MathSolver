@@ -693,8 +693,9 @@ public static class QuizCurriculumLayer
                 : level == 4 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,
                     ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide]
                 : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock]
-                : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.CalendarWeekday]
+                : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar, ElementaryQuizType.CalendarWeekday]
+                : ElementaryQuizGenerator.Types(kind).Where(t => level >= 4 || t is not (ElementaryQuizType.SecondsConversion or ElementaryQuizType.YearCentury)).ToArray(),
             QuizProblemKind.Data => level < 2 ? [] : level <= 3 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph]
                 : level == 4 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph, ElementaryQuizType.ReadBarChart,
                     ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference] : ElementaryQuizGenerator.Types(kind),
@@ -705,7 +706,7 @@ public static class QuizCurriculumLayer
                 : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.TwoNumbers => level < 4 ? [] : level == 4 ? [ElementaryQuizType.SumDifference] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.FractionSkills => level < 4 ? [] : level == 4 ? [ElementaryQuizType.ReduceFraction,
-                    ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber] : ElementaryQuizGenerator.Types(kind),
+                    ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.OrderRelatedFractions] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Probability => level < 2 ? [] : level < 5 ? [ElementaryQuizType.Likelihood] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Remainder => level < 3 ? [] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Decimal => level < 5 ? [] : ElementaryQuizGenerator.Types(kind),

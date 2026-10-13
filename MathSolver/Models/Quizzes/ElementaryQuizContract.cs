@@ -1,5 +1,6 @@
 using MathSolver.Services;
 using MathSolver.Services.Core;
+using System.Text.Json.Serialization;
 
 namespace MathSolver.Models;
 
@@ -22,7 +23,8 @@ public enum ElementaryQuizType
     FractionPicture, FractionTerms, EquivalentFraction, OrderFractions,
     SpatialPosition, IdentifyLine, Midpoint, CircleParts, ShapeNet, TriangleKind,
     ReadRuler, ReadProtractor, ReadThermometer, SortData, CompleteBarChart,
-    FullGroups
+    FullGroups,
+    SecondsConversion, YearCentury, CalendarWeekday, OrderRelatedFractions
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -104,11 +106,12 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
         ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability or
         ElementaryQuizType.FractionPicture or ElementaryQuizType.FractionTerms or
-        ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions;
+        ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions or ElementaryQuizType.OrderRelatedFractions;
 
     public bool IsComparison => Type is ElementaryQuizType.IntegerCompare or
         ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;
 
+    [JsonIgnore]
     public (string Left, string Right) ComparisonOperands => Type == ElementaryQuizType.CompareFractions
         ? ($"{Facts[0]}/{Facts[1]}", $"{Facts[2]}/{Facts[3]}") : (Facts[0], Facts[1]);
 

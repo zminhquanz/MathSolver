@@ -100,6 +100,10 @@ internal sealed partial class QuizChoiceDrawable
         }
         switch (id)
         {
+            case "time-seconds": Equation("120 s", "= 2 min"); break;
+            case "time-century": Equation("2001", "→ XXI"); break;
+            case "time-weekday": Equation("T2 + 3", "→ T5"); break;
+            case "fraction-order-different": Equation("1/4 < 1/2", "< 3/4"); break;
             case "data-table":
                 Cells(3, 3, 3, 14, 14, 24);
                 Text("2", 15, 39, 22, 16); Text("5", 39, 63, 22, 16);

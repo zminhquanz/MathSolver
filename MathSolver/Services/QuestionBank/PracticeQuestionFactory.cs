@@ -87,8 +87,8 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry or QuizProblemKind.Probability
             || question.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: not null }
             || question.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
-            || question.ElementaryProblem is { Kind: QuizProblemKind.Time } time && ElementaryQuizGenerator.TimeStoryTypes.Contains(time.Type)
-            || question.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fraction && ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fraction.Type)
+            || question.ElementaryProblem is { Kind: QuizProblemKind.Time } time && ElementaryQuizGenerator.TimeBankTypes.Contains(time.Type)
+            || question.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fraction && ElementaryQuizGenerator.FractionQuantityBankTypes.Contains(fraction.Type)
             || question.ElementaryProblem is { Kind: QuizProblemKind.Measurement, IsNumericMeasurementConversion: false } measurement && ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurement.Type))
             question = await practice.SelectReasoningAsync(question, curriculum.Tier, language, cancellation);
         cancellation.ThrowIfCancellationRequested();

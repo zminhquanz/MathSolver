@@ -11,6 +11,7 @@ public sealed partial class ElementaryQuizGenerator
         ? CreateFoundation(kind, type, language, tier) : kind switch
     {
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
+        QuizProblemKind.Time when IsTimeFractionExtension(type) => CreateTimeFractionExtension(type, language, tier),
         QuizProblemKind.Time => TimeStoryTypes.Contains(type) ? CreateTimeStory(type, language, tier) : AddTimeStory(CreateTimeDifficulty(type, language, tier)),
         QuizProblemKind.Measurement when type == ElementaryQuizType.MapScale => CreateMapScale(language, tier),
         QuizProblemKind.Measurement when type == ElementaryQuizType.AreaConversion => BuildAreaMeasurement(new(
@@ -23,6 +24,7 @@ public sealed partial class ElementaryQuizGenerator
         QuizProblemKind.MultiStep => CreateMultiStep(type, language, tier),
         QuizProblemKind.VisualGeometry when type == ElementaryQuizType.RecognizeShape => CreateShapeRecognition(language, tier),
         QuizProblemKind.Probability => CreateProbabilityDifficulty(type, language, tier),
+        QuizProblemKind.FractionSkills when type == ElementaryQuizType.OrderRelatedFractions => CreateTimeFractionExtension(type, language, tier),
         QuizProblemKind.FractionSkills => CreateFractionDifficulty(type, language, tier),
         _ => null
     };

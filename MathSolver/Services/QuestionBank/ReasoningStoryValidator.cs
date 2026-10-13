@@ -68,7 +68,7 @@ public static class ReasoningStoryValidator
                     .Select(q => "{" + q.Id + "}=" + q.Role))
                 + "\n" + SemanticProseRules.PromptGuidance(c.Language)
                 + ActivityGuidance(c, vi)
-                + (c.Family != BankQuestionFamily.FractionQuantity ? "" : vi
+                + (c.Family != BankQuestionFamily.FractionQuantity || ElementaryQuizGenerator.IsTimeFractionExtension((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
                     : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
                 + (c.Family != BankQuestionFamily.Decimal ? "" : vi
@@ -91,6 +91,10 @@ public static class ReasoningStoryValidator
 
     private static string ActivityGuidance(BasicQuestionContract c, bool vi)
     {
+        if (c.Family is BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
+            && ElementaryQuizGenerator.IsTimeFractionExtension((MathSolver.Models.ElementaryQuizType)c.BankVariant))
+            return "\n" + (vi ? "Giữ hướng đổi đơn vị, trước/sau, năm và thứ tự tăng/giảm đúng như mẫu. Không tự sắp xếp phân số, tính ngày hay điền thế kỷ vào câu hỏi. Các số và đáp án do C# tính."
+                : "Preserve conversion direction, earlier/later, year and increasing/decreasing order. Do not sort the fractions, calculate dates or insert the century into the question. C# computes values and answers.");
         if (c.Family == BankQuestionFamily.Data)
             return "\n" + (vi ? "C# giữ danh sách quan sát, chú giải và hình. Không đổi giá trị mỗi biểu tượng, nhóm hỏi hoặc các mục bị loại; không tiết lộ cột ẩn."
                 : "C# owns observations, legend and figure. Preserve symbol value, target categories and excluded entries; do not reveal hidden bars.");

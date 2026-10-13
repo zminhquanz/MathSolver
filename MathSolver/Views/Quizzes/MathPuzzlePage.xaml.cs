@@ -531,6 +531,14 @@ public partial class MathPuzzlePage : ContentPage
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
+        if (question?.ElementaryProblem is { } extension && ElementaryQuizGenerator.IsTimeFractionExtension(extension.Type))
+        {
+            EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            EssayValidationHintLabel.Text = TranslateQuiz(extension.Type == ElementaryQuizType.OrderRelatedFractions
+                ? "Quiz.FractionOrderInputHint" : "Quiz.TimeFractionInputHint");
+            EssayWorkEditor.Placeholder = extension.Type == ElementaryQuizType.OrderRelatedFractions ? "1/4 -> 1/2 -> 3/4" : TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            return;
+        }
         if (question?.ElementaryProblem?.Type == ElementaryQuizType.ReadBarChart && !requiresSolution)
         {
             EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");

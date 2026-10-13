@@ -24,9 +24,9 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurementProblem
             && (measurementProblem.IsNumericMeasurementConversion || !ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurementProblem.Type))) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Time } timeProblem
-            && !ElementaryQuizGenerator.TimeStoryTypes.Contains(timeProblem.Type)) return generated;
+            && !ElementaryQuizGenerator.TimeBankTypes.Contains(timeProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionProblem
-            && !ElementaryQuizGenerator.FractionQuantityStoryTypes.Contains(fractionProblem.Type)) return generated;
+            && !ElementaryQuizGenerator.FractionQuantityBankTypes.Contains(fractionProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: null }) return generated;
         var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills or QuizProblemKind.Data or QuizProblemKind.Probability } elementary
             ? (elementary.Kind switch { QuizProblemKind.MultiStep => BankQuestionFamily.MultiStep,

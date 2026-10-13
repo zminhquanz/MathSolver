@@ -130,6 +130,7 @@ internal static class DefaultBankSuite
 
 
         GenerationStructurePolicyTests.Run();
+        await TimeFractionBankTests.RunAsync();
         Console.WriteLine("All AI question bank checks passed. No model inference or benchmark ran.");
     }
 }

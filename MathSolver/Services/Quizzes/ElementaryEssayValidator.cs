@@ -13,6 +13,12 @@ internal static partial class ElementaryEssayValidator
         string? solution, string? equations, string? answerText)
     {
         var contract = question.ElementaryProblem!;
+        if (ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) && contract.Type != ElementaryQuizType.SecondsConversion)
+        {
+            bool valid = CheckAnswers(question, answerText);
+            return new(true, true, valid, EssayAnswerError.None, EssayAnswerError.None,
+                valid ? EssayAnswerError.None : EssayAnswerError.WrongAnswer);
+        }
         if (contract.IsComparison) return ComparisonEssayValidator.Validate(contract, equations, answerText);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool preferDecimals = contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement;
@@ -193,6 +199,10 @@ internal static partial class ElementaryEssayValidator
     internal static bool CheckAnswers(ArithmeticQuizQuestion question, string? text, List<string>? details = null)
     {
         var contract = question.ElementaryProblem!; bool vi = contract.Language == AppLanguage.Vietnamese;
+        if (contract.Type == ElementaryQuizType.OrderRelatedFractions)
+            return TimeFractionAnswerRules.MatchesOrder(text ?? "", contract.Answers[0].Text!);
+        if (contract.Type == ElementaryQuizType.YearCentury)
+            text = TimeFractionAnswerRules.NormalizeCentury(text ?? "");
         if (contract.Type == ElementaryQuizType.ReadClock)
         {
             if (EssayCombinedInputParser.TryNormalizeClockAnswer(text, out string clockAnswer)) text = clockAnswer;
@@ -241,7 +251,7 @@ internal static partial class ElementaryEssayValidator
                 or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide
                 or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion
-                or ElementaryQuizType.VolumeConversion) && parsed.Unit.Length == 0
+                or ElementaryQuizType.VolumeConversion or ElementaryQuizType.SecondsConversion) && parsed.Unit.Length == 0
                 || UnitsMatch(question, parsed.Unit, expected.Unit);
             if (!valueOkay || !formOkay || !unitOkay)
             {

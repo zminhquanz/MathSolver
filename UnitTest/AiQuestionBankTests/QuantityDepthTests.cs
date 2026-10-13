@@ -34,7 +34,7 @@ internal static partial class QuantityDepthTests
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (var family in new[] { BankQuestionFamily.Decimal, BankQuestionFamily.FractionQuantity })
-        foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier))
+        foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier).Where(v => !ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)v)))
         {
             var contexts = family == BankQuestionFamily.Decimal
                 ? ElementaryQuizGenerator.DecimalContexts(language).Select(c => c.Id)

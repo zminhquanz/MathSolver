@@ -16,6 +16,7 @@ internal static partial class PuzzleTests
         int count = 0;
         foreach (var family in families)
         foreach (var type in ElementaryQuizGenerator.Types(family).Where(type => !ElementaryQuizGenerator.IsFoundationSkill(type)
+            && !ElementaryQuizGenerator.IsTimeFractionExtension(type)
             && type is not (ElementaryQuizType.MapScale or ElementaryQuizType.ReadPictograph)))
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())

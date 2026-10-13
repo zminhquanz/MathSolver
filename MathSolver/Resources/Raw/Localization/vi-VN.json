@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Quiz.TimeFractionInputHint": "Có thể nhập kết quả trực tiếp hoặc ghi lời giải và đáp số. Ví dụ: 120 giây, thế kỷ 20, thứ hai.",
+    "Quiz.FractionOrderInputHint": "Nhập các phân số theo thứ tự, ngăn cách bằng ->, dấu phẩy hoặc dấu chấm phẩy. Ví dụ: 1/4 -> 1/2 -> 3/4.",
+    "Quiz.Elementary.SecondsConversion": "Đổi giây và phút",
+    "Quiz.Elementary.YearCentury": "Xác định thế kỷ",
+    "Quiz.Elementary.CalendarWeekday": "Xác định thứ trong tuần",
+    "Quiz.Elementary.OrderRelatedFractions": "Sắp xếp phân số khác mẫu",
     "Quiz.ProtractorInputHint": "Nhập số đo góc kèm chữ độ, ví dụ: 90 độ hoặc 180 độ. Không cần gõ ký hiệu °.",
     "Quiz.ProtractorInputPlaceholder": "Ví dụ: 90 độ",
     "Quiz.ThermometerInputHint": "Nhập nhiệt độ kèm đơn vị độ C, ví dụ: 34 độ C. Không cần gõ ký hiệu °.",

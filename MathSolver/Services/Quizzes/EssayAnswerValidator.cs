@@ -128,6 +128,8 @@ public sealed partial class EssayAnswerValidator
     {
         ArgumentNullException.ThrowIfNull(question);
         bool resultOnly = IsResultOnlyPractice(question);
+        if (question.ElementaryProblem?.Type == ElementaryQuizType.YearCentury && input is not null && !input.Contains('\n') && !input.Contains('\r'))
+            input = TimeFractionAnswerRules.NormalizeCentury(input);
         submission = EssayCombinedInputParser.Parse(input, RequiresSolution(question),
             preserveAllCalculations: question.WordProblem?.ConversionStep is not null
                 || question.WordProblem?.PracticeDetails?.Steps.Count > 1
@@ -157,6 +159,7 @@ public sealed partial class EssayAnswerValidator
         ArgumentNullException.ThrowIfNull(question);
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
+                || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
                 || question.ElementaryProblem.Type is ElementaryQuizType.DecimalRound or ElementaryQuizType.LetterExpression
                     or ElementaryQuizType.MixedNumber or ElementaryQuizType.MixedLength
                     or ElementaryQuizType.MapScale or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion

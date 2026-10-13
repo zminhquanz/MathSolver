@@ -107,7 +107,7 @@ internal static partial class ActivityDepthTests
         {
             int i = 0;
             foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier).Where(v => family != BankQuestionFamily.Measurement
-                || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)))
+                || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time || !ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)v)))
             {
                 var language = ((int)tier + i++) % 2 == 0 ? AppLanguage.English : AppLanguage.Vietnamese;
                 string context = family == BankQuestionFamily.Remainder
@@ -127,7 +127,7 @@ internal static partial class ActivityDepthTests
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier).Where(v => family != BankQuestionFamily.Measurement
-            || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)))
+            || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time || !ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)v)))
         foreach (string context in Contexts(family, variant, tier, language, true))
         {
             var c = ReasoningStoryCatalogue.Create(family, variant, tier, language, new(63), context);

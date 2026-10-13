@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--time-fraction", "--time-fraction-model"], "--time-fraction | --time-fraction-model <model.gguf>", async args =>
+        {
+            if (args.Length == 1) await TimeFractionBankTests.RunAsync();
+            else await TimeFractionBankTests.RunModelAsync(args[1]);
+        }, args => args is ["--time-fraction"] or ["--time-fraction-model", _]),
         new(["--expanded-arithmetic", "--expanded-arithmetic-model"], "--expanded-arithmetic | --expanded-arithmetic-model <model.gguf>", async args =>
         {
             if (args.Length == 1) await ExpandedArithmeticTests.RunAsync();

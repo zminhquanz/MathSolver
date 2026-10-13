@@ -36,8 +36,8 @@ public static partial class ReasoningStoryCatalogue
         BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalStoryTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(value => (int)value).ToArray(),
-        BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryTypes.Select(value => (int)value).ToArray(),
-        BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityStoryTypes.Select(value => (int)value).ToArray(),
+        BankQuestionFamily.Time => ElementaryQuizGenerator.TimeBankTypes.Select(value => (int)value).ToArray(),
+        BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Geometry => GeometryVariants(tier),
         BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(value => (int)value).ToArray(),
@@ -188,6 +188,8 @@ public static partial class ReasoningStoryCatalogue
         bool expanded = c.Story.ContextVersion > 0;
         return c.Family switch
         {
+            BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)
+                => new ElementaryQuizGenerator(random).GenerateTimeFractionExtension(mode, (ElementaryQuizType)c.BankVariant, c.Language, c.Tier, c.Story.NarrativeId),
             BankQuestionFamily.TwoNumbers => new ElementaryQuizGenerator(random, expanded).Generate(mode, QuizProblemKind.TwoNumbers,
                 (ElementaryQuizType)c.Story.Variant, c.Language, c.Tier),
             BankQuestionFamily.MultiStep => new ElementaryQuizGenerator(random, expanded).Generate(mode, QuizProblemKind.MultiStep,
@@ -226,6 +228,8 @@ public static partial class ReasoningStoryCatalogue
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
         using var capture = new QuizNarrativeCapture(c.Family switch {
+            BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)
+                => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.TimeFractionListName),
             BankQuestionFamily.TwoNumbers => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.TwoNumbersListName),
             BankQuestionFamily.Average => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.AverageListName),
             BankQuestionFamily.Percentage => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.PercentageListName),
@@ -302,6 +306,9 @@ public static partial class ReasoningStoryCatalogue
         var bindings = new List<(string Role, string Value)> { ("answer_unit", unit) };
         if (q.ElementaryProblem?.ProbabilityScenario is { } probabilityBindings)
             bindings.Add(("probability_event", probabilityBindings.EventText));
+        if (q.ElementaryProblem?.Type == ElementaryQuizType.CalendarWeekday)
+            for (int day = 0; day < 7; day++)
+                bindings.Add(("weekday_" + day, QuizContentCatalog.Text(c.Language, "TimeFraction.Weekday" + day)));
         if (q.ElementaryProblem?.DataChart is { Observations: { } batches } observationChart)
             bindings.AddRange(batches.Select(batch => (batch.Role, string.Join(", ", batch.CategoryIds.Select(id =>
                 q.ElementaryProblem.Visual!.Labels[observationChart.Profile.CategoryIds.ToList().IndexOf(id)])))));
