@@ -57,6 +57,8 @@ public static class QuizWorksheetBuilder
             ?? q.ProportionProblem?.ProblemText ?? q.MotionProblem?.ProblemText ?? q.AverageProblem?.ProblemText
             ?? q.PercentageProblem?.ProblemText ?? expression + (q.FindXProblem is null ? " = ?" : "");
         if (e?.IsNumericDecimalCalculation == true) prompt = e.FormatDecimalCalculation("?");
+        if (q.WordProblem is null && q.ArithmeticStyle is { } style)
+            prompt = PracticeArithmeticDifficulty.Prompt(style, q.Mode, language) + "\n" + prompt;
         string unit = q.WordProblem?.AnswerUnit ?? q.GeometryProblem?.AnswerUnit ?? q.ProportionProblem?.AnswerUnit
             ?? q.MotionProblem?.AnswerUnit ?? q.AverageProblem?.AnswerUnit ?? q.PercentageProblem?.AnswerUnit ?? "";
         string answer = e?.AnswerText ?? (q.ExpressionProblem?.CorrectAnswer.ToString() ?? q.FractionProblem?.CorrectAnswer.ToString()

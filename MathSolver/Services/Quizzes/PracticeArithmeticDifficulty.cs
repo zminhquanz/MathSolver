@@ -3,14 +3,18 @@ using MathSolver.Models;
 namespace MathSolver.Services;
 
 /// <summary>Practice/PDF ranges. Bank preview generation retains QuizCurriculumLayer's existing policy.</summary>
-public static class PracticeArithmeticDifficulty
+public static partial class PracticeArithmeticDifficulty
 {
-    public static int Maximum(CurriculumTier tier) => tier switch
+    public static int Maximum(CurriculumTier tier, PracticeArithmeticStyle? style = null) => tier switch
     {
+        CurriculumTier.FourStars when style == PracticeArithmeticStyle.Mental => 999_999_999,
         CurriculumTier.FourStars => 99_999_999,
         CurriculumTier.FiveStars => 999_999_999,
         _ => QuizCurriculumLayer.GetMaximumOperandValue(tier)
     };
+
+    public static string Prompt(PracticeArithmeticStyle style, ArithmeticQuizMode mode, AppLanguage language) =>
+        QuizContentCatalog.Text(language, $"PracticeArithmetic.{style}.{mode}");
 
     public static int MoneyMaximum(CurriculumTier tier, AppLanguage language)
     {

@@ -2,6 +2,12 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id":"PracticeArithmetic.Mental.TrueFalse","Text":"Tính nhẩm rồi xét đúng hay sai.","Variables":[]},
+    {"Id":"PracticeArithmetic.Mental.MultipleChoice","Text":"Tính nhẩm rồi chọn kết quả đúng.","Variables":[]},
+    {"Id":"PracticeArithmetic.Mental.Essay","Text":"Tính nhẩm.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.TrueFalse","Text":"Đặt tính để kiểm tra phép tính đúng hay sai.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.MultipleChoice","Text":"Đặt tính rồi chọn kết quả đúng.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.Essay","Text":"Đặt tính rồi tính.","Variables":[]},
 {
     "Id":  "AreaMeasurementStories.InitialLarge",
     "Text":  "Diện tích {subject} ban đầu là {initial_large} {large_unit}.",
@@ -32505,6 +32511,8 @@
       }
     ],
     "PracticeArithmeticContexts": [
+      {"Id":"population-statistics","Capacity":300000000,"MaximumPerGroup":20000000,"GroupUnit":"khu vực","Actor":"Bảng thống kê dân số của một quốc gia giả định","Unit":"người","Group":"Data","TemplatePrefix":"population","AllowsMentalLargeNumbers":true},
+      {"Id":"annual-paper-production","Capacity":600000000,"MaximumPerGroup":20000000,"GroupUnit":"nhà máy","Actor":"Hệ thống nhà máy giấy","Unit":"tờ giấy","Group":"Production","TemplatePrefix":"production","AllowsMentalLargeNumbers":true},
       {"Id":"classroom","Capacity":40,"MaximumPerGroup":20,"GroupUnit":"nhóm","Actor":"Lớp học","Unit":"học sinh","Group":"Objects"},
       {"Id":"school-library","Capacity":2000,"MaximumPerGroup":100,"GroupUnit":"kệ","Actor":"Thư viện trường","Unit":"quyển sách","Group":"Objects"},
       {"Id":"book-distributor","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"lô hàng","Actor":"Kho phân phối sách","Unit":"quyển sách","Group":"Objects"},
@@ -32513,26 +32521,37 @@
       {"Id":"survey-data","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"đợt khảo sát","Actor":"Hệ thống khảo sát","Unit":"phiếu khảo sát","Group":"Data"},
       {"Id":"national-book-distribution","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"đợt phân phối","Actor":"Mạng lưới phân phối sách toàn quốc","Unit":"quyển sách","Group":"Objects"},
       {"Id":"packing-network","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"đợt đóng gói","Actor":"Mạng lưới kho đóng gói","Unit":"sản phẩm","Group":"Packaging"},
-      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt sản xuất","Actor":"Kho thành phẩm của hệ thống nhà máy","Unit":"sản phẩm","Group":"Production"},
-      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt tổng hợp","Actor":"Hệ thống tổng hợp dữ liệu toàn quốc","Unit":"bản ghi","Group":"Data"}
+      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt sản xuất","Actor":"Kho thành phẩm của hệ thống nhà máy","Unit":"sản phẩm","Group":"Production","AllowsMentalLargeNumbers":true},
+      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt tổng hợp","Actor":"Hệ thống tổng hợp dữ liệu toàn quốc","Unit":"bản ghi","Group":"Data","AllowsMentalLargeNumbers":true}
     ],
     "PracticeMoneyItems": [
-      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":3000,"MaximumCount":10,"Buyer":"Gia đình An","Name":"bút bi","MaximumPrice":10000,"PriceStep":1000,"Unit":"đồng","PluralName":"bút bi"},
-      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":35000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai dầu ăn","MaximumPrice":70000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai dầu ăn"},
-      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":20000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai nước mắm","MaximumPrice":50000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai nước mắm"},
-      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc xe đạp trẻ em","MaximumPrice":5000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc xe đạp trẻ em"},
-      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":200000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc ba lô học sinh","MaximumPrice":500000,"PriceStep":10000,"Unit":"đồng","PluralName":"chiếc ba lô học sinh"},
-      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":5000000,"MaximumCount":2,"Buyer":"Gia đình An","MaximumPrice":20000000,"Name":"chiếc ti vi","PluralName":"chiếc ti vi","PriceStep":500000,"Unit":"đồng"},
-      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":15000000,"MaximumCount":20,"Buyer":"Nhà trường","MaximumPrice":30000000,"Name":"chiếc máy tính xách tay","PluralName":"chiếc máy tính xách tay","PriceStep":500000,"Unit":"đồng"}
+      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":3000,"MaximumCount":10,"Buyer":"Gia đình An","Name":"bút bi","MaximumPrice":10000,"PriceStep":1000,"Unit":"đồng","PluralName":"bút bi","MaximumPurchaseTotal":100000},
+      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":35000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai dầu ăn","MaximumPrice":70000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai dầu ăn","MaximumPurchaseTotal":280000},
+      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":20000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai nước mắm","MaximumPrice":50000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai nước mắm","MaximumPurchaseTotal":200000},
+      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc xe đạp trẻ em","MaximumPrice":5000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc xe đạp trẻ em","MaximumPurchaseTotal":15000000},
+      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":200000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc ba lô học sinh","MaximumPrice":500000,"PriceStep":10000,"Unit":"đồng","PluralName":"chiếc ba lô học sinh","MaximumPurchaseTotal":1000000},
+      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":5000000,"MaximumCount":2,"Buyer":"Gia đình An","MaximumPrice":20000000,"Name":"chiếc ti vi","PluralName":"chiếc ti vi","PriceStep":500000,"Unit":"đồng","MaximumPurchaseTotal":40000000},
+      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":15000000,"MaximumCount":20,"Buyer":"Nhà trường","MaximumPrice":30000000,"Name":"chiếc máy tính xách tay","PluralName":"chiếc máy tính xách tay","PriceStep":500000,"Unit":"đồng","MaximumPurchaseTotal":600000000,"IsInstitutional":true}
     ],
     "PracticeArithmeticTemplates": [
+      {"Id":"population-add","Problem":"{actor} ghi nhận hai khu vực có lần lượt {a} {unit} và {b} {unit}. Hỏi hai khu vực có tổng cộng bao nhiêu {unit}?","Lead":"Tổng dân số hai khu vực là ({unit}):"},
+      {"Id":"population-subtract","Problem":"{actor} ghi nhận tổng cộng {a} {unit}, trong đó một khu vực có {b} {unit}. Hỏi các khu vực còn lại có tổng cộng bao nhiêu {unit}?","Lead":"Dân số các khu vực còn lại là ({unit}):"},
+      {"Id":"population-multiply","Problem":"{actor} ghi nhận {b} {group}, mỗi khu vực có {a} {unit}. Hỏi các khu vực này có tổng cộng bao nhiêu {unit}?","Lead":"Tổng dân số các khu vực là ({unit}):"},
+      {"Id":"population-divide","Problem":"{actor} ghi nhận {a} {unit} tại {b} {group} có dân số bằng nhau. Hỏi mỗi khu vực có bao nhiêu {unit}?","Lead":"Dân số mỗi khu vực là ({unit}):"},
+      {"Id":"production-add","Problem":"Trong một năm, {actor} sản xuất đợt đầu {a} {unit}, đợt sau {b} {unit}. Hỏi hai đợt sản xuất được tổng cộng bao nhiêu {unit}?","Lead":"Sản lượng hai đợt là ({unit}):"},
+      {"Id":"production-subtract","Problem":"Trong một năm, {actor} sản xuất {a} {unit}, đã giao cho khách hàng {b} {unit}. Hỏi còn bao nhiêu {unit} chưa giao?","Lead":"Số lượng chưa giao là ({unit}):"},
+      {"Id":"production-multiply","Problem":"Trong một năm, {actor} có {b} {group}, mỗi nhà máy sản xuất {a} {unit}. Hỏi hệ thống sản xuất được tổng cộng bao nhiêu {unit}?","Lead":"Tổng sản lượng của hệ thống là ({unit}):"},
+      {"Id":"production-divide","Problem":"Trong một năm, {actor} có {b} {group} sản xuất được tổng cộng {a} {unit}, sản lượng mỗi nhà máy bằng nhau. Hỏi mỗi nhà máy sản xuất bao nhiêu {unit}?","Lead":"Sản lượng mỗi nhà máy là ({unit}):"},
+      {"Id":"budget-subtract","Problem":"{actor} có ngân sách {a} {unit}, mua một {item} với giá {b} {unit}. Hỏi ngân sách còn lại bao nhiêu {unit}?","Lead":"Ngân sách còn lại là ({unit}):"},
+      {"Id":"budget-subtract-two","Problem":"{actor} có ngân sách {a} {unit}, mua hai {items}, mỗi món giá {price} {unit}. Hỏi ngân sách còn lại bao nhiêu {unit}?","Lead":"Ngân sách còn lại là ({unit}):","FirstLead":"Chi phí mua hai món là ({unit}):"},
+      {"Id":"budget-subtract-batches","Problem":"{actor} có ngân sách {a} {unit} cho hai đợt mua hàng. Mỗi đợt mua {count} {items}, mỗi món giá {price} {unit}. Hỏi ngân sách còn lại bao nhiêu {unit}?","Lead":"Ngân sách còn lại là ({unit}):","FirstLead":"Chi phí mua một đợt là ({unit}):"},
       {"Lead":"Số lượng tất cả là ({unit}):","FirstLead":"","Id":"count-add","Problem":"{actor} có {a} {unit}, nhận thêm {b} {unit}. Hỏi có tất cả bao nhiêu {unit}?"},
       {"Lead":"Số lượng còn lại là ({unit}):","FirstLead":"","Id":"count-subtract","Problem":"{actor} có {a} {unit}, chuyển đi {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
       {"Lead":"Số lượng tất cả là ({unit}):","FirstLead":"","Id":"count-multiply","Problem":"{actor} có {b} {group}, mỗi nhóm có {a} {unit}. Hỏi có tất cả bao nhiêu {unit}?"},
       {"Lead":"Số lượng trong mỗi nhóm là ({unit}):","FirstLead":"","Id":"count-divide","Problem":"{actor} chia đều {a} {unit} thành {b} {group}. Hỏi mỗi nhóm có bao nhiêu {unit}?"},
       {"Lead":"Số lượng cuối cùng là ({unit}):","FirstLead":"Số lượng sau khi chuyển đi là ({unit}):","Id":"count-add-two","Problem":"{actor} có {initial} {unit}, chuyển đi {change} {unit}, rồi nhận thêm {b} {unit}. Hỏi cuối cùng có bao nhiêu {unit}?"},
       {"Lead":"Số lượng còn lại là ({unit}):","FirstLead":"Số lượng sau khi nhận thêm là ({unit}):","Id":"count-subtract-two","Problem":"{actor} có {initial} {unit}, nhận thêm {change} {unit}, rồi chuyển đi {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
-      {"Lead":"Tổng số tiền mua hàng là ({unit}):","FirstLead":"","Id":"money-add","Problem":"{actor} mua {count} {items}, hết {a} {unit}. Hôm sau mua thêm {count} {items}, hết {b} {unit}. Hỏi hai lần mua hết bao nhiêu {unit}?"},
+      {"Lead":"Tổng số tiền mua hàng là ({unit}):","FirstLead":"Chi phí đợt mua thứ {batch} là ({unit}):","Id":"money-add","Problem":"{actor} mua {count} {items}, mỗi món giá {price} {unit}. Hôm sau mua thêm {count} {items}, mỗi món giá {second_price} {unit}. Hỏi hai lần mua hết bao nhiêu {unit}?"},
       {"Lead":"Số tiền còn lại là ({unit}):","FirstLead":"","Id":"money-subtract","Problem":"{actor} có {a} {unit}, mua một {item} với giá {b} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
       {"Lead":"Số tiền còn lại là ({unit}):","FirstLead":"Số tiền mua hai món là ({unit}):","Id":"money-subtract-two","Problem":"{actor} có {a} {unit}, mua hai {items}, mỗi món giá {price} {unit}. Hỏi còn lại bao nhiêu {unit}?"},
       {"Lead":"Số tiền phải trả là ({unit}):","FirstLead":"","Id":"money-multiply","Problem":"{actor} mua {count} {items}, mỗi món giá {price} {unit}. Hỏi phải trả tất cả bao nhiêu {unit}?"},
@@ -32543,6 +32562,10 @@
       {"PadLowerHundreds":true,"SmallNumbers":[],"OneAfterTens":"mốt","FiveAfterTens":"lăm","PlaceNames":["đơn vị","chục","trăm","nghìn","chục nghìn","trăm nghìn","triệu","chục triệu","trăm triệu"],"ZeroTens":"linh","ReadingAliases":{"nghìn":"ngàn","linh":"lẻ"},"TensJoin":" ","Ten":"mười","HundredJoin":" ","Hundred":"trăm","Style":"Vietnamese","Digits":["không","một","hai","ba","bốn","năm","sáu","bảy","tám","chín"],"Tens":[],"Scales":["","nghìn","triệu"],"ClassJoin":" ","TensMarker":"mươi"}
     ],
     "Foundation.NumberNames.Extensions": [
+      {"Words":"ba trăm linh bảy triệu không trăm hai mươi sáu","Value":307000026},
+      {"Words":"ba trăm linh bảy triệu hai trăm sáu mươi hai","Value":307000262},
+      {"Words":"tám trăm triệu không trăm ba mươi bốn nghìn một trăm linh bốn","Value":800034104},
+      {"Words":"một trăm triệu không trăm bảy mươi nghìn không trăm bảy mươi","Value":100070070},
       {"Words":"mười triệu","Value":10000000},
       {"Words":"mười triệu không trăm linh một","Value":10000001},
       {"Words":"hai mươi triệu không trăm linh năm nghìn không trăm linh sáu","Value":20005006},

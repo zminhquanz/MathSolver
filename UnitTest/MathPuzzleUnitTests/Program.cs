@@ -2,6 +2,7 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Textbook mental calculations and contextual quantities", PuzzleTests.CheckTextbookPractice),
     ("Practice number ranges and realistic money", PuzzleTests.CheckPracticeNumberRanges),
     ("Nine-digit number sense and exact product boundaries", PuzzleTests.CheckLargeNumberSense),
     ("Recoverable result storage", PuzzleTests.CheckRecoverableResultStorage),

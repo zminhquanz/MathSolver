@@ -25,9 +25,10 @@ internal static partial class PuzzleTests
             var generator = new ArithmeticQuizGenerator(engine, new Random(seed));
             var numeric = generator.Generate(mode, operation, context, expandedPractice: true);
             Require(validator.Validate(numeric).IsValid, "Expanded numeric question failed validation.");
-            Require(numeric.Expression.LeftOperand <= PracticeArithmeticDifficulty.Maximum(tier), "Practice operand exceeded its star cap.");
+            Require(numeric.Expression.LeftOperand <= PracticeArithmeticDifficulty.Maximum(tier, numeric.ArithmeticStyle), "Practice operand exceeded its skill cap.");
             if ((int)tier >= 4 && operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
-                Require(numeric.Expression.RightOperand <= 99, "Large multiplication/division requires a one/two digit factor.");
+                Require(numeric.Expression.RightOperand <= 99 || numeric.ArithmeticStyle == PracticeArithmeticStyle.Mental
+                    && (numeric.Expression.RightOperand == 100 || numeric.Expression.RightOperand == 1000), "Unexpected multiplication/division factor.");
             if (tier == CurriculumTier.FourStars) largeFour |= numeric.Expression.LeftOperand >= 100_000;
             if (tier == CurriculumTier.FiveStars) largeFive |= numeric.Expression.LeftOperand >= 1_000_000;
             if ((int)tier < 4) continue;
@@ -54,10 +55,20 @@ internal static partial class PuzzleTests
                     var item = QuizContentCatalog.LoadList<PracticeMoneyItem>("PracticeMoneyItems", QuizContentCatalog.Culture(language)).Single(i => i.Id == purchase.ItemId);
                     int limit = tier == CurriculumTier.FourStars && item.MaximumCountFourStars > 0 ? item.MaximumCountFourStars : item.MaximumCount;
                     Require(purchase.Total <= facts.Capacity && purchase.Count >= 1 && purchase.Count <= limit, "Implausible shopping quantity.");
+                    Require(purchase.Total <= item.MaximumPurchaseTotal, "Purchase exceeded its item-specific budget.");
                     if (purchase.ItemId == "ballpoint-pen" && language == AppLanguage.Vietnamese)
                         Require(purchase.UnitPrice <= 10_000 && purchase.Total <= 100_000, "A pen purchase cost millions.");
                     if (purchase.ItemId == "child-bicycle") Require(tier == CurriculumTier.FiveStars, "Bicycle escaped five-star availability.");
                     seen.Add(purchase.ItemId);
+                }
+                Require(facts.Purchases.Sum(p => (long)p.Total) <= facts.Capacity, "Combined purchases exceeded the budget.");
+                if (facts.Purchases.Count == 2 && operation == ArithmeticOperation.Add)
+                {
+                    Require(q.Expression.LeftOperand == facts.Purchases[0].Total && q.Expression.RightOperand == facts.Purchases[1].Total,
+                        "Total prices were confused with unit prices.");
+                    if (facts.Purchases[0].Count > 1)
+                        Require(facts.Steps.Count == 3 && facts.Steps[0].Answer == facts.Purchases[0].Total
+                            && facts.Steps[1].Answer == facts.Purchases[1].Total, "Batch calculations were omitted.");
                 }
                 if (mode == ArithmeticQuizMode.Essay)
                 {

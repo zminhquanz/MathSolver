@@ -3,6 +3,8 @@ using MathSolver.Services.Core;
 
 namespace MathSolver.Models;
 
+public enum PracticeArithmeticStyle { Mental, Written }
+
 /// <summary>Frozen C# practice facts, never a stored/AI template contract.</summary>
 public sealed record PracticeArithmeticDetails(string ContextId, int Capacity,
     IReadOnlyList<PracticePurchase> Purchases, IReadOnlyList<PracticeSolutionStep> Steps);

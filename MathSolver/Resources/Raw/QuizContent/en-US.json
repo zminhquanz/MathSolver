@@ -2,6 +2,12 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id":"PracticeArithmetic.Mental.TrueFalse","Text":"Calculate mentally and decide whether the equation is true or false.","Variables":[]},
+    {"Id":"PracticeArithmetic.Mental.MultipleChoice","Text":"Calculate mentally and choose the correct result.","Variables":[]},
+    {"Id":"PracticeArithmetic.Mental.Essay","Text":"Calculate mentally.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.TrueFalse","Text":"Use a written calculation to check whether the equation is true or false.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.MultipleChoice","Text":"Use a written calculation and choose the correct result.","Variables":[]},
+    {"Id":"PracticeArithmetic.Written.Essay","Text":"Use a written calculation.","Variables":[]},
 {
     "Id":  "AreaMeasurementStories.InitialLarge",
     "Text":  "The initial area of {subject} is {initial_large} {large_unit}.",
@@ -31991,6 +31997,8 @@
       }
     ],
     "PracticeArithmeticContexts": [
+      {"Id":"population-statistics","Capacity":300000000,"MaximumPerGroup":20000000,"GroupUnit":"regions","Actor":"The population table for an imaginary country","Unit":"people","Group":"Data","TemplatePrefix":"population","AllowsMentalLargeNumbers":true},
+      {"Id":"annual-paper-production","Capacity":600000000,"MaximumPerGroup":20000000,"GroupUnit":"factories","Actor":"the paper factory network","Unit":"sheets of paper","Group":"Production","TemplatePrefix":"production","AllowsMentalLargeNumbers":true},
       {"Id":"classroom","Capacity":40,"MaximumPerGroup":20,"GroupUnit":"groups","Actor":"The class","Unit":"students","Group":"Objects"},
       {"Id":"school-library","Capacity":2000,"MaximumPerGroup":100,"GroupUnit":"shelves","Actor":"The school library","Unit":"books","Group":"Objects"},
       {"Id":"book-distributor","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"batches","Actor":"The book distribution warehouse","Unit":"books","Group":"Objects"},
@@ -31999,26 +32007,37 @@
       {"Id":"survey-data","Capacity":9999999,"MaximumPerGroup":200000,"GroupUnit":"survey rounds","Actor":"The survey system","Unit":"survey responses","Group":"Data"},
       {"Id":"national-book-distribution","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"distribution rounds","Actor":"The national book distribution network","Unit":"books","Group":"Objects"},
       {"Id":"packing-network","Capacity":99999999,"MaximumPerGroup":5000000,"GroupUnit":"packing rounds","Actor":"The packing warehouse network","Unit":"products","Group":"Packaging"},
-      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"production runs","Actor":"The factory network\u0027s finished-goods stores","Unit":"products","Group":"Production"},
-      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"aggregation rounds","Actor":"The national data aggregation system","Unit":"records","Group":"Data"}
+      {"Id":"annual-production-network","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"production runs","Actor":"The factory network's finished-goods stores","Unit":"products","Group":"Production","AllowsMentalLargeNumbers":true},
+      {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"aggregation rounds","Actor":"The national data aggregation system","Unit":"records","Group":"Data","AllowsMentalLargeNumbers":true}
     ],
     "PracticeMoneyItems": [
-      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":1,"MaximumCount":10,"Buyer":"Alex\u0027s family","Name":"ballpoint pen","MaximumPrice":4,"PriceStep":1,"Unit":"dollars","PluralName":"ballpoint pens"},
-      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":3,"MaximumCount":4,"Buyer":"Alex\u0027s family","Name":"bottle of cooking oil","MaximumPrice":10,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of cooking oil"},
-      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":2,"MaximumCount":4,"Buyer":"Alex\u0027s family","Name":"bottle of fish sauce","MaximumPrice":8,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of fish sauce"},
-      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":100,"MaximumCount":3,"Buyer":"Alex\u0027s family","Name":"children\u0027s bicycle","MaximumPrice":350,"PriceStep":10,"Unit":"dollars","PluralName":"children\u0027s bicycles"},
-      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":20,"MaximumCount":2,"Buyer":"Alex\u0027s family","Name":"school backpack","MaximumPrice":60,"PriceStep":5,"Unit":"dollars","PluralName":"school backpacks"},
-      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":200,"MaximumCount":2,"Buyer":"Alex\u0027s family","MaximumPrice":1000,"Name":"television","PluralName":"televisions","PriceStep":50,"Unit":"dollars"},
-      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":500,"MaximumCount":20,"Buyer":"The school","MaximumPrice":1500,"Name":"laptop","PluralName":"laptops","PriceStep":50,"Unit":"dollars"}
+      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":1,"MaximumCount":10,"Buyer":"Alex's family","Name":"ballpoint pen","MaximumPrice":4,"PriceStep":1,"Unit":"dollars","PluralName":"ballpoint pens","MaximumPurchaseTotal":40},
+      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":3,"MaximumCount":4,"Buyer":"Alex's family","Name":"bottle of cooking oil","MaximumPrice":10,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of cooking oil","MaximumPurchaseTotal":40},
+      {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":2,"MaximumCount":4,"Buyer":"Alex's family","Name":"bottle of fish sauce","MaximumPrice":8,"PriceStep":1,"Unit":"dollars","PluralName":"bottles of fish sauce","MaximumPurchaseTotal":32},
+      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":100,"MaximumCount":3,"Buyer":"Alex's family","Name":"children's bicycle","MaximumPrice":350,"PriceStep":10,"Unit":"dollars","PluralName":"children's bicycles","MaximumPurchaseTotal":1050},
+      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":20,"MaximumCount":2,"Buyer":"Alex's family","Name":"school backpack","MaximumPrice":60,"PriceStep":5,"Unit":"dollars","PluralName":"school backpacks","MaximumPurchaseTotal":120},
+      {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":200,"MaximumCount":2,"Buyer":"Alex's family","MaximumPrice":1000,"Name":"television","PluralName":"televisions","PriceStep":50,"Unit":"dollars","MaximumPurchaseTotal":2000},
+      {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":500,"MaximumCount":20,"Buyer":"The school","MaximumPrice":1500,"Name":"laptop","PluralName":"laptops","PriceStep":50,"Unit":"dollars","MaximumPurchaseTotal":30000,"IsInstitutional":true}
     ],
     "PracticeArithmeticTemplates": [
+      {"Id":"population-add","Problem":"{actor} records {a} {unit} in one region and {b} {unit} in another. How many {unit} live in these two regions altogether?","Lead":"The combined population of the two regions is ({unit}):"},
+      {"Id":"population-subtract","Problem":"{actor} records a total of {a} {unit}, including {b} {unit} in one region. How many {unit} live in all the other regions combined?","Lead":"The population of the other regions is ({unit}):"},
+      {"Id":"population-multiply","Problem":"{actor} records {b} {group}, each with {a} {unit}. What is the total population of these regions?","Lead":"The total population of the regions is ({unit}):"},
+      {"Id":"population-divide","Problem":"{actor} records {a} {unit} across {b} {group} with equal populations. How many {unit} live in each region?","Lead":"The population of each region is ({unit}):"},
+      {"Id":"production-add","Problem":"In one year, {actor} produces {a} {unit} in the first run and {b} {unit} in the second run. How many {unit} are produced in both runs altogether?","Lead":"The total output of both runs is ({unit}):"},
+      {"Id":"production-subtract","Problem":"In one year, {actor} produces {a} {unit} and delivers {b} {unit} to customers. How many {unit} have not yet been delivered?","Lead":"The undelivered quantity is ({unit}):"},
+      {"Id":"production-multiply","Problem":"In one year, {actor} has {b} {group}, each producing {a} {unit}. What is the total output of the network?","Lead":"The total output of the network is ({unit}):"},
+      {"Id":"production-divide","Problem":"In one year, {actor} produces {a} {unit} across {b} {group}, with equal output at each factory. How many {unit} does each factory produce?","Lead":"The output of each factory is ({unit}):"},
+      {"Id":"budget-subtract","Problem":"{actor} has a budget of {a} {unit} and buys one {item} for {b} {unit}. How much of the budget remains?","Lead":"The remaining budget is ({unit}):"},
+      {"Id":"budget-subtract-two","Problem":"{actor} has a budget of {a} {unit} and buys two {items}, at {price} {unit} each. How much of the budget remains?","Lead":"The remaining budget is ({unit}):","FirstLead":"The cost of both items is ({unit}):"},
+      {"Id":"budget-subtract-batches","Problem":"{actor} has a budget of {a} {unit} for two purchases. Each purchase contains {count} {items}, at {price} {unit} each. How much of the budget remains?","Lead":"The remaining budget is ({unit}):","FirstLead":"The cost of one batch is ({unit}):"},
       {"Lead":"The total quantity is ({unit}):","FirstLead":"","Id":"count-add","Problem":"{actor} has {a} {unit} and receives {b} more {unit}. How many {unit} are there altogether?"},
       {"Lead":"The remaining quantity is ({unit}):","FirstLead":"","Id":"count-subtract","Problem":"{actor} has {a} {unit} and transfers away {b} {unit}. How many {unit} remain?"},
       {"Lead":"The total quantity is ({unit}):","FirstLead":"","Id":"count-multiply","Problem":"{actor} has {b} {group}, each with {a} {unit}. How many {unit} are there altogether?"},
       {"Lead":"The quantity in each group is ({unit}):","FirstLead":"","Id":"count-divide","Problem":"{actor} divides {a} {unit} equally into {b} {group}. How many {unit} are in each group?"},
       {"Lead":"The final quantity is ({unit}):","FirstLead":"The quantity after the transfer is ({unit}):","Id":"count-add-two","Problem":"{actor} has {initial} {unit}, transfers away {change} {unit}, then receives {b} more {unit}. How many {unit} are there finally?"},
       {"Lead":"The remaining quantity is ({unit}):","FirstLead":"The quantity after receiving more is ({unit}):","Id":"count-subtract-two","Problem":"{actor} has {initial} {unit}, receives {change} more {unit}, then transfers away {b} {unit}. How many {unit} remain?"},
-      {"Lead":"The total purchase cost is ({unit}):","FirstLead":"","Id":"money-add","Problem":"{actor} buys {count} {items} for {a} {unit}, then buys another {count} {items} for {b} {unit} the next day. How much do both purchases cost altogether?"},
+      {"Lead":"The total purchase cost is ({unit}):","FirstLead":"The cost of purchase {batch} is ({unit}):","Id":"money-add","Problem":"{actor} buys {count} of the same item: {items}, at {price} {unit} each, then buys another {count} at {second_price} {unit} each the next day. How much do both purchases cost altogether?"},
       {"Lead":"The remaining money is ({unit}):","FirstLead":"","Id":"money-subtract","Problem":"{actor} has {a} {unit} and buys one {item} for {b} {unit}. How much money remains?"},
       {"Lead":"The remaining money is ({unit}):","FirstLead":"The cost of both items is ({unit}):","Id":"money-subtract-two","Problem":"{actor} has {a} {unit} and buys two of the same item: {items}, at {price} {unit} each. How much money remains?"},
       {"Lead":"The total payment is ({unit}):","FirstLead":"","Id":"money-multiply","Problem":"{actor} buys {count} of the same item: {items}, at {price} {unit} each. How much must be paid altogether?"},
@@ -32029,6 +32048,10 @@
       {"PadLowerHundreds":false,"SmallNumbers":["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen"],"OneAfterTens":"one","FiveAfterTens":"five","PlaceNames":["ones","tens","hundreds","thousands","ten thousands","hundred thousands","millions","ten millions","hundred millions"],"ZeroTens":"","ReadingAliases":{"-":" "," and ":" "},"TensJoin":"-","Ten":"ten","HundredJoin":" and ","Hundred":"hundred","Style":"English","Digits":["zero","one","two","three","four","five","six","seven","eight","nine"],"Tens":["","","twenty","thirty","forty","fifty","sixty","seventy","eighty","ninety"],"Scales":["","thousand","million"],"ClassJoin":" ","TensMarker":""}
     ],
     "Foundation.NumberNames.Extensions": [
+      {"Words":"three hundred and seven million and twenty-six","Value":307000026},
+      {"Words":"three hundred and seven million two hundred and sixty-two","Value":307000262},
+      {"Words":"eight hundred million thirty-four thousand one hundred and four","Value":800034104},
+      {"Words":"one hundred million seventy thousand and seventy","Value":100070070},
       {"Words":"ten million","Value":10000000},
       {"Words":"ten million and one","Value":10000001},
       {"Words":"twenty million five thousand and six","Value":20005006},

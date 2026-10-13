@@ -47,13 +47,20 @@ public sealed class ArithmeticQuizGenerator
         ArithmeticQuizMode mode,
         ArithmeticOperation? requestedOperation = null,
         QuizCurriculumContext? curriculumContext = null,
-        bool expandedPractice = false)
+        bool expandedPractice = false,
+        PracticeArithmeticStyle? requestedStyle = null)
     {
         QuizCurriculumLayer.ArithmeticRules? curriculumRules =
             curriculumContext.HasValue
                 ? QuizCurriculumLayer.GetArithmeticRules(
                     curriculumContext.Value)
                 : null;
+        if (requestedStyle is not null && (!Enum.IsDefined(requestedStyle.Value) || !expandedPractice
+            || curriculumRules is null || (int)curriculumRules.Tier < 4))
+            throw new ArgumentOutOfRangeException(nameof(requestedStyle));
+        PracticeArithmeticStyle? style = expandedPractice && curriculumRules is not null && (int)curriculumRules.Tier >= 4
+            ? requestedStyle ?? (_random.Next(3) == 0 ? PracticeArithmeticStyle.Mental : PracticeArithmeticStyle.Written)
+            : null;
         if (expandedPractice && curriculumRules is not null)
             curriculumRules = curriculumRules with
             {
@@ -79,7 +86,7 @@ public sealed class ArithmeticQuizGenerator
             IntegerArithmeticExpression expression =
                 CreateExpression(
                     operation,
-                    curriculumRules, expandedPractice);
+                    curriculumRules, expandedPractice, style);
 
             IntegerArithmeticResult calculation =
                 _engine.CalculateInteger(
@@ -109,6 +116,7 @@ public sealed class ArithmeticQuizGenerator
                         "Unsupported quiz mode.")
                 };
 
+            question = question with { ArithmeticStyle = style };
             if (_validator.Validate(
                     question).IsValid)
             {
@@ -123,7 +131,8 @@ public sealed class ArithmeticQuizGenerator
     private IntegerArithmeticExpression CreateExpression(
         ArithmeticOperation operation,
         QuizCurriculumLayer.ArithmeticRules? curriculumRules,
-        bool expandedPractice)
+        bool expandedPractice,
+        PracticeArithmeticStyle? style)
     {
         int left;
         int right;
@@ -137,7 +146,12 @@ public sealed class ArithmeticQuizGenerator
 
         if (expandedPractice)
         {
-            int a = PracticeArithmeticDifficulty.NextPrimary(_random, tier);
+            if (style == PracticeArithmeticStyle.Mental)
+                return PracticeArithmeticDifficulty.CreateMentalExpression(_random, tier, operation,
+                    operation == ArithmeticOperation.Multiply ? curriculumRules.AllowedMultiplicationFactors : curriculumRules.AllowedDivisionFactors);
+            int a = PracticeArithmeticDifficulty.NextPrimary(_random, tier,
+                style == PracticeArithmeticStyle.Written && operation == ArithmeticOperation.Add
+                    ? PracticeArithmeticDifficulty.Maximum(tier) - 1 : null);
             int b;
             if (operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
             {
@@ -151,8 +165,13 @@ public sealed class ArithmeticQuizGenerator
                     // The school exercise stays within nine digits, irrespective of the engine's BigInteger support.
                     a = PracticeArithmeticDifficulty.NextPrimary(_random, tier, PracticeArithmeticDifficulty.Maximum(tier) / b);
             }
-            else b = PracticeArithmeticDifficulty.NextRegroupingPartner(_random, tier, a, operation,
-                operation == ArithmeticOperation.Subtract ? a : PracticeArithmeticDifficulty.Maximum(tier));
+            else
+            {
+                b = PracticeArithmeticDifficulty.NextRegroupingPartner(_random, tier, a, operation,
+                    operation == ArithmeticOperation.Subtract ? a : style is null
+                        ? PracticeArithmeticDifficulty.Maximum(tier) : PracticeArithmeticDifficulty.Maximum(tier) - a);
+                if (b == 0) { a = Math.Max(1, a / 10 * 10); b = 1; }
+            }
             return new(a, operation, b);
         }
 

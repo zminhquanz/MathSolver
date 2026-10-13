@@ -509,6 +509,9 @@ public partial class MathPuzzlePage : ContentPage
             return Translate("Quiz.WordProblemTitle");
         }
 
+        if (_currentQuestion?.ArithmeticStyle is { } style)
+            return PracticeArithmeticDifficulty.Prompt(style, _currentQuestion.Mode, AppLanguageManager.CurrentLanguage);
+
         return Translate(
             _selectedMode switch
             {

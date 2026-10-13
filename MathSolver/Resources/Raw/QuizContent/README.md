@@ -1,5 +1,7 @@
 # Nội dung toán đố
 
+Phạm vi luyện tập/PDF, họ lời văn dân số và sản lượng, cùng đơn giá/ngân sách: [hướng dẫn phạm vi số](../../../PRACTICE_NUMBER_RANGES.md).
+
 - `vi-VN.json`, `en-US.json`: lời văn theo ngôn ngữ và các danh sách bối cảnh.
 - `catalogues.json`: metadata toán học dùng chung.
 

@@ -40,7 +40,7 @@ internal static class PracticeNumberRangesTests
                 items.Add(printed);
                 var numeric = await factory.CreateAsync(request, mode, new((CurriculumTier)stars, false), language,
                     null, PracticeQuestionFormat.Numeric, false);
-                Check(numeric.WordProblem is null && numeric.Expression.LeftOperand <= PracticeArithmeticDifficulty.Maximum((CurriculumTier)stars),
+                Check(numeric.WordProblem is null && numeric.Expression.LeftOperand <= PracticeArithmeticDifficulty.Maximum((CurriculumTier)stars, numeric.ArithmeticStyle),
                     "Numeric PDF acquired a story or escaped its range.");
                 items.Add(QuizWorksheetBuilder.Format(numeric, language));
             }
@@ -48,6 +48,27 @@ internal static class PracticeNumberRangesTests
             var large = new PracticeArithmeticStoryGenerator(new Random(14)).Generate(ArithmeticOperation.Multiply,
                 CurriculumTier.FiveStars, language, QuestionKnowledgeGroup.Production, mode);
             items.Add(QuizWorksheetBuilder.Format(large, language));
+            foreach (var style in Enum.GetValues<PracticeArithmeticStyle>())
+            foreach (var operation in Enum.GetValues<ArithmeticOperation>())
+            {
+                var q = new ArithmeticQuizGenerator(new BasicArithmeticEngine(), new Random(31)).Generate(mode, operation,
+                    new(CurriculumTier.FourStars, false), expandedPractice: true, requestedStyle: style);
+                var printed = QuizWorksheetBuilder.Format(q, language);
+                Check(printed.Prompt.StartsWith(PracticeArithmeticDifficulty.Prompt(style, mode, language), StringComparison.Ordinal),
+                    "PDF lost the mental/written instruction used by the practice UI.");
+                items.Add(printed);
+            }
+            foreach (var (group, id) in new[] { (QuestionKnowledgeGroup.Data, "population-statistics"),
+                (QuestionKnowledgeGroup.Production, "annual-paper-production") })
+            {
+                var q = Enumerable.Range(0, 400).Select(seed => new PracticeArithmeticStoryGenerator(new Random(seed))
+                    .Generate(ArithmeticOperation.Add, CurriculumTier.FourStars, language, group, mode))
+                    .First(q => q.WordProblem!.PracticeDetails!.ContextId == id && q.CorrectAnswer >= 100_000_000);
+                var printed = QuizWorksheetBuilder.Format(q, language);
+                Check(printed.Prompt == q.WordProblem!.ProblemText || mode == ArithmeticQuizMode.TrueFalse
+                    && printed.Prompt.StartsWith(q.WordProblem!.ProblemText, StringComparison.Ordinal), "PDF changed the statistical story.");
+                items.Add(printed);
+            }
             var worksheet = new QuizWorksheet("PRACTICE-RANGES", "Practice ranges", "Reviewed item prices", language,
                 CurriculumTier.FiveStars, mode, items.AsReadOnly());
             string snapshot = JsonSerializer.Serialize(worksheet);
@@ -57,6 +78,17 @@ internal static class PracticeNumberRangesTests
                 PdfAssertions.HasEmbeddedText(pdf);
                 string text = PdfTestReader.ExtractText(pdf);
                 Check(text.Contains("Practice ranges"), "PDF title could not be read.");
+                if (!answers)
+                {
+                    foreach (var style in Enum.GetValues<PracticeArithmeticStyle>())
+                        Check(Compact(text).Contains(Compact(PracticeArithmeticDifficulty.Prompt(style, mode, language))),
+                            "Rendered PDF omitted a mental/written skill heading.");
+                    foreach (var id in new[] { "population-statistics", "annual-paper-production" })
+                    {
+                        var story = items.First(i => i.Source.WordProblem?.PracticeDetails?.ContextId == id);
+                        Check(Compact(text).Contains(Compact(story.Source.WordProblem!.SubjectName)), "Rendered PDF lost the statistical context.");
+                    }
+                }
                 if (!answers)
                     Check(items[0].Source.WordProblem!.PracticeDetails!.Purchases.All(p => {
                         var item = QuizContentCatalog.LoadList<PracticeMoneyItem>("PracticeMoneyItems", QuizContentCatalog.Culture(language)).Single(i => i.Id == p.ItemId);

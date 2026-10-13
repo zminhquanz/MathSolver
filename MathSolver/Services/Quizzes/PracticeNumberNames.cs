@@ -19,11 +19,22 @@ public static class PracticeNumberNames
         int minimum = (int)Math.Pow(10, digits - 1);
         int cap = (int)Math.Min(maximum, (long)minimum * 10 - 1);
         int value = random.Next(minimum, cap + 1);
-        if (tier == CurriculumTier.FiveStars && digits >= 7 && random.Next(3) == 0)
+        // Both grades practise zero digits inside a class and a missing thousands class.
+        if ((int)tier >= 4 && digits >= 4 && random.Next(3) == 0)
         {
-            int wholeClass = value / 1_000_000 * 1_000_000;
-            int available = Math.Min(99, maximum - wholeClass);
-            value = wholeClass + (available > 0 ? random.Next(1, available + 1) : 0);
+            if (digits >= 7 && random.Next(2) == 0)
+            {
+                int wholeClass = value / 1_000_000 * 1_000_000;
+                int available = Math.Min(999, maximum - wholeClass);
+                value = wholeClass + (available > 0 ? random.Next(1, available + 1) : 0);
+            }
+            else
+            {
+                int power = random.Next(1, digits - 1);
+                int width = random.Next(1, Math.Min(3, digits - 1 - power) + 1);
+                int place = (int)Math.Pow(10, power), block = (int)Math.Pow(10, width);
+                value -= value / place % block * place; // Never remove the leading digit or exceed the supplied cap.
+            }
         }
         return value;
     }

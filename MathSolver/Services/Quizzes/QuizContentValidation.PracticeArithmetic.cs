@@ -13,12 +13,23 @@ public static partial class QuizContentValidation
         ["count-divide"] = ["actor", "a", "b", "unit", "group"],
         ["count-add-two"] = ["actor", "initial", "change", "b", "unit"],
         ["count-subtract-two"] = ["actor", "initial", "change", "b", "unit"],
-        ["money-add"] = ["actor", "items", "count", "a", "b", "unit"],
+        ["money-add"] = ["actor", "items", "count", "price", "second_price", "unit"],
         ["money-subtract"] = ["actor", "item", "a", "b", "unit"],
         ["money-subtract-two"] = ["actor", "items", "a", "price", "unit"],
         ["money-subtract-batches"] = ["actor", "items", "count", "a", "price", "unit"],
         ["money-multiply"] = ["actor", "items", "count", "price", "unit"],
-        ["money-divide"] = ["actor", "items", "count", "cost", "unit"]
+        ["money-divide"] = ["actor", "items", "count", "cost", "unit"],
+        ["population-add"] = ["actor", "a", "b", "unit"],
+        ["population-subtract"] = ["actor", "a", "b", "unit"],
+        ["population-multiply"] = ["actor", "a", "b", "unit", "group"],
+        ["population-divide"] = ["actor", "a", "b", "unit", "group"],
+        ["production-add"] = ["actor", "a", "b", "unit"],
+        ["production-subtract"] = ["actor", "a", "b", "unit"],
+        ["production-multiply"] = ["actor", "a", "b", "unit", "group"],
+        ["production-divide"] = ["actor", "a", "b", "unit", "group"],
+        ["budget-subtract"] = ["actor", "item", "a", "b", "unit"],
+        ["budget-subtract-two"] = ["actor", "items", "a", "price", "unit"],
+        ["budget-subtract-batches"] = ["actor", "items", "count", "a", "price", "unit"]
     };
 
     private static void CheckPracticeArithmeticLists(QuizContentPack pack)
@@ -36,10 +47,8 @@ public static partial class QuizContentValidation
                 if (!ids.Add(id)) throw new InvalidDataException("Duplicate practice ID: " + id);
                 if (key == "PracticeMoneyItems")
                 {
-                    PracticeArithmeticStoryGenerator.Validate(new(id, RequiredString(row, "Name"), RequiredString(row, "Buyer"),
-                        RequiredString(row, "Unit"), row.GetProperty("MinimumPrice").GetInt32(), row.GetProperty("MaximumPrice").GetInt32(),
-                        row.GetProperty("PriceStep").GetInt32(), row.GetProperty("MaximumCount").GetInt32(), row.GetProperty("MinimumStars").GetInt32(),
-                        row.TryGetProperty("MaximumCountFourStars", out var four) ? four.GetInt32() : 0));
+                    PracticeArithmeticStoryGenerator.Validate(row.Deserialize<PracticeMoneyItem>()
+                        ?? throw new InvalidDataException("Invalid practice item: " + id));
                 }
                 else if (key == "PracticeArithmeticContexts")
                 {
@@ -50,6 +59,12 @@ public static partial class QuizContentValidation
                         || row.GetProperty("MaximumPerGroup").GetInt32() < 1
                         || row.GetProperty("MaximumPerGroup").GetInt32() > row.GetProperty("Capacity").GetInt32())
                         throw new InvalidDataException("Invalid practice context: " + id);
+                    string prefix = row.TryGetProperty("TemplatePrefix", out var family) ? family.GetString() ?? "" : "count";
+                    if (prefix is not ("count" or "population" or "production")
+                        || prefix == "population" && group != MathSolver.Models.QuestionKnowledgeGroup.Data
+                        || prefix == "production" && group != MathSolver.Models.QuestionKnowledgeGroup.Production)
+                        throw new InvalidDataException("Practice context uses the wrong prose family: " + id);
+                    if (row.TryGetProperty("AllowsMentalLargeNumbers", out var mental)) _ = mental.GetBoolean();
                 }
                 else
                 {
@@ -58,7 +73,15 @@ public static partial class QuizContentValidation
                         .Select(m => m.Groups[1].Value).ToHashSet();
                     if (!PracticeVariables.TryGetValue(id, out var expected) || !variables.SetEquals(expected))
                         throw new InvalidDataException("Invalid practice template roles: " + id);
-                    if (id.EndsWith("-two", StringComparison.Ordinal) || id == "money-subtract-batches") _ = RequiredString(row, "FirstLead");
+                    if (id.EndsWith("-two", StringComparison.Ordinal) || id.EndsWith("-subtract-batches", StringComparison.Ordinal)) _ = RequiredString(row, "FirstLead");
+                    if (id == "money-add")
+                    {
+                        string lead = RequiredString(row, "FirstLead");
+                        var leadRoles = Regex.Matches(lead, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
+                            .Select(m => m.Groups[1].Value).ToHashSet();
+                        if (!leadRoles.SetEquals(new[] { "batch", "unit" }))
+                            throw new InvalidDataException("Invalid purchase-step roles: " + id);
+                    }
                 }
             }
             if (key == "PracticeArithmeticTemplates" && !ids.SetEquals(PracticeVariables.Keys))

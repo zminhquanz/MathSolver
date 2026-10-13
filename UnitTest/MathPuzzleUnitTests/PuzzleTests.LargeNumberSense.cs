@@ -20,7 +20,10 @@ internal static partial class PuzzleTests
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
             foreach (var row in QuizContentCatalog.LoadList<QuizNumberName>("Foundation.NumberNames.Extensions", QuizContentCatalog.Culture(language)))
+            {
                 Require(PracticeNumberNames.Format(row.Value, language) == row.Words, "Algorithm disagrees with reviewed vocabulary: " + row.Value);
+                upperBoundary |= row.Value == PracticeNumberNames.Maximum;
+            }
             foreach (var (value, vi, en) in new[] {
                 (0, "không", "zero"), (15, "mười lăm", "fifteen"), (21, "hai mươi mốt", "twenty-one"),
                 (105, "một trăm linh năm", "one hundred and five"),
@@ -91,7 +94,7 @@ internal static partial class PuzzleTests
             for (int seed = 0; seed < 300; seed++)
             {
                 var q = new ArithmeticQuizGenerator(engine, new Random(seed)).Generate(ArithmeticQuizMode.Essay, ArithmeticOperation.Multiply, new(tier, false), expandedPractice: true);
-                Require(q.CorrectAnswer <= PracticeArithmeticDifficulty.Maximum(tier), "Practice multiplication escaped its bounded product.");
+                Require(q.CorrectAnswer <= PracticeArithmeticDifficulty.Maximum(tier, q.ArithmeticStyle), "Practice multiplication escaped its bounded product.");
                 foreach (var operation in new[] { ArithmeticOperation.Add, ArithmeticOperation.Subtract })
                 {
                     var arithmetic = new ArithmeticQuizGenerator(engine, new Random(seed)).Generate(ArithmeticQuizMode.Essay, operation, new(tier, false), expandedPractice: true);
