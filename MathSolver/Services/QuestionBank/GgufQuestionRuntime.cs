@@ -245,6 +245,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.Grammar(c);
         if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryValidator.Grammar(c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prose(c).Grammar(c, new HashSet<string>(StringComparer.Ordinal));
         if (c.Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Grammar(c);
@@ -265,7 +266,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     }
 
     internal static string BuildNovelGrammar(BasicQuestionContract c, IReadOnlySet<string> excludedProse)
-        => ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family) ? ReasoningStoryValidator.Grammar(c, excludedProse)
+        => c.Version == ExpandedArithmeticCatalogue.Version ? ExpandedArithmeticCatalogue.Grammar(c, excludedProse)
+            : ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family) ? ReasoningStoryValidator.Grammar(c, excludedProse)
             : ReviewedQuestionProse.For(c)?.Grammar(c, excludedProse) ?? BuildGrammar(c);
 
 }

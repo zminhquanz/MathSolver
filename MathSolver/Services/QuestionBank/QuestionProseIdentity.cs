@@ -9,6 +9,7 @@ public static class QuestionProseIdentity
 {
     public static string Hash(BasicQuestionContract contract, BasicQuestionDraft draft)
     {
+        if (contract.Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.ProseHash(contract, draft);
         string prose = draft.ProblemText.Normalize(NormalizationForm.FormC);
         if (contract.Family == BankQuestionFamily.MultiStep)
             prose = ReviewedReasoningProse.CanonicalizeOpening(contract, prose);

@@ -50,6 +50,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     private readonly FindXQuestionCycle _findXCycle = new();
     private readonly FractionQuestionCycle _fractionCycle = new();
     private readonly ReasoningStoryCycle _storyCycle = new();
+    private readonly ExpandedArithmeticCycle _expandedArithmeticCycle = new();
     private CancellationTokenSource? _cancellation;
     private Task _work = Task.CompletedTask;
     private int _pendingInserts;
@@ -175,7 +176,10 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         for (int number = 1; number <= options.Count; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var contract = ReasoningStoryCatalogue.Supports(options.Family)
+            var contract = options.Family == BankQuestionFamily.Arithmetic
+                && ExpandedArithmeticCatalogue.Supports(options.Profile?.Group ?? QuestionKnowledgeGroup.Objects, options.Tier)
+                ? _expandedArithmeticCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse)
+                : ReasoningStoryCatalogue.Supports(options.Family)
                 ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse)
                 : options.Family == BankQuestionFamily.Fraction
                 ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)

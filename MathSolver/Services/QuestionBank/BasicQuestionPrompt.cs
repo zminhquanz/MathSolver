@@ -12,6 +12,8 @@ public static class BasicQuestionPrompt
     public static string Build(BasicQuestionContract contract, string? correction = null,
         IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null, string? errorDetails = null)
     {
+        if (contract.Version == ExpandedArithmeticCatalogue.Version)
+            return ExpandedArithmeticCatalogue.Prompt(contract, excludedProse, correction);
         string prompt = contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryValidator.Prompt(contract, correction, excludedProse) : BuildCore(contract, correction, excludedProse);
         prompt += QuestionProseRepair.Instructions(contract, correction, errorDetails);
         if (ReasoningStoryCatalogue.UsesReviewedPhrasings(contract.Family) && excludedProse is not null) return prompt;

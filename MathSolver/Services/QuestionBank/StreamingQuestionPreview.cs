@@ -38,6 +38,8 @@ public static class StreamingQuestionPreview
 
     public static string Render(string? json, BasicQuestionContract c)
     {
+        if (c.Version == ExpandedArithmeticCatalogue.Version)
+            return ExpandedArithmeticCatalogue.Render(ReadNarrative(json), c);
         if (c.Version == ReasoningStoryCatalogue.Version)
             return ReasoningStoryCatalogue.Render(ReadNarrative(json), c);
         if (!c.IsTemplate) return Read(json);

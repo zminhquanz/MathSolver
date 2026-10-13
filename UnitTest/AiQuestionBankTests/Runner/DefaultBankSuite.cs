@@ -11,6 +11,7 @@ internal static class DefaultBankSuite
     internal static async Task RunAsync()
     {
         await HarnessInfrastructureTests.RunAsync();
+        await ExpandedArithmeticTests.RunAsync();
         await ModelHarnessTests.RunAsync();
         int checkedDrafts = 0;
         foreach (var language in Enum.GetValues<AppLanguage>())

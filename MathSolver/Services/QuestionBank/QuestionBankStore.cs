@@ -50,6 +50,9 @@ public interface IQuestionBankStore
         var question = await TakeAsync(operation, tier, language, cancellationToken).ConfigureAwait(false);
         return question?.Contract is { } c && profile.Includes(c.KnowledgeGroup) ? question : null;
     }
+    Task<ValidatedBankQuestion?> TakeExpandedAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
+        => Task.FromResult<ValidatedBankQuestion?>(null);
 }
 
 /// <summary>Short serialized SQLite operations; no connection/transaction spans inference.</summary>
@@ -127,7 +130,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             : legacyContract + "\n" + BasicQuestionValidator.Normalize(question.Draft.ProblemText);
         if (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version)
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Structure}/{c.TopicId}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
-        if (c.Version is AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version)
+        if (c.Version is AppliedQuestionCatalogue.Version or FindXQuestionCatalogue.Version or FractionQuestionCatalogue.Version or ExpandedArithmeticCatalogue.Version)
             identity = $"{c.Version}/{c.Operation}/{c.Tier}/{c.Language}/{c.Grade}/{c.KnowledgeGroup}/{c.SceneId}/{question.Draft.UnitId}\n{draftJson}";
         if (c.Version == ReasoningStoryCatalogue.Version)
             identity = $"{c.Version}/{c.Family}/{c.BankVariant}/{c.Tier}/{c.Language}/{c.Story!.Schema}\n{draftJson}";
@@ -161,14 +164,18 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
         => TakeCoreAsync(operation, tier, language, profile, cancellationToken);
 
+    public Task<ValidatedBankQuestion?> TakeExpandedAsync(ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, QuestionLearningProfile profile, CancellationToken cancellationToken = default)
+        => TakeCoreAsync(operation, tier, language, profile, cancellationToken, expandedOnly: true);
+
     private async Task<ValidatedBankQuestion?> TakeCoreAsync(ArithmeticOperation operation, CurriculumTier tier,
-        AppLanguage language, QuestionLearningProfile? profile, CancellationToken cancellationToken)
+        AppLanguage language, QuestionLearningProfile? profile, CancellationToken cancellationToken, bool expandedOnly = false)
     {
         try
         {
             return await WithDatabaseAsync<ValidatedBankQuestion?>(db =>
             {
-                var candidates = ContextCandidates(db, operation, tier, language, profile);
+                var candidates = ContextCandidates(db, operation, tier, language, profile, expandedOnly);
                 foreach (var row in candidates)
                 {
                     try
@@ -176,7 +183,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                         var contract = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
                         if (contract is null || row.ProblemType != (int)contract.Family || row.ProblemVariant != (int)contract.UnknownRole || row.Version != contract.Version || contract.Operation != operation || contract.Tier != tier || contract.Language != language)
                             continue;
-                        if (contract.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version && ((int)contract.Structure != row.Structure
+                        if (contract.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version or AppliedQuestionCatalogue.Version or ExpandedArithmeticCatalogue.Version && ((int)contract.Structure != row.Structure
                             || contract.TopicId != row.TopicId || contract.SceneId != row.SceneId)) continue;
                         if (contract.Grade != row.Grade || (int)contract.KnowledgeGroup != row.KnowledgeGroup
                             || profile is not null && !profile.Includes(contract.KnowledgeGroup)) continue;
@@ -214,14 +221,15 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
     }
 
     private IEnumerable<Row> ContextCandidates(SQLiteConnection db, ArithmeticOperation operation, CurriculumTier tier, AppLanguage language,
-        QuestionLearningProfile? profile)
+        QuestionLearningProfile? profile, bool expandedOnly)
     {
         // Historical imports can omit the new columns even after initialization.
         // Treat NULL family/group as the original arithmetic/objects defaults.
         string filter = "COALESCE(ProblemType,0)=0 AND Operation=? AND Stars=? AND Language=? AND " + (profile is null
-            ? "Version IN (1,2,3,4)" : profile.Group == QuestionKnowledgeGroup.Objects
-                ? "Version IN (1,2,3,4,5) AND COALESCE(KnowledgeGroup,0)=?" : profile.Group == QuestionKnowledgeGroup.Measurement
-                    ? "Version=5 AND KnowledgeGroup IN (2,3,4,7)" : "Version=5 AND KnowledgeGroup=?");
+            ? "(Version IN (1,2,3,4) OR (Version=10 AND COALESCE(KnowledgeGroup,0)=0))" : profile.Group == QuestionKnowledgeGroup.Objects
+                ? "Version IN (1,2,3,4,5,10) AND COALESCE(KnowledgeGroup,0)=?" : profile.Group == QuestionKnowledgeGroup.Measurement
+                    ? "Version=5 AND KnowledgeGroup IN (2,3,4,7)" : "Version IN (5,10) AND KnowledgeGroup=?");
+        if (expandedOnly) filter += " AND Version=10";
         object[] args = profile is null ? [(int)operation, (int)tier, (int)language]
             : profile.Group == QuestionKnowledgeGroup.Measurement ? [(int)operation, (int)tier, (int)language]
             : [(int)operation, (int)tier, (int)language, (int)profile.Group];
@@ -233,9 +241,11 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                 : ArithmeticQuestionCatalogue.Supports(b.SceneId, operation, tier, (BasicQuestionStructure)b.Structure));
         buckets = buckets.Where(b => profile is not null
             ? Enum.TryParse<QuestionKnowledgeGroup>(b.TopicId, out var group) && profile.Includes(group)
-                && AppliedQuestionCatalogue.Available(profile, operation, tier).Any(s => s.Id == b.SceneId)
+                && (AppliedQuestionCatalogue.Available(profile, operation, tier).Any(s => s.Id == b.SceneId)
+                    || ExpandedArithmeticCatalogue.Contexts(profile.Group, tier, language).Contains(b.SceneId))
                 || profile.Group == QuestionKnowledgeGroup.Objects && LegacyBucket(b)
-            : LegacyBucket(b)).ToList();
+            : LegacyBucket(b) || b.TopicId == QuestionKnowledgeGroup.Objects.ToString()
+                && ExpandedArithmeticCatalogue.Contexts(QuestionKnowledgeGroup.Objects, tier, language).Contains(b.SceneId)).ToList();
         var history = _selectionHistory.GetValueOrDefault((operation, tier, language)) ?? [];
         var relationUsed = buckets.GroupBy(b => b.Structure).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));
         var topicUsed = buckets.GroupBy(b => b.TopicId).ToDictionary(g => g.Key, g => g.Max(b => b.LastUsedUtc));

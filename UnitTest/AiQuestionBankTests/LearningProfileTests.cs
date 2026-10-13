@@ -173,7 +173,9 @@ internal static class LearningProfileTests
         await service.Completion.WaitAsync(TimeSpan.FromSeconds(10));
         Check(service.Snapshot.State == AiJobState.Completed && service.Snapshot.Items.All(i => i.State == AiItemState.Saved)
             && service.Snapshot.Items.Any(i => i.Question?.WordProblem.ArithmeticReasoning?.Rule == AppliedArithmeticRule.MinimumGroups)
-            && service.Snapshot.Items.Any(i => i.Question?.WordProblem.ArithmeticReasoning?.Rule == AppliedArithmeticRule.Remainder), "Background AI skipped non-exact division semantics.");
+            && service.Snapshot.Items.Any(i => i.Question?.WordProblem.ArithmeticReasoning?.Rule == AppliedArithmeticRule.Remainder),
+            "Background AI skipped non-exact division semantics: " + service.Snapshot.State + "/" + service.Snapshot.Error + "; "
+            + string.Join(", ", service.Snapshot.Items.Select(i => $"{i.Contract.SceneId}/{i.State}/{i.Error}")));
     }
 
     private static async Task PersistenceAndPracticeAsync(string directory)
@@ -263,11 +265,22 @@ internal static class LearningProfileTests
         public string ModelName => "fake-profile-runtime";
         public bool Released { get; private set; }
         public Task ReleaseAsync() { Released = true; return Task.CompletedTask; }
+        public Task<string> GenerateNovelAsync(BasicQuestionContract contract, string prompt, IReadOnlySet<string> excluded,
+            CancellationToken token, Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
+        {
+            var draft = contract.Version == ExpandedArithmeticCatalogue.Version
+                ? ExpandedArithmeticCatalogue.NovelDrafts(contract, excluded).First()
+                : Enumerable.Range(0, 3).Select(i => AppliedQuestionCatalogue.Draft(contract, i))
+                    .First(d => !excluded.Contains(QuestionProseIdentity.Hash(contract, d)));
+            string raw = QuestionBankStore.SerializeDraft(draft);
+            foreach (char ch in raw) onText?.Invoke(ch.ToString());
+            return Task.FromResult(raw);
+        }
         public Task<string> GenerateAsync(BasicQuestionContract contract, string prompt, CancellationToken token,
             Action<string>? onText = null, Action<AiGenerationMetrics>? onMetrics = null)
         {
-            string raw = QuestionBankStore.SerializeDraft(AppliedQuestionCatalogue.Draft(contract,
-                prompt.Contains("DuplicateProse") ? 0 : 1));
+            string raw = QuestionBankStore.SerializeDraft(contract.Version == ExpandedArithmeticCatalogue.Version
+                ? ExpandedArithmeticCatalogue.Draft(contract) : AppliedQuestionCatalogue.Draft(contract, prompt.Contains("DuplicateProse") ? 0 : 1));
             foreach (char ch in raw) onText?.Invoke(ch.ToString());
             return Task.FromResult(raw);
         }

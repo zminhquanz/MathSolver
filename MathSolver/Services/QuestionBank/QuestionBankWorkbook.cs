@@ -25,7 +25,7 @@ public static partial class QuestionBankWorkbook
     {
         "Version", "Operation", "Stars", "Language", "Left", "Right", "Subject", "Unit", "GroupUnit",
         "GivenA", "GivenB", "Question", "ModelName", "CreatedUtc", "RawJson", "Answer", "ProblemText",
-        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator", "StorySeedJson", "FactsJson", "SolutionLeadsJson", "UserAuthored"
+        "Structure", "OtherSubject", "SolutionLead", "UnitId", "TopicId", "SceneId", "PartA", "PartB", "Grade", "KnowledgeGroup", "UnknownRole", "LeftDenominator", "RightDenominator", "StorySeedJson", "FactsJson", "SolutionLeadsJson", "UserAuthored", "PracticeSeedJson"
     });
 
     public static int Write(Stream output, IEnumerable<ValidatedBankQuestion> questions, CancellationToken cancellationToken = default)
@@ -88,7 +88,7 @@ public static partial class QuestionBankWorkbook
                 c.Story is null ? "" : JsonSerializer.Serialize(c.Story),
                 question.Draft.Facts is null ? "" : JsonSerializer.Serialize(question.Draft.Facts),
                 question.Draft.SolutionLeads is null ? "" : JsonSerializer.Serialize(question.Draft.SolutionLeads),
-                question.UserAuthored ? "true" : "false"]);
+                question.UserAuthored ? "true" : "false", c.Practice is null ? "" : JsonSerializer.Serialize(c.Practice)]);
         }
         xml.WriteEndElement();
         xml.WriteStartElement("autoFilter", Main); xml.WriteAttributeString("ref", $"A1:{ColumnName(Columns.Count - 1)}{rowNumber - 1}"); xml.WriteEndElement();
@@ -211,9 +211,11 @@ public static partial class QuestionBankWorkbook
                     string.IsNullOrWhiteSpace(Get("RightDenominator")) ? 1 : int.Parse(Get("RightDenominator"), CultureInfo.InvariantCulture));
                 if (contract.Version == ReasoningStoryCatalogue.Version)
                     contract = contract with { Story = JsonSerializer.Deserialize<ReasoningStorySeed>(Get("StorySeedJson")) };
+                if (contract.Version == ExpandedArithmeticCatalogue.Version)
+                    contract = contract with { Practice = JsonSerializer.Deserialize<ExpandedArithmeticSeed>(Get("PracticeSeedJson")) };
                 var draft = new BasicQuestionDraft(Get("GivenA"), Get("GivenB"), Get("Question"),
                     contract.IsTemplate ? Get("SolutionLead") : null, contract.IsTemplate ? Get("UnitId") : null);
-                if (contract.Version == ReasoningStoryCatalogue.Version)
+                if (contract.Version is ReasoningStoryCatalogue.Version or ExpandedArithmeticCatalogue.Version)
                     draft = draft with {
                         Facts = JsonSerializer.Deserialize<NarrativeClause[]>(Get("FactsJson")),
                         SolutionLeads = JsonSerializer.Deserialize<NarrativeClause[]>(Get("SolutionLeadsJson"))

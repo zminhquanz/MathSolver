@@ -197,7 +197,10 @@ public partial class AiQuestionBankPage : ContentPage
         PreviewFractionSolution.Expression = fractionStory ? item!.Question!.Contract.Solution : "";
         PreviewSolutionLabel.IsVisible = item?.Question is not null && !fractionStory;
         PreviewSolutionLabel.Text = item?.Question is { } question && !fractionStory
-            ? question.Contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Solution(question.Contract, question.Draft)
+            ? question.Contract.Version == ExpandedArithmeticCatalogue.Version
+                ? ElementaryWordProblemSolutionFormatter.Format(question.Contract.ToPracticeQuestion(question.WordProblem, ArithmeticQuizMode.Essay),
+                    question.Contract.Language, System.Globalization.CultureInfo.GetCultureInfo(QuizContentCatalog.Culture(question.Contract.Language)))
+            : question.Contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Solution(question.Contract, question.Draft)
             : (question.WordProblem.ConversionStep is { } step ? step + "\n" : "")
                 + question.WordProblem.SolutionLead + "\n" + (question.WordProblem.ArithmeticReasoning?.Equation ?? question.Contract.Left + " "
                 + MathSolver.Services.Core.BasicArithmeticEngine.GetSymbol(question.Contract.Expression.Operation) + " "
@@ -241,7 +244,8 @@ public partial class AiQuestionBankPage : ContentPage
             return;
         }
         ContractEditor.Text = item is null ? "" : JsonSerializer.Serialize(
-            item.Contract.Version == ReasoningStoryCatalogue.Version
+            item.Contract.Version == ExpandedArithmeticCatalogue.Version ? ExpandedArithmeticCatalogue.DiagnosticData(item.Contract)
+            : item.Contract.Version == ReasoningStoryCatalogue.Version
                 ? ReasoningStoryCatalogue.DiagnosticData(item.Contract) : item.Contract, JsonOptions);
         RawJsonEditor.Text = item is null ? "" : string.Join("\n\n", item.Attempts.Select(a => $"{T("Attempt")} {a.Number}/3\n{a.RawJson}"));
         PromptEditor.Text = item?.Attempts.LastOrDefault()?.Prompt ?? "";

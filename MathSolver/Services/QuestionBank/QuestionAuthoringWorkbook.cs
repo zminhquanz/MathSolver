@@ -1,4 +1,5 @@
 using MathSolver.Models;
+using System.Globalization;
 using System.IO.Compression;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -136,6 +137,9 @@ public static class QuestionAuthoringWorkbook
 
     public static string Solution(ValidatedBankQuestion question)
     {
+        if (question.Contract.Version == ExpandedArithmeticCatalogue.Version)
+            return ElementaryWordProblemSolutionFormatter.Format(question.Contract.ToPracticeQuestion(question.WordProblem, ArithmeticQuizMode.Essay),
+                question.Contract.Language, CultureInfo.GetCultureInfo(QuizContentCatalog.Culture(question.Contract.Language)));
         if (question.Contract.Version == ReasoningStoryCatalogue.Version)
             return ReasoningStoryCatalogue.Solution(question.Contract, question.Draft);
         string solution = question.Contract.Solution;

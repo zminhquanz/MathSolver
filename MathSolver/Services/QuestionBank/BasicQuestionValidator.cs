@@ -11,7 +11,8 @@ public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Que
     public IReadOnlyList<NarrativeClause>? Facts { get; init; }
     public IReadOnlyList<NarrativeClause>? SolutionLeads { get; init; }
     public string ProblemText => Facts is not null ? string.Join(" ", Facts.Select(f => f.Text.Trim()).Append(Question.Trim())) : $"{GivenA.Trim()} {GivenB.Trim()} {Question.Trim()}";
-    public MathWordProblem ToWordProblem(BasicQuestionContract c) => c.Version == ReasoningStoryCatalogue.Version
+    public MathWordProblem ToWordProblem(BasicQuestionContract c) => c.Version == ExpandedArithmeticCatalogue.Version
+        ? ExpandedArithmeticCatalogue.ToWordProblem(c, this) : c.Version == ReasoningStoryCatalogue.Version
         ? new(ReasoningStoryCatalogue.Render(ProblemText, c), "", c.AnswerUnit, c.Subject) : new(c.IsTemplate
         ? BasicQuestionTemplates.RenderProblem(GivenA, GivenB, Question, c) : ProblemText,
         c.IsTemplate ? BasicQuestionTemplates.Render(SolutionLead!, c) : c.SolutionLead, c.AnswerUnit, c.Subject,

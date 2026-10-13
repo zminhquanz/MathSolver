@@ -13,7 +13,8 @@ public sealed record PracticeCountContext(string Id, QuestionKnowledgeGroup Grou
 public sealed record PracticeMoneyItem(string Id, string Name, string Buyer, string Unit,
     int MinimumPrice, int MaximumPrice, int PriceStep, int MaximumCount, int MinimumStars,
     int MaximumCountFourStars = 0, string PluralName = "", int MaximumPurchaseTotal = 0, bool IsInstitutional = false);
-public sealed record PracticeArithmeticTemplate(string Id, string Problem, string Lead, string FirstLead = "");
+public sealed record PracticeArithmeticTemplate(string Id, string Problem, string Lead, string FirstLead = "",
+    string[]? AlternativeProblems = null);
 
 /// <summary>Reviewed JSON prose and bounded C# facts for practice/PDF only; never an AI bank contract.</summary>
 public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
@@ -23,7 +24,8 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         or QuestionKnowledgeGroup.Money or QuestionKnowledgeGroup.Packaging or QuestionKnowledgeGroup.Production or QuestionKnowledgeGroup.Data;
 
     public ArithmeticQuizQuestion Generate(ArithmeticOperation operation, CurriculumTier tier, AppLanguage language,
-        QuestionKnowledgeGroup group, ArithmeticQuizMode mode)
+        QuestionKnowledgeGroup group, ArithmeticQuizMode mode, string? contextIdFilter = null,
+        PracticeArithmeticStyle? requestedStyle = null)
     {
         if (!Supports(group) || !Enum.IsDefined(operation) || !Enum.IsDefined(mode))
             throw new ArgumentOutOfRangeException(nameof(group));
@@ -41,7 +43,8 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         {
             cap = PracticeArithmeticDifficulty.MoneyMaximum(tier, language);
             var items = QuizContentCatalog.LoadList<PracticeMoneyItem>("PracticeMoneyItems", culture)
-                .Where(i => i.MinimumStars <= (int)tier && i.MinimumPrice * 2L <= cap).ToArray();
+                .Where(i => i.MinimumStars <= (int)tier && i.MinimumPrice * 2L <= cap
+                    && (contextIdFilter is null || i.Id == contextIdFilter)).ToArray();
             if (items.Length == 0) throw new InvalidDataException("No affordable practice money item.");
             var item = items[_random.Next(items.Length)];
             Validate(item);
@@ -110,12 +113,16 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         else
         {
             var contexts = QuizContentCatalog.LoadList<PracticeCountContext>("PracticeArithmeticContexts", culture)
-                .Where(c => c.Group == group).ToArray();
+                .Where(c => c.Group == group && (contextIdFilter is null || c.Id == contextIdFilter)).ToArray();
             if (contexts.Length == 0) throw new InvalidDataException("Missing practice count context.");
             var context = contexts[_random.Next(contexts.Length)];
             if (context.Capacity < 2 || context.MaximumPerGroup < 1) throw new InvalidDataException("Invalid practice context bounds.");
-            style = context.AllowsMentalLargeNumbers && operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract && _random.Next(3) == 0
+            if (requestedStyle == PracticeArithmeticStyle.Mental && (!context.AllowsMentalLargeNumbers
+                || operation is not (ArithmeticOperation.Add or ArithmeticOperation.Subtract)))
+                throw new ArgumentException("Unsupported mental story context.", nameof(requestedStyle));
+            var sampledStyle = context.AllowsMentalLargeNumbers && operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract && _random.Next(3) == 0
                 ? PracticeArithmeticStyle.Mental : PracticeArithmeticStyle.Written;
+            style = requestedStyle ?? sampledStyle;
             cap = Math.Min(context.Capacity, PracticeArithmeticDifficulty.Maximum(tier, style));
             unit = context.Unit; actor = context.Actor; contextId = context.Id;
             values["group"] = context.GroupUnit;
@@ -172,7 +179,8 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         var expression = new IntegerArithmeticExpression(a, operation, b);
         steps.Add(new(Render(template.Lead, values), expression, unit));
         var answer = steps[^1].Answer;
-        var details = new PracticeArithmeticDetails(contextId, cap, purchases.AsReadOnly(), steps.AsReadOnly());
+        var details = new PracticeArithmeticDetails(contextId, cap, purchases.AsReadOnly(), steps.AsReadOnly(), templateId,
+            new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(values));
         var word = new MathWordProblem(Render(template.Problem, values), Render(template.Lead, values), unit, actor,
             group == QuestionKnowledgeGroup.Money ? WordProblemQuantity.Money : WordProblemQuantity.Count, PracticeDetails: details);
         var choices = new List<BigInteger>();

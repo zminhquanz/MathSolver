@@ -2,6 +2,8 @@ Runner commands are registered under Runner/, native generation checks under Mod
 
 # AI question bank checks
 
+`--expanded-arithmetic` checks 296 version-10 C#/JSON arithmetic profiles, price/context bounds, fresh facts, grading, mutations, deduplication, streaming, worker routing, SQLite and Excel backups. `--expanded-arithmetic-model <model.gguf>` runs 16 real operation/star/language combinations plus two novel-wording retries. See [expanded arithmetic AI](../../MathSolver/EXPANDED_ARITHMETIC_AI.md).
+
 `--area-measurement-foundation` checks the staged C#/JSON area contracts before
 AI integration: 120 bilingual reviewed templates in a separate SQLite test
 table, deduplication across fresh facts and replay in all three grading modes.

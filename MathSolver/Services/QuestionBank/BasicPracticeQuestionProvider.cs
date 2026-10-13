@@ -147,16 +147,20 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             return numeric ? question.WordProblem?.ArithmeticReasoning is not null ? generated
                 : question with { WordProblem = null } : question;
         }
-        // Price-bound shopping contexts cannot safely reuse old bank templates without item identity.
-        if (expandedPractice && (int)tier >= 4 && profile?.Group == QuestionKnowledgeGroup.Money) return BuiltIn();
         if (_random.Next(2) == 0) return BuiltIn();
 
-        var saved = await (profile is null
+        var saved = await (expandedPractice && (int)tier >= 4 && profile?.Group == QuestionKnowledgeGroup.Money
+            ? store.TakeExpandedAsync(generated.Expression.Operation, tier, language, profile, cancellationToken)
+            : profile is null
             ? store.TakeAsync(generated.Expression.Operation, tier, language, cancellationToken)
             : store.TakeForProfileAsync(generated.Expression.Operation, tier, language, profile, cancellationToken)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         if (saved is null) return BuiltIn();
         var c = saved.Contract;
+        // Keep unpriced historical money templates available to legacy consumers,
+        // but price-bounded practice only reuses the new item-aware contract.
+        if (expandedPractice && (int)tier >= 4 && profile?.Group == QuestionKnowledgeGroup.Money
+            && c.Version != ExpandedArithmeticCatalogue.Version) return BuiltIn();
         var validation = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validation.IsValid || c.Family != BankQuestionFamily.Arithmetic
             || c.Operation != generated.Expression.Operation || c.Tier != tier || c.Language != language

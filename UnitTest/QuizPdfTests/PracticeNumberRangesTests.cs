@@ -10,8 +10,9 @@ internal static class PracticeNumberRangesTests
 {
     internal static async Task Run(string directory)
     {
-        string unusedBank = Path.Combine(directory, "expanded-shopping-unopened.db3");
-        var provider = new BasicPracticeQuestionProvider(new QuestionBankStore(unusedBank), new Random(24));
+        string unusedBank = Path.Combine(directory, "expanded-shopping-empty.db3");
+        var emptyStore = new QuestionBankStore(unusedBank);
+        var provider = new BasicPracticeQuestionProvider(emptyStore, new Random(24));
         var factory = new PracticeQuestionFactory(provider);
         var validator = new ArithmeticQuizValidator(new BasicArithmeticEngine());
         foreach (var language in Enum.GetValues<AppLanguage>())
@@ -102,7 +103,8 @@ internal static class PracticeNumberRangesTests
             }
             Check(snapshot == JsonSerializer.Serialize(worksheet), "PDF regenerated or changed frozen facts.");
         }
-        Check(!File.Exists(unusedBank), "Expanded shopping/numeric practice accessed the unchanged AI bank.");
+        var bankRows = await emptyStore.QueryAsync("SELECT Hash FROM BasicQuestionBank;");
+        Check(bankRows.Rows.Count == 0, "Fallback practice inserted generated facts into SQLite.");
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
             var read = Enumerable.Range(0, 1000).Select(seed => new ElementaryQuizGenerator(new Random(seed), expandedNumberPractice: true)

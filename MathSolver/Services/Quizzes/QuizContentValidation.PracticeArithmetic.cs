@@ -73,6 +73,23 @@ public static partial class QuizContentValidation
                         .Select(m => m.Groups[1].Value).ToHashSet();
                     if (!PracticeVariables.TryGetValue(id, out var expected) || !variables.SetEquals(expected))
                         throw new InvalidDataException("Invalid practice template roles: " + id);
+                    if (row.TryGetProperty("AlternativeProblems", out var alternatives))
+                    {
+                        if (alternatives.ValueKind != JsonValueKind.Array || alternatives.GetArrayLength() is < 1 or > 8)
+                            throw new InvalidDataException("Invalid reviewed practice alternatives: " + id);
+                        foreach (var alternative in alternatives.EnumerateArray())
+                        {
+                            string text = alternative.GetString() ?? "";
+                            var roles = Regex.Matches(text, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
+                                .Select(m => m.Groups[1].Value).ToArray();
+                            var baseline = Regex.Matches(problem, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
+                                .Select(m => m.Groups[1].Value).ToArray();
+                            static bool IsFact(string role) => role is not ("actor" or "unit" or "group" or "item" or "items");
+                            if (!roles.ToHashSet().SetEquals(expected) || !roles.Where(IsFact).Order().SequenceEqual(baseline.Where(IsFact).Order())
+                                || !text.EndsWith('?') || !text.Contains(". ") || text.Length > 1200)
+                                throw new InvalidDataException("Reviewed alternative changed roles: " + id);
+                        }
+                    }
                     if (id.EndsWith("-two", StringComparison.Ordinal) || id.EndsWith("-subtract-batches", StringComparison.Ordinal)) _ = RequiredString(row, "FirstLead");
                     if (id == "money-add")
                     {
