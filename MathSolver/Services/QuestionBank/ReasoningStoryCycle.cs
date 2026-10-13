@@ -21,13 +21,15 @@ internal sealed class ReasoningStoryCycle
             if (repetitions < bestCount) { best = c; bestCount = repetitions; }
             if (repetitions == 0) break;
         }
-        if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity && excludedProse is not null
+        if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && excludedProse is not null
             && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
         {
             // One exhausted context must not stop a batch while other compatible
             // contexts still have wording. Search the finite catalog before failing.
             var narrativeIds = family switch
             {
+                BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)variant)
+                    => ElementaryQuizGenerator.DecimalSpatialContexts((ElementaryQuizType)variant),
                 BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)variant)
                     => ElementaryQuizGenerator.TimeFractionContextIds((ElementaryQuizType)variant),
                 BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalContexts(language).Select(c => c.Id),

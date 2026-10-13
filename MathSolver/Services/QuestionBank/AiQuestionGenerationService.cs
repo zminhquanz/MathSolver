@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 using System.Text;
 
 namespace MathSolver.Services.QuestionBank;
@@ -148,7 +149,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         }
         catch (Exception error)
         {
-            finalError = error.GetType().Name + ": " + error.Message;
+            finalError = error is RegexMatchTimeoutException ? "TextProcessingTimeout" : error.GetType().Name + ": " + error.Message;
             lock (_sync)
                 _snapshot = _snapshot with {
                     Items = _snapshot.Items.Select(i => i.Question is null && i.State is AiItemState.Generating or AiItemState.Validating
@@ -229,6 +230,16 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     correction = "GenerationTimeout";
                     errorDetails = null;
                     UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction, IsComplete = true, Metrics = metrics });
+                    UpdateItem(number, i => i with { Error = correction });
+                    continue;
+                }
+                catch (RegexMatchTimeoutException error)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    correction = "TextProcessingTimeout";
+                    errorDetails = QuestionTextRegex.TimeoutDetails(error, "generation");
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction,
+                        ErrorDetails = errorDetails, IsComplete = true, Metrics = metrics });
                     UpdateItem(number, i => i with { Error = correction });
                     continue;
                 }

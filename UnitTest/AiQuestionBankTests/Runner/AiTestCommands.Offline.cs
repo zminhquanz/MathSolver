@@ -10,6 +10,18 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--regex-timeout", "--seconds-regex-model"], "--regex-timeout | --seconds-regex-model <model.gguf>", async args =>
+        {
+            if (args.Length == 1) await RegexTimeoutRegressionTests.RunAsync();
+            else await RegexTimeoutRegressionTests.RunModelBatchAsync(args[1]);
+        }, args => args is ["--regex-timeout"] or ["--seconds-regex-model", _]),
+        new(["--decimal-spatial-evidence"], "--decimal-spatial-evidence <directory>", args => DecimalSpatialBankTests.VerifyEvidenceAsync(args[1]),
+            args => args is ["--decimal-spatial-evidence", _]),
+        new(["--decimal-spatial", "--decimal-spatial-model"], "--decimal-spatial | --decimal-spatial-model <model.gguf>", async args =>
+        {
+            if (args.Length == 1) await DecimalSpatialBankTests.RunAsync();
+            else await DecimalSpatialBankTests.RunModelAsync(args[1]);
+        }, args => args is ["--decimal-spatial"] or ["--decimal-spatial-model", _]),
         new(["--time-fraction", "--time-fraction-model"], "--time-fraction | --time-fraction-model <model.gguf>", async args =>
         {
             if (args.Length == 1) await TimeFractionBankTests.RunAsync();

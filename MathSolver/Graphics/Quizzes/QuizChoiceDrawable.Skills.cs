@@ -100,6 +100,20 @@ internal sealed partial class QuizChoiceDrawable
         }
         switch (id)
         {
+            case "spatial-front":
+            case "spatial-behind":
+            case "spatial-between":
+                Arrow(88, 20, 12, 20);
+                Text("A", 9, 40, 24); Text("B", 38, 40, 24); Text("C", 67, 40, 24);
+                c.DrawRectangle(id == "spatial-front" ? 9 : id == "spatial-behind" ? 67 : 38, 40, 24, 28);
+                break;
+            case "decimal-read": Equation("12,05", "Aa"); break;
+            case "decimal-write": Equation("Aa", "12,05"); break;
+            case "decimal-place": Equation("12,05", "0,01"); break;
+            case "decimal-parts": Equation("12 | 05", "12,05"); break;
+            case "decimal-order": Equation("0,09", "< 0,1"); break;
+            case "decimal-to-fraction": Equation("0,25", "25/100"); break;
+            case "fraction-to-decimal": Equation("25/100", "0,25"); break;
             case "time-seconds": Equation("120 s", "= 2 min"); break;
             case "time-century": Equation("2001", "→ XXI"); break;
             case "time-weekday": Equation("T2 + 3", "→ T5"); break;

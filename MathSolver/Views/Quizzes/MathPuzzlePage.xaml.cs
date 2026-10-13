@@ -531,6 +531,16 @@ public partial class MathPuzzlePage : ContentPage
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
+        if (question?.ElementaryProblem is { } newSkill && ElementaryQuizGenerator.IsDecimalSpatialSkill(newSkill.Type))
+        {
+            EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            EssayValidationHintLabel.Text = TranslateQuiz(ElementaryQuizGenerator.SpatialSkillTypes.Contains(newSkill.Type) ? "Quiz.SpatialSkillInputHint"
+                : newSkill.Type == ElementaryQuizType.DecimalParts ? "Quiz.DecimalPartsInputHint"
+                : newSkill.Type == ElementaryQuizType.OrderDecimals ? "Quiz.DecimalOrderInputHint" : "Quiz.DecimalSkillInputHint");
+            EssayWorkEditor.Placeholder = newSkill.Type == ElementaryQuizType.DecimalParts ? "12; 05"
+                : newSkill.Type == ElementaryQuizType.OrderDecimals ? "1,09; 1,1; 1,101; 1,11" : TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            return;
+        }
         if (question?.ElementaryProblem is { } extension && ElementaryQuizGenerator.IsTimeFractionExtension(extension.Type))
         {
             EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");

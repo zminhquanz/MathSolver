@@ -24,7 +24,9 @@ public enum ElementaryQuizType
     SpatialPosition, IdentifyLine, Midpoint, CircleParts, ShapeNet, TriangleKind,
     ReadRuler, ReadProtractor, ReadThermometer, SortData, CompleteBarChart,
     FullGroups,
-    SecondsConversion, YearCentury, CalendarWeekday, OrderRelatedFractions
+    SecondsConversion, YearCentury, CalendarWeekday, OrderRelatedFractions,
+    SpatialFront, SpatialBehind, SpatialBetween, ReadDecimal, WriteDecimal, DecimalPlace, DecimalParts,
+    OrderDecimals, DecimalToFraction, FractionToDecimal
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -106,7 +108,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
         ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability or
         ElementaryQuizType.FractionPicture or ElementaryQuizType.FractionTerms or
-        ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions or ElementaryQuizType.OrderRelatedFractions;
+        ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions or ElementaryQuizType.OrderRelatedFractions or ElementaryQuizType.DecimalToFraction or ElementaryQuizType.FractionToDecimal;
 
     public bool IsComparison => Type is ElementaryQuizType.IntegerCompare or
         ElementaryQuizType.DecimalCompare or ElementaryQuizType.CompareFractions;

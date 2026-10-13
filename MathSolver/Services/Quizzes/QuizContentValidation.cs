@@ -8,6 +8,7 @@ public static partial class QuizContentValidation
     public static void CheckLists(QuizContentPack pack)
     {
         CheckTimeFractionLists(pack);
+        CheckDecimalSpatialLists(pack);
         CheckPracticeArithmeticLists(pack);
         CheckNumberNameLists(pack);
         CheckAreaMeasurementLists(pack);
@@ -126,6 +127,7 @@ public static partial class QuizContentValidation
             {
                 string id = RequiredString(row, "Id");
                 string prefix = listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.DecimalSpatialListName ? "DecimalSpatial."
                     : listName == ReviewedNarrativePhrasings.TimeFractionListName ? "TimeFraction."
                     : listName == ReviewedNarrativePhrasings.TwoNumbersListName ? "ElementaryQuizGenerator."
                     : listName == ReviewedNarrativePhrasings.AverageListName ? "AverageQuizGenerator."

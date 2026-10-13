@@ -9,16 +9,20 @@ internal static class QuizPrintCalculationSolution
 {
     internal static bool AppliesTo(ArithmeticQuizQuestion question) => question.WordProblem is null
         && (question.ElementaryProblem is { } elementary
-            ? elementary.IsNumericDecimalCalculation
+            ? elementary.IsNumericDecimalCalculation || ElementaryQuizGenerator.IsDecimalSpatialSkill(elementary.Type)
                 || (elementary.IsComparison && !elementary.RequiresSolution && elementary.StoryContextId is null)
             : !EssayAnswerValidator.RequiresSolution(question));
 
     internal static string Format(ArithmeticQuizQuestion question)
     {
         if (question.ElementaryProblem is { } elementary)
+        {
+            if (ElementaryQuizGenerator.IsDecimalSpatialSkill(elementary.Type))
+                return elementary.Reasoning?.Explanation ?? elementary.AnswerText;
             return elementary.IsComparison
                 ? elementary.FormatComparison(elementary.Answers[0].Text!)
                 : elementary.FormatDecimalCalculation(elementary.AnswerText);
+        }
 
         if (question.FindXProblem is { } findX)
         {

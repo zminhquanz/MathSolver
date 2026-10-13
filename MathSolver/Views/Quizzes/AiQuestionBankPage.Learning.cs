@@ -35,13 +35,14 @@ public partial class AiQuestionBankPage
                         .Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Motion => ["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"],
                     BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse"],
-                    BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Time => ElementaryQuizGenerator.TimeBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Geometry => ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1))
                         .Select(variant => "Quiz.Geometry" + ReasoningStoryCatalogue.GeometryProfile(variant).Shape).ToArray(),
+                    BankQuestionFamily.Spatial => ElementaryQuizGenerator.SpatialSkillTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(type => "Quiz.Elementary." + type).ToArray(),
                     _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]

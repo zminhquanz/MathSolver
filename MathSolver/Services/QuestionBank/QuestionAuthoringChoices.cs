@@ -12,20 +12,21 @@ public static class QuestionAuthoringChoices
         BankQuestionFamily.MultiStep => "Quiz.ProblemMultiStep", BankQuestionFamily.Motion => "Quiz.ProblemMotion", BankQuestionFamily.Proportion => "Quiz.ProblemProportion",
         BankQuestionFamily.Decimal => "Quiz.ProblemDecimal", BankQuestionFamily.Measurement => "Quiz.ProblemMeasurement", BankQuestionFamily.Remainder => "Quiz.ProblemRemainder",
         BankQuestionFamily.Time => "Quiz.ProblemTime", BankQuestionFamily.FractionQuantity => "Quiz.ProblemFractionSkills", BankQuestionFamily.Geometry => "Quiz.ProblemGeometry",
-        BankQuestionFamily.Data => "Quiz.ProblemData", BankQuestionFamily.Probability => "Quiz.ProblemProbability", _ => throw new ArgumentOutOfRangeException(nameof(family)) };
+        BankQuestionFamily.Data => "Quiz.ProblemData", BankQuestionFamily.Probability => "Quiz.ProblemProbability",
+        BankQuestionFamily.Spatial => "Quiz.ProblemVisualGeometry", _ => throw new ArgumentOutOfRangeException(nameof(family)) };
 
     public static string FamilyLabel(BankQuestionFamily family, AppLanguage language)
     {
         string[] vi = ["Toán đố cơ bản", "Tìm X", "Phân số", "Tìm hai số", "Trung bình cộng", "Phần trăm", "Bài nhiều bước",
-            "Chuyển động", "Tỉ lệ", "Số thập phân", "Đo lường", "Chia có dư", "Thời gian", "Kĩ năng phân số", "Hình học ứng dụng", "Bảng và biểu đồ", "Khả năng xảy ra"];
+            "Chuyển động", "Tỉ lệ", "Số thập phân", "Đo lường", "Chia có dư", "Thời gian", "Kĩ năng phân số", "Hình học ứng dụng", "Bảng và biểu đồ", "Khả năng xảy ra", "Hình học trực quan"];
         string[] en = ["Basic word problems", "Find X", "Fractions", "Find two quantities", "Averages", "Percentages", "Multi-step problems",
-            "Motion", "Proportion", "Decimals", "Measurement", "Division with remainder", "Time", "Fraction skills", "Applied geometry", "Tables and charts", "Probability"];
+            "Motion", "Proportion", "Decimals", "Measurement", "Division with remainder", "Time", "Fraction skills", "Applied geometry", "Tables and charts", "Probability", "Visual geometry"];
         return (language == AppLanguage.Vietnamese ? vi : en)[(int)family];
     }
 
     public static string VariantKey(BankQuestionFamily family, int variant) => family switch {
         BankQuestionFamily.TwoNumbers or BankQuestionFamily.MultiStep or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
-            or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Data or BankQuestionFamily.Probability
+            or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Data or BankQuestionFamily.Probability or BankQuestionFamily.Spatial
             => "Quiz.Elementary." + (ElementaryQuizType)variant,
         BankQuestionFamily.Average => "Quiz.Average" + (AverageQuizType)variant,
         BankQuestionFamily.Percentage => (PercentageQuizType)variant switch {

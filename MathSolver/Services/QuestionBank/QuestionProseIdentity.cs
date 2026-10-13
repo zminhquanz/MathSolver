@@ -16,6 +16,14 @@ public static class QuestionProseIdentity
         prose = prose.ToLowerInvariant();
         if (contract.IsTemplate)
         {
+            if (contract.Family == BankQuestionFamily.Spatial || contract.Family == BankQuestionFamily.Decimal
+                && ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)contract.BankVariant))
+                foreach (var quantity in ReasoningStoryCatalogue.Lesson(contract).Quantities)
+                {
+                    if (quantity.Role == "decimal_reading") prose = prose.Replace("{" + quantity.Id + "}", " quantity ");
+                    else if (quantity.Role.StartsWith("spatial_actor_", StringComparison.Ordinal))
+                        prose = prose.Replace("{" + quantity.Id + "}", " actor_" + quantity.Role + " ");
+                }
             if (contract.Family == BankQuestionFamily.Motion)
                 foreach (var actor in ReasoningStoryCatalogue.Lesson(contract).Quantities
                     .Where(q => q.Role.StartsWith("motion_actor_", StringComparison.Ordinal)))

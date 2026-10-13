@@ -6,7 +6,7 @@ namespace MathSolver.Services;
 public sealed partial class ElementaryQuizGenerator
 {
     private ElementaryQuizContract? CreateDifficultyContract(QuizProblemKind kind, ElementaryQuizType type,
-        AppLanguage language, CurriculumTier tier) => kind == QuizProblemKind.Data
+        AppLanguage language, CurriculumTier tier) => IsDecimalSpatialSkill(type) ? CreateDecimalSpatialSkill(type, language, tier) : kind == QuizProblemKind.Data
         ? CreateDataDifficulty(type, language, tier) : IsFoundationSkill(type)
         ? CreateFoundation(kind, type, language, tier) : kind switch
     {

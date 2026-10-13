@@ -11,6 +11,7 @@ internal static class DefaultBankSuite
     internal static async Task RunAsync()
     {
         await HarnessInfrastructureTests.RunAsync();
+        await RegexTimeoutRegressionTests.RunAsync();
         await ExpandedArithmeticTests.RunAsync();
         await ModelHarnessTests.RunAsync();
         int checkedDrafts = 0;
@@ -131,6 +132,7 @@ internal static class DefaultBankSuite
 
         GenerationStructurePolicyTests.Run();
         await TimeFractionBankTests.RunAsync();
+        await DecimalSpatialBankTests.RunAsync();
         Console.WriteLine("All AI question bank checks passed. No model inference or benchmark ran.");
     }
 }

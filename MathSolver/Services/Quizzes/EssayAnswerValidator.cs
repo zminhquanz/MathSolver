@@ -160,6 +160,7 @@ public sealed partial class EssayAnswerValidator
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
                 || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
+                || ElementaryQuizGenerator.IsDecimalSpatialSkill(question.ElementaryProblem.Type)
                 || question.ElementaryProblem.Type is ElementaryQuizType.DecimalRound or ElementaryQuizType.LetterExpression
                     or ElementaryQuizType.MixedNumber or ElementaryQuizType.MixedLength
                     or ElementaryQuizType.MapScale or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion

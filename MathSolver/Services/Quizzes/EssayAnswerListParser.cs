@@ -7,7 +7,7 @@ namespace MathSolver.Services;
 internal static partial class EssayAnswerListParser
 {
     internal static bool PreserveDecimalCommas(ElementaryQuizContract contract) =>
-        contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement
+        contract.Type != ElementaryQuizType.DecimalParts && (contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement)
         || contract.Answers.Any(answer => !answer.IsText && !answer.Value.Denominator.IsOne
             && !answer.RequiredDenominator.HasValue && !answer.RequireMixedNumber);
 

@@ -13,7 +13,7 @@ internal static partial class ElementaryEssayValidator
         string? solution, string? equations, string? answerText)
     {
         var contract = question.ElementaryProblem!;
-        if (ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) && contract.Type != ElementaryQuizType.SecondsConversion)
+        if (ElementaryQuizGenerator.IsDecimalSpatialSkill(contract.Type) || ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) && contract.Type != ElementaryQuizType.SecondsConversion)
         {
             bool valid = CheckAnswers(question, answerText);
             return new(true, true, valid, EssayAnswerError.None, EssayAnswerError.None,
@@ -199,6 +199,8 @@ internal static partial class ElementaryEssayValidator
     internal static bool CheckAnswers(ArithmeticQuizQuestion question, string? text, List<string>? details = null)
     {
         var contract = question.ElementaryProblem!; bool vi = contract.Language == AppLanguage.Vietnamese;
+        if (contract.Type == ElementaryQuizType.OrderDecimals)
+            return DecimalSpatialAnswerRules.MatchesOrder(text ?? "", contract.Answers[0].Text!);
         if (contract.Type == ElementaryQuizType.OrderRelatedFractions)
             return TimeFractionAnswerRules.MatchesOrder(text ?? "", contract.Answers[0].Text!);
         if (contract.Type == ElementaryQuizType.YearCentury)
@@ -243,7 +245,9 @@ internal static partial class ElementaryEssayValidator
             }
             var parsed = SplitValueUnit(entry);
             bool valueOkay = TryValue(parsed.Number, out V value, contract.Kind is QuizProblemKind.Decimal or QuizProblemKind.Measurement) && value == ToValue(expected.Value);
-            bool formOkay = CorrectForm(parsed.Number, expected);
+            bool formOkay = CorrectForm(parsed.Number, expected)
+                && (contract.Type is not (ElementaryQuizType.WriteDecimal or ElementaryQuizType.FractionToDecimal)
+                    || !parsed.Number.Contains('/'));
             // These readings and unit-conversion tasks already supply the answer's unit. A numeric answer
             // may omit it, but an explicitly written unit must still match.
             bool unitOkay = (contract.Type is ElementaryQuizType.ReadBarChart

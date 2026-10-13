@@ -85,6 +85,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             question = await practice.SelectFractionAsync(question, curriculum.Tier, language, learning ?? new(QuestionKnowledgeGroup.Objects), cancellation);
         if (request.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep
             or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry or QuizProblemKind.Probability
+            || question.ElementaryProblem is { } skill && ElementaryQuizGenerator.IsDecimalSpatialSkill(skill.Type)
             || question.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: not null }
             || question.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }
             || question.ElementaryProblem is { Kind: QuizProblemKind.Time } time && ElementaryQuizGenerator.TimeBankTypes.Contains(time.Type)

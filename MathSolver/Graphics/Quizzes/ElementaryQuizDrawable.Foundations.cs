@@ -24,6 +24,19 @@ public sealed partial class ElementaryQuizDrawable
         }
         switch (visual.Kind)
         {
+            case "foundation-queue":
+                Text(visual.Labels[3], 75, 45, 210);
+                canvas.DrawLine(300, 85, 60, 85);
+                canvas.DrawLine(60, 85, 73, 78); canvas.DrawLine(60, 85, 73, 92);
+                for (int i = 0; i < 3; i++)
+                {
+                    float x = 85 + i * 95;
+                    canvas.FillColor = Series[i];
+                    canvas.FillCircle(x, 130, 10);
+                    canvas.DrawRectangle(x - 12, 145, 24, 35);
+                    Text(visual.Labels[i], x - 25, 190);
+                }
+                break;
             case "foundation-count":
                 for (int i = 0; i < visual.Values[0]; i++)
                 { canvas.FillColor = Series[i % 3]; canvas.FillCircle(65 + i % 5 * 55, 45 + i / 5 * 45, 10); }

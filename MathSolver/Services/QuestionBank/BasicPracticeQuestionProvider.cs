@@ -20,6 +20,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Decimal } decimalProblem
+            && !ElementaryQuizGenerator.IsDecimalSpatialSkill(decimalProblem.Type)
             && (!decimalProblem.IsDecimalArithmetic || decimalProblem.StoryContextId is null)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Measurement } measurementProblem
             && (measurementProblem.IsNumericMeasurementConversion || !ElementaryQuizGenerator.MeasurementBankTypes.Contains(measurementProblem.Type))) return generated;
@@ -28,7 +29,9 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.FractionSkills } fractionProblem
             && !ElementaryQuizGenerator.FractionQuantityBankTypes.Contains(fractionProblem.Type)) return generated;
         if (generated.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: null }) return generated;
-        var (family, variant) = generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills or QuizProblemKind.Data or QuizProblemKind.Probability } elementary
+        var (family, variant) = generated.ElementaryProblem is { } spatial && ElementaryQuizGenerator.SpatialSkillTypes.Contains(spatial.Type)
+            ? (BankQuestionFamily.Spatial, (int)spatial.Type)
+            : generated.ElementaryProblem is { Kind: QuizProblemKind.TwoNumbers or QuizProblemKind.MultiStep or QuizProblemKind.Decimal or QuizProblemKind.Measurement or QuizProblemKind.Remainder or QuizProblemKind.Time or QuizProblemKind.FractionSkills or QuizProblemKind.Data or QuizProblemKind.Probability } elementary
             ? (elementary.Kind switch { QuizProblemKind.MultiStep => BankQuestionFamily.MultiStep,
                 QuizProblemKind.Data => BankQuestionFamily.Data,
                 QuizProblemKind.Probability => BankQuestionFamily.Probability,

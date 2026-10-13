@@ -21,10 +21,10 @@ public static partial class ReasoningStoryCatalogue
     internal static bool UsesReviewedPhrasings(BankQuestionFamily family) => family is
         BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion
         or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
-        or BankQuestionFamily.TwoNumbers or BankQuestionFamily.Average or BankQuestionFamily.Percentage or BankQuestionFamily.Geometry or BankQuestionFamily.Data or BankQuestionFamily.Probability;
+        or BankQuestionFamily.TwoNumbers or BankQuestionFamily.Average or BankQuestionFamily.Percentage or BankQuestionFamily.Geometry or BankQuestionFamily.Data or BankQuestionFamily.Probability or BankQuestionFamily.Spatial;
     private static readonly ConditionalWeakTable<BasicQuestionContract, NarrativeLesson> Lessons = new();
     public static bool Supports(BankQuestionFamily family) => family is BankQuestionFamily.TwoNumbers
-        or BankQuestionFamily.Average or BankQuestionFamily.Percentage or BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Geometry or BankQuestionFamily.Data or BankQuestionFamily.Probability;
+        or BankQuestionFamily.Average or BankQuestionFamily.Percentage or BankQuestionFamily.MultiStep or BankQuestionFamily.Motion or BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Geometry or BankQuestionFamily.Data or BankQuestionFamily.Probability or BankQuestionFamily.Spatial;
     public static int[] Variants(BankQuestionFamily family, CurriculumTier tier) => family switch
     {
         BankQuestionFamily.TwoNumbers => [(int)ElementaryQuizType.SumDifference, (int)ElementaryQuizType.SumRatio, (int)ElementaryQuizType.DifferenceRatio],
@@ -33,11 +33,12 @@ public static partial class ReasoningStoryCatalogue
         BankQuestionFamily.MultiStep => ElementaryQuizGenerator.Types(QuizProblemKind.MultiStep).Select(value => (int)value).ToArray(),
         BankQuestionFamily.Motion => Enum.GetValues<MotionQuizType>().Select(value => (int)value).ToArray(),
         BankQuestionFamily.Proportion => Enum.GetValues<ProportionQuizType>().Select(value => (int)value).ToArray(),
-        BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalStoryTypes.Select(value => (int)value).ToArray(),
+        BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Time => ElementaryQuizGenerator.TimeBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(value => (int)value).ToArray(),
+        BankQuestionFamily.Spatial => ElementaryQuizGenerator.SpatialSkillTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Geometry => GeometryVariants(tier),
         BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(value => (int)value).ToArray(),
@@ -68,7 +69,7 @@ public static partial class ReasoningStoryCatalogue
         var lesson = Build(provisional);
         return provisional with { Subject = lesson.Subject, Unit = lesson.Unit, SceneId = lesson.Context,
             TopicId = family.ToString(), Story = provisional.Story! with { Schema = lesson.Schema,
-                NarrativeId = family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
+                NarrativeId = family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
     }
 
     internal static NarrativeLesson Lesson(BasicQuestionContract c) => Lessons.GetValue(c, Build);
@@ -94,8 +95,8 @@ public static partial class ReasoningStoryCatalogue
             || c.PartA != "" || c.PartB != ""
             || (seed.Family == BankQuestionFamily.Data) != (seed.ChartProfile is not null)
             || seed.ChartProfile is { } chart && ((int)chart.Type != seed.Variant || chart.Tier != c.Tier || chart.Language != c.Language)
-            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity) && seed.NarrativeId != "")
-            || (seed.Family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity && string.IsNullOrEmpty(seed.NarrativeId))) return false;
+            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "")
+            || (seed.Family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && string.IsNullOrEmpty(seed.NarrativeId))) return false;
         NarrativeLesson lesson;
         try { lesson = Lesson(c); }
         catch (Exception error) when (error is ArgumentException or InvalidDataException) { return false; }
@@ -121,8 +122,8 @@ public static partial class ReasoningStoryCatalogue
         {
             var fresh = Create(c.Family, c.Story!.Variant, c.Tier, c.Language, random, c.Story.NarrativeId, c.Story.ChartProfile, c.Story.ContextVersion);
             if (fresh.Story!.Schema == c.Story.Schema
-                && (c.Family is not (BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity) || !Lesson(fresh).Quantities.Where(q => q.Id.StartsWith('f'))
-                    .Select(q => q.Value).SequenceEqual(Lesson(c).Quantities.Where(q => q.Id.StartsWith('f')).Select(q => q.Value))))
+                && (c.Family is not (BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity) || !Lesson(fresh).Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "decimal_reading")
+                    .Select(q => q.Value).SequenceEqual(Lesson(c).Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "decimal_reading").Select(q => q.Value))))
                 return fresh;
         }
         throw new InvalidOperationException("StorySchemaUnavailable");
@@ -188,6 +189,8 @@ public static partial class ReasoningStoryCatalogue
         bool expanded = c.Story.ContextVersion > 0;
         return c.Family switch
         {
+            BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)c.BankVariant)
+                => new ElementaryQuizGenerator(random).GenerateDecimalSpatialSkill(mode, (ElementaryQuizType)c.BankVariant, c.Language, c.Tier, c.Story.NarrativeId),
             BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)
                 => new ElementaryQuizGenerator(random).GenerateTimeFractionExtension(mode, (ElementaryQuizType)c.BankVariant, c.Language, c.Tier, c.Story.NarrativeId),
             BankQuestionFamily.TwoNumbers => new ElementaryQuizGenerator(random, expanded).Generate(mode, QuizProblemKind.TwoNumbers,
@@ -228,6 +231,8 @@ public static partial class ReasoningStoryCatalogue
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
         using var capture = new QuizNarrativeCapture(c.Family switch {
+            BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)c.BankVariant)
+                => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.DecimalSpatialListName),
             BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)
                 => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.TimeFractionListName),
             BankQuestionFamily.TwoNumbers => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.TwoNumbersListName),
@@ -304,6 +309,14 @@ public static partial class ReasoningStoryCatalogue
         // Owners and dimensions are explicit bindings, just like the quantities.
         // This stops the model abstracting pupils/groups into generic objects/units.
         var bindings = new List<(string Role, string Value)> { ("answer_unit", unit) };
+        if (q.ElementaryProblem?.Type == ElementaryQuizType.WriteDecimal)
+        {
+            string value = q.ElementaryProblem.Reasoning!.Givens[0].Value;
+            var parts = value.Split('.');
+            bindings.Add(("decimal_reading", ElementaryQuizGenerator.DecimalReading(int.Parse(parts[0], CultureInfo.InvariantCulture), parts[1], c.Language)));
+        }
+        if (c.Family == BankQuestionFamily.Spatial)
+            bindings.AddRange(q.ElementaryProblem!.Visual!.Labels.Take(3).Select((label,i) => ("spatial_actor_" + i, label)));
         if (q.ElementaryProblem?.ProbabilityScenario is { } probabilityBindings)
             bindings.Add(("probability_event", probabilityBindings.EventText));
         if (q.ElementaryProblem?.Type == ElementaryQuizType.CalendarWeekday)
@@ -379,7 +392,7 @@ public static partial class ReasoningStoryCatalogue
         string schema = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
             c.Family + "/" + c.Story!.Variant + "/" + c.Tier + "/" + c.Language + "\n" + context + "\n" + template
             + "\n" + string.Join("/", quantities.Select(v => v.Role + (v.Id.StartsWith('v') && !v.Role.StartsWith("motion_actor_", StringComparison.Ordinal)
-                && !v.Role.StartsWith("observations_", StringComparison.Ordinal) ? "=" + v.Value : "")))
+                && !v.Role.StartsWith("observations_", StringComparison.Ordinal) && v.Role != "decimal_reading" ? "=" + v.Value : "")))
             + "\n" + string.Join("/", steps.Select(s => s.Lead))
             + (c.Story.ChartProfile is { } chart ? "\nchart:" + chart.ContextId + "/" + chart.QuestionKind
                 + "/" + string.Join(",", chart.CategoryIds) + "/" + string.Join(",", chart.TargetCategoryIds)

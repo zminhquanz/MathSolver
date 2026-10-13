@@ -7,18 +7,27 @@ namespace MathSolver.Services;
 internal static class EquivalentProseStructures
 {
     private const string Slot = @"\{[A-Za-z0-9_.-]+\}";
-    private static readonly TimeSpan Timeout = TimeSpan.FromMilliseconds(100);
+    private sealed record Rule(Regex Pattern, string Replacement);
+    private static readonly Lazy<Rule[]> VietnameseRules = new(CompileVietnamese);
+    private static readonly Lazy<Rule[]> EnglishRules = new(CompileEnglish);
+    private static Rule[] CompileVietnamese() => Compile(Vietnamese);
+    private static Rule[] CompileEnglish() => Compile(English);
+    private static Rule[] Compile((string Pattern, string Replacement)[] rules) => rules.Select(rule =>
+        // A back-reference prevents using the linear engine. Capture the second
+        // unit independently and check exact equality before transforming it.
+        new Rule(QuestionTextRegex.Create(rule.Pattern.Replace(@"\k<unit>", $@"(?<unit_again>{Slot})", StringComparison.Ordinal)), rule.Replacement)).ToArray();
+    private static readonly Regex OwnershipAgreement = QuestionTextRegex.Create($@"(?<amount>{Slot}) (?<unit>{Slot}) (?<verb>belong to|were sold by)");
+    private static readonly Regex GroupAgreement = QuestionTextRegex.Create($@"There are (?<amount>{Slot}) (?<unit>{Slot})");
 
     // The model cannot choose singular/plural verbs because C# supplies fresh
     // quantities later. Apply agreement while the role slots are still intact.
     internal static string WithEnglishAgreement(string text, Func<string, bool> isOne)
     {
-        text = Regex.Replace(text, $@"(?<amount>{Slot}) (?<unit>{Slot}) (?<verb>belong to|were sold by)", m =>
+        text = OwnershipAgreement.Replace(text, m =>
             !isOne(m.Groups["amount"].Value) ? m.Value : m.Groups["amount"].Value + " " + m.Groups["unit"].Value
-                + (m.Groups["verb"].Value == "belong to" ? " belongs to" : " was sold by"), RegexOptions.CultureInvariant, Timeout);
-        return Regex.Replace(text, $@"There are (?<amount>{Slot}) (?<unit>{Slot})", m =>
-            !isOne(m.Groups["amount"].Value) ? m.Value : "There is " + m.Groups["amount"].Value + " " + m.Groups["unit"].Value,
-            RegexOptions.CultureInvariant, Timeout);
+                + (m.Groups["verb"].Value == "belong to" ? " belongs to" : " was sold by"));
+        return GroupAgreement.Replace(text, m =>
+            !isOne(m.Groups["amount"].Value) ? m.Value : "There is " + m.Groups["amount"].Value + " " + m.Groups["unit"].Value);
     }
 
     internal static string[] Expand(IEnumerable<string> examples, AppLanguage language)
@@ -29,22 +38,26 @@ internal static class EquivalentProseStructures
             result.Add(example);
             // Match a whole, single factual clause. Never move words across an
             // event, comparison, fraction base or a second quantity.
-            var rules = language == AppLanguage.Vietnamese ? Vietnamese : English;
+            if (example.Length > QuestionTextRegex.MaximumClauseLength) continue;
+            var rules = language == AppLanguage.Vietnamese ? VietnameseRules.Value : EnglishRules.Value;
             foreach (var (pattern, replacement) in rules)
-                if (Regex.IsMatch(example, pattern, RegexOptions.CultureInvariant, Timeout))
-                    result.Add(Regex.Replace(example, pattern, match => {
-                        string value = match.Result(replacement);
-                        // A moved adverbial is no longer sentence-initial.
-                        var time = match.Groups["time"];
-                        if (time.Success) value = value.Replace(time.Value, time.Value.ToLowerInvariant(), StringComparison.Ordinal);
-                        foreach (string group in new[] { "actor", "part", "whole" })
-                        {
-                            string noun = match.Groups[group].Value;
-                            if (noun.Length > 0 && !noun.StartsWith('{'))
-                                value = value.Replace(noun, char.ToLowerInvariant(noun[0]) + noun[1..], StringComparison.Ordinal);
-                        }
-                        return value;
-                    }, RegexOptions.CultureInvariant, Timeout));
+            {
+                var match = pattern.Match(example);
+                if (match.Success && (!match.Groups["unit_again"].Success || match.Groups["unit_again"].Value == match.Groups["unit"].Value))
+                {
+                    string value = match.Result(replacement);
+                    // A moved adverbial is no longer sentence-initial.
+                    var time = match.Groups["time"];
+                    if (time.Success) value = value.Replace(time.Value, time.Value.ToLowerInvariant(), StringComparison.Ordinal);
+                    foreach (string group in new[] { "actor", "part", "whole" })
+                    {
+                        string noun = match.Groups[group].Value;
+                        if (noun.Length > 0 && !noun.StartsWith('{'))
+                            value = value.Replace(noun, char.ToLowerInvariant(noun[0]) + noun[1..], StringComparison.Ordinal);
+                    }
+                    result.Add(value);
+                }
+            }
         }
         return result.Distinct(StringComparer.Ordinal).ToArray();
     }

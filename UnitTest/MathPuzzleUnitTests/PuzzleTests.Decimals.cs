@@ -16,7 +16,7 @@ internal static partial class PuzzleTests
         {
             var generator = new ElementaryQuizGenerator(new Random(3801));
             foreach (var tier in Enum.GetValues<CurriculumTier>())
-            foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Decimal))
+            foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Decimal).Where(type => !ElementaryQuizGenerator.IsDecimalSpatialSkill(type)))
             foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
             foreach (bool? wordProblems in type is (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
                 or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide)

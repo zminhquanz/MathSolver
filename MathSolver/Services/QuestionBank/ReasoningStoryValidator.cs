@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using MathSolver.Services;
 
 namespace MathSolver.Services.QuestionBank;
@@ -7,10 +8,10 @@ public static class ReasoningStoryValidator
 {
     public static BasicDraftValidation Validate(string raw, BasicQuestionContract c)
     {
-        if (!c.IsValid) return new(null, "InvalidContract");
         if (string.IsNullOrWhiteSpace(raw) || raw.Length > 12000) return new(null, "InvalidJson");
         try
         {
+            if (!c.IsValid) return new(null, "InvalidContract");
             using var document = JsonDocument.Parse(raw, new() { MaxDepth = 8 });
             var root = document.RootElement;
             string[] fields = ["facts", "question", "solution_leads"];
@@ -49,6 +50,8 @@ public static class ReasoningStoryValidator
             if (mismatches.Count > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: string.Join(", ", mismatches));
             return new(draft, null, c);
         }
+        catch (RegexMatchTimeoutException error)
+        { return new(null, "TextProcessingTimeout", ErrorDetails: QuestionTextRegex.TimeoutDetails(error, "validation")); }
         catch (Exception error) when (error is JsonException or ArgumentException or InvalidOperationException)
         { return new(null, "InvalidJson"); }
     }
@@ -71,7 +74,7 @@ public static class ReasoningStoryValidator
                 + (c.Family != BankQuestionFamily.FractionQuantity || ElementaryQuizGenerator.IsTimeFractionExtension((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
                     : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
-                + (c.Family != BankQuestionFamily.Decimal ? "" : vi
+                + (c.Family != BankQuestionFamily.Decimal || ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
                     ? "\nGiữ riêng lượng mỗi nhóm, số nhóm và tổng lượng; phần bổ sung sau khi chia chỉ thuộc nhóm được chỉ định."
                     : "\nKeep amount per group, group count and total distinct; an addition after sharing belongs only to the specified group.")
                 + "\n" + QuestionBankStore.SerializeDraft(example)
@@ -91,6 +94,10 @@ public static class ReasoningStoryValidator
 
     private static string ActivityGuidance(BasicQuestionContract c, bool vi)
     {
+        if (c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Spatial
+            && ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)c.BankVariant))
+            return "\n" + (vi ? "Giữ nguyên hướng quay mặt, thứ tự bạn trong hàng, trước/sau/ở giữa và chữ số thập phân. Không điền câu trả lời hay đổi chiều chuyển đổi phân số thập phân."
+                : "Preserve facing direction, queue order, front/behind/between and decimal digits. Do not insert answers or reverse decimal-fraction conversion.");
         if (c.Family is BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
             && ElementaryQuizGenerator.IsTimeFractionExtension((MathSolver.Models.ElementaryQuizType)c.BankVariant))
             return "\n" + (vi ? "Giữ hướng đổi đơn vị, trước/sau, năm và thứ tự tăng/giảm đúng như mẫu. Không tự sắp xếp phân số, tính ngày hay điền thế kỷ vào câu hỏi. Các số và đáp án do C# tính."

@@ -688,10 +688,10 @@ public static class QuizCurriculumLayer
                 ElementaryQuizType.Parity or ElementaryQuizType.LetterExpression => 4,
                 _ => 1
             })).ToArray(),
-            QuizProblemKind.VisualGeometry => level <= 2 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides]
-                : level == 3 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle]
+            QuizProblemKind.VisualGeometry => level <= 2 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.SpatialPosition, .. ElementaryQuizGenerator.SpatialSkillTypes]
+                : level == 3 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle, .. ElementaryQuizGenerator.SpatialSkillTypes]
                 : level == 4 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,
-                    ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide]
+                    ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide, .. ElementaryQuizGenerator.SpatialSkillTypes]
                 : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.CalendarWeekday]
                 : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar, ElementaryQuizType.CalendarWeekday]

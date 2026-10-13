@@ -6,8 +6,7 @@ namespace MathSolver.Services;
 /// Only neutral linking language and reviewed synonyms may change around the anchors.</summary>
 internal static class SemanticProseRules
 {
-    private static readonly Regex Tokens = new(@"\{[A-Za-z0-9_.-]+\}|[/%=+*\u00f7\u00d7<>]|[\p{L}\p{M}\p{N}]+", RegexOptions.CultureInvariant,
-        TimeSpan.FromMilliseconds(100));
+    private static readonly Regex Tokens = QuestionTextRegex.Create(@"\{[A-Za-z0-9_.-]+\}|[/%=+*\u00f7\u00d7<>]|[\p{L}\p{M}\p{N}]+");
     private static readonly HashSet<string> VietnameseLinks = ["hỏi", "vậy", "thì", "là", "được", "các", "những", "này",
         "đó", "rằng", "theo", "bản", "dữ", "liệu", "bối", "cảnh", "ghi", "chép", "báo", "cáo", "kết", "quả", "trong", "hoạt", "động", "hôm", "nay"];
     private static readonly HashSet<string> EnglishLinks = ["the", "a", "an", "please", "find", "calculate", "is", "are",
@@ -39,7 +38,7 @@ internal static class SemanticProseRules
 
     private static bool MatchesCore(string? candidate, IEnumerable<string> examples, AppLanguage language, bool rendered)
     {
-        if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > 1400 || candidate.Any(char.IsControl)) return false;
+        if (string.IsNullOrWhiteSpace(candidate) || candidate.Length > QuestionTextRegex.MaximumClauseLength || candidate.Any(char.IsControl)) return false;
         string withoutSlots = Regex.Replace(candidate, @"\{[A-Za-z0-9_.-]+\}", "");
         if (withoutSlots.IndexOfAny(['{', '}']) >= 0) return false;
         // Template quantities and computations always belong to C#.
