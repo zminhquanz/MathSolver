@@ -7,7 +7,7 @@ internal sealed class ReasoningStoryCycle
     private readonly Dictionary<(BankQuestionFamily, int, CurriculumTier, AppLanguage), Queue<string>> _recent = [];
 
     public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
-        IReadOnlySet<string>? excludedProse = null)
+        IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
     {
         var key = (family, variant, tier, language);
         if (!_recent.TryGetValue(key, out var history)) _recent[key] = history = new();
@@ -22,7 +22,7 @@ internal sealed class ReasoningStoryCycle
             if (repetitions == 0) break;
         }
         if (family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && excludedProse is not null
-            && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
+            && !(creativeProse && OpenQuestionProse.Supports(best!)) && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
         {
             // One exhausted context must not stop a batch while other compatible
             // contexts still have wording. Search the finite catalog before failing.
@@ -51,6 +51,7 @@ internal sealed class ReasoningStoryCycle
                 ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
         }
         if (ReasoningStoryCatalogue.UsesReviewedPhrasings(family) && excludedProse is not null
+            && !(creativeProse && OpenQuestionProse.Supports(best!))
             && !ReviewedReasoningProse.NovelDrafts(best!, excludedProse).Any())
         {
             // Resampling is bounded and never calls inference. A used-up scene

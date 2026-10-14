@@ -28,6 +28,7 @@ public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Que
 public sealed record BasicDraftValidation(BasicQuestionDraft? Draft, string? ErrorCode, BasicQuestionContract? Contract = null, string? ErrorDetails = null)
 {
     public bool IsValid => Draft is not null && ErrorCode is null;
+    public bool NeedsReview => Draft is not null && ErrorCode == "SemanticReviewRequired";
 }
 
 /// <summary>Bounded first-version arithmetic prose validation, independent of model facts.</summary>

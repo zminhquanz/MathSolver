@@ -8,6 +8,8 @@ using System.Text.Json;
 internal static partial class ActivityDepthTests
 {
     private static readonly BankQuestionFamily[] Families = [BankQuestionFamily.Remainder, BankQuestionFamily.Time, BankQuestionFamily.Measurement];
+    // This suite supplies legacy activity contexts. Calendar/clock and the new
+    // time skills have their own catalogue contexts and dedicated suites.
     private static IEnumerable<string> Contexts(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language, bool expanded) => family switch
     {
         BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language, expanded).Select(c => c.Id),
@@ -107,7 +109,8 @@ internal static partial class ActivityDepthTests
         {
             int i = 0;
             foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier).Where(v => family != BankQuestionFamily.Measurement
-                || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time || !ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)v)))
+                || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time
+                    || (ElementaryQuizType)v is ElementaryQuizType.ElapsedTime or ElementaryQuizType.TimeAddition))
             {
                 var language = ((int)tier + i++) % 2 == 0 ? AppLanguage.English : AppLanguage.Vietnamese;
                 string context = family == BankQuestionFamily.Remainder
@@ -127,7 +130,8 @@ internal static partial class ActivityDepthTests
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (var tier in Enum.GetValues<CurriculumTier>())
         foreach (int variant in ReasoningStoryCatalogue.Variants(family, tier).Where(v => family != BankQuestionFamily.Measurement
-            || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time || !ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)v)))
+            || ElementaryQuizGenerator.MeasurementStoryTypes.Contains((ElementaryQuizType)v)).Where(v => family != BankQuestionFamily.Time
+                || (ElementaryQuizType)v is ElementaryQuizType.ElapsedTime or ElementaryQuizType.TimeAddition))
         foreach (string context in Contexts(family, variant, tier, language, true))
         {
             var c = ReasoningStoryCatalogue.Create(family, variant, tier, language, new(63), context);

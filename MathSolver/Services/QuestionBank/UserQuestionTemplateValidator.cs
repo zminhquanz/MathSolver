@@ -68,6 +68,7 @@ public static class UserQuestionTemplateValidator
 
     public static BasicDraftValidation Validate(string json, BasicQuestionContract c)
     {
+        if (c.OpenProse) return OpenQuestionProse.ValidateSyntax(json, c);
         if (c.Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.Validate(json, c);
         if (!c.IsValid || !c.IsTemplate) return new(null, "InvalidContract");
         if (string.IsNullOrWhiteSpace(json) || json.Length > 256 * 1024) return new(null, "InvalidJson");

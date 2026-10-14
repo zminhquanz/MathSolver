@@ -7,7 +7,7 @@ internal sealed class ExpandedArithmeticCycle
 {
     private readonly Dictionary<(QuestionKnowledgeGroup, ArithmeticOperation, CurriculumTier, AppLanguage, string), int> _uses = [];
     public BasicQuestionContract Next(QuestionLearningProfile profile, ArithmeticOperation operation, CurriculumTier tier,
-        AppLanguage language, IReadOnlySet<string> excluded)
+        AppLanguage language, IReadOnlySet<string> excluded, bool creativeProse = false)
     {
         var specialized = profile.Group == QuestionKnowledgeGroup.Packaging && operation == ArithmeticOperation.Divide
             ? AppliedQuestionCatalogue.Available(profile, operation, tier).Where(s => s.Id is "packing-minimum" or "packing-remainder")
@@ -20,8 +20,8 @@ internal sealed class ExpandedArithmeticCycle
                 bool legacy = specialized.Contains(id);
                 var c = legacy ? AppliedQuestionCatalogue.Create(profile, operation, tier, language, sceneId: id)
                     : ExpandedArithmeticCatalogue.Create(profile, operation, tier, language, contextId: id);
-                if (legacy ? ReviewedQuestionProse.For(c)?.NovelExample(c, excluded) is null
-                    : ExpandedArithmeticCatalogue.NovelDrafts(c, excluded).Count == 0) continue;
+                if (!(creativeProse && OpenQuestionProse.Supports(c)) && (legacy ? ReviewedQuestionProse.For(c)?.NovelExample(c, excluded) is null
+                    : ExpandedArithmeticCatalogue.NovelDrafts(c, excluded).Count == 0)) continue;
                 var key = (profile.Group, operation, tier, language, id);
                 _uses[key] = _uses.GetValueOrDefault(key) + 1;
                 return c;

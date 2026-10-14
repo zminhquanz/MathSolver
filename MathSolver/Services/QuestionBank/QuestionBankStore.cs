@@ -16,6 +16,10 @@ public sealed record ValidatedBankQuestion(BasicQuestionContract Contract, Basic
 
 public interface IQuestionBankStore
 {
+    Task<bool> QueueReviewAsync(PendingQuestionReview question, CancellationToken cancellationToken = default)
+        => Task.FromResult(false);
+    Task<IReadOnlySet<string>> GetPendingProseHashesAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult<IReadOnlySet<string>>(new HashSet<string>(StringComparer.Ordinal));
     Task<int> DeleteAllAsync(CancellationToken cancellationToken = default)
         => Task.FromException<int>(new NotSupportedException());
     Task<bool> InsertAsync(ValidatedBankQuestion question, CancellationToken cancellationToken = default);
@@ -101,6 +105,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 deleted = db.Execute("DELETE FROM BasicQuestionBank");
+                db.Execute("DELETE FROM QuestionPendingReview");
                 // Also remove any stale derived identities left by older installations.
                 db.Execute("DELETE FROM QuestionProseIndex");
                 cancellationToken.ThrowIfCancellationRequested();
@@ -295,6 +300,7 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
                     db.ExecuteScalar<string>("PRAGMA journal_mode=WAL");
                     RenameProblemColumns(db);
                     db.CreateTable<Row>();
+                    db.CreateTable<PendingReviewRow>();
                     // Added integer columns can be NULL on pre-v6 SQLite tables.
                     // Keep their arithmetic rows available after the schema upgrade.
                     db.Execute("UPDATE BasicQuestionBank SET ProblemType=0 WHERE ProblemType IS NULL");

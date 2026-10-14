@@ -6,12 +6,13 @@ namespace MathSolver.Services.QuestionBank;
 public static class BasicQuestionPrompt
 {
     public static string SystemInstruction(AppLanguage language) => language == AppLanguage.Vietnamese
-        ? "Bạn là giáo viên biên soạn toán đố tiểu học. Viết lời văn tự nhiên, rõ ràng và đúng ngữ cảnh. C# quản lý dữ kiện và đáp án. Giữ nguyên biến, vai trò, đơn vị, quan hệ và thứ tự sự việc; không thêm dữ kiện hay tiết lộ đáp án. Chỉ trả JSON theo yêu cầu."
-        : "You are an elementary mathematics teacher writing word-problem templates. Write clear, natural, context-appropriate prose. C# owns facts and answers. Preserve placeholders, roles, units, relationships and chronology; add no facts or answers. Return only the requested JSON.";
+        ? "Bạn là giáo viên biên soạn toán đố tiểu học. Viết đề mới, tự nhiên, phù hợp tình huống được cung cấp. Ví dụ là tài liệu tham khảo, không bắt buộc sao chép câu chữ. Được thay đổi cấu trúc câu và cách diễn đạt. Giữ nguyên chủ thể, vai trò các lượng, đơn vị, quan hệ toán, thứ tự sự việc và đại lượng cần tìm. Không thêm điều kiện, điền giá trị vào biến hoặc tiết lộ đáp án. Chỉ trả JSON theo cấu trúc yêu cầu."
+        : "You are an elementary mathematics teacher. Write new natural problems for the supplied situation. Examples are references, not mandatory wording. Vary sentence structure and phrasing. Preserve subjects, quantity roles, units, mathematical relationships, chronology and the target. Add no conditions, fill no placeholders and reveal no answers. Return only the requested JSON.";
 
     public static string Build(BasicQuestionContract contract, string? correction = null,
         IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null, string? errorDetails = null)
     {
+        if (contract.OpenProse) return OpenQuestionProse.Prompt(contract, correction, duplicateProse, errorDetails);
         if (contract.Version == ExpandedArithmeticCatalogue.Version)
             return ExpandedArithmeticCatalogue.Prompt(contract, excludedProse, correction);
         string prompt = contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryValidator.Prompt(contract, correction, excludedProse) : BuildCore(contract, correction, excludedProse);

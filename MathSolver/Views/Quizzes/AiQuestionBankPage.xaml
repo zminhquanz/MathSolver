@@ -95,6 +95,8 @@
                         <Label x:Name="DownloadStatusLabel" LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Border>
+                <Button Text="{localization:Translate AiBank.Review.Open}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
+                <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" />
                 <Border x:Name="DiagnosticsCard" Style="{StaticResource SolverCardStyle}" IsVisible="False">
                     <VerticalStackLayout Spacing="10">
                         <Button x:Name="DiagnosticsToggleButton" Text="{localization:Translate AiBank.ShowDiagnostics}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleDiagnosticsClicked" />
@@ -130,6 +132,10 @@
                 <Border Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout x:Name="ConfigurationPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
+                        <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
+                            <Switch x:Name="CreativeProseSwitch" Grid.Column="1" IsToggled="False" />
+                        </Grid>
                         <Label Text="{localization:Translate AiBank.ProblemType}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="ProblemPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankProblemChanged" />

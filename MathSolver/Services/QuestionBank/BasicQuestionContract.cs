@@ -16,6 +16,7 @@ public sealed record BasicQuestionContract(
     FindXUnknownRole UnknownRole = FindXUnknownRole.None, int LeftDenominator = 1, int RightDenominator = 1)
 {
     public ReasoningStorySeed? Story { get; init; }
+    public bool OpenProse { get; init; }
     public ExpandedArithmeticSeed? Practice { get; init; }
     public const int CurrentVersion = 2;
     [JsonIgnore] public int BankVariant => Story?.Variant ?? (int)UnknownRole;
@@ -136,6 +137,9 @@ public sealed record BasicQuestionContract(
     }
 
     public BasicQuestionContract FreshFacts(Random? random = null)
+        => FreshFactsCore(random) with { OpenProse = OpenProse };
+
+    private BasicQuestionContract FreshFactsCore(Random? random)
     {
         if (!IsTemplate) return this;
         if (Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.Fresh(this, random);
@@ -175,7 +179,8 @@ public sealed record BasicQuestionContract(
 
 public sealed record AiGenerationOptions(ArithmeticOperation Operation, CurriculumTier Tier,
     AppLanguage Language, int Count, bool AutoInsert, QuestionLearningProfile? Profile = null,
-    BankQuestionFamily Family = BankQuestionFamily.Arithmetic, FindXUnknownRole UnknownRole = FindXUnknownRole.None, int StoryVariant = 0)
+    BankQuestionFamily Family = BankQuestionFamily.Arithmetic, FindXUnknownRole UnknownRole = FindXUnknownRole.None, int StoryVariant = 0,
+    bool CreativeProse = false)
 {
     public void Validate()
     {

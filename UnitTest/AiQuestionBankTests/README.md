@@ -2,6 +2,14 @@ Runner commands are registered under Runner/, native generation checks under Mod
 
 # AI question bank checks
 
+`--open-prose` checks the opt-in one-step/Find X/unit-conversion wording pilot,
+1,344 bilingual profiles, fresh C# grading and the separate persistent review
+queue. `--open-prose-model <model.gguf> [directory]` runs six fixed profiles with
+a closed baseline at 0.5 and open wording at 0.4/0.5/0.6 (maximum three attempts
+per request). `--open-prose-evidence <directory>` replays real raw outputs against
+the final validator and checks quarantine isolation. See
+[the pilot guide](../../MathSolver/OPEN_PROSE_PILOT.md) for scope, review and metrics.
+
 `--expanded-arithmetic` checks 296 version-10 C#/JSON arithmetic profiles, price/context bounds, fresh facts, grading, mutations, deduplication, streaming, worker routing, SQLite and Excel backups. `--expanded-arithmetic-model <model.gguf>` runs 16 real operation/star/language combinations plus two novel-wording retries. See [expanded arithmetic AI](../../MathSolver/EXPANDED_ARITHMETIC_AI.md).
 
 `--area-measurement-foundation` checks the staged C#/JSON area contracts before

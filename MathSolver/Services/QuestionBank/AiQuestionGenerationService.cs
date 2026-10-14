@@ -30,11 +30,12 @@ public sealed record AiGenerationMetrics(int GeneratedTokens, TimeSpan Generatio
 }
 
 public enum AiJobState { Idle, Generating, Validating, Completed, Stopped, Failed }
-public enum AiItemState { Generating, Validating, Ready, Saved, Duplicate, Rejected, Stopped, SaveFailed }
+public enum AiItemState { Generating, Validating, Ready, Saved, Duplicate, Rejected, Stopped, SaveFailed, PendingReview }
 public sealed record AiQuestionAttempt(int Number, string Prompt, string RawJson, string? ErrorCode,
     bool IsComplete = true, AiGenerationMetrics? Metrics = null, string? ErrorDetails = null);
 public sealed record AiQuestionItem(int Number, BasicQuestionContract Contract, AiItemState State,
-    IReadOnlyList<AiQuestionAttempt> Attempts, ValidatedBankQuestion? Question = null, string? Error = null);
+    IReadOnlyList<AiQuestionAttempt> Attempts, ValidatedBankQuestion? Question = null, string? Error = null,
+    PendingQuestionReview? Review = null);
 public sealed record AiJobSnapshot(AiJobState State, AiGenerationOptions? Options,
     IReadOnlyList<AiQuestionItem> Items, string? Error = null)
 {
@@ -62,6 +63,15 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     public Task Completion { get { lock (_sync) return _work; } }
     public bool IsRunning => Snapshot.IsRunning;
     public bool IsDeletingAll { get { lock (_sync) return _deletingAll; } }
+    internal void ResolveReview(string id,bool saved)
+    {
+        lock(_sync)
+            _snapshot=_snapshot with {Items=_snapshot.Items.Select(i=>i.Review is { } review && review.Id==id
+                ? i with { State=saved?AiItemState.Saved:AiItemState.Rejected,Error=null,Review=null,
+                    Question=saved?new ValidatedBankQuestion(review.Contract,review.Draft,review.RawJson,review.ModelName,review.CreatedUtc){UserAuthored=true}:null }
+                : i).ToArray()};
+        Notify();
+    }
 
     public void Start(AiGenerationOptions options)
     {
@@ -119,7 +129,8 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             int deleted = await store.DeleteAllAsync(cancellationToken).ConfigureAwait(false);
             lock (_sync)
                 _snapshot = _snapshot with { Items = _snapshot.Items.Select(i =>
-                    i.Question is not null && i.State is AiItemState.Saved or AiItemState.Duplicate
+                    i.State==AiItemState.PendingReview ? i with {State=AiItemState.Rejected,Review=null,Error=null}
+                    : i.Question is not null && i.State is AiItemState.Saved or AiItemState.Duplicate
                         ? i with { State = AiItemState.Ready, Error = null } : i).ToArray() };
             return deleted;
         }
@@ -144,7 +155,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             finalState = AiJobState.Stopped;
             lock (_sync)
                 _snapshot = _snapshot with {
-                    Items = _snapshot.Items.Select(i => i.Question is null && i.State != AiItemState.Rejected
+                    Items = _snapshot.Items.Select(i => i.Question is null && i.State is not (AiItemState.Rejected or AiItemState.PendingReview)
                         ? i with { State = AiItemState.Stopped } : i).ToArray() };
         }
         catch (Exception error)
@@ -174,14 +185,15 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     {
         var batchProse = new HashSet<string>(StringComparer.Ordinal);
         var excludedProse = new HashSet<string>(await store.GetProseHashesAsync(cancellationToken).ConfigureAwait(false), StringComparer.Ordinal);
+        if(options.CreativeProse) excludedProse.UnionWith(await store.GetPendingProseHashesAsync(cancellationToken).ConfigureAwait(false));
         for (int number = 1; number <= options.Count; number++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var contract = options.Family == BankQuestionFamily.Arithmetic
                 && ExpandedArithmeticCatalogue.Supports(options.Profile?.Group ?? QuestionKnowledgeGroup.Objects, options.Tier)
-                ? _expandedArithmeticCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse)
+                ? _expandedArithmeticCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse, options.CreativeProse)
                 : ReasoningStoryCatalogue.Supports(options.Family)
-                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse)
+                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse, options.CreativeProse)
                 : options.Family == BankQuestionFamily.Fraction
                 ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)
                 : options.Family == BankQuestionFamily.FindX
@@ -191,10 +203,12 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 : options.Operation == ArithmeticOperation.Add
                 ? _additionCycle.Next(options.Tier, options.Language)
                 : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
+            contract = contract with { OpenProse = options.CreativeProse && OpenQuestionProse.Supports(contract) };
             Append(new(number, contract, AiItemState.Generating, []));
             string? correction = null;
             string? errorDetails = null;
             var duplicateProse = new List<string>();
+            PendingQuestionReview? pendingReview = null;
             for (int attempt = 1; attempt <= 3; attempt++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -261,10 +275,24 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 errorDetails = validation.ErrorDetails;
                 UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, ErrorDetails = validation.ErrorDetails, IsComplete = true });
                 UpdateItem(number, i => i with { Error = correction });
-                if (!validation.IsValid) continue;
+                if (!validation.IsValid)
+                {
+                    if (validation.NeedsReview)
+                    {
+                        var candidate=PendingQuestionReview.Create(contract,validation.Draft!,raw,runtime.ModelName,validation.ErrorDetails??"SemanticReviewRequired");
+                        if(!excludedProse.Add(candidate.Id))
+                        {
+                            correction="DuplicateProse";duplicateProse.Add(validation.Draft!.ProblemText);
+                            UpdateAttempt(number,attempt,a=>a with {ErrorCode=correction});
+                        }
+                        else pendingReview=candidate;
+                    }
+                    continue;
+                }
                 var question = new ValidatedBankQuestion(validation.Contract ?? contract, validation.Draft!, raw, runtime.ModelName, DateTime.UtcNow);
                 string proseHash = QuestionProseIdentity.Hash(question.Contract, question.Draft);
-                if (batchProse.Contains(proseHash) || await store.ContainsProseAsync(question, cancellationToken).ConfigureAwait(false))
+                if (batchProse.Contains(proseHash) || contract.OpenProse && excludedProse.Contains(proseHash)
+                    || await store.ContainsProseAsync(question, cancellationToken).ConfigureAwait(false))
                 {
                     RejectDuplicate();
                     continue;
@@ -300,6 +328,20 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             var result = Snapshot.Items.Single(i => i.Number == number);
             if (result.Question is null)
             {
+                if (pendingReview is not null)
+                {
+                    // Quarantined drafts live in a separate table and never enter
+                    // the Ready/Saved path, even when automatic saving is enabled.
+                    if (!await store.QueueReviewAsync(pendingReview,cancellationToken).ConfigureAwait(false))
+                    {
+                        UpdateItem(number,i=>i with {State=AiItemState.Duplicate,Error="DuplicateProse"});
+                        return (AiJobState.Failed,"DuplicateProseRetriesExhausted");
+                    }
+                    UpdateItem(number,i=>i with { State=AiItemState.PendingReview,Review=pendingReview,Error="SemanticReviewRequired" });
+                    batchProse.Add(pendingReview.Id);
+                    excludedProse.Add(pendingReview.Id);
+                    continue;
+                }
                 UpdateItem(number, i => i with { State = correction == "DuplicateProse" ? AiItemState.Duplicate : AiItemState.Rejected, Error = correction });
                 return (AiJobState.Failed, correction == "DuplicateProse" ? "DuplicateProseRetriesExhausted" : "RetriesExhausted");
             }

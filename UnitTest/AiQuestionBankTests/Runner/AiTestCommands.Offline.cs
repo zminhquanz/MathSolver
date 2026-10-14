@@ -10,6 +10,13 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--open-prose-evidence"], "--open-prose-evidence <directory>", args => OpenProseTests.VerifyEvidenceAsync(args[1]),
+            args => args is ["--open-prose-evidence", _]),
+        new(["--open-prose", "--open-prose-model"], "--open-prose | --open-prose-model <model.gguf> [directory]", async args =>
+        {
+            if (args.Length == 1) await OpenProseTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null);
+        }, args => args is ["--open-prose"] or ["--open-prose-model", _] or ["--open-prose-model", _, _]),
         new(["--applied-narratives-evidence"], "--applied-narratives-evidence <directory>", args=>AppliedNarrativeBankTests.VerifyEvidenceAsync(args[1]),
             args=>args is ["--applied-narratives-evidence",_]),
         new(["--applied-narratives", "--applied-narratives-model"], "--applied-narratives | --applied-narratives-model <model.gguf>", async args =>

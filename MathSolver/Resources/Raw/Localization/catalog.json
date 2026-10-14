@@ -1785,6 +1785,23 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key": "AiBank.Review.Experimental", "source": "Diễn đạt đa dạng (thử nghiệm)", "mode": "exact"},
+    {"key": "AiBank.Item.PendingReview", "source": "Đề chờ duyệt · Chưa dùng để luyện tập", "mode": "exact"},
+    {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
+    {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
+    {"key": "AiBank.Review.Title", "source": "Duyệt đề AI", "mode": "exact"},
+    {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X và đổi đơn vị. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập.", "mode": "exact"},
+    {"key": "AiBank.Review.Hint", "source": "Đối chiếu đề AI với đề tham khảo và phép tính chuẩn. Chỉ chấp nhận khi chủ thể, các lượng, đơn vị, quan hệ và câu hỏi đều đúng. Việc duyệt sẽ đưa đề vào ngân hàng đề để luyện tập.", "mode": "exact"},
+    {"key": "AiBank.Review.Count", "source": "Chờ duyệt: {0}", "mode": "exact"},
+    {"key": "AiBank.Review.Empty", "source": "Không có đề chờ duyệt.", "mode": "exact"},
+    {"key": "AiBank.Review.Candidate", "source": "Đề AI cần kiểm tra", "mode": "exact"},
+    {"key": "AiBank.Review.Reference", "source": "Đề tham khảo với cùng dữ kiện", "mode": "exact"},
+    {"key": "AiBank.Review.Calculation", "source": "Lời giải và phép tính chuẩn", "mode": "exact"},
+    {"key": "AiBank.Review.Approve", "source": "Đã kiểm tra, dùng đề này", "mode": "exact"},
+    {"key": "AiBank.Review.Reject", "source": "Bỏ đề này", "mode": "exact"},
+    {"key": "AiBank.Review.Confirm", "source": "Bạn đã đối chiếu và xác nhận đề AI giữ đúng dữ kiện, đơn vị, quan hệ toán và đại lượng cần tìm? Đề được chấp nhận sẽ dùng để luyện tập.", "mode": "exact"},
+    {"key": "AiBank.Review.Error", "source": "Chưa xử lý được đề. Hãy thử lại; các đề đã lưu vẫn được giữ.", "mode": "exact"},
+
     {"key": "Quiz.Elementary.MixedTimeAdd", "source": "Cộng thời gian hỗn hợp", "mode": "exact"},
     {"key": "Quiz.Elementary.MixedTimeSubtract", "source": "Trừ thời gian hỗn hợp", "mode": "exact"},
     {"key": "Quiz.Elementary.MixedTimeMultiply", "source": "Nhân thời gian hỗn hợp", "mode": "exact"},

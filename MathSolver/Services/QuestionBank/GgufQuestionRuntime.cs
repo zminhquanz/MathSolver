@@ -26,6 +26,8 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     private LLamaWeights? _weights;
     private ModelParams? _parameters;
     private static int _nativeConfigured;
+    private QuestionSamplingSettings _sampling = new();
+    public QuestionSamplingSettings Sampling { get => _sampling; set { ArgumentNullException.ThrowIfNull(value); value.Validate(); _sampling = value; } }
     public bool IsLoaded => _weights is not null;
     public bool CanGenerate => ModelPath.Length > 0;
     public string ModelName { get; private set; } = "";
@@ -191,6 +193,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         try
         {
             if (_weights is null || _parameters is null) throw new InvalidOperationException("ModelNotLoaded");
+            var settings=Sampling;
             return await Task.Run(async () =>
             {
                 string input = FormatChatPrompt(_weights, contract, prompt);
@@ -202,10 +205,10 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                 // Sampling owns native grammar/sampler chains too; release them
                 // deterministically before the job releases the model weights.
                 using var sampling = new DefaultSamplingPipeline {
-                    Temperature = 0.5f, TopP = 0.9f, TopK = 40, MinP = 0.05f,
+                    Temperature = settings.Temperature, TopP = settings.TopP, TopK = settings.TopK, MinP = settings.MinP,
                     // Mild within-response repetition control: JSON keys and role
                     // slots legitimately recur. SQLite handles cross-question duplication.
-                    RepeatPenalty = 1.05f,
+                    RepeatPenalty = settings.RepeatPenalty,
                     // Leave Seed unset: LLamaSharp generates a fresh random seed
                     // for every pipeline, including retries within the same job.
                     // Validate the sampled candidate first; fall back to the full
@@ -245,6 +248,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
 
     internal static string BuildGrammar(BasicQuestionContract c)
     {
+        if (c.OpenProse) return OpenQuestionProse.Grammar(c);
         if (c.Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.Grammar(c);
         if (c.Version == ReasoningStoryCatalogue.Version) return ReasoningStoryValidator.Grammar(c);
         if (c.Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Prose(c).Grammar(c, new HashSet<string>(StringComparer.Ordinal));
@@ -266,7 +270,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     }
 
     internal static string BuildNovelGrammar(BasicQuestionContract c, IReadOnlySet<string> excludedProse)
-        => c.Version == ExpandedArithmeticCatalogue.Version ? ExpandedArithmeticCatalogue.Grammar(c, excludedProse)
+        => c.OpenProse ? OpenQuestionProse.Grammar(c) : c.Version == ExpandedArithmeticCatalogue.Version ? ExpandedArithmeticCatalogue.Grammar(c, excludedProse)
             : ReasoningStoryCatalogue.UsesReviewedPhrasings(c.Family) ? ReasoningStoryValidator.Grammar(c, excludedProse)
             : ReviewedQuestionProse.For(c)?.Grammar(c, excludedProse) ?? BuildGrammar(c);
 

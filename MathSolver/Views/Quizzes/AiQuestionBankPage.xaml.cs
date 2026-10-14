@@ -17,6 +17,7 @@ public partial class AiQuestionBankPage : ContentPage
     private bool _saving;
     private bool _goingBack;
     private bool _confirmingStop;
+    private bool _openingReview;
     private bool _followLatestItem = true;
     private int _renderQueued;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true,
@@ -78,6 +79,7 @@ public partial class AiQuestionBankPage : ContentPage
             BatchModePicker.SelectedIndex = options.Count > 1 ? 1 : 0;
             CountEntry.Text = options.Count.ToString(CultureInfo.InvariantCulture);
             AutoInsertSwitch.IsToggled = options.AutoInsert;
+            CreativeProseSwitch.IsToggled = options.CreativeProse;
             RefreshFindXRoles();
         }
         Render();
@@ -97,6 +99,13 @@ public partial class AiQuestionBankPage : ContentPage
     }
 
     private static string T(string key) => LocalizationService.TranslateKey("AiBank." + key);
+    private async void OnReviewClicked(object? sender,EventArgs e)
+    {
+        if(_openingReview)return;_openingReview=true;
+        try{await Navigation.PushAsync(new AiQuestionReviewPage(_bank.Store,_bank.Generation.ResolveReview));}
+        catch(Exception error){await ShowErrorAsync(error);}
+        finally{_openingReview=false;}
+    }
     private void OnStateChanged(object? sender, EventArgs e)
     {
         if (!_appeared) return;
@@ -162,6 +171,8 @@ public partial class AiQuestionBankPage : ContentPage
         int valid = snapshot.Items.Count(i => i.Question is not null), saved = snapshot.Items.Count(i => i.State == AiItemState.Saved);
         JobStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("Progress"), T("Job." + snapshot.State), valid,
             snapshot.Options?.Count ?? 0, saved) + (snapshot.Error is null ? "" : "\n" + ErrorText(snapshot.Error));
+        int pending=snapshot.Items.Count(i=>i.State==AiItemState.PendingReview);
+        if(pending>0) JobStatusLabel.Text += " · " + string.Format(CultureInfo.CurrentCulture,T("Review.Count"),pending);
         RenderGenerationStatus(snapshot, busy);
         int previous = QuestionPicker.SelectedIndex;
         _updating = true;
@@ -181,9 +192,10 @@ public partial class AiQuestionBankPage : ContentPage
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
     private void RenderSelected()
     {
+        CreativeProsePanel.IsVisible=_family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement;
         var item = SelectedItem;
         PreviewStatusLabel.Text = item is null ? T("NoPreview") : T("Item." + item.State);
-        string? raw = item?.Attempts.LastOrDefault()?.RawJson;
+        string? raw = item?.Review?.RawJson ?? item?.Attempts.LastOrDefault()?.RawJson;
         string preview = item is null ? "" : StreamingQuestionPreview.Render(raw, item.Contract);
         bool streaming = item?.Question is null && preview.Length > 0;
         PreviewStreamingTextLabel.IsVisible = streaming;
@@ -394,7 +406,7 @@ public partial class AiQuestionBankPage : ContentPage
         {
             _followLatestItem = true;
             _bank.Generation.Start(new(ReasoningStoryCatalogue.Supports(_family) ? ArithmeticOperation.Add : SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
-                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant));
+                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant, CreativeProse: CreativeProseSwitch.IsToggled));
             _updating = true;
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }
