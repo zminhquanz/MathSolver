@@ -13,7 +13,7 @@ internal static partial class ElementaryEssayValidator
         string? solution, string? equations, string? answerText)
     {
         var contract = question.ElementaryProblem!;
-        if (ElementaryQuizGenerator.IsDecimalSpatialSkill(contract.Type) || ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) && contract.Type != ElementaryQuizType.SecondsConversion)
+        if (ElementaryQuizGenerator.IsMixedTime(contract.Type) || ElementaryQuizGenerator.IsDecimalSpatialSkill(contract.Type) || ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) && contract.Type != ElementaryQuizType.SecondsConversion)
         {
             bool valid = CheckAnswers(question, answerText);
             return new(true, true, valid, EssayAnswerError.None, EssayAnswerError.None,
@@ -199,6 +199,8 @@ internal static partial class ElementaryEssayValidator
     internal static bool CheckAnswers(ArithmeticQuizQuestion question, string? text, List<string>? details = null)
     {
         var contract = question.ElementaryProblem!; bool vi = contract.Language == AppLanguage.Vietnamese;
+        if (ElementaryQuizGenerator.IsMixedTime(contract.Type))
+            return MixedTimeAnswerRules.TryRead(text, out int duration) && contract.Answers[0].Value == new ReducedFraction(duration, 1);
         if (contract.Type == ElementaryQuizType.OrderDecimals)
             return DecimalSpatialAnswerRules.MatchesOrder(text ?? "", contract.Answers[0].Text!);
         if (contract.Type == ElementaryQuizType.OrderRelatedFractions)

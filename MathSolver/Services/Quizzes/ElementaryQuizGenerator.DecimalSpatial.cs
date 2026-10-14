@@ -11,7 +11,7 @@ public sealed partial class ElementaryQuizGenerator
         ElementaryQuizType.DecimalPlace, ElementaryQuizType.DecimalParts, ElementaryQuizType.OrderDecimals,
         ElementaryQuizType.DecimalToFraction, ElementaryQuizType.FractionToDecimal];
     public static ElementaryQuizType[] SpatialSkillTypes => [ElementaryQuizType.SpatialFront, ElementaryQuizType.SpatialBehind, ElementaryQuizType.SpatialBetween];
-    public static ElementaryQuizType[] DecimalBankTypes => [.. DecimalStoryTypes, .. DecimalSkillTypes];
+    public static ElementaryQuizType[] DecimalBankTypes => [.. DecimalStoryTypes, .. DecimalSkillTypes, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare];
     public static bool IsDecimalSpatialSkill(ElementaryQuizType type) => DecimalSkillTypes.Contains(type) || SpatialSkillTypes.Contains(type);
     internal static string[] DecimalSpatialContexts(ElementaryQuizType type) => type == ElementaryQuizType.OrderDecimals
         ? ["decimals-ascending", "decimals-descending"] : [type.ToString()];

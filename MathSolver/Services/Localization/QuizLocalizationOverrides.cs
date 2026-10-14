@@ -383,7 +383,8 @@ internal static class QuizLocalizationOverrides
         if (key == "Quiz.ProblemNumberSense" || key.StartsWith("Quiz.Elementary.", StringComparison.Ordinal)
             && Enum.TryParse<MathSolver.Models.ElementaryQuizType>(key[16..], out var type)
             && (MathSolver.Services.ElementaryQuizGenerator.IsFoundationSkill(type)
-                || MathSolver.Services.ElementaryQuizGenerator.IsTimeFractionExtension(type) || MathSolver.Services.ElementaryQuizGenerator.IsDecimalSpatialSkill(type)))
+                || MathSolver.Services.ElementaryQuizGenerator.IsTimeFractionExtension(type) || MathSolver.Services.ElementaryQuizGenerator.IsDecimalSpatialSkill(type)
+                || MathSolver.Services.ElementaryQuizGenerator.IsMixedTime(type)))
         {
             value = MathSolver.Services.QuizContentCatalog.Text(culture.StartsWith("vi", StringComparison.OrdinalIgnoreCase) ? "vi-VN" : "en-US", key);
             return true;

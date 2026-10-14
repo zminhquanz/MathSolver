@@ -78,7 +78,17 @@ internal static partial class PuzzleTests
             if (family == QuizProblemKind.Time)
             {
                 decimal expected;
-                if (type == ElementaryQuizType.Calendar)
+                if (ElementaryQuizGenerator.IsMixedTime(type))
+                {
+                    expected = type switch
+                    {
+                        ElementaryQuizType.MixedTimeAdd => Get("left-duration") + Get("right-duration"),
+                        ElementaryQuizType.MixedTimeSubtract => Get("left-duration") - Get("right-duration"),
+                        ElementaryQuizType.MixedTimeMultiply => Get("left-duration") * Get("factor"),
+                        _ => Get("left-duration") / Get("factor")
+                    };
+                }
+                else if (type == ElementaryQuizType.Calendar)
                 {
                     var start = new DateTime((int)Get("year"), (int)Get("start-month"), (int)Get("start-day"));
                     var end = new DateTime((int)Get("year"), (int)Get("end-month"), (int)Get("end-day"));

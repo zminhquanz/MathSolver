@@ -42,7 +42,7 @@ public partial class AiQuestionBankPage
                     BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Geometry => ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1))
                         .Select(variant => "Quiz.Geometry" + ReasoningStoryCatalogue.GeometryProfile(variant).Shape).ToArray(),
-                    BankQuestionFamily.Spatial => ElementaryQuizGenerator.SpatialSkillTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
+                    BankQuestionFamily.Spatial => ElementaryQuizGenerator.VisualBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(type => "Quiz.Elementary." + type).ToArray(),
                     _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]

@@ -26,7 +26,8 @@ public enum ElementaryQuizType
     FullGroups,
     SecondsConversion, YearCentury, CalendarWeekday, OrderRelatedFractions,
     SpatialFront, SpatialBehind, SpatialBetween, ReadDecimal, WriteDecimal, DecimalPlace, DecimalParts,
-    OrderDecimals, DecimalToFraction, FractionToDecimal
+    OrderDecimals, DecimalToFraction, FractionToDecimal,
+    MixedTimeAdd, MixedTimeSubtract, MixedTimeMultiply, MixedTimeDivide
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,

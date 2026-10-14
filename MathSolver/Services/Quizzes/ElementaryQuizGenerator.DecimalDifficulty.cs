@@ -28,10 +28,10 @@ public sealed partial class ElementaryQuizGenerator
             string a = t.Given("number", value);
             decimal rounded = decimal.Round(value, digits, MidpointRounding.AwayFromZero);
             t.Constants.Add(N(rounded));
-            t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.001"), N(rounded));
-            string destination = digits == 0 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.002")
-                : (digits == 1 ? QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.008") : QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.009"));
-            return t.Build("decimal-round-" + level, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.003", ("a", $"{a}"), ("destination", $"{destination}")))
+            t.Answer(AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.001"), N(rounded));
+            string destination = digits == 0 ? AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.002")
+                : (digits == 1 ? AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.008") : AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.009"));
+            return t.Build("decimal-round-" + level, AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.003", ("a", $"{a}"), ("destination", $"{destination}")))
                 with { RoundingDecimalPlaces = digits };
         }
         if (type == ElementaryQuizType.DecimalCompare)
@@ -44,9 +44,9 @@ public sealed partial class ElementaryQuizGenerator
             decimal b = relation == 0 ? a : relation == 1 ? a - gap : a + gap;
             if (b <= 0) { a += 4; b += 4; }
             string first = t.Given("first", a), second = t.Given("second", b);
-            t.TextAnswer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.004"), a < b ? "<" : a > b ? ">" : "=");
+            t.TextAnswer(AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.004"), a < b ? "<" : a > b ? ">" : "=");
             return t.Build("decimal-compare-" + level,
-                QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", ("first", $"{first}"), ("second", $"{second}")));
+                AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", ("first", $"{first}"), ("second", $"{second}")));
         }
         if (wordProblems ?? _random.Next(2) == 0) return CreateDecimalStory(type, language, tier);
 
@@ -79,8 +79,8 @@ public sealed partial class ElementaryQuizGenerator
         }
         string x = t.Given("quantity", left), y = t.Given("second-quantity", right);
         string op = type switch { ElementaryQuizType.DecimalAdd => "+", ElementaryQuizType.DecimalSubtract => "-", ElementaryQuizType.DecimalMultiply => "*", _ => "/" };
-        t.Answer(QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.006"), $"{x}{op}{y}");
+        t.Answer(AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.006"), $"{x}{op}{y}");
         string expression = QuizMathExpressionFormatter.Format($"{x}{op}{y}");
-        return t.Build("decimal-calculation-" + level, QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.007", ("expression", $"{expression}")));
+        return t.Build("decimal-calculation-" + level, AppliedText(t.Language, "ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.007", ("expression", $"{expression}")));
     }
 }

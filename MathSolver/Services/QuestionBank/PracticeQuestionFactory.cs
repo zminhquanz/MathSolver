@@ -31,6 +31,11 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
         }
         var question = request.Kind switch
         {
+            // The other applied types already have C# stories/diagrams. Retain
+            // their context rotation and specialized area-measurement contracts.
+            QuizProblemKind.Decimal when request.ElementaryType is (ElementaryQuizType.DecimalRound or ElementaryQuizType.DecimalCompare)
+                && format != PracticeQuestionFormat.Numeric
+                => _elementary.GenerateAppliedNarrative(mode, request.ElementaryType.Value, language, curriculum.Tier),
             _ when request.IsComparison => _elementary.GenerateComparison(mode, request.Kind, language, curriculum.Tier),
             QuizProblemKind.Measurement when ElementaryQuizGenerator.SupportsMeasurementPractice(request.ElementaryType)
                 && format == PracticeQuestionFormat.Numeric
@@ -50,6 +55,11 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             QuizProblemKind.Percentage => _percentage.GenerateAlgorithm(mode, request.PercentageType, language, curriculum),
             _ => throw new ArgumentOutOfRangeException(nameof(request))
         };
+        if (request.ElementaryType is { } numericType && ElementaryQuizGenerator.IsAppliedNarrative(numericType) && format == PracticeQuestionFormat.Numeric)
+        {
+            cancellation.ThrowIfCancellationRequested();
+            return question;
+        }
         if (learning is { IsMixed: true } && !request.IsComparison)
         {
             // Resolve each question separately, using its actual operation. A mixed
@@ -85,6 +95,7 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             question = await practice.SelectFractionAsync(question, curriculum.Tier, language, learning ?? new(QuestionKnowledgeGroup.Objects), cancellation);
         if (request.Kind is QuizProblemKind.TwoNumbers or QuizProblemKind.Average or QuizProblemKind.Percentage or QuizProblemKind.MultiStep
             or QuizProblemKind.Motion or QuizProblemKind.Proportion or QuizProblemKind.Remainder or QuizProblemKind.Geometry or QuizProblemKind.Probability
+            || question.ElementaryProblem is { } appliedSkill && ElementaryQuizGenerator.IsAppliedNarrative(appliedSkill.Type)
             || question.ElementaryProblem is { } skill && ElementaryQuizGenerator.IsDecimalSpatialSkill(skill.Type)
             || question.ElementaryProblem is { Kind: QuizProblemKind.Data, DataChart: not null }
             || question.ElementaryProblem is { Kind: QuizProblemKind.Decimal, IsDecimalArithmetic: true, StoryContextId: not null }

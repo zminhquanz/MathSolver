@@ -12,7 +12,7 @@ public sealed partial class ElementaryQuizGenerator
     public static int CenturyOfYear(int year) => year is >= 1 and <= 9999
         ? (year - 1) / 100 + 1 : throw new ArgumentOutOfRangeException(nameof(year));
     public static ElementaryQuizType[] TimeBankTypes => [.. TimeStoryTypes,
-        ElementaryQuizType.SecondsConversion, ElementaryQuizType.YearCentury, ElementaryQuizType.CalendarWeekday];
+        ElementaryQuizType.SecondsConversion, ElementaryQuizType.YearCentury, ElementaryQuizType.CalendarWeekday, ElementaryQuizType.Calendar, ElementaryQuizType.ReadClock];
     public static ElementaryQuizType[] FractionQuantityBankTypes => [.. FractionQuantityStoryTypes, ElementaryQuizType.OrderRelatedFractions];
     public static bool IsTimeFractionExtension(ElementaryQuizType type) => type is ElementaryQuizType.SecondsConversion
         or ElementaryQuizType.YearCentury or ElementaryQuizType.CalendarWeekday or ElementaryQuizType.OrderRelatedFractions;

@@ -7,7 +7,7 @@ public sealed partial class ElementaryQuizGenerator
 {
     internal static readonly ElementaryQuizType[] MeasurementStoryTypes =
         [ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.LengthConversion];
-    internal static readonly ElementaryQuizType[] MeasurementBankTypes = [.. MeasurementStoryTypes, ElementaryQuizType.MapScale];
+    internal static readonly ElementaryQuizType[] MeasurementBankTypes = [.. MeasurementStoryTypes, ElementaryQuizType.MapScale, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength];
     internal const string MeasurementContextsList = "MeasurementStoryContexts";
     internal sealed record MeasurementStoryContext(string Id, string Category, string Subject, string Activity = "", int MaximumQuantity = 20);
     internal static string MeasurementCategory(ElementaryQuizType type) => type switch

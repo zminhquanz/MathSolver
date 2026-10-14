@@ -38,7 +38,7 @@ public static partial class ReasoningStoryCatalogue
         BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Time => ElementaryQuizGenerator.TimeBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(value => (int)value).ToArray(),
-        BankQuestionFamily.Spatial => ElementaryQuizGenerator.SpatialSkillTypes.Select(value => (int)value).ToArray(),
+        BankQuestionFamily.Spatial => ElementaryQuizGenerator.VisualBankTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Geometry => GeometryVariants(tier),
         BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(value => (int)value).ToArray(),
         BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(value => (int)value).ToArray(),
@@ -118,11 +118,17 @@ public static partial class ReasoningStoryCatalogue
         }
         // A schema binds roles, context, question and step order. Resample the
         // original generator, retaining precisely that schema, never just two values.
+        bool requiresNewQuantities = c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
+            or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
+            || c.Family == BankQuestionFamily.Spatial && ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant);
         for (int attempt = 0; attempt < 512; attempt++)
         {
             var fresh = Create(c.Family, c.Story!.Variant, c.Tier, c.Language, random, c.Story.NarrativeId, c.Story.ChartProfile, c.Story.ContextVersion);
             if (fresh.Story!.Schema == c.Story.Schema
-                && (c.Family is not (BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity) || !Lesson(fresh).Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "decimal_reading")
+                && (!requiresNewQuantities
+                || c.Family == BankQuestionFamily.Time && c.BankVariant == (int)ElementaryQuizType.ReadClock
+                    && !Lesson(fresh).QuestionModel.ElementaryProblem!.Visual!.Values.SequenceEqual(Lesson(c).QuestionModel.ElementaryProblem!.Visual!.Values)
+                || !Lesson(fresh).Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "decimal_reading")
                     .Select(q => q.Value).SequenceEqual(Lesson(c).Quantities.Where(q => q.Id.StartsWith('f') || q.Role == "decimal_reading").Select(q => q.Value))))
                 return fresh;
         }
@@ -189,6 +195,8 @@ public static partial class ReasoningStoryCatalogue
         bool expanded = c.Story.ContextVersion > 0;
         return c.Family switch
         {
+            _ when ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant) && c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Time or BankQuestionFamily.Spatial
+                => new ElementaryQuizGenerator(random).GenerateAppliedNarrative(mode, (ElementaryQuizType)c.BankVariant, c.Language, c.Tier, c.Story.NarrativeId),
             BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)c.BankVariant)
                 => new ElementaryQuizGenerator(random).GenerateDecimalSpatialSkill(mode, (ElementaryQuizType)c.BankVariant, c.Language, c.Tier, c.Story.NarrativeId),
             BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)
@@ -231,6 +239,8 @@ public static partial class ReasoningStoryCatalogue
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
         using var capture = new QuizNarrativeCapture(c.Family switch {
+            _ when ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant) && c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Time or BankQuestionFamily.Spatial
+                => ReviewedNarrativePhrasings.For(c.Language, ElementaryQuizGenerator.AppliedNarrativeList),
             BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)c.BankVariant)
                 => ReviewedNarrativePhrasings.For(c.Language, ReviewedNarrativePhrasings.DecimalSpatialListName),
             BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)c.BankVariant)

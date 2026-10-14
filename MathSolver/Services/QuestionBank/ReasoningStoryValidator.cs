@@ -74,7 +74,7 @@ public static class ReasoningStoryValidator
                 + (c.Family != BankQuestionFamily.FractionQuantity || ElementaryQuizGenerator.IsTimeFractionExtension((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
                     ? "\nKhông đổi tìm phần thành tìm toàn bộ. Phân số của lượng ban đầu khác phân số của phần còn lại sau lần dùng thứ nhất; giữ đúng lượng làm gốc ở từng câu."
                     : "\nDo not switch finding a part with finding the whole. A fraction of the initial amount differs from a fraction of the remainder after the first use; preserve the exact base of each fraction.")
-                + (c.Family != BankQuestionFamily.Decimal || ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
+                + (c.Family != BankQuestionFamily.Decimal || ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)c.BankVariant) || ElementaryQuizGenerator.IsAppliedNarrative((MathSolver.Models.ElementaryQuizType)c.BankVariant) ? "" : vi
                     ? "\nGiữ riêng lượng mỗi nhóm, số nhóm và tổng lượng; phần bổ sung sau khi chia chỉ thuộc nhóm được chỉ định."
                     : "\nKeep amount per group, group count and total distinct; an addition after sharing belongs only to the specified group.")
                 + "\n" + QuestionBankStore.SerializeDraft(example)
@@ -94,6 +94,11 @@ public static class ReasoningStoryValidator
 
     private static string ActivityGuidance(BasicQuestionContract c, bool vi)
     {
+        if (c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Time or BankQuestionFamily.Spatial
+            && ElementaryQuizGenerator.IsAppliedNarrative((MathSolver.Models.ElementaryQuizType)c.BankVariant))
+            return "\n" + (vi
+                ? "Giữ chiều đổi đơn vị, phần ghép/phần cắt bỏ và cạnh cần tìm. Hình và kim đồng hồ do C# giữ; không đưa giờ trên hình vào dữ kiện. Giữ mốc đầu ngày, ngày tạm dừng, mức làm tròn và thứ tự hai lượng so sánh."
+                : "Preserve conversion direction, joined/cutout regions and the requested side. C# owns diagrams and clock hands; do not insert the pictured clock time into the facts. Preserve beginning-of-day endpoints, paused days, rounding precision and comparison order.");
         if (c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Spatial
             && ElementaryQuizGenerator.IsDecimalSpatialSkill((MathSolver.Models.ElementaryQuizType)c.BankVariant))
             return "\n" + (vi ? "Giữ nguyên hướng quay mặt, thứ tự bạn trong hàng, trước/sau/ở giữa và chữ số thập phân. Không điền câu trả lời hay đổi chiều chuyển đổi phân số thập phân."

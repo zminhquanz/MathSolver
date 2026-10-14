@@ -17,7 +17,8 @@ public static partial class EssayCombinedInputParser
         bool allowEquationAnswer = false,
         int expectedAnswerCount = 1,
         bool preserveDecimalAnswerCommas = false,
-        bool allowClockAnswer = false)
+        bool allowClockAnswer = false,
+        bool allowDurationAnswer = false)
     {
         string[] lines = (input ?? string.Empty).Normalize()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -76,6 +77,19 @@ public static partial class EssayCombinedInputParser
             {
                 answers.Add(work[^1]);
                 work.RemoveAt(work.Count - 1);
+            }
+        }
+
+        if (allowDurationAnswer && !requireAnswerLabel && answers.Count == 0 && work.Count > 0)
+        {
+            string final = work[^1];
+            if (MixedTimeAnswerRules.TryRead(final, out _))
+                answers.AddRange(work.Where(line => MixedTimeAnswerRules.TryRead(line, out _)));
+            else
+            {
+                int equals = final.LastIndexOf('=');
+                // Keep invalid final input visible to grading rather than evaluating unfinished work.
+                answers.Add(equals >= 0 ? final[(equals + 1)..].Trim() : final);
             }
         }
 

@@ -8,6 +8,7 @@ public static partial class QuizContentValidation
     public static void CheckLists(QuizContentPack pack)
     {
         CheckTimeFractionLists(pack);
+        CheckMixedTimeLists(pack);
         CheckDecimalSpatialLists(pack);
         CheckPracticeArithmeticLists(pack);
         CheckNumberNameLists(pack);
@@ -126,7 +127,8 @@ public static partial class QuizContentValidation
             foreach (var row in phrasings.EnumerateArray())
             {
                 string id = RequiredString(row, "Id");
-                string prefix = listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
+                string prefix = listName == ElementaryQuizGenerator.AppliedNarrativeList ? "AppliedNarrative."
+                    : listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
                     : listName == ReviewedNarrativePhrasings.DecimalSpatialListName ? "DecimalSpatial."
                     : listName == ReviewedNarrativePhrasings.TimeFractionListName ? "TimeFraction."
                     : listName == ReviewedNarrativePhrasings.TwoNumbersListName ? "ElementaryQuizGenerator."

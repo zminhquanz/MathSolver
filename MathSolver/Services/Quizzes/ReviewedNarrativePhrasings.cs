@@ -23,7 +23,7 @@ internal sealed record ReviewedNarrativePhrasings(string Id, string[] Alternativ
     internal const string TimeFractionListName = "Narrative.TimeFraction.Phrasings";
     internal static readonly string[] ListNames = [ListName, MotionListName, ProportionListName,
         DecimalListName, MeasurementListName, RemainderListName, TimeListName, FractionQuantityListName,
-        TwoNumbersListName, AverageListName, PercentageListName, GeometryListName, DataListName, MapScaleListName, ProbabilityListName, TimeFractionListName, DecimalSpatialListName];
+        TwoNumbersListName, AverageListName, PercentageListName, GeometryListName, DataListName, MapScaleListName, ProbabilityListName, TimeFractionListName, DecimalSpatialListName, ElementaryQuizGenerator.AppliedNarrativeList];
 
     internal static IReadOnlyDictionary<string, string[]> ForFractionQuantity(AppLanguage language)
     {

@@ -140,7 +140,8 @@ public sealed partial class EssayAnswerValidator
             expectedAnswerCount: question.ElementaryProblem?.Answers.Count ?? 1,
             preserveDecimalAnswerCommas: question.ElementaryProblem is { } contract
                 && EssayAnswerListParser.PreserveDecimalCommas(contract),
-            allowClockAnswer: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock);
+            allowClockAnswer: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
+            allowDurationAnswer: question.ElementaryProblem is { } duration && ElementaryQuizGenerator.IsMixedTime(duration.Type));
         if (!resultOnly)
             return Validate(question, submission.Solution, submission.Equation, submission.Answer);
 
@@ -160,6 +161,7 @@ public sealed partial class EssayAnswerValidator
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
                 || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
+                || ElementaryQuizGenerator.IsMixedTime(question.ElementaryProblem.Type)
                 || ElementaryQuizGenerator.IsDecimalSpatialSkill(question.ElementaryProblem.Type)
                 || question.ElementaryProblem.Type is ElementaryQuizType.DecimalRound or ElementaryQuizType.LetterExpression
                     or ElementaryQuizType.MixedNumber or ElementaryQuizType.MixedLength

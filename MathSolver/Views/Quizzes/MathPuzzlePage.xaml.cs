@@ -531,6 +531,13 @@ public partial class MathPuzzlePage : ContentPage
         bool requiresSolution =
             question is not null &&
             EssayAnswerValidator.RequiresSolution(question);
+        if (question?.ElementaryProblem is { } duration && ElementaryQuizGenerator.IsMixedTime(duration.Type))
+        {
+            EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");
+            EssayValidationHintLabel.Text = TranslateQuiz("Quiz.MixedTimeInputHint");
+            EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.MixedTimeInputPlaceholder");
+            return;
+        }
         if (question?.ElementaryProblem is { } newSkill && ElementaryQuizGenerator.IsDecimalSpatialSkill(newSkill.Type))
         {
             EssayWorkLabel.Text = TranslateQuiz("Quiz.EssayResultOnlyLabel");

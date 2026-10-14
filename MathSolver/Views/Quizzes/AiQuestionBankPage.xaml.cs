@@ -16,6 +16,7 @@ public partial class AiQuestionBankPage : ContentPage
     private bool _appeared;
     private bool _saving;
     private bool _goingBack;
+    private bool _confirmingStop;
     private bool _followLatestItem = true;
     private int _renderQueued;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true,
@@ -150,7 +151,7 @@ public partial class AiQuestionBankPage : ContentPage
         EjectModelButton.IsEnabled = !busy && _bank.Runtime.CanGenerate;
         CancelModelButton.IsEnabled = _bank.IsManaging;
         GenerateButton.IsEnabled = !busy && !_saving && _bank.Runtime.CanGenerate;
-        StopButton.IsEnabled = running;
+        StopButton.IsEnabled = running && !_confirmingStop;
         ModelStatusLabel.Text = _bank.Runtime.IsLoaded ? T("Loaded") + ": " + _bank.Runtime.ModelName
             : _bank.Runtime.CanGenerate ? T("SelectedModel") + ": " + _bank.Runtime.ModelName : T("NoModel");
         DownloadProgressBar.IsVisible = _bank.IsManaging && _bank.DownloadProgress is not null;
@@ -402,7 +403,27 @@ public partial class AiQuestionBankPage : ContentPage
         catch (Exception error) { await ShowErrorAsync(error); }
     }
 
-    private void OnStopClicked(object? sender, EventArgs e) => _bank.Generation.Stop();
+    private async void OnStopClicked(object? sender, EventArgs e)
+    {
+        if (_confirmingStop || !_bank.Generation.IsRunning) return;
+        var currentJob = _bank.Generation.Completion;
+        _confirmingStop = true;
+        StopButton.IsEnabled = false;
+        try
+        {
+            bool confirmed = await DisplayAlertAsync(T("ConfirmStopTitle"), T("ConfirmStopMessage"),
+                T("ConfirmStopAction"), T("KeepGenerating"));
+            // The current batch may finish while the confirmation is open.
+            // An answer to this dialog must never stop a subsequent batch.
+            if (confirmed && ReferenceEquals(currentJob, _bank.Generation.Completion) && _bank.Generation.IsRunning)
+                _bank.Generation.Stop();
+        }
+        finally
+        {
+            _confirmingStop = false;
+            if (_appeared) Render();
+        }
+    }
     private async void OnInsertClicked(object? sender, EventArgs e)
     {
         var item = SelectedItem;

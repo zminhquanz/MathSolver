@@ -1127,6 +1127,22 @@
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     },
+    "AiBank.ConfirmStopTitle": {
+      "context": "Math puzzles > Add questions with AI > Stop confirmation",
+      "translatorNote": "Title of the confirmation dialog before stopping AI question generation."
+    },
+    "AiBank.ConfirmStopMessage": {
+      "context": "Math puzzles > Add questions with AI > Stop confirmation",
+      "translatorNote": "Stopping keeps completed questions; the current incomplete question may be discarded."
+    },
+    "AiBank.ConfirmStopAction": {
+      "context": "Math puzzles > Add questions with AI > Stop confirmation",
+      "translatorNote": "Confirm button that stops question generation."
+    },
+    "AiBank.KeepGenerating": {
+      "context": "Math puzzles > Add questions with AI > Stop confirmation",
+      "translatorNote": "Cancel button that leaves question generation running."
+    },
     "AiBank.Stop": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
@@ -1769,6 +1785,17 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key": "Quiz.Elementary.MixedTimeAdd", "source": "Cộng thời gian hỗn hợp", "mode": "exact"},
+    {"key": "Quiz.Elementary.MixedTimeSubtract", "source": "Trừ thời gian hỗn hợp", "mode": "exact"},
+    {"key": "Quiz.Elementary.MixedTimeMultiply", "source": "Nhân thời gian hỗn hợp", "mode": "exact"},
+    {"key": "Quiz.Elementary.MixedTimeDivide", "source": "Chia thời gian hỗn hợp", "mode": "exact"},
+    {"key": "Curriculum.Requirement.Time.MixedTimeAdd", "source": "Cộng số đo thời gian theo giờ, phút, giây và đổi khi đủ 60 đơn vị.", "mode": "exact"},
+    {"key": "Curriculum.Requirement.Time.MixedTimeSubtract", "source": "Trừ số đo thời gian theo giờ, phút, giây, có mượn đơn vị khi cần.", "mode": "exact"},
+    {"key": "Curriculum.Requirement.Time.MixedTimeMultiply", "source": "Nhân số đo thời gian hỗn hợp với một số tự nhiên.", "mode": "exact"},
+    {"key": "Curriculum.Requirement.Time.MixedTimeDivide", "source": "Chia số đo thời gian hỗn hợp cho một số tự nhiên, bảo đảm chia hết đến đơn vị nhỏ nhất.", "mode": "exact"},
+    {"key": "Quiz.MixedTimeInputHint", "source": "Nhập kết quả kèm đơn vị, ví dụ 2 giờ 30 phút, 2h30 hoặc 1 giờ 5 phút 20 giây. Chấp nhận kết quả tương đương như 150 phút. Không bắt buộc ghi lời giải, phép tính hay Đáp số.", "mode": "exact"},
+    {"key": "Quiz.MixedTimeInputPlaceholder", "source": "Ví dụ: 2 giờ 30 phút hoặc 2h30", "mode": "exact"},
+
     {"key": "AiBank.Error.TextProcessingTimeout", "source": "Quá thời gian xử lý đề. Hãy thử lại; các đề đã lưu vẫn được giữ.", "mode": "exact"},
     {"key": "Quiz.Elementary.SpatialFront", "source": "Vị trí phía trước", "mode": "exact"},
     {"key": "Curriculum.Requirement.VisualGeometry.SpatialFront", "source": "Vị trí phía trước.", "mode": "exact"},

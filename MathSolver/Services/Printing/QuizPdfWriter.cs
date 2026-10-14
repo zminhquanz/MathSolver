@@ -74,7 +74,9 @@ public static class QuizPdfWriter
                     : item.Options.Sum(option => QuizPdfText.Wrap(_g, option, _font, Width).Sum(line => line.Height)) + 30;
                 double tableHeight = item.Table is { } factTable ? (factTable.Rows.Count + 1) * 25 : 0;
                 double captionHeight = item.Diagram is { } d ? QuizPdfText.Wrap(_g, d.Caption, _font, Width).Sum(line => line.Height) : 0;
-                Ensure(Math.Min(700, 28 + (answers ? 0 : promptHeight + visualHeight + tableHeight + captionHeight + optionsHeight + 30)));
+                double answerHeight = answers && item.Source.ElementaryProblem is { } time && ElementaryQuizGenerator.IsMixedTime(time.Type)
+                    ? QuizPdfText.Wrap(_g, item.Solution, _font, Width).Sum(line => line.Height) + 14 : 0;
+                Ensure(Math.Min(700, 28 + (answers ? answerHeight : promptHeight + visualHeight + tableHeight + captionHeight + optionsHeight + 30)));
                 Text(T("Câu ", "Question ") + (index + 1) + ".", _bold);
                 if (answers)
                 {

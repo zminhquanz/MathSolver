@@ -28,6 +28,8 @@ internal sealed class ReasoningStoryCycle
             // contexts still have wording. Search the finite catalog before failing.
             var narrativeIds = family switch
             {
+                _ when ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)variant) && family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Time or BankQuestionFamily.Spatial
+                    => new[] { "applied-" + (ElementaryQuizType)variant },
                 BankQuestionFamily.Decimal or BankQuestionFamily.Spatial when ElementaryQuizGenerator.IsDecimalSpatialSkill((ElementaryQuizType)variant)
                     => ElementaryQuizGenerator.DecimalSpatialContexts((ElementaryQuizType)variant),
                 BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity when ElementaryQuizGenerator.IsTimeFractionExtension((ElementaryQuizType)variant)

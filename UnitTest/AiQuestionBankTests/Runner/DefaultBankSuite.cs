@@ -11,6 +11,7 @@ internal static class DefaultBankSuite
     internal static async Task RunAsync()
     {
         await HarnessInfrastructureTests.RunAsync();
+        await AppliedNarrativeBankTests.RunAsync();
         await RegexTimeoutRegressionTests.RunAsync();
         await ExpandedArithmeticTests.RunAsync();
         await ModelHarnessTests.RunAsync();

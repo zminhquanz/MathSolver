@@ -21,7 +21,7 @@ internal static partial class PuzzleTests
         {
             // The page keeps this generator alive when users change stars and language.
             var generator = new ElementaryQuizGenerator(new Random(seed));
-            foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Time).Where(t => !ElementaryQuizGenerator.IsTimeFractionExtension(t)))
+            foreach (var type in ElementaryQuizGenerator.Types(QuizProblemKind.Time).Where(t => !ElementaryQuizGenerator.IsTimeFractionExtension(t) && !ElementaryQuizGenerator.IsMixedTime(t)))
             foreach (var language in Enum.GetValues<AppLanguage>())
             {
                 foreach (var tier in changes)
@@ -50,7 +50,7 @@ internal static partial class PuzzleTests
         void Check(ArithmeticQuizQuestion question, CurriculumTier tier)
         {
             var contract = question.ElementaryProblem!;
-            if (ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type))
+            if (ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) || ElementaryQuizGenerator.IsMixedTime(contract.Type))
             {
                 Require(contract.Reasoning?.Tier == tier && new EssayAnswerValidator(new MathSolver.Services.Core.BasicArithmeticEngine())
                     .ValidateSubmission(question, contract.AnswerText).IsCorrect, "New time skill lost its tier or answer when changing stars.");

@@ -10,6 +10,13 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--applied-narratives-evidence"], "--applied-narratives-evidence <directory>", args=>AppliedNarrativeBankTests.VerifyEvidenceAsync(args[1]),
+            args=>args is ["--applied-narratives-evidence",_]),
+        new(["--applied-narratives", "--applied-narratives-model"], "--applied-narratives | --applied-narratives-model <model.gguf>", async args =>
+        {
+            if (args.Length == 1) await AppliedNarrativeBankTests.RunAsync();
+            else await AppliedNarrativeBankTests.RunModelAsync(args[1]);
+        }, args => args is ["--applied-narratives"] or ["--applied-narratives-model", _]),
         new(["--regex-timeout", "--seconds-regex-model"], "--regex-timeout | --seconds-regex-model <model.gguf>", async args =>
         {
             if (args.Length == 1) await RegexTimeoutRegressionTests.RunAsync();

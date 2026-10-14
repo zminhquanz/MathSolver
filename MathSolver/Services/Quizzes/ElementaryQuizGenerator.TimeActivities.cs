@@ -10,8 +10,8 @@ public sealed partial class ElementaryQuizGenerator
         QuizContentCatalog.LoadList<TimeActivityContext>("TimeActivityContexts", QuizContentCatalog.Culture(language));
     internal static readonly string[] TimeActivityClauses = ["017", "019", "020", "022", "025", "029", "031", "033", "036"];
 
-    private static string TimeActivityText(AppLanguage language, TimeActivityContext? activity, string suffix,
-        params (string Key, string Value)[] values) => QuizContentCatalog.Text(language,
+    private string TimeActivityText(AppLanguage language, TimeActivityContext? activity, string suffix,
+        params (string Key, string Value)[] values) => AppliedText(language,
             "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty."
             + (activity is not null && TimeActivityClauses.Contains(suffix) ? "Activity." + activity.Id + "." : "") + suffix, values);
 

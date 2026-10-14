@@ -11,6 +11,7 @@ var tests = new (string Name, Action Run)[]
     ("Illustrated choices and search routing", PuzzleTests.CheckIllustratedChoices),
     ("Primary curriculum mapping", PuzzleTests.CheckPrimaryCurriculum),
     ("Time and different-denominator fraction skills", PuzzleTests.CheckTimeFractionExtensions),
+    ("Mixed time arithmetic and keyboard duration input", PuzzleTests.CheckMixedTime),
     ("Decimal and spatial extension skills", PuzzleTests.CheckDecimalSpatialSkills),
     ("Foundation skills and independent visual checks", PuzzleTests.CheckFoundations),
     ("Short spatial position answer input", PuzzleTests.CheckSpatialPositionInput),

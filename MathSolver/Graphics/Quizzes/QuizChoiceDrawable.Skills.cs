@@ -115,6 +115,10 @@ internal sealed partial class QuizChoiceDrawable
             case "decimal-to-fraction": Equation("0,25", "25/100"); break;
             case "fraction-to-decimal": Equation("25/100", "0,25"); break;
             case "time-seconds": Equation("120 s", "= 2 min"); break;
+            case "mixed-time-add": Equation("2 h 45 min", "+ 1 h 30 min"); break;
+            case "mixed-time-subtract": Equation("3 h 10 min", "− 1 h 25 min"); break;
+            case "mixed-time-multiply": Equation("1 h 40 min", "× 3"); break;
+            case "mixed-time-divide": Equation("5 h 20 min", "÷ 4"); break;
             case "time-century": Equation("2001", "→ XXI"); break;
             case "time-weekday": Equation("T2 + 3", "→ T5"); break;
             case "fraction-order-different": Equation("1/4 < 1/2", "< 3/4"); break;
