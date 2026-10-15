@@ -192,7 +192,9 @@ public partial class AiQuestionBankPage : ContentPage
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
     private void RenderSelected()
     {
-        CreativeProsePanel.IsVisible=_family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement;
+        CreativeProsePanel.IsVisible=_family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
+            || _family==BankQuestionFamily.Time && SameDayTimePilot.IsType((ElementaryQuizType)_storyVariant)
+            || _family==BankQuestionFamily.Decimal && ElementaryQuizGenerator.DecimalStoryTypes.Contains((ElementaryQuizType)_storyVariant);
         var item = SelectedItem;
         PreviewStatusLabel.Text = item is null ? T("NoPreview") : T("Item." + item.State);
         string? raw = item?.Review?.RawJson ?? item?.Attempts.LastOrDefault()?.RawJson;

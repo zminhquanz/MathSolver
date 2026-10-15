@@ -127,6 +127,9 @@
       {"Key":"Quiz.Elementary.VolumeConversion","IllustrationId":"measure-volume","DescriptionKey":"Curriculum.Requirement.Measurement.VolumeConversion"},
       {"Key":"Quiz.Elementary.MixedLength","IllustrationId":"measure-mixed","DescriptionKey":"Curriculum.Requirement.Measurement.MixedLength"},
       {"Key":"Quiz.Elementary.MapScale","IllustrationId":"measure-map","DescriptionKey":"Curriculum.Requirement.Measurement.MapScale"},
+      {"Key": "Quiz.Elementary.SameDayElapsed", "IllustrationId": "same-day-duration", "DescriptionKey": "Curriculum.Requirement.Time.SameDayElapsed"},
+      {"Key": "Quiz.Elementary.SameDayStart", "IllustrationId": "same-day-start", "DescriptionKey": "Curriculum.Requirement.Time.SameDayStart"},
+      {"Key": "Quiz.Elementary.SameDayEnd", "IllustrationId": "same-day-end", "DescriptionKey": "Curriculum.Requirement.Time.SameDayEnd"},
       {"Key":"Quiz.Elementary.ElapsedTime","IllustrationId":"time-elapsed","DescriptionKey":"Curriculum.Requirement.Time.ElapsedTime"},
       {"Key":"Quiz.Elementary.TimeAddition","IllustrationId":"time-conversion","DescriptionKey":"Curriculum.Requirement.Time.TimeAddition"},
       {"Key":"Quiz.Elementary.ReadClock","IllustrationId":"clock","DescriptionKey":"Curriculum.Requirement.Time.ReadClock"},
@@ -4228,6 +4231,9 @@
         "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
         "SourcePages":  "21-46"
     },
+    {"Id": "Time.SameDayElapsed", "Kind": "Time", "Subtype": "SameDayElapsed", "Grades": [3, 4, 5], "RequirementId": "Curriculum.Requirement.Time.SameDayElapsed", "Scope": "Core", "Coverage": "Partial", "Constraints": "One continuous same-day activity. No pauses, midnight crossing or calendar conventions.", "SourcePages": "21-46"},
+    {"Id": "Time.SameDayStart", "Kind": "Time", "Subtype": "SameDayStart", "Grades": [3, 4, 5], "RequirementId": "Curriculum.Requirement.Time.SameDayStart", "Scope": "Core", "Coverage": "Partial", "Constraints": "One continuous same-day activity. No pauses, midnight crossing or calendar conventions.", "SourcePages": "21-46"},
+    {"Id": "Time.SameDayEnd", "Kind": "Time", "Subtype": "SameDayEnd", "Grades": [3, 4, 5], "RequirementId": "Curriculum.Requirement.Time.SameDayEnd", "Scope": "Core", "Coverage": "Partial", "Constraints": "One continuous same-day activity. No pauses, midnight crossing or calendar conventions.", "SourcePages": "21-46"},
     {
         "Id":  "Time.ElapsedTime",
         "Kind":  "Time",

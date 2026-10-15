@@ -15,7 +15,13 @@ internal sealed class ReasoningStoryCycle
         int bestCount = int.MaxValue;
         for (int attempt = 0; attempt < 12; attempt++)
         {
-            var c = ReasoningStoryCatalogue.Create(family, variant, tier, language);
+            var profiles=creativeProse && family==BankQuestionFamily.Decimal
+                ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
+                : family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)variant)
+                    ? SameDayTimePilot.Profiles((ElementaryQuizType)variant,language).ToArray():[];
+            var profile=profiles.OrderBy(id=>history.Count(s=>s.StartsWith(id+"/",StringComparison.Ordinal)))
+                .ThenBy(_=>Random.Shared.Next()).FirstOrDefault()??"";
+            var c = ReasoningStoryCatalogue.Create(family, variant, tier, language,narrativeId:profile);
             string context = c.SceneId + "/" + c.Unit;
             int repetitions = history.Count(s => s == context);
             if (repetitions < bestCount) { best = c; bestCount = repetitions; }
@@ -40,6 +46,7 @@ internal sealed class ReasoningStoryCycle
                         .Where(c => (int)tier >= c.MinimumStar && (int)tier <= c.MaximumStar).Select(c => c.Id),
                 BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementContexts(language, (ElementaryQuizType)variant).Select(c => c.Id),
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
+                BankQuestionFamily.Time when SameDayTimePilot.IsType((ElementaryQuizType)variant)=>SameDayTimePilot.Profiles((ElementaryQuizType)variant,language),
                 BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryContextIds(tier),
                 BankQuestionFamily.FractionQuantity => FractionQuantityStoryContextCatalog.GetProfile(language).Select(c => c.ContextId),
                 _ => ProportionQuizGenerator.NarrativeIds((ProportionQuizType)variant, tier, language)

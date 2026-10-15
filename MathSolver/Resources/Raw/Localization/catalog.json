@@ -32,6 +32,9 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "Quiz.Elementary.SameDayElapsed": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Elapsed time within one day. One continuous activity within the same day."},
+    "Quiz.Elementary.SameDayStart": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Find the start time within one day. One continuous activity within the same day."},
+    "Quiz.Elementary.SameDayEnd": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Find the end time within one day. One continuous activity within the same day."},
     "Quiz.TablePieAnswerInputHint": {"context": "Math puzzles > Reading tables and pie charts: optional worked solution and answer unit.", "translatorNote": "A direct number is sufficient at every difficulty. Any explicit unit must match the requested answer unit. Explanation, calculation and final-answer prefix are optional."},
     "Quiz.TablePieAnswerInputPlaceholder": {"context": "Math puzzles > Reading tables and pie charts: optional worked solution and answer unit.", "translatorNote": "A direct number is sufficient at every difficulty. Any explicit unit must match the requested answer unit. Explanation, calculation and final-answer prefix are optional."},
     "Quiz.MissingSideInputHint": {"context": "Math puzzles > Finding missing sides: direct result with an optional length unit.", "translatorNote": "A number alone is accepted at every difficulty. If a unit is included it must match the requested length unit. Worked solutions are optional; compact unit spelling is allowed."},
@@ -1790,7 +1793,7 @@
     {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
     {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
     {"key": "AiBank.Review.Title", "source": "Duyệt đề AI", "mode": "exact"},
-    {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X và đổi đơn vị. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập.", "mode": "exact"},
+    {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước.", "mode": "exact"},
     {"key": "AiBank.Review.Hint", "source": "Đối chiếu đề AI với đề tham khảo và phép tính chuẩn. Chỉ chấp nhận khi chủ thể, các lượng, đơn vị, quan hệ và câu hỏi đều đúng. Việc duyệt sẽ đưa đề vào ngân hàng đề để luyện tập.", "mode": "exact"},
     {"key": "AiBank.Review.Count", "source": "Chờ duyệt: {0}", "mode": "exact"},
     {"key": "AiBank.Review.Empty", "source": "Không có đề chờ duyệt.", "mode": "exact"},

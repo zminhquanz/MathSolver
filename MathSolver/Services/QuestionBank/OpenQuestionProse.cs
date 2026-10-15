@@ -15,6 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
+        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -76,7 +77,7 @@ public static class OpenQuestionProse
                 if (bare.Any(char.IsDigit) || bare.IndexOfAny(['=', '<', '>', '+', '*', '/', '×', '÷', '%']) >= 0)
                     return new(null, "ChangedQuantities", ErrorDetails: actual.Id);
                 if(text.Count(ch=>ch=='$')!=expected.Text.Count(ch=>ch=='$'))return new(null,"ChangedUnits",ErrorDetails:actual.Id);
-                if(Regex.IsMatch(bare,@"\b(?:given_a|given_b|solution_lead|unit_id|solution_leads)\b",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100)))
+                if(PilotMeaningRules.TechnicalText(bare))
                     return new(null,"InvalidText",ErrorDetails:actual.Id);
             }
             return new(draft, null, c);
@@ -89,10 +90,20 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if(SameDayTimeCatalogue.IsProfile(c))
+        {
+            if(PilotMeaningRules.TimeContradiction(syntax.Draft!,c.Language))
+                return new(null,"ChangedRelationOrTarget",ErrorDetails:"Same-day continuity or chronology changed.");
+            return PilotMeaningRules.ProvesTime(c,syntax.Draft!)?syntax:
+                new(syntax.Draft,"SemanticReviewRequired",c,"Time quantity roles, continuity or target could not be proved.");
+        }
+        if(DecimalOpenStoryCatalogue.IsProfile(c)&&DecimalOpenStoryCatalogue.HasContradiction(c,syntax.Draft!))
+            return new(null,"ChangedRelationOrTarget",ErrorDetails:"Decimal event direction or financial condition changed.");
         // Voice markers such as Vietnamese "được tặng" carry mathematical
         // direction. Check them before legacy neutral-link normalization.
         if(OpenProseMeaning.HasContradiction(syntax.Draft!,Example(c),c.Language))
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"Event direction or condition changed.");
+        if(DecimalOpenStoryCatalogue.IsProfile(c)&&PilotMeaningRules.ProvesDecimal(c,syntax.Draft!))return syntax;
         var legacy = BasicQuestionValidator.Validate(raw, c with { OpenProse = false });
         if (legacy.IsValid) return syntax;
         var draft = syntax.Draft!;
@@ -123,7 +134,9 @@ public static class OpenQuestionProse
             Do not change the kind of objects or add actors. Never put JSON field names or instructions inside the prose. Use one short sentence per field, at most 24 words.
             Return only JSON with the example's schema and role/step/unit_id values.
             """;
-        string relation = c.Family == BankQuestionFamily.FindX
+        string relation = SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
+            : DecimalOpenStoryCatalogue.IsProfile(c) ? DecimalOpenStoryCatalogue.PromptRelation(c)
+            : c.Family == BankQuestionFamily.FindX
             ? "unknown=" + c.UnknownRole + "; given_a="+FindXQuestionCatalogue.Find(c.SceneId)!.KnownARole+"; given_b="+FindXQuestionCatalogue.Find(c.SceneId)!.KnownBRole+"; target=" + FindXQuestionCatalogue.Find(c.SceneId)!.TargetRole
             : c.Version == ReasoningStoryCatalogue.Version ? string.Join(", ", ReasoningStoryCatalogue.Lesson(c).Quantities.Select(q => "{" + q.Id + "}=" + q.Role))
             : c.Version==ExpandedArithmeticCatalogue.Version ? "operation="+c.Operation+"; one-step target; use the reference's actual event and quantity roles"

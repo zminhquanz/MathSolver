@@ -101,7 +101,8 @@ internal static partial class OpenProseTests
     private sealed record Attempt(string Case, string Family, bool Open, float Temperature, int Number, string Outcome,
         bool NovelVerified, double WallSeconds, double? TokensPerSecond, int Tokens, string RawJson, string Prompt, BasicQuestionContract Contract,int ContextTokens);
 
-    internal static async Task RunModelAsync(string path, string? output = null)
+    internal static async Task RunModelAsync(string path, string? output = null,
+        IEnumerable<(string Name,BasicQuestionContract Contract)>? customCases=null)
     {
         string directory = Path.GetFullPath(output ?? "artifacts/verification/open-prose/model-" + DateTime.UtcNow.ToString("yyyyMMdd-HHmmss"));
         Directory.CreateDirectory(directory);
@@ -116,11 +117,12 @@ internal static partial class OpenProseTests
         await session.LoadAsync(path, deadline.Token);
         await File.WriteAllTextAsync(Path.Combine(directory,"run-info.json"),JsonSerializer.Serialize(new {SchemaVersion=1,StartedUtc=DateTime.UtcNow,session.Runtime.ModelName,
             session.Runtime.InferenceThreadCount,session.Runtime.PromptThreadCount,SystemVietnamese=BasicQuestionPrompt.SystemInstruction(AppLanguage.Vietnamese),SystemEnglish=BasicQuestionPrompt.SystemInstruction(AppLanguage.English),
-            Pipeline="open-variables-bounded-v3",ReplicationsPerFamilyAndTemperature=2,SeedPolicy="Native sampling seed unset; C# fixtures fixed"},json));
+            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v1":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
+            Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed"},json));
         try
         {
-            foreach (var setting in new[] { (Open:false, Temperature:0.5f), (Open:true, Temperature:0.4f), (Open:true, Temperature:0.5f), (Open:true, Temperature:0.6f) })
-            foreach (var (name, seed) in Cases())
+            foreach (var setting in customCases is null?new[] { (Open:false, Temperature:0.5f), (Open:true, Temperature:0.4f), (Open:true, Temperature:0.5f), (Open:true, Temperature:0.6f) }:new[]{(Open:true,Temperature:0.5f)})
+            foreach (var (name, seed) in customCases??Cases())
             {
                 var c = seed with { OpenProse = setting.Open };
                 session.Runtime.Sampling = new(Temperature:setting.Temperature);

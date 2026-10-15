@@ -147,7 +147,9 @@ public static partial class ReasoningStoryCatalogue
         var quantities = Lesson(c).Quantities.ToDictionary(q => q.Id, q => q.Value);
         if (c.Language == AppLanguage.English)
             text = EquivalentProseStructures.WithEnglishAgreement(text, slot => quantities.GetValueOrDefault(slot.Trim('{', '}')) == "1");
-        return Regex.Replace(text, @"\{([fv]\d+)\}", m => quantities.GetValueOrDefault(m.Groups[1].Value, m.Value));
+        text=Regex.Replace(text, @"\{([fv]\d+)\}", m => quantities.GetValueOrDefault(m.Groups[1].Value, m.Value));
+        return SameDayTimeCatalogue.IsProfile(c)&&c.Language==AppLanguage.Vietnamese
+            ? SameDayTimePilot.CapitalizeSentenceOpenings(text):text;
     }
 
     public static string Solution(BasicQuestionContract c, BasicQuestionDraft? draft = null)
@@ -192,6 +194,10 @@ public static partial class ReasoningStoryCatalogue
     private static ArithmeticQuizQuestion Generate(BasicQuestionContract c, ArithmeticQuizMode mode)
     {
         var random = new Random(c.Story!.Seed);
+        if(SameDayTimeCatalogue.IsProfile(c))
+            return new ElementaryQuizGenerator(random).GenerateSameDayTime(mode,(ElementaryQuizType)c.BankVariant,c.Language,c.Tier,c.Story!.NarrativeId);
+        if(DecimalOpenStoryCatalogue.IsProfile(c))
+            return new ElementaryQuizGenerator(random).GenerateDecimalPilot(mode,(ElementaryQuizType)c.BankVariant,c.Language,c.Tier,c.Story.NarrativeId);
         bool expanded = c.Story.ContextVersion > 0;
         return c.Family switch
         {
@@ -238,6 +244,16 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
+        if(c.Family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)c.BankVariant))
+        {
+            if(string.IsNullOrEmpty(c.Story!.NarrativeId))
+            {
+                var profiles=SameDayTimePilot.Profiles((ElementaryQuizType)c.BankVariant,c.Language).ToArray();
+                c=c with {Story=c.Story with {NarrativeId=profiles[new Random(c.Story.Seed).Next(profiles.Length)]}};
+            }
+            return SameDayTimeCatalogue.Build(c);
+        }
+        if(DecimalOpenStoryCatalogue.IsProfile(c))return DecimalOpenStoryCatalogue.Build(c);
         using var capture = new QuizNarrativeCapture(c.Family switch {
             _ when ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant) && c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Time or BankQuestionFamily.Spatial
                 => ReviewedNarrativePhrasings.For(c.Language, ElementaryQuizGenerator.AppliedNarrativeList),

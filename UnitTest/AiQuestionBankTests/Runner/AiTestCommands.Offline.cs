@@ -10,6 +10,16 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--time-open","--time-open-model"],"--time-open | --time-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SameDayTimeTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SameDayTimeTests.NativeCases());
+        },args=>args is ["--time-open"] or ["--time-open-model",_] or ["--time-open-model",_,_]),
+        new(["--decimal-open","--decimal-open-model"],"--decimal-open | --decimal-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await DecimalOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,DecimalOpenTests.NativeCases());
+        },args=>args is ["--decimal-open"] or ["--decimal-open-model",_] or ["--decimal-open-model",_,_]),
         new(["--open-prose-evidence"], "--open-prose-evidence <directory>", args => OpenProseTests.VerifyEvidenceAsync(args[1]),
             args => args is ["--open-prose-evidence", _]),
         new(["--open-prose", "--open-prose-model"], "--open-prose | --open-prose-model <model.gguf> [directory]", async args =>

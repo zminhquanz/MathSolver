@@ -126,6 +126,8 @@ try
     await CalculationSolutionTests.Run(factory, directory);
     await PracticeNumberRangesTests.Run(directory);
     await ExpandedArithmeticBankTests.Run(directory);
+    await DecimalOpenWorksheetTests.Run(directory);
+    await SameDayTimeWorksheetTests.Run(directory);
     await FactSummaryTests.Run(factory, directory);
     await WorksheetSettingsTests.Run(factory);
     await MeasurementPracticeTests.Run(directory);

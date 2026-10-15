@@ -24,7 +24,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         QuizProblemKind.Measurement => [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.AreaConversion, ElementaryQuizType.VolumeConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.MapScale, ElementaryQuizType.ReadRuler, ElementaryQuizType.ReadProtractor, ElementaryQuizType.ReadThermometer],
         QuizProblemKind.Time => [ElementaryQuizType.ElapsedTime, ElementaryQuizType.TimeAddition, ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar,
             ElementaryQuizType.SecondsConversion, ElementaryQuizType.YearCentury, ElementaryQuizType.CalendarWeekday,
-            .. MixedTimeTypes],
+            .. MixedTimeTypes, ElementaryQuizType.SameDayElapsed, ElementaryQuizType.SameDayStart, ElementaryQuizType.SameDayEnd],
         QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers, ElementaryQuizType.FullGroups],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare, .. DecimalSkillTypes],
         QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction, ElementaryQuizType.FractionPicture, ElementaryQuizType.FractionTerms, ElementaryQuizType.EquivalentFraction, ElementaryQuizType.OrderFractions,

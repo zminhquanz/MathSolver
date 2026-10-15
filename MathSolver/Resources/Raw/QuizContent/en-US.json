@@ -8644,6 +8644,9 @@
         "Text":  "Solve a map scale task using the supplied data.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Calculate the duration of an uninterrupted same-day activity.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Find a same-day starting time from ending time and duration.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameDayEnd", "Text": "Find a same-day ending time from starting time and duration.", "Variables": []},
     {
         "Id":  "Curriculum.Requirement.Time.ElapsedTime",
         "Text":  "Solve a elapsed time task using the supplied data.",
@@ -13031,6 +13034,384 @@
     }
   ],
   "Lists": {
+    "TimeOpen.Contexts": [
+      {
+        "Id": "reading",
+        "Actor": "Alex",
+        "Activity": "reading session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90
+      },
+      {
+        "Id": "sport",
+        "Actor": "Alex",
+        "Activity": "sports session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120
+      },
+      {
+        "Id": "craft",
+        "Actor": "Alex",
+        "Activity": "craft session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90
+      }
+    ],
+    "TimeOpen.Relations": [
+      {
+        "Id": "elapsed",
+        "Type": "SameDayElapsed",
+        "Facts": [
+          "The {v1} for {v0} starts at {f0} hours {f1} minutes.",
+          "The {v1} for {v0} ends at {f2} hours {f3} minutes.",
+          "The activity runs continuously on the same day."
+        ],
+        "Question": "How many minutes does the {v1} for {v0} last?",
+        "Lead": "Duration of the activity",
+        "AlternativeFacts": [
+          "The {v1} for {v0} begins at {f0} hours {f1} minutes.",
+          "The {v1} for {v0} finishes at {f2} hours {f3} minutes.",
+          "On the same day, the activity runs continuously."
+        ],
+        "AlternativeQuestion": "Please determine: How many minutes does the {v1} for {v0} last?"
+      },
+      {
+        "Id": "start",
+        "Type": "SameDayStart",
+        "Facts": [
+          "The {v1} for {v0} ends at {f0} hours {f1} minutes.",
+          "The activity lasts {f2} minutes.",
+          "The activity runs continuously on the same day."
+        ],
+        "Question": "At what hour and minute does the {v1} for {v0} start?",
+        "Lead": "Starting time of the activity",
+        "AlternativeFacts": [
+          "The {v1} for {v0} finishes at {f0} hours {f1} minutes.",
+          "The activity continues for {f2} minutes.",
+          "On the same day, the activity runs continuously."
+        ],
+        "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} start?"
+      },
+      {
+        "Id": "end",
+        "Type": "SameDayEnd",
+        "Facts": [
+          "The {v1} for {v0} starts at {f0} hours {f1} minutes.",
+          "The activity lasts {f2} minutes.",
+          "The activity runs continuously on the same day."
+        ],
+        "Question": "At what hour and minute does the {v1} for {v0} end?",
+        "Lead": "Ending time of the activity",
+        "AlternativeFacts": [
+          "The {v1} for {v0} begins at {f0} hours {f1} minutes.",
+          "The activity continues for {f2} minutes.",
+          "On the same day, the activity runs continuously."
+        ],
+        "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} end?"
+      }
+    ],
+    "DecimalOpen.Contexts": [
+      {
+        "Id": "rice",
+        "Actor": "Alex",
+        "Other": "Sam",
+        "Item": "rice",
+        "Unit": "kg",
+        "Group": "bags",
+        "MaximumPerGroup": 5,
+        "MaximumTotal": 100,
+        "Money": false
+      },
+      {
+        "Id": "water",
+        "Actor": "Alex",
+        "Other": "Sam",
+        "Item": "water",
+        "Unit": "litres",
+        "Group": "bottles",
+        "MaximumPerGroup": 2,
+        "MaximumTotal": 50,
+        "Money": false
+      },
+      {
+        "Id": "fabric",
+        "Actor": "Alex",
+        "Other": "Sam",
+        "Item": "fabric",
+        "Unit": "m",
+        "Group": "pieces",
+        "MaximumPerGroup": 10,
+        "MaximumTotal": 200,
+        "Money": false
+      },
+      {
+        "Id": "notebooks",
+        "Actor": "Alex",
+        "Other": "Sam",
+        "Item": "notebook funds",
+        "Unit": "dollars",
+        "Group": "notebooks",
+        "MaximumPerGroup": 10,
+        "MaximumTotal": 200,
+        "Money": true
+      },
+      {
+        "Id": "lunch",
+        "Actor": "Alex",
+        "Other": "Sam",
+        "Item": "lunch funds",
+        "Unit": "dollars",
+        "Group": "meals",
+        "MaximumPerGroup": 12,
+        "MaximumTotal": 200,
+        "Money": true
+      }
+    ],
+    "DecimalOpen.Relations": [
+      {
+        "Id": "combine",
+        "Type": "DecimalAdd",
+        "FirstRole": "separate-first-stock",
+        "SecondRole": "separate-second-stock",
+        "TargetRole": "combined-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} has {f0} {v4} of {v3}.",
+          "{v2} has {f1} {v5} of {v3}."
+        ],
+        "Question": "How many {v0} of {v3} do they have altogether?",
+        "Lead": "The combined amount of {v3} is",
+        "AlternativeFacts": [
+          "The amount of {v3} held by {v1} is {f0} {v4}.",
+          "The amount of {v3} held by {v2} is {f1} {v5}."
+        ],
+        "AlternativeQuestion": "What is their combined amount of {v3} in {v0}?"
+      },
+      {
+        "Id": "increase",
+        "Type": "DecimalAdd",
+        "FirstRole": "initial-stock",
+        "SecondRole": "added-stock",
+        "TargetRole": "final-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} has {f0} {v4} of {v3}.",
+          "{v1} receives another {f1} {v5} of {v3}."
+        ],
+        "Question": "How many {v0} of {v3} does {v1} have now?",
+        "Lead": "The final amount of {v3} is",
+        "AlternativeFacts": [
+          "The initial amount of {v3} held by {v1} is {f0} {v4}.",
+          "Another {f1} {v5} of {v3} is given to {v1}."
+        ],
+        "AlternativeQuestion": "What is the final amount of {v3} held by {v1} in {v0}?"
+      },
+      {
+        "Id": "remaining",
+        "Type": "DecimalSubtract",
+        "FirstRole": "initial-stock",
+        "SecondRole": "removed-stock",
+        "TargetRole": "remaining-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} has {f0} {v4} of {v3}.",
+          "{v1} uses {f1} {v5} of {v3}."
+        ],
+        "Question": "How many {v0} of {v3} does {v1} have left?",
+        "Lead": "The remaining amount of {v3} is",
+        "AlternativeFacts": [
+          "The initial amount of {v3} held by {v1} is {f0} {v4}.",
+          "{v1} uses up {f1} {v5} of {v3}."
+        ],
+        "AlternativeQuestion": "What amount of {v3} remains with {v1} in {v0}?"
+      },
+      {
+        "Id": "groups",
+        "Type": "DecimalMultiply",
+        "FirstRole": "amount-per-group",
+        "SecondRole": "group-count",
+        "TargetRole": "total-amount",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "Each of the {v6} holds {f0} {v4} of {v3}.",
+          "{v1} prepares {f1} such {v5}."
+        ],
+        "Question": "How many {v0} of {v3} does {v1} prepare in total?",
+        "Lead": "The total amount of {v3} is",
+        "AlternativeFacts": [
+          "The amount of {v3} in each of the {v6} is {f0} {v4}.",
+          "There are {f1} such {v5} prepared by {v1}."
+        ],
+        "AlternativeQuestion": "What is the total amount of {v3} prepared by {v1} in {v0}?"
+      },
+      {
+        "Id": "price",
+        "Type": "DecimalMultiply",
+        "FirstRole": "unit-price",
+        "SecondRole": "purchase-count",
+        "TargetRole": "total-cost",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "The price of each of the {v6} is {f0} {v4}.",
+          "{v1} buys {f1} {v5}."
+        ],
+        "Question": "How many {v0} must {v1} pay altogether?",
+        "Lead": "The total cost is",
+        "AlternativeFacts": [
+          "Each of the {v6} costs {f0} {v4}.",
+          "The number of {v5} bought by {v1} is {f1}."
+        ],
+        "AlternativeQuestion": "What is the total cost for {v1} in {v0}?"
+      },
+      {
+        "Id": "share",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "group-count",
+        "TargetRole": "amount-per-group",
+        "MoneyOnly": false,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} has {f0} {v4} of {v3}.",
+          "{v1} shares that amount equally among {f1} {v5}."
+        ],
+        "Question": "How many {v0} of {v3} does each of the {v6} receive?",
+        "Lead": "The amount of {v3} in each share is",
+        "AlternativeFacts": [
+          "The amount of {v3} held by {v1} is {f0} {v4}.",
+          "That amount is shared equally by {v1} among {f1} {v5}."
+        ],
+        "AlternativeQuestion": "What is the amount of {v3} in each of the {v6} in {v0}?"
+      },
+      {
+        "Id": "count",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "amount-per-group",
+        "TargetRole": "group-count",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} has {f0} {v4} of {v3}.",
+          "Each of the {v6} needs {f1} {v5} of {v3}."
+        ],
+        "Question": "How many {v0} can {v1} fill using the whole amount?",
+        "Lead": "The number of complete shares is",
+        "AlternativeFacts": [
+          "The amount of {v3} held by {v1} is {f0} {v4}.",
+          "The amount of {v3} needed for each of the {v6} is {f1} {v5}."
+        ],
+        "AlternativeQuestion": "How many {v0} can be filled with the whole amount held by {v1}?"
+      },
+      {
+        "Id": "combine-money",
+        "Type": "DecimalAdd",
+        "FirstRole": "separate-first-stock",
+        "SecondRole": "separate-second-stock",
+        "TargetRole": "combined-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} has {f0} {v4}.",
+          "{v2} has {f1} {v5}."
+        ],
+        "Question": "How many {v0} do they have altogether?",
+        "Lead": "The combined amount of money is",
+        "AlternativeFacts": [
+          "The money held by {v1} is {f0} {v4}.",
+          "The money held by {v2} is {f1} {v5}."
+        ],
+        "AlternativeQuestion": "What is their combined amount of money in {v0}?"
+      },
+      {
+        "Id": "increase-money",
+        "Type": "DecimalAdd",
+        "FirstRole": "initial-stock",
+        "SecondRole": "added-stock",
+        "TargetRole": "final-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} has {f0} {v4}.",
+          "{v1} receives another {f1} {v5}."
+        ],
+        "Question": "How many {v0} does {v1} have now?",
+        "Lead": "The final amount of money is",
+        "AlternativeFacts": [
+          "The initial money held by {v1} is {f0} {v4}.",
+          "Another {f1} {v5} is given to {v1}."
+        ],
+        "AlternativeQuestion": "What is the final amount of money held by {v1} in {v0}?"
+      },
+      {
+        "Id": "remaining-money",
+        "Type": "DecimalSubtract",
+        "FirstRole": "initial-stock",
+        "SecondRole": "removed-stock",
+        "TargetRole": "remaining-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} has {f0} {v4}.",
+          "{v1} spends {f1} {v5}."
+        ],
+        "Question": "How many {v0} does {v1} have left?",
+        "Lead": "The remaining money is",
+        "AlternativeFacts": [
+          "The initial budget of {v1} is {f0} {v4}.",
+          "{v1} uses {f1} {v5}."
+        ],
+        "AlternativeQuestion": "What amount of money remains with {v1} in {v0}?"
+      },
+      {
+        "Id": "share-money",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "group-count",
+        "TargetRole": "amount-per-group",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} sets aside {f0} {v4}.",
+          "{v1} shares that money equally among {f1} {v5}."
+        ],
+        "Question": "How many {v0} go into each of the {v6}?",
+        "Lead": "The money in each share is",
+        "AlternativeFacts": [
+          "The money set aside by {v1} is {f0} {v4}.",
+          "That money is shared equally by {v1} among {f1} {v5}."
+        ],
+        "AlternativeQuestion": "What is the money in each of the {v6} in {v0}?"
+      },
+      {
+        "Id": "count-money",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "amount-per-group",
+        "TargetRole": "group-count",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} has {f0} {v4}.",
+          "Each of the {v6} costs {f1} {v5}."
+        ],
+        "Question": "How many {v0} can {v1} buy using all that money?",
+        "Lead": "The number of items purchased is",
+        "AlternativeFacts": [
+          "The budget of {v1} is {f0} {v4}.",
+          "The price of each of the {v6} is {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Using the whole budget, how many {v0} can {v1} buy?"
+      }
+    ],
     "Narrative.Applied.Phrasings": [{"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.002", "Alternatives": ["For this practical task, {subject} is {a} {large_Symbol}. Please determine: how much is this in {small_Symbol}?", "The given information states that {subject} is {a} {large_Symbol}. Using the given information, how much is this in {small_Symbol}?", "We are told that {subject} is {a} {large_Symbol}. Please find: how much is this in {small_Symbol}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.003", "Alternatives": ["For this practical task, {subject} is {value} {small_Symbol}. Please determine: how much is this in {large_Symbol}?", "The given information states that {subject} is {value} {small_Symbol}. Using the given information, how much is this in {large_Symbol}?", "We are told that {subject} is {value} {small_Symbol}. Please find: how much is this in {large_Symbol}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.004", "Alternatives": ["For this practical task, {subject} consists of {a} {large_Symbol} and {b} {small_Symbol}.", "The given information states that {subject} consists of {a} {large_Symbol} and {b} {small_Symbol}.", "We are told that {subject} consists of {a} {large_Symbol} and {b} {small_Symbol}."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006", "Alternatives": ["For this practical task, an additional {c} {large_Symbol} is added.", "The given information states that an additional {c} {large_Symbol} is added.", "We are told that an additional {c} {large_Symbol} is added."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008", "Alternatives": ["For this practical task, then {used} {small_Symbol} is removed.", "The given information states that then {used} {small_Symbol} is removed.", "We are told that then {used} {small_Symbol} is removed."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010", "Alternatives": ["Please determine: what is the result in {answerUnit}?", "Using the given information, what is the result in {answerUnit}?", "Please find: what is the result in {answerUnit}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.003", "Alternatives": ["For this practical task, a piece of cord measures {a} m. Please determine: when the measurement is rounded to the {destination}, about how many metres long is the cord?", "The given information states that a piece of cord measures {a} m. Using the given information, when the measurement is rounded to the {destination}, about how many metres long is the cord?", "We are told that a piece of cord measures {a} m. Please find: when the measurement is rounded to the {destination}, about how many metres long is the cord?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", "Alternatives": ["For this practical task, the first jug holds {first} l of water, and the second jug holds {second} l. Please determine: which sign, <, > or =, compares the amount in the first jug with the amount in the second jug?", "The given information states that the first jug holds {first} l of water, and the second jug holds {second} l. Using the given information, which sign, <, > or =, compares the amount in the first jug with the amount in the second jug?", "We are told that the first jug holds {first} l of water, and the second jug holds {second} l. Please find: which sign, <, > or =, compares the amount in the first jug with the amount in the second jug?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.008", "Alternatives": ["For this practical task, the clock in the picture shows the start of a reading session. Please determine: at what hour and minute does the reading session start?", "The given information states that the clock in the picture shows the start of a reading session. Using the given information, at what hour and minute does the reading session start?", "We are told that the clock in the picture shows the start of a reading session. Please find: at what hour and minute does the reading session start?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.011", "Alternatives": ["For this practical task, the clock in the picture shows the start of a reading session. Please determine: after {elapsed} minutes, what hour and minute does the clock show?", "The given information states that the clock in the picture shows the start of a reading session. Using the given information, after {elapsed} minutes, what hour and minute does the clock show?", "We are told that the clock in the picture shows the start of a reading session. Please find: after {elapsed} minutes, what hour and minute does the clock show?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.012", "Alternatives": ["For this practical task, the clock in the picture shows the start of a reading session. For this practical task, the elapsed time is {hourPart} hour and {minutePart} minutes minus {reduction} minutes. Please determine: what hour and minute does the clock show afterwards?", "The given information states that the clock in the picture shows the start of a reading session. The given information states that the elapsed time is {hourPart} hour and {minutePart} minutes minus {reduction} minutes. Using the given information, what hour and minute does the clock show afterwards?", "We are told that the clock in the picture shows the start of a reading session. We are told that the elapsed time is {hourPart} hour and {minutePart} minutes minus {reduction} minutes. Please find: what hour and minute does the clock show afterwards?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.034", "Alternatives": ["For this practical task, a reading programme starts at the beginning of {from_yyyy_MM_dd} and ends at the beginning of {to_yyyy_MM_dd}. Please determine: how many days does the programme last?", "The given information states that a reading programme starts at the beginning of {from_yyyy_MM_dd} and ends at the beginning of {to_yyyy_MM_dd}. Using the given information, how many days does the programme last?", "We are told that a reading programme starts at the beginning of {from_yyyy_MM_dd} and ends at the beginning of {to_yyyy_MM_dd}. Please find: how many days does the programme last?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.035", "Alternatives": ["For this practical task, an activity runs from the beginning of {from_yyyy_MM_dd} to the beginning of {to_yyyy_MM_dd}, with {paused} paused days during this interval. Please determine: how many active days are there?", "The given information states that an activity runs from the beginning of {from_yyyy_MM_dd} to the beginning of {to_yyyy_MM_dd}, with {paused} paused days during this interval. Using the given information, how many active days are there?", "We are told that an activity runs from the beginning of {from_yyyy_MM_dd} to the beginning of {to_yyyy_MM_dd}, with {paused} paused days during this interval. Please find: how many active days are there?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.007", "Alternatives": ["For this practical task, a rectangular card has an area of {a_b} {areaUnit} and {known} {given} {unit}. Please determine: what is its {missing}?", "The given information states that a rectangular card has an area of {a_b} {areaUnit} and {known} {given} {unit}. Using the given information, what is its {missing}?", "We are told that a rectangular card has an area of {a_b} {areaUnit} and {known} {given} {unit}. Please find: what is its {missing}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.008", "Alternatives": ["For this practical task, a rectangular card has a perimeter of {perimeter} {unit} and {known} {given} {unit}. Please determine: what is its {missing}?", "The given information states that a rectangular card has a perimeter of {perimeter} {unit} and {known} {given} {unit}. Using the given information, what is its {missing}?", "We are told that a rectangular card has a perimeter of {perimeter} {unit} and {known} {given} {unit}. Please find: what is its {missing}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.012", "Alternatives": ["For this practical task, {shape} has a perimeter of {4_a} {unit}. Please determine: what is the length of one side?", "The given information states that {shape} has a perimeter of {4_a} {unit}. Using the given information, what is the length of one side?", "We are told that {shape} has a perimeter of {4_a} {unit}. Please find: what is the length of one side?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.014", "Alternatives": ["For this practical task, triangle ABC has a perimeter of {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Please determine: how long is side AC?", "The given information states that triangle ABC has a perimeter of {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Using the given information, how long is side AC?", "We are told that triangle ABC has a perimeter of {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Please find: how long is side AC?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.016", "Alternatives": ["For this practical task, parallelogram ABCD has a perimeter of {p} {unit}, AB = {a} {unit}. Please determine: how long is side BC?", "The given information states that parallelogram ABCD has a perimeter of {p} {unit}, AB = {a} {unit}. Using the given information, how long is side BC?", "We are told that parallelogram ABCD has a perimeter of {p} {unit}, AB = {a} {unit}. Please find: how long is side BC?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.018", "Alternatives": ["For this practical task, the top side of a rectangular card is segment AN of length {a_b} {unit}. For this practical task, M lies between A and N, AM = {a} {unit}. Please determine: how long is MN?", "The given information states that the top side of a rectangular card is segment AN of length {a_b} {unit}. The given information states that M lies between A and N, AM = {a} {unit}. Using the given information, how long is MN?", "We are told that the top side of a rectangular card is segment AN of length {a_b} {unit}. We are told that M lies between A and N, AM = {a} {unit}. Please find: how long is MN?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.020", "Alternatives": ["For this practical task, rectangular card ANCD has a perimeter of {fullPerimeter} {unit}, NC = {b} {unit}. For this practical task, M lies between A and N, AM = {a} {unit}. Please determine: how long is MN?", "The given information states that rectangular card ANCD has a perimeter of {fullPerimeter} {unit}, NC = {b} {unit}. The given information states that M lies between A and N, AM = {a} {unit}. Using the given information, how long is MN?", "We are told that rectangular card ANCD has a perimeter of {fullPerimeter} {unit}, NC = {b} {unit}. We are told that M lies between A and N, AM = {a} {unit}. Please find: how long is MN?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.022", "Alternatives": ["For this practical task, the L-shaped card FABCDE has perpendicular adjacent sides. For this practical task, side ED is {a_b} {unit} long, and side FA is {a} {unit} long. Please determine: how long is horizontal side BC in the picture?", "The given information states that the L-shaped card FABCDE has perpendicular adjacent sides. The given information states that side ED is {a_b} {unit} long, and side FA is {a} {unit} long. Using the given information, how long is horizontal side BC in the picture?", "We are told that the L-shaped card FABCDE has perpendicular adjacent sides. We are told that side ED is {a_b} {unit} long, and side FA is {a} {unit} long. Please find: how long is horizontal side BC in the picture?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.025", "Alternatives": ["For this practical task, two rectangles are joined without overlap: rectangle I is {a} {unit} long and {b} {unit} wide, and rectangle II is {c} {unit} long and {a} {unit} wide. Please determine: what is the total area of the combined shape?", "The given information states that two rectangles are joined without overlap: rectangle I is {a} {unit} long and {b} {unit} wide, and rectangle II is {c} {unit} long and {a} {unit} wide. Using the given information, what is the total area of the combined shape?", "We are told that two rectangles are joined without overlap: rectangle I is {a} {unit} long and {b} {unit} wide, and rectangle II is {c} {unit} long and {a} {unit} wide. Please find: what is the total area of the combined shape?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.026", "Alternatives": ["For this practical task, the combined shape consists of square I with side {a} {unit} and rectangle II with sides {b} {unit} and {c} {unit}. For this practical task, the two shapes do not overlap. Please determine: what is the area of the combined shape?", "The given information states that the combined shape consists of square I with side {a} {unit} and rectangle II with sides {b} {unit} and {c} {unit}. The given information states that the two shapes do not overlap. Using the given information, what is the area of the combined shape?", "We are told that the combined shape consists of square I with side {a} {unit} and rectangle II with sides {b} {unit} and {c} {unit}. We are told that the two shapes do not overlap. Please find: what is the area of the combined shape?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.027", "Alternatives": ["For this practical task, from a rectangular card {w} {unit} long and {h} {unit} wide, a rectangle {b} {unit} across and {c} {unit} high is cut from the upper right corner. Please determine: what is the area of the remaining L-shaped card?", "The given information states that from a rectangular card {w} {unit} long and {h} {unit} wide, a rectangle {b} {unit} across and {c} {unit} high is cut from the upper right corner. Using the given information, what is the area of the remaining L-shaped card?", "We are told that from a rectangular card {w} {unit} long and {h} {unit} wide, a rectangle {b} {unit} across and {c} {unit} high is cut from the upper right corner. Please find: what is the area of the remaining L-shaped card?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.028", "Alternatives": ["For this practical task, a rectangular frame has outer dimensions {outerW} {unit} and {outerH} {unit}. For this practical task, the rectangular opening inside measures {a} {unit} by {b} {unit}. Please determine: what is the area of the frame, excluding the opening?", "The given information states that a rectangular frame has outer dimensions {outerW} {unit} and {outerH} {unit}. The given information states that the rectangular opening inside measures {a} {unit} by {b} {unit}. Using the given information, what is the area of the frame, excluding the opening?", "We are told that a rectangular frame has outer dimensions {outerW} {unit} and {outerH} {unit}. We are told that the rectangular opening inside measures {a} {unit} by {b} {unit}. Please find: what is the area of the frame, excluding the opening?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.030", "Alternatives": ["For this practical task, rectangle I, {a} {unit} wide and {height} {unit} high, is joined to right triangle II with perpendicular sides {c} {unit} and {height} {unit}, without overlap. Please determine: what is the total area of the combined shape?", "The given information states that rectangle I, {a} {unit} wide and {height} {unit} high, is joined to right triangle II with perpendicular sides {c} {unit} and {height} {unit}, without overlap. Using the given information, what is the total area of the combined shape?", "We are told that rectangle I, {a} {unit} wide and {height} {unit} high, is joined to right triangle II with perpendicular sides {c} {unit} and {height} {unit}, without overlap. Please find: what is the total area of the combined shape?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.031", "Alternatives": ["For this practical task, a T-shape is made of two non-overlapping rectangles: horizontal bar I is {topWidth} {unit} long and {c} {unit} wide, and vertical bar II is {b} {unit} wide and {a} {unit} long. Please determine: what is the area of the T-shape?", "The given information states that a T-shape is made of two non-overlapping rectangles: horizontal bar I is {topWidth} {unit} long and {c} {unit} wide, and vertical bar II is {b} {unit} wide and {a} {unit} long. Using the given information, what is the area of the T-shape?", "We are told that a T-shape is made of two non-overlapping rectangles: horizontal bar I is {topWidth} {unit} long and {c} {unit} wide, and vertical bar II is {b} {unit} wide and {a} {unit} long. Please find: what is the area of the T-shape?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.032", "Alternatives": ["For this practical task, a rectangular card is {boardWidth} {unit} long and {boardHeight} {unit} wide. For this practical task, two non-overlapping rectangular openings lie entirely inside it: opening I measures {a} {unit} by {b} {unit}, and opening II measures {b} {unit} by {c} {unit}. Please determine: what is the area of the remaining card?", "The given information states that a rectangular card is {boardWidth} {unit} long and {boardHeight} {unit} wide. The given information states that two non-overlapping rectangular openings lie entirely inside it: opening I measures {a} {unit} by {b} {unit}, and opening II measures {b} {unit} by {c} {unit}. Using the given information, what is the area of the remaining card?", "We are told that a rectangular card is {boardWidth} {unit} long and {boardHeight} {unit} wide. We are told that two non-overlapping rectangular openings lie entirely inside it: opening I measures {a} {unit} by {b} {unit}, and opening II measures {b} {unit} by {c} {unit}. Please find: what is the area of the remaining card?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.033", "Alternatives": ["For this practical task, three rectangles I, II and III are joined side by side without overlap, each of width {strip} {unit}, with respective heights {a} {unit}, {b} {unit} and {c} {unit}. Please determine: what is the total area of the combined shape?", "The given information states that three rectangles I, II and III are joined side by side without overlap, each of width {strip} {unit}, with respective heights {a} {unit}, {b} {unit} and {c} {unit}. Using the given information, what is the total area of the combined shape?", "We are told that three rectangles I, II and III are joined side by side without overlap, each of width {strip} {unit}, with respective heights {a} {unit}, {b} {unit} and {c} {unit}. Please find: what is the total area of the combined shape?"]}],
 
     "Narrative.DecimalSpatial.Phrasings": [{"Id": "DecimalSpatial.SpatialFact", "Alternatives": ["All three pupils face left. Their order from front to back is {first}, {second}, {third}.", "Three pupils queue facing left. Reading from front to back, their order is {first}, {second}, {third}.", "The pupils in the queue all face left. Moving from front to back, we meet {first}, {second}, {third}.", "Three pupils stand in a queue and face left. In order from front to back, they are {first}, {second}, {third}."]}, {"Id": "DecimalSpatial.DecimalFact", "Alternatives": ["The decimal being considered is {value}.", "You have the decimal number {value}.", "Consider the decimal number {value}.", "The given decimal number is {value}."]}, {"Id": "DecimalSpatial.ReadingFact", "Alternatives": ["The reading of a decimal number is “{reading}”.", "You hear a decimal number read as “{reading}”.", "A decimal number has the reading “{reading}”.", "A number is read as “{reading}”."]}, {"Id": "DecimalSpatial.OrderFact", "Alternatives": ["The decimals to consider are {value0}, {value1}, {value2}, {value3}.", "You have the decimals {value0}, {value1}, {value2}, {value3}.", "Consider the decimals {value0}, {value1}, {value2}, {value3}.", "The given numbers are {value0}, {value1}, {value2}, {value3}."]}, {"Id": "DecimalSpatial.FractionFact", "Alternatives": ["The decimal fraction being considered is {numerator}/{denominator}.", "You have the decimal fraction {numerator}/{denominator}.", "Consider the decimal fraction {numerator}/{denominator}.", "The given fraction is {numerator}/{denominator}."]}, {"Id": "DecimalSpatial.FrontQuestion", "Alternatives": ["Using the given information, who stands immediately in front of {second}?", "Based on the given information, who stands immediately in front of {second}?", "From the information given, who stands immediately in front of {second}?"]}, {"Id": "DecimalSpatial.BehindQuestion", "Alternatives": ["Using the given information, who stands immediately behind {second}?", "Based on the given information, who stands immediately behind {second}?", "From the information given, who stands immediately behind {second}?"]}, {"Id": "DecimalSpatial.BetweenQuestion", "Alternatives": ["Using the given information, who stands between {first} and {third}?", "Based on the given information, who stands between {first} and {third}?", "From the information given, who stands between {first} and {third}?"]}, {"Id": "DecimalSpatial.ReadQuestion", "Alternatives": ["Using the given information, how do you read this number in words?", "Based on the given information, how do you read this number in words?", "From the information given, how do you read this number in words?"]}, {"Id": "DecimalSpatial.WriteQuestion", "Alternatives": ["Using the given information, how do you write this number using digits?", "Based on the given information, how do you write this number using digits?", "From the information given, how do you write this number using digits?"]}, {"Id": "DecimalSpatial.PlaceQuestion", "Alternatives": ["Using the given information, which digit is in the {place} place?", "Based on the given information, which digit is in the {place} place?", "From the information given, which digit is in the {place} place?"]}, {"Id": "DecimalSpatial.PartsQuestion", "Alternatives": ["Using the given information, what are the whole part and the digits of the decimal part?", "Based on the given information, what are the whole part and the digits of the decimal part?", "From the information given, what are the whole part and the digits of the decimal part?"]}, {"Id": "DecimalSpatial.AscendingQuestion", "Alternatives": ["Using the given information, how do you order these numbers from smallest to largest?", "Based on the given information, how do you order these numbers from smallest to largest?", "From the information given, how do you order these numbers from smallest to largest?"]}, {"Id": "DecimalSpatial.DescendingQuestion", "Alternatives": ["Using the given information, how do you order these numbers from largest to smallest?", "Based on the given information, how do you order these numbers from largest to smallest?", "From the information given, how do you order these numbers from largest to smallest?"]}, {"Id": "DecimalSpatial.ToFractionQuestion", "Alternatives": ["Using the given information, how do you write this number as a decimal fraction with denominator {denominator}?", "Based on the given information, how do you write this number as a decimal fraction with denominator {denominator}?", "From the information given, how do you write this number as a decimal fraction with denominator {denominator}?"]}, {"Id": "DecimalSpatial.ToDecimalQuestion", "Alternatives": ["Using the given information, how do you write this fraction as a decimal number?", "Based on the given information, how do you write this fraction as a decimal number?", "From the information given, how do you write this fraction as a decimal number?"]}],

@@ -115,6 +115,9 @@ internal sealed partial class QuizChoiceDrawable
             case "decimal-to-fraction": Equation("0,25", "25/100"); break;
             case "fraction-to-decimal": Equation("25/100", "0,25"); break;
             case "time-seconds": Equation("120 s", "= 2 min"); break;
+            case "same-day-duration": Equation("08:15 → 09:00", "? min"); break;
+            case "same-day-start": Equation("? + 45 min", "09:00"); break;
+            case "same-day-end": Equation("08:15 + 45 min", "?"); break;
             case "mixed-time-add": Equation("2 h 45 min", "+ 1 h 30 min"); break;
             case "mixed-time-subtract": Equation("3 h 10 min", "− 1 h 25 min"); break;
             case "mixed-time-multiply": Equation("1 h 40 min", "× 3"); break;

@@ -572,7 +572,7 @@ public partial class MathPuzzlePage : ContentPage
             bool unitConversion = question.ElementaryProblem?.Type is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion;
             bool timeResult = question.ElementaryProblem?.Type is ElementaryQuizType.ElapsedTime
-                or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar;
+                or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar or ElementaryQuizType.SameDayElapsed;
             bool pictograph = question.ElementaryProblem?.Type == ElementaryQuizType.ReadPictograph;
             bool tableOrPieChart = question.ElementaryProblem?.Type is ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart;
             bool missingSide = question.ElementaryProblem?.Type == ElementaryQuizType.RectangleSide;
@@ -702,7 +702,7 @@ public partial class MathPuzzlePage : ContentPage
                 EssayValidationHintLabel.Text = TranslateQuiz("Quiz.ComparisonEssayHint");
                 EssayWorkEditor.Placeholder = TranslateQuiz("Quiz.ComparisonEssayPlaceholder");
             }
-            else if (elementary.Type == ElementaryQuizType.ReadClock)
+            else if (elementary.Type == ElementaryQuizType.ReadClock || SameDayTimePilot.IsClock(elementary.Type))
             {
                 if (!requiresSolution) EssayWorkLabel.Text = TranslateQuiz("Quiz.ClockAnswerLabel");
                 EssayValidationHintLabel.Text = TranslateQuiz(requiresSolution ? "Quiz.ClockEssayHint" : "Quiz.ClockAnswerHint");

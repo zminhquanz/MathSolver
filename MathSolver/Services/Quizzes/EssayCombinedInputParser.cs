@@ -18,7 +18,8 @@ public static partial class EssayCombinedInputParser
         int expectedAnswerCount = 1,
         bool preserveDecimalAnswerCommas = false,
         bool allowClockAnswer = false,
-        bool allowDurationAnswer = false)
+        bool allowDurationAnswer = false,
+        bool preserveClockWork = false)
     {
         string[] lines = (input ?? string.Empty).Normalize()
             .Replace("\r\n", "\n", StringComparison.Ordinal)
@@ -50,7 +51,7 @@ public static partial class EssayCombinedInputParser
             for (int index = 0; index < work.Count;)
             {
                 string line = work[index];
-                if (!requiresSolution || TryNormalizeClockAnswer(line, out _) || ClockFieldRegex().IsMatch(line))
+                if (!requiresSolution && !preserveClockWork || TryNormalizeClockAnswer(line, out _) || ClockFieldRegex().IsMatch(line))
                 {
                     answers.Add(line);
                     work.RemoveAt(index);

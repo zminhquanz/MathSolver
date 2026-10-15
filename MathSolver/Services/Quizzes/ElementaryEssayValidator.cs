@@ -207,7 +207,7 @@ internal static partial class ElementaryEssayValidator
             return TimeFractionAnswerRules.MatchesOrder(text ?? "", contract.Answers[0].Text!);
         if (contract.Type == ElementaryQuizType.YearCentury)
             text = TimeFractionAnswerRules.NormalizeCentury(text ?? "");
-        if (contract.Type == ElementaryQuizType.ReadClock)
+        if (contract.Type == ElementaryQuizType.ReadClock || SameDayTimePilot.IsClock(contract.Type))
         {
             if (EssayCombinedInputParser.TryNormalizeClockAnswer(text, out string clockAnswer)) text = clockAnswer;
         }
@@ -257,7 +257,7 @@ internal static partial class ElementaryEssayValidator
                 or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide
                 or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion
-                or ElementaryQuizType.VolumeConversion or ElementaryQuizType.SecondsConversion) && parsed.Unit.Length == 0
+                or ElementaryQuizType.VolumeConversion or ElementaryQuizType.SecondsConversion or ElementaryQuizType.SameDayElapsed) && parsed.Unit.Length == 0
                 || UnitsMatch(question, parsed.Unit, expected.Unit);
             if (!valueOkay || !formOkay || !unitOkay)
             {

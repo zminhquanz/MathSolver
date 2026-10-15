@@ -59,7 +59,9 @@ public sealed class AiQuestionReviewPage : ContentPage
             var rows=await _store.GetPendingReviewsAsync();
             _items.ItemsSource=rows.Select(p=>new Card(p,p.Draft.ToWordProblem(p.Contract).ProblemText,
                 OpenQuestionProse.Example(p.Contract).ToWordProblem(p.Contract).ProblemText,p.Contract.Solution,
-                LocalizationService.TranslateKey(p.Contract.Family==BankQuestionFamily.FindX?"FindXBank.Title":p.Contract.Family==BankQuestionFamily.Measurement?"Quiz.ProblemMeasurement":"AiBank.BasicArithmetic"))).ToArray();
+                LocalizationService.TranslateKey(p.Contract.Family switch {
+                    BankQuestionFamily.FindX=>"FindXBank.Title",BankQuestionFamily.Measurement=>"Quiz.ProblemMeasurement",
+                    BankQuestionFamily.Time=>"Quiz.ProblemTime",BankQuestionFamily.Decimal=>"Quiz.ProblemDecimal",_=>"AiBank.BasicArithmetic"}))).ToArray();
             _status.Text=rows.Count==0?T("Empty"):string.Format(System.Globalization.CultureInfo.CurrentCulture,T("Count"),rows.Count);
         }
         catch(Exception e){System.Diagnostics.Debug.WriteLine(e);_status.Text=T("Error");}

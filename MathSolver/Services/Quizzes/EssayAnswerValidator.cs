@@ -140,8 +140,9 @@ public sealed partial class EssayAnswerValidator
             expectedAnswerCount: question.ElementaryProblem?.Answers.Count ?? 1,
             preserveDecimalAnswerCommas: question.ElementaryProblem is { } contract
                 && EssayAnswerListParser.PreserveDecimalCommas(contract),
-            allowClockAnswer: question.ElementaryProblem?.Type == ElementaryQuizType.ReadClock,
-            allowDurationAnswer: question.ElementaryProblem is { } duration && ElementaryQuizGenerator.IsMixedTime(duration.Type));
+            allowClockAnswer: question.ElementaryProblem is { } clock && (clock.Type == ElementaryQuizType.ReadClock || SameDayTimePilot.IsClock(clock.Type)),
+            allowDurationAnswer: question.ElementaryProblem is { } duration && ElementaryQuizGenerator.IsMixedTime(duration.Type),
+            preserveClockWork: question.ElementaryProblem is { } timed && SameDayTimePilot.IsClock(timed.Type));
         if (!resultOnly)
             return Validate(question, submission.Solution, submission.Equation, submission.Answer);
 
@@ -161,6 +162,7 @@ public sealed partial class EssayAnswerValidator
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
                 || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
+                || SameDayTimePilot.IsType(question.ElementaryProblem.Type)
                 || ElementaryQuizGenerator.IsMixedTime(question.ElementaryProblem.Type)
                 || ElementaryQuizGenerator.IsDecimalSpatialSkill(question.ElementaryProblem.Type)
                 || question.ElementaryProblem.Type is ElementaryQuizType.DecimalRound or ElementaryQuizType.LetterExpression
@@ -1053,6 +1055,12 @@ public sealed partial class EssayAnswerValidator
         // matching would accept unrelated compounds such as "kg °C".
         if (enteredUnit is "°c" or "°" || expectedUnit is "°c" or "°") return false;
 
+        // Scale words change the amount of money. The object-unit suffix
+        // heuristic must not turn "nghìn đồng" into the same unit as "đồng".
+        var enteredMoney=CurrencyUnit(enteredUnit);var expectedMoney=CurrencyUnit(expectedUnit);
+        if(enteredMoney is {Scale:>1} || expectedMoney is {Scale:>1})
+            return enteredMoney is { } entered && expectedMoney is { } expected && entered==expected;
+
         if (MetricUnitsMatch(enteredUnit, expectedUnit))
         {
             return true;
@@ -1116,6 +1124,20 @@ public sealed partial class EssayAnswerValidator
                enteredSymbol == GetMetricUnitSymbol(
                    expectedUnit, allowDescriptiveSuffix: true);
     }
+
+    private static (string Currency,int Scale)? CurrencyUnit(string unit)
+    {
+        var match=CurrencyUnitRegex().Match(unit);
+        if(!match.Success)return null;
+        string currency=match.Groups["currency"].Value is "dollar" or "dollars" or "usd" or "$"?"usd":"vnd";
+        int scale=match.Groups["scale"].Value switch {
+            "nghìn" or "ngàn" or "nghin" or "ngan" or "thousand"=>1000,
+            "triệu" or "trieu" or "million"=>1000000,"tỷ" or "ty" or "billion"=>1000000000,_=>1};
+        return (currency,scale);
+    }
+
+    [GeneratedRegex(@"\A(?:(?<scale>nghìn|ngàn|nghin|ngan|triệu|trieu|tỷ|ty|thousand|million|billion)\s+)?(?<currency>đồng|dong|vnd|đ|dollars?|usd|\$)\z",RegexOptions.CultureInvariant)]
+    private static partial Regex CurrencyUnitRegex();
 
     private static bool ContainsMetricUnitPhrase(string solution, string expectedUnit)
     {

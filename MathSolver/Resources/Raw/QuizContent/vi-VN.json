@@ -8673,6 +8673,9 @@
         "Text":  "Thực hiện dạng tỉ lệ bản đồ với dữ kiện được cung cấp.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Tính khoảng thời gian của hoạt động liên tục trong cùng ngày.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Tìm giờ bắt đầu khi biết giờ kết thúc và khoảng thời gian trong cùng ngày.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameDayEnd", "Text": "Tìm giờ kết thúc khi biết giờ bắt đầu và khoảng thời gian trong cùng ngày.", "Variables": []},
     {
         "Id":  "Curriculum.Requirement.Time.ElapsedTime",
         "Text":  "Thực hiện dạng thời gian trôi qua với dữ kiện được cung cấp.",
@@ -13060,6 +13063,384 @@
     }
   ],
   "Lists": {
+    "TimeOpen.Contexts": [
+      {
+        "Id": "reading",
+        "Actor": "Lan",
+        "Activity": "buổi đọc sách",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90
+      },
+      {
+        "Id": "sport",
+        "Actor": "Lan",
+        "Activity": "buổi tập thể thao",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120
+      },
+      {
+        "Id": "craft",
+        "Actor": "Lan",
+        "Activity": "buổi làm thủ công",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90
+      }
+    ],
+    "TimeOpen.Relations": [
+      {
+        "Id": "elapsed",
+        "Type": "SameDayElapsed",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Hoạt động diễn ra liên tục trong cùng ngày."
+        ],
+        "Question": "{v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian diễn ra hoạt động",
+        "AlternativeFacts": [
+          "{v1} của {v0} bắt đầu vào lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc vào lúc {f2} giờ {f3} phút.",
+          "Trong cùng ngày, hoạt động diễn ra liên tục."
+        ],
+        "AlternativeQuestion": "Hỏi {v1} của {v0} kéo dài bao nhiêu phút?"
+      },
+      {
+        "Id": "start",
+        "Type": "SameDayStart",
+        "Facts": [
+          "{v1} của {v0} kết thúc lúc {f0} giờ {f1} phút.",
+          "Hoạt động đó kéo dài {f2} phút.",
+          "Hoạt động diễn ra liên tục trong cùng ngày."
+        ],
+        "Question": "{v1} của {v0} bắt đầu lúc mấy giờ, mấy phút?",
+        "Lead": "Thời điểm bắt đầu hoạt động",
+        "AlternativeFacts": [
+          "{v1} của {v0} kết thúc vào lúc {f0} giờ {f1} phút.",
+          "Hoạt động đó diễn ra trong {f2} phút.",
+          "Trong cùng ngày, hoạt động diễn ra liên tục."
+        ],
+        "AlternativeQuestion": "Hỏi {v1} của {v0} bắt đầu lúc mấy giờ, mấy phút?"
+      },
+      {
+        "Id": "end",
+        "Type": "SameDayEnd",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "Hoạt động đó kéo dài {f2} phút.",
+          "Hoạt động diễn ra liên tục trong cùng ngày."
+        ],
+        "Question": "{v1} của {v0} kết thúc lúc mấy giờ, mấy phút?",
+        "Lead": "Thời điểm kết thúc hoạt động",
+        "AlternativeFacts": [
+          "{v1} của {v0} bắt đầu vào lúc {f0} giờ {f1} phút.",
+          "Hoạt động đó diễn ra trong {f2} phút.",
+          "Trong cùng ngày, hoạt động diễn ra liên tục."
+        ],
+        "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
+      }
+    ],
+    "DecimalOpen.Contexts": [
+      {
+        "Id": "rice",
+        "Actor": "Lan",
+        "Other": "Mai",
+        "Item": "gạo",
+        "Unit": "kg",
+        "Group": "túi",
+        "MaximumPerGroup": 5,
+        "MaximumTotal": 100,
+        "Money": false
+      },
+      {
+        "Id": "water",
+        "Actor": "Lan",
+        "Other": "Mai",
+        "Item": "nước",
+        "Unit": "l",
+        "Group": "chai",
+        "MaximumPerGroup": 2,
+        "MaximumTotal": 50,
+        "Money": false
+      },
+      {
+        "Id": "fabric",
+        "Actor": "Lan",
+        "Other": "Mai",
+        "Item": "vải",
+        "Unit": "m",
+        "Group": "đoạn",
+        "MaximumPerGroup": 10,
+        "MaximumTotal": 200,
+        "Money": false
+      },
+      {
+        "Id": "notebooks",
+        "Actor": "Lan",
+        "Other": "Mai",
+        "Item": "tiền mua vở",
+        "Unit": "nghìn đồng",
+        "Group": "quyển vở",
+        "MaximumPerGroup": 50,
+        "MaximumTotal": 1000,
+        "Money": true
+      },
+      {
+        "Id": "lunch",
+        "Actor": "Lan",
+        "Other": "Mai",
+        "Item": "tiền ăn",
+        "Unit": "nghìn đồng",
+        "Group": "suất ăn",
+        "MaximumPerGroup": 50,
+        "MaximumTotal": 1000,
+        "Money": true
+      }
+    ],
+    "DecimalOpen.Relations": [
+      {
+        "Id": "combine",
+        "Type": "DecimalAdd",
+        "FirstRole": "separate-first-stock",
+        "SecondRole": "separate-second-stock",
+        "TargetRole": "combined-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} có {f0} {v4} {v3}.",
+          "{v2} có {f1} {v5} {v3}."
+        ],
+        "Question": "Hai bạn có tất cả bao nhiêu {v0} {v3}?",
+        "Lead": "Tổng lượng {v3} của hai bạn là",
+        "AlternativeFacts": [
+          "Lượng {v3} của {v1} là {f0} {v4}.",
+          "Lượng {v3} của {v2} là {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Tổng lượng {v3} của hai bạn là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "increase",
+        "Type": "DecimalAdd",
+        "FirstRole": "initial-stock",
+        "SecondRole": "added-stock",
+        "TargetRole": "final-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} có {f0} {v4} {v3}.",
+          "{v1} nhận thêm {f1} {v5} {v3}."
+        ],
+        "Question": "{v1} có tất cả bao nhiêu {v0} {v3}?",
+        "Lead": "Lượng {v3} sau khi nhận thêm là",
+        "AlternativeFacts": [
+          "Lượng {v3} ban đầu của {v1} là {f0} {v4}.",
+          "{v1} được bổ sung thêm {f1} {v5} {v3}."
+        ],
+        "AlternativeQuestion": "Sau khi nhận thêm, {v1} có bao nhiêu {v0} {v3}?"
+      },
+      {
+        "Id": "remaining",
+        "Type": "DecimalSubtract",
+        "FirstRole": "initial-stock",
+        "SecondRole": "removed-stock",
+        "TargetRole": "remaining-stock",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} có {f0} {v4} {v3}.",
+          "{v1} dùng hết {f1} {v5} {v3}."
+        ],
+        "Question": "{v1} còn lại bao nhiêu {v0} {v3}?",
+        "Lead": "Lượng {v3} còn lại là",
+        "AlternativeFacts": [
+          "Lượng {v3} ban đầu của {v1} là {f0} {v4}.",
+          "{v1} đã sử dụng {f1} {v5} {v3}."
+        ],
+        "AlternativeQuestion": "Sau khi sử dụng, {v1} còn bao nhiêu {v0} {v3}?"
+      },
+      {
+        "Id": "groups",
+        "Type": "DecimalMultiply",
+        "FirstRole": "amount-per-group",
+        "SecondRole": "group-count",
+        "TargetRole": "total-amount",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "Mỗi {v6} chứa {f0} {v4} {v3}.",
+          "{v1} chuẩn bị {f1} {v5} như vậy."
+        ],
+        "Question": "{v1} chuẩn bị tất cả bao nhiêu {v0} {v3}?",
+        "Lead": "Tổng lượng {v3} là",
+        "AlternativeFacts": [
+          "Trong mỗi {v6} có {f0} {v4} {v3}.",
+          "Có {f1} {v5} như vậy do {v1} chuẩn bị."
+        ],
+        "AlternativeQuestion": "Tổng lượng {v3} mà {v1} chuẩn bị là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "price",
+        "Type": "DecimalMultiply",
+        "FirstRole": "unit-price",
+        "SecondRole": "purchase-count",
+        "TargetRole": "total-cost",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "Mỗi {v6} có giá {f0} {v4}.",
+          "{v1} mua {f1} {v5}."
+        ],
+        "Question": "{v1} phải trả tất cả bao nhiêu {v0}?",
+        "Lead": "Tổng số tiền phải trả là",
+        "AlternativeFacts": [
+          "Giá của mỗi {v6} là {f0} {v4}.",
+          "Số lượng {v5} mà {v1} mua là {f1}."
+        ],
+        "AlternativeQuestion": "Tổng số tiền {v1} phải trả là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "share",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "group-count",
+        "TargetRole": "amount-per-group",
+        "MoneyOnly": false,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} có {f0} {v4} {v3}.",
+          "{v1} chia đều lượng đó vào {f1} {v5}."
+        ],
+        "Question": "Mỗi {v6} nhận được bao nhiêu {v0} {v3}?",
+        "Lead": "Lượng {v3} trong mỗi phần là",
+        "AlternativeFacts": [
+          "Lượng {v3} của {v1} là {f0} {v4}.",
+          "Lượng đó được {v1} chia đều vào {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Lượng {v3} trong mỗi {v6} là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "count",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "amount-per-group",
+        "TargetRole": "group-count",
+        "MoneyOnly": false,
+        "GoodsOnly": true,
+        "Facts": [
+          "{v1} có {f0} {v4} {v3}.",
+          "Mỗi {v6} cần {f1} {v5} {v3}."
+        ],
+        "Question": "{v1} chia hết lượng đó được bao nhiêu {v0}?",
+        "Lead": "Số phần chia được là",
+        "AlternativeFacts": [
+          "Lượng {v3} của {v1} là {f0} {v4}.",
+          "Lượng {v3} cần cho mỗi {v6} là {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Có thể chia hết lượng của {v1} thành bao nhiêu {v0}?"
+      },
+      {
+        "Id": "combine-money",
+        "Type": "DecimalAdd",
+        "FirstRole": "separate-first-stock",
+        "SecondRole": "separate-second-stock",
+        "TargetRole": "combined-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} có {f0} {v4}.",
+          "{v2} có {f1} {v5}."
+        ],
+        "Question": "Hai bạn có tất cả bao nhiêu {v0}?",
+        "Lead": "Tổng số tiền của hai bạn là",
+        "AlternativeFacts": [
+          "Số tiền của {v1} là {f0} {v4}.",
+          "Số tiền của {v2} là {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Tổng số tiền của hai bạn là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "increase-money",
+        "Type": "DecimalAdd",
+        "FirstRole": "initial-stock",
+        "SecondRole": "added-stock",
+        "TargetRole": "final-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} có {f0} {v4}.",
+          "{v1} được nhận thêm {f1} {v5}."
+        ],
+        "Question": "{v1} có tất cả bao nhiêu {v0}?",
+        "Lead": "Số tiền sau khi nhận thêm là",
+        "AlternativeFacts": [
+          "Số tiền ban đầu của {v1} là {f0} {v4}.",
+          "{v1} được bổ sung thêm {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Sau khi nhận thêm, {v1} có bao nhiêu {v0}?"
+      },
+      {
+        "Id": "remaining-money",
+        "Type": "DecimalSubtract",
+        "FirstRole": "initial-stock",
+        "SecondRole": "removed-stock",
+        "TargetRole": "remaining-stock",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} có {f0} {v4}.",
+          "{v1} đã chi {f1} {v5}."
+        ],
+        "Question": "{v1} còn lại bao nhiêu {v0}?",
+        "Lead": "Số tiền còn lại là",
+        "AlternativeFacts": [
+          "Ngân sách ban đầu của {v1} là {f0} {v4}.",
+          "{v1} đã sử dụng {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Sau khi chi tiền, {v1} còn bao nhiêu {v0}?"
+      },
+      {
+        "Id": "share-money",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "group-count",
+        "TargetRole": "amount-per-group",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} dành {f0} {v4}.",
+          "{v1} chia đều số tiền đó vào {f1} {v5}."
+        ],
+        "Question": "Mỗi {v6} có bao nhiêu {v0}?",
+        "Lead": "Số tiền trong mỗi phần là",
+        "AlternativeFacts": [
+          "Số tiền {v1} dành ra là {f0} {v4}.",
+          "Số tiền đó được {v1} chia đều vào {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Số tiền trong mỗi {v6} là bao nhiêu {v0}?"
+      },
+      {
+        "Id": "count-money",
+        "Type": "DecimalDivide",
+        "FirstRole": "total-amount",
+        "SecondRole": "amount-per-group",
+        "TargetRole": "group-count",
+        "MoneyOnly": true,
+        "GoodsOnly": false,
+        "Facts": [
+          "{v1} có {f0} {v4}.",
+          "Mỗi {v6} có giá {f1} {v5}."
+        ],
+        "Question": "{v1} dùng hết số tiền đó mua được bao nhiêu {v0}?",
+        "Lead": "Số món mua được là",
+        "AlternativeFacts": [
+          "Ngân sách của {v1} là {f0} {v4}.",
+          "Giá của mỗi {v6} là {f1} {v5}."
+        ],
+        "AlternativeQuestion": "Với toàn bộ số tiền đó, {v1} mua được bao nhiêu {v0}?"
+      }
+    ],
     "Narrative.Applied.Phrasings": [{"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.002", "Alternatives": ["Trong bài thực hành, {subject} là {a} {large_Symbol}. Em hãy cho biết: lượng này bằng bao nhiêu {small_Symbol}?", "Theo dữ kiện của bài, {subject} là {a} {large_Symbol}. Theo dữ kiện đã cho, lượng này bằng bao nhiêu {small_Symbol}?", "Ta có dữ kiện: {subject} là {a} {large_Symbol}. Hãy xác định: lượng này bằng bao nhiêu {small_Symbol}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.003", "Alternatives": ["Trong bài thực hành, {subject} là {value} {small_Symbol}. Em hãy cho biết: lượng này bằng bao nhiêu {large_Symbol}?", "Theo dữ kiện của bài, {subject} là {value} {small_Symbol}. Theo dữ kiện đã cho, lượng này bằng bao nhiêu {large_Symbol}?", "Ta có dữ kiện: {subject} là {value} {small_Symbol}. Hãy xác định: lượng này bằng bao nhiêu {large_Symbol}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.004", "Alternatives": ["Trong bài thực hành, {subject} gồm {a} {large_Symbol} và {b} {small_Symbol}.", "Theo dữ kiện của bài, {subject} gồm {a} {large_Symbol} và {b} {small_Symbol}.", "Ta có dữ kiện: {subject} gồm {a} {large_Symbol} và {b} {small_Symbol}."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.006", "Alternatives": ["Trong bài thực hành, cộng thêm {c} {large_Symbol}.", "Theo dữ kiện của bài, cộng thêm {c} {large_Symbol}.", "Ta có dữ kiện: cộng thêm {c} {large_Symbol}."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.008", "Alternatives": ["Trong bài thực hành, sau đó bớt {used} {small_Symbol}.", "Theo dữ kiện của bài, sau đó bớt {used} {small_Symbol}.", "Ta có dữ kiện: sau đó bớt {used} {small_Symbol}."]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.MeasurementDifficulty.CreateMeasurementDifficulty.010", "Alternatives": ["Em hãy cho biết: kết quả là bao nhiêu {answerUnit}?", "Theo dữ kiện đã cho, kết quả là bao nhiêu {answerUnit}?", "Hãy xác định: kết quả là bao nhiêu {answerUnit}?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.003", "Alternatives": ["Trong bài thực hành, một đoạn dây đo được {a} m. Em hãy cho biết: khi làm tròn số đo đến {destination}, đoạn dây dài khoảng bao nhiêu mét?", "Theo dữ kiện của bài, một đoạn dây đo được {a} m. Theo dữ kiện đã cho, khi làm tròn số đo đến {destination}, đoạn dây dài khoảng bao nhiêu mét?", "Ta có dữ kiện: một đoạn dây đo được {a} m. Hãy xác định: khi làm tròn số đo đến {destination}, đoạn dây dài khoảng bao nhiêu mét?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.DecimalDifficulty.CreateDecimalDifficulty.005", "Alternatives": ["Trong bài thực hành, bình thứ nhất chứa {first} l nước, bình thứ hai chứa {second} l nước. Em hãy cho biết: dùng dấu <, > hoặc = để so sánh lượng nước của bình thứ nhất với bình thứ hai được dấu nào?", "Theo dữ kiện của bài, bình thứ nhất chứa {first} l nước, bình thứ hai chứa {second} l nước. Theo dữ kiện đã cho, dùng dấu <, > hoặc = để so sánh lượng nước của bình thứ nhất với bình thứ hai được dấu nào?", "Ta có dữ kiện: bình thứ nhất chứa {first} l nước, bình thứ hai chứa {second} l nước. Hãy xác định: dùng dấu <, > hoặc = để so sánh lượng nước của bình thứ nhất với bình thứ hai được dấu nào?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.008", "Alternatives": ["Trong bài thực hành, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Em hãy cho biết: buổi đọc sách bắt đầu lúc mấy giờ, bao nhiêu phút?", "Theo dữ kiện của bài, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Theo dữ kiện đã cho, buổi đọc sách bắt đầu lúc mấy giờ, bao nhiêu phút?", "Ta có dữ kiện: đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Hãy xác định: buổi đọc sách bắt đầu lúc mấy giờ, bao nhiêu phút?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.011", "Alternatives": ["Trong bài thực hành, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Em hãy cho biết: sau {elapsed} phút, đồng hồ chỉ mấy giờ, bao nhiêu phút?", "Theo dữ kiện của bài, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Theo dữ kiện đã cho, sau {elapsed} phút, đồng hồ chỉ mấy giờ, bao nhiêu phút?", "Ta có dữ kiện: đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Hãy xác định: sau {elapsed} phút, đồng hồ chỉ mấy giờ, bao nhiêu phút?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.012", "Alternatives": ["Trong bài thực hành, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Trong bài thực hành, thời gian trôi qua bằng {hourPart} giờ {minutePart} phút bớt {reduction} phút. Em hãy cho biết: sau đó đồng hồ chỉ mấy giờ, bao nhiêu phút?", "Theo dữ kiện của bài, đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Theo dữ kiện của bài, thời gian trôi qua bằng {hourPart} giờ {minutePart} phút bớt {reduction} phút. Theo dữ kiện đã cho, sau đó đồng hồ chỉ mấy giờ, bao nhiêu phút?", "Ta có dữ kiện: đồng hồ trong hình chỉ giờ bắt đầu buổi đọc sách. Ta có dữ kiện: thời gian trôi qua bằng {hourPart} giờ {minutePart} phút bớt {reduction} phút. Hãy xác định: sau đó đồng hồ chỉ mấy giờ, bao nhiêu phút?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.034", "Alternatives": ["Trong bài thực hành, một đợt đọc sách bắt đầu vào đầu ngày {from_dd_MM_yyyy} và kết thúc vào đầu ngày {to_dd_MM_yyyy}. Em hãy cho biết: đợt đọc sách kéo dài bao nhiêu ngày?", "Theo dữ kiện của bài, một đợt đọc sách bắt đầu vào đầu ngày {from_dd_MM_yyyy} và kết thúc vào đầu ngày {to_dd_MM_yyyy}. Theo dữ kiện đã cho, đợt đọc sách kéo dài bao nhiêu ngày?", "Ta có dữ kiện: một đợt đọc sách bắt đầu vào đầu ngày {from_dd_MM_yyyy} và kết thúc vào đầu ngày {to_dd_MM_yyyy}. Hãy xác định: đợt đọc sách kéo dài bao nhiêu ngày?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.035", "Alternatives": ["Trong bài thực hành, một hoạt động diễn ra từ đầu ngày {from_dd_MM_yyyy} đến đầu ngày {to_dd_MM_yyyy}, có {paused} ngày tạm dừng trong khoảng này. Em hãy cho biết: có bao nhiêu ngày hoạt động?", "Theo dữ kiện của bài, một hoạt động diễn ra từ đầu ngày {from_dd_MM_yyyy} đến đầu ngày {to_dd_MM_yyyy}, có {paused} ngày tạm dừng trong khoảng này. Theo dữ kiện đã cho, có bao nhiêu ngày hoạt động?", "Ta có dữ kiện: một hoạt động diễn ra từ đầu ngày {from_dd_MM_yyyy} đến đầu ngày {to_dd_MM_yyyy}, có {paused} ngày tạm dừng trong khoảng này. Hãy xác định: có bao nhiêu ngày hoạt động?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.007", "Alternatives": ["Trong bài thực hành, một tấm bìa hình chữ nhật có diện tích {a_b} {areaUnit}, {known} {given} {unit}. Em hãy cho biết: {missing} của tấm bìa bằng bao nhiêu?", "Theo dữ kiện của bài, một tấm bìa hình chữ nhật có diện tích {a_b} {areaUnit}, {known} {given} {unit}. Theo dữ kiện đã cho, {missing} của tấm bìa bằng bao nhiêu?", "Ta có dữ kiện: một tấm bìa hình chữ nhật có diện tích {a_b} {areaUnit}, {known} {given} {unit}. Hãy xác định: {missing} của tấm bìa bằng bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.008", "Alternatives": ["Trong bài thực hành, một tấm bìa hình chữ nhật có chu vi {perimeter} {unit}, {known} {given} {unit}. Em hãy cho biết: {missing} của tấm bìa bằng bao nhiêu?", "Theo dữ kiện của bài, một tấm bìa hình chữ nhật có chu vi {perimeter} {unit}, {known} {given} {unit}. Theo dữ kiện đã cho, {missing} của tấm bìa bằng bao nhiêu?", "Ta có dữ kiện: một tấm bìa hình chữ nhật có chu vi {perimeter} {unit}, {known} {given} {unit}. Hãy xác định: {missing} của tấm bìa bằng bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.012", "Alternatives": ["Trong bài thực hành, {shape} có chu vi {4_a} {unit}. Em hãy cho biết: một cạnh của hình dài bao nhiêu?", "Theo dữ kiện của bài, {shape} có chu vi {4_a} {unit}. Theo dữ kiện đã cho, một cạnh của hình dài bao nhiêu?", "Ta có dữ kiện: {shape} có chu vi {4_a} {unit}. Hãy xác định: một cạnh của hình dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.014", "Alternatives": ["Trong bài thực hành, tam giác ABC có chu vi {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Em hãy cho biết: cạnh AC dài bao nhiêu?", "Theo dữ kiện của bài, tam giác ABC có chu vi {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Theo dữ kiện đã cho, cạnh AC dài bao nhiêu?", "Ta có dữ kiện: tam giác ABC có chu vi {trianglePerimeter} {unit}, AB = {a} {unit}, BC = {b} {unit}. Hãy xác định: cạnh AC dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.016", "Alternatives": ["Trong bài thực hành, hình bình hành ABCD có chu vi {p} {unit}, AB = {a} {unit}. Em hãy cho biết: cạnh BC dài bao nhiêu?", "Theo dữ kiện của bài, hình bình hành ABCD có chu vi {p} {unit}, AB = {a} {unit}. Theo dữ kiện đã cho, cạnh BC dài bao nhiêu?", "Ta có dữ kiện: hình bình hành ABCD có chu vi {p} {unit}, AB = {a} {unit}. Hãy xác định: cạnh BC dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.018", "Alternatives": ["Trong bài thực hành, cạnh trên của tấm bìa hình chữ nhật là đoạn AN dài {a_b} {unit}. Trong bài thực hành, điểm M nằm giữa A và N, AM = {a} {unit}. Em hãy cho biết: đoạn MN dài bao nhiêu?", "Theo dữ kiện của bài, cạnh trên của tấm bìa hình chữ nhật là đoạn AN dài {a_b} {unit}. Theo dữ kiện của bài, điểm M nằm giữa A và N, AM = {a} {unit}. Theo dữ kiện đã cho, đoạn MN dài bao nhiêu?", "Ta có dữ kiện: cạnh trên của tấm bìa hình chữ nhật là đoạn AN dài {a_b} {unit}. Ta có dữ kiện: điểm M nằm giữa A và N, AM = {a} {unit}. Hãy xác định: đoạn MN dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.020", "Alternatives": ["Trong bài thực hành, tấm bìa hình chữ nhật ANCD có chu vi {fullPerimeter} {unit}, NC = {b} {unit}. Trong bài thực hành, điểm M nằm giữa A và N, AM = {a} {unit}. Em hãy cho biết: đoạn MN dài bao nhiêu?", "Theo dữ kiện của bài, tấm bìa hình chữ nhật ANCD có chu vi {fullPerimeter} {unit}, NC = {b} {unit}. Theo dữ kiện của bài, điểm M nằm giữa A và N, AM = {a} {unit}. Theo dữ kiện đã cho, đoạn MN dài bao nhiêu?", "Ta có dữ kiện: tấm bìa hình chữ nhật ANCD có chu vi {fullPerimeter} {unit}, NC = {b} {unit}. Ta có dữ kiện: điểm M nằm giữa A và N, AM = {a} {unit}. Hãy xác định: đoạn MN dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateMissingSideTask.022", "Alternatives": ["Trong bài thực hành, tấm bìa hình chữ L FABCDE có các cạnh kề nhau vuông góc. Trong bài thực hành, cạnh ED dài {a_b} {unit}, cạnh FA dài {a} {unit}. Em hãy cho biết: cạnh BC nằm ngang trong hình dài bao nhiêu?", "Theo dữ kiện của bài, tấm bìa hình chữ L FABCDE có các cạnh kề nhau vuông góc. Theo dữ kiện của bài, cạnh ED dài {a_b} {unit}, cạnh FA dài {a} {unit}. Theo dữ kiện đã cho, cạnh BC nằm ngang trong hình dài bao nhiêu?", "Ta có dữ kiện: tấm bìa hình chữ L FABCDE có các cạnh kề nhau vuông góc. Ta có dữ kiện: cạnh ED dài {a_b} {unit}, cạnh FA dài {a} {unit}. Hãy xác định: cạnh BC nằm ngang trong hình dài bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.025", "Alternatives": ["Trong bài thực hành, ghép hai hình chữ nhật không chồng lấn: hình I dài {a} {unit}, rộng {b} {unit}, hình II dài {c} {unit}, rộng {a} {unit}. Em hãy cho biết: tổng diện tích hình ghép là bao nhiêu?", "Theo dữ kiện của bài, ghép hai hình chữ nhật không chồng lấn: hình I dài {a} {unit}, rộng {b} {unit}, hình II dài {c} {unit}, rộng {a} {unit}. Theo dữ kiện đã cho, tổng diện tích hình ghép là bao nhiêu?", "Ta có dữ kiện: ghép hai hình chữ nhật không chồng lấn: hình I dài {a} {unit}, rộng {b} {unit}, hình II dài {c} {unit}, rộng {a} {unit}. Hãy xác định: tổng diện tích hình ghép là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.026", "Alternatives": ["Trong bài thực hành, hình ghép gồm hình vuông I cạnh {a} {unit} và hình chữ nhật II có hai cạnh {b} {unit}, {c} {unit}. Trong bài thực hành, hai hình không chồng lấn. Em hãy cho biết: diện tích hình ghép là bao nhiêu?", "Theo dữ kiện của bài, hình ghép gồm hình vuông I cạnh {a} {unit} và hình chữ nhật II có hai cạnh {b} {unit}, {c} {unit}. Theo dữ kiện của bài, hai hình không chồng lấn. Theo dữ kiện đã cho, diện tích hình ghép là bao nhiêu?", "Ta có dữ kiện: hình ghép gồm hình vuông I cạnh {a} {unit} và hình chữ nhật II có hai cạnh {b} {unit}, {c} {unit}. Ta có dữ kiện: hai hình không chồng lấn. Hãy xác định: diện tích hình ghép là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.027", "Alternatives": ["Trong bài thực hành, từ tấm bìa hình chữ nhật dài {w} {unit}, rộng {h} {unit}, cắt bỏ ở góc trên bên phải một hình chữ nhật có chiều ngang {b} {unit}, chiều dọc {c} {unit}. Em hãy cho biết: diện tích phần chữ L còn lại là bao nhiêu?", "Theo dữ kiện của bài, từ tấm bìa hình chữ nhật dài {w} {unit}, rộng {h} {unit}, cắt bỏ ở góc trên bên phải một hình chữ nhật có chiều ngang {b} {unit}, chiều dọc {c} {unit}. Theo dữ kiện đã cho, diện tích phần chữ L còn lại là bao nhiêu?", "Ta có dữ kiện: từ tấm bìa hình chữ nhật dài {w} {unit}, rộng {h} {unit}, cắt bỏ ở góc trên bên phải một hình chữ nhật có chiều ngang {b} {unit}, chiều dọc {c} {unit}. Hãy xác định: diện tích phần chữ L còn lại là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.028", "Alternatives": ["Trong bài thực hành, một khung hình chữ nhật có kích thước ngoài {outerW} {unit} và {outerH} {unit}. Trong bài thực hành, phần rỗng hình chữ nhật bên trong có kích thước {a} {unit} và {b} {unit}. Em hãy cho biết: diện tích phần khung, không tính phần rỗng, là bao nhiêu?", "Theo dữ kiện của bài, một khung hình chữ nhật có kích thước ngoài {outerW} {unit} và {outerH} {unit}. Theo dữ kiện của bài, phần rỗng hình chữ nhật bên trong có kích thước {a} {unit} và {b} {unit}. Theo dữ kiện đã cho, diện tích phần khung, không tính phần rỗng, là bao nhiêu?", "Ta có dữ kiện: một khung hình chữ nhật có kích thước ngoài {outerW} {unit} và {outerH} {unit}. Ta có dữ kiện: phần rỗng hình chữ nhật bên trong có kích thước {a} {unit} và {b} {unit}. Hãy xác định: diện tích phần khung, không tính phần rỗng, là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.030", "Alternatives": ["Trong bài thực hành, ghép hình chữ nhật I rộng {a} {unit}, cao {height} {unit} với tam giác vuông II có hai cạnh góc vuông {c} {unit} và {height} {unit}, không chồng lấn. Em hãy cho biết: tổng diện tích hình ghép là bao nhiêu?", "Theo dữ kiện của bài, ghép hình chữ nhật I rộng {a} {unit}, cao {height} {unit} với tam giác vuông II có hai cạnh góc vuông {c} {unit} và {height} {unit}, không chồng lấn. Theo dữ kiện đã cho, tổng diện tích hình ghép là bao nhiêu?", "Ta có dữ kiện: ghép hình chữ nhật I rộng {a} {unit}, cao {height} {unit} với tam giác vuông II có hai cạnh góc vuông {c} {unit} và {height} {unit}, không chồng lấn. Hãy xác định: tổng diện tích hình ghép là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.031", "Alternatives": ["Trong bài thực hành, hình chữ T ghép từ hai hình chữ nhật không chồng lấn: thanh ngang I dài {topWidth} {unit}, rộng {c} {unit}, thanh dọc II rộng {b} {unit}, dài {a} {unit}. Em hãy cho biết: diện tích hình chữ T là bao nhiêu?", "Theo dữ kiện của bài, hình chữ T ghép từ hai hình chữ nhật không chồng lấn: thanh ngang I dài {topWidth} {unit}, rộng {c} {unit}, thanh dọc II rộng {b} {unit}, dài {a} {unit}. Theo dữ kiện đã cho, diện tích hình chữ T là bao nhiêu?", "Ta có dữ kiện: hình chữ T ghép từ hai hình chữ nhật không chồng lấn: thanh ngang I dài {topWidth} {unit}, rộng {c} {unit}, thanh dọc II rộng {b} {unit}, dài {a} {unit}. Hãy xác định: diện tích hình chữ T là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.032", "Alternatives": ["Trong bài thực hành, tấm bìa hình chữ nhật dài {boardWidth} {unit}, rộng {boardHeight} {unit}. Trong bài thực hành, cắt bỏ hai phần rỗng hình chữ nhật không chồng lấn nằm hoàn toàn bên trong: phần I có kích thước {a} {unit} và {b} {unit}, phần II có kích thước {b} {unit} và {c} {unit}. Em hãy cho biết: diện tích bìa còn lại là bao nhiêu?", "Theo dữ kiện của bài, tấm bìa hình chữ nhật dài {boardWidth} {unit}, rộng {boardHeight} {unit}. Theo dữ kiện của bài, cắt bỏ hai phần rỗng hình chữ nhật không chồng lấn nằm hoàn toàn bên trong: phần I có kích thước {a} {unit} và {b} {unit}, phần II có kích thước {b} {unit} và {c} {unit}. Theo dữ kiện đã cho, diện tích bìa còn lại là bao nhiêu?", "Ta có dữ kiện: tấm bìa hình chữ nhật dài {boardWidth} {unit}, rộng {boardHeight} {unit}. Ta có dữ kiện: cắt bỏ hai phần rỗng hình chữ nhật không chồng lấn nằm hoàn toàn bên trong: phần I có kích thước {a} {unit} và {b} {unit}, phần II có kích thước {b} {unit} và {c} {unit}. Hãy xác định: diện tích bìa còn lại là bao nhiêu?"]}, {"Id": "AppliedNarrative.ElementaryQuizGenerator.Shapes.CreateCompositeAreaTask.033", "Alternatives": ["Trong bài thực hành, ba hình chữ nhật I, II, III ghép cạnh nhau, không chồng lấn, cùng rộng {strip} {unit}, chiều cao lần lượt {a} {unit}, {b} {unit}, {c} {unit}. Em hãy cho biết: tổng diện tích hình ghép là bao nhiêu?", "Theo dữ kiện của bài, ba hình chữ nhật I, II, III ghép cạnh nhau, không chồng lấn, cùng rộng {strip} {unit}, chiều cao lần lượt {a} {unit}, {b} {unit}, {c} {unit}. Theo dữ kiện đã cho, tổng diện tích hình ghép là bao nhiêu?", "Ta có dữ kiện: ba hình chữ nhật I, II, III ghép cạnh nhau, không chồng lấn, cùng rộng {strip} {unit}, chiều cao lần lượt {a} {unit}, {b} {unit}, {c} {unit}. Hãy xác định: tổng diện tích hình ghép là bao nhiêu?"]}],
 
     "Narrative.DecimalSpatial.Phrasings": [{"Id": "DecimalSpatial.SpatialFact", "Alternatives": ["Cả ba bạn đều quay mặt sang trái. Thứ tự từ đầu hàng tới cuối hàng là {first}, {second}, {third}.", "Ba bạn xếp hàng và cùng nhìn về bên trái. Tính từ đầu hàng đến cuối hàng, thứ tự là {first}, {second}, {third}.", "Các bạn trong hàng đều quay mặt về bên trái. Đi từ đầu hàng đến cuối hàng, ta gặp {first}, {second}, {third}.", "Ba bạn đang đứng thành hàng, cùng hướng mặt sang trái. Lần lượt từ đầu đến cuối hàng là {first}, {second}, {third}."]}, {"Id": "DecimalSpatial.DecimalFact", "Alternatives": ["Số thập phân đang xét là {value}.", "Em có số thập phân {value}.", "Xét số thập phân {value}.", "Số thập phân được cho là {value}."]}, {"Id": "DecimalSpatial.ReadingFact", "Alternatives": ["Cách đọc của một số thập phân là “{reading}”.", "Em nghe số thập phân được đọc là “{reading}”.", "Số thập phân có cách đọc “{reading}”.", "Một số được đọc thành “{reading}”."]}, {"Id": "DecimalSpatial.OrderFact", "Alternatives": ["Các số thập phân cần xét là {value0}, {value1}, {value2}, {value3}.", "Em có các số thập phân {value0}, {value1}, {value2}, {value3}.", "Xét các số thập phân {value0}, {value1}, {value2}, {value3}.", "Các số được cho là {value0}, {value1}, {value2}, {value3}."]}, {"Id": "DecimalSpatial.FractionFact", "Alternatives": ["Phân số thập phân đang xét là {numerator}/{denominator}.", "Em có phân số thập phân {numerator}/{denominator}.", "Xét phân số thập phân {numerator}/{denominator}.", "Phân số được cho là {numerator}/{denominator}."]}, {"Id": "DecimalSpatial.FrontQuestion", "Alternatives": ["Quan sát dữ kiện, bạn nào đứng ngay trước {second}?", "Dựa vào dữ kiện, bạn nào đứng ngay trước {second}?", "Theo dữ kiện, bạn nào đứng ngay trước {second}?"]}, {"Id": "DecimalSpatial.BehindQuestion", "Alternatives": ["Quan sát dữ kiện, bạn nào đứng ngay sau {second}?", "Dựa vào dữ kiện, bạn nào đứng ngay sau {second}?", "Theo dữ kiện, bạn nào đứng ngay sau {second}?"]}, {"Id": "DecimalSpatial.BetweenQuestion", "Alternatives": ["Quan sát dữ kiện, bạn nào đứng ở giữa {first} và {third}?", "Dựa vào dữ kiện, bạn nào đứng ở giữa {first} và {third}?", "Theo dữ kiện, bạn nào đứng ở giữa {first} và {third}?"]}, {"Id": "DecimalSpatial.ReadQuestion", "Alternatives": ["Hãy cho biết, em đọc số đó bằng lời như thế nào?", "Dựa vào dữ kiện, em đọc số đó bằng lời như thế nào?", "Theo dữ kiện, em đọc số đó bằng lời như thế nào?"]}, {"Id": "DecimalSpatial.WriteQuestion", "Alternatives": ["Hãy cho biết, em viết số đó bằng chữ số như thế nào?", "Dựa vào dữ kiện, em viết số đó bằng chữ số như thế nào?", "Theo dữ kiện, em viết số đó bằng chữ số như thế nào?"]}, {"Id": "DecimalSpatial.PlaceQuestion", "Alternatives": ["Quan sát dữ kiện, chữ số ở hàng {place} là chữ số nào?", "Dựa vào dữ kiện, chữ số ở hàng {place} là chữ số nào?", "Theo dữ kiện, chữ số ở hàng {place} là chữ số nào?"]}, {"Id": "DecimalSpatial.PartsQuestion", "Alternatives": ["Quan sát dữ kiện, phần nguyên và các chữ số của phần thập phân là gì?", "Dựa vào dữ kiện, phần nguyên và các chữ số của phần thập phân là gì?", "Theo dữ kiện, phần nguyên và các chữ số của phần thập phân là gì?"]}, {"Id": "DecimalSpatial.AscendingQuestion", "Alternatives": ["Hãy cho biết, em sắp xếp các số đó từ bé đến lớn như thế nào?", "Dựa vào dữ kiện, em sắp xếp các số đó từ bé đến lớn như thế nào?", "Theo dữ kiện, em sắp xếp các số đó từ bé đến lớn như thế nào?"]}, {"Id": "DecimalSpatial.DescendingQuestion", "Alternatives": ["Hãy cho biết, em sắp xếp các số đó từ lớn đến bé như thế nào?", "Dựa vào dữ kiện, em sắp xếp các số đó từ lớn đến bé như thế nào?", "Theo dữ kiện, em sắp xếp các số đó từ lớn đến bé như thế nào?"]}, {"Id": "DecimalSpatial.ToFractionQuestion", "Alternatives": ["Hãy cho biết, em viết số đó thành phân số thập phân có mẫu số {denominator} như thế nào?", "Dựa vào dữ kiện, em viết số đó thành phân số thập phân có mẫu số {denominator} như thế nào?", "Theo dữ kiện, em viết số đó thành phân số thập phân có mẫu số {denominator} như thế nào?"]}, {"Id": "DecimalSpatial.ToDecimalQuestion", "Alternatives": ["Hãy cho biết, em viết phân số đó thành số thập phân như thế nào?", "Dựa vào dữ kiện, em viết phân số đó thành số thập phân như thế nào?", "Theo dữ kiện, em viết phân số đó thành số thập phân như thế nào?"]}],

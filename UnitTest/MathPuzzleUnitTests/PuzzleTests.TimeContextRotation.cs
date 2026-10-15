@@ -9,7 +9,7 @@ internal static partial class PuzzleTests
     {
         string[] earlyContexts = ["library", "sports", "craft", "schedule"];
         string[] lateContexts = ["tourism", "events", "schedule"];
-        string[] Allowed(ElementaryQuizType type, CurriculumTier tier) => ElementaryQuizGenerator.TimeStoryTypes.Contains(type)
+        string[] Allowed(ElementaryQuizType type, CurriculumTier tier) => SameDayTimePilot.IsType(type)?SameDayTimePilot.Profiles(type,AppLanguage.Vietnamese).ToArray():ElementaryQuizGenerator.TimeStoryTypes.Contains(type)
             ? ElementaryQuizGenerator.TimeStoryContextIds(tier)
             : tier >= CurriculumTier.ThreeStars ? lateContexts : earlyContexts;
         CurriculumTier[] changes = [CurriculumTier.OneStar, CurriculumTier.ThreeStars,
@@ -50,6 +50,14 @@ internal static partial class PuzzleTests
         void Check(ArithmeticQuizQuestion question, CurriculumTier tier)
         {
             var contract = question.ElementaryProblem!;
+            if(SameDayTimePilot.IsType(contract.Type))
+            {
+                Require(Allowed(contract.Type,tier).Contains(contract.StoryContextId!)&&contract.Reasoning?.Tier==tier,
+                    "Same-day profile lost its context or star range.");
+                Require(new EssayAnswerValidator(new MathSolver.Services.Core.BasicArithmeticEngine()).ValidateSubmission(question,contract.AnswerText).IsCorrect,
+                    "Same-day answer changed after rotating context.");
+                count++;return;
+            }
             if (ElementaryQuizGenerator.IsTimeFractionExtension(contract.Type) || ElementaryQuizGenerator.IsMixedTime(contract.Type))
             {
                 Require(contract.Reasoning?.Tier == tier && new EssayAnswerValidator(new MathSolver.Services.Core.BasicArithmeticEngine())

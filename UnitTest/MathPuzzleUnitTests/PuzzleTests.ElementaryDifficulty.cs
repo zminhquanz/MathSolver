@@ -78,7 +78,18 @@ internal static partial class PuzzleTests
             if (family == QuizProblemKind.Time)
             {
                 decimal expected;
-                if (ElementaryQuizGenerator.IsMixedTime(type))
+                if(SameDayTimePilot.IsType(type))
+                {
+                    decimal start=Get("start-hour")*60+Get("start-minute"),end=Get("end-hour")*60+Get("end-minute");
+                    expected=type switch {ElementaryQuizType.SameDayElapsed=>end-start,
+                        ElementaryQuizType.SameDayStart=>end-Get("duration-minutes"),_=>start+Get("duration-minutes")};
+                    if(SameDayTimePilot.IsClock(type))
+                    {
+                        Require(Value()*60+Value(1)==expected&&Value(1)>=0&&Value(1)<60,"Same-day clock carry/borrow is incorrect.");
+                        expected=Value();
+                    }
+                }
+                else if (ElementaryQuizGenerator.IsMixedTime(type))
                 {
                     expected = type switch
                     {

@@ -2,6 +2,14 @@ Runner commands are registered under Runner/, native generation checks under Mod
 
 # AI question bank checks
 
+`--decimal-open` checks 300 bilingual one-step decimal profiles across addition,
+subtraction, per-group multiplication, unit prices, equal sharing and group-count
+division, including money contexts, fresh facts, grading, storage and review.
+`--decimal-open-model <gguf> [directory]` runs 14 real native profiles at 0.5,
+with at most three attempts and seeded original-wording exclusions. Replay with
+`--open-prose-evidence <directory>`. See
+[decimal open wording](../../MathSolver/DECIMAL_OPEN_PROSE.md).
+
 `--open-prose` checks the opt-in one-step/Find X/unit-conversion wording pilot,
 1,344 bilingual profiles, fresh C# grading and the separate persistent review
 queue. `--open-prose-model <model.gguf> [directory]` runs six fixed profiles with
@@ -564,3 +572,11 @@ native outputs must validate and grade against the current schema before reuse.
 `--next-ai-evidence <directory>` replays all 30 native SQLite outputs against the
 current source with independent arithmetic and fresh-data grading, without
 modifying the evidence database or running inference again.
+
+## Same-day time pilot
+
+Run `--time-open` for the bilingual role/chronology/grading/review regression.
+Run `--time-open-model <gguf> [directory]` for real inference across elapsed,
+start-time and end-time relations. Replay with `--open-prose-evidence <directory>`
+afterward; use final outcomes rather than treating pending drafts as verified.
+Scope and evidence are documented in `MathSolver/SAME_DAY_TIME_OPEN_PROSE.md`.

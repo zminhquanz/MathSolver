@@ -129,6 +129,7 @@ public static class ReasoningStoryValidator
                 ? " Chỗ dành riêng không dùng để xếp lượng đang xét." : " Reserved spaces are unavailable for this batch.");
         }
         if (c.Family != BankQuestionFamily.Time) return "";
+        if(SameDayTimeCatalogue.IsProfile(c))return "\n"+SameDayTimeCatalogue.PromptRelation(c);
         bool clockTimes = c.BankVariant == (int)MathSolver.Models.ElementaryQuizType.ElapsedTime;
         bool pause = (int)c.Tier >= (clockTimes ? 4 : 3);
         return "\n" + (clockTimes
