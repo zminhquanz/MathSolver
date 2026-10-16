@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../tools/msbuild/PdfSharpCore.props" />
   <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable></PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../TestSupport/TestSupport.csproj" />
     <ProjectReference Include="../TestHost/TestHost.csproj" />
-    <PackageReference Include="PDFsharp" Version="6.2.4" />
     <PackageReference Include="Microsoft.Maui.Graphics" Version="10.0.110" />
     <Compile Include="../../MathSolver/Services/Printing/*.cs" Link="Printing/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Graphics/Quizzes/ElementaryQuizDrawable*.cs" Link="Graphics/%(Filename)%(Extension)" />

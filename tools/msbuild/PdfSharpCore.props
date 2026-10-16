@@ -1,0 +1,35 @@
+<Project>
+  <!-- PDFsharp's NuGet package bundles a default digital signer and declares
+       Pkcs for it. Math Solver only uses the independent PDF engine assemblies.
+       Download the pinned upstream package, then opt in to those assemblies;
+       do not restore or ship the signer and its unused crypto dependency.
+       Keep dependencies here in sync when changing PdfSharpCoreVersion.
+       https://docs.pdfsharp.net/PDFsharp/Topics/PDF-Features/Signatures.html -->
+  <PropertyGroup>
+    <PdfSharpCoreVersion>6.2.4</PdfSharpCoreVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageDownload Include="PDFsharp" Version="[$(PdfSharpCoreVersion)]" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <Reference Include="PdfSharp">
+      <HintPath>$(NuGetPackageRoot)pdfsharp/$(PdfSharpCoreVersion)/lib/net10.0/PdfSharp.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="PdfSharp.Shared">
+      <HintPath>$(NuGetPackageRoot)pdfsharp/$(PdfSharpCoreVersion)/lib/net10.0/PdfSharp.Shared.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="PdfSharp.System">
+      <HintPath>$(NuGetPackageRoot)pdfsharp/$(PdfSharpCoreVersion)/lib/net10.0/PdfSharp.System.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+  <Target Name="VerifyPdfSharpCoreReferences" AfterTargets="ResolveReferences" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <_UnusedPdfSigningReference Include="@(ReferencePath)"
+          Condition="'%(ReferencePath.Filename)' == 'PdfSharp.Cryptography' Or '%(ReferencePath.Filename)' == 'System.Security.Cryptography.Pkcs'" />
+    </ItemGroup>
+    <Error Condition="'@(_UnusedPdfSigningReference)' != ''"
+           Text="Unused PDF signing dependency was reintroduced: @(_UnusedPdfSigningReference). Use PdfSharpCore.props without the digital signer." />
+  </Target>
+</Project>
