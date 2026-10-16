@@ -14,7 +14,7 @@ internal static partial class OpenProseTests
         int verified = 0, pending = 0;
         foreach(var attempt in attempts)
         {
-            if(attempt.Open&&attempt.Number==1&&(DecimalOpenStoryCatalogue.IsProfile(attempt.Contract)||SameDayTimeCatalogue.IsProfile(attempt.Contract)))
+            if(attempt.Open&&attempt.Number==1&&(DecimalOpenStoryCatalogue.IsProfile(attempt.Contract)||SameDayTimeCatalogue.IsProfile(attempt.Contract)||FractionPartOpenCatalogue.IsProfile(attempt.Contract)))
                 Check(attempt.Prompt.Replace("\r\n","\n",StringComparison.Ordinal)==BasicQuestionPrompt.Build(attempt.Contract).Replace("\r\n","\n",StringComparison.Ordinal),"Final pilot prompt differs from native-tested input.");
             var result = BasicQuestionValidator.Validate(attempt.RawJson,attempt.Contract);
             if(attempt.Outcome == "Verified")

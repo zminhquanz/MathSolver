@@ -13129,6 +13129,38 @@
         "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} end?"
       }
     ],
+    "FractionPartOpen.Contexts": [
+        {
+            "Id": "books",
+            "Actor": "The library",
+            "Unit": "books",
+            "Capacity": 1000,
+            "Whole": "{v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of those {v1}.",
+            "Question": "How many {v1} does {v0} donate?",
+            "Lead": "Number of {v1} donated"
+        },
+        {
+            "Id": "pens",
+            "Actor": "The teacher",
+            "Unit": "pens",
+            "Capacity": 200,
+            "Whole": "{v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of those {v1}.",
+            "Question": "How many {v1} does {v0} donate?",
+            "Lead": "Number of {v1} donated"
+        },
+        {
+            "Id": "notebooks",
+            "Actor": "The club",
+            "Unit": "notebooks",
+            "Capacity": 500,
+            "Whole": "{v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of those {v1}.",
+            "Question": "How many {v1} does {v0} donate?",
+            "Lead": "Number of {v1} donated"
+        }
+    ],
     "DecimalOpen.Contexts": [
       {
         "Id": "rice",

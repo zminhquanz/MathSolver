@@ -13158,6 +13158,38 @@
         "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
       }
     ],
+    "FractionPartOpen.Contexts": [
+        {
+            "Id": "books",
+            "Actor": "Thư viện",
+            "Unit": "quyển sách",
+            "Capacity": 1000,
+            "Whole": "{v0} có tất cả {f0} {v1}.",
+            "Share": "{v0} tặng {f1} tổng số {v1} đó.",
+            "Question": "{v0} đã tặng bao nhiêu {v1}?",
+            "Lead": "Số {v1} đã tặng"
+        },
+        {
+            "Id": "pens",
+            "Actor": "Cô giáo",
+            "Unit": "cây bút",
+            "Capacity": 200,
+            "Whole": "{v0} có tất cả {f0} {v1}.",
+            "Share": "{v0} tặng {f1} tổng số {v1} đó.",
+            "Question": "{v0} đã tặng bao nhiêu {v1}?",
+            "Lead": "Số {v1} đã tặng"
+        },
+        {
+            "Id": "notebooks",
+            "Actor": "Câu lạc bộ",
+            "Unit": "quyển vở",
+            "Capacity": 500,
+            "Whole": "{v0} có tất cả {f0} {v1}.",
+            "Share": "{v0} tặng {f1} tổng số {v1} đó.",
+            "Question": "{v0} đã tặng bao nhiêu {v1}?",
+            "Lead": "Số {v1} đã tặng"
+        }
+    ],
     "DecimalOpen.Contexts": [
       {
         "Id": "rice",

@@ -14,6 +14,7 @@ internal static class DefaultBankSuite
         await OpenProseTests.RunAsync();
         await DecimalOpenTests.RunAsync();
         await SameDayTimeTests.RunAsync();
+        await FractionPartOpenTests.RunAsync();
         await AppliedNarrativeBankTests.RunAsync();
         await RegexTimeoutRegressionTests.RunAsync();
         await ExpandedArithmeticTests.RunAsync();

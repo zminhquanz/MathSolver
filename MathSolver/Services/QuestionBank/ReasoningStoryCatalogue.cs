@@ -194,6 +194,8 @@ public static partial class ReasoningStoryCatalogue
     private static ArithmeticQuizQuestion Generate(BasicQuestionContract c, ArithmeticQuizMode mode)
     {
         var random = new Random(c.Story!.Seed);
+        if(FractionPartOpenCatalogue.IsProfile(c))
+            return new ElementaryQuizGenerator(random).GenerateFractionPartPilot(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(SameDayTimeCatalogue.IsProfile(c))
             return new ElementaryQuizGenerator(random).GenerateSameDayTime(mode,(ElementaryQuizType)c.BankVariant,c.Language,c.Tier,c.Story!.NarrativeId);
         if(DecimalOpenStoryCatalogue.IsProfile(c))
@@ -244,6 +246,7 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
+        if(FractionPartOpenCatalogue.IsProfile(c))return FractionPartOpenCatalogue.Build(c);
         if(c.Family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)c.BankVariant))
         {
             if(string.IsNullOrEmpty(c.Story!.NarrativeId))

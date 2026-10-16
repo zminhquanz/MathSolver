@@ -8,6 +8,7 @@ public static partial class QuizContentValidation
     public static void CheckLists(QuizContentPack pack)
     {
         CheckDecimalOpenLists(pack);
+        CheckFractionPartLists(pack);
         CheckSameDayTimeLists(pack);
         CheckTimeFractionLists(pack);
         CheckMixedTimeLists(pack);

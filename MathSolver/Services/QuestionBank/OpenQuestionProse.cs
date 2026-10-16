@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -90,6 +90,7 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if(FractionPartOpenCatalogue.IsProfile(c))return FractionPartOpenCatalogue.Validate(c,syntax.Draft!);
         if(SameDayTimeCatalogue.IsProfile(c))
         {
             if(PilotMeaningRules.TimeContradiction(syntax.Draft!,c.Language))
@@ -141,6 +142,7 @@ public static class OpenQuestionProse
             Return only JSON with the example's schema and role/step/unit_id values.
             """;
         string relation = SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
+            : FractionPartOpenCatalogue.IsProfile(c) ? FractionPartOpenCatalogue.Relation
             : DecimalOpenStoryCatalogue.IsProfile(c) ? DecimalOpenStoryCatalogue.PromptRelation(c)
             : c.Family == BankQuestionFamily.FindX
             ? "unknown=" + c.UnknownRole + "; given_a="+FindXQuestionCatalogue.Find(c.SceneId)!.KnownARole+"; given_b="+FindXQuestionCatalogue.Find(c.SceneId)!.KnownBRole+"; target=" + FindXQuestionCatalogue.Find(c.SceneId)!.TargetRole
