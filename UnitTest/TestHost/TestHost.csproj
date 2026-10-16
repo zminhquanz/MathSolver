@@ -16,6 +16,8 @@
     <Compile Include="../../MathSolver/Numerics/BigIntegers/*.cs" Link="Numerics/BigIntegers/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Numerics/Powers/*.cs" Link="Numerics/Powers/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Numerics/FloatingPoint/*.cs" Link="Numerics/FloatingPoint/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Graphics/Equations/*SimdEvaluator.cs" Link="Graphics/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Graphics/Equations/LinearGraphProjection.cs" Link="Graphics/LinearGraphProjection.cs" />
     <Compile Include="../../MathSolver/Numerics/Serialization/*.cs" Link="Numerics/Serialization/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Services/Calculations/*.cs" Link="Services/Calculations/%(Filename)%(Extension)" />
     <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />

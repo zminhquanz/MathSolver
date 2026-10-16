@@ -537,6 +537,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(shoup);
 
         int index = start;
+        if (index + Unroll <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx512);
         for (; index + Unroll <= end; index += Unroll)
         {
             Vector512<uint> first =
@@ -578,6 +579,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
+        if (index + Width <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx512);
         for (; index + Width <= end; index += Width)
         {
             Vector512<uint> value =
@@ -662,6 +664,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(shoup);
 
         int index = start;
+        if (index + Unroll <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx2);
         for (; index + Unroll <= end; index += Unroll)
         {
             Vector256<uint> first =
@@ -700,6 +703,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
+        if (index + Width <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx2);
         for (; index + Width <= end; index += Width)
         {
             Vector256<uint> value =
@@ -784,6 +788,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(shoup);
 
         int index = start;
+        if (index + Unroll <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Sse);
         for (; index + Unroll <= end; index += Unroll)
         {
             Vector128<uint> first =
@@ -822,6 +827,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
+        if (index + Width <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Sse);
         for (; index + Width <= end; index += Width)
         {
             Vector128<uint> value =
@@ -906,6 +912,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(shoup);
 
         int index = start;
+        if (index + Unroll <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Neon);
         for (; index + Unroll <= end; index += Unroll)
         {
             Vector128<uint> first =
@@ -944,6 +951,7 @@ internal sealed partial class ParallelBigUnsigned
             }
         }
 
+        if (index + Width <= end) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Neon);
         for (; index + Width <= end; index += Width)
         {
             Vector128<uint> value =

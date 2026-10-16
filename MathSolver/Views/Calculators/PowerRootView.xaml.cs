@@ -2124,6 +2124,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         // Every new calculation starts with developer diagnostics collapsed.
         _isDiagnosticsVisible = false;
+        ResetPowerDiagnostics();
         DiagnosticsToggleButton.IsVisible = false;
         LargeResultInfoBorder.IsVisible = false;
         DiagnosticsToggleButton.Text =
@@ -2487,6 +2488,7 @@ public partial class PowerRootView : LocalizedSolverView
             if (ShouldReleaseLargeTemporaryMemory(
                     completedState))
             {
+                long cleanupStarted = Stopwatch.GetTimestamp();
                 long privateMemoryAfterCleanup =
                     await ReleaseLargeTemporaryMemoryAsync();
 
@@ -2495,6 +2497,7 @@ public partial class PowerRootView : LocalizedSolverView
                 {
                     return;
                 }
+                _powerCleanupElapsed = Stopwatch.GetElapsedTime(cleanupStarted);
 
                 completedState =
                     completedState with
@@ -2506,12 +2509,8 @@ public partial class PowerRootView : LocalizedSolverView
                 _calculationState =
                     completedState;
 
-                if (LargeResultInfoBorder.IsVisible)
-                {
-                    LargeResultInfoLabel.Text =
-                        CreateLargeResultInformation(
-                            completedState);
-                }
+                UpdatePowerSummary(completedState);
+                if (LargeResultInfoBorder.IsVisible) RenderPowerDiagnostics(completedState);
             }
         }
         catch (OperationCanceledException)
@@ -2657,8 +2656,7 @@ public partial class PowerRootView : LocalizedSolverView
         CalculationProgressBar.Progress =
             progress;
 
-        ProgressPercentLabel.Text =
-            $"{progress:P0}";
+        ProgressPercentLabel.Text = $"{progress:P0}";
 
         ProgressTitleLabel.Text =
             Format(
@@ -2687,93 +2685,18 @@ public partial class PowerRootView : LocalizedSolverView
         int totalSteps,
         int activeWorkerCount)
     {
-        const int phaseCount = 3;
-
-        int phaseNumber =
-            phase switch
-            {
-                CalculationProgressPhase.Preparing => 1,
-                CalculationProgressPhase.BitShift => 2,
-                CalculationProgressPhase.DecimalShift => 2,
-                CalculationProgressPhase.Computing => 2,
-                CalculationProgressPhase.Formatting => 3,
-                CalculationProgressPhase.Completed => phaseCount,
-                _ => 1
-            };
-
-        long totalBitShift = exponent;
-
-        if (phase == CalculationProgressPhase.BitShift &&
-            _powerRootEngine.TryGetPowerOfTwoExponent(
-                baseValue,
-                out int basePowerOfTwoExponent))
-        {
-            totalBitShift =
-                checked(
-                    (long)basePowerOfTwoExponent *
-                    exponent);
-        }
-
         return phase switch
         {
-            CalculationProgressPhase.Preparing =>
-                Format(
-                    "PowerRoot.ProgressPhasePreparing",
-                    phaseNumber,
-                    phaseCount),
-            CalculationProgressPhase.BitShift =>
-                Format(
-                    "PowerRoot.ProgressPhaseBitShift",
-                    phaseNumber,
-                    phaseCount,
-                    totalBitShift.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture),
-                    baseValue.ToString(
-                        "N0",
-                        CultureInfo.InvariantCulture)),
-            CalculationProgressPhase.DecimalShift =>
-                Format(
-                    "PowerRoot.ProgressPhaseDecimalShift",
-                    phaseNumber,
-                    phaseCount),
-            CalculationProgressPhase.Computing =>
-                string.Join(
-                    Environment.NewLine,
-                    Format(
-                        "PowerRoot.ProgressPhaseComputing",
-                        phaseNumber,
-                        phaseCount,
-                        completedSteps,
-                        totalSteps),
-                    Format(
-                        "PowerRoot.ProgressWorkers",
-                        activeWorkerCount)),
-            CalculationProgressPhase.Formatting =>
-                activeWorkerCount > 1
-                    ? string.Join(
-                        Environment.NewLine,
-                        Format(
-                            "PowerRoot.ProgressPhaseFormatting",
-                            phaseNumber,
-                            phaseCount),
-                        Format(
-                            "PowerRoot.ProgressWorkers",
-                            activeWorkerCount))
-                    : Format(
-                        "PowerRoot.ProgressPhaseFormatting",
-                        phaseNumber,
-                        phaseCount),
-            CalculationProgressPhase.Completed =>
-                Format(
-                    "PowerRoot.ProgressPhaseCompleted",
-                    phaseCount,
-                    phaseCount),
-            _ =>
-                string.Empty
+            CalculationProgressPhase.Preparing => Translate("PowerRoot.Diagnostics.Preparing"),
+            CalculationProgressPhase.BitShift or CalculationProgressPhase.DecimalShift =>
+                Translate("PowerRoot.Diagnostics.ComputingDirect"),
+            CalculationProgressPhase.Computing => Translate("PowerRoot.Diagnostics.Computing")
+                + Environment.NewLine + Format("PowerRoot.Diagnostics.OperationProgress", completedSteps, totalSteps, activeWorkerCount),
+            CalculationProgressPhase.Formatting => Translate("PowerRoot.Diagnostics.Formatting"),
+            CalculationProgressPhase.Completed => Translate("PowerRoot.Diagnostics.Completed"),
+            _ => string.Empty
         };
     }
-
     private static PowerCalculationState CreateVirtualBitShiftCalculationState(
         long baseValue,
         int exponent,
@@ -3468,12 +3391,8 @@ public partial class PowerRootView : LocalizedSolverView
                 ? 1
                 : 2);
 
-        if (canExport)
-        {
-            LargeResultInfoLabel.Text =
-                CreateLargeResultInformation(
-                    state);
-        }
+        PowerSummaryBorder.IsVisible = canExport;
+        if (canExport) UpdatePowerSummary(state);
 
         SolutionLabel.Text =
             CreateSolution(
@@ -3500,6 +3419,7 @@ public partial class PowerRootView : LocalizedSolverView
 
         LargeResultInfoBorder.IsVisible =
             _isDiagnosticsVisible;
+        if (_isDiagnosticsVisible && _calculationState is { } state) RenderPowerDiagnostics(state);
 
         DiagnosticsToggleButton.Text =
             Translate(
@@ -3536,6 +3456,8 @@ public partial class PowerRootView : LocalizedSolverView
         LargeResultInfoBorder.IsVisible =
             canShowDeveloperDiagnostics &&
             _isDiagnosticsVisible;
+        if (LargeResultInfoBorder.IsVisible && _calculationState is { } state) RenderPowerDiagnostics(state);
+        if (!canShowDeveloperDiagnostics) PowerDiagnosticsSections.Children.Clear();
 
         DiagnosticsToggleButton.Text =
             Translate(
@@ -4169,6 +4091,12 @@ public partial class PowerRootView : LocalizedSolverView
                 string.IsNullOrWhiteSpace(
                     line));
 
+        lines.Insert(0, DF("LogInput", state.BaseValue.ToString(CultureInfo.InvariantCulture), state.Exponent.ToString(CultureInfo.InvariantCulture)));
+        lines.Add(D("TimeNote"));
+        if (_powerCleanupElapsed is { } cleanup) lines.Add($"• {D("CleanupTime")}: {Duration(cleanup)}");
+        if (_powerTxtPreparationElapsed is { } txt) lines.Add($"• {D("TxtPreparationTime")}: {Duration(txt)}");
+        if (_powerTxtReused) lines.Add(D("TxtReused"));
+
         return string.Join(
             Environment.NewLine,
             lines);
@@ -4588,6 +4516,8 @@ public partial class PowerRootView : LocalizedSolverView
             exportCompletionSource;
 
         _isExporting = true;
+        _powerTxtPreparationElapsed = null;
+        _powerTxtReused = false;
         UpdateWindowsCloseGuard();
 
         SetInputEnabled(
@@ -4700,6 +4630,7 @@ public partial class PowerRootView : LocalizedSolverView
 
                 if (ownsTemporaryPath)
                 {
+                    long txtStarted = Stopwatch.GetTimestamp();
                     await Task.Run(
                         () => WriteFullResultFile(
                             temporaryPath,
@@ -4708,7 +4639,9 @@ public partial class PowerRootView : LocalizedSolverView
                             cancellationToken,
                             useSimdForExport),
                         cancellationToken);
+                    _powerTxtPreparationElapsed = Stopwatch.GetElapsedTime(txtStarted);
                 }
+                else _powerTxtReused = true;
             }
             finally { _resultStorageGate.Release(); }
 
@@ -4819,6 +4752,7 @@ public partial class PowerRootView : LocalizedSolverView
             }
 
             _isExporting = false;
+            if (LargeResultInfoBorder.IsVisible && _calculationState is { } current) RenderPowerDiagnostics(current);
             SetInputEnabled(
                 enabled: true);
 
@@ -5537,6 +5471,7 @@ public partial class PowerRootView : LocalizedSolverView
     private void HideResult()
     {
         ReleaseStoredResult();
+        ResetPowerDiagnostics();
 
         ResultBorder.IsVisible =
             false;
@@ -5837,37 +5772,18 @@ public partial class PowerRootView : LocalizedSolverView
         PowerCalculationState state,
         ParallelPowerDiagnostics diagnostics)
     {
-#if ANDROID
-        if (diagnostics.UsedNeonNttButterflies)
+        var lines = new List<string>
         {
-            return Format(
-                state.WasNeonPortableAvailable
-                    ? "PowerRoot.InfoNttKernelNeonPortableAndroid"
-                    : "PowerRoot.InfoNttKernelNeonAndroid",
-                state.Exponent > LegacyNttMaximumExponent ? ">10M" : "≤10M");
-        }
-
-        if (!state.WasSimdEnabled || !state.WasNeonSelected)
-        {
-            return Translate("PowerRoot.InfoNttKernelScalarNeonOff");
-        }
-
-        return Translate(
-            state.Exponent <= 1_000_000 && state.WasAndroidNeonAllowed
-                ? "PowerRoot.InfoNttKernelScalarNeonShort"
-                : "PowerRoot.InfoNttKernelScalarNeonUnavailable");
-#else
-        return diagnostics.UsedSseNttButterflies
-            ? $"NTT/CRT: {CalculationAccelerationManager.PowerNttSseBackendName} (128-bit, ≤100M; global-tail SIMD)"
-            : diagnostics.UsedAvx2NttButterflies && !state.AllowAvx512
-                ? "NTT/CRT: AVX2 256-bit + global-tail SIMD"
-                : Format(
-                    diagnostics.UsedAvx2NttButterflies
-                        ? "PowerRoot.InfoNttKernelAvx2"
-                        : "PowerRoot.InfoNttKernelScalar");
-#endif
+            DF("BackendRecorded", GetRecordedNttBackend(diagnostics)),
+            D("Avx512Runtime") + ": " + D(diagnostics.Avx512RuntimeSupported ? "Yes" : "No"),
+            D("Avx512Enabled") + ": " + D(diagnostics.Avx512Enabled ? "Yes" : "No"),
+            D("KernelExecution") + ":"
+        };
+        foreach (var row in PowerDiagnosticsPresentation.KernelRows(diagnostics))
+            lines.Add($"  {D(row.Phase.ToString())} | {KernelIsaName(row.Isa)} | {DF("KernelBatches", row.Calls.ToString("N0", CultureInfo.InvariantCulture))}");
+        lines.Add(D("KernelCountNote"));
+        return string.Join(Environment.NewLine, lines);
     }
-
     private static string Format(
         string key,
         params object?[] values)

@@ -147,16 +147,18 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         string? finalError = null;
         try
         {
-            await runtime.PrepareAsync(cancellationToken).ConfigureAwait(false);
-            (finalState, finalError) = await RunQuestionsAsync(options, cancellationToken).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested) finalState = AiJobState.Stopped;
+            else
+            {
+                await runtime.PrepareAsync(cancellationToken).ConfigureAwait(false);
+                (finalState, finalError) = cancellationToken.IsCancellationRequested
+                    ? (AiJobState.Stopped, null)
+                    : await RunQuestionsAsync(options, cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException)
         {
             finalState = AiJobState.Stopped;
-            lock (_sync)
-                _snapshot = _snapshot with {
-                    Items = _snapshot.Items.Select(i => i.Question is null && i.State is not (AiItemState.Rejected or AiItemState.PendingReview)
-                        ? i with { State = AiItemState.Stopped } : i).ToArray() };
         }
         catch (Exception error)
         {
@@ -168,6 +170,13 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         }
         finally
         {
+            // Both cooperative returns and cancellation from runtime/store APIs
+            // retain partial output and mark unfinished items consistently.
+            if (finalState == AiJobState.Stopped)
+                lock (_sync)
+                    _snapshot = _snapshot with {
+                        Items = _snapshot.Items.Select(i => i.Question is null && i.State is not (AiItemState.Rejected or AiItemState.PendingReview)
+                            ? i with { State = AiItemState.Stopped } : i).ToArray() };
             // Release once per single/batch job, including load failure and cancellation.
             // Keep the job running until cleanup finishes so model management/new jobs
             // cannot race native disposal. Cancellation must not skip cleanup.
@@ -183,12 +192,14 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
 
     private async Task<(AiJobState State, string? Error)> RunQuestionsAsync(AiGenerationOptions options, CancellationToken cancellationToken)
     {
+        if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
         var batchProse = new HashSet<string>(StringComparer.Ordinal);
         var excludedProse = new HashSet<string>(await store.GetProseHashesAsync(cancellationToken).ConfigureAwait(false), StringComparer.Ordinal);
+        if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
         if(options.CreativeProse) excludedProse.UnionWith(await store.GetPendingProseHashesAsync(cancellationToken).ConfigureAwait(false));
         for (int number = 1; number <= options.Count; number++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
             var contract = options.Family == BankQuestionFamily.Arithmetic
                 && ExpandedArithmeticCatalogue.Supports(options.Profile?.Group ?? QuestionKnowledgeGroup.Objects, options.Tier)
                 ? _expandedArithmeticCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse, options.CreativeProse)
@@ -211,7 +222,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             PendingQuestionReview? pendingReview = null;
             for (int attempt = 1; attempt <= 3; attempt++)
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 SetState(AiJobState.Generating);
                 string prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse, errorDetails);
                 UpdateItem(number, i => i with { State = AiItemState.Generating,
@@ -238,7 +249,13 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 {
                     if (acceptingText && !timeout.IsCancellationRequested) metrics = value;
                 }
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 try { raw = await runtime.GenerateNovelAsync(contract, prompt, excludedProse, timeout.Token, OnText, OnMetrics).ConfigureAwait(false); }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
+                    return (AiJobState.Stopped, null);
+                }
                 catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
                 {
                     correction = "GenerationTimeout";
@@ -249,7 +266,11 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 }
                 catch (RegexMatchTimeoutException error)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    if (cancellationToken.IsCancellationRequested)
+                    {
+                        UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
+                        return (AiJobState.Stopped, null);
+                    }
                     correction = "TextProcessingTimeout";
                     errorDetails = QuestionTextRegex.TimeoutDetails(error, "generation");
                     UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction,
@@ -266,11 +287,13 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 // Some executors finish normally when cancelled between token yields.
                 // Retain their final buffered text without treating it as validated.
                 UpdateAttempt(number, attempt, a => a with { RawJson = raw, Metrics = metrics });
-                cancellationToken.ThrowIfCancellationRequested();
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 SetState(AiJobState.Validating);
                 UpdateItem(number, i => i with { State = AiItemState.Validating,
                     Attempts = i.Attempts.Select(a => a.Number == attempt ? a with { RawJson = raw, Metrics = metrics } : a).ToArray() });
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 var validation = BasicQuestionValidator.Validate(raw, contract);
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 correction = validation.ErrorCode;
                 errorDetails = validation.ErrorDetails;
                 UpdateAttempt(number, attempt, a => a with { RawJson = raw, ErrorCode = correction, ErrorDetails = validation.ErrorDetails, IsComplete = true });
@@ -297,10 +320,11 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     RejectDuplicate();
                     continue;
                 }
+                if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 UpdateItem(number, i => i with { State = AiItemState.Ready, Question = question, Contract = question.Contract });
                 if (options.AutoInsert)
                 {
-                    cancellationToken.ThrowIfCancellationRequested();
+                    if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                     await InsertAsync(number).ConfigureAwait(false);
                     if (Snapshot.Items.Single(i => i.Number == number).State == AiItemState.SaveFailed)
                     { return (AiJobState.Failed, "DatabaseSaveFailed"); }
@@ -325,6 +349,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     UpdateItem(number, i => i with { State = AiItemState.Duplicate, Question = null, Error = correction });
                 }
             }
+            if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
             var result = Snapshot.Items.Single(i => i.Number == number);
             if (result.Question is null)
             {
@@ -332,8 +357,10 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 {
                     // Quarantined drafts live in a separate table and never enter
                     // the Ready/Saved path, even when automatic saving is enabled.
-                    if (!await store.QueueReviewAsync(pendingReview,cancellationToken).ConfigureAwait(false))
+                    bool queued = await store.QueueReviewAsync(pendingReview,cancellationToken).ConfigureAwait(false);
+                    if (!queued)
                     {
+                        if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                         UpdateItem(number,i=>i with {State=AiItemState.Duplicate,Error="DuplicateProse"});
                         return (AiJobState.Failed,"DuplicateProseRetriesExhausted");
                     }
@@ -346,7 +373,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 return (AiJobState.Failed, correction == "DuplicateProse" ? "DuplicateProseRetriesExhausted" : "RetriesExhausted");
             }
         }
-        return (AiJobState.Completed, null);
+        return (cancellationToken.IsCancellationRequested ? AiJobState.Stopped : AiJobState.Completed, null);
     }
 
     private void Append(AiQuestionItem item)

@@ -16,9 +16,12 @@ Biểu diễn số nguyên lớn, nhân/bình phương, NTT/CRT, limb nhị phâ
 - [ParallelBigUnsigned_NttKernels.cs](BigIntegers/ParallelBigUnsigned_NttKernels.cs): các stage NTT còn lại, inverse fusion, pointwise và final inverse.
 - [ParallelBigUnsigned_TwiddleSimd.cs](BigIntegers/ParallelBigUnsigned_TwiddleSimd.cs): dựng bảng twiddle SIMD.
 - [ParallelBigUnsigned_GlobalShoupSimd.cs](BigIntegers/ParallelBigUnsigned_GlobalShoupSimd.cs): dựng Shoup companion cho global stage.
+- [NttKernelUsage.cs](BigIntegers/NttKernelUsage.cs): ghi nhận ISA tại nhánh kernel thực sự chạy, theo Forward, Inverse, Pointwise, CRT, Carry và Twiddle. Mỗi worker giữ bộ đếm riêng, gộp sau barrier/join và giữ snapshot sau khi giải phóng worker; số lượt là lô xử lý, không phải số butterfly, số phép nhân hay thời gian, không dùng tỷ lệ lượt để so tốc độ ISA.
 - [ParallelBigUnsigned_Sse.cs](BigIntegers/ParallelBigUnsigned_Sse.cs): fallback SSE2/SSE4.1 cho butterfly NTT trong cache ở nhánh ≤10M; [kết quả đo](../SSE_NTT_SUB10M_NOTES.md).
 - [ParallelBigUnsigned_Neon.cs](BigIntegers/ParallelBigUnsigned_Neon.cs): backend NTT/CRT ARM64 NEON đến số mũ 100M. Trên Android Release, Pow dùng AdvSimd.Arm64 trực tiếp hoặc Vector128 lai (nhân high32 và carry dùng Scalar) khi mũ >1M; mũ ≤1M giữ Scalar. Xem [benchmark trên thiết bị thật](../../tests/AndroidNttBenchmark/RESULTS_20260929.md).
 
+
+AVX-512 dùng chính sách `UsePowerNttAvx512`: công tắc SIMD, chế độ Auto/AVX-512, AVX2 và runtime AVX-512F/Vector512 phải cùng cho phép; CRT còn kiểm tra AVX-512DQ tại kernel cần DQ. Nhánh lớn giữ các gate riêng theo hình dạng stage và fallback AVX2/Scalar. Log phân biệt runtime hỗ trợ, chính sách cho phép và ISA đã chạy; không suy ra thực thi từ cấu hình. Test `NTT kernel execution` đối chiếu BigInteger ở Scalar/SSE/AVX2/AVX-512, có chia nhánh, lập lịch persistent, phân đoạn, chạy đồng thời và hủy tính; phần AVX-512 tự bỏ qua trên runtime không hỗ trợ.
 
 ## FloatingPoint
 

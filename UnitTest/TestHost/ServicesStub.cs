@@ -15,12 +15,16 @@ internal enum CalculationSimdMode { Portable, Scalar, Sse, AvxAvx2, Avx512, ArmN
 
 internal static class CalculationAccelerationManager
 {
+    internal static bool UseSimd { get; set; } = true;
+    internal static bool AllowAvx { get; set; } = Avx.IsSupported;
     internal static bool UsePowerExportSimd => false;
     internal static bool UsePowerNttAvx2 { get; set; } = Avx2.IsSupported;
     internal static bool UsePowerNttSse { get; set; }
     internal static bool UsePowerNttNeon => false;
     internal static bool UsePowerNttNeonForExponent(int exponent) => false;
-    internal static bool AllowAvx512 => false;
+    internal static bool AllowAvx512 { get; set; }
+    internal static bool UsePowerNttAvx512 => UsePowerNttAvx2 && AllowAvx512 &&
+        Avx512F.IsSupported && System.Runtime.Intrinsics.Vector512.IsHardwareAccelerated;
     internal static bool IsAndroidNeonExecutionAllowed => false;
     internal static CalculationSimdMode EffectiveSimdMode => CalculationSimdMode.AvxAvx2;
 }

@@ -10,7 +10,8 @@ public sealed record BankQueryResult(string[] Columns, IReadOnlyList<string[]> R
     public string? ErrorCode { get; init; }
     public int? SqliteErrorCode { get; init; }
     public string? ErrorMessage { get; init; }
-    public bool IsSuccess => ErrorCode is null;
+    public bool IsSuccess => ErrorCode is null && !ConfirmationDeclined;
+    public bool ConfirmationDeclined { get; init; }
     public bool IsWrite { get; init; }
     public int AffectedRows { get; init; }
     public string[]? EditableColumns { get; init; }
@@ -26,7 +27,19 @@ public sealed partial class QuestionBankStore
 {
     public const string DefaultInquiry = "SELECT Hash, ProblemType, ProblemVariant, Operation, Stars, Language, DraftJson\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
 
-    public async Task<BankQueryResult> QueryAsync(string sql, CancellationToken cancellationToken = default)
+    public Task<BankQueryResult> QueryAsync(string sql, CancellationToken cancellationToken = default)
+        => QueryCoreAsync(sql, null, cancellationToken);
+
+    /// <summary>Prepare and classify SQL before asking permission; no write is stepped before approval.</summary>
+    public Task<BankQueryResult> QueryWithConfirmationAsync(string sql, Func<Task<bool>> confirmWrite,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(confirmWrite);
+        return QueryCoreAsync(sql, confirmWrite, cancellationToken);
+    }
+
+    private async Task<BankQueryResult> QueryCoreAsync(string sql, Func<Task<bool>>? confirmWrite,
+        CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         // Invalid user SQL is an expected result, rather than a faulted task/first-chance exception.
@@ -34,7 +47,7 @@ public sealed partial class QuestionBankStore
             || !Regex.IsMatch(sql[SkipSqlTrivia(sql)..], @"^(SELECT|WITH|INSERT|UPDATE|DELETE)\b", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
             return BankQueryResult.Failure("SupportedStatementRequired");
         string path = await WithDatabaseAsync(db => db.DatabasePath, cancellationToken).ConfigureAwait(false);
-        return await Task.Run(() =>
+        return await Task.Run(async () =>
         {
             // A separate connection keeps long queries out of the store's serialized operations.
             using var reader = new SQLiteConnection(path, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.FullMutex);
@@ -57,6 +70,16 @@ public sealed partial class QuestionBankStore
                 bool isWrite = SQLitePCL.raw.sqlite3_stmt_readonly(statement) == 0;
                 int count = SQLite3.ColumnCount(statement);
                 if (count > 32 || !isWrite && count < 1) return BankQueryResult.Failure("QueryColumnLimit");
+                if (isWrite && confirmWrite is not null)
+                {
+                    // Waiting for a person is outside the SQLite execution budget.
+                    // There is no write transaction or stepped statement yet.
+                    timer.Stop();
+                    bool confirmed = await confirmWrite().ConfigureAwait(false);
+                    cancellationToken.ThrowIfCancellationRequested();
+                    if (!confirmed) return new BankQueryResult([], [], false) { ConfirmationDeclined = true };
+                    timer.Start();
+                }
                 string[] columns = Enumerable.Range(0, count).Select(i => SQLite3.ColumnName(statement, i)).ToArray();
                 string[]? editable = isWrite ? null : GridProjection(sql, columns);
                 // Protect identity too: a NULL/non-text/truncated Hash is never an editable row.

@@ -76,7 +76,7 @@ public partial class DataManagementPage : ContentPage
         _closing = true;
         try
         {
-            if (_confirmingDeleteAll) return;
+            if (_confirmingDataChange) return;
             if ((QueryResultsTable.IsEditing || QueryResultsTable.IsInserting || _pendingImport is not null)
                 && !await DisplayAlertAsync(LocalizationService.TranslateKey("DataManagement.Title"),
                     _pendingImport is not null ? T("ImportLeaveHint") : LocalizationService.TranslateKey("DataManagement.DiscardHint"),

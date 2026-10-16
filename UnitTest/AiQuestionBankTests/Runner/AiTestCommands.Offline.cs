@@ -62,6 +62,12 @@ internal static partial class AiTestCommands
             await ModelHarnessTests.RunAsync();
             await WorkerLifecycleTests.RunAsync();
         }, args => args is ["--harness"]),
+        new(["--generation-lifecycle"], "--generation-lifecycle (stop, streaming and model lifecycle; no inference)", async args =>
+        {
+            await WorkerLifecycleTests.RunAsync();
+            await StreamingTests.RunAsync(Draft);
+            await MemoryLifecycleTests.RunAsync();
+        }, args => args is ["--generation-lifecycle"]),
         new(["--area-measurement-foundation"], "--area-measurement-foundation", args =>
         {
             AreaMeasurementFoundationTests.Run();
@@ -188,6 +194,17 @@ internal static partial class AiTestCommands
             var draft = BasicQuestionValidator.Validate(raw, contract).Draft!;
             await SqlGridTests.RunAsync(folder, new(contract, draft, raw, "grid-test", DateTime.UtcNow));
         }, args => args is ["--sql-grid"]),
+        new(["--bank-data"], "--bank-data", async args =>
+        {
+            using var workspace = TestWorkspace.Temporary("bank-data");
+            var contract = BasicQuestionContract.Create(ArithmeticOperation.Add, CurriculumTier.OneStar, AppLanguage.Vietnamese, new Random(43));
+            string raw = Draft(contract);
+            var draft = BasicQuestionValidator.Validate(raw, contract).Draft!;
+            var sample = new ValidatedBankQuestion(contract, draft, raw, "data-test", DateTime.UtcNow);
+            await BankDataTests.RunAsync(workspace.DirectoryPath, sample, Draft);
+            await SqlMutationTests.RunAsync(workspace.DirectoryPath, sample);
+            await DeleteAllTests.RunAsync(workspace.DirectoryPath);
+        }, args => args is ["--bank-data"]),
         new(["--prose-deduplication"], "--prose-deduplication", async args =>
         {
             using var workspace = TestWorkspace.Temporary("prose-deduplication");

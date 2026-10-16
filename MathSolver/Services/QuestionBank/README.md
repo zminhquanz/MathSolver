@@ -1,5 +1,13 @@
 # Local AI question templates
 
+## Stopping an AI job
+
+The generation worker treats its own stop checkpoints as normal `Stopped` results instead of calling `ThrowIfCancellationRequested`. A runtime that finishes normally after cancellation can return its final buffered text; the worker preserves that text without validating or saving the interrupted draft. Cancellation exceptions supplied by runtime/store APIs remain handled. Both paths mark unfinished items consistently and release the runtime once before publishing the terminal job state. Completed previews, saved questions and successfully queued reviews retain their state; cleanup failures remain failures.
+
+## Confirming data management changes
+
+The data management page confirms row insertion, saving edits, deletion, reviewed Excel import and whole-bank deletion before persistence. SQL entered there uses `QueryWithConfirmationAsync`: SQLite prepares and classifies the statement with `sqlite3_stmt_readonly`, then awaits approval before starting the write transaction or stepping it. This covers writable CTEs and `RETURNING`; read-only queries and invalid statements do not prompt. Declining returns `ConfirmationDeclined` without throwing or writing; the UI retains its grid/draft and shows the cancelled status. Waiting for approval is excluded from the execution timeout, and cancellation is checked again before any write. The UI marshals the dialog callback to its main thread. Other internal callers retain the noninteractive `QueryAsync` API.
+
 ## User-authored Excel templates
 
 Authoring imports use `UserQuestionTemplateValidator`: required cells, balanced

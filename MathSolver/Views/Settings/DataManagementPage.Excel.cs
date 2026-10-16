@@ -80,6 +80,10 @@ public partial class DataManagementPage
         bool committed = false;
         await RunDataOperationAsync(true, async cancellation =>
         {
+            if (!await ConfirmDataChangeAsync(DT("ConfirmImportTitle"),
+                string.Format(CultureInfo.CurrentCulture, DT("ConfirmImportMessage"), reviewed.Count(row => row.Question is not null)),
+                DT("ConfirmImportAccept"), cancellation, transfer: true)) return;
+            cancellation.ThrowIfCancellationRequested();
             var report = await _bank.Store.ImportReviewedAsync(reviewed, cancellation);
             if (!_appeared) return;
             ClearImportReview();

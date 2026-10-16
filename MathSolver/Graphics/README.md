@@ -30,6 +30,8 @@ Vẽ đồ thị tuyến tính, parabol và đánh giá điểm vẽ bằng SIMD
 
 - [LinearEquationGraphDrawable.cs](Equations/LinearEquationGraphDrawable.cs)
 - [ParabolaGraphDrawable.cs](Equations/ParabolaGraphDrawable.cs)
+- [FunctionGraphSimdEvaluator.cs](Equations/FunctionGraphSimdEvaluator.cs): bộ chọn backend chung cho hai đầu mút đường thẳng và dãy mẫu parabol; AVX/FMA → AVX → SSE2, ARM64 NEON/FMA hoặc Vector128 và Scalar, tôn trọng cấu hình tăng tốc.
+- [LinearGraphProjection.cs](Equations/LinearGraphProjection.cs): cache hệ số chiếu double, chạy hai đầu mút bằng SIMD không tạo mảng mẫu; quay về QuadDouble khi sai số ước tính vượt 1/8 pixel theo viewport. Nghiệm, giao điểm và viewport bậc 1 vẫn dùng QuadDouble.
 
 ## Formulas
 

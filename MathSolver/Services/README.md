@@ -26,6 +26,7 @@ Engine giải toán và điều phối thuật toán theo từng phép tính.
 - [LongDivisionCalculator.cs](Calculations/LongDivisionCalculator.cs)
 - [MeasurementEngine.cs](Calculations/MeasurementEngine.cs)
 - [PowerRootEngine.cs](Calculations/PowerRootEngine.cs)
+- [PowerDiagnosticsPresentation.cs](Calculations/PowerDiagnosticsPresentation.cs): chọn các công đoạn có số đo, giữ riêng mục con và chọn stage NTT theo thời gian; không thay đổi kernel hoặc bộ đếm thuật toán.
 - [QuadraticEquationEngine.cs](Calculations/QuadraticEquationEngine.cs)
 
 ## QuestionBank

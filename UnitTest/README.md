@@ -14,6 +14,10 @@ Ba chương trình console chạy phần C# thật của ứng dụng. Chúng kh
 không chứng minh giao diện trên thiết bị hoặc mọi nhánh SIMD hoạt động đúng.
 LLamaSharp và backend CPU chỉ thuộc dự án AI; PDF không tham chiếu chương trình AI.
 
+Nhóm `NTT kernel execution` bật từng chế độ Scalar/SSE/AVX2/AVX-512 trong stub, chạy kernel Numerics thật và đối chiếu với BigInteger. AVX-512 chỉ chạy khi runtime hỗ trợ; máy thiếu ISA sẽ ghi SKIP. Stub mặc định vẫn tắt AVX-512 cho các nhóm khác. Nhóm này kiểm tra cả telemetry theo công đoạn, gộp nhánh, tính phân đoạn/persistent, job đồng thời và dọn worker sau hủy; không thay cho benchmark tải 100M hay kiểm thử giao diện.
+
+Nhóm `Function graph SIMD` chạy evaluator thật dùng chung cho đường thẳng/parabol với SIMD tắt, AVX bị cấm và backend tốt nhất của runtime. Kiểm tra làm tròn FMA, phần đuôi mẫu parabol, hệ số Int128 lớn, triệt tiêu gần nghiệm và fallback QuadDouble theo sai số pixel. Không khởi động MAUI hoặc kiểm tra raster trên thiết bị.
+
 ## Lệnh thường dùng
 
 ```powershell
@@ -44,6 +48,12 @@ file trong thư mục con có GUID; đường dẫn output kiểu cũ vẫn đư
 tạo thư mục con riêng. Lệnh model giữ evidence như trước; không dọn thư mục
 checkpoint được truyền vào. Các fixture SQL offline dùng `TestWorkspace.Temporary`;
 helper chỉ dọn thư mục mới do chính lượt chạy tạo, không dọn thư mục của người dùng.
+
+`AiQuestionBankTests --sql-grid` kiểm tra thêm bước xác nhận SQL: từ chối INSERT/UPDATE/DELETE không làm đổi database, chấp nhận chỉ thực thi một lần, SELECT không hỏi, CTE/RETURNING được phân loại bởi SQLite, hủy khi đang đợi không ghi dữ liệu và thời gian đợi popup không tính vào timeout SQL. Các test chạy trong database tạm, không mở dữ liệu người dùng.
+
+`AiQuestionBankTests --bank-data` chạy riêng các kiểm tra SQL/Excel, timeout, giới hạn dữ liệu, rollback câu lệnh ghi và xóa toàn bộ, không nạp model.
+
+`AiQuestionBankTests --generation-lifecycle` kiểm tra Stop ở các checkpoint bằng runtime trả về bình thường, theo dõi exception first-chance từ worker, giữ phần nội dung cuối và preview đã xong, không lưu phần bị dừng và giải phóng model một lần. Lệnh còn chạy các test streaming, retry, lỗi runtime và vòng đời bộ nhớ hiện có; không thực hiện inference GGUF.
 
 ## Thêm hoặc sửa test
 

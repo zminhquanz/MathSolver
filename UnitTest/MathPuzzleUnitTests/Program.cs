@@ -2,6 +2,9 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Function graph SIMD linear endpoints and parabola regression", PuzzleTests.CheckFunctionGraphSimd),
+    ("NTT kernel execution and AVX-512 exact results", PuzzleTests.CheckNttKernelExecution),
+    ("Power diagnostics phase boundaries and stage percentages", PuzzleTests.CheckPowerDiagnostics),
     ("Textbook mental calculations and contextual quantities", PuzzleTests.CheckTextbookPractice),
     ("Practice number ranges and realistic money", PuzzleTests.CheckPracticeNumberRanges),
     ("Nine-digit number sense and exact product boundaries", PuzzleTests.CheckLargeNumberSense),

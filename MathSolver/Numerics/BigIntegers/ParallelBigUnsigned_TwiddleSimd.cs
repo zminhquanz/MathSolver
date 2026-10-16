@@ -270,6 +270,7 @@ internal sealed partial class ParallelBigUnsigned
         uint advanceShoup,
         CancellationToken cancellationToken)
     {
+        if (firstIndex < endIndex) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx512);
         const int Width = 16;
         Span<uint> seed = stackalloc uint[Width];
         FillTwiddleSeed(seed, root, firstIndex, modulus);
@@ -428,6 +429,7 @@ internal sealed partial class ParallelBigUnsigned
         uint advanceShoup,
         CancellationToken cancellationToken)
     {
+        if (firstIndex < endIndex) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Avx2);
         const int Width = 8;
         Span<uint> seed = stackalloc uint[Width];
         FillTwiddleSeed(seed, root, firstIndex, modulus);
@@ -586,6 +588,7 @@ internal sealed partial class ParallelBigUnsigned
         uint advanceShoup,
         CancellationToken cancellationToken)
     {
+        if (firstIndex < endIndex) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Sse);
         const int Width = 4;
         Span<uint> seed = stackalloc uint[Width];
         FillTwiddleSeed(seed, root, firstIndex, modulus);
@@ -744,6 +747,7 @@ internal sealed partial class ParallelBigUnsigned
         uint advanceShoup,
         CancellationToken cancellationToken)
     {
+        if (firstIndex < endIndex) NttKernelExecution.Record(NttKernelPhase.Twiddle, NttKernelIsa.Neon);
         const int Width = 4;
         Span<uint> seed = stackalloc uint[Width];
         FillTwiddleSeed(seed, root, firstIndex, modulus);

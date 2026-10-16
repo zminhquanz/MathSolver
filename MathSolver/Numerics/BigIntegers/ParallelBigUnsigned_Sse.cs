@@ -87,6 +87,7 @@ internal sealed partial class ParallelBigUnsigned
         int pairIndex =
             pairStart;
 
+        if (pairIndex + 1 < pairEnd) NttKernelExecution.Record((normalize ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Sse);
         for (; pairIndex + 1 < pairEnd; pairIndex += 2)
         {
             int valueIndex =
@@ -165,6 +166,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 15;
 
+        if (index <= vectorEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Sse);
         for (; index <= vectorEnd; index += 16)
         {
             TransposeRadix4Sse(
@@ -221,6 +223,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 15;
 
+        if (index <= vectorEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Sse);
         for (; index <= vectorEnd; index += 16)
         {
             TransposeRadix4Sse(
@@ -651,6 +654,7 @@ internal sealed partial class ParallelBigUnsigned
         int i = first;
         int sinceCancellation = 0;
 
+        if (i + 3 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Sse);
         for (; i + 3 < last; i += 4)
         {
             int index0 = groupOffset + i;
@@ -757,6 +761,7 @@ internal sealed partial class ParallelBigUnsigned
                 ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
                 ref uint quotients = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
 
+                if ((segmentStart) < segmentEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Sse);
                 for (int segment = segmentStart; segment < segmentEnd; segment++)
                 {
                     GetFusionAlignedSegmentBounds(
@@ -937,6 +942,7 @@ internal sealed partial class ParallelBigUnsigned
                     int groupOffset = group * stageLength;
                     int i = first;
 
+                    if (i + 3 < last) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Sse);
                     for (; i + 3 < last; i += 4)
                     {
                         int leftIndex = groupOffset + i;
@@ -1012,6 +1018,7 @@ internal sealed partial class ParallelBigUnsigned
                 int groupOffset = group * stageLength;
                 Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
                 int i = first;
+                if (i + 3 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Sse);
                 for (; i + 3 < last; i += 4)
                 {
                     int leftIndex = groupOffset + i;
@@ -1081,6 +1088,7 @@ internal sealed partial class ParallelBigUnsigned
                 int groupOffset = group * stageLength;
                 Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, first, modulus);
                 int i = first;
+                if (i + 3 < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Sse);
                 for (; i + 3 < last; i += 4)
                 {
                     int leftIndex = groupOffset + i;
@@ -1269,6 +1277,7 @@ internal sealed partial class ParallelBigUnsigned
 
         int offset = 0;
 
+        if (offset < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Crt, NttKernelIsa.Sse);
         for (; offset < vectorEnd; offset += Vector128<uint>.Count)
         {
             Vector128<uint> first =
@@ -1388,6 +1397,7 @@ internal sealed partial class ParallelBigUnsigned
                     int t20Index = secondTwiddleOffset + first;
                     int t21Index = secondTwiddleOffset + halfLength + first;
 
+                    if ((first) < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Sse);
                     for (int i = first; i < last; i += Width)
                     {
                         Vector128<uint> a = Vector128.LoadUnsafe(ref data, (nuint)index0);
