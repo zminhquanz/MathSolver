@@ -120,6 +120,12 @@ public static class OpenQuestionProse
     public static string Prompt(BasicQuestionContract c, string? correction = null, IReadOnlyList<string>? duplicates = null, string? details = null)
     {
         if (!Supports(c)) throw new ArgumentException("Unsupported open prose profile.");
+        if (SameDayTimeCatalogue.IsProfile(c))
+            return SameDayTimeCatalogue.OpenPrompt(c)
+                + (correction is null ? "" : c.Language==AppLanguage.Vietnamese
+                    ? "\nLượt trước chưa đạt: " + correction + ". " + details + " Viết lại rõ vai trò thời điểm và thời lượng, giữ đúng câu hỏi."
+                    : "\nPrevious attempt: " + correction + ". " + details + " Rewrite with clear clock and duration roles and the correct target.")
+                + (duplicates is not { Count: > 0 } ? "" : "\nAvoid this wording: " + JsonSerializer.Serialize(duplicates.TakeLast(1), Json));
         bool vi = c.Language == AppLanguage.Vietnamese;
         string instruction = vi ? """
             Viết đề mới, tự nhiên, phù hợp tình huống. Ví dụ chỉ tham khảo, không bắt buộc sao chép câu chữ.
@@ -178,6 +184,23 @@ public static class OpenQuestionProse
             for(int i=0;i<matches.Length;i++)
             {
                 string block=Literal(matches[i].Value);
+                if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value=="{v1}" && i+1<matches.Length && matches[i+1].Value=="{v0}")
+                {
+                    // Bind the owner/activity phrase, never an entire sentence.
+                    // Neither a person's name nor an activity is a numeric unit.
+                    block=c.Language==AppLanguage.Vietnamese ? Literal("{v1} của {v0}")
+                        : "("+Literal("the {v1} for {v0}")+" | "+Literal("The {v1} for {v0}")+" | "+Literal("{v0}'s {v1}")+")";
+                    blocks.Add(block); i++; continue;
+                }
+                if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value is "{f0}" or "{f2}" && i+1<matches.Length
+                    && matches[i+1].Value==(matches[i].Value=="{f0}"?"{f1}":"{f3}"))
+                {
+                    // Clock components travel together with their immutable units.
+                    string hour=matches[i].Value,minute=matches[++i].Value;
+                    block=c.Language==AppLanguage.Vietnamese?Literal(hour+" giờ "+minute+" phút")
+                        :"("+Literal(hour+" hours "+minute+" minutes")+" | "+Literal(hour+" hours and "+minute+" minutes")+")";
+                    blocks.Add(block); continue;
+                }
                 if(i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
                     && Regex.IsMatch(matches[i+1].Value,@"^\{(?:unit(?:_[ab])?|items?|group(?:_one)?|v\d+)\}$")
                     && string.IsNullOrWhiteSpace(value[(matches[i].Index+matches[i].Length)..matches[i+1].Index]))
@@ -187,17 +210,33 @@ public static class OpenQuestionProse
             IEnumerable<string[]> Orders(string[] source)
             {
                 if(source.Length==0){yield return [];yield break;}
-                if(source.Length>3){yield return source;yield break;}
+                if(source.Length>(SameDayTimeCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
                 for(int i=0;i<source.Length;i++)
                     foreach(var tail in Orders(source.Where((_,j)=>j!=i).ToArray()))yield return [source[i],..tail];
             }
+            bool time=SameDayTimeCatalogue.IsProfile(c);
+            int prefix=time&&property!="question"?16:79;
             string branch=blocks.Count==0 ? "character{1,140}" : "("+string.Join(" | ",Orders(blocks.ToArray())
-                .Select(order=>"character{0,32} "+string.Join(" character{0,48} ",order)+" character{0,40}").Distinct())+")";
-            rules.AppendLine(name + " ::= " + Literal("\"") + " " + branch + " " + Literal("\""));
+                .Select(order=>time
+                    ? "(character{0,"+prefix+"} "+Literal(" ")+")? "+string.Join(" "+Literal(" ")+" character{0,71} "+Literal(" ")+" ",order)+" ("+Literal(" ")+" character{0,79})?"
+                    : "character{0,32} "+string.Join(" character{0,48} ",order)+" character{0,40}").Distinct())+")";
+            if(time&&blocks.Count==2)
+            {
+                // Two clause structures bind the clock to its owner. A free
+                // permutation could put the owner after an unrelated clause.
+                // Predicates remain generated text, not enumerated sentences.
+                string opening=c.Language==AppLanguage.Vietnamese?"Theo ghi chép, ":"According to the records, ";
+                branch="("+Literal(opening)+")? "+blocks[0]+" "+Literal(" ")+" character{1,64} "+Literal(" ")+" "+blocks[1]+" ("+Literal(" ")+" character{0,40})?"
+                    +" | "+Literal(c.Language==AppLanguage.Vietnamese?"Vào lúc ":"At ")+" "+blocks[1]+" "+Literal(", ")+" "+blocks[0]+" "+Literal(" ")+" character{1,64}";
+                branch="("+branch+")";
+            }
+            rules.AppendLine(name + " ::= " + Literal("\"") + " " + branch + (time?" ending ":" ") + Literal("\""));
             return name;
         }
         string root = Node(doc.RootElement);
+        bool sameDay=SameDayTimeCatalogue.IsProfile(c);
         return "root ::= " + root + " ws\n" + rules
-            + "character ::= [" + QuestionProseLanguage.GrammarLetters(c.Language) + " ,.;:!?()'\\u2019-]\nws ::= [ \\t]{0,2}\n";
+            + "character ::= [" + QuestionProseLanguage.GrammarLetters(c.Language) + (sameDay?" ,()'\\u2019-]":" ,.;:!?()'\\u2019-]")
+            + (sameDay?"\nending ::= [.!?:]?":"")+"\nws ::= [ \\t]{0,2}\n";
     }
 }

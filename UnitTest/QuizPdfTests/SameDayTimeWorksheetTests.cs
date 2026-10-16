@@ -15,11 +15,17 @@ internal static class SameDayTimeWorksheetTests
         {
             var items=new List<QuizPrintItem>();
             foreach(var relation in SameDayTimePilot.Relations(language))
+            foreach(var context in SameDayTimePilot.Contexts(language))
             {
-                string profile=SameDayTimePilot.Prefix+relation.Id+"/reading";
+                string profile=SameDayTimePilot.Prefix+relation.Id+"/"+context.Id;
                 var c=ReasoningStoryCatalogue.Create(BankQuestionFamily.Time,(int)relation.Type,CurriculumTier.ThreeStars,language,new(713),profile) with {OpenProse=true};
                 var draft=ReasoningStoryCatalogue.Draft(c);
-                var store=new QuestionBankStore(Path.Combine(directory,$"time-open-{language}-{relation.Id}.db3"));
+                string first=language==AppLanguage.Vietnamese
+                    ? $"Vào lúc {{f0}} giờ {{f1}} phút, {{v1}} của {{v0}} {(relation.Id=="start"?"kết thúc":"bắt đầu")}."
+                    : $"At {{f0}} hours {{f1}} minutes, {{v0}}'s {{v1}} {(relation.Id=="start"?"finishes":"begins")}.";
+                draft=draft with {Facts=draft.Facts!.Select((f,i)=>i==0?f with {Text=first}:f).ToArray()};
+                Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft),c).IsValid,"New time phrasing failed meaning verification before PDF.");
+                var store=new QuestionBankStore(Path.Combine(directory,$"time-open-{language}-{relation.Id}-{context.Id}.db3"));
                 if(relation.Id=="elapsed")
                 {
                     var unknown=draft with {Facts=draft.Facts!.Select((f,i)=>i==0?f with {Text=(language==AppLanguage.Vietnamese?"Theo một ghi chép mới, ":"From a new record, ")+f.Text}:f).ToArray()};

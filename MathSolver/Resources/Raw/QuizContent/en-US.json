@@ -13058,6 +13058,22 @@
         "EarliestHour": 7,
         "LatestHour": 20,
         "MaximumMinutes": 90
+      },
+      {
+        "Id": "travel",
+        "Actor": "Alex",
+        "Activity": "bus journey",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180
+      },
+      {
+        "Id": "club",
+        "Actor": "Alex",
+        "Activity": "club session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120
       }
     ],
     "TimeOpen.Relations": [

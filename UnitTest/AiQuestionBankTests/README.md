@@ -2,6 +2,12 @@ Runner commands are registered under Runner/, native generation checks under Mod
 
 # AI question bank checks
 
+`--time-open` checks 150 bilingual same-day time profiles across five contexts,
+three distinct targets and five star levels, plus fresh facts, role mutations,
+grading, worker/review isolation and Excel. `--time-open-model <gguf> [directory]`
+runs ten real native requests covering all relations and contexts at 0.5, with
+at most three attempts each. See [same-day time AI](../../MathSolver/SAME_DAY_TIME_AI.md).
+
 `--decimal-open` checks 300 bilingual one-step decimal profiles across addition,
 subtraction, per-group multiplication, unit prices, equal sharing and group-count
 division, including money contexts, fresh facts, grading, storage and review.

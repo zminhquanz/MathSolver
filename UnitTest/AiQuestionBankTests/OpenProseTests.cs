@@ -117,7 +117,7 @@ internal static partial class OpenProseTests
         await session.LoadAsync(path, deadline.Token);
         await File.WriteAllTextAsync(Path.Combine(directory,"run-info.json"),JsonSerializer.Serialize(new {SchemaVersion=1,StartedUtc=DateTime.UtcNow,session.Runtime.ModelName,
             session.Runtime.InferenceThreadCount,session.Runtime.PromptThreadCount,SystemVietnamese=BasicQuestionPrompt.SystemInstruction(AppLanguage.Vietnamese),SystemEnglish=BasicQuestionPrompt.SystemInstruction(AppLanguage.English),
-            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v1":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
+            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
             Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed"},json));
         try
         {

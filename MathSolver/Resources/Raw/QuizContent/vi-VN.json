@@ -13087,6 +13087,22 @@
         "EarliestHour": 7,
         "LatestHour": 20,
         "MaximumMinutes": 90
+      },
+      {
+        "Id": "travel",
+        "Actor": "Lan",
+        "Activity": "chuyến đi xe",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180
+      },
+      {
+        "Id": "club",
+        "Actor": "Lan",
+        "Activity": "buổi sinh hoạt câu lạc bộ",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120
       }
     ],
     "TimeOpen.Relations": [
