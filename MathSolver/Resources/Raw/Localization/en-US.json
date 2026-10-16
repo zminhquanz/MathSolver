@@ -1825,7 +1825,7 @@
     "AiBank.Batch": "Batch",
     "AiBank.Count": "Count (1–100)",
     "AiBank.AutoInsert": "Automatically save valid questions to SQLite",
-    "AiBank.InsertHint": "When off, valid questions are saved only when you press Save to question bank. Each invalid item has up to 3 attempts; repeated failure stops the job so you can start again. A new run replaces the previous previews; save or export any drafts you want to keep first.",
+    "AiBank.InsertHint": "When off, valid questions are saved only when you press Save to question bank. Questions with complete facts but unverified meaning go straight to Questions awaiting review, then generation continues with the next question. Invalid items have up to 3 attempts; repeated failure stops the job so you can start again. A new run replaces the previous previews; save or export any drafts you want to keep first.",
     "AiBank.Generate": "✨ Generate with AI",
     "AiBank.Stop": "■ Stop generating",
     "AiBank.ConfirmStopTitle": "Confirm stop",

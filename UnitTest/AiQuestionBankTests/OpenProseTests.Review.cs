@@ -13,7 +13,7 @@ internal static partial class OpenProseTests
         return d.Facts is null?d with {GivenA=opening+d.GivenA}:d with {Facts=d.Facts.Select((f,i)=>i==0?f with {Text=opening+f.Text}:f).ToArray()};
     }
 
-    private sealed class ReviewRuntime : IQuestionTextRuntime
+    private sealed class ReviewRuntime(bool invalidFirst=false,bool allReview=false) : IQuestionTextRuntime
     {
         public bool IsLoaded=>true;
         public string ModelName=>"isolated-review-fixture";
@@ -22,7 +22,14 @@ internal static partial class OpenProseTests
         public Task<string> GenerateAsync(BasicQuestionContract c,string prompt,CancellationToken cancellationToken,Action<string>? onText=null,Action<AiGenerationMetrics>? onMetrics=null)
         {
             cancellationToken.ThrowIfCancellationRequested();Calls++;
-            var draft=Calls<=3?Unverified(c):OpenQuestionProse.Example(c);
+            if(invalidFirst&&Calls==1)return Task.FromResult("{}");
+            var draft=allReview||Calls==(invalidFirst?2:1)?Unverified(c):OpenQuestionProse.Example(c);
+            if(allReview)
+            {
+                string prefix="Zephyrus "+(char)('A'+Calls)+", ";
+                draft=draft.Facts is null?draft with {GivenA=prefix+draft.GivenA}
+                    :draft with {Facts=draft.Facts.Select((f,i)=>i==0?f with {Text=prefix+f.Text}:f).ToArray()};
+            }
             string raw=QuestionBankStore.SerializeDraft(draft);onText?.Invoke(raw);return Task.FromResult(raw);
         }
     }
@@ -37,9 +44,11 @@ internal static partial class OpenProseTests
             worker.Start(new(ArithmeticOperation.Add,CurriculumTier.ThreeStars,AppLanguage.Vietnamese,2,auto,new(QuestionKnowledgeGroup.Objects),CreativeProse:true));
             await worker.Completion.WaitAsync(TimeSpan.FromSeconds(30));
             Check(worker.Snapshot.State==AiJobState.Completed && !worker.Completion.IsFaulted,"Reviewable prose stopped the batch or threw.");
-            Check(runtime.Calls==4 && runtime.Releases==1,"Review retries or model release policy changed.");
+            Check(runtime.Calls==2 && runtime.Releases==1,"An inconclusive question was retried or model cleanup changed.");
             var first=worker.Snapshot.Items[0];
             Check(first.State==AiItemState.PendingReview && first.Question is null && first.Review is not null,"Unverified prose became usable.");
+            Check(first.Attempts.Count==1&&first.Attempts[0].ErrorCode=="SemanticReviewRequired"
+                &&worker.Snapshot.Items[1].Attempts.Count==1,"Review should finish its item immediately and generate the next one.");
             Check(worker.Snapshot.Items[1].State==(auto?AiItemState.Saved:AiItemState.Ready),"Batch did not continue after a pending question.");
             await worker.InsertAsync(1);
             var pending=(await new QuestionBankStore(path).GetPendingReviewsAsync()).Single();
@@ -71,12 +80,31 @@ internal static partial class OpenProseTests
             await store.DeleteAllAsync();
             Check((await store.GetPendingReviewsAsync()).Count==0 && (await store.GetProseHashesAsync()).Count==0,"Delete-all left review drafts behind.");
         }
+        var pendingStore=new QuestionBankStore(workspace.FilePath("all-review.db3"));var pendingRuntime=new ReviewRuntime(allReview:true);
+        var pendingWorker=new AiQuestionGenerationService(pendingRuntime,pendingStore);
+        pendingWorker.Start(new(ArithmeticOperation.Add,CurriculumTier.ThreeStars,AppLanguage.Vietnamese,3,true,new(QuestionKnowledgeGroup.Objects),CreativeProse:true));
+        await pendingWorker.Completion.WaitAsync(TimeSpan.FromSeconds(30));
+        Check(pendingWorker.Snapshot.State==AiJobState.Completed&&pendingRuntime.Calls==3&&pendingRuntime.Releases==1
+            &&pendingWorker.Snapshot.Items.All(i=>i.State==AiItemState.PendingReview&&i.Attempts.Count==1&&i.Question is null),
+            "A batch of review-only questions was retried, stopped, or automatically approved.");
+        Check((await pendingStore.GetPendingReviewsAsync()).Count==3&&(await pendingStore.GetProseHashesAsync()).Count==0,
+            "Review-only batch did not persist three isolated drafts.");
+        var retryStore=new QuestionBankStore(workspace.FilePath("invalid-then-review.db3"));var retryRuntime=new ReviewRuntime(invalidFirst:true);
+        var retryWorker=new AiQuestionGenerationService(retryRuntime,retryStore);
+        retryWorker.Start(new(ArithmeticOperation.Add,CurriculumTier.ThreeStars,AppLanguage.Vietnamese,2,true,new(QuestionKnowledgeGroup.Objects),CreativeProse:true));
+        await retryWorker.Completion.WaitAsync(TimeSpan.FromSeconds(30));
+        Check(retryWorker.Snapshot.State==AiJobState.Completed&&retryRuntime.Calls==3&&retryRuntime.Releases==1,"Invalid output did not retry before review/continuation.");
+        var retried=retryWorker.Snapshot.Items[0];
+        Check(retried.State==AiItemState.PendingReview&&retried.Attempts.Count==2&&retried.Attempts[0].ErrorCode=="InvalidFields"
+            &&retried.Attempts[1].ErrorCode=="SemanticReviewRequired"&&retryWorker.Snapshot.Items[1].State==AiItemState.Saved,
+            "An inconclusive retry should be queued immediately, preserving the invalid attempt and the next saved item.");
+        Check((await retryStore.GetPendingReviewsAsync()).Count==1,"Retried review draft was not persisted exactly once.");
         var cancelledStore=new QuestionBankStore(workspace.FilePath("cancelled.db3"));var cancelledRuntime=new ReviewRuntime();var cancelled=new AiQuestionGenerationService(cancelledRuntime,cancelledStore);
         cancelled.Changed+=(_,_)=>{if(cancelled.Snapshot.Items.Any(i=>i.State==AiItemState.PendingReview))cancelled.Stop();};
         cancelled.Start(new(ArithmeticOperation.Add,CurriculumTier.ThreeStars,AppLanguage.Vietnamese,2,true,new(QuestionKnowledgeGroup.Objects),CreativeProse:true));
         await cancelled.Completion.WaitAsync(TimeSpan.FromSeconds(30));
         Check(cancelled.Snapshot.State==AiJobState.Stopped && cancelled.Snapshot.Items[0].State==AiItemState.PendingReview
-            && (await cancelledStore.GetPendingReviewsAsync()).Count==1 && cancelledRuntime.Releases==1,"Stopping a later item lost a completed review draft or model cleanup.");
-        Console.WriteLine("PASS durable review quarantine, manual provenance/approval, batch continuation, duplicate pending drafts, insertion bypass rejection, discard/delete-all and cancellation.");
+            && (await cancelledStore.GetPendingReviewsAsync()).Count==1 && cancelledRuntime.Calls==1 && cancelledRuntime.Releases==1,"Stopping after immediate review lost the completed draft or started another generation.");
+        Console.WriteLine("PASS one-attempt review quarantine, invalid-output retry then immediate review, manual provenance/approval, batch continuation, duplicate pending drafts, insertion bypass rejection, discard/delete-all and cancellation.");
     }
 }

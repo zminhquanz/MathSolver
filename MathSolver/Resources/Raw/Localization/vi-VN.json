@@ -1825,7 +1825,7 @@
     "AiBank.Batch": "Tạo nhiều đề",
     "AiBank.Count": "Số đề (1–100)",
     "AiBank.AutoInsert": "Tự động lưu đề hợp lệ vào SQLite",
-    "AiBank.InsertHint": "Nếu tắt, đề hợp lệ chỉ được lưu khi bạn bấm Lưu vào ngân hàng đề. Mỗi đề lỗi được thử tối đa 3 lần; nếu vẫn lỗi, tác vụ dừng để bạn bấm tạo lại. Tạo lượt mới sẽ thay bản xem của lượt cũ; hãy lưu hoặc xuất đề muốn giữ trước.",
+    "AiBank.InsertHint": "Nếu tắt, đề hợp lệ chỉ được lưu khi bạn bấm Lưu vào ngân hàng đề. Đề đủ dữ kiện nhưng chưa xác minh rõ ý nghĩa được chuyển ngay vào Đề chờ duyệt, rồi tiếp tục đề sau. Đề không hợp lệ được thử tối đa 3 lần; nếu vẫn lỗi, tác vụ dừng để bạn bấm tạo lại. Tạo lượt mới sẽ thay bản xem của lượt cũ; hãy lưu hoặc xuất đề muốn giữ trước.",
     "AiBank.Generate": "✨ Tạo đề bằng AI",
     "AiBank.Stop": "■ Dừng tạo đề",
     "AiBank.ConfirmStopTitle": "Xác nhận dừng tạo đề",

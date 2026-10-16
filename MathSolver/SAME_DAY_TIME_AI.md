@@ -30,6 +30,10 @@ tự lấy lại số liệu khi xuất.
 - Các cách nói được kiểm chứng có giới hạn. Câu khác chưa hiểu được vào hàng
   chờ duyệt, không tự dùng trong luyện tập hoặc PDF. Đây không phải bộ hiểu
   ngôn ngữ tổng quát. JSON đúng và phép tính C# đúng chưa chứng minh câu văn đúng.
+- Khi đủ dữ kiện nhưng chưa chứng minh được ý nghĩa, lưu ngay vào hàng chờ
+  duyệt sau lần sinh đó rồi chuyển sang đề tiếp theo. Không sinh lại chỉ vì
+  `SemanticReviewRequired`. Đề sai hoặc trùng vẫn dùng cơ chế thử lại hiện có,
+  tối đa ba lần. Cài đặt tự lưu đề hợp lệ không thay đổi.
 - Trùng lời văn vẫn được kiểm tra riêng. Đổi số, tên, dấu câu hoặc riêng câu
   dẫn lời giải không tạo một đề mới.
 
@@ -48,7 +52,8 @@ Offline kiểm tra 150 cấu hình (5 bối cảnh × 3 quan hệ × 5 mức × 
 PDF kiểm tra cả năm bối cảnh với lời văn mới đã xác minh.
 
 Lượt native gồm 10 yêu cầu song ngữ, đủ ba quan hệ và năm bối cảnh, temperature
-0.5, tối đa ba lần sinh/yêu cầu. Evidence giữ prompt, JSON thô, trạng thái từng
+0.5; dừng ngay khi xác minh được hoặc cần duyệt, chỉ thử lại đề sai/trùng,
+tối đa ba lần/yêu cầu. Evidence giữ prompt, JSON thô, trạng thái từng
 lần thử, thời gian và tốc độ. Ngân hàng thử là SQLite riêng; không ghi vào dữ
 liệu cài đặt của người dùng. Đọc nội dung từng câu và báo cáo riêng tỷ lệ xác
 minh, cần duyệt, trùng và thử lại; không suy ra độ chính xác chung từ mẫu nhỏ.

@@ -308,7 +308,13 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                             correction="DuplicateProse";duplicateProse.Add(validation.Draft!.ProblemText);
                             UpdateAttempt(number,attempt,a=>a with {ErrorCode=correction});
                         }
-                        else pendingReview=candidate;
+                        else
+                        {
+                            // Complete facts with inconclusive meaning go to review
+                            // after this attempt; only invalid/duplicate output retries.
+                            pendingReview=candidate;
+                            break;
+                        }
                     }
                     continue;
                 }

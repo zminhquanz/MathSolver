@@ -118,7 +118,8 @@ internal static partial class OpenProseTests
         await File.WriteAllTextAsync(Path.Combine(directory,"run-info.json"),JsonSerializer.Serialize(new {SchemaVersion=1,StartedUtc=DateTime.UtcNow,session.Runtime.ModelName,
             session.Runtime.InferenceThreadCount,session.Runtime.PromptThreadCount,SystemVietnamese=BasicQuestionPrompt.SystemInstruction(AppLanguage.Vietnamese),SystemEnglish=BasicQuestionPrompt.SystemInstruction(AppLanguage.English),
             Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
-            Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed"},json));
+            Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed",
+            RetryPolicy="Stop on verified or semantic review; retry invalid/duplicate output up to three attempts"},json));
         try
         {
             foreach (var setting in customCases is null?new[] { (Open:false, Temperature:0.5f), (Open:true, Temperature:0.4f), (Open:true, Temperature:0.5f), (Open:true, Temperature:0.6f) }:new[]{(Open:true,Temperature:0.5f)})
@@ -162,6 +163,7 @@ internal static partial class OpenProseTests
                         await store.QueueReviewAsync(PendingQuestionReview.Create(c,result.Draft!,raw,session.Runtime.ModelName,result.ErrorDetails??"review"),deadline.Token);
                     await File.WriteAllTextAsync(Path.Combine(directory,"attempts.json"),JsonSerializer.Serialize(attempts,json));
                     Console.WriteLine($"{(setting.Open?"OPEN":"BASE")} {setting.Temperature:F1} {name} #{attempt}: {correction??"Verified"}, {watch.Elapsed.TotalSeconds:F1}s, {metrics?.TokensPerSecond:F2} token/s");
+                    if(result.NeedsReview&&correction=="SemanticReviewRequired")break;
                     if (correction is null)
                     {
                         CheckPractice(c with {OpenProse=true},result.Draft!);

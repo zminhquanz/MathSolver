@@ -130,6 +130,9 @@ internal static class SameDayTimeTests
             Check(worker.Snapshot.State==AiJobState.Completed&&runtime.Releases==1,"Time worker did not finish/release.");
             Check(worker.Snapshot.Items[0].State==AiItemState.PendingReview&&worker.Snapshot.Items[0].Question is null,"Time worker trusted unknown.");
             Check(worker.Snapshot.Items[1].State==AiItemState.Saved,"Time worker did not continue saving verified relations.");
+            Check(runtime.Calls==4&&worker.Snapshot.Items[0].Attempts.Count==1
+                &&worker.Snapshot.Items[1].Attempts.Count==3&&worker.Snapshot.Items[1].Attempts.Take(2).All(a=>a.ErrorCode=="InvalidText"),
+                "Time review must finish after one attempt; only the following invalid output should retry.");
         }
         Console.WriteLine($"PASS {profiles} bilingual same-day time profiles; 8 fresh seeds, independent chronology/answers, all modes, result-only grading, relation/target/condition mutations, technical-text rejection, worker, review isolation and Excel.");
     }
