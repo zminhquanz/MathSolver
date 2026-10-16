@@ -31,6 +31,7 @@ public sealed class LinearEquationGraphDrawable : IDrawable
 
     private QuadDouble _a;
     private QuadDouble _b;
+    private LinearGraphProjection _projection;
 
     private double _rootX;
     private double _yIntercept;
@@ -89,6 +90,7 @@ public sealed class LinearEquationGraphDrawable : IDrawable
 
         _a = rawA;
         _b = rawB;
+        _projection = new LinearGraphProjection(rawA, rawB);
 
         HasEquation =
             _a.IsFinite &&
@@ -494,8 +496,11 @@ public sealed class LinearEquationGraphDrawable : IDrawable
         double yMinimum,
         double yMaximum)
     {
-        double y1 = Evaluate(xMinimum);
-        double y2 = Evaluate(xMaximum);
+        // A straight line needs just two endpoints. Use the same SIMD policy
+        // as the parabola, retaining precise evaluation when projection error
+        // could exceed one eighth of a pixel at the current zoom.
+        _projection.EvaluatePair(xMinimum, xMaximum,
+            (yMaximum - yMinimum) / plotRect.Height / 8d, out double y1, out double y2);
 
         if (!double.IsFinite(y1) || !double.IsFinite(y2))
         {

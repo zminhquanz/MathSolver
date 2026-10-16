@@ -270,6 +270,11 @@
 
                             </Grid>
 
+                            <Label
+                                Text="{localization:Translate PowerRoot.Diagnostics.ProgressEstimate}"
+                                FontSize="13"
+                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
                             <Grid
                                 ColumnDefinitions="*,Auto"
                                 ColumnSpacing="12">
@@ -456,6 +461,10 @@
 
                             </Border>
 
+                            <Border x:Name="PowerSummaryBorder" IsVisible="False" Style="{StaticResource SolverCardStyle}">
+                                <VerticalStackLayout x:Name="PowerSummaryRows" Spacing="10" />
+                            </Border>
+
                             <Button
                                 x:Name="DiagnosticsToggleButton"
                                 IsVisible="False"
@@ -482,12 +491,7 @@
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
 
-                                <Label
-                                    x:Name="LargeResultInfoLabel"
-                                    FontSize="15"
-                                    LineHeight="1.25"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <VerticalStackLayout x:Name="PowerDiagnosticsSections" Spacing="12" />
 
                             </Border>
 

@@ -681,8 +681,7 @@ internal sealed partial class ParallelBigUnsigned
         // worker gates, so the radix-4 dispatch below is confined to <=10M.
         bool useAvx512Ntt =
             useAvx2Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // One workspace pool lives for the complete exponentiation.  In the
         // split-power path both branches and the final combine share it, so
@@ -739,7 +738,7 @@ internal sealed partial class ParallelBigUnsigned
                new FixedWorkerTeam(
                    workerCount,
                    nttBufferPool,
-                   sharedNttTwiddlePlans))
+                   sharedNttTwiddlePlans, diagnostics: diagnostics))
         {
             actualWorkerCount =
                 workers.WorkerCount;
@@ -946,7 +945,7 @@ internal sealed partial class ParallelBigUnsigned
                    workerCount,
                    nttBufferPool,
                    sharedNttTwiddlePlans,
-                   persistentStaticScheduling: true))
+                   persistentStaticScheduling: true, diagnostics: diagnostics))
         {
             // Seed a^10,000,000 is still the same arithmetic kernel used by
             // Pow(); the difference is lifetime only. The same 24-worker team
@@ -1293,7 +1292,7 @@ internal sealed partial class ParallelBigUnsigned
                     new FixedWorkerTeam(
                         branchWorkerCount,
                         nttBufferPool,
-                        sharedNttTwiddlePlans);
+                        sharedNttTwiddlePlans, diagnostics: branchDiagnostics);
 
                 ParallelBigUnsigned branchMagnitude =
                     PowWithTeam(
@@ -1396,7 +1395,7 @@ internal sealed partial class ParallelBigUnsigned
                new FixedWorkerTeam(
                    workerCount,
                    nttBufferPool,
-                   sharedNttTwiddlePlans))
+                   sharedNttTwiddlePlans, diagnostics: diagnostics))
         {
             magnitude =
                 Multiply(
@@ -2758,6 +2757,7 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
+                NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Scalar);
                 ExecuteRanges(
                     transformLength,
                     workers,
@@ -2910,6 +2910,7 @@ internal sealed partial class ParallelBigUnsigned
                 }
                 else
                 {
+                    NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Scalar);
                     ExecuteRanges(
                         transformLength,
                         workers,
@@ -3005,6 +3006,7 @@ internal sealed partial class ParallelBigUnsigned
                 }
                 else
                 {
+                    NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Scalar);
                     ExecuteRanges(
                         transformLength,
                         workers,
@@ -5063,6 +5065,7 @@ internal sealed partial class ParallelBigUnsigned
                 }
                 else
                 {
+                    NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Scalar);
                     ExecuteRanges(
                         transformLength,
                         workers,
@@ -5154,8 +5157,7 @@ internal sealed partial class ParallelBigUnsigned
         uint modulus)
     {
         return (workers.UseAvx512Ntt || workers.UseLargeModeAvx512Pointwise) &&
-               (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-               Vector512.IsHardwareAccelerated &&
+               CalculationAccelerationManager.UsePowerNttAvx512 &&
                (modulus == FirstModulus ||
                 modulus == SecondModulus);
     }
@@ -5543,6 +5545,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             dualVectorWidth;
 
+        if (index < dualVectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < dualVectorEnd;
              index += dualVectorWidth)
@@ -5588,6 +5591,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             Vector512<uint>.Count;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < vectorEnd;
              index += Vector512<uint>.Count)
@@ -5655,6 +5659,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             dualVectorWidth;
 
+        if (index < dualVectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < dualVectorEnd;
              index += dualVectorWidth)
@@ -5698,6 +5703,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             Vector512<uint>.Count;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < vectorEnd;
              index += Vector512<uint>.Count)
@@ -5760,6 +5766,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             dualVectorWidth;
 
+        if (index < dualVectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < dualVectorEnd;
              index += dualVectorWidth)
@@ -5795,6 +5802,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             Vector512<uint>.Count;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < vectorEnd;
              index += Vector512<uint>.Count)
@@ -5853,6 +5861,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             dualVectorWidth;
 
+        if (index < dualVectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < dualVectorEnd;
              index += dualVectorWidth)
@@ -5888,6 +5897,7 @@ internal sealed partial class ParallelBigUnsigned
             (end - index) %
             Vector512<uint>.Count;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx512);
         for (;
              index < vectorEnd;
              index += Vector512<uint>.Count)
@@ -6117,6 +6127,7 @@ internal sealed partial class ParallelBigUnsigned
             }
             else
             {
+                NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Scalar);
                 ExecuteRanges(
                     transformLength,
                     workers,
@@ -6206,6 +6217,8 @@ internal sealed partial class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        if (values.Length > 1 && !workers.UseAvx2Ntt && !workers.UseSseNtt && !workers.UseNeonNtt)
+            NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Scalar);
         int length =
             values.Length;
 
@@ -6995,6 +7008,8 @@ internal sealed partial class ParallelBigUnsigned
         PowerDiagnosticsCollector diagnostics,
         CancellationToken cancellationToken)
     {
+        if (values.Length > 1 && !workers.UseAvx2Ntt && !workers.UseSseNtt && !workers.UseNeonNtt)
+            NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Scalar);
         int length =
             values.Length;
 
@@ -10971,6 +10986,7 @@ internal sealed partial class ParallelBigUnsigned
                 count &
                 ~(Vector512<uint>.Count - 1);
 
+            if (offset < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Crt, NttKernelIsa.Avx512);
             for (;
                  offset < vectorEnd;
                  offset += Vector512<uint>.Count)
@@ -11220,6 +11236,7 @@ internal sealed partial class ParallelBigUnsigned
         }
 
         // Exact fallback for machines with SIMD disabled/unavailable.
+        if (offset < count) NttKernelExecution.Record(NttKernelPhase.Crt, NttKernelIsa.Scalar);
         for (;
              offset < count;
              offset++)
@@ -11665,6 +11682,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(
                 shoupTwiddles);
 
+        if (leftIndex + 15 < butterflyEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         while (leftIndex + 15 < butterflyEnd)
         {
             Vector512<uint> left =
@@ -11798,6 +11816,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(
                 shoupTwiddles);
 
+        if (leftIndex + 15 < butterflyEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         while (leftIndex + 15 < butterflyEnd)
         {
             Vector512<uint> left =
@@ -11932,6 +11951,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(
                 shoupTwiddles);
 
+        if (leftIndex + 7 < butterflyEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         while (leftIndex + 7 < butterflyEnd)
         {
             Vector256<uint> left =
@@ -12065,6 +12085,7 @@ internal sealed partial class ParallelBigUnsigned
             ref MemoryMarshal.GetArrayDataReference(
                 shoupTwiddles);
 
+        if (leftIndex + 7 < butterflyEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         while (leftIndex + 7 < butterflyEnd)
         {
             Vector256<uint> left =
@@ -12176,6 +12197,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
 
+        if (index0 + 7 < end0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         while (index0 + 7 < end0)
         {
             Vector256<uint> value0 = Vector256.LoadUnsafe(ref valuesReference, (nuint)index0);
@@ -12283,6 +12305,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref shoupTwiddles[0];
 
+        if (index0 + 7 < end0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         while (index0 + 7 < end0)
         {
             // First quarter pair: complete its S-stage work before touching the
@@ -12421,6 +12444,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref shoupTwiddles[0];
 
+        if (index0 + 7 < end0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         while (index0 + 7 < end0)
         {
             // First quarter pair: complete its S-stage work before touching the
@@ -12600,6 +12624,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
 
+        if (index0 + 7 < end0) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         while (index0 + 7 < end0)
         {
             // Final Inverse-L1 generic stage-pair pass: keep the single-parent
@@ -12744,6 +12769,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
 
+        if (index0 + 7 < end0) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         while (index0 + 7 < end0)
         {
             // Final Inverse-L1 generic stage-pair pass: keep the single-parent
@@ -12949,6 +12975,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector512<uint> shoupVector =
                 Vector512.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -13054,6 +13081,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector512<uint> shoupVector =
                 Vector512.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -13187,6 +13215,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> shoupVector =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -13293,6 +13322,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> shoupVector =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)twiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -13474,6 +13504,7 @@ internal sealed partial class ParallelBigUnsigned
         int groupOffset = regionOffset;
         int pairedEnd = regionEnd - StageLength;
 
+        if (groupOffset < pairedEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (; groupOffset < pairedEnd; groupOffset += TwoGroupStride)
         {
             int nextGroupOffset =
@@ -13694,6 +13725,7 @@ internal sealed partial class ParallelBigUnsigned
         int groupOffset = regionOffset;
         int pairedEnd = regionEnd - StageLength;
 
+        if (groupOffset < pairedEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (; groupOffset < pairedEnd; groupOffset += TwoGroupStride)
         {
             int nextGroupOffset =
@@ -13886,6 +13918,8 @@ internal sealed partial class ParallelBigUnsigned
 
         int groupOffset = regionOffset;
 
+        if (groupOffset + FourGroupStride <= regionEnd)
+            NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (; groupOffset + FourGroupStride <= regionEnd;
              groupOffset += FourGroupStride)
         {
@@ -14098,6 +14132,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> secondShoup =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -14272,6 +14307,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> secondShoup =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -14454,6 +14490,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> secondShoup =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
             for (int groupOffset = regionOffset;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -14641,6 +14678,7 @@ internal sealed partial class ParallelBigUnsigned
         int groupOffsetA = regionOffset;
         int groupOffsetB = regionOffset + stageLength;
 
+        if ((0) < quarterLength) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (int butterfly = 0;
              butterfly < quarterLength;
              butterfly += 16)
@@ -14866,6 +14904,7 @@ internal sealed partial class ParallelBigUnsigned
             // is still no cross-lane permutation and no extra value traffic.
             int groupOffset = regionOffset;
 
+            if (groupOffset + (stageLength << 1) <= regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
             for (;
                  groupOffset + (stageLength << 1) <= regionEnd;
                  groupOffset += stageLength << 1)
@@ -14990,6 +15029,7 @@ internal sealed partial class ParallelBigUnsigned
 
             // Odd group counts retain the exact accepted Phase-11 bounded
             // schedule. This is also the only path for a one-group region.
+            if (groupOffset < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
             for (;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -15132,6 +15172,7 @@ internal sealed partial class ParallelBigUnsigned
             // is still no cross-lane permutation and no extra value traffic.
             int groupOffset = regionOffset;
 
+            if (groupOffset + (stageLength << 1) <= regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
             for (;
                  groupOffset + (stageLength << 1) <= regionEnd;
                  groupOffset += stageLength << 1)
@@ -15256,6 +15297,7 @@ internal sealed partial class ParallelBigUnsigned
 
             // Odd group counts retain the exact accepted Phase-11 bounded
             // schedule. This is also the only path for a one-group region.
+            if (groupOffset < regionEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
             for (;
                  groupOffset < regionEnd;
                  groupOffset += stageLength)
@@ -15433,6 +15475,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint shoupReference =
             ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
 
+        if ((0) < eighthLength) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (int butterfly = 0;
              butterfly < eighthLength;
              butterfly += 8)
@@ -15762,6 +15805,7 @@ internal sealed partial class ParallelBigUnsigned
         int parentOffset = regionOffset;
         int pairedEnd = regionEnd - ParentLength;
 
+        if (parentOffset < pairedEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         for (; parentOffset < pairedEnd;
              parentOffset += TwoParentStride)
         {
@@ -16012,6 +16056,7 @@ internal sealed partial class ParallelBigUnsigned
         int parentOffset = regionOffset;
         int pairedEnd = regionEnd - ParentLength;
 
+        if (parentOffset < pairedEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         for (; parentOffset < pairedEnd;
              parentOffset += TwoParentStride)
         {
@@ -16204,6 +16249,8 @@ internal sealed partial class ParallelBigUnsigned
 
         int parentOffset = regionOffset;
 
+        if (parentOffset + FourParentStride <= regionEnd)
+            NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         for (; parentOffset + FourParentStride <= regionEnd;
              parentOffset += FourParentStride)
         {
@@ -16416,6 +16463,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> secondShoup1 =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;
                  parentOffset += parentLength)
@@ -16601,6 +16649,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector256<uint> secondShoup1 =
                 Vector256.LoadUnsafe(ref shoupReference, (nuint)secondTwiddleIndex1);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;
                  parentOffset += parentLength)
@@ -16874,6 +16923,7 @@ internal sealed partial class ParallelBigUnsigned
              superOffset < regionEnd;
              superOffset += superBlockLength)
         {
+            if ((0) < firstHalfLength) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
             for (int butterfly = 0;
                  butterfly < firstHalfLength;
                  butterfly += 16)
@@ -17105,6 +17155,7 @@ internal sealed partial class ParallelBigUnsigned
                 stageLength >= 128 &&
                 regionLength >= (parentLength << 1);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;)
             {
@@ -17359,6 +17410,7 @@ internal sealed partial class ParallelBigUnsigned
                 stageLength >= 128 &&
                 regionLength >= (parentLength << 1);
 
+            if ((regionOffset) < regionEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
             for (int parentOffset = regionOffset;
                  parentOffset < regionEnd;)
             {
@@ -17602,6 +17654,7 @@ internal sealed partial class ParallelBigUnsigned
                     ref MemoryMarshal.GetArrayDataReference(
                         shoupTwiddles);
 
+                if ((groupStart) < groupEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
                 for (int groupIndex = groupStart;
                      groupIndex < groupEnd;
                      groupIndex++)
@@ -17921,6 +17974,7 @@ internal sealed partial class ParallelBigUnsigned
                     ref MemoryMarshal.GetArrayDataReference(
                         shoupTwiddles);
 
+                if ((parentStart) < parentEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
                 for (int parentIndex = parentStart;
                      parentIndex < parentEnd;
                      parentIndex++)
@@ -18396,6 +18450,7 @@ internal sealed partial class ParallelBigUnsigned
         int sinceCancellation =
             0;
 
+        if (butterfly + 15 < butterflyEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (;
              butterfly + 15 < butterflyEnd;
              butterfly += 16)
@@ -19219,6 +19274,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
         int i = first;
         int sinceCancellation = 0;
+        if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (; i + 15 < last; i += 16)
         {
             int index0 = groupOffset + i;
@@ -19342,6 +19398,7 @@ internal sealed partial class ParallelBigUnsigned
         int sinceCancellation =
             0;
 
+        if (i + 7 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (; i + 7 < last; i += 8)
         {
             int index0 =
@@ -19523,6 +19580,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint destination = ref MemoryMarshal.GetArrayDataReference(output);
         int i = first;
         int sinceCancellation = 0;
+        if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         for (; i + 15 < last; i += 16)
         {
             Vector512<uint> left = MultiplyShoupLow32Avx512(
@@ -19795,6 +19853,7 @@ internal sealed partial class ParallelBigUnsigned
                     int i = first;
                     int sinceCancellation = 0;
 
+                    if (i + 7 < last) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Avx2);
                     for (; i + 7 < last; i += 8)
                     {
                         int leftIndex = groupOffset + i;
@@ -19937,6 +19996,7 @@ internal sealed partial class ParallelBigUnsigned
                     int i = first;
                     int sinceCancellation = 0;
 
+                    if (i + 7 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
                     for (; i + 7 < last; i += 8)
                     {
                         int leftIndex = groupOffset + i;
@@ -20066,6 +20126,7 @@ internal sealed partial class ParallelBigUnsigned
                     int i = first;
                     int sinceCancellation = 0;
 
+                    if (i + 7 < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
                     for (; i + 7 < last; i += 8)
                     {
                         int leftIndex = groupOffset + i;
@@ -20235,6 +20296,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
         int i = first;
         int sinceCancellation = 0;
+        if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (; i + 15 < last; i += 16)
         {
             int leftIndex = groupOffset + i;
@@ -20302,6 +20364,7 @@ internal sealed partial class ParallelBigUnsigned
                 Vector512<uint> twiddle = CreateTwiddleSequenceAvx512(root, first, modulus);
                 int i = first;
                 int sinceCancellation = 0;
+                if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
                 for (; i + 15 < last; i += 16)
                 {
                     int leftIndex = groupOffset + i;
@@ -21433,6 +21496,7 @@ internal sealed partial class ParallelBigUnsigned
                 int groupOffset = group * stageLength;
                 int i = first;
                 int sinceCancellation = 0;
+                if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
                 for (; i + 15 < last; i += 16)
                 {
                     int leftIndex = groupOffset + i;
@@ -21501,6 +21565,7 @@ internal sealed partial class ParallelBigUnsigned
                 int parentOffset = parent * parentLength;
                 int i = first;
                 int sinceCancellation = 0;
+                if (i + 15 < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
                 for (; i + 15 < last; i += 16)
                 {
                     int index0 = parentOffset + i;
@@ -23094,8 +23159,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512ForwardL1Generic =
                     workers.UseLargeModeAvx512ForwardL1Generic;
@@ -23395,8 +23459,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512ForwardL1Generic =
                     workers.UseLargeModeAvx512ForwardL1Generic;
@@ -23758,8 +23821,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512InverseL1Generic =
                     workers.UseLargeModeAvx512InverseL1Generic;
@@ -24000,8 +24062,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512InverseL1Generic =
                     workers.UseLargeModeAvx512InverseL1Generic;
@@ -24261,6 +24322,7 @@ internal sealed partial class ParallelBigUnsigned
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
         ref uint roots = ref MemoryMarshal.GetArrayDataReference(twiddles);
         ref uint companions = ref MemoryMarshal.GetArrayDataReference(shoupTwiddles);
+        if ((0) < halfLength) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         for (int i = 0; i < halfLength; i += 16)
         {
             Vector512<uint> value0 = Vector512.LoadUnsafe(ref data, (nuint)(parentOffset + i));
@@ -24365,8 +24427,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512InverseL1Generic =
                     workers.UseLargeModeAvx512InverseL1Generic;
@@ -25776,6 +25837,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 31;
 
+        if (index <= vectorEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (; index <= vectorEnd; index += 32)
         {
             TransposeRadix4Avx2(
@@ -25832,6 +25894,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 31;
 
+        if (index <= vectorEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         for (; index <= vectorEnd; index += 32)
         {
             TransposeRadix4Avx2(
@@ -25918,6 +25981,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 63;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         for (; index < vectorEnd; index += 64)
         {
             TransposeRadix4Avx512(
@@ -25981,6 +26045,7 @@ internal sealed partial class ParallelBigUnsigned
         int index = blockOffset;
         int vectorEnd = blockEnd - 63;
 
+        if (index < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         for (; index < vectorEnd; index += 64)
         {
             TransposeRadix4Avx512(
@@ -27232,6 +27297,7 @@ internal sealed partial class ParallelBigUnsigned
         int groupOffset = regionOffset;
         int pairedEnd = regionEnd - StageLength;
 
+        if (groupOffset < pairedEnd) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         for (; groupOffset < pairedEnd; groupOffset += TwoGroupStride)
         {
             int nextGroupOffset = groupOffset + StageLength;
@@ -27691,8 +27757,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 bool useAvx512Ntt =
                     workers.UseAvx512Ntt &&
-                    (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-                    Vector512.IsHardwareAccelerated;
+                    CalculationAccelerationManager.UsePowerNttAvx512;
 
                 bool useLargeModeAvx512ForwardL1Generic =
                     workers.UseLargeModeAvx512ForwardL1Generic;
@@ -29321,6 +29386,7 @@ internal sealed partial class ParallelBigUnsigned
         int pairIndex =
             pairStart;
 
+        if (pairIndex + 7 < pairEnd) NttKernelExecution.Record((normalize ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Avx512);
         for (; pairIndex + 7 < pairEnd; pairIndex += 8)
         {
             int valueIndex =
@@ -29417,6 +29483,7 @@ internal sealed partial class ParallelBigUnsigned
         int pairIndex =
             pairStart;
 
+        if (pairIndex + 3 < pairEnd) NttKernelExecution.Record((normalize ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Avx2);
         for (; pairIndex + 3 < pairEnd; pairIndex += 4)
         {
             int valueIndex =
@@ -30441,6 +30508,10 @@ internal sealed partial class ParallelBigUnsigned
 
     private sealed class PowerDiagnosticsCollector
     {
+        private readonly List<NttKernelCounter> _kernelCounters = [];
+        private readonly List<NttKernelUsage> _importedKernelUsage = [];
+        private bool _avx512Enabled;
+        public void AttachKernelCounter(NttKernelCounter counter) => _kernelCounters.Add(counter);
         public int NttMultiplicationCount;
         public long BitReversalTicks;
         public long ForwardTransformTicks;
@@ -30841,12 +30912,20 @@ internal sealed partial class ParallelBigUnsigned
                 forwardCriticalBranch,
                 inverseCriticalBranch);
 
+            result._kernelCounters.AddRange(first._kernelCounters);
+            result._kernelCounters.AddRange(second._kernelCounters);
+            result._importedKernelUsage.AddRange(first._importedKernelUsage);
+            result._importedKernelUsage.AddRange(second._importedKernelUsage);
+            result._avx512Enabled = first._avx512Enabled || second._avx512Enabled;
+
             return result;
         }
 
         public void AccumulateSnapshot(
             ParallelPowerDiagnostics snapshot)
         {
+            _importedKernelUsage.AddRange(snapshot.KernelUsage);
+            _avx512Enabled |= snapshot.Avx512Enabled;
             NttMultiplicationCount =
                 checked(
                     NttMultiplicationCount +
@@ -30968,6 +31047,7 @@ internal sealed partial class ParallelBigUnsigned
         public void ConfigureNttBackends(
             bool enabled, bool useSse = false, bool useNeon = false)
         {
+            _avx512Enabled |= enabled && CalculationAccelerationManager.UsePowerNttAvx512;
             _usedAvx2NttButterflies |=
                 enabled;
             _usedSseNttButterflies |= useSse;
@@ -31132,7 +31212,14 @@ internal sealed partial class ParallelBigUnsigned
                 _largePersistentGenerationCount,
                 _largePersistentStaticRangeCount,
                 _largeMemoryBudgetBufferLimit,
-                CreateGlobalStageProfiles()) { UsedSseNttButterflies = _usedSseNttButterflies, UsedNeonNttButterflies = _usedNeonNttButterflies };
+                CreateGlobalStageProfiles())
+            {
+                UsedSseNttButterflies = _usedSseNttButterflies,
+                UsedNeonNttButterflies = _usedNeonNttButterflies,
+                KernelUsage = NttKernelExecution.Merge(_importedKernelUsage.Concat(_kernelCounters.SelectMany(counter => counter.Snapshot()))),
+                Avx512RuntimeSupported = Avx512F.IsSupported && Vector512.IsHardwareAccelerated,
+                Avx512Enabled = _avx512Enabled
+            };
         }
 
         private static long ToTimestampTicks(
@@ -31918,6 +32005,8 @@ internal sealed partial class ParallelBigUnsigned
     /// </summary>
     private sealed class FixedWorkerTeam : IDisposable
     {
+        private readonly NttKernelCounter _kernelCounter = new();
+        private readonly NttKernelExecution.Scope _ownerKernelScope;
         private readonly object _gate =
             new();
 
@@ -31971,8 +32060,10 @@ internal sealed partial class ParallelBigUnsigned
             int workerCount,
             NttBufferPool nttBufferPool,
             SharedNttTwiddlePlans sharedNttTwiddlePlans,
-            bool persistentStaticScheduling = false)
+            bool persistentStaticScheduling = false,
+            PowerDiagnosticsCollector? diagnostics = null)
         {
+            diagnostics?.AttachKernelCounter(_kernelCounter);
             _nttBufferPool =
                 nttBufferPool ??
                 throw new ArgumentNullException(
@@ -32019,6 +32110,7 @@ internal sealed partial class ParallelBigUnsigned
 
                 _threads[workerIndex].Start();
             }
+            _ownerKernelScope = NttKernelExecution.Bind(_kernelCounter);
         }
 
         public int WorkerCount { get; }
@@ -32056,8 +32148,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // Phase 3 keeps the shared large-mode AVX-512 plan flag off and
         // opens only the accepted Inverse-L2 stage-pair shapes through the
@@ -32067,8 +32158,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // Phase 4 opens only the four generic >10M Forward-L1 DIF stage-pairs
         // through the exact Low32 Vector512 kernel. Packed 16+8 remains on the
@@ -32077,16 +32167,14 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // Cached-global policy covers eligible stage pairs on any worker count.
         public bool UseLargeModeAvx512ForwardGlobalCached =>
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // Widen only the fused 4+2 DIF / 2+4 DIT kernels. Keep packed and
         // generic local-stage policies independent of this large-mode gate.
@@ -32094,8 +32182,7 @@ internal sealed partial class ParallelBigUnsigned
             _persistentStaticScheduling &&
             UseAvx2Ntt &&
             !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) &&
-            Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // L2 pass deliberately has a separate gate from the accepted L1
         // checkpoint so L2 can be A/B tested and rolled back independently.
@@ -32118,17 +32205,17 @@ internal sealed partial class ParallelBigUnsigned
         public bool UseLargeModeAvx512InverseGlobal =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         public bool UseLargeModeAvx512ForwardGlobalUncached =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         public bool UseLargeModeAvx512Crt =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated &&
+            CalculationAccelerationManager.UsePowerNttAvx512 &&
             Avx512DQ.IsSupported;
 
         // Keep prefix normalization independent of the global-stage policy.
@@ -32137,26 +32224,26 @@ internal sealed partial class ParallelBigUnsigned
         public bool UseLargeModeAvx512FinalInversePrefix =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // The prime-specific reducer handles products and squares, including
         // aliased destinations. DQ is optional inside the exact F kernel.
         public bool UseLargeModeAvx512Pointwise =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         public bool UseLargeModeAvx512ForwardL2 =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         // Keep three-stage L3/bridge fusion separate from the shared <=10M
         // policy. The caller additionally checks the exact L3=4*L2 shape.
         public bool UseLargeModeAvx512InverseL3Bridge =>
             _persistentStaticScheduling &&
             UseAvx2Ntt && !UseAvx512Ntt &&
-            (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+            CalculationAccelerationManager.UsePowerNttAvx512;
 
         public long PersistentGenerationCount =>
             Interlocked.Read(
@@ -32380,11 +32467,14 @@ internal sealed partial class ParallelBigUnsigned
             _itemCount = 0;
 
             _completed.Dispose();
+            _kernelCounter.Dispose();
+            _ownerKernelScope.Dispose();
         }
 
         private void WorkerLoop(
             int workerIndex)
         {
+            using var kernelScope = NttKernelExecution.Bind(_kernelCounter);
             int observedGeneration = 0;
 
             while (true)
@@ -33500,4 +33590,7 @@ internal sealed record ParallelPowerDiagnostics(
 {
     public bool UsedSseNttButterflies { get; init; }
     public bool UsedNeonNttButterflies { get; init; }
+    public IReadOnlyList<NttKernelUsage> KernelUsage { get; init; } = [];
+    public bool Avx512RuntimeSupported { get; init; }
+    public bool Avx512Enabled { get; init; }
 }

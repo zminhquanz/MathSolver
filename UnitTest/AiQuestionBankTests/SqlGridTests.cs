@@ -8,6 +8,7 @@ internal static class SqlGridTests
 
     public static async Task RunAsync(string directory, ValidatedBankQuestion sample)
     {
+        await SqlWriteConfirmationTests.RunAsync(directory, sample);
         await CheckRowEditsAsync(directory, sample);
         string path = Path.Combine(directory, "sql-grid.db3");
         var store = new QuestionBankStore(path);

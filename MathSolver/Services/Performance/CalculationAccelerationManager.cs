@@ -250,6 +250,11 @@ public static class CalculationAccelerationManager
         Avx2.IsSupported &&
         IsPowerNttAccelerationAvailable;
 
+    /// <summary>Enables real NTT AVX-512 dispatch for Auto/AVX-512 when the runtime supports it.</summary>
+    public static bool UsePowerNttAvx512 =>
+        UsePowerNttAvx2 && AllowAvx512 &&
+        Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
+
     /// <summary>
     /// Direct ARM64 AdvSimd or optimized hybrid Vector128 for Android NTT/CRT
     /// through exponent 100M.

@@ -45,6 +45,7 @@ internal sealed partial class ParallelBigUnsigned
 
         int offset = 0;
 
+        if (offset < vectorEnd) NttKernelExecution.Record(NttKernelPhase.Crt, NttKernelIsa.Avx2);
         for (; offset < vectorEnd; offset += Vector256<uint>.Count)
         {
             Vector256<uint> first =
@@ -429,6 +430,8 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        if (count > 0 && !workers.UseAvx2Ntt && !workers.UseSseNtt && !workers.UseNeonNtt)
+            NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Scalar);
         if (count <= 0)
             return incomingCarry;
 
@@ -464,6 +467,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong qRef = ref MemoryMarshal.GetReference(q);
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector512<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset < end; offset += Vector512<ulong>.Count)
             {
                 Vector512<ulong> values = Vector512.LoadUnsafe(ref source, (nuint)offset);
@@ -480,6 +484,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong qRef = ref MemoryMarshal.GetReference(q);
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector256<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset < end; offset += Vector256<ulong>.Count)
             {
                 Vector256<ulong> values = Vector256.LoadUnsafe(ref source, (nuint)offset);
@@ -496,6 +501,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong qRef = ref MemoryMarshal.GetReference(q);
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector128<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 Vector128<ulong> values = Vector128.LoadUnsafe(ref source, (nuint)offset);
@@ -513,6 +519,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong qRef = ref MemoryMarshal.GetReference(q);
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector128<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Neon);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 Vector128<ulong> values = Vector128.LoadUnsafe(ref source, (nuint)offset);
@@ -548,6 +555,8 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+        if (count > 0 && !workers.UseAvx2Ntt && !workers.UseSseNtt && !workers.UseNeonNtt)
+            NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Scalar);
         if (count <= 0)
             return incomingCarry;
 
@@ -568,6 +577,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector512<ulong>.Count - 1);
 
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset < end; offset += Vector512<ulong>.Count)
             {
                 if ((offset & 0xFFFF) == 0)
@@ -592,6 +602,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector256<ulong>.Count - 1);
 
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset < end; offset += Vector256<ulong>.Count)
             {
                 if ((offset & 0xFFFF) == 0)
@@ -616,6 +627,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector128<ulong>.Count - 1);
 
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 if ((offset & 0xFFFF) == 0)
@@ -641,6 +653,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             int end = count & ~(Vector128<ulong>.Count - 1);
 
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Neon);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 if ((offset & 0xFFFF) == 0)
@@ -685,6 +698,7 @@ internal sealed partial class ParallelBigUnsigned
         ulong incomingCarry,
         CancellationToken cancellationToken)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Scalar);
         ulong carry = incomingCarry;
         for (int offset = 0; offset < count; offset++)
         {
@@ -1258,6 +1272,7 @@ internal sealed partial class ParallelBigUnsigned
             var one = Vector512.Create(1u);
             Span<uint> remainders = stackalloc uint[16];
             Span<uint> quotients = stackalloc uint[16];
+            if (offset <= count - 16) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset <= count - 16; offset += 16)
             {
                 if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
@@ -1290,6 +1305,7 @@ internal sealed partial class ParallelBigUnsigned
             var one = Vector256.Create(1u);
             Span<uint> remainders = stackalloc uint[8];
             Span<uint> quotients = stackalloc uint[8];
+            if (offset <= count - 8) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset <= count - 8; offset += 8)
             {
                 if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();
@@ -1322,6 +1338,7 @@ internal sealed partial class ParallelBigUnsigned
             var one = Vector128.Create(1u);
             Span<uint> remainders = stackalloc uint[4];
             Span<uint> quotients = stackalloc uint[4];
+            if (offset <= count - 4) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset <= count - 4; offset += 4)
             {
                 if ((offset & 0xFFFF) == 0) token.ThrowIfCancellationRequested();

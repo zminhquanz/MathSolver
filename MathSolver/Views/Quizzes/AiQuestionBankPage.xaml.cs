@@ -31,6 +31,10 @@ public partial class AiQuestionBankPage : ContentPage
     public AiQuestionBankPage()
     {
         InitializeComponent();
+        CountEntry.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(Entry.IsEnabled)) RefreshConfigurationTheme();
+        };
         IllustratedQuizPicker.Attach(ProblemPicker, "Choice.SelectProblem");
         IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectSubtype");
         IllustratedQuizPicker.Attach(FindXRolePicker, "Choice.SelectSubtype");
@@ -51,6 +55,9 @@ public partial class AiQuestionBankPage : ContentPage
         _appeared = true;
         Shell.SetTabBarIsVisible(this, true);
         LiveWallpaper.Resume();
+        AppThemeManager.ThemeChanged += OnConfigurationThemeChanged;
+        AppThemeManager.WallpaperVisualResourcesChanged += OnConfigurationThemeChanged;
+        QueueConfigurationThemeRefresh();
         _bank.Generation.Changed += OnStateChanged;
         _bank.Changed += OnStateChanged;
         LocalizationService.CultureChanged += OnCultureChanged;
@@ -88,6 +95,9 @@ public partial class AiQuestionBankPage : ContentPage
     protected override void OnDisappearing()
     {
         _appeared = false;
+        AppThemeManager.ThemeChanged -= OnConfigurationThemeChanged;
+        AppThemeManager.WallpaperVisualResourcesChanged -= OnConfigurationThemeChanged;
+        ++_configurationThemeGeneration;
         _bank.Generation.Changed -= OnStateChanged;
         _bank.Changed -= OnStateChanged;
         LocalizationService.CultureChanged -= OnCultureChanged;
@@ -155,6 +165,7 @@ public partial class AiQuestionBankPage : ContentPage
         var snapshot = _bank.Generation.Snapshot;
         bool running = snapshot.IsRunning, busy = running || _bank.IsManaging || _bank.Generation.IsDeletingAll;
         ConfigurationPanel.IsEnabled = !busy;
+        RefreshConfigurationTheme();
         ChooseModelButton.IsEnabled = DownloadButton.IsEnabled = !busy;
         DownloadModelPicker.IsEnabled = !busy;
         EjectModelButton.IsEnabled = !busy && _bank.Runtime.CanGenerate;

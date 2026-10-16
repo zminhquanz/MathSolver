@@ -275,7 +275,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
     {
         Dispatcher.Dispatch(() =>
         {
-            GraphSimdBackendLabel.Text = "SIMD: " + ParabolaSimdEvaluator.BackendName;
+            GraphSimdBackendLabel.Text = "SIMD: " + FunctionGraphSimdEvaluator.BackendName;
             ParabolaGraphicsView.Invalidate();
         });
     }

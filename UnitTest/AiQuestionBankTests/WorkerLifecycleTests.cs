@@ -6,6 +6,7 @@ internal static class WorkerLifecycleTests
 {
     internal static async Task RunAsync()
     {
+        await AiStopTests.RunAsync();
         var memoryStore = new MemoryStore();
         var fake = new FakeRuntime(prompt =>
         {

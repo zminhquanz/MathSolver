@@ -36,11 +36,11 @@ internal sealed partial class ParallelBigUnsigned
         using var plans = workerCount > 1
             ? new SharedNttTwiddlePlans(
                 twiddles!, avx2,
-                avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported),
+                avx2 && CalculationAccelerationManager.UsePowerNttAvx512,
                 1 << 18, useSseNtt: false, useNeonNtt: neon)
             : null;
-        using var workers = workerCount > 1 ? new FixedWorkerTeam(workerCount, pool!, plans!) : null;
         var diagnostics = new PowerDiagnosticsCollector();
+        using var workers = workerCount > 1 ? new FixedWorkerTeam(workerCount, pool!, plans!, diagnostics: diagnostics) : null;
         diagnostics.ConfigureNttBackends(avx2, useNeon: neon);
         var powers = new Dictionary<int, ParallelBigUnsigned>();
         int leaves = Math.Max(1, checked((int)(((long)words.Length + leafWords - 1) / leafWords)));
@@ -168,7 +168,7 @@ internal sealed partial class ParallelBigUnsigned
         bool sse = !avx2 && !neon && CalculationAccelerationManager.UsePowerNttSse;
         // Match the accepted large decimal engine: static scheduling enables
         // its individually validated AVX-512 kernels rather than the legacy gate.
-        bool avx512 = !largeSchedule && avx2 && (CalculationAccelerationManager.AllowAvx512 && Avx512F.IsSupported) && Vector512.IsHardwareAccelerated;
+        bool avx512 = !largeSchedule && avx2 && CalculationAccelerationManager.UsePowerNttAvx512;
         using var pool = new NttBufferPool(maximumRetainedBufferCount: cacheForward ? 3 : 2,
             maximumLeasedBufferCount: cacheForward ? 4 : 2);
         using var twiddlePool = new NttTwiddleBufferPool();
@@ -184,7 +184,7 @@ internal sealed partial class ParallelBigUnsigned
         diagnostics.ConfigureNttBackends(avx2, useSse: sse, useNeon: neon);
         BinaryMagnitude magnitude = new([5], 1);
         uint[] packedWords;
-        using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule))
+        using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule, diagnostics))
         {
             var arithmetic = new BinaryPowerWorkspace(workers, diagnostics, maximumTransformLength, token, cacheForward);
             int total = PowerOfTenArithmetic.OperationCount(exponent), done = 0;
@@ -304,6 +304,8 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken token)
     {
+        if (count > 0 && !workers.UseAvx2Ntt && !workers.UseSseNtt && !workers.UseNeonNtt)
+            NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Scalar);
         ulong carry = incomingCarry;
         int offset = 0;
         ref ulong sourceRef = ref Unsafe.Add(
@@ -318,6 +320,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             Vector512<ulong> mask = Vector512.Create(0xffffUL);
             int end = count & ~(Vector512<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset < end; offset += Vector512<ulong>.Count)
             {
                 Vector512<ulong> values = Vector512.LoadUnsafe(ref sourceRef, (nuint)offset);
@@ -338,6 +341,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             Vector256<ulong> mask = Vector256.Create(0xffffUL);
             int end = count & ~(Vector256<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset < end; offset += Vector256<ulong>.Count)
             {
                 Vector256<ulong> values = Vector256.LoadUnsafe(ref sourceRef, (nuint)offset);
@@ -358,6 +362,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             Vector128<ulong> mask = Vector128.Create(0xffffUL);
             int end = count & ~(Vector128<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 Vector128<ulong> values = Vector128.LoadUnsafe(ref sourceRef, (nuint)offset);
@@ -379,6 +384,7 @@ internal sealed partial class ParallelBigUnsigned
             ref ulong rRef = ref MemoryMarshal.GetReference(r);
             Vector128<ulong> mask = Vector128.Create(0xffffUL);
             int end = count & ~(Vector128<ulong>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Neon);
             for (; offset < end; offset += Vector128<ulong>.Count)
             {
                 Vector128<ulong> values = Vector128.LoadUnsafe(ref sourceRef, (nuint)offset);
@@ -653,6 +659,7 @@ internal sealed partial class ParallelBigUnsigned
             Vector512.IsHardwareAccelerated)
         {
             int end = count & ~(Vector512<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset < end; offset += Vector512<uint>.Count)
             {
                 Vector512<uint> values = Vector512.LoadUnsafe(ref rawRef, (nuint)offset);
@@ -663,6 +670,7 @@ internal sealed partial class ParallelBigUnsigned
         else if (workers.UseAvx2Ntt && Avx2.IsSupported)
         {
             int end = count & ~(Vector256<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset < end; offset += Vector256<uint>.Count)
             {
                 Vector256<uint> values = Vector256.LoadUnsafe(ref rawRef, (nuint)offset);
@@ -673,6 +681,7 @@ internal sealed partial class ParallelBigUnsigned
         else if (workers.UseSseNtt && Sse2.IsSupported)
         {
             int end = count & ~(Vector128<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset < end; offset += Vector128<uint>.Count)
             {
                 Vector128<uint> values = Vector128.LoadUnsafe(ref rawRef, (nuint)offset);
@@ -684,6 +693,7 @@ internal sealed partial class ParallelBigUnsigned
         else if (workers.UseNeonNtt && AdvSimd.IsSupported)
         {
             int end = count & ~(Vector128<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Neon);
             for (; offset < end; offset += Vector128<uint>.Count)
             {
                 Vector128<uint> values = Vector128.LoadUnsafe(ref rawRef, (nuint)offset);
@@ -738,6 +748,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector512<uint> mask = Vector512.Create(0xffffU);
             int end = count & ~(Vector512<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx512);
             for (; offset < end; offset += Vector512<uint>.Count)
             {
                 Vector512<uint> sum = Vector512.Add(
@@ -751,6 +762,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector256<uint> mask = Vector256.Create(0xffffU);
             int end = count & ~(Vector256<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Avx2);
             for (; offset < end; offset += Vector256<uint>.Count)
             {
                 Vector256<uint> sum = Avx2.Add(
@@ -764,6 +776,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector128<uint> mask = Vector128.Create(0xffffU);
             int end = count & ~(Vector128<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Sse);
             for (; offset < end; offset += Vector128<uint>.Count)
             {
                 Vector128<uint> sum = Sse2.Add(
@@ -778,6 +791,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector128<uint> mask = Vector128.Create(0xffffU);
             int end = count & ~(Vector128<uint>.Count - 1);
+            if (offset < end) NttKernelExecution.Record(NttKernelPhase.Carry, NttKernelIsa.Neon);
             for (; offset < end; offset += Vector128<uint>.Count)
             {
                 Vector128<uint> sum = AdvSimd.Add(

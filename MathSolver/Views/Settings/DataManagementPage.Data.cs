@@ -9,7 +9,7 @@ namespace MathSolver.Views;
 public partial class DataManagementPage
 {
     private CancellationTokenSource? _dataCancellation;
-    private bool _confirmingDeleteAll;
+    private bool _confirmingDataChange;
     private SqlResultCellEventArgs? _selectedSqlCell;
     private BankQueryResult? _sqlResults;
     private string? _sqlResultQuery;
@@ -28,7 +28,7 @@ public partial class DataManagementPage
     private void UpdateDataActions()
     {
         if (!_appeared) return;
-        bool idle = !_closing && _dataCancellation is null && !_confirmingDeleteAll && !_bank.Generation.IsDeletingAll;
+        bool idle = !_closing && _dataCancellation is null && !_confirmingDataChange && !_bank.Generation.IsDeletingAll;
         bool inserting = QueryResultsTable.IsInserting;
         bool editing = QueryResultsTable.IsEditing;
         bool draft = inserting || editing || _pendingImport is not null;
@@ -106,24 +106,17 @@ public partial class DataManagementPage
     private async void OnDeleteAllClicked(object? sender, EventArgs e)
     {
         if (!DeleteAllButton.IsEnabled) return;
-        _confirmingDeleteAll = true;
-        UpdateDataActions();
-        try
+        await RunDataOperationAsync(true, async cancellation =>
         {
-            bool confirmed = await DisplayAlertAsync(T("DeleteAllTitle"), T("DeleteAllConfirm"),
-                T("DeleteAllAccept"), T("Cancel"));
-            if (!confirmed) return;
-            await RunDataOperationAsync(true, async cancellation =>
-            {
-                int deleted = await _bank.Generation.DeleteAllAsync(cancellation);
-                ClearSqlResults();
-                InquiryStatusLabel.Text = "";
-                DataTransferStatusLabel.Text = deleted == 0 ? T("DeleteAllEmpty")
-                    : string.Format(CultureInfo.CurrentCulture, T("DeleteAllSuccess"), deleted);
-            });
-        }
-        catch (Exception error) { await ShowErrorAsync(error); }
-        finally { _confirmingDeleteAll = false; UpdateDataActions(); }
+            if (!await ConfirmDataChangeAsync(T("DeleteAllTitle"), T("DeleteAllConfirm"), T("DeleteAllAccept"), cancellation, transfer: true))
+                return;
+            cancellation.ThrowIfCancellationRequested();
+            int deleted = await _bank.Generation.DeleteAllAsync(cancellation);
+            ClearSqlResults();
+            InquiryStatusLabel.Text = "";
+            DataTransferStatusLabel.Text = deleted == 0 ? T("DeleteAllEmpty")
+                : string.Format(CultureInfo.CurrentCulture, T("DeleteAllSuccess"), deleted);
+        });
     }
 
     private async Task RunDataOperationAsync(bool transfer, Func<CancellationToken, Task> work)
@@ -147,8 +140,12 @@ public partial class DataManagementPage
         string query = QueryEditor.Text ?? "";
         await RunDataOperationAsync(false, async cancellation =>
         {
+            var result = await _bank.Store.QueryWithConfirmationAsync(query,
+                () => ConfirmDataChangeAsync(DT("ConfirmSqlTitle"),
+                    string.Format(CultureInfo.CurrentCulture, DT("ConfirmSqlMessage"), query.Length <= 700 ? query : query[..700] + "…"),
+                    DT("ConfirmSqlAccept"), cancellation), cancellation);
+            if (result.ConfirmationDeclined) return;
             ClearSqlResults();
-            var result = await _bank.Store.QueryAsync(query, cancellation);
             if (!result.IsSuccess)
             {
                 string detail = result.SqliteErrorCode is int sqliteCode
@@ -327,8 +324,13 @@ public partial class DataManagementPage
     {
         if (_dataCancellation is not null || !QueryResultsTable.IsEditing || _editingSqlRow is not { } row) return;
         var values = QueryResultsTable.GetEditValues().Where(field => field.Key != "Hash").ToDictionary(field => field.Key, field => field.Value);
+        int rowNumber = QueryResultsTable.EditingRowNumber;
         await RunDataOperationAsync(false, async cancellation =>
         {
+            if (!await ConfirmDataChangeAsync(DT("ConfirmUpdateTitle"),
+                string.Format(CultureInfo.CurrentCulture, DT("ConfirmUpdateMessage"), rowNumber, row.Hash), DT("ConfirmUpdateAccept"), cancellation))
+                return;
+            cancellation.ThrowIfCancellationRequested();
             var saved = await _bank.Store.UpdateGridRowAsync(row, values, cancellation);
             if (!saved.IsSuccess) { InquiryStatusLabel.Text = ErrorText(saved.ErrorCode!); return; }
             await RefreshSqlGridAsync(CancellationToken.None, T("GridRowSaved"));
@@ -346,9 +348,14 @@ public partial class DataManagementPage
 
     private async void OnDeleteSqlRowClicked(object? sender, EventArgs e)
     {
-        if (!DeleteSqlRowButton.IsEnabled || _selectedSqlRow is not { } row) return;
+        if (!DeleteSqlRowButton.IsEnabled || _selectedSqlRow is not { } row || _selectedSqlCell is not { } cell) return;
+        int rowNumber = cell.RowNumber;
         await RunDataOperationAsync(false, async cancellation =>
         {
+            if (!await ConfirmDataChangeAsync(DT("ConfirmDeleteTitle"),
+                string.Format(CultureInfo.CurrentCulture, DT("ConfirmDeleteMessage"), rowNumber, row.Hash), DT("ConfirmDeleteAccept"), cancellation))
+                return;
+            cancellation.ThrowIfCancellationRequested();
             var deleted = await _bank.Store.DeleteGridRowAsync(row, cancellation);
             if (!deleted.IsSuccess) { InquiryStatusLabel.Text = ErrorText(deleted.ErrorCode!); return; }
             await RefreshSqlGridAsync(CancellationToken.None, T("GridRowDeleted"));
@@ -378,7 +385,7 @@ public partial class DataManagementPage
 
     private async Task LoadEditableSqlAsync()
     {
-        if (_dataCancellation is not null || _confirmingDeleteAll || _bank.Generation.IsDeletingAll
+        if (_dataCancellation is not null || _confirmingDataChange || _bank.Generation.IsDeletingAll
             || QueryResultsTable.IsInserting || QueryResultsTable.IsEditing) return;
         QueryEditor.Text = "SELECT *\nFROM BasicQuestionBank\nORDER BY CreatedUtc DESC\nLIMIT 50;";
         await RunDataOperationAsync(false, async cancellation =>
@@ -410,6 +417,9 @@ public partial class DataManagementPage
         values.TryAdd("CreatedUtc", DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture));
         await RunDataOperationAsync(false, async cancellation =>
         {
+            if (!await ConfirmDataChangeAsync(DT("ConfirmInsertTitle"), DT("ConfirmInsertMessage"), DT("ConfirmInsertAccept"), cancellation))
+                return;
+            cancellation.ThrowIfCancellationRequested();
             var inserted = await _bank.Store.InsertGridRowAsync(values, cancellation);
             if (!inserted.IsSuccess) { InquiryStatusLabel.Text = ErrorText(inserted.ErrorCode!); return; }
             await RefreshSqlGridAsync(CancellationToken.None, T("GridRowInserted"));

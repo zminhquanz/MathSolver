@@ -41,6 +41,7 @@ internal sealed partial class ParallelBigUnsigned
         bool inverse,
         in Avx512NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward, NttKernelIsa.Avx512);
         Debug.Assert(count is > 0 and < 16);
 
         Span<uint> leftScratch = stackalloc uint[16];
@@ -103,6 +104,7 @@ internal sealed partial class ParallelBigUnsigned
         bool inverse,
         in Avx2NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Avx2);
         Debug.Assert(count is > 0 and < 8);
 
         Span<uint> leftScratch = stackalloc uint[8];
@@ -165,6 +167,7 @@ internal sealed partial class ParallelBigUnsigned
         bool inverse,
         uint modulus)
     {
+        if (count > 0) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Sse);
         Debug.Assert(count is > 0 and < 4);
 
         Span<uint> leftScratch = stackalloc uint[4];
@@ -228,6 +231,7 @@ internal sealed partial class ParallelBigUnsigned
         bool inverse,
         uint modulus)
     {
+        if (count > 0) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Neon);
         Debug.Assert(count is > 0 and < 4);
 
         Span<uint> leftScratch = stackalloc uint[4];
@@ -294,6 +298,7 @@ internal sealed partial class ParallelBigUnsigned
         int count,
         in Avx512NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         Debug.Assert(count is > 0 and < 16);
         Span<uint> v0Scratch = stackalloc uint[16];
         Span<uint> v1Scratch = stackalloc uint[16];
@@ -370,6 +375,7 @@ internal sealed partial class ParallelBigUnsigned
         int count,
         in Avx2NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         Debug.Assert(count is > 0 and < 8);
         Span<uint> v0Scratch = stackalloc uint[8];
         Span<uint> v1Scratch = stackalloc uint[8];
@@ -446,6 +452,7 @@ internal sealed partial class ParallelBigUnsigned
         int count,
         in Avx512NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         Debug.Assert(count is > 0 and < 16);
         Span<uint> v0Scratch = stackalloc uint[16];
         Span<uint> v1Scratch = stackalloc uint[16];
@@ -519,6 +526,7 @@ internal sealed partial class ParallelBigUnsigned
         int count,
         in Avx2NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         Debug.Assert(count is > 0 and < 8);
         Span<uint> v0Scratch = stackalloc uint[8];
         Span<uint> v1Scratch = stackalloc uint[8];
@@ -590,6 +598,7 @@ internal sealed partial class ParallelBigUnsigned
         uint modulus,
         in Avx512NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx512);
         Span<uint> v0Scratch = stackalloc uint[16];
         Span<uint> v1Scratch = stackalloc uint[16];
         Span<uint> v2Scratch = stackalloc uint[16];
@@ -635,6 +644,7 @@ internal sealed partial class ParallelBigUnsigned
         uint modulus,
         in Avx2NttModContext context)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Avx2);
         Span<uint> v0Scratch = stackalloc uint[8];
         Span<uint> v1Scratch = stackalloc uint[8];
         Span<uint> v2Scratch = stackalloc uint[8];
@@ -679,6 +689,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> twiddle2,
         uint modulus)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Sse);
         Span<uint> v0Scratch = stackalloc uint[4];
         Span<uint> v1Scratch = stackalloc uint[4];
         Span<uint> v2Scratch = stackalloc uint[4];
@@ -724,6 +735,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> twiddle2,
         uint modulus)
     {
+        if (count > 0) NttKernelExecution.Record(NttKernelPhase.Forward, NttKernelIsa.Neon);
         Span<uint> v0Scratch = stackalloc uint[4];
         Span<uint> v1Scratch = stackalloc uint[4];
         Span<uint> v2Scratch = stackalloc uint[4];
@@ -762,6 +774,7 @@ internal sealed partial class ParallelBigUnsigned
         uint quarterTurnShoup, bool inverse, in Avx512NttModContext context)
     {
         Debug.Assert(count > 0 && count < 64 && (count & 3) == 0);
+        if (count > 0) NttKernelExecution.Record(inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward, NttKernelIsa.Avx512);
         Span<uint> scratch = stackalloc uint[64];
         scratch.Clear();
         values.AsSpan(index, count).CopyTo(scratch);
@@ -1181,6 +1194,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector512<uint> invShoup = Vector512.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
 
+        if ((first) < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx512);
         for (int i = first; i < last; i += Width)
         {
             int index0 = parentOffset + i;
@@ -1256,6 +1270,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector256<uint> invShoup = Vector256.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
 
+        if ((first) < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
         for (int i = first; i < last; i += Width)
         {
             int index0 = parentOffset + i;
@@ -1337,6 +1352,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> invShoup = Vector128.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
 
+        if ((first) < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Sse);
         for (int i = first; i < last; i += Width)
         {
             int index0 = parentOffset + i;
@@ -1419,6 +1435,7 @@ internal sealed partial class ParallelBigUnsigned
         Vector128<uint> invShoup = Vector128.Create(inverseLengthShoup);
         ref uint data = ref MemoryMarshal.GetArrayDataReference(values);
 
+        if ((first) < last) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Neon);
         for (int i = first; i < last; i += Width)
         {
             int index0 = parentOffset + i;
@@ -1518,6 +1535,7 @@ internal sealed partial class ParallelBigUnsigned
                 ref uint rightRef = ref MemoryMarshal.GetArrayDataReference(right);
 
                 int i = start;
+                if (i + (Vector256<uint>.Count - 1) < end) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Avx2);
                 for (; i + (Vector256<uint>.Count - 1) < end; i += Vector256<uint>.Count)
                 {
                     Vector256<uint> leftVector =
@@ -1559,6 +1577,7 @@ internal sealed partial class ParallelBigUnsigned
                 ref uint rightRef = ref MemoryMarshal.GetArrayDataReference(right);
 
                 int i = start;
+                if (i + (Vector128<uint>.Count - 1) < end) NttKernelExecution.Record(NttKernelPhase.Pointwise, NttKernelIsa.Sse);
                 for (; i + (Vector128<uint>.Count - 1) < end; i += Vector128<uint>.Count)
                 {
                     Vector128<uint> leftVector =
@@ -1608,6 +1627,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector256<uint> twiddle = CreateTwiddleSequenceAvx2(root, i, modulus);
 
+            if (i + width <= end) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Avx2);
             for (; i + width <= end; i += width)
             {
                 int rightIndex = i + halfLength;
@@ -1743,6 +1763,7 @@ internal sealed partial class ParallelBigUnsigned
         {
             Vector128<uint> twiddle = CreateTwiddleSequenceSse(root, i, modulus);
 
+            if (i + width <= end) NttKernelExecution.Record(NttKernelPhase.Inverse, NttKernelIsa.Sse);
             for (; i + width <= end; i += width)
             {
                 int rightIndex = i + halfLength;

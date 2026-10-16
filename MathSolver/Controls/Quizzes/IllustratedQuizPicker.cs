@@ -19,6 +19,8 @@ public sealed class IllustratedQuizPicker : ContentView
     private readonly string _captionKey;
     private string[] _keys = [];
     private bool _opening;
+    private bool _themeSubscribed;
+    private int _themeRefreshGeneration;
 
     private IllustratedQuizPicker(Picker picker, string captionKey, Border? frame)
     {
@@ -66,7 +68,53 @@ public sealed class IllustratedQuizPicker : ContentView
         Content = layout;
         _open.Clicked += OnOpenClicked;
         picker.PropertyChanged += OnPickerChanged;
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
         UpdateSelection();
+    }
+
+    private void OnLoaded(object? sender, EventArgs e)
+    {
+        if (!_themeSubscribed)
+        {
+            AppThemeManager.ThemeChanged += OnThemeChanged;
+            _themeSubscribed = true;
+        }
+        QueueThemeTextRefresh();
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        AppThemeManager.ThemeChanged -= OnThemeChanged;
+        _themeSubscribed = false;
+        ++_themeRefreshGeneration;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e) => QueueThemeTextRefresh();
+
+    private void QueueThemeTextRefresh()
+    {
+        int generation = ++_themeRefreshGeneration;
+        void Refresh()
+        {
+            if (!_themeSubscribed || generation != _themeRefreshGeneration) return;
+            // The label is an overlay, not the backing Picker's native text.
+            // A disconnected WinUI resource listener can interrupt DynamicResource
+            // notifications. Read the committed palette after the theme transaction,
+            // including when returning to a page created under an earlier theme.
+            if (Application.Current?.Resources.TryGetValue("TextPrimaryColor", out var value) == true
+                && value is Color primary)
+            {
+                try { _title.TextColor = primary; }
+                catch (Exception error) when (error is System.Runtime.InteropServices.COMException or ObjectDisposedException)
+                { System.Diagnostics.Debug.WriteLine($"Illustrated picker theme text deferred: {error}"); }
+            }
+        }
+        Dispatcher.Dispatch(Refresh);
+#if WINDOWS
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(180), Refresh);
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(420), Refresh);
+#endif
     }
 
     public static void Attach(Picker picker, string captionKey)
