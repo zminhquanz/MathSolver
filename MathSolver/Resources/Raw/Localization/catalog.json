@@ -1915,6 +1915,8 @@
     {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
     {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
     {"key": "AiBank.Review.Title", "source": "Duyệt đề AI", "mode": "exact"},
+    {"key": "Quiz.PercentageRemaining", "source": "Phần trăm đã tặng → tìm phần còn lại", "mode": "exact"},
+    {"key": "Quiz.PercentageRemainingEssayEquationPlaceholder", "source": "Ví dụ: 80 − 80 × 25 ÷ 100 = 60", "mode": "exact"},
     {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước.", "mode": "exact"},
     {"key": "AiBank.Review.Hint", "source": "Đối chiếu đề AI với đề tham khảo và phép tính chuẩn. Chỉ chấp nhận khi chủ thể, các lượng, đơn vị, quan hệ và câu hỏi đều đúng. Việc duyệt sẽ đưa đề vào ngân hàng đề để luyện tập.", "mode": "exact"},
     {"key": "AiBank.Review.Count", "source": "Chờ duyệt: {0}", "mode": "exact"},

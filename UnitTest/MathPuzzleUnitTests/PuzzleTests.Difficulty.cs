@@ -113,10 +113,10 @@ internal static partial class PuzzleTests
             {
                 var percentage = question.PercentageProblem!;
                 (story, subject, unit) = (percentage.ProblemText, percentage.SubjectName, percentage.AnswerUnit);
-                Require(level < 4 ? percentage.CombinedQuantities is null
+                Require(level < 4 || percentage.Type==PercentageQuizType.FindRemainingAfterDonation ? percentage.CombinedQuantities is null
                     : percentage.CombinedQuantities?.Count == (level == 4 ? 2 : 3),
                     "Advanced percentages must first combine independent quantities.");
-                if (level == 1) Require(percentage.Facts[^1] == 50 || percentage.Type == PercentageQuizType.FindPercentageRatio
+                if (level == 1 && percentage.Type!=PercentageQuizType.FindRemainingAfterDonation) Require(percentage.Facts[^1] == 50 || percentage.Type == PercentageQuizType.FindPercentageRatio
                     && percentage.CorrectAnswer == 50, "Easy percentages should start with halves.");
             }
             if (mode == ArithmeticQuizMode.MultipleChoice)

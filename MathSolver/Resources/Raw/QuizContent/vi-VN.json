@@ -2,6 +2,9 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id": "Choice.Skill.Quiz.PercentageRemaining", "Text": "Biết tổng số và phần trăm đã tặng, tìm số còn lại.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Percentage.FindRemainingAfterDonation", "Text": "Tìm số lượng còn lại sau một lần tặng một tỉ lệ phần trăm của tổng số ban đầu.", "Variables": []},
+
     {"Id": "Quiz.Elementary.MixedTimeAdd", "Text": "Cộng thời gian hỗn hợp", "Variables": []},
     {"Id": "Quiz.Elementary.MixedTimeSubtract", "Text": "Trừ thời gian hỗn hợp", "Variables": []},
     {"Id": "Quiz.Elementary.MixedTimeMultiply", "Text": "Nhân thời gian hỗn hợp", "Variables": []},
@@ -13162,6 +13165,56 @@
         ],
         "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
       }
+    ],
+    "PercentageRemainingOpen.Contexts": [
+        {
+            "Id": "books",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Lan",
+            "Recipient": "bạn An",
+            "Action": "donate",
+            "Unit": "quyển sách",
+            "Capacity": 1000,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        },
+        {
+            "Id": "pens",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Minh",
+            "Recipient": "bạn Bình",
+            "Action": "donate",
+            "Unit": "cây bút",
+            "Capacity": 200,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        },
+        {
+            "Id": "notebooks",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Hoa",
+            "Recipient": "bạn Mai",
+            "Action": "donate",
+            "Unit": "quyển vở",
+            "Capacity": 500,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        }
     ],
     "PercentagePartOpen.Contexts": [
         {"Id":"books","Relation":"known-whole-find-percentage-part","Owner":"Thư viện Hoa Mai","WholeUnit":"quyển sách","WholeNoun":"sách","PartNoun":"sách truyện","PartUnit":"quyển sách truyện","Capacity":2000,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"},

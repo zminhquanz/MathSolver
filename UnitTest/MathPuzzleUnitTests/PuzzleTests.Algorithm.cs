@@ -126,6 +126,7 @@ internal static partial class PuzzleTests
                         secondFact * 100 / quantity,
                     PercentageQuizType.FindPercentageValue =>
                         quantity * secondFact / 100,
+                    PercentageQuizType.FindRemainingAfterDonation => quantity - quantity * secondFact / 100,
                     _ => quantity * 100 / secondFact
                 };
                 Require(percentage.CorrectAnswer == expectedPercentage &&

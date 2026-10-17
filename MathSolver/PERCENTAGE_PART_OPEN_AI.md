@@ -7,6 +7,8 @@ percentage algorithms and closed profiles retain their existing ranges and
 multi-step behavior. Ratio, inverse, remaining-amount and financial-change
 relations are not part of this open-prose pilot. Remaining amounts need their
 own relation, rather than treating the supplied percentage as its complement.
+The subsequent single-donation remainder subtype is documented separately in
+`PERCENTAGE_REMAINING_OPEN_AI.md`.
 
 Typed `PercentagePartOpen.Contexts` lists supply the owner, counted whole unit,
 whole noun, subset noun, answer unit, capacity, relation ID and reference clauses.

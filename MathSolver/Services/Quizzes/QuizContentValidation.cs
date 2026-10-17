@@ -13,6 +13,7 @@ public static partial class QuizContentValidation
         CheckFractionWholeLists(pack);
         CheckAverageOpenLists(pack);
         CheckPercentagePartLists(pack);
+        CheckPercentageRemainingLists(pack);
         CheckSameDayTimeLists(pack);
         CheckTimeFractionLists(pack);
         CheckMixedTimeLists(pack);

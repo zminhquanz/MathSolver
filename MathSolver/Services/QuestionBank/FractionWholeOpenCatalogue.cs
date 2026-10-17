@@ -37,6 +37,7 @@ internal static class FractionWholeOpenCatalogue
         Đổi cấu trúc ít nhất một câu dữ kiện: được đổi cách mở đầu, từ nối, chủ động/bị động hoặc đưa người nhận lên đầu.
         Câu đầu nói {v0} đã tặng {v2} đúng {f0} {v1}. Câu thứ hai nói số đã tặng bằng {f1} tổng số ban đầu của {v0}; chỉ dùng {v1} một lần trong câu này.
         Câu hỏi tìm tổng số ban đầu của người tặng, trước khi tặng. Câu dẫn lời giải chỉ gọi tên tổng số đồ vật ban đầu.
+        Nêu rõ người sở hữu tổng số ban đầu bằng biến tương ứng; tránh đại từ như “họ” khiến lượng gốc có thể thuộc hai người.
         Mỗi trường là một câu ngắn. Giữ nguyên từng biến, người cho/người nhận, đồ vật và một lần tặng. Không tự điền số, giải thích biến hoặc thêm dữ kiện; không đổi thành phần còn lại.
         Chỉ trả JSON như cấu trúc ví dụ. C# sẽ điền tên và số, tính toán và viết đáp số.
         """:"""
@@ -44,6 +45,7 @@ internal static class FractionWholeOpenCatalogue
         Change the structure of at least one fact: vary openings, links, active/passive voice or put the recipient first.
         The first fact says {v0} gave exactly {f0} {v1} to {v2}. The second says the donated count equals {f1} of {v0}'s original total; use {v1} only once in this field.
         Ask for the giver's total BEFORE the gift. The solution lead names only that original item count.
+        Bind the original stock to the giver explicitly, not an ambiguous “their”. For counted items use number or count, not amount.
         Use one short sentence per field. Preserve placeholders, people, objects and the single gift. Fill no values, define no placeholders and add no events or conditions. Do not use the remaining count as the known part or fraction base.
         Return only JSON with the example's schema. C# fills names and numbers and owns calculations and answers.
         """;

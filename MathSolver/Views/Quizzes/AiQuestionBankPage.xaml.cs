@@ -201,14 +201,21 @@ public partial class AiQuestionBankPage : ContentPage
     }
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
-    private void RenderSelected()
-    {
-        CreativeProsePanel.IsVisible=_family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
+    private bool SupportsCreativeProse => _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
             || _family==BankQuestionFamily.Average && _storyVariant==(int)AverageQuizType.Direct
-            || _family==BankQuestionFamily.Percentage && _storyVariant==(int)PercentageQuizType.FindPercentageValue
+            || _family==BankQuestionFamily.Percentage && _storyVariant is (int)PercentageQuizType.FindPercentageValue or (int)PercentageQuizType.FindRemainingAfterDonation
             || _family==BankQuestionFamily.FractionQuantity && _storyVariant is (int)ElementaryQuizType.FractionOfNumber or (int)ElementaryQuizType.FractionRemaining or (int)ElementaryQuizType.WholeFromFraction
             || _family==BankQuestionFamily.Time && SameDayTimePilot.IsType((ElementaryQuizType)_storyVariant)
             || _family==BankQuestionFamily.Decimal && ElementaryQuizGenerator.DecimalStoryTypes.Contains((ElementaryQuizType)_storyVariant);
+    private void RefreshCreativeProseAvailability()
+    {
+        CreativeProsePanel.IsEnabled = SupportsCreativeProse;
+        CreativeProsePanel.Opacity = SupportsCreativeProse ? 1 : 0.5;
+    }
+
+    private void RenderSelected()
+    {
+        RefreshCreativeProseAvailability();
         var item = SelectedItem;
         PreviewStatusLabel.Text = item is null ? T("NoPreview") : T("Item." + item.State);
         string? raw = item?.Review?.RawJson ?? item?.Attempts.LastOrDefault()?.RawJson;
@@ -422,7 +429,7 @@ public partial class AiQuestionBankPage : ContentPage
         {
             _followLatestItem = true;
             _bank.Generation.Start(new(ReasoningStoryCatalogue.Supports(_family) ? ArithmeticOperation.Add : SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
-                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant, CreativeProse: CreativeProseSwitch.IsToggled));
+                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant, CreativeProse: SupportsCreativeProse && CreativeProseSwitch.IsToggled));
             _updating = true;
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }

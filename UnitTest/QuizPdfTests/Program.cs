@@ -8,14 +8,15 @@ using PdfSharp.Pdf.IO;
 using System.Text.Json;
 if (args is ["--help"] or ["--list"])
 {
-    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --average-open output-root | --percentage-part-open output-root | --fraction-remaining-open output-root | --fraction-whole-open output-root]. Default: isolated temporary files, cleaned after tests.");
+    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --average-open output-root | --percentage-part-open output-root | --fraction-remaining-open output-root | --fraction-whole-open output-root | --percentage-remaining-open output-root]. Default: isolated temporary files, cleaned after tests.");
     return 0;
 }
+bool percentageRemainingOnly=args is ["--percentage-remaining-open",_];
 bool wholeOnly=args is ["--fraction-whole-open",_];
 bool remainingOnly=args is ["--fraction-remaining-open",_];
 bool averageOnly=args is ["--average-open",_];
 bool percentageOnly=args is ["--percentage-part-open",_];
-if(averageOnly||percentageOnly||remainingOnly||wholeOnly)args=["--artifacts",args[1]];
+if(averageOnly||percentageOnly||remainingOnly||wholeOnly||percentageRemainingOnly)args=["--artifacts",args[1]];
 if (!(args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] || (args.Length == 1 && !args[0].StartsWith("--"))))
 {
     Console.Error.WriteLine("Invalid PDF test arguments. Use --help.");
@@ -27,6 +28,12 @@ try
         : TestWorkspace.Artifacts("quiz-pdf", args[0] == "--artifacts" ? (args.Length == 2 ? args[1] : "artifacts/verification") : args[0]);
     string directory = workspace.DirectoryPath;
     await HarnessInfrastructureTests.RunAsync();
+    if(percentageRemainingOnly)
+    {
+        await PercentageRemainingOpenWorksheetTests.Run(directory);
+        Console.WriteLine("Percentage remaining PDF output: "+directory);
+        return 0;
+    }
     if(wholeOnly)
     {
         await FractionWholeOpenWorksheetTests.Run(directory);
@@ -42,6 +49,7 @@ try
     if(percentageOnly)
     {
         await PercentagePartOpenWorksheetTests.Run(directory);
+    await PercentageRemainingOpenWorksheetTests.Run(directory);
         Console.WriteLine("Percentage PDF output: "+directory);
         return 0;
     }
@@ -162,6 +170,7 @@ try
     await FractionWholeOpenWorksheetTests.Run(directory);
     await AverageOpenWorksheetTests.Run(directory);
     await PercentagePartOpenWorksheetTests.Run(directory);
+    await PercentageRemainingOpenWorksheetTests.Run(directory);
     await FactSummaryTests.Run(factory, directory);
     await WorksheetSettingsTests.Run(factory);
     await MeasurementPracticeTests.Run(directory);

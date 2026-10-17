@@ -6,11 +6,12 @@ public enum PercentageQuizType
 {
     FindPercentageRatio,
     FindPercentageValue,
-    FindWholeFromPercentageValue
+    FindWholeFromPercentageValue,
+    FindRemainingAfterDonation
 }
 
 /// <summary>
-/// Hợp đồng C# cho ba dạng phần trăm cơ bản. Model chỉ được diễn đạt lại đúng
+/// Hợp đồng C# cho các dạng phần trăm và phần còn lại sau một lần tặng. Model chỉ được diễn đạt lại đúng
 /// các facts; phép tính, đơn vị và đáp án do C# sở hữu.
 /// </summary>
 public sealed record PercentageQuizContract(

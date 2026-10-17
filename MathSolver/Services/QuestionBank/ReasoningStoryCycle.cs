@@ -27,6 +27,8 @@ internal sealed class ReasoningStoryCycle
                     ? FractionPartPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.Direct
                     ? AverageOpenPilot.Profiles(language).ToArray()
+                : family==BankQuestionFamily.Percentage && variant==(int)PercentageQuizType.FindRemainingAfterDonation
+                    ? PercentageRemainingPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Percentage && variant==(int)PercentageQuizType.FindPercentageValue
                     ? PercentagePartPilot.Profiles(language).ToArray():[];
             var profile=profiles.OrderBy(id=>history.Count(s=>s.StartsWith(id+"/",StringComparison.Ordinal)))

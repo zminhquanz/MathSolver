@@ -33,6 +33,7 @@ public static class QuestionAuthoringChoices
             PercentageQuizType.FindPercentageRatio => "Quiz.PercentageRatio",
             PercentageQuizType.FindPercentageValue => "Quiz.PercentageValue",
             PercentageQuizType.FindWholeFromPercentageValue => "Quiz.PercentageWhole",
+            PercentageQuizType.FindRemainingAfterDonation => "Quiz.PercentageRemaining",
             _ => throw new ArgumentOutOfRangeException(nameof(variant)) },
         BankQuestionFamily.Motion => "Quiz.Motion" + (MotionQuizType)variant,
         BankQuestionFamily.Proportion => "Quiz.Proportion" + (ProportionQuizType)variant,

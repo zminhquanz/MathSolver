@@ -19,6 +19,7 @@ internal static class DefaultBankSuite
         await FractionWholeOpenTests.RunAsync();
         await AverageOpenTests.RunAsync();
         await PercentagePartOpenTests.RunAsync();
+        await PercentageRemainingOpenTests.RunAsync();
         await AppliedNarrativeBankTests.RunAsync();
         await RegexTimeoutRegressionTests.RunAsync();
         await ExpandedArithmeticTests.RunAsync();

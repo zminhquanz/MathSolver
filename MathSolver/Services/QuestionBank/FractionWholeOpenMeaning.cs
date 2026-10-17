@@ -30,7 +30,12 @@ internal static class FractionWholeOpenMeaning
                 ||Has(gift,@"(?:given|donated) to "+owner+@" by "+recipient)
                 ||Has(question,@"\b(?:left|remaining|what fraction|what percentage)\b|how many "+unit+@" (?:does "+owner+@" (?:donate|give)|did "+owner+@" (?:donate|give))")
                 ||Has(lead,@"\b(?:left|remaining|donated|given away)\b");
+        changed|=ReversesWholeAndPart(share,vi);
         if(changed)return new(null,"ChangedRelationOrTarget",ErrorDetails:"Known donated count, gift direction, original fraction base or original-whole target changed.");
+        if(Has(share,vi?@"\bcủa họ\b":@"\b(?:their original|their initial)\b"))
+            return new(draft,"SemanticReviewRequired",c,"Original-stock owner is expressed by an unresolved pronoun.");
+        if(!vi&&Has(all,@"\bamount of \{v1\}|\b(?:initial amount|original amount)\b"))
+            return new(draft,"SemanticReviewRequired",c,"Editorial review required: use a count noun for counted objects.");
         string viGive=@"(?:tặng|tặng cho|cho|cho đi|trao tặng|trao cho)";
         string enGive=@"(?:gave|gives|donated|donates|gave away|gives away|has given|has donated)";
         bool giftProved=vi
@@ -40,26 +45,54 @@ internal static class FractionWholeOpenMeaning
                 ||Match(gift,count+" "+unit+@" (?:đã )?được "+owner+@" (?:tặng|cho|trao tặng) (?:cho )?"+recipient)
             : Match(gift,owner+" "+enGive+" "+count+" "+unit+@" to "+recipient)
                 ||Match(gift,owner+@" (?:gave|gives|has given) "+recipient+" "+count+" "+unit)
-                ||Match(gift,recipient+@" (?:received|receives|has received) "+count+" "+unit+@" from "+owner)
+                ||Match(gift,recipient+@" (?:received|receives|has received) (?:exactly )?"+count+" "+unit+@" from "+owner)
                 ||Match(gift,recipient+@" (?:was|is) given "+count+" "+unit+@" by "+owner)
                 ||Match(gift,count+" "+unit+@" (?:were|are) (?:given|donated) to "+recipient+@" by "+owner);
         bool shareProved=vi
             ? Match(share,@"số "+unit+" "+owner+@" (?:đã )?(?:tặng|cho đi) (?:bằng|chiếm) "+fraction+@" (?:của )?tổng số ban đầu")
                 ||Match(share,@"số "+unit+@" (?:đã tặng|đã cho đi) (?:bằng|chiếm) "+fraction+@" (?:của )?tổng số ban đầu của "+owner)
                 ||Match(share,@"số "+unit+@" (?:mà )?"+owner+@" (?:đã )?(?:tặng|cho đi) (?:bằng|chiếm) "+fraction+@" (?:của )?tổng số lúc đầu")
+                ||Match(share,@"số "+unit+@" mà "+owner+@" (?:đã )?(?:cho|tặng|cho đi) chính là "+fraction+@" (?:của )?tổng số ban đầu")
             : Match(share,@"the donated "+unit+@" (?:are|were|represent) "+fraction+@" of "+owner+@"'s original (?:total|stock)")
                 ||Match(share,@"the "+unit+@" (?:that )?"+owner+@" (?:gave away|donated) (?:are|were|represent) "+fraction+@" of (?:the )?original total")
                 ||Match(share,@"the number of "+unit+@" (?:given away|donated) (?:is|was|equals) "+fraction+@" of "+owner+@"'s original (?:total|stock)")
-                ||Match(share,@"the donated "+unit+@" (?:are|were) "+fraction+@" of the original total that "+owner+@" had");
+                ||Match(share,@"the donated "+unit+@" (?:are|were) "+fraction+@" of the original total that "+owner+@" had")
+                ||Match(share,@"the total count of "+unit+@" given away equals "+fraction+@" of what "+owner+@" started with");
         bool targetProved=vi
             ? Match(question,@"(?:hỏi )?(?:ban đầu|lúc đầu),? "+owner+@" (?:đã )?có (?:tất cả )?bao nhiêu "+unit)
                 ||Match(question,@"(?:hỏi )?"+owner+@" có (?:tất cả )?bao nhiêu "+unit+@" (?:ban đầu|lúc đầu|trước khi tặng)")
                 ||Match(question,@"tổng số "+unit+@" ban đầu của "+owner+@" là bao nhiêu")
+                ||Match(question,@"(?:hỏi )?trước khi tặng,? "+owner+@" có (?:tất cả )?bao nhiêu "+unit)
             : Match(question,@"how many "+unit+@" did "+owner+@" (?:have|own) (?:originally|initially|before the gift)")
-                ||Match(question,@"what was "+owner+@"'s original (?:number|count) of "+unit);
+                ||Match(question,@"what was "+owner+@"'s original (?:number|count) of "+unit)
+                ||Match(question,@"what was the initial number of "+unit+@" that "+owner+@" possessed");
         bool leadProved=vi?Match(lead,@"(?:tổng số|số) "+unit+@" (?:ban đầu|lúc đầu)")
-            : Match(lead,@"(?:the )?original (?:number|count|total number) of "+unit);
+            : Match(lead,@"(?:the )?original (?:number|count|quantity|total number) of "+unit);
         if(giftProved&&shareProved&&targetProved&&leadProved)return new(draft,null,c);
         return new(draft,"SemanticReviewRequired",c,"The donated count, single gift, fraction of the original stock or original-whole question could not be fully proved; wording also needs review.");
+    }
+
+    // Recognize the roles on both sides of an explicitly stated equality,
+    // rather than one previously observed full sentence. Unknown clauses still
+    // need review. A proper fraction times the known part cannot be its whole.
+    private static bool ReversesWholeAndPart(string text,bool vi)
+    {
+        string clause=Clean(text);
+        if(!vi)
+        {
+            clause=Regex.Replace(clause,@"\b(?:is|was) (?:equivalent|equal) to\b","equals",RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
+            clause=Regex.Replace(clause,@"\b(originally|initially) (had|owned|possessed|held)\b","$2 $1",RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
+        }
+        var equation=Regex.Match(clause,vi?@"\A(?<left>.+?) (?:bằng|là|gấp) \{f1\} (?:lần|của) (?<right>.+)\z"
+            :@"\A(?<left>.+?) (?:is|was|equals) \{f1\} (?:times|of) (?<right>.+)\z",
+            RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
+        if(!equation.Success)return false;
+        string left=equation.Groups["left"].Value,right=equation.Groups["right"].Value;
+        bool whole=vi?Match(left,@"(?:tổng số|số) \{v1\} (?:ban đầu|lúc đầu) của \{v0\}")
+            :Match(left,@"the (?:total|original|initial) (?:number|count|quantity) of \{v1\} (?:that )?\{v0\} (?:had|owned|possessed|held) (?:at the start|before giving(?: any away)?|initially|originally)")
+                ||Match(left,@"\{v0\}'s (?:original|initial) (?:number|count|quantity) of \{v1\}");
+        bool part=vi?Has(right,@"\b(?:số|phần) (?:đã tặng|đã cho|đã cho đi)\b")
+            :Has(right,@"\b(?:gifted|donated|given away)\b");
+        return whole&&part;
     }
 }

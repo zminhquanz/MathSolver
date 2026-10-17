@@ -45,7 +45,7 @@ public partial class AiQuestionBankPage
                     BankQuestionFamily.Spatial => ElementaryQuizGenerator.VisualBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(type => "Quiz.Elementary." + type).ToArray(),
-                    _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"]
+                    _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole", "Quiz.PercentageRemaining"]
                 };
                 _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
                 if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
@@ -105,6 +105,7 @@ public partial class AiQuestionBankPage
 
     private void RefreshFindXRoles()
     {
+        RefreshCreativeProseAvailability();
         FindXRolePanel.IsVisible = _family == BankQuestionFamily.FindX;
         if (!FindXRolePanel.IsVisible) { _unknownRole = FindXUnknownRole.None; return; }
         _updatingLearning = true;

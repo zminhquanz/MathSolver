@@ -38,6 +38,18 @@ Known placeholder explanations are invalid text; unfamiliar awkward prose still
 needs editorial review. No claim is made that the verifier understands arbitrary
 natural language or catches every writing defect.
 
+The follow-up proof supports source-bound “received exactly”, the original-stock
+phrase “what ... started with” and Vietnamese questions explicitly asking before
+the gift. Tests pair these with changed bases, targets and reversed gift roles.
+Unresolved “của họ/their” stock ownership and counted-object “amount” phrasing
+remain pending; the follow-up prompts also ask for explicit ownership and count
+nouns. New-generation evidence is kept separately with the percentage-remainder
+report, not substituted for the initial six pending drafts.
+The follow-up also rejects the explicit inverse claim that the original whole
+equals the donated count multiplied by its proper fraction. Bilingual mutation
+tests cover that direction; the correct relation divides the donated count by
+the fraction.
+
 Verified templates follow the save setting, persist in SQLite/Excel and resample
 within their meaning schema. Pending drafts cannot enter practice or PDFs before
 explicit approval. C# retains all answers and inverse calculations. The preview

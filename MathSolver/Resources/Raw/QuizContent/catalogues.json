@@ -95,6 +95,7 @@
       {"Key":"Quiz.PercentageRatio","IllustrationId":"percentage-ratio","DescriptionKey":"Choice.Skill.Quiz.PercentageRatio"},
       {"Key":"Quiz.PercentageValue","IllustrationId":"percentage-part","DescriptionKey":"Choice.Skill.Quiz.PercentageValue"},
       {"Key":"Quiz.PercentageWhole","IllustrationId":"percentage-whole","DescriptionKey":"Choice.Skill.Quiz.PercentageWhole"},
+      {"Key":"Quiz.PercentageRemaining","IllustrationId":"percentage-part","DescriptionKey":"Choice.Skill.Quiz.PercentageRemaining"},
       {"Key":"Quiz.MotionBasic","IllustrationId":"motion","DescriptionKey":"Choice.Skill.Quiz.MotionBasic"},
       {"Key":"Quiz.MotionChasing","IllustrationId":"motion-chasing","DescriptionKey":"Choice.Skill.Quiz.MotionChasing"},
       {"Key":"Quiz.MotionMeeting","IllustrationId":"motion-meeting","DescriptionKey":"Choice.Skill.Quiz.MotionMeeting"},
@@ -5601,6 +5602,19 @@
         "Coverage":  "Partial",
         "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
         "SourcePages":  "21-46"
+    },
+    {
+        "Id": "Percentage.FindRemainingAfterDonation",
+        "Kind": "Percentage",
+        "Subtype": "FindRemainingAfterDonation",
+        "Grades": [
+            5
+        ],
+        "RequirementId": "Curriculum.Requirement.Percentage.FindRemainingAfterDonation",
+        "Scope": "Extension",
+        "Coverage": "Partial",
+        "Constraints": "One donation from an original whole; donated rate is not the remaining rate. Integer counts only; no additional transfers or discounts.",
+        "SourcePages": "21-46"
     },
     {
         "Id":  "Expression.Integer",

@@ -669,6 +669,8 @@ public partial class MathPuzzlePage : ContentPage
                 ? TranslateQuiz("Quiz.PercentageRatioEssayEquationPlaceholder")
                 : percentageType == PercentageQuizType.FindPercentageValue
                 ? TranslateQuiz("Quiz.PercentageValueEssayEquationPlaceholder")
+                : percentageType == PercentageQuizType.FindRemainingAfterDonation
+                ? TranslateQuiz("Quiz.PercentageRemainingEssayEquationPlaceholder")
                 : percentageType == PercentageQuizType.FindWholeFromPercentageValue
                 ? TranslateQuiz("Quiz.PercentageWholeEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
@@ -843,7 +845,8 @@ public partial class MathPuzzlePage : ContentPage
                 "Quiz.SubtypeMixed",
                 "Quiz.PercentageRatio",
                 "Quiz.PercentageValue",
-                "Quiz.PercentageWhole"
+                "Quiz.PercentageWhole",
+                "Quiz.PercentageRemaining"
             ];
             foreach (string key in percentageKeys)
             {
@@ -856,6 +859,7 @@ public partial class MathPuzzlePage : ContentPage
                 PercentageQuizType.FindPercentageRatio => 1,
                 PercentageQuizType.FindPercentageValue => 2,
                 PercentageQuizType.FindWholeFromPercentageValue => 3,
+                PercentageQuizType.FindRemainingAfterDonation => 4,
                 _ => 0
             };
 
@@ -1040,6 +1044,7 @@ public partial class MathPuzzlePage : ContentPage
             1 => PercentageQuizType.FindPercentageRatio,
             2 => PercentageQuizType.FindPercentageValue,
             3 => PercentageQuizType.FindWholeFromPercentageValue,
+            4 => PercentageQuizType.FindRemainingAfterDonation,
             _ => null
         };
 

@@ -126,7 +126,7 @@ public static class QuizWorksheetChoices
                 Add<AverageQuizType>(["Quiz.AverageDirect", "Quiz.AverageTotalToAverage", "Quiz.AverageAverageToTotal", "Quiz.AverageMissingValue", "Quiz.AverageIndirectData", "Quiz.AverageTwoGroups"], v => new(kind, AverageType: v));
                 break;
             case QuizProblemKind.Percentage:
-                Add<PercentageQuizType>(["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole"], v => new(kind, PercentageType: v));
+                Add<PercentageQuizType>(["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole", "Quiz.PercentageRemaining"], v => new(kind, PercentageType: v));
                 break;
             case QuizProblemKind.Expression:
                 Add<ExpressionQuizType>(["Quiz.ExpressionInteger", "Quiz.ExpressionIntegerBrackets", "Quiz.ExpressionFraction", "Quiz.ExpressionFractionBrackets"], v => new(kind, ExpressionType: v));

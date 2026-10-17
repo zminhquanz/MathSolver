@@ -2,6 +2,9 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id": "Choice.Skill.Quiz.PercentageRemaining", "Text": "Given the original whole and donated percentage, find the remaining count.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Percentage.FindRemainingAfterDonation", "Text": "Find the remaining count after one gift of a percentage of the original whole.", "Variables": []},
+
     {"Id": "Quiz.Elementary.MixedTimeAdd", "Text": "Add mixed time durations", "Variables": []},
     {"Id": "Quiz.Elementary.MixedTimeSubtract", "Text": "Subtract mixed time durations", "Variables": []},
     {"Id": "Quiz.Elementary.MixedTimeMultiply", "Text": "Multiply mixed time durations", "Variables": []},
@@ -13133,6 +13136,56 @@
         ],
         "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} end?"
       }
+    ],
+    "PercentageRemainingOpen.Contexts": [
+        {
+            "Id": "books",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Lan",
+            "Recipient": "An",
+            "Action": "donate",
+            "Unit": "books",
+            "Capacity": 1000,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        },
+        {
+            "Id": "pens",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Minh",
+            "Recipient": "Binh",
+            "Action": "donate",
+            "Unit": "pens",
+            "Capacity": 200,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        },
+        {
+            "Id": "notebooks",
+            "Relation": "known-original-whole-donated-percentage-find-remaining",
+            "Donor": "Hoa",
+            "Recipient": "Mai",
+            "Action": "donate",
+            "Unit": "notebooks",
+            "Capacity": 500,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining",
+            "KnownRole": "original-whole",
+            "RateRole": "donated-percentage-of-original",
+            "TargetRole": "donor-remaining-count"
+        }
     ],
     "PercentagePartOpen.Contexts": [
         {"Id":"books","Relation":"known-whole-find-percentage-part","Owner":"Maple Library","WholeUnit":"books","WholeNoun":"books","PartNoun":"storybooks","PartUnit":"storybooks","Capacity":2000,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"},

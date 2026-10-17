@@ -27,6 +27,7 @@ internal static partial class OpenProseTests
         {
             var fresh = c.FreshFacts(new(891 + seed));
             Check(fresh.OpenProse && BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), fresh).IsValid, "Fresh facts lost the prose policy or its verification.");
+            if (PercentageRemainingOpenCatalogue.IsProfile(fresh)) { PercentageRemainingOpenTests.CheckPractice(fresh,draft); continue; }
             if (FractionWholeOpenCatalogue.IsProfile(fresh)) { FractionWholeOpenTests.CheckPractice(fresh,draft); continue; }
             if (FractionRemainingOpenCatalogue.IsProfile(fresh)) { FractionRemainingOpenTests.CheckPractice(fresh,draft); continue; }
             if (FractionPartOpenCatalogue.IsProfile(fresh)) { FractionPartOpenTests.CheckPractice(fresh,draft); continue; }
@@ -122,7 +123,7 @@ internal static partial class OpenProseTests
         await session.LoadAsync(path, deadline.Token);
         await File.WriteAllTextAsync(Path.Combine(directory,"run-info.json"),JsonSerializer.Serialize(new {SchemaVersion=1,StartedUtc=DateTime.UtcNow,session.Runtime.ModelName,
             session.Runtime.InferenceThreadCount,session.Runtime.PromptThreadCount,SystemVietnamese=BasicQuestionPrompt.SystemInstruction(AppLanguage.Vietnamese),SystemEnglish=BasicQuestionPrompt.SystemInstruction(AppLanguage.English),
-            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>FractionWholeOpenCatalogue.IsProfile(x.Contract))?"fraction-whole-open-v1":customCases.Any(x=>FractionRemainingOpenCatalogue.IsProfile(x.Contract))?"fraction-remaining-open-editorial-v5":customCases.Any(x=>PercentagePartOpenCatalogue.IsProfile(x.Contract))?"percentage-part-open-v2":customCases.Any(x=>AverageOpenCatalogue.IsProfile(x.Contract))?"average-open-editorial-v4":customCases.Any(x=>FractionPartOpenCatalogue.IsProfile(x.Contract))?"fraction-part-open-v1":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
+            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>PercentageRemainingOpenCatalogue.IsProfile(x.Contract))?"percentage-remaining-english-v7":customCases.Any(x=>FractionWholeOpenCatalogue.IsProfile(x.Contract))?"fraction-whole-open-v5":customCases.Any(x=>FractionRemainingOpenCatalogue.IsProfile(x.Contract))?"fraction-remaining-open-editorial-v5":customCases.Any(x=>PercentagePartOpenCatalogue.IsProfile(x.Contract))?"percentage-part-open-v2":customCases.Any(x=>AverageOpenCatalogue.IsProfile(x.Contract))?"average-open-editorial-v4":customCases.Any(x=>FractionPartOpenCatalogue.IsProfile(x.Contract))?"fraction-part-open-v1":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
             Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed",
             RetryPolicy="Stop on verified or semantic review; retry invalid/duplicate output up to three attempts"},json));
         try

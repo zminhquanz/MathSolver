@@ -69,7 +69,7 @@ public static partial class ReasoningStoryCatalogue
         var lesson = Build(provisional);
         return provisional with { Subject = lesson.Subject, Unit = lesson.Unit, SceneId = lesson.Context,
             TopicId = family.ToString(), Story = provisional.Story! with { Schema = lesson.Schema,
-                NarrativeId = AverageOpenCatalogue.IsProfile(provisional) || PercentagePartOpenCatalogue.IsProfile(provisional) || family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
+                NarrativeId = AverageOpenCatalogue.IsProfile(provisional) || PercentagePartOpenCatalogue.IsProfile(provisional) || PercentageRemainingOpenCatalogue.IsProfile(provisional) || family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
     }
 
     internal static NarrativeLesson Lesson(BasicQuestionContract c) => Lessons.GetValue(c, Build);
@@ -84,7 +84,7 @@ public static partial class ReasoningStoryCatalogue
 
     public static bool IsValid(BasicQuestionContract c)
     {
-        if (c.Version != Version || c.Story is not { } seed || seed.Seed < 0
+        if (c.Version != Version || c.Story is not { } seed || seed.Seed < 0 || seed.NarrativeId is null
             || seed.FactSeed is < 0 || seed.FactSeed is not null && seed.Family != BankQuestionFamily.Probability
             || seed.ContextVersion is < 0 or > NarrativeContextExpansion.Version || !Supports(seed.Family)
             || !Variants(seed.Family, c.Tier).Contains(seed.Variant) || !Enum.IsDefined(c.Tier)
@@ -95,7 +95,7 @@ public static partial class ReasoningStoryCatalogue
             || c.PartA != "" || c.PartB != ""
             || (seed.Family == BankQuestionFamily.Data) != (seed.ChartProfile is not null)
             || seed.ChartProfile is { } chart && ((int)chart.Type != seed.Variant || chart.Tier != c.Tier || chart.Language != c.Language)
-            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "" && !AverageOpenCatalogue.IsProfile(c) && !PercentagePartOpenCatalogue.IsProfile(c))
+            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "" && !AverageOpenCatalogue.IsProfile(c) && !PercentagePartOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c))
             || (seed.Family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && string.IsNullOrEmpty(seed.NarrativeId))) return false;
         NarrativeLesson lesson;
         try { lesson = Lesson(c); }
@@ -118,7 +118,7 @@ public static partial class ReasoningStoryCatalogue
         }
         // A schema binds roles, context, question and step order. Resample the
         // original generator, retaining precisely that schema, never just two values.
-        bool requiresNewQuantities = AverageOpenCatalogue.IsProfile(c) || PercentagePartOpenCatalogue.IsProfile(c) || c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
+        bool requiresNewQuantities = AverageOpenCatalogue.IsProfile(c) || PercentagePartOpenCatalogue.IsProfile(c) || PercentageRemainingOpenCatalogue.IsProfile(c) || c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
             or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
             || c.Family == BankQuestionFamily.Spatial && ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant);
         for (int attempt = 0; attempt < 512; attempt++)
@@ -148,7 +148,7 @@ public static partial class ReasoningStoryCatalogue
         if (c.Language == AppLanguage.English)
             text = EquivalentProseStructures.WithEnglishAgreement(text, slot => quantities.GetValueOrDefault(slot.Trim('{', '}')) == "1");
         text=Regex.Replace(text, @"\{([fv]\d+)\}", m => quantities.GetValueOrDefault(m.Groups[1].Value, m.Value));
-        if(FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c))return FractionRemainingPilot.CapitalizeOpenings(text);
+        if(FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))return FractionRemainingPilot.CapitalizeOpenings(text);
         return SameDayTimeCatalogue.IsProfile(c)&&c.Language==AppLanguage.Vietnamese
             ? SameDayTimePilot.CapitalizeSentenceOpenings(text):text;
     }
@@ -195,6 +195,8 @@ public static partial class ReasoningStoryCatalogue
     private static ArithmeticQuizQuestion Generate(BasicQuestionContract c, ArithmeticQuizMode mode)
     {
         var random = new Random(c.Story!.Seed);
+        if(PercentageRemainingOpenCatalogue.IsProfile(c))
+            return new PercentageQuizGenerator(random).GenerateOpenRemaining(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(PercentagePartOpenCatalogue.IsProfile(c))
             return new PercentageQuizGenerator(random).GenerateOpenPart(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(AverageOpenCatalogue.IsProfile(c))
@@ -255,6 +257,7 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
+        if(PercentageRemainingOpenCatalogue.IsProfile(c))return PercentageRemainingOpenCatalogue.Build(c);
         if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenCatalogue.Build(c);
         if(AverageOpenCatalogue.IsProfile(c))return AverageOpenCatalogue.Build(c);
         if(FractionWholeOpenCatalogue.IsProfile(c))return FractionWholeOpenCatalogue.Build(c);

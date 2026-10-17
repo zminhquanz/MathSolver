@@ -10,6 +10,12 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--percentage-remaining-english","--percentage-remaining-english-model"],"--percentage-remaining-english | --percentage-remaining-english-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await PercentageRemainingEnglishTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,
+                PercentageRemainingOpenTests.NativeCases().Where(x=>x.Contract.Language==AppLanguage.English));
+        },args=>args is ["--percentage-remaining-english"] or ["--percentage-remaining-english-model",_] or ["--percentage-remaining-english-model",_,_]),
         new(["--percentage-part-open","--percentage-part-open-model"],"--percentage-part-open | --percentage-part-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await PercentagePartOpenTests.RunAsync();
@@ -22,6 +28,11 @@ internal static partial class AiTestCommands
             if(args.Length==1)await AverageOpenTests.RunAsync();
             else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,AverageOpenTests.NativeCases());
         },args=>args is ["--average-open"] or ["--average-open-model",_] or ["--average-open-model",_,_]),
+        new(["--percentage-remaining-open","--percentage-remaining-open-model"],"--percentage-remaining-open | --percentage-remaining-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await PercentageRemainingOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,PercentageRemainingOpenTests.NativeCases());
+        },args=>args is ["--percentage-remaining-open"] or ["--percentage-remaining-open-model",_] or ["--percentage-remaining-open-model",_,_]),
         new(["--fraction-whole-open","--fraction-whole-open-model"],"--fraction-whole-open | --fraction-whole-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await FractionWholeOpenTests.RunAsync();
