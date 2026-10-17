@@ -27,6 +27,7 @@ public sealed partial class ElementaryQuizGenerator
         QuizProblemKind.VisualGeometry when type == ElementaryQuizType.RecognizeShape => CreateShapeRecognition(language, tier),
         QuizProblemKind.Probability => CreateProbabilityDifficulty(type, language, tier),
         QuizProblemKind.FractionSkills when type == ElementaryQuizType.OrderRelatedFractions => CreateTimeFractionExtension(type, language, tier),
+        QuizProblemKind.FractionSkills when type == ElementaryQuizType.FractionRemaining => CreateFractionRemaining(language, tier),
         QuizProblemKind.FractionSkills => CreateFractionDifficulty(type, language, tier),
         _ => null
     };

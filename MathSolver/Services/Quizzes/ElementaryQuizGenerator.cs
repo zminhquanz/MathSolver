@@ -28,7 +28,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         QuizProblemKind.Remainder => [ElementaryQuizType.QuotientRemainder, ElementaryQuizType.MinimumGroups, ElementaryQuizType.Leftovers, ElementaryQuizType.FullGroups],
         QuizProblemKind.Decimal => [ElementaryQuizType.DecimalAdd, ElementaryQuizType.DecimalSubtract, ElementaryQuizType.DecimalMultiply, ElementaryQuizType.DecimalDivide, ElementaryQuizType.DecimalRound, ElementaryQuizType.DecimalCompare, .. DecimalSkillTypes],
         QuizProblemKind.FractionSkills => [ElementaryQuizType.ReduceFraction, ElementaryQuizType.MixedNumber, ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.WholeFromFraction, ElementaryQuizType.FractionPicture, ElementaryQuizType.FractionTerms, ElementaryQuizType.EquivalentFraction, ElementaryQuizType.OrderFractions,
-            ElementaryQuizType.OrderRelatedFractions],
+            ElementaryQuizType.OrderRelatedFractions, ElementaryQuizType.FractionRemaining],
         QuizProblemKind.Data => [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadBarChart, ElementaryQuizType.ReadPieChart, ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference, ElementaryQuizType.ReadPictograph, ElementaryQuizType.SortData, ElementaryQuizType.CompleteBarChart],
         QuizProblemKind.Probability => [ElementaryQuizType.Likelihood, ElementaryQuizType.ExperimentalProbability],
         QuizProblemKind.VisualGeometry => [ElementaryQuizType.ClassifyAngle, ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.CountSides, ElementaryQuizType.RectangleSide, ElementaryQuizType.CompositeArea, ElementaryQuizType.RecognizeShape, ElementaryQuizType.SpatialPosition, ElementaryQuizType.IdentifyLine, ElementaryQuizType.Midpoint, ElementaryQuizType.CircleParts, ElementaryQuizType.ShapeNet, ElementaryQuizType.TriangleKind, .. SpatialSkillTypes],
@@ -273,7 +273,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         string answerLabel = QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.071");
         // Keep evaluation expressions intact; use school division notation only in the displayed work.
         string DisplayStepExpression(string expression) => QuizMathExpressionFormatter.Format(expression,
-            preserveFractions: contract.Kind == QuizProblemKind.FractionSkills || contract.Type == ElementaryQuizType.ExperimentalProbability);
+            preserveFractions: contract.Kind == QuizProblemKind.FractionSkills && contract.Reasoning?.ScenarioId != FractionWholePilot.Relation
+                || contract.Type == ElementaryQuizType.ExperimentalProbability);
         if (contract.Reasoning is not null)
             work.AddRange(contract.Reasoning.Steps.Select(step => step.Label + ":" + Environment.NewLine +
                 DisplayStepExpression(step.Expression) + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));

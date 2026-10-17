@@ -8762,6 +8762,11 @@
         "Variables": []
     },
     {
+        "Id": "Curriculum.Requirement.FractionSkills.FractionRemaining",
+        "Text": "Tìm số đồ vật còn lại sau khi tặng một phân số của tổng số ban đầu.",
+        "Variables": []
+    },
+    {
         "Id":  "Curriculum.Requirement.FractionSkills.WholeFromFraction",
         "Text":  "Tìm toàn bộ số lượng khi biết giá trị một phân số của nó.",
         "Variables": []
@@ -13158,10 +13163,106 @@
         "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
       }
     ],
+    "PercentagePartOpen.Contexts": [
+        {"Id":"books","Relation":"known-whole-find-percentage-part","Owner":"Thư viện Hoa Mai","WholeUnit":"quyển sách","WholeNoun":"sách","PartNoun":"sách truyện","PartUnit":"quyển sách truyện","Capacity":2000,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"},
+        {"Id":"notebooks","Relation":"known-whole-find-percentage-part","Owner":"Cửa hàng Sao Mai","WholeUnit":"quyển vở","WholeNoun":"vở","PartNoun":"vở ô li","PartUnit":"quyển vở ô li","Capacity":1000,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"},
+        {"Id":"trees","Relation":"known-whole-find-percentage-part","Owner":"Vườn trường Hòa Bình","WholeUnit":"cây","WholeNoun":"cây","PartNoun":"cây cam","PartUnit":"cây cam","Capacity":500,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"}
+    ],
     "AverageOpen.Contexts": [
         {"Id":"notebooks","Groups":["Tổ Hoa Mai","Tổ Hoa Lan","Tổ Hoa Sen"],"Unit":"quyển vở","GroupUnit":"tổ","GroupPlural":"tổ","Verb":"quyên góp được","BaseVerb":"quyên góp được","Capacity":2000,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},
         {"Id":"recycling","Groups":["Nhóm Xanh","Nhóm Sạch","Nhóm Đẹp"],"Unit":"kg giấy","GroupUnit":"nhóm","GroupPlural":"nhóm","Verb":"thu gom được","BaseVerb":"thu gom được","Capacity":200,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},
         {"Id":"planting","Groups":["Đội An","Đội Bình","Đội Chi"],"Unit":"cây","GroupUnit":"đội","GroupPlural":"đội","Verb":"trồng được","BaseVerb":"trồng được","Capacity":500,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"}
+    ],
+    "FractionWholeOpen.Contexts": [
+        {
+            "Id": "books",
+            "Donor": "Lan",
+            "Recipient": "bạn An",
+            "Unit": "quyển sách",
+            "Capacity": 1000,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+            "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+            "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+            "Lead": "Tổng số {v1} ban đầu"
+        },
+        {
+            "Id": "pens",
+            "Donor": "Minh",
+            "Recipient": "bạn Bình",
+            "Unit": "cây bút",
+            "Capacity": 200,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+            "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+            "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+            "Lead": "Tổng số {v1} ban đầu"
+        },
+        {
+            "Id": "notebooks",
+            "Donor": "Hoa",
+            "Recipient": "bạn Mai",
+            "Unit": "quyển vở",
+            "Capacity": 500,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+            "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+            "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+            "Lead": "Tổng số {v1} ban đầu"
+        }
+    ],
+    "FractionRemainingOpen.Contexts": [
+        {
+            "Id": "books",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Lan",
+            "Recipient": "bạn An",
+            "Action": "donate",
+            "Unit": "quyển sách",
+            "Capacity": 1000,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại"
+        },
+        {
+            "Id": "pens",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Minh",
+            "Recipient": "bạn Bình",
+            "Action": "donate",
+            "Unit": "cây bút",
+            "Capacity": 200,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại"
+        },
+        {
+            "Id": "notebooks",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Hoa",
+            "Recipient": "bạn Mai",
+            "Action": "donate",
+            "Unit": "quyển vở",
+            "Capacity": 500,
+            "Whole": "Ban đầu, {v0} có {f0} {v1}.",
+            "Share": "{v0} tặng {v2} {f1} tổng số {v1} ban đầu.",
+            "Question": "{v0} còn lại bao nhiêu {v1}?",
+            "Lead": "Số {v1} còn lại"
+        }
     ],
     "FractionPartOpen.Contexts": [
         {

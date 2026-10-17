@@ -28,7 +28,8 @@ public enum ElementaryQuizType
     SpatialFront, SpatialBehind, SpatialBetween, ReadDecimal, WriteDecimal, DecimalPlace, DecimalParts,
     OrderDecimals, DecimalToFraction, FractionToDecimal,
     MixedTimeAdd, MixedTimeSubtract, MixedTimeMultiply, MixedTimeDivide,
-    SameDayElapsed, SameDayStart, SameDayEnd
+    SameDayElapsed, SameDayStart, SameDayEnd,
+    FractionRemaining
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,
@@ -108,7 +109,7 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         ElementaryQuizType.DifferenceRatio or ElementaryQuizType.ReduceFraction or
         ElementaryQuizType.CompareFractions or ElementaryQuizType.MixedNumber or
         ElementaryQuizType.CommonDenominator or ElementaryQuizType.FractionOfNumber or
-        ElementaryQuizType.WholeFromFraction or ElementaryQuizType.ExperimentalProbability or
+        ElementaryQuizType.WholeFromFraction or ElementaryQuizType.FractionRemaining or ElementaryQuizType.ExperimentalProbability or
         ElementaryQuizType.FractionPicture or ElementaryQuizType.FractionTerms or
         ElementaryQuizType.EquivalentFraction or ElementaryQuizType.OrderFractions or ElementaryQuizType.OrderRelatedFractions or ElementaryQuizType.DecimalToFraction or ElementaryQuizType.FractionToDecimal;
 

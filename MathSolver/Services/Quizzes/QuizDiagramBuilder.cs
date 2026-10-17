@@ -59,6 +59,26 @@ public static class QuizDiagramBuilder
                     }).ToArray()
                 } : supporting;
             }
+            else if (elementary.Type == ElementaryQuizType.WholeFromFraction && elementary.Reasoning is { ScenarioId: FractionWholePilot.Relation } whole)
+            {
+                var givens=whole.Givens.ToDictionary(g=>g.Role,g=>g.Value);
+                string unit=elementary.Answers[0].Unit;
+                string original=revealSolution?elementary.Answers[0].Value.ToString():"?";
+                string caption=(language==AppLanguage.Vietnamese?"Tổng số ban đầu = ":"Original whole = ")+original+" "+unit;
+                string label=(language==AppLanguage.Vietnamese?"Đã tặng = ":"Given away = ")+givens["donated-count"]+" "+unit;
+                diagram=new("fractions",caption,[new(label,[],FractionNumerator:int.Parse(givens["numerator"],CultureInfo.InvariantCulture),
+                    FractionDenominator:int.Parse(givens["denominator"],CultureInfo.InvariantCulture))]);
+            }
+            else if (elementary.Type == ElementaryQuizType.FractionRemaining && elementary.Reasoning is { } remaining)
+            {
+                var givens = remaining.Givens.ToDictionary(g=>g.Role,g=>g.Value);
+                string unit = elementary.Answers[0].Unit;
+                int n = int.Parse(givens["donated-numerator"], CultureInfo.InvariantCulture);
+                int d = int.Parse(givens["donated-denominator"], CultureInfo.InvariantCulture);
+                string caption = (language == AppLanguage.Vietnamese ? "Tổng số ban đầu = " : "Original whole = ") + givens["whole"] + " " + unit;
+                string label = language == AppLanguage.Vietnamese ? "Phần đã tặng" : "Donated fraction";
+                diagram = new("fractions", caption, [new(label, [], FractionNumerator:n, FractionDenominator:d)]);
+            }
             else if (elementary.Reasoning is not null && elementary.Kind == QuizProblemKind.FractionSkills)
             {
                 // Quantities can be inferred from several givens. No solved quantity is supplied as a diagram label.

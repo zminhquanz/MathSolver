@@ -11,6 +11,10 @@ public sealed partial class ElementaryQuizGenerator
     public ArithmeticQuizQuestion GenerateFractionQuantityStory(ArithmeticQuizMode mode, ElementaryQuizType type,
         AppLanguage language, CurriculumTier tier, string contextId)
     {
+        if(contextId is null)throw new ArgumentException("InvalidFractionQuantityProfile");
+        if(type==ElementaryQuizType.WholeFromFraction && contextId.StartsWith(FractionWholePilot.Prefix,StringComparison.Ordinal))
+            return GenerateFractionWholePilot(mode,language,tier,contextId);
+        if(type == ElementaryQuizType.FractionRemaining) return GenerateFractionRemaining(mode,language,tier,contextId);
         if (!Enum.IsDefined(tier) || type is not (ElementaryQuizType.FractionOfNumber or ElementaryQuizType.WholeFromFraction)
             || string.IsNullOrWhiteSpace(contextId)) throw new ArgumentException("InvalidFractionQuantityProfile");
         return CompleteQuestion(mode, CreateFractionDifficulty(type, language, tier, contextId), [], null);

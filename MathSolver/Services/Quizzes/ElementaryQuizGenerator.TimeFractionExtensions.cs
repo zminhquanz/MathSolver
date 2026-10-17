@@ -13,7 +13,7 @@ public sealed partial class ElementaryQuizGenerator
         ? (year - 1) / 100 + 1 : throw new ArgumentOutOfRangeException(nameof(year));
     public static ElementaryQuizType[] TimeBankTypes => [.. TimeStoryTypes, ElementaryQuizType.SameDayElapsed, ElementaryQuizType.SameDayStart, ElementaryQuizType.SameDayEnd,
         ElementaryQuizType.SecondsConversion, ElementaryQuizType.YearCentury, ElementaryQuizType.CalendarWeekday, ElementaryQuizType.Calendar, ElementaryQuizType.ReadClock];
-    public static ElementaryQuizType[] FractionQuantityBankTypes => [.. FractionQuantityStoryTypes, ElementaryQuizType.OrderRelatedFractions];
+    public static ElementaryQuizType[] FractionQuantityBankTypes => [.. FractionQuantityStoryTypes, ElementaryQuizType.OrderRelatedFractions, ElementaryQuizType.FractionRemaining];
     public static bool IsTimeFractionExtension(ElementaryQuizType type) => type is ElementaryQuizType.SecondsConversion
         or ElementaryQuizType.YearCentury or ElementaryQuizType.CalendarWeekday or ElementaryQuizType.OrderRelatedFractions;
     internal static string[] TimeFractionContextIds(ElementaryQuizType type) => type switch

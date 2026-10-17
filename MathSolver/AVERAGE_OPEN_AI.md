@@ -28,16 +28,32 @@ bindings have these roles:
 Verb placeholders keep the selected action immutable while the model changes
 sentence structure and connective wording. They are not numeric units. GBNF
 constrains JSON and required variables without listing complete sentences.
-Owner/action and group/base-action phrases stay together in grammar. The prompt
-also explains the selected verb and unit values as context, while output retains
-the placeholders; this avoids treating a verb variable as a group name or adding
-a technical definition inside the question.
+The grammar binds owner/action phrases with active and English passive alternatives,
+keeping the selected action inside its group observation instead of a dangling
+sentence. In these single-observation fields the amount and unit can also
+move independently, permitting unit-first clauses such as 'The number of ...'.
+In the question, the group/base-action phrase stays together so the verb cannot
+become a count noun or a dangling placeholder after generated punctuation.
+Field-specific placeholder checks and meaning validation preserve their roles.
+The average-specific prompt
+explains the selected verb and unit values as context, while output retains the
+placeholders. It teaches Vietnamese question word order and English `did` + base
+verb, and asks the model to avoid repeating an action already inside a binding.
+The examples illustrate grammatical constructions, not a closed list of sentences.
 Syntax validation checks field-specific placeholder multisets and role/step IDs,
 language, numeric insertion and technical-text leaks. Meaning validation checks
 complete clauses for observation ownership, action, group independence, requested
 per-group mean and solution target. The question itself must explicitly ask for
 the mean; an average label in the solution cannot compensate for an individual
-group question. Unknown wording needs review. Explicit
+group question. A separate editorial guard sends known awkward wording to review:
+Vietnamese units before `bao nhiêu`, repeated selected actions or `được`, detached
+action placeholders, repeated average markers, and English base verbs following
+`each group` without `did`. Automatic acceptance also
+requires a recognized complete, well-formed question. No automatic prose rewrite
+or extra model call repairs an awkward draft. Review reasons distinguish these
+editorial concerns from unproved relationships while retaining the existing
+`SemanticReviewRequired` state and one-attempt review policy. Unknown wording
+needs review. Explicit
 overlap, observations changed to means, totals or per-person/weighted targets
 are rejected; such output can use the existing retry limit.
 
@@ -65,10 +81,14 @@ speed. Manual reading is an assessment of this sample, not another automatic
 validator or permission to insert pending drafts. Do not equate all review-only
 outputs with mathematically wrong questions.
 
-The final pilot verified one mathematical relation whose English question still
-had a tense/grammar defect. This verifier is not a complete editorial quality
-check; distinguish mathematical acceptance from readiness for pupils. The report
-also preserves the earlier false positive (missing mean in the question), its
-regression fix and a separate audit of old evidence. Unchanged replay now checks
+The earlier pilot verified one mathematical relation whose English question still
+had a tense/grammar defect. That question now needs editorial review; a direct
+individual-group question previously left unproved is now recognized as a wrong
+target. This remains a bounded verifier, not a complete grammar checker or a
+guarantee of readiness for pupils. The original report preserves the earlier
+false positive (missing mean in the question), its regression fix and old evidence.
+See `artifacts/verification/average-editorial/REPORT.md` for the new native run,
+per-output reading and separate audit of the previous six outputs.
+Unchanged replay checks
 generation dispositions including duplicates; `--open-prose-audit` deliberately
 allows comparison against changed source and must not be presented as a fresh run.

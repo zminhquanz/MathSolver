@@ -19,10 +19,16 @@ internal sealed class ReasoningStoryCycle
                 ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
                 : family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)variant)
                     ? SameDayTimePilot.Profiles((ElementaryQuizType)variant,language).ToArray()
+                : family==BankQuestionFamily.FractionQuantity && variant==(int)ElementaryQuizType.FractionRemaining
+                    ? FractionRemainingPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.FractionQuantity && variant==(int)ElementaryQuizType.WholeFromFraction
+                    ? FractionWholePilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.FractionQuantity && variant==(int)ElementaryQuizType.FractionOfNumber
                     ? FractionPartPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.Direct
-                    ? AverageOpenPilot.Profiles(language).ToArray():[];
+                    ? AverageOpenPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.Percentage && variant==(int)PercentageQuizType.FindPercentageValue
+                    ? PercentagePartPilot.Profiles(language).ToArray():[];
             var profile=profiles.OrderBy(id=>history.Count(s=>s.StartsWith(id+"/",StringComparison.Ordinal)))
                 .ThenBy(_=>Random.Shared.Next()).FirstOrDefault()??"";
             var c = ReasoningStoryCatalogue.Create(family, variant, tier, language,narrativeId:profile);
@@ -52,6 +58,7 @@ internal sealed class ReasoningStoryCycle
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
                 BankQuestionFamily.Time when SameDayTimePilot.IsType((ElementaryQuizType)variant)=>SameDayTimePilot.Profiles((ElementaryQuizType)variant,language),
                 BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryContextIds(tier),
+                BankQuestionFamily.FractionQuantity when variant==(int)ElementaryQuizType.FractionRemaining => FractionRemainingPilot.Profiles(language),
                 BankQuestionFamily.FractionQuantity => FractionQuantityStoryContextCatalog.GetProfile(language).Select(c => c.ContextId),
                 _ => ProportionQuizGenerator.NarrativeIds((ProportionQuizType)variant, tier, language)
             };

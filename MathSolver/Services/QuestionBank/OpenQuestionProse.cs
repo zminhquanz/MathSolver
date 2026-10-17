@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -90,7 +90,10 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenMeaning.Validate(c,syntax.Draft!);
         if(AverageOpenCatalogue.IsProfile(c))return AverageOpenMeaning.Validate(c,syntax.Draft!);
+        if(FractionWholeOpenCatalogue.IsProfile(c))return FractionWholeOpenMeaning.Validate(c,syntax.Draft!);
+        if(FractionRemainingOpenCatalogue.IsProfile(c))return FractionRemainingOpenMeaning.Validate(c,syntax.Draft!);
         if(FractionPartOpenCatalogue.IsProfile(c))return FractionPartOpenCatalogue.Validate(c,syntax.Draft!);
         if(SameDayTimeCatalogue.IsProfile(c))
         {
@@ -142,8 +145,15 @@ public static class OpenQuestionProse
             Do not change the kind of objects or add actors. Never put JSON field names or instructions inside the prose. Use one short sentence per field, at most 24 words.
             Return only JSON with the example's schema and role/step/unit_id values.
             """;
+        if (AverageOpenCatalogue.IsProfile(c)) instruction = AverageOpenCatalogue.WritingInstructions(c.Language);
+        if (FractionWholeOpenCatalogue.IsProfile(c)) instruction = FractionWholeOpenCatalogue.WritingInstructions(c.Language);
+        if (FractionRemainingOpenCatalogue.IsProfile(c)) instruction = FractionRemainingOpenCatalogue.WritingInstructions(c.Language);
+        if (PercentagePartOpenCatalogue.IsProfile(c)) instruction = PercentagePartOpenCatalogue.WritingInstructions(c.Language);
         string relation = SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
             : AverageOpenCatalogue.IsProfile(c) ? AverageOpenCatalogue.PromptRelation(c)
+            : PercentagePartOpenCatalogue.IsProfile(c) ? PercentagePartOpenCatalogue.PromptRelation(c)
+            : FractionWholeOpenCatalogue.IsProfile(c) ? FractionWholeOpenCatalogue.PromptRelation(c.Language)
+            : FractionRemainingOpenCatalogue.IsProfile(c) ? FractionRemainingOpenCatalogue.PromptRelation(c.Language)
             : FractionPartOpenCatalogue.IsProfile(c) ? FractionPartOpenCatalogue.Relation
             : DecimalOpenStoryCatalogue.IsProfile(c) ? DecimalOpenStoryCatalogue.PromptRelation(c)
             : c.Family == BankQuestionFamily.FindX
@@ -163,7 +173,11 @@ public static class OpenQuestionProse
         return instruction + "\nC# relation: " + relation + "; context=" + c.SceneId
             + "\n"+(vi?"Chủ thể dùng biến, không điền tên. Đơn vị/đồ vật đã chọn (chỉ để hiểu bối cảnh): ":"Use actor placeholders, never actual names. Selected units/objects (context only): ")+c.Unit+"; "+c.GroupUnit
             + "\nReference JSON:\n" + QuestionBankStore.SerializeDraft(Example(c))
-            + (correction is null ? "" : "\nPrevious attempt: " + correction + ". " + details + " Reword all fields while preserving their facts and relation.")
+            + (correction is null ? "" : FractionWholeOpenCatalogue.IsProfile(c)
+                ? FractionWholeOpenCatalogue.RetryInstructions(c.Language,correction,details)
+                : FractionRemainingOpenCatalogue.IsProfile(c)
+                ? FractionRemainingOpenCatalogue.RetryInstructions(c.Language,correction,details)
+                : "\nPrevious attempt: " + correction + ". " + details + " Reword all fields while preserving their facts and relation.")
             + (duplicates is not { Count: > 0 } ? "" : "\nAvoid this wording: " + JsonSerializer.Serialize(duplicates.TakeLast(1), Json));
     }
 
@@ -181,21 +195,30 @@ public static class OpenQuestionProse
             if (property is "role" or "step" or "unit_id") return Literal(JsonSerializer.Serialize(value));
             string name = "field-" + index++;
             string[] slots = Slots.Matches(value).Select(m => m.Value).Distinct().ToArray();
-            // Bind variables, not complete sentences. Quantity/unit pairs remain
-            // together; actor placement may change for active/passive wording.
+            // Bind variables, not complete sentences. Average observations also
+            // allow unit-first clauses ("The number of ... was ..."), so their
+            // single quantity and unit can move independently within the field.
             var matches=Slots.Matches(value).Cast<Match>().ToArray();
             var blocks=new List<string>();
             for(int i=0;i<matches.Length;i++)
             {
                 string block=Literal(matches[i].Value);
                 if(AverageOpenCatalogue.IsProfile(c)&&i+1<matches.Length
-                    &&(matches[i].Value is "{v0}" or "{v1}" or "{v2}" && matches[i+1].Value=="{v5}"
-                        || matches[i].Value=="{v4}"&&matches[i+1].Value=="{v6}"))
+                    &&matches[i].Value is "{v0}" or "{v1}" or "{v2}"&&matches[i+1].Value=="{v5}")
                 {
-                    // Keep the selected verb attached to its subject/group.
-                    // This is a role phrase, never an enumerated sentence.
-                    block=Literal(matches[i].Value+" "+matches[++i].Value);
+                    // Bind the action to its owner in either voice, not a whole
+                    // sentence. Independent amount/unit placement still allows
+                    // unit-first clauses and amount-first passive observations.
+                    string owner=matches[i].Value,action=matches[++i].Value;
+                    block=c.Language==AppLanguage.Vietnamese?Literal(owner+" "+action)
+                        :"("+Literal(owner+" "+action)+" | "+Literal(action+" by "+owner)+")";
                     blocks.Add(block);continue;
+                }
+                if(AverageOpenCatalogue.IsProfile(c)&&matches[i].Value=="{v4}"&&i+1<matches.Length&&matches[i+1].Value=="{v6}")
+                {
+                    // The base action is a verb attached to its group, never a
+                    // quantity or a dangling token at the end of the question.
+                    blocks.Add(Literal(matches[i].Value+" "+matches[++i].Value));continue;
                 }
                 if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value=="{v1}" && i+1<matches.Length && matches[i+1].Value=="{v0}")
                 {
@@ -214,7 +237,7 @@ public static class OpenQuestionProse
                         :"("+Literal(hour+" hours "+minute+" minutes")+" | "+Literal(hour+" hours and "+minute+" minutes")+")";
                     blocks.Add(block); continue;
                 }
-                if(i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
+                if(!AverageOpenCatalogue.IsProfile(c) && !FractionRemainingOpenCatalogue.IsProfile(c) && !FractionWholeOpenCatalogue.IsProfile(c) && i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
                     && Regex.IsMatch(matches[i+1].Value,@"^\{(?:unit(?:_[ab])?|items?|group(?:_one)?|v\d+)\}$")
                     && string.IsNullOrWhiteSpace(value[(matches[i].Index+matches[i].Length)..matches[i+1].Index]))
                     block += " " + Literal(" ") + " " + Literal(matches[++i].Value);
@@ -223,7 +246,7 @@ public static class OpenQuestionProse
             IEnumerable<string[]> Orders(string[] source)
             {
                 if(source.Length==0){yield return [];yield break;}
-                if(source.Length>(SameDayTimeCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
+                if(source.Length>(SameDayTimeCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
                 for(int i=0;i<source.Length;i++)
                     foreach(var tail in Orders(source.Where((_,j)=>j!=i).ToArray()))yield return [source[i],..tail];
             }

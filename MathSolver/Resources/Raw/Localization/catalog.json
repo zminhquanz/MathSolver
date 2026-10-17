@@ -443,6 +443,11 @@
       "description": "Name of the math skill displayed in the subtype picker.",
       "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
     },
+    "Quiz.Elementary.FractionRemaining": {
+      "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
+      "description": "Name of the math skill displayed in the subtype picker.",
+      "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
+    },
     "Quiz.Elementary.WholeFromFraction": {
       "context": "Math puzzles > Choose problem > Choose subtype; skill label.",
       "description": "Name of the math skill displayed in the subtype picker.",
@@ -1905,7 +1910,7 @@
     {"key":"PowerRoot.Diagnostics.UnderMillisecond","source":"< 1 ms","mode":"exact"},
     {"key":"PowerRoot.Diagnostics.Seconds","source":"{0} s","mode":"exact"},
     {"key":"PowerRoot.Diagnostics.NoNtt","source":"Không ghi nhận phép nhân NTT","mode":"exact"},
-    {"key": "AiBank.Review.Experimental", "source": "Diễn đạt đa dạng (thử nghiệm)", "mode": "exact"},
+    {"key": "AiBank.Review.Experimental", "source": "Diễn đạt đa dạng", "mode": "exact"},
     {"key": "AiBank.Item.PendingReview", "source": "Đề chờ duyệt · Chưa dùng để luyện tập", "mode": "exact"},
     {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
     {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
@@ -8800,6 +8805,11 @@
     {
       "key": "Quiz.Elementary.FractionOfNumber",
       "source": "Tìm phân số của một số",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.Elementary.FractionRemaining",
+      "source": "Tìm phần còn lại sau khi cho một phần",
       "mode": "exact"
     },
     {

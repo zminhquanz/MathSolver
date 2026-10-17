@@ -147,6 +147,7 @@
       {"Key":"Quiz.Elementary.MixedNumber","IllustrationId":"fraction-mixed","DescriptionKey":"Curriculum.Requirement.FractionSkills.MixedNumber"},
       {"Key":"Quiz.Elementary.CommonDenominator","IllustrationId":"fraction-common","DescriptionKey":"Curriculum.Requirement.FractionSkills.CommonDenominator"},
       {"Key":"Quiz.Elementary.FractionOfNumber","IllustrationId":"fraction-part","DescriptionKey":"Curriculum.Requirement.FractionSkills.FractionOfNumber"},
+      {"Key":"Quiz.Elementary.FractionRemaining","IllustrationId":"fraction-part","DescriptionKey":"Curriculum.Requirement.FractionSkills.FractionRemaining"},
       {"Key":"Quiz.Elementary.WholeFromFraction","IllustrationId":"fraction-whole","DescriptionKey":"Curriculum.Requirement.FractionSkills.WholeFromFraction"},
       {"Key":"Quiz.Elementary.ReadTable","IllustrationId":"data-table","DescriptionKey":"Curriculum.Requirement.Data.ReadTable"},
       {"Key":"Quiz.Elementary.ReadBarChart","IllustrationId":"data-bar","DescriptionKey":"Curriculum.Requirement.Data.ReadBarChart"},
@@ -4474,6 +4475,20 @@
         "Scope":  "Core",
         "Coverage":  "Partial",
         "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "FractionSkills.FractionRemaining",
+        "Kind":  "FractionSkills",
+        "Subtype":  "FractionRemaining",
+        "Grades":  [
+                       4,
+                       5
+                   ],
+        "RequirementId":  "Curriculum.Requirement.FractionSkills.FractionRemaining",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Single donation of a proper fraction of the original whole; integral counted quantities. Star tiers vary facts without adding events.",
         "SourcePages":  "21-46"
     },
     {

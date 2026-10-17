@@ -9,7 +9,10 @@ public static partial class QuizContentValidation
     {
         CheckDecimalOpenLists(pack);
         CheckFractionPartLists(pack);
+        CheckFractionRemainingLists(pack);
+        CheckFractionWholeLists(pack);
         CheckAverageOpenLists(pack);
+        CheckPercentagePartLists(pack);
         CheckSameDayTimeLists(pack);
         CheckTimeFractionLists(pack);
         CheckMixedTimeLists(pack);

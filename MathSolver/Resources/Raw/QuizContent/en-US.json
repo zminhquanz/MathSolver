@@ -8733,6 +8733,11 @@
         "Variables": []
     },
     {
+        "Id": "Curriculum.Requirement.FractionSkills.FractionRemaining",
+        "Text": "Find the remaining item count after donating a fraction of the original whole.",
+        "Variables": []
+    },
+    {
         "Id":  "Curriculum.Requirement.FractionSkills.WholeFromFraction",
         "Text":  "Find a whole quantity from a known fractional part.",
         "Variables": []
@@ -13129,10 +13134,106 @@
         "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} end?"
       }
     ],
+    "PercentagePartOpen.Contexts": [
+        {"Id":"books","Relation":"known-whole-find-percentage-part","Owner":"Maple Library","WholeUnit":"books","WholeNoun":"books","PartNoun":"storybooks","PartUnit":"storybooks","Capacity":2000,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"},
+        {"Id":"notebooks","Relation":"known-whole-find-percentage-part","Owner":"Sunrise Stationery","WholeUnit":"notebooks","WholeNoun":"notebooks","PartNoun":"squared notebooks","PartUnit":"squared notebooks","Capacity":1000,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"},
+        {"Id":"trees","Relation":"known-whole-find-percentage-part","Owner":"Harmony School Garden","WholeUnit":"trees","WholeNoun":"trees","PartNoun":"orange trees","PartUnit":"orange trees","Capacity":500,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"}
+    ],
     "AverageOpen.Contexts": [
         {"Id":"notebooks","Groups":["Team Maple","Team Cedar","Team Oak"],"Unit":"notebooks","GroupUnit":"team","GroupPlural":"teams","Verb":"collected","BaseVerb":"collect","Capacity":2000,"Fact":"{owner} {v5} {count} {v3}.","Scope":"There are {f3} independent {v7}.","Question":"On average, how many {v3} did each {v4} {v6}?","Lead":"Average number of {v3} per {v4}"},
         {"Id":"recycling","Groups":["Group Green","Group Blue","Group Gold"],"Unit":"kg of paper","GroupUnit":"group","GroupPlural":"groups","Verb":"collected","BaseVerb":"collect","Capacity":200,"Fact":"{owner} {v5} {count} {v3}.","Scope":"There are {f3} independent {v7}.","Question":"On average, how many {v3} did each {v4} {v6}?","Lead":"Average amount of {v3} per {v4}"},
         {"Id":"planting","Groups":["Team Alice","Team Ben","Team Chloe"],"Unit":"trees","GroupUnit":"team","GroupPlural":"teams","Verb":"planted","BaseVerb":"plant","Capacity":500,"Fact":"{owner} {v5} {count} {v3}.","Scope":"There are {f3} independent {v7}.","Question":"On average, how many {v3} did each {v4} {v6}?","Lead":"Average number of {v3} per {v4}"}
+    ],
+    "FractionWholeOpen.Contexts": [
+        {
+            "Id": "books",
+            "Donor": "Lan",
+            "Recipient": "An",
+            "Unit": "books",
+            "Capacity": 1000,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} gave {f0} {v1} to {v2}.",
+            "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+            "Question": "How many {v1} did {v0} have originally?",
+            "Lead": "Original number of {v1}"
+        },
+        {
+            "Id": "pens",
+            "Donor": "Minh",
+            "Recipient": "Binh",
+            "Unit": "pens",
+            "Capacity": 200,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} gave {f0} {v1} to {v2}.",
+            "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+            "Question": "How many {v1} did {v0} have originally?",
+            "Lead": "Original number of {v1}"
+        },
+        {
+            "Id": "notebooks",
+            "Donor": "Hoa",
+            "Recipient": "Mai",
+            "Unit": "notebooks",
+            "Capacity": 500,
+            "Relation": "known-donated-part-find-original-whole",
+            "KnownRole": "donated-count",
+            "BaseRole": "original-whole",
+            "TargetRole": "original-whole",
+            "Action": "donate",
+            "Gift": "{v0} gave {f0} {v1} to {v2}.",
+            "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+            "Question": "How many {v1} did {v0} have originally?",
+            "Lead": "Original number of {v1}"
+        }
+    ],
+    "FractionRemainingOpen.Contexts": [
+        {
+            "Id": "books",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Lan",
+            "Recipient": "An",
+            "Action": "donate",
+            "Unit": "books",
+            "Capacity": 1000,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining"
+        },
+        {
+            "Id": "pens",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Minh",
+            "Recipient": "Binh",
+            "Action": "donate",
+            "Unit": "pens",
+            "Capacity": 200,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining"
+        },
+        {
+            "Id": "notebooks",
+            "Relation": "known-whole-donated-find-remaining",
+            "Donor": "Hoa",
+            "Recipient": "Mai",
+            "Action": "donate",
+            "Unit": "notebooks",
+            "Capacity": 500,
+            "Whole": "Initially, {v0} has {f0} {v1}.",
+            "Share": "{v0} donates {f1} of the original {v1} to {v2}.",
+            "Question": "How many {v1} does {v0} have left?",
+            "Lead": "Number of {v1} remaining"
+        }
     ],
     "FractionPartOpen.Contexts": [
         {

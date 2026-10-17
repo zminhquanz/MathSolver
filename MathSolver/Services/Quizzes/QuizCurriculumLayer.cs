@@ -706,7 +706,7 @@ public static class QuizCurriculumLayer
                 : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.TwoNumbers => level < 4 ? [] : level == 4 ? [ElementaryQuizType.SumDifference] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.FractionSkills => level < 4 ? [] : level == 4 ? [ElementaryQuizType.ReduceFraction,
-                    ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.OrderRelatedFractions] : ElementaryQuizGenerator.Types(kind),
+                    ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.FractionRemaining, ElementaryQuizType.OrderRelatedFractions] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Probability => level < 2 ? [] : level < 5 ? [ElementaryQuizType.Likelihood] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Remainder => level < 3 ? [] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Decimal => level < 5 ? [] : ElementaryQuizGenerator.Types(kind),

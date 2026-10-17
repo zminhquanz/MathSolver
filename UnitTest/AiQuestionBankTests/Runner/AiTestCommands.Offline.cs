@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--percentage-part-open","--percentage-part-open-model"],"--percentage-part-open | --percentage-part-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await PercentagePartOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,PercentagePartOpenTests.NativeCases());
+        },args=>args is ["--percentage-part-open"] or ["--percentage-part-open-model",_] or ["--percentage-part-open-model",_,_]),
         new(["--open-prose-audit"],"--open-prose-audit <directory> (compare old evidence with changed source; not an unchanged replay)",
             args=>OpenProseTests.VerifyEvidenceAsync(args[1],auditChangedSource:true),args=>args is ["--open-prose-audit",_]),
         new(["--average-open","--average-open-model"],"--average-open | --average-open-model <gguf> [directory]",async args=>
@@ -17,6 +22,16 @@ internal static partial class AiTestCommands
             if(args.Length==1)await AverageOpenTests.RunAsync();
             else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,AverageOpenTests.NativeCases());
         },args=>args is ["--average-open"] or ["--average-open-model",_] or ["--average-open-model",_,_]),
+        new(["--fraction-whole-open","--fraction-whole-open-model"],"--fraction-whole-open | --fraction-whole-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await FractionWholeOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,FractionWholeOpenTests.NativeCases());
+        },args=>args is ["--fraction-whole-open"] or ["--fraction-whole-open-model",_] or ["--fraction-whole-open-model",_,_]),
+        new(["--fraction-remaining-open","--fraction-remaining-open-model"],"--fraction-remaining-open | --fraction-remaining-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await FractionRemainingOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,FractionRemainingOpenTests.NativeCases());
+        },args=>args is ["--fraction-remaining-open"] or ["--fraction-remaining-open-model",_] or ["--fraction-remaining-open-model",_,_]),
         new(["--fraction-part-open","--fraction-part-open-model"],"--fraction-part-open | --fraction-part-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await FractionPartOpenTests.RunAsync();
