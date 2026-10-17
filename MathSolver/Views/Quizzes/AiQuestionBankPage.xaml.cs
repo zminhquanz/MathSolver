@@ -204,6 +204,7 @@ public partial class AiQuestionBankPage : ContentPage
     private void RenderSelected()
     {
         CreativeProsePanel.IsVisible=_family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
+            || _family==BankQuestionFamily.Average && _storyVariant==(int)AverageQuizType.Direct
             || _family==BankQuestionFamily.FractionQuantity && _storyVariant==(int)ElementaryQuizType.FractionOfNumber
             || _family==BankQuestionFamily.Time && SameDayTimePilot.IsType((ElementaryQuizType)_storyVariant)
             || _family==BankQuestionFamily.Decimal && ElementaryQuizGenerator.DecimalStoryTypes.Contains((ElementaryQuizType)_storyVariant);

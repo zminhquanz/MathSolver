@@ -20,7 +20,9 @@ internal sealed class ReasoningStoryCycle
                 : family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)variant)
                     ? SameDayTimePilot.Profiles((ElementaryQuizType)variant,language).ToArray()
                 : creativeProse && family==BankQuestionFamily.FractionQuantity && variant==(int)ElementaryQuizType.FractionOfNumber
-                    ? FractionPartPilot.Profiles(language).ToArray():[];
+                    ? FractionPartPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.Direct
+                    ? AverageOpenPilot.Profiles(language).ToArray():[];
             var profile=profiles.OrderBy(id=>history.Count(s=>s.StartsWith(id+"/",StringComparison.Ordinal)))
                 .ThenBy(_=>Random.Shared.Next()).FirstOrDefault()??"";
             var c = ReasoningStoryCatalogue.Create(family, variant, tier, language,narrativeId:profile);

@@ -128,7 +128,7 @@
     "AiBank.Error.SemanticReviewRequired": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.",
     "AiBank.Review.Open": "🔎 Đề chờ duyệt",
     "AiBank.Review.Title": "Duyệt đề AI",
-    "AiBank.Review.PilotHint": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước. Thêm ba dạng thời gian trong cùng ngày: tìm khoảng thời gian, giờ bắt đầu và giờ kết thúc; chưa có giờ nghỉ hay qua nửa đêm. Phân số mở thêm biết toàn bộ, tìm phần đã tặng của sách, bút và vở; chỉ một bước, kết quả nguyên, chưa có phần còn lại hay tìm toàn bộ.",
+    "AiBank.Review.PilotHint": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước. Thêm ba dạng thời gian trong cùng ngày: tìm khoảng thời gian, giờ bắt đầu và giờ kết thúc; chưa có giờ nghỉ hay qua nửa đêm. Phân số mở thêm biết toàn bộ, tìm phần đã tặng của sách, bút và vở; chỉ một bước, kết quả nguyên, chưa có phần còn lại hay tìm toàn bộ. Trung bình cộng mở bài biết đủ số liệu của ba nhóm độc lập, chưa có số liệu thiếu hay trung bình có trọng số.",
     "AiBank.Review.Hint": "Đối chiếu đề AI với đề tham khảo và phép tính chuẩn. Chỉ chấp nhận khi chủ thể, các lượng, đơn vị, quan hệ và câu hỏi đều đúng. Việc duyệt sẽ đưa đề vào ngân hàng đề để luyện tập.",
     "AiBank.Review.Count": "Chờ duyệt: {0}",
     "AiBank.Review.Empty": "Không có đề chờ duyệt.",

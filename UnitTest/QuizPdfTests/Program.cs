@@ -8,9 +8,11 @@ using PdfSharp.Pdf.IO;
 using System.Text.Json;
 if (args is ["--help"] or ["--list"])
 {
-    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root]. Default: isolated temporary files, cleaned after tests.");
+    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --average-open output-root]. Default: isolated temporary files, cleaned after tests.");
     return 0;
 }
+bool averageOnly=args is ["--average-open",_];
+if(averageOnly)args=["--artifacts",args[1]];
 if (!(args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] || (args.Length == 1 && !args[0].StartsWith("--"))))
 {
     Console.Error.WriteLine("Invalid PDF test arguments. Use --help.");
@@ -22,6 +24,12 @@ try
         : TestWorkspace.Artifacts("quiz-pdf", args[0] == "--artifacts" ? (args.Length == 2 ? args[1] : "artifacts/verification") : args[0]);
     string directory = workspace.DirectoryPath;
     await HarnessInfrastructureTests.RunAsync();
+    if(averageOnly)
+    {
+        await AverageOpenWorksheetTests.Run(directory);
+        Console.WriteLine("Average PDF output: "+directory);
+        return 0;
+    }
 
     var provider = new BasicPracticeQuestionProvider(new QuestionBankStore(Path.Combine(directory, "isolated-bank.db3")));
     var factory = new PracticeQuestionFactory(provider);
@@ -129,6 +137,7 @@ try
     await DecimalOpenWorksheetTests.Run(directory);
     await SameDayTimeWorksheetTests.Run(directory);
     await FractionPartOpenWorksheetTests.Run(directory);
+    await AverageOpenWorksheetTests.Run(directory);
     await FactSummaryTests.Run(factory, directory);
     await WorksheetSettingsTests.Run(factory);
     await MeasurementPracticeTests.Run(directory);

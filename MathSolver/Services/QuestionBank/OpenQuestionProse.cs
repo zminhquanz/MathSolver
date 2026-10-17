@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -90,6 +90,7 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if(AverageOpenCatalogue.IsProfile(c))return AverageOpenMeaning.Validate(c,syntax.Draft!);
         if(FractionPartOpenCatalogue.IsProfile(c))return FractionPartOpenCatalogue.Validate(c,syntax.Draft!);
         if(SameDayTimeCatalogue.IsProfile(c))
         {
@@ -142,6 +143,7 @@ public static class OpenQuestionProse
             Return only JSON with the example's schema and role/step/unit_id values.
             """;
         string relation = SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
+            : AverageOpenCatalogue.IsProfile(c) ? AverageOpenCatalogue.PromptRelation(c)
             : FractionPartOpenCatalogue.IsProfile(c) ? FractionPartOpenCatalogue.Relation
             : DecimalOpenStoryCatalogue.IsProfile(c) ? DecimalOpenStoryCatalogue.PromptRelation(c)
             : c.Family == BankQuestionFamily.FindX
@@ -186,6 +188,15 @@ public static class OpenQuestionProse
             for(int i=0;i<matches.Length;i++)
             {
                 string block=Literal(matches[i].Value);
+                if(AverageOpenCatalogue.IsProfile(c)&&i+1<matches.Length
+                    &&(matches[i].Value is "{v0}" or "{v1}" or "{v2}" && matches[i+1].Value=="{v5}"
+                        || matches[i].Value=="{v4}"&&matches[i+1].Value=="{v6}"))
+                {
+                    // Keep the selected verb attached to its subject/group.
+                    // This is a role phrase, never an enumerated sentence.
+                    block=Literal(matches[i].Value+" "+matches[++i].Value);
+                    blocks.Add(block);continue;
+                }
                 if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value=="{v1}" && i+1<matches.Length && matches[i+1].Value=="{v0}")
                 {
                     // Bind the owner/activity phrase, never an entire sentence.

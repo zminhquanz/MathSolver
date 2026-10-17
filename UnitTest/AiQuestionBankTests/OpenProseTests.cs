@@ -28,6 +28,7 @@ internal static partial class OpenProseTests
             var fresh = c.FreshFacts(new(891 + seed));
             Check(fresh.OpenProse && BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), fresh).IsValid, "Fresh facts lost the prose policy or its verification.");
             if (FractionPartOpenCatalogue.IsProfile(fresh)) { FractionPartOpenTests.CheckPractice(fresh,draft); continue; }
+            if (AverageOpenCatalogue.IsProfile(fresh)) { AverageOpenTests.CheckPractice(fresh,draft); continue; }
             if (fresh.Version == ReasoningStoryCatalogue.Version) { ProseExpansionTests.VerifyPractice(fresh,draft); continue; }
             foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
             {
@@ -118,7 +119,7 @@ internal static partial class OpenProseTests
         await session.LoadAsync(path, deadline.Token);
         await File.WriteAllTextAsync(Path.Combine(directory,"run-info.json"),JsonSerializer.Serialize(new {SchemaVersion=1,StartedUtc=DateTime.UtcNow,session.Runtime.ModelName,
             session.Runtime.InferenceThreadCount,session.Runtime.PromptThreadCount,SystemVietnamese=BasicQuestionPrompt.SystemInstruction(AppLanguage.Vietnamese),SystemEnglish=BasicQuestionPrompt.SystemInstruction(AppLanguage.English),
-            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>FractionPartOpenCatalogue.IsProfile(x.Contract))?"fraction-part-open-v1":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
+            Pipeline=customCases is null?"open-variables-bounded-v3":customCases.Any(x=>AverageOpenCatalogue.IsProfile(x.Contract))?"average-open-v1":customCases.Any(x=>FractionPartOpenCatalogue.IsProfile(x.Contract))?"fraction-part-open-v1":customCases.Any(x=>SameDayTimeCatalogue.IsProfile(x.Contract))?"time-open-v2":"decimal-open-v1",CasesPerSetting=customCases?.Count()??6,
             Sampling=session.Runtime.Sampling,SeedPolicy="Native sampling seed unset; C# fixtures fixed",
             RetryPolicy="Stop on verified or semantic review; retry invalid/duplicate output up to three attempts"},json));
         try

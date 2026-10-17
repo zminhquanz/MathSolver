@@ -69,7 +69,7 @@ public static partial class ReasoningStoryCatalogue
         var lesson = Build(provisional);
         return provisional with { Subject = lesson.Subject, Unit = lesson.Unit, SceneId = lesson.Context,
             TopicId = family.ToString(), Story = provisional.Story! with { Schema = lesson.Schema,
-                NarrativeId = family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
+                NarrativeId = AverageOpenCatalogue.IsProfile(provisional) || family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
     }
 
     internal static NarrativeLesson Lesson(BasicQuestionContract c) => Lessons.GetValue(c, Build);
@@ -95,7 +95,7 @@ public static partial class ReasoningStoryCatalogue
             || c.PartA != "" || c.PartB != ""
             || (seed.Family == BankQuestionFamily.Data) != (seed.ChartProfile is not null)
             || seed.ChartProfile is { } chart && ((int)chart.Type != seed.Variant || chart.Tier != c.Tier || chart.Language != c.Language)
-            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "")
+            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "" && !AverageOpenCatalogue.IsProfile(c))
             || (seed.Family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && string.IsNullOrEmpty(seed.NarrativeId))) return false;
         NarrativeLesson lesson;
         try { lesson = Lesson(c); }
@@ -118,7 +118,7 @@ public static partial class ReasoningStoryCatalogue
         }
         // A schema binds roles, context, question and step order. Resample the
         // original generator, retaining precisely that schema, never just two values.
-        bool requiresNewQuantities = c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
+        bool requiresNewQuantities = AverageOpenCatalogue.IsProfile(c) || c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
             or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
             || c.Family == BankQuestionFamily.Spatial && ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant);
         for (int attempt = 0; attempt < 512; attempt++)
@@ -194,6 +194,8 @@ public static partial class ReasoningStoryCatalogue
     private static ArithmeticQuizQuestion Generate(BasicQuestionContract c, ArithmeticQuizMode mode)
     {
         var random = new Random(c.Story!.Seed);
+        if(AverageOpenCatalogue.IsProfile(c))
+            return new AverageQuizGenerator(random).GenerateOpenDirect(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(FractionPartOpenCatalogue.IsProfile(c))
             return new ElementaryQuizGenerator(random).GenerateFractionPartPilot(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(SameDayTimeCatalogue.IsProfile(c))
@@ -246,6 +248,7 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
+        if(AverageOpenCatalogue.IsProfile(c))return AverageOpenCatalogue.Build(c);
         if(FractionPartOpenCatalogue.IsProfile(c))return FractionPartOpenCatalogue.Build(c);
         if(c.Family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)c.BankVariant))
         {

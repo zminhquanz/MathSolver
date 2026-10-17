@@ -13158,6 +13158,11 @@
         "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
       }
     ],
+    "AverageOpen.Contexts": [
+        {"Id":"notebooks","Groups":["Tổ Hoa Mai","Tổ Hoa Lan","Tổ Hoa Sen"],"Unit":"quyển vở","GroupUnit":"tổ","GroupPlural":"tổ","Verb":"quyên góp được","BaseVerb":"quyên góp được","Capacity":2000,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},
+        {"Id":"recycling","Groups":["Nhóm Xanh","Nhóm Sạch","Nhóm Đẹp"],"Unit":"kg giấy","GroupUnit":"nhóm","GroupPlural":"nhóm","Verb":"thu gom được","BaseVerb":"thu gom được","Capacity":200,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},
+        {"Id":"planting","Groups":["Đội An","Đội Bình","Đội Chi"],"Unit":"cây","GroupUnit":"đội","GroupPlural":"đội","Verb":"trồng được","BaseVerb":"trồng được","Capacity":500,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"}
+    ],
     "FractionPartOpen.Contexts": [
         {
             "Id": "books",
