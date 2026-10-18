@@ -10,6 +10,16 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--time-break-open","--time-break-open-model"],"--time-break-open | --time-break-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SameDayBreakTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SameDayBreakTests.NativeCases());
+        },args=>args is ["--time-break-open"] or ["--time-break-open-model",_] or ["--time-break-open-model",_,_]),
+        new(["--rectangle-area-open","--rectangle-area-open-model"],"--rectangle-area-open | --rectangle-area-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await RectangleAreaOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,RectangleAreaOpenTests.NativeCases());
+        },args=>args is ["--rectangle-area-open"] or ["--rectangle-area-open-model",_] or ["--rectangle-area-open-model",_,_]),
         new(["--rectangle-perimeter-open","--rectangle-perimeter-open-model"],"--rectangle-perimeter-open | --rectangle-perimeter-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await RectanglePerimeterOpenTests.RunAsync();

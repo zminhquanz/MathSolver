@@ -11,6 +11,7 @@ public sealed partial class ElementaryQuizGenerator
         ? CreateFoundation(kind, type, language, tier) : kind switch
     {
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
+        QuizProblemKind.Time when type==SameDayBreakPilot.Type => CreateSameDayBreak(language, tier),
         QuizProblemKind.Time when SameDayTimePilot.IsType(type) => CreateSameDayTime(type, language, tier),
         QuizProblemKind.Time when IsMixedTime(type) => CreateMixedTime(type, language, tier),
         QuizProblemKind.Time when IsTimeFractionExtension(type) => CreateTimeFractionExtension(type, language, tier),

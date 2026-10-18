@@ -8676,6 +8676,7 @@
         "Text":  "Thực hiện dạng tỉ lệ bản đồ với dữ kiện được cung cấp.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Tính thời gian thực hiện trong cùng ngày, không tính đúng một lần nghỉ nằm trong buổi.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Tính khoảng thời gian của hoạt động liên tục trong cùng ngày.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Tìm giờ bắt đầu khi biết giờ kết thúc và khoảng thời gian trong cùng ngày.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayEnd", "Text": "Tìm giờ kết thúc khi biết giờ bắt đầu và khoảng thời gian trong cùng ngày.", "Variables": []},
@@ -13071,6 +13072,12 @@
     }
   ],
   "Lists": {
+    "RectangleAreaOpen.Contexts": [
+      {"Id": "garden", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "khu vườn", "Shape": "hình chữ nhật", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} có dạng {v1}.", "LengthFact": "{v0} có chiều dài {f0} {v2}.", "WidthFact": "{v0} có chiều rộng {f1} {v2}.", "Question": "Hỏi diện tích {v0} là bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "playground", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "sân chơi", "Shape": "hình chữ nhật", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} có hình dạng {v1}.", "LengthFact": "Chiều dài của {v0} bằng {f0} {v2}.", "WidthFact": "Chiều rộng của {v0} bằng {f1} {v2}.", "Question": "Hỏi diện tích {v0} là bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "card", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "tấm bìa", "Shape": "hình chữ nhật", "Unit": "Centimeter", "MaximumLength": 60, "ShapeFact": "{v0} có dạng {v1}.", "LengthFact": "{v0} dài {f0} {v2}.", "WidthFact": "{v0} rộng {f1} {v2}.", "Question": "Diện tích của {v0} là bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "photo", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "bức ảnh", "Shape": "hình chữ nhật", "Unit": "Centimeter", "MaximumLength": 30, "ShapeFact": "{v0} mang hình dáng {v1}.", "LengthFact": "Chiều dài của {v0} là {f0} {v2}.", "WidthFact": "Chiều rộng của {v0} là {f1} {v2}.", "Question": "Diện tích {v0} bằng bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"}
+    ],
     "RectanglePerimeterOpen.Contexts": [
       {
         "Id": "garden",
@@ -13139,6 +13146,136 @@
         "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
         "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
         "Lead": "Chu vi {v0}"
+      }
+    ],
+    "TimeBreakOpen.Contexts": [
+      {
+        "Id": "study",
+        "Actor": "Lan",
+        "Activity": "buổi học",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Trong {v1} của {v0}, có đúng một lần nghỉ dài {f4} phút.",
+          "Hai mốc giờ thuộc cùng một ngày."
+        ],
+        "Question": "Không tính thời gian nghỉ, {v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động không tính nghỉ",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Vào lúc {f2} giờ {f3} phút, {v1} của {v0} kết thúc.",
+          "{v1} của {v0} có đúng một lần nghỉ kéo dài {f4} phút trong buổi.",
+          "Buổi hoạt động bắt đầu và kết thúc trong cùng một ngày."
+        ],
+        "AlternativeQuestion": "Thời gian thực hiện thực tế {v1} của {v0}, không tính nghỉ, là bao nhiêu phút?"
+      },
+      {
+        "Id": "sport",
+        "Actor": "Lan",
+        "Activity": "buổi tập thể thao",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Trong {v1} của {v0}, có đúng một lần nghỉ dài {f4} phút.",
+          "Hai mốc giờ thuộc cùng một ngày."
+        ],
+        "Question": "Không tính thời gian nghỉ, {v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động không tính nghỉ",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Vào lúc {f2} giờ {f3} phút, {v1} của {v0} kết thúc.",
+          "{v1} của {v0} có đúng một lần nghỉ kéo dài {f4} phút trong buổi.",
+          "Buổi hoạt động bắt đầu và kết thúc trong cùng một ngày."
+        ],
+        "AlternativeQuestion": "Thời gian thực hiện thực tế {v1} của {v0}, không tính nghỉ, là bao nhiêu phút?"
+      },
+      {
+        "Id": "craft",
+        "Actor": "Lan",
+        "Activity": "buổi làm thủ công",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Trong {v1} của {v0}, có đúng một lần nghỉ dài {f4} phút.",
+          "Hai mốc giờ thuộc cùng một ngày."
+        ],
+        "Question": "Không tính thời gian nghỉ, {v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động không tính nghỉ",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Vào lúc {f2} giờ {f3} phút, {v1} của {v0} kết thúc.",
+          "{v1} của {v0} có đúng một lần nghỉ kéo dài {f4} phút trong buổi.",
+          "Buổi hoạt động bắt đầu và kết thúc trong cùng một ngày."
+        ],
+        "AlternativeQuestion": "Thời gian thực hiện thực tế {v1} của {v0}, không tính nghỉ, là bao nhiêu phút?"
+      },
+      {
+        "Id": "club",
+        "Actor": "Lan",
+        "Activity": "buổi sinh hoạt câu lạc bộ",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Trong {v1} của {v0}, có đúng một lần nghỉ dài {f4} phút.",
+          "Hai mốc giờ thuộc cùng một ngày."
+        ],
+        "Question": "Không tính thời gian nghỉ, {v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động không tính nghỉ",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Vào lúc {f2} giờ {f3} phút, {v1} của {v0} kết thúc.",
+          "{v1} của {v0} có đúng một lần nghỉ kéo dài {f4} phút trong buổi.",
+          "Buổi hoạt động bắt đầu và kết thúc trong cùng một ngày."
+        ],
+        "AlternativeQuestion": "Thời gian thực hiện thực tế {v1} của {v0}, không tính nghỉ, là bao nhiêu phút?"
       }
     ],
     "TimeOpen.Contexts": [

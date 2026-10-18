@@ -32,6 +32,7 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "Quiz.Elementary.SameDayActiveDuration": {"context":"Practice, PDF and AI time relation selection", "translatorNote":"One break included within the same-day session; ask active minutes excluding rest."},
     "Quiz.Elementary.SameDayElapsed": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Elapsed time within one day. One continuous activity within the same day."},
     "Quiz.Elementary.SameDayStart": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Find the start time within one day. One continuous activity within the same day."},
     "Quiz.Elementary.SameDayEnd": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Find the end time within one day. One continuous activity within the same day."},

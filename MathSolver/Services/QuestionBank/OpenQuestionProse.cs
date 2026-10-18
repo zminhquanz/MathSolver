@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -90,6 +90,8 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if(SameDayBreakCatalogue.IsProfile(c))return SameDayBreakMeaning.Validate(c,syntax.Draft!);
+        if(RectangleAreaOpenCatalogue.IsProfile(c))return RectangleAreaOpenMeaning.Validate(c,syntax.Draft!);
         if(RectanglePerimeterOpenCatalogue.IsProfile(c))return RectanglePerimeterOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentageWholeOpenCatalogue.IsProfile(c))return PercentageWholeOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentageRemainingOpenCatalogue.IsProfile(c))return PercentageRemainingOpenMeaning.Validate(c,syntax.Draft!);
@@ -148,6 +150,8 @@ public static class OpenQuestionProse
             Do not change the kind of objects or add actors. Never put JSON field names or instructions inside the prose. Use one short sentence per field, at most 24 words.
             Return only JSON with the example's schema and role/step/unit_id values.
             """;
+        if (SameDayBreakCatalogue.IsProfile(c)) instruction = SameDayBreakCatalogue.WritingInstructions(c);
+        if (RectangleAreaOpenCatalogue.IsProfile(c)) instruction = RectangleAreaOpenCatalogue.WritingInstructions(c.Language);
         if (RectanglePerimeterOpenCatalogue.IsProfile(c)) instruction = RectanglePerimeterOpenCatalogue.WritingInstructions(c);
         if (AverageOpenCatalogue.IsProfile(c)) instruction = AverageOpenCatalogue.WritingInstructions(c.Language);
         if (FractionWholeOpenCatalogue.IsProfile(c)) instruction = FractionWholeOpenCatalogue.WritingInstructions(c.Language);
@@ -155,7 +159,9 @@ public static class OpenQuestionProse
         if (PercentageWholeOpenCatalogue.IsProfile(c)) instruction = PercentageWholeOpenCatalogue.WritingInstructions(c.Language);
         if (PercentageRemainingOpenCatalogue.IsProfile(c)) instruction = PercentageRemainingOpenCatalogue.WritingInstructions(c.Language);
         if (PercentagePartOpenCatalogue.IsProfile(c)) instruction = PercentagePartOpenCatalogue.WritingInstructions(c.Language);
-        string relation = RectanglePerimeterOpenCatalogue.IsProfile(c)?RectanglePerimeterOpenCatalogue.PromptRelation
+        string relation = SameDayBreakCatalogue.IsProfile(c)?SameDayBreakCatalogue.PromptRelation
+            : RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.PromptRelation
+            : RectanglePerimeterOpenCatalogue.IsProfile(c)?RectanglePerimeterOpenCatalogue.PromptRelation
             : SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
             : AverageOpenCatalogue.IsProfile(c) ? AverageOpenCatalogue.PromptRelation(c)
             : PercentageWholeOpenCatalogue.IsProfile(c) ? PercentageWholeOpenCatalogue.PromptRelation(c.Language)
@@ -183,6 +189,8 @@ public static class OpenQuestionProse
             + "\n"+(vi?"Chủ thể dùng biến, không điền tên. Đơn vị/đồ vật đã chọn (chỉ để hiểu bối cảnh): ":"Use actor placeholders, never actual names. Selected units/objects (context only): ")+c.Unit+"; "+c.GroupUnit
             + "\nReference JSON:\n" + QuestionBankStore.SerializeDraft(Example(c))
             + (RectanglePerimeterOpenCatalogue.IsProfile(c)?RectanglePerimeterOpenCatalogue.WritingFocus(c):"")
+            + (RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.WritingFocus(c):"")
+            + (SameDayBreakCatalogue.IsProfile(c)?SameDayBreakCatalogue.WritingFocus(c):"")
             + (correction is null ? "" : PercentageWholeOpenCatalogue.IsProfile(c)
                 ? PercentageWholeOpenCatalogue.RetryInstructions(c.Language,correction,details)
                 : PercentageRemainingOpenCatalogue.IsProfile(c)
@@ -198,9 +206,9 @@ public static class OpenQuestionProse
     public static string Grammar(BasicQuestionContract c)
     {
         if (!Supports(c)) throw new ArgumentException("Unsupported open prose profile.");
-        bool singleSentence=RectanglePerimeterOpenCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c);
+        bool singleSentence=SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c);
         using var doc = JsonDocument.Parse(QuestionBankStore.SerializeDraft(Example(c)));
-        bool punctuatedClauses=RectanglePerimeterOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)
+        bool punctuatedClauses=SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)
             ||c.Language==AppLanguage.English&&PercentageRemainingOpenCatalogue.IsProfile(c);
         int factFields=punctuatedClauses?doc.RootElement.GetProperty("facts").GetArrayLength():0;
         var rules = new StringBuilder(); int index = 0;
@@ -239,6 +247,18 @@ public static class OpenQuestionProse
                     // quantity or a dangling token at the end of the question.
                     blocks.Add(Literal(matches[i].Value+" "+matches[++i].Value));continue;
                 }
+                if(SameDayBreakCatalogue.IsProfile(c)&&i+1<matches.Length
+                    &&(c.Language==AppLanguage.Vietnamese&&matches[i].Value=="{v1}"&&matches[i+1].Value=="{v0}"
+                        ||c.Language==AppLanguage.English&&matches[i].Value=="{v0}"&&matches[i+1].Value=="{v1}"))
+                {
+                    // Bind a named activity to its owner, not a complete
+                    // sentence. Free predicates/openings remain generated.
+                    // This prevents dangling actors/activities and English
+                    // bare session nouns without possessives or articles.
+                    blocks.Add(c.Language==AppLanguage.Vietnamese?Literal("{v1} của {v0}")
+                        :"("+Literal("{v0}'s {v1}")+" | "+Literal("the {v1} for {v0}")+" | "+Literal("The {v1} for {v0}")+")");
+                    i++;continue;
+                }
                 if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value=="{v1}" && i+1<matches.Length && matches[i+1].Value=="{v0}")
                 {
                     // Bind the owner/activity phrase, never an entire sentence.
@@ -247,7 +267,7 @@ public static class OpenQuestionProse
                         : "("+Literal("the {v1} for {v0}")+" | "+Literal("The {v1} for {v0}")+" | "+Literal("{v0}'s {v1}")+")";
                     blocks.Add(block); i++; continue;
                 }
-                if(SameDayTimeCatalogue.IsProfile(c) && matches[i].Value is "{f0}" or "{f2}" && i+1<matches.Length
+                if((SameDayTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)) && matches[i].Value is "{f0}" or "{f2}" && i+1<matches.Length
                     && matches[i+1].Value==(matches[i].Value=="{f0}"?"{f1}":"{f3}"))
                 {
                     // Clock components travel together with their immutable units.
@@ -256,7 +276,7 @@ public static class OpenQuestionProse
                         :"("+Literal(hour+" hours "+minute+" minutes")+" | "+Literal(hour+" hours and "+minute+" minutes")+")";
                     blocks.Add(block); continue;
                 }
-                if(!RectanglePerimeterOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !FractionRemainingOpenCatalogue.IsProfile(c) && !FractionWholeOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c) && i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
+                if(!RectangleAreaOpenCatalogue.IsProfile(c) && !RectanglePerimeterOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !FractionRemainingOpenCatalogue.IsProfile(c) && !FractionWholeOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c) && i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
                     && Regex.IsMatch(matches[i+1].Value,@"^\{(?:unit(?:_[ab])?|items?|group(?:_one)?|v\d+)\}$")
                     && string.IsNullOrWhiteSpace(value[(matches[i].Index+matches[i].Length)..matches[i+1].Index]))
                     block += " " + Literal(" ") + " " + Literal(matches[++i].Value);
@@ -265,20 +285,20 @@ public static class OpenQuestionProse
             IEnumerable<string[]> Orders(string[] source)
             {
                 if(source.Length==0){yield return [];yield break;}
-                if(source.Length>(SameDayTimeCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
+                if(source.Length>(SameDayBreakCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
                 for(int i=0;i<source.Length;i++)
                     foreach(var tail in Orders(source.Where((_,j)=>j!=i).ToArray()))yield return [source[i],..tail];
             }
             bool time=SameDayTimeCatalogue.IsProfile(c);
             int prefix=time&&property!="question"?16:79;
-            bool wordBoundaries=PercentageWholeOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c);
+            bool wordBoundaries=SameDayBreakCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c);
             string branch=blocks.Count==0 ? "character{1,140}" : "("+string.Join(" | ",Orders(blocks.ToArray())
                 .Select(order=>wordBoundaries
                     // Slots are complete lexical tokens, not function names or
                     // letter aliases. Keep every order and all free prose; only
                     // a person's English possessive may touch its placeholder.
                     ? "(character{1,31} "+Literal(" ")+")? "+string.Join(" word-gap ",order.Select(block=>block
-                        +(c.Language==AppLanguage.English&&(block==Literal("{v0}")||block==Literal("{v2}")&&!RectanglePerimeterOpenCatalogue.IsProfile(c))?" possessive?":"")))+" word-tail"
+                        +(c.Language==AppLanguage.English&&(block==Literal("{v0}")||block==Literal("{v2}")&&!RectangleAreaOpenCatalogue.IsProfile(c)&&!RectanglePerimeterOpenCatalogue.IsProfile(c))?" possessive?":"")))+" word-tail"
                     :time
                     ? "(character{0,"+prefix+"} "+Literal(" ")+")? "+string.Join(" "+Literal(" ")+" character{0,71} "+Literal(" ")+" ",order)+" ("+Literal(" ")+" character{0,79})?"
                     : "character{0,32} "+string.Join(" character{0,48} ",order)+" character{0,40}").Distinct())+")";
@@ -300,7 +320,8 @@ public static class OpenQuestionProse
         string root = Node(doc.RootElement);
         return "root ::= " + root + " ws\n" + rules
             + "character ::= [" + QuestionProseLanguage.GrammarLetters(c.Language) + (singleSentence?" ,()'\\u2019-]":" ,.;:!?()'\\u2019-]")
-            + (PercentageWholeOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)?"\nword-gap ::= \" \" (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,39})?\npossessive ::= \"'s\" | \"\\u2019s\"":"")
+            + (SameDayBreakCatalogue.IsProfile(c)?"\nword-gap ::= (\" \" | \", \") (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,79})? | \", \" character{1,79}\npossessive ::= \"'s\" | \"\\u2019s\""
+                :PercentageWholeOpenCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)?"\nword-gap ::= \" \" (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,39})?\npossessive ::= \"'s\" | \"\\u2019s\"":"")
             + (singleSentence?"\nending ::= [.!?:]?":"")+"\nws ::= [ \\t]{0,2}\n";
     }
 }

@@ -19,29 +19,16 @@ internal static class RectanglePerimeterOpenMeaning
         string all=string.Join(" ",OpenQuestionProse.Fields(draft).Select(f=>f.Text));
         if(Has(all,vi?@"\b(?:diện tích|thể tích|nửa chu vi|hình vuông|hình tròn|tam giác|hình thang|cổng|lối đi|hàng rào|khoảng hở|bỏ trống|chi phí|giá tiền|không|chưa|gấp|hơn|kém|đổi đơn vị)\b"
             :@"\b(?:area|volume|half|semiperimeter|square|circle|triangle|trapezoid|gate|path|fence|fencing|gap|opening|cost|price|not|never|twice|longer|shorter|convert)\b")
-            ||Has(length,vi?@"\bchiều rộng\b":@"\b(?:width|wide|breadth)\b")
-            ||Has(width,vi?@"\bchiều dài\b":@"\b(?:length|long)\b"))
+            ||Has(length,vi?@"\b(?:(?:chiều|cạnh) rộng|cạnh ngắn)\b":@"\b(?:width|wide|breadth)\b")
+            ||Has(width,vi?@"\b(?:chiều|cạnh) dài\b":@"\b(?:length|long)\b"))
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"Keep a rectangle, directly given length and width in their own roles, and its full perimeter; add no conditions.");
         if(Has(all,@"[²³]|\{v2\}\s*\^|\b(?:squared|cubed)\b")||Has(all,vi?@"\b(?:mét vuông|mét khối)\b":@"\bsquare (?:metres?|meters?|centimeters?|centimetres?)\b"))
             return new(null,"ChangedUnits",ErrorDetails:"Rectangle perimeter uses the common length unit, not an area/volume unit.");
         if(OpenQuestionProse.Fields(draft).Any(f=>Has(f.Text.Trim(),@"[.!?:;].+")))
             return new(null,"InvalidText",ErrorDetails:"Use one sentence per field, without an added event or technical note.");
-        bool shapeProved=vi
-            ?Match(shape,@"\{v0\} (?:có dạng|có hình dạng|có hình dáng|mang hình dáng|là một|là) \{v1\}")
-                ||Match(shape,@"một \{v0\} (?:có dạng|có hình dạng|là) \{v1\}")
-            :Match(shape,@"\{v0\} (?:is|is shaped as|is shaped like) (?:a )?\{v1\}")
-                ||Match(shape,@"\{v0\} has (?:the|a) shape of a \{v1\}");
-        bool Dimension(string text,string role,string amount)=>vi
-            ?Match(text,@"\{v0\} có chiều "+role+" "+@"(?:(?:là|bằng) )?"+amount+@" \{v2\}")
-                ||Match(text,@"chiều "+role+@" (?:của )?\{v0\} (?:là|bằng|đo được) "+amount+@" \{v2\}")
-                ||Match(text,@"\{v0\} "+role+" "+amount+@" \{v2\}")
-            :Match(text,@"\{v0\} has a "+role+@" of "+amount+@" \{v2\}")
-                ||Match(text,@"the "+role+@" of \{v0\} (?:is|measures|equals) "+amount+@" \{v2\}")
-                ||Match(text,@"\{v0\} (?:is|measures) "+amount+@" \{v2\} "+(role=="length"?"long":"wide"))
-                ||Match(text,@"\{v0\} measures "+amount+@" \{v2\} in "+role)
-                ||Match(text,@"in "+role+@", \{v0\} measures "+amount+@" \{v2\}")
-                ||Match(text,@"\{v0\}['’]s "+role+@" (?:is|measures|equals) "+amount+@" \{v2\}");
-        bool lengthProved=Dimension(length,vi?"dài":"length",@"\{f0\}"),widthProved=Dimension(width,vi?"rộng":"width",@"\{f1\}");
+        bool shapeProved=RectangleDirectOpenLanguage.Shape(shape,c.Language);
+        bool lengthProved=RectangleDirectOpenLanguage.Dimension(length,vi?"dài":"length",@"\{f0\}",c.Language);
+        bool widthProved=RectangleDirectOpenLanguage.Dimension(width,vi?"rộng":"width",@"\{f1\}",c.Language);
         bool targetProved=vi
             ?Match(question,@"(?:hỏi )?chu vi (?:của )?\{v0\} (?:là|bằng|đạt giá trị) bao nhiêu \{v2\}")
                 ||Match(question,@"chu vi (?:của )?\{v0\} tính theo \{v2\} (?:là|bằng) bao nhiêu")

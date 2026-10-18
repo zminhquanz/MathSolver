@@ -8647,6 +8647,7 @@
         "Text":  "Solve a map scale task using the supplied data.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Find active same-day minutes, excluding one break included inside the session.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Calculate the duration of an uninterrupted same-day activity.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Find a same-day starting time from ending time and duration.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayEnd", "Text": "Find a same-day ending time from starting time and duration.", "Variables": []},
@@ -13042,6 +13043,12 @@
     }
   ],
   "Lists": {
+    "RectangleAreaOpen.Contexts": [
+      {"Id": "garden", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the garden", "Shape": "rectangle", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "{v0} has a length of {f0} {v2}.", "WidthFact": "{v0} has a width of {f1} {v2}.", "Question": "What is the area of {v0} in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "playground", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the playground", "Shape": "rectangle", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "The length of {v0} is {f0} {v2}.", "WidthFact": "The width of {v0} is {f1} {v2}.", "Question": "What is the area of {v0} in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "card", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the card", "Shape": "rectangle", "Unit": "Centimeter", "MaximumLength": 60, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "{v0} is {f0} {v2} long.", "WidthFact": "{v0} is {f1} {v2} wide.", "Question": "What is the area of {v0} in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
+      {"Id": "photo", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the photograph", "Shape": "rectangle", "Unit": "Centimeter", "MaximumLength": 30, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "{v0}'s length is {f0} {v2}.", "WidthFact": "{v0}'s width is {f1} {v2}.", "Question": "What is {v0}'s area in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"}
+    ],
     "RectanglePerimeterOpen.Contexts": [
       {
         "Id": "garden",
@@ -13110,6 +13117,136 @@
         "WidthFact": "{v0} has a width of {f1} {v2}.",
         "Question": "What is the perimeter of {v0} in {v2}?",
         "Lead": "Perimeter of {v0}"
+      }
+    ],
+    "TimeBreakOpen.Contexts": [
+      {
+        "Id": "study",
+        "Actor": "Alex",
+        "Activity": "study session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 120,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes.",
+          "During {v0}'s {v1}, there is exactly one break lasting {f4} minutes.",
+          "Both clock times are on the same day."
+        ],
+        "Question": "Excluding the break, how many minutes does {v0}'s {v1} last?",
+        "Lead": "Active time excluding the break",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "At {f2} hours and {f3} minutes, {v0}'s {v1} finishes.",
+          "{v0}'s {v1} includes exactly one break of {f4} minutes.",
+          "The session starts and ends on the same day."
+        ],
+        "AlternativeQuestion": "What is the active duration of {v0}'s {v1} in minutes, excluding the break?"
+      },
+      {
+        "Id": "sport",
+        "Actor": "Alex",
+        "Activity": "sports session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes.",
+          "During {v0}'s {v1}, there is exactly one break lasting {f4} minutes.",
+          "Both clock times are on the same day."
+        ],
+        "Question": "Excluding the break, how many minutes does {v0}'s {v1} last?",
+        "Lead": "Active time excluding the break",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "At {f2} hours and {f3} minutes, {v0}'s {v1} finishes.",
+          "{v0}'s {v1} includes exactly one break of {f4} minutes.",
+          "The session starts and ends on the same day."
+        ],
+        "AlternativeQuestion": "What is the active duration of {v0}'s {v1} in minutes, excluding the break?"
+      },
+      {
+        "Id": "craft",
+        "Actor": "Alex",
+        "Activity": "craft session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 90,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes.",
+          "During {v0}'s {v1}, there is exactly one break lasting {f4} minutes.",
+          "Both clock times are on the same day."
+        ],
+        "Question": "Excluding the break, how many minutes does {v0}'s {v1} last?",
+        "Lead": "Active time excluding the break",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "At {f2} hours and {f3} minutes, {v0}'s {v1} finishes.",
+          "{v0}'s {v1} includes exactly one break of {f4} minutes.",
+          "The session starts and ends on the same day."
+        ],
+        "AlternativeQuestion": "What is the active duration of {v0}'s {v1} in minutes, excluding the break?"
+      },
+      {
+        "Id": "club",
+        "Actor": "Alex",
+        "Activity": "club session",
+        "EarliestHour": 7,
+        "LatestHour": 20,
+        "MaximumMinutes": 180,
+        "RelationId": "same-day-one-break-find-active-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "included-break-minutes"
+        ],
+        "TargetRole": "active-minutes-excluding-break",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes.",
+          "During {v0}'s {v1}, there is exactly one break lasting {f4} minutes.",
+          "Both clock times are on the same day."
+        ],
+        "Question": "Excluding the break, how many minutes does {v0}'s {v1} last?",
+        "Lead": "Active time excluding the break",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "At {f2} hours and {f3} minutes, {v0}'s {v1} finishes.",
+          "{v0}'s {v1} includes exactly one break of {f4} minutes.",
+          "The session starts and ends on the same day."
+        ],
+        "AlternativeQuestion": "What is the active duration of {v0}'s {v1} in minutes, excluding the break?"
       }
     ],
     "TimeOpen.Contexts": [
