@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--rectangle-perimeter-open","--rectangle-perimeter-open-model"],"--rectangle-perimeter-open | --rectangle-perimeter-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await RectanglePerimeterOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,RectanglePerimeterOpenTests.NativeCases());
+        },args=>args is ["--rectangle-perimeter-open"] or ["--rectangle-perimeter-open-model",_] or ["--rectangle-perimeter-open-model",_,_]),
         new(["--percentage-remaining-english","--percentage-remaining-english-model"],"--percentage-remaining-english | --percentage-remaining-english-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await PercentageRemainingEnglishTests.RunAsync();
@@ -33,6 +38,11 @@ internal static partial class AiTestCommands
             if(args.Length==1)await PercentageRemainingOpenTests.RunAsync();
             else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,PercentageRemainingOpenTests.NativeCases());
         },args=>args is ["--percentage-remaining-open"] or ["--percentage-remaining-open-model",_] or ["--percentage-remaining-open-model",_,_]),
+        new(["--percentage-whole-open","--percentage-whole-open-model"],"--percentage-whole-open | --percentage-whole-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await PercentageWholeOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,PercentageWholeOpenTests.NativeCases());
+        },args=>args is ["--percentage-whole-open"] or ["--percentage-whole-open-model",_] or ["--percentage-whole-open-model",_,_]),
         new(["--fraction-whole-open","--fraction-whole-open-model"],"--fraction-whole-open | --fraction-whole-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await FractionWholeOpenTests.RunAsync();

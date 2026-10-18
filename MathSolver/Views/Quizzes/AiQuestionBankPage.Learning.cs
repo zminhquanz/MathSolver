@@ -49,15 +49,14 @@ public partial class AiQuestionBankPage
                 };
                 _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
                 if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
-                OperationPicker.ItemsSource = keys.Select(LocalizationService.TranslateKey).ToArray();
-                if (_family == BankQuestionFamily.Geometry)
-                    OperationPicker.ItemsSource = _storyVariants.Select(variant => {
+                string[] labels = _family == BankQuestionFamily.Geometry
+                    ? _storyVariants.Select(variant => {
                         var profile = ReasoningStoryCatalogue.GeometryProfile(variant);
                         return LocalizationService.TranslateKey("Quiz.Geometry" + profile.Shape) + " · "
                             + GeometryReasoningText.MeasurementName(profile.Measurement, AppLanguageManager.CurrentLanguage);
-                    }).ToArray();
-                IllustratedQuizPicker.SetKeys(OperationPicker, keys);
-                OperationPicker.SelectedIndex = Array.IndexOf(_storyVariants, _storyVariant);
+                    }).ToArray()
+                    : keys.Select(LocalizationService.TranslateKey).ToArray();
+                SetLearningPicker(OperationPicker, labels, keys, Array.IndexOf(_storyVariants, _storyVariant));
                 return;
             }
             string L(string key) => LocalizationService.TranslateKey("Learning." + key);
@@ -69,9 +68,11 @@ public partial class AiQuestionBankPage
             IllustratedQuizPicker.SetKeys(LearningGroupPicker, _learningGroups.Select(g => "Learning.Group." + g));
             LearningGroupPicker.SelectedIndex = Array.IndexOf(_learningGroups, _learningGroup);
             _learningOperations = Enum.GetValues<ArithmeticOperation>();
-            OperationPicker.ItemsSource = _learningOperations.Select(op => T(op.ToString())).ToArray();
-            IllustratedQuizPicker.SetKeys(OperationPicker, _learningOperations.Select(op => "AiBank." + op));
-            OperationPicker.SelectedIndex = Math.Max(0, Array.IndexOf(_learningOperations, operation));
+            string[] operationKeys = _family == BankQuestionFamily.FindX
+                ? ["Quiz.FindXSum", "Quiz.FindXDifference", "Quiz.FindXProduct", "Quiz.FindXQuotient"]
+                : _learningOperations.Select(op => "AiBank." + op).ToArray();
+            SetLearningPicker(OperationPicker, operationKeys.Select(LocalizationService.TranslateKey).ToArray(), operationKeys,
+                Math.Max(0, Array.IndexOf(_learningOperations, operation)));
         }
         finally { _updatingLearning = false; }
     }
@@ -96,9 +97,17 @@ public partial class AiQuestionBankPage
         if (_updating || _updatingLearning) return;
         if (ReasoningStoryCatalogue.Supports(_family))
         {
-            if (sender == OperationPicker && OperationPicker.SelectedIndex >= 0)
-                _storyVariant = _storyVariants[OperationPicker.SelectedIndex];
-            RefreshLearningPickers(ArithmeticOperation.Add);
+            if (sender == OperationPicker)
+            {
+                int index = OperationPicker.SelectedIndex;
+                if (index < 0 || index >= _storyVariants.Length) return;
+                _storyVariant = _storyVariants[index];
+                // Do not replace this picker's items from its own selection event.
+                // MAUI can defer the reset/index notifications until after the
+                // updating guard exits, creating an endless selection loop.
+            }
+            else if (sender == StarsPicker)
+                RefreshLearningPickers(ArithmeticOperation.Add);
         }
         RefreshFindXRoles();
     }
@@ -114,14 +123,9 @@ public partial class AiQuestionBankPage
             _unknownRoles = FindXQuestionCatalogue.Available(CurrentLearningProfile, SelectedLearningOperation,
                 (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1)).Select(s => s.Role).Distinct().ToArray();
             if (!_unknownRoles.Contains(_unknownRole)) _unknownRole = _unknownRoles.FirstOrDefault();
-            FindXRolePicker.ItemsSource = _unknownRoles.Select(r => LocalizationService.TranslateKey("FindXBank.Role." + r)).ToArray();
-            IllustratedQuizPicker.SetKeys(FindXRolePicker, _unknownRoles.Select(role => "FindXBank.Role." + role));
-            FindXRolePicker.SelectedIndex = Array.IndexOf(_unknownRoles, _unknownRole);
-            string[] keys = ["Quiz.FindXSum", "Quiz.FindXDifference", "Quiz.FindXProduct", "Quiz.FindXQuotient"];
-            int operation = OperationPicker.SelectedIndex;
-            OperationPicker.ItemsSource = keys.Select(LocalizationService.TranslateKey).ToArray();
-            IllustratedQuizPicker.SetKeys(OperationPicker, keys);
-            OperationPicker.SelectedIndex = Math.Max(0, operation);
+            string[] keys = _unknownRoles.Select(role => "FindXBank.Role." + role).ToArray();
+            SetLearningPicker(FindXRolePicker, keys.Select(LocalizationService.TranslateKey).ToArray(), keys,
+                Array.IndexOf(_unknownRoles, _unknownRole));
         }
         finally { _updatingLearning = false; }
     }
@@ -130,5 +134,13 @@ public partial class AiQuestionBankPage
     {
         if (!_updatingLearning && FindXRolePicker.SelectedIndex >= 0 && FindXRolePicker.SelectedIndex < _unknownRoles.Length)
             _unknownRole = _unknownRoles[FindXRolePicker.SelectedIndex];
+    }
+
+    private static void SetLearningPicker(Picker picker, string[] labels, IEnumerable<string> keys, int selectedIndex)
+    {
+        if (picker.ItemsSource is not IEnumerable<string> current || !current.SequenceEqual(labels))
+            picker.ItemsSource = labels;
+        IllustratedQuizPicker.SetKeys(picker, keys);
+        if (picker.SelectedIndex != selectedIndex) picker.SelectedIndex = selectedIndex;
     }
 }

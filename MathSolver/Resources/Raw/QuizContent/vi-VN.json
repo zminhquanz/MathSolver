@@ -13071,6 +13071,76 @@
     }
   ],
   "Lists": {
+    "RectanglePerimeterOpen.Contexts": [
+      {
+        "Id": "garden",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "khu vườn",
+        "Shape": "hình chữ nhật",
+        "Unit": "Meter",
+        "MaximumLength": 100,
+        "ShapeFact": "{v0} có dạng {v1}.",
+        "LengthFact": "{v0} có chiều dài {f0} {v2}.",
+        "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
+        "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
+        "Lead": "Chu vi {v0}"
+      },
+      {
+        "Id": "playground",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "sân chơi",
+        "Shape": "hình chữ nhật",
+        "Unit": "Meter",
+        "MaximumLength": 100,
+        "ShapeFact": "{v0} có dạng {v1}.",
+        "LengthFact": "{v0} có chiều dài {f0} {v2}.",
+        "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
+        "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
+        "Lead": "Chu vi {v0}"
+      },
+      {
+        "Id": "card",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "tấm bìa",
+        "Shape": "hình chữ nhật",
+        "Unit": "Centimeter",
+        "MaximumLength": 60,
+        "ShapeFact": "{v0} có dạng {v1}.",
+        "LengthFact": "{v0} có chiều dài {f0} {v2}.",
+        "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
+        "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
+        "Lead": "Chu vi {v0}"
+      },
+      {
+        "Id": "photo",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "bức ảnh",
+        "Shape": "hình chữ nhật",
+        "Unit": "Centimeter",
+        "MaximumLength": 30,
+        "ShapeFact": "{v0} có dạng {v1}.",
+        "LengthFact": "{v0} có chiều dài {f0} {v2}.",
+        "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
+        "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
+        "Lead": "Chu vi {v0}"
+      }
+    ],
     "TimeOpen.Contexts": [
       {
         "Id": "reading",
@@ -13164,6 +13234,56 @@
           "Trong cùng ngày, hoạt động diễn ra liên tục."
         ],
         "AlternativeQuestion": "Hỏi {v1} của {v0} kết thúc lúc mấy giờ, mấy phút?"
+      }
+    ],
+    "PercentageWholeOpen.Contexts": [
+      {
+        "Id": "books",
+        "Donor": "Lan",
+        "Recipient": "bạn An",
+        "Unit": "quyển sách",
+        "Capacity": 1000,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+        "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+        "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+        "Lead": "Tổng số {v1} ban đầu"
+      },
+      {
+        "Id": "pens",
+        "Donor": "Minh",
+        "Recipient": "bạn Bình",
+        "Unit": "cây bút",
+        "Capacity": 200,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+        "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+        "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+        "Lead": "Tổng số {v1} ban đầu"
+      },
+      {
+        "Id": "notebooks",
+        "Donor": "Hoa",
+        "Recipient": "bạn Mai",
+        "Unit": "quyển vở",
+        "Capacity": 500,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} đã tặng {v2} {f0} {v1}.",
+        "Share": "Số {v1} {v0} đã tặng bằng {f1} tổng số ban đầu.",
+        "Question": "Hỏi ban đầu {v0} có bao nhiêu {v1}?",
+        "Lead": "Tổng số {v1} ban đầu"
       }
     ],
     "PercentageRemainingOpen.Contexts": [

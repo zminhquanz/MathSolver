@@ -13042,6 +13042,76 @@
     }
   ],
   "Lists": {
+    "RectanglePerimeterOpen.Contexts": [
+      {
+        "Id": "garden",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "the garden",
+        "Shape": "rectangle",
+        "Unit": "Meter",
+        "MaximumLength": 100,
+        "ShapeFact": "{v0} is a {v1}.",
+        "LengthFact": "{v0} has a length of {f0} {v2}.",
+        "WidthFact": "{v0} has a width of {f1} {v2}.",
+        "Question": "What is the perimeter of {v0} in {v2}?",
+        "Lead": "Perimeter of {v0}"
+      },
+      {
+        "Id": "playground",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "the playground",
+        "Shape": "rectangle",
+        "Unit": "Meter",
+        "MaximumLength": 100,
+        "ShapeFact": "{v0} is a {v1}.",
+        "LengthFact": "{v0} has a length of {f0} {v2}.",
+        "WidthFact": "{v0} has a width of {f1} {v2}.",
+        "Question": "What is the perimeter of {v0} in {v2}?",
+        "Lead": "Perimeter of {v0}"
+      },
+      {
+        "Id": "card",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "the card",
+        "Shape": "rectangle",
+        "Unit": "Centimeter",
+        "MaximumLength": 60,
+        "ShapeFact": "{v0} is a {v1}.",
+        "LengthFact": "{v0} has a length of {f0} {v2}.",
+        "WidthFact": "{v0} has a width of {f1} {v2}.",
+        "Question": "What is the perimeter of {v0} in {v2}?",
+        "Lead": "Perimeter of {v0}"
+      },
+      {
+        "Id": "photo",
+        "Relation": "rectangle-direct-length-width-find-perimeter",
+        "ShapeId": "rectangle",
+        "LengthRole": "length",
+        "WidthRole": "width",
+        "TargetRole": "perimeter",
+        "Object": "the photograph",
+        "Shape": "rectangle",
+        "Unit": "Centimeter",
+        "MaximumLength": 30,
+        "ShapeFact": "{v0} is a {v1}.",
+        "LengthFact": "{v0} has a length of {f0} {v2}.",
+        "WidthFact": "{v0} has a width of {f1} {v2}.",
+        "Question": "What is the perimeter of {v0} in {v2}?",
+        "Lead": "Perimeter of {v0}"
+      }
+    ],
     "TimeOpen.Contexts": [
       {
         "Id": "reading",
@@ -13135,6 +13205,56 @@
           "On the same day, the activity runs continuously."
         ],
         "AlternativeQuestion": "Please determine: At what hour and minute does the {v1} for {v0} end?"
+      }
+    ],
+    "PercentageWholeOpen.Contexts": [
+      {
+        "Id": "books",
+        "Donor": "Lan",
+        "Recipient": "An",
+        "Unit": "books",
+        "Capacity": 1000,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} gave {f0} {v1} to {v2}.",
+        "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+        "Question": "How many {v1} did {v0} have originally?",
+        "Lead": "Original number of {v1}"
+      },
+      {
+        "Id": "pens",
+        "Donor": "Minh",
+        "Recipient": "Binh",
+        "Unit": "pens",
+        "Capacity": 200,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} gave {f0} {v1} to {v2}.",
+        "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+        "Question": "How many {v1} did {v0} have originally?",
+        "Lead": "Original number of {v1}"
+      },
+      {
+        "Id": "notebooks",
+        "Donor": "Hoa",
+        "Recipient": "Mai",
+        "Unit": "notebooks",
+        "Capacity": 500,
+        "Relation": "known-donated-percentage-part-find-original-whole",
+        "KnownRole": "donated-count",
+        "BaseRole": "original-whole",
+        "TargetRole": "original-whole",
+        "Action": "donate",
+        "Gift": "{v0} gave {f0} {v1} to {v2}.",
+        "Share": "The donated {v1} are {f1} of {v0}'s original total.",
+        "Question": "How many {v1} did {v0} have originally?",
+        "Lead": "Original number of {v1}"
       }
     ],
     "PercentageRemainingOpen.Contexts": [

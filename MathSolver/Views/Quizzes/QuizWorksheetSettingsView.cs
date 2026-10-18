@@ -111,9 +111,12 @@ internal sealed class QuizWorksheetSettingsView : ContentView
     private static void Choices(Picker picker, IEnumerable<string> keys, int index)
     {
         var values = keys.ToArray();
-        picker.ItemsSource = values.Select(T).ToArray();
+        var labels = values.Select(T).ToArray();
+        // Refresh can run inside this picker's own selection event. Replacing
+        // identical items queues another reset/selection after _updating exits.
+        if (!picker.Items.SequenceEqual(labels)) picker.ItemsSource = labels;
         IllustratedQuizPicker.SetKeys(picker, values);
-        picker.SelectedIndex = index;
+        if (picker.SelectedIndex != index) picker.SelectedIndex = index;
     }
 
     private void Refresh()
@@ -122,8 +125,10 @@ internal sealed class QuizWorksheetSettingsView : ContentView
         try
         {
             Choices(_problem, _catalog.Options.Select(o => o.LocalizationKey), Settings.ProblemIndex);
-            _stars.ItemsSource = IllustratedQuizPicker.DifficultyLabels(); IllustratedQuizPicker.SetTextOptions(_stars);
-            _stars.SelectedIndex = (int)Settings.Tier - 1;
+            var difficultyLabels = IllustratedQuizPicker.DifficultyLabels();
+            if (!_stars.Items.SequenceEqual(difficultyLabels)) _stars.ItemsSource = difficultyLabels;
+            IllustratedQuizPicker.SetTextOptions(_stars);
+            if (_stars.SelectedIndex != (int)Settings.Tier - 1) _stars.SelectedIndex = (int)Settings.Tier - 1;
             Choices(_group, _groups.Select(g => "Learning.Group." + g), Math.Max(0, Array.IndexOf(_groups, Settings.Group)));
             _formatField.IsVisible = Settings.CanChooseFormat; _groupField.IsVisible = Settings.CanChooseGroup;
             if (Settings.FormatPrefix.Length > 0)

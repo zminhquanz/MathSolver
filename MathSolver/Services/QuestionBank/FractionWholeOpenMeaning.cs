@@ -1,13 +1,20 @@
 using MathSolver.Models;
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace MathSolver.Services.QuestionBank;
 
 internal static class FractionWholeOpenMeaning
 {
-    private static string Clean(string text)=>Regex.Replace(text.Trim().ToLowerInvariant(),@"\s+"," ",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100)).TrimEnd(' ','.','?',':','!');
-    private static bool Match(string text,string pattern)=>Regex.IsMatch(Clean(text),"\\A(?:"+pattern+")\\z",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100));
-    private static bool Has(string text,string pattern)=>Regex.IsMatch(Clean(text),pattern,RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100));
+    // These role patterns are fixed by code, not supplied by users. Retain the
+    // linear matchers instead of repeatedly evicting .NET's small static cache.
+    // The shared timeout policy also permits cold matching in a busy UI process.
+    private static readonly ConcurrentDictionary<string,Regex> Patterns=new(StringComparer.Ordinal);
+    private static Regex Pattern(string pattern)=>Patterns.GetOrAdd(pattern,QuestionTextRegex.Create);
+    private static readonly Regex Whitespace=QuestionTextRegex.Create(@"\s+");
+    private static string Clean(string text)=>Whitespace.Replace(text.Trim().ToLowerInvariant()," ").TrimEnd(' ','.','?',':','!');
+    private static bool Match(string text,string pattern)=>Pattern("\\A(?:"+pattern+")\\z").IsMatch(Clean(text));
+    private static bool Has(string text,string pattern)=>Pattern(pattern).IsMatch(Clean(text));
     internal static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft draft)
     {
         string gift=draft.Facts![0].Text,share=draft.Facts[1].Text,question=draft.Question,lead=draft.SolutionLeads![0].Text;
@@ -15,8 +22,7 @@ internal static class FractionWholeOpenMeaning
         const string owner=@"\{v0\}",unit=@"\{v1\}",recipient=@"\{v2\}",count=@"\{f0\}",fraction=@"\{f1\}";
         bool vi=c.Language==AppLanguage.Vietnamese;
         if(Has(all,@"\b(?:đơn vị đếm|biến số|placeholder|stands for)\b|\{[fv]\d+\} (?:là đơn vị|means|is the variable)")
-            ||Regex.IsMatch(all,@"\bA\b",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100))
-                &&Regex.IsMatch(all,@"\bB\b",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100)))
+            ||Pattern(@"\bA\b").IsMatch(all)&&Pattern(@"\bB\b").IsMatch(all))
             return new(null,"InvalidText",ErrorDetails:"Unbound actors or technical placeholder explanations entered the prose.");
         bool changed=vi
             ? Has(facts,@"\b(?:không|chưa|còn lại|còn giữ|nhận thêm|mua thêm|tặng thêm|lần nữa|lần thứ|tăng thêm|giảm giá)\b")
@@ -80,12 +86,11 @@ internal static class FractionWholeOpenMeaning
         string clause=Clean(text);
         if(!vi)
         {
-            clause=Regex.Replace(clause,@"\b(?:is|was) (?:equivalent|equal) to\b","equals",RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
-            clause=Regex.Replace(clause,@"\b(originally|initially) (had|owned|possessed|held)\b","$2 $1",RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
+            clause=Pattern(@"\b(?:is|was) (?:equivalent|equal) to\b").Replace(clause,"equals");
+            clause=Pattern(@"\b(originally|initially) (had|owned|possessed|held)\b").Replace(clause,"$2 $1");
         }
-        var equation=Regex.Match(clause,vi?@"\A(?<left>.+?) (?:bằng|là|gấp) \{f1\} (?:lần|của) (?<right>.+)\z"
-            :@"\A(?<left>.+?) (?:is|was|equals) \{f1\} (?:times|of) (?<right>.+)\z",
-            RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,TimeSpan.FromMilliseconds(100));
+        var equation=Pattern(vi?@"\A(?<left>.+?) (?:bằng|là|gấp) \{f1\} (?:lần|của) (?<right>.+)\z"
+            :@"\A(?<left>.+?) (?:is|was|equals) \{f1\} (?:times|of) (?<right>.+)\z").Match(clause);
         if(!equation.Success)return false;
         string left=equation.Groups["left"].Value,right=equation.Groups["right"].Value;
         bool whole=vi?Match(left,@"(?:tổng số|số) \{v1\} (?:ban đầu|lúc đầu) của \{v0\}")
