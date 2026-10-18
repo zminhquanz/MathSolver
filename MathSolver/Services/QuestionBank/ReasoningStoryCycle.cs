@@ -17,6 +17,8 @@ internal sealed class ReasoningStoryCycle
         {
             var profiles=creativeProse && family==BankQuestionFamily.Decimal
                 ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
+                : family==BankQuestionFamily.Time&&variant==(int)OvernightTimePilot.Type
+                    ? OvernightTimePilot.Profiles(language).ToArray()
                 : family==BankQuestionFamily.Time&&variant==(int)SameDayBreakPilot.Type
                     ? SameDayBreakPilot.Profiles(language).ToArray()
                 : family==BankQuestionFamily.Time&&SameDayTimePilot.IsType((ElementaryQuizType)variant)
@@ -66,6 +68,7 @@ internal sealed class ReasoningStoryCycle
                         .Where(c => (int)tier >= c.MinimumStar && (int)tier <= c.MaximumStar).Select(c => c.Id),
                 BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementContexts(language, (ElementaryQuizType)variant).Select(c => c.Id),
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
+                BankQuestionFamily.Time when variant==(int)OvernightTimePilot.Type=>OvernightTimePilot.Profiles(language),
                 BankQuestionFamily.Time when variant==(int)SameDayBreakPilot.Type=>SameDayBreakPilot.Profiles(language),
                 BankQuestionFamily.Time when SameDayTimePilot.IsType((ElementaryQuizType)variant)=>SameDayTimePilot.Profiles((ElementaryQuizType)variant,language),
                 BankQuestionFamily.Time => ElementaryQuizGenerator.TimeStoryContextIds(tier),

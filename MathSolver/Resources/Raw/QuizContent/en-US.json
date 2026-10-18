@@ -8647,6 +8647,7 @@
         "Text":  "Solve a map scale task using the supplied data.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.OvernightElapsed", "Text": "Find elapsed minutes for one continuous activity without breaks ending the following day.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Find active same-day minutes, excluding one break included inside the session.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Calculate the duration of an uninterrupted same-day activity.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Find a same-day starting time from ending time and duration.", "Variables": []},
@@ -13117,6 +13118,132 @@
         "WidthFact": "{v0} has a width of {f1} {v2}.",
         "Question": "What is the perimeter of {v0} in {v2}?",
         "Lead": "Perimeter of {v0}"
+      }
+    ],
+    "OvernightTimeOpen.Contexts": [
+      {
+        "Id": "bus",
+        "Actor": "Alex",
+        "Activity": "bus journey",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes on the following day.",
+          "The activity runs continuously without a break."
+        ],
+        "Question": "How many minutes does {v0}'s {v1} last?",
+        "Lead": "Elapsed duration",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "The next day, {v0}'s {v1} finishes at {f2} hours and {f3} minutes.",
+          "The session is continuous and has no breaks."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v1} in minutes?"
+      },
+      {
+        "Id": "train",
+        "Actor": "Sam",
+        "Activity": "train journey",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes on the following day.",
+          "The activity runs continuously without a break."
+        ],
+        "Question": "How many minutes does {v0}'s {v1} last?",
+        "Lead": "Elapsed duration",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "The next day, {v0}'s {v1} finishes at {f2} hours and {f3} minutes.",
+          "The session is continuous and has no breaks."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v1} in minutes?"
+      },
+      {
+        "Id": "trip",
+        "Actor": "Taylor",
+        "Activity": "trip",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes on the following day.",
+          "The activity runs continuously without a break."
+        ],
+        "Question": "How many minutes does {v0}'s {v1} last?",
+        "Lead": "Elapsed duration",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "The next day, {v0}'s {v1} finishes at {f2} hours and {f3} minutes.",
+          "The session is continuous and has no breaks."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v1} in minutes?"
+      },
+      {
+        "Id": "watch",
+        "Actor": "Alex",
+        "Activity": "night watch",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v0}'s {v1} starts at {f0} hours {f1} minutes.",
+          "{v0}'s {v1} ends at {f2} hours {f3} minutes on the following day.",
+          "The activity runs continuously without a break."
+        ],
+        "Question": "How many minutes does {v0}'s {v1} last?",
+        "Lead": "Elapsed duration",
+        "AlternativeFacts": [
+          "At {f0} hours and {f1} minutes, {v0}'s {v1} begins.",
+          "The next day, {v0}'s {v1} finishes at {f2} hours and {f3} minutes.",
+          "The session is continuous and has no breaks."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v1} in minutes?"
       }
     ],
     "TimeBreakOpen.Contexts": [

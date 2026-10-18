@@ -149,7 +149,7 @@ public static partial class ReasoningStoryCatalogue
             text = EquivalentProseStructures.WithEnglishAgreement(text, slot => quantities.GetValueOrDefault(slot.Trim('{', '}')) == "1");
         text=Regex.Replace(text, @"\{([fv]\d+)\}", m => quantities.GetValueOrDefault(m.Groups[1].Value, m.Value));
         if(RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))return FractionRemainingPilot.CapitalizeOpenings(text);
-        return (SameDayTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c))&&c.Language==AppLanguage.Vietnamese
+        return (SameDayTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c))&&c.Language==AppLanguage.Vietnamese
             ? SameDayTimePilot.CapitalizeSentenceOpenings(text):text;
     }
 
@@ -213,6 +213,8 @@ public static partial class ReasoningStoryCatalogue
             return new ElementaryQuizGenerator(random).GenerateFractionRemaining(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(FractionPartOpenCatalogue.IsProfile(c))
             return new ElementaryQuizGenerator(random).GenerateFractionPartPilot(mode,c.Language,c.Tier,c.Story.NarrativeId);
+        if(OvernightTimeCatalogue.IsProfile(c))
+            return new ElementaryQuizGenerator(random).GenerateOvernightTime(mode,c.Language,c.Tier,c.Story!.NarrativeId);
         if(SameDayBreakCatalogue.IsProfile(c))
             return new ElementaryQuizGenerator(random).GenerateSameDayBreak(mode,c.Language,c.Tier,c.Story!.NarrativeId);
         if(SameDayTimeCatalogue.IsProfile(c))
@@ -265,6 +267,15 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
+        if(c.Family==BankQuestionFamily.Time&&c.BankVariant==(int)OvernightTimePilot.Type)
+        {
+            if(string.IsNullOrEmpty(c.Story!.NarrativeId))
+            {
+                var profiles=OvernightTimePilot.Profiles(c.Language).ToArray();
+                c=c with {Story=c.Story with {NarrativeId=profiles[new Random(c.Story.Seed).Next(profiles.Length)]}};
+            }
+            return OvernightTimeCatalogue.Build(c);
+        }
         if(c.Family==BankQuestionFamily.Time&&c.BankVariant==(int)SameDayBreakPilot.Type)
         {
             if(string.IsNullOrEmpty(c.Story!.NarrativeId))

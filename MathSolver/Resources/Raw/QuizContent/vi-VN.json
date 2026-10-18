@@ -8676,6 +8676,7 @@
         "Text":  "Thực hiện dạng tỉ lệ bản đồ với dữ kiện được cung cấp.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.OvernightElapsed", "Text": "Tính số phút trôi qua của một hoạt động liên tục, không nghỉ, kết thúc ngày hôm sau.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Tính thời gian thực hiện trong cùng ngày, không tính đúng một lần nghỉ nằm trong buổi.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Tính khoảng thời gian của hoạt động liên tục trong cùng ngày.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayStart", "Text": "Tìm giờ bắt đầu khi biết giờ kết thúc và khoảng thời gian trong cùng ngày.", "Variables": []},
@@ -13146,6 +13147,132 @@
         "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
         "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
         "Lead": "Chu vi {v0}"
+      }
+    ],
+    "OvernightTimeOpen.Contexts": [
+      {
+        "Id": "bus",
+        "Actor": "Lan",
+        "Activity": "chuyến xe",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút ngày hôm sau.",
+          "Hoạt động này diễn ra liên tục, không nghỉ."
+        ],
+        "Question": "{v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Ngày hôm sau, {v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Buổi hoạt động diễn ra liên tục và không có thời gian nghỉ."
+        ],
+        "AlternativeQuestion": "Thời gian của {v1} của {v0} là bao nhiêu phút?"
+      },
+      {
+        "Id": "train",
+        "Actor": "Minh",
+        "Activity": "chuyến tàu",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút ngày hôm sau.",
+          "Hoạt động này diễn ra liên tục, không nghỉ."
+        ],
+        "Question": "{v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Ngày hôm sau, {v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Buổi hoạt động diễn ra liên tục và không có thời gian nghỉ."
+        ],
+        "AlternativeQuestion": "Thời gian của {v1} của {v0} là bao nhiêu phút?"
+      },
+      {
+        "Id": "trip",
+        "Actor": "An",
+        "Activity": "hành trình",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút ngày hôm sau.",
+          "Hoạt động này diễn ra liên tục, không nghỉ."
+        ],
+        "Question": "{v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Ngày hôm sau, {v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Buổi hoạt động diễn ra liên tục và không có thời gian nghỉ."
+        ],
+        "AlternativeQuestion": "Thời gian của {v1} của {v0} là bao nhiêu phút?"
+      },
+      {
+        "Id": "watch",
+        "Actor": "Lan",
+        "Activity": "buổi trực",
+        "EarliestHour": 20,
+        "MaximumMinutes": 480,
+        "EndDayOffset": 1,
+        "Continuity": "continuous-no-break",
+        "RelationId": "overnight-continuous-find-duration",
+        "KnownRoles": [
+          "start-hour",
+          "start-minute",
+          "end-hour",
+          "end-minute",
+          "end-day-offset"
+        ],
+        "TargetRole": "elapsed-minutes",
+        "Facts": [
+          "{v1} của {v0} bắt đầu lúc {f0} giờ {f1} phút.",
+          "{v1} của {v0} kết thúc lúc {f2} giờ {f3} phút ngày hôm sau.",
+          "Hoạt động này diễn ra liên tục, không nghỉ."
+        ],
+        "Question": "{v1} của {v0} kéo dài bao nhiêu phút?",
+        "Lead": "Thời gian hoạt động",
+        "AlternativeFacts": [
+          "Vào lúc {f0} giờ {f1} phút, {v1} của {v0} bắt đầu.",
+          "Ngày hôm sau, {v1} của {v0} kết thúc lúc {f2} giờ {f3} phút.",
+          "Buổi hoạt động diễn ra liên tục và không có thời gian nghỉ."
+        ],
+        "AlternativeQuestion": "Thời gian của {v1} của {v0} là bao nhiêu phút?"
       }
     ],
     "TimeBreakOpen.Contexts": [

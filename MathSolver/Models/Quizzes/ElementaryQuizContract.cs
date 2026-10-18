@@ -30,7 +30,8 @@ public enum ElementaryQuizType
     MixedTimeAdd, MixedTimeSubtract, MixedTimeMultiply, MixedTimeDivide,
     SameDayElapsed, SameDayStart, SameDayEnd,
     FractionRemaining,
-    SameDayActiveDuration
+    SameDayActiveDuration,
+    OvernightElapsed
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,

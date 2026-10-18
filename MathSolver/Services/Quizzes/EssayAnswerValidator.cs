@@ -162,6 +162,7 @@ public sealed partial class EssayAnswerValidator
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
                 || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
+                || question.ElementaryProblem.Type==OvernightTimePilot.Type
                 || question.ElementaryProblem.Type==SameDayBreakPilot.Type
                 || SameDayTimePilot.IsType(question.ElementaryProblem.Type)
                 || ElementaryQuizGenerator.IsMixedTime(question.ElementaryProblem.Type)

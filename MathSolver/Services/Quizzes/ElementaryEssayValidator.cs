@@ -257,7 +257,7 @@ internal static partial class ElementaryEssayValidator
                 or ElementaryQuizType.ReadPictograph or ElementaryQuizType.RectangleSide
                 or ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion
-                or ElementaryQuizType.VolumeConversion or ElementaryQuizType.SecondsConversion or ElementaryQuizType.SameDayElapsed or ElementaryQuizType.SameDayActiveDuration) && parsed.Unit.Length == 0
+                or ElementaryQuizType.VolumeConversion or ElementaryQuizType.SecondsConversion or ElementaryQuizType.SameDayElapsed or ElementaryQuizType.SameDayActiveDuration or ElementaryQuizType.OvernightElapsed) && parsed.Unit.Length == 0
                 || UnitsMatch(question, parsed.Unit, expected.Unit);
             if (!valueOkay || !formOkay || !unitOkay)
             {
