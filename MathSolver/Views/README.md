@@ -13,9 +13,10 @@ Lớp nền cho các giao diện tính toán được bản địa hóa.
 Nhập liệu và hiển thị kết quả các phép tính, lũy thừa, phân số, phương trình và hình học.
 
 - [AverageView.xaml](Calculators/AverageView.xaml)
-- [CalculationPage.xaml](Calculators/CalculationPage.xaml)
+- [CalculationPage.xaml](Calculators/CalculationPage.xaml): chế độ Biểu thức hiển thị bản xem trước cập nhật theo từng ký tự bằng `FractionExpressionView`. Nội dung lấy từ chuỗi nhập chính xác, đồng bộ khi đổi chế độ, xóa và chuyển focus; dấu chia được hiển thị là `÷` để giữ đúng nghĩa phép chia tuần tự của tab cơ bản.
 - [FindXView.xaml](Calculators/FindXView.xaml)
 - [FractionView.xaml](Calculators/FractionView.xaml)
+- [FractionView.Expression.cs](Calculators/FractionView.Expression.cs): chế độ Biểu thức giữ riêng dữ liệu với chế độ hai phân số; nhập ví dụ `(1/2 + 1/3) × 3/4`, xem trước cách viết, tính đáp số rút gọn và các bước theo thứ tự ưu tiên bằng `RationalExpressionEngine.Shared`. Sao chép giữ nguyên phân số chính xác, nút Xóa áp dụng cho chế độ đang chọn.
 - [GeometryCalculatorView.xaml](Calculators/GeometryCalculatorView.xaml)
 - [PowerRootView.xaml](Calculators/PowerRootView.xaml)
 - [PowerRootView.Diagnostics.cs](Calculators/PowerRootView.Diagnostics.cs): tóm tắt kết quả lũy thừa lớn; chế độ nhà phát triển mở bảng hiệu năng và các nhóm kỹ thuật thu gọn. Stage mặc định chỉ hiện 5 mục chậm nhất; phần trăm dùng tổng của nhóm cùng loại, kể cả các mục ẩn. Log sao chép giữ đầy đủ số đo. Thời gian tính, dọn bộ nhớ và tạo nội dung TXT được phân biệt; thời gian chọn nơi lưu/sao chép file không tính vào tạo nội dung TXT.

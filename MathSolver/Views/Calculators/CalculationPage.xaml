@@ -506,6 +506,8 @@
                                             Placeholder="{localization:Translate Calculation.Expression.Placeholder}"
                                             AutoSize="TextChanges"
                                             MinimumHeightRequest="132"
+                                            IsSpellCheckEnabled="False"
+                                            IsTextPredictionEnabled="False"
                                             FontSize="19"
                                             TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
@@ -530,6 +532,11 @@
                                             LineBreakMode="WordWrap"
                                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                     </Border>
+
+                                    <controls:FractionExpressionView
+                                        x:Name="ArithmeticExpressionPreview"
+                                        IsVisible="False" WrapContent="True" MathFontSize="22"
+                                        MathColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                 </VerticalStackLayout>
 

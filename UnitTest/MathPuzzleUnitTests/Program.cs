@@ -2,6 +2,8 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Fraction live preview without formatting exceptions", PuzzleTests.CheckFractionLivePreview),
+    ("Shared rational expressions and worked steps", PuzzleTests.CheckRationalExpressions),
     ("Function graph SIMD linear endpoints and parabola regression", PuzzleTests.CheckFunctionGraphSimd),
     ("NTT kernel execution and AVX-512 exact results", PuzzleTests.CheckNttKernelExecution),
     ("Power diagnostics phase boundaries and stage percentages", PuzzleTests.CheckPowerDiagnostics),

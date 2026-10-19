@@ -59,7 +59,7 @@
                         <Grid
                             x:Name="OperationButtonsGrid"
                             ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
-                            RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                            RowDefinitions="Auto,Auto"
                             ColumnSpacing="8"
                             RowSpacing="8">
 
@@ -107,7 +107,7 @@
                                 x:Name="CommonDenominatorButton"
                                 Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
                                 Grid.Column="{OnPlatform Android=0, WinUI=4, Default=4}"
-                                Grid.ColumnSpan="{OnPlatform Android=4, WinUI=1, Default=1}"
+                                Grid.ColumnSpan="{OnPlatform Android=2, WinUI=1, Default=1}"
                                 Text="Quy đồng"
                                 FontSize="16"
                                 FontAttributes="Bold"
@@ -117,6 +117,13 @@
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnCommonDenominatorClicked" />
+
+                            <Button x:Name="FractionExpressionButton" Grid.Row="1"
+                                    Grid.Column="{OnPlatform Android=2, Default=0}"
+                                    Grid.ColumnSpan="{OnPlatform Android=2, Default=5}"
+                                    Text="{localization:Translate Calculation.Expression.Option}"
+                                    Style="{StaticResource SolverOperationButtonStyle}"
+                                    FontSize="16" Clicked="OnFractionExpressionClicked" />
 
                         </Grid>
 
@@ -129,8 +136,12 @@
                     <VerticalStackLayout Spacing="14">
 
                         <Label
-                            Text="2. Nhập các phân số"
+                            x:Name="FractionInputTitleLabel" Text="2. Nhập các phân số"
                             Style="{StaticResource SolverSectionTitleStyle}" />
+
+                        <Label x:Name="FractionExpressionInputTitleLabel" IsVisible="False"
+                               Text="{localization:Translate Fraction.Expression.InputTitle}"
+                               Style="{StaticResource SolverSectionTitleStyle}" />
 
                         <Grid
                             x:Name="FractionInputGrid"
@@ -314,6 +325,25 @@
 
                         </Grid>
 
+                        <VerticalStackLayout x:Name="FractionExpressionInputPanel" IsVisible="False" Spacing="10">
+                            <Label Text="{localization:Translate Fraction.Expression.InputHelp}"
+                                   LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                            <Border Style="{StaticResource SolverInputBorderStyle}" Padding="12,8">
+                                <Editor x:Name="FractionExpressionEditor" AutoSize="TextChanges"
+                                        MinimumHeightRequest="132" MaxLength="4096" FontSize="19"
+                                        IsSpellCheckEnabled="False" IsTextPredictionEnabled="False"
+                                        Placeholder="{localization:Translate Fraction.Expression.Placeholder}"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                        BackgroundColor="Transparent" TextChanged="OnFractionExpressionTextChanged" />
+                            </Border>
+                            <Label Text="{localization:Translate Fraction.Expression.PriorityHint}"
+                                   LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                            <controls:FractionExpressionView x:Name="FractionExpressionPreview" IsVisible="False"
+                                ParseArithmeticExpressions="True" WrapContent="True" MathFontSize="22"
+                                MathColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                        </VerticalStackLayout>
+
                         <Grid
                             x:Name="ActionButtonsGrid"
                             ColumnDefinitions="*,*"
@@ -401,6 +431,7 @@
 
                         <controls:FractionExpressionView
                             x:Name="FullExpressionMathView"
+                            WrapContent="True"
                             MathFontSize="23"
                             MathColor="{DynamicResource PrimaryColor}"
                             HorizontalOptions="Center" />
@@ -417,6 +448,7 @@
 
                         <controls:FractionExpressionView
                             x:Name="AnswerMathView"
+                            WrapContent="True"
                             MathFontSize="32"
                             MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                             HorizontalOptions="Center" />
@@ -526,6 +558,8 @@
                                                             <DataTemplate x:DataType="x:String">
                                                                 <controls:FractionExpressionView
                                                                     Expression="{Binding .}"
+                                                                    ParseArithmeticExpressions="{Binding Source={x:Reference Root}, Path=IsExpressionMode, x:DataType='views:FractionView'}"
+                                                                    WrapContent="True"
                                                                     MathFontSize="19"
                                                                     MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                                                                     HorizontalOptions="Start" />

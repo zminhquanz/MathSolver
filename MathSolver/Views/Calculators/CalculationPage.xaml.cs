@@ -551,6 +551,7 @@ public partial class CalculationPage : ContentPage
         ExpressionInputPanel.IsVisible = _isExpressionMode;
         NumberInputTitleLabel.IsVisible = !_isExpressionMode;
         ExpressionInputTitleLabel.IsVisible = _isExpressionMode;
+        UpdateArithmeticExpressionPreview();
     }
 
     private void OnCalculateClicked(object? sender, EventArgs e)
@@ -2683,6 +2684,7 @@ public partial class CalculationPage : ContentPage
                 newText,
                 StringComparison.Ordinal))
         {
+            UpdateArithmeticExpressionPreview();
             return;
         }
 
@@ -2761,6 +2763,22 @@ public partial class CalculationPage : ContentPage
             string.Empty);
     }
 
+    private void UpdateArithmeticExpressionPreview()
+    {
+        if (ArithmeticExpressionPreview is null) return;
+        bool hasText = !string.IsNullOrWhiteSpace(_arithmeticExpressionRawText);
+        ArithmeticExpressionPreview.IsVisible = hasText;
+        // Format only; incomplete input is normal during typing. Keep the raw
+        // value independent of the editor's scientific display on focus loss.
+        // Here '/' means ordinary division, so show ÷ rather than a stacked
+        // fraction that could suggest a different grouping of chained divisions.
+        ArithmeticExpressionPreview.Expression = hasText
+            ? FormatArithmeticExpressionWhileTyping(_arithmeticExpressionRawText)
+                .Replace('*', '×').Replace('x', '×').Replace('X', '×')
+                .Replace('/', '÷').Replace(':', '÷').Replace('-', '−').Replace('–', '−')
+            : string.Empty;
+    }
+
     private void SetArithmeticExpressionEditorText(
         string text,
         int? cursorPosition = null)
@@ -2788,6 +2806,7 @@ public partial class CalculationPage : ContentPage
             _isUpdatingArithmeticExpressionText =
                 false;
         }
+        UpdateArithmeticExpressionPreview();
     }
 
     private static string FormatArithmeticExpressionWhileTyping(

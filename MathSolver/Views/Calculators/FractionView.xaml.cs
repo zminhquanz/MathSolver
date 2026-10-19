@@ -13,6 +13,9 @@ namespace MathSolver.Views;
 public partial class FractionView : LocalizedSolverView
 {
     private readonly FractionCalculationEngine _fractionEngine = new();
+    private bool _isExpressionMode;
+    private string _expressionExactAnswer = string.Empty;
+    public bool IsExpressionMode => _isExpressionMode;
     private bool _isCompact;
     private bool _isUpdatingNumberText;
 
@@ -99,6 +102,7 @@ public partial class FractionView : LocalizedSolverView
     private void SelectOperation(
     FractionOperation operation)
     {
+        SetExpressionMode(false);
         _selectedOperation = operation;
 
         Button selectedButton;
@@ -155,7 +159,8 @@ public partial class FractionView : LocalizedSolverView
             SubtractButton,
             MultiplyButton,
             DivideButton,
-            CommonDenominatorButton);
+            CommonDenominatorButton,
+            FractionExpressionButton);
 
         ResetOutput();
     }
@@ -206,6 +211,12 @@ public partial class FractionView : LocalizedSolverView
     {
         using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         ResetOutput();
+
+        if (_isExpressionMode)
+        {
+            CalculateFractionExpression();
+            return;
+        }
 
         if (!TryReadInteger(
                 GetEntryInputText(
@@ -315,13 +326,20 @@ public partial class FractionView : LocalizedSolverView
     {
         await ResultClipboardService.CopyAsync(
             FractionCopyResultButton,
-            AnswerMathView.Expression);
+            _isExpressionMode ? _expressionExactAnswer : AnswerMathView.Expression);
     }
 
     private void OnClearClicked(
         object? sender,
         EventArgs e)
     {
+        if (_isExpressionMode)
+        {
+            FractionExpressionEditor.Text = string.Empty;
+            ResetOutput();
+            FractionExpressionEditor.Focus();
+            return;
+        }
         _entryScientificCodeValues.Clear();
         _pendingRestoredEntryTexts.Clear();
 
@@ -370,6 +388,7 @@ public partial class FractionView : LocalizedSolverView
 
     private void ResetOutput()
     {
+        _expressionExactAnswer = string.Empty;
         ErrorBorder.IsVisible = false;
         ErrorLabel.Text = string.Empty;
 
@@ -1219,7 +1238,10 @@ public partial class FractionView : LocalizedSolverView
 
         Grid.SetColumnSpan(
             CommonDenominatorButton,
-            4);
+            2);
+        Grid.SetRow(FractionExpressionButton, 1);
+        Grid.SetColumn(FractionExpressionButton, 2);
+        Grid.SetColumnSpan(FractionExpressionButton, 2);
 
         OperationButtonsGrid.ColumnSpacing =
             6;
@@ -1326,6 +1348,8 @@ public partial class FractionView : LocalizedSolverView
             new RowDefinition(
                 GridLength.Auto));
 
+        OperationButtonsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
         OperationButtonsGrid.ColumnDefinitions.Add(
             new ColumnDefinition(
                 GridLength.Star));
@@ -1356,6 +1380,10 @@ public partial class FractionView : LocalizedSolverView
             DivideButton,
             CommonDenominatorButton
         ];
+
+        Grid.SetRow(FractionExpressionButton, 1);
+        Grid.SetColumn(FractionExpressionButton, 0);
+        Grid.SetColumnSpan(FractionExpressionButton, 5);
 
         for (int index = 0;
              index < operationButtons.Length;

@@ -228,6 +228,7 @@ public sealed class FractionExpressionView : ContentView
 
         foreach (View tokenView in CreateTokenViews(tokens))
         {
+            FlexLayout.SetShrink(tokenView, 0);
             tokenView.Margin = new Thickness(
                 0,
                 0,
@@ -261,6 +262,7 @@ public sealed class FractionExpressionView : ContentView
                 TextAlignment.End => FlexJustify.End, _ => FlexJustify.Start }, HorizontalOptions = LayoutOptions.Fill };
         foreach (var item in items)
         {
+            FlexLayout.SetShrink(item, 0);
             item.Margin = new Thickness(0, 0, TokenSpacing, Math.Min(4, TokenSpacing));
             wrap.Children.Add(item);
         }
@@ -307,15 +309,31 @@ public sealed class FractionExpressionView : ContentView
         };
     }
 
-    private View CreateFractionView(View numerator, View denominator)
+    private View CreateFractionView(View numerator, View denominator, double? minimumWidth = null)
     {
-        var grid = new Grid { RowDefinitions = { new(GridLength.Auto), new(new GridLength(2)), new(GridLength.Auto) },
-            RowSpacing = 2, MinimumWidthRequest = MathFontSize * 1.25, VerticalOptions = LayoutOptions.Center };
+        // Auto columns measure the actual operand views, including the current
+        // native font and accessibility scaling. A star column inside a wrapping
+        // FlexLayout can constrain a long operand before its natural width is known.
+        double minimum = minimumWidth ?? MathFontSize * 1.25;
+        var grid = new Grid
+        {
+            ColumnDefinitions = { new(GridLength.Auto) },
+            RowDefinitions = { new(GridLength.Auto), new(new GridLength(2)), new(GridLength.Auto) },
+            RowSpacing = 2, MinimumWidthRequest = minimum,
+            VerticalOptions = LayoutOptions.Center
+        };
         numerator.HorizontalOptions = LayoutOptions.Center;
         denominator.HorizontalOptions = LayoutOptions.Center;
+        if (numerator is Label numeratorLabel) numeratorLabel.HorizontalTextAlignment = TextAlignment.Center;
+        if (denominator is Label denominatorLabel) denominatorLabel.HorizontalTextAlignment = TextAlignment.Center;
         grid.Add(numerator, 0, 0);
-        grid.Add(new BoxView { HeightRequest = 2, BackgroundColor = MathColor, HorizontalOptions = LayoutOptions.Fill }, 0, 1);
+        grid.Add(new BoxView
+        {
+            HeightRequest = 2, BackgroundColor = MathColor, HorizontalOptions = LayoutOptions.Fill,
+            MinimumWidthRequest = minimum
+        }, 0, 1);
         grid.Add(denominator, 0, 2);
+        FlexLayout.SetShrink(grid, 0);
         return grid;
     }
 
@@ -419,6 +437,10 @@ public sealed class FractionExpressionView : ContentView
         {
             Text = text,
             FontSize = MathFontSize,
+            // Leave room inside the native text bounds for bold glyph ink and
+            // fractional-pixel rounding, rather than clipping the final digit.
+            Padding = new Thickness(2, 0),
+            LineBreakMode = LineBreakMode.NoWrap,
             FontAttributes =
                 FontAttributes.Bold,
 
@@ -458,99 +480,8 @@ public sealed class FractionExpressionView : ContentView
         return start > 0 || end < token.Length;
     }
 
-    private View CreateFractionView(
-        string numerator,
-        string denominator)
-    {
-        double minimumWidth =
-            Math.Max(
-                34,
-                Math.Max(
-                    numerator.Length,
-                    denominator.Length) *
-                MathFontSize * 0.65);
-
-        var fractionGrid =
-            new Grid
-            {
-                RowDefinitions =
-                {
-                    new RowDefinition(
-                        GridLength.Auto),
-
-                    new RowDefinition(
-                        new GridLength(2)),
-
-                    new RowDefinition(
-                        GridLength.Auto)
-                },
-
-                RowSpacing = 2,
-
-                MinimumWidthRequest =
-                    minimumWidth,
-
-                VerticalOptions =
-                    LayoutOptions.Center
-            };
-
-        var numeratorLabel =
-            new Label
-            {
-                Text = numerator,
-                FontSize = MathFontSize,
-
-                FontAttributes =
-                    FontAttributes.Bold,
-
-                TextColor = MathColor,
-
-                HorizontalTextAlignment =
-                    TextAlignment.Center
-            };
-
-        var fractionBar =
-            new BoxView
-            {
-                HeightRequest = 2,
-                BackgroundColor = MathColor,
-
-                HorizontalOptions =
-                    LayoutOptions.Fill
-            };
-
-        var denominatorLabel =
-            new Label
-            {
-                Text = denominator,
-                FontSize = MathFontSize,
-
-                FontAttributes =
-                    FontAttributes.Bold,
-
-                TextColor = MathColor,
-
-                HorizontalTextAlignment =
-                    TextAlignment.Center
-            };
-
-        fractionGrid.Add(
-            numeratorLabel,
-            0,
-            0);
-
-        fractionGrid.Add(
-            fractionBar,
-            0,
-            1);
-
-        fractionGrid.Add(
-            denominatorLabel,
-            0,
-            2);
-
-        return fractionGrid;
-    }
+    private View CreateFractionView(string numerator, string denominator) =>
+        CreateFractionView(CreateTextToken(numerator), CreateTextToken(denominator), minimumWidth: 34);
 
     private static bool TryParseFraction(
         string token,

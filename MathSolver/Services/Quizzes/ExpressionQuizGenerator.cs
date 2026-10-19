@@ -7,6 +7,7 @@ namespace MathSolver.Services;
 public sealed class ExpressionQuizGenerator(Random? random = null)
 {
     private readonly Random _random = random ?? Random.Shared;
+    private readonly RationalExpressionEngine _expressionEngine = RationalExpressionEngine.Shared;
 
     private sealed record Node(string Text, ReducedFraction Value, int Height,
         ArithmeticOperation? Operation = null, Node? Left = null, Node? Right = null);
@@ -39,7 +40,7 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
                 ? CreateGroup(operands, fractions, tier, root: true)
                 : CreatePlain(operands, fractions, tier);
             text = tree.Text;
-            if (!EssayCalculationEvaluator.TryEvaluate(text, out var value, out bool operation) ||
+            if (!_expressionEngine.TryEvaluate(text, out var value, out bool operation) ||
                 !operation || value.Numerator.Sign <= 0 ||
                 !fractions && !value.Denominator.IsOne ||
                 value.Numerator.ToString().Length > 40 || value.Denominator.ToString().Length > 40)
@@ -52,7 +53,7 @@ public sealed class ExpressionQuizGenerator(Random? random = null)
                 // at higher tiers. One star also practices grouping sums.
                 string ungrouped = string.Concat(text.Where(character => character is not
                     ('(' or ')' or '[' or ']' or '{' or '}')));
-                if (EssayCalculationEvaluator.TryEvaluate(ungrouped, out var plain, out _) && plain == value)
+                if (_expressionEngine.TryEvaluate(ungrouped, out var plain, out _) && plain == value)
                     continue;
             }
 

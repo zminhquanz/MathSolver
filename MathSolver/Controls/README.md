@@ -6,7 +6,7 @@
 
 Hiển thị phân số và căn thức theo kiểu sách giáo khoa.
 
-- [FractionExpressionView.cs](Expressions/FractionExpressionView.cs)
+- [FractionExpressionView.cs](Expressions/FractionExpressionView.cs): các phân số dạng token và cây biểu thức dùng cùng bố cục cột Auto, đo theo font/nội dung thật thay vì số ký tự. Nhãn có đệm ngang để tránh cắt nét chữ cuối; các phần tử toán học không co hẹp trong FlexLayout khi xuống dòng.
 - [TextbookRadicalExpressionView.cs](Expressions/TextbookRadicalExpressionView.cs)
 - [TextbookRadicalStrokeView.cs](Expressions/TextbookRadicalStrokeView.cs)
 

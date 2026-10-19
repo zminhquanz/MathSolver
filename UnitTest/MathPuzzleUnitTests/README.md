@@ -28,6 +28,17 @@ text, including tablet two-column choices and diagram reflow. Accessible diagram
 checks ensure hidden chart values and worked explanations are not read before
 grading. These are layout-policy checks, not screenshots or physical device tests.
 
+`"Shared rational expressions"` checks the calculator/quiz shared evaluator: exact
+fractions and large integers, bracket nesting, fractional division, worked-step
+order, decimal input, validation errors, bounded intermediate growth and concurrent
+calls. `"Numeric expressions"` retains independent generation/grading checks for
+all expression types, tiers and answer modes.
+
+`"Fraction live preview"` watches first-chance `FormatException` events while
+parsing every typing/deletion prefix of valid expressions, malformed input and
+excessive nesting. The presentation parser must return `false` with no partial
+tree or exception, preserve the original text, and render complete `()[]{}` groups.
+
 `"Data chart"` checks all 27 chart contexts, stable category IDs, pinned fresh
 data, serialized profile replay, absolute/directed comparisons, three grading
 modes and hidden-data projection. See [the chart contract guide](../../MathSolver/DATA_CHART_FOUNDATION.md).

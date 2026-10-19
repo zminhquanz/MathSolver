@@ -21,6 +21,7 @@ Engine giải toán và điều phối thuật toán theo từng phép tính.
 - [BasicArithmeticEngine.cs](Calculations/BasicArithmeticEngine.cs)
 - [FindXEngine.cs](Calculations/FindXEngine.cs)
 - [FractionCalculationEngine.cs](Calculations/FractionCalculationEngine.cs)
+- [RationalExpressionEngine.cs](Calculations/RationalExpressionEngine.cs): đối tượng `Shared` tính biểu thức hữu tỉ bằng `BigInteger`/`ReducedFraction`, dùng chung cho Giải toán > Phân số và sinh/chấm đề Toán đố. Parser được chuyển từ `EssayCalculationEvaluator`; lớp cũ chỉ còn chuyển đổi kiểu dữ liệu cho các bộ chấm bài. Hỗ trợ ngoặc `()[]{}`, ưu tiên phép tính và tùy chọn ghi từng phép tính thành lời giải. Giới hạn 256 ký tự, 20 mức ngoặc, mỗi số đầu vào 60 ký tự và kết quả trung gian 16.384 bit; không dùng số thực để xấp xỉ đáp án. Dùng `÷` hoặc `:` để chia các phân số viết dưới dạng `a/b`.
 - [GeometryCalculationEngine.cs](Calculations/GeometryCalculationEngine.cs)
 - [LinearEquationEngine.cs](Calculations/LinearEquationEngine.cs)
 - [LongDivisionCalculator.cs](Calculations/LongDivisionCalculator.cs)
