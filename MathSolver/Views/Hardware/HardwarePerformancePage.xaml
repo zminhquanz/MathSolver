@@ -19,7 +19,7 @@
     <Shell.TitleView>
         <Grid
             Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
-            ColumnDefinitions="Auto,*"
+            ColumnDefinitions="Auto,Auto,*"
             ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
 
             <Grid
@@ -47,8 +47,14 @@
                     VerticalOptions="Center" />
             </Grid>
 
+            <controls:ThemedSvgPathIcon Grid.Column="1"
+                Data="{x:Static controls:SettingsDestinationIconPaths.Hardware}"
+                WidthRequest="24" HeightRequest="24" Margin="4,0"
+                HorizontalOptions="Center" VerticalOptions="Center"
+                InputTransparent="True" AutomationProperties.IsInAccessibleTree="False" />
+
             <VerticalStackLayout
-                Grid.Column="1"
+                Grid.Column="2"
                 Spacing="0"
                 VerticalOptions="Center">
 
@@ -57,7 +63,7 @@
                     TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
                     FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
                     FontAttributes="Bold"
-                    LineBreakMode="NoWrap"
+                    LineBreakMode="TailTruncation"
                     MaxLines="1"
                     TextColor="{DynamicResource TextPrimaryColor}" />
 

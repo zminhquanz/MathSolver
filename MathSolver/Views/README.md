@@ -52,6 +52,8 @@ Giao diện đề toán và bài tập.
 
 Cài đặt, menu cài đặt và giới thiệu ứng dụng.
 
+Các trang Quản lý dữ liệu, Thông tin phần cứng, Giới thiệu và Cài đặt đặt icon giữa nút lùi và tiêu đề; dùng chung SVG path với menu qua `SettingsDestinationIconPaths` và tự đổi màu theo theme. Trang xuất PDF và Đề chờ duyệt dùng `EmojiLabel` với Unicode gán trong C# (📄 và 🔎), cùng vị trí như icon 🤖 của trang thêm đề AI.
+
 - [AboutPage.xaml](Settings/AboutPage.xaml)
 - [SettingsMenuPage.xaml](Settings/SettingsMenuPage.xaml)
 - [SettingsPage.xaml](Settings/SettingsPage.xaml)

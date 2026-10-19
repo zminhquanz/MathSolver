@@ -103,14 +103,21 @@ public sealed class AiQuestionReviewPage : ContentPage
         backHost.Add(backIcon);
         var navigation = new Grid
         {
-            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = android ? 2 : 6,
+            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = android ? 2 : 6,
             Padding = android ? new Thickness(0, 0, 8, 0) : new Thickness(2, 0, 10, 0)
         };
         navigation.Add(backHost, 0);
+        navigation.Add(new EmojiLabel
+        {
+            Text = "\U0001F50E", // Magnifying glass: matches the pending-review action.
+            FontSize = 24, WidthRequest = 32,
+            HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center,
+            VerticalOptions = LayoutOptions.Center
+        }, 1);
         var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
         headerText.Add(_headerTitle);
         headerText.Add(_headerSubtitle);
-        navigation.Add(headerText, 1);
+        navigation.Add(headerText, 2);
         Shell.SetTitleView(this, navigation);
         RefreshHeader();
         var count = new Border

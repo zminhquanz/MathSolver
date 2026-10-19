@@ -303,7 +303,7 @@
                         <Border Style="{StaticResource ThemeMenuRowStyle}">
                             <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon x:Name="DataMenuIcon" Grid.Column="0"
-                                    Data="M480-880C680-880 840-820 840-740C840-660 680-600 480-600C280-600 120-660 120-740C120-820 280-880 480-880Z M120-600C280-490 680-490 840-600V-440C840-360 680-300 480-300C280-300 120-360 120-440Z M120-300C280-190 680-190 840-300V-180C840-100 680-40 480-40C280-40 120-100 120-180Z"
+                                    Data="{x:Static controls:SettingsDestinationIconPaths.DataManagement}"
                                     WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="{localization:Translate DataManagement.Title}" Style="{StaticResource ThemeMenuTitleStyle}" />
@@ -322,7 +322,7 @@
                                 <controls:ThemedSvgPathIcon
                                     x:Name="HardwareMenuIcon"
                                     Grid.Column="0"
-                                    Data="M680-160q-17 0-28.5-11.5T640-200v-200q0-17 11.5-28.5T680-440h80q17 0 28.5 11.5T800-400v200q0 17-11.5 28.5T760-160h-80Zm-240 0q-17 0-28.5-11.5T400-200v-560q0-17 11.5-28.5T440-800h80q17 0 28.5 11.5T560-760v560q0 17-11.5 28.5T520-160h-80Zm-240 0q-17 0-28.5-11.5T160-200v-360q0-17 11.5-28.5T200-600h80q17 0 28.5 11.5T320-560v360q0 17-11.5 28.5T280-160h-80Z"
+                                    Data="{x:Static controls:SettingsDestinationIconPaths.Hardware}"
                                     WidthRequest="24"
                                     Scale="0.666667"
                                     HeightRequest="24"
@@ -361,7 +361,7 @@
                                 <controls:ThemedSvgPathIcon
                                     x:Name="AboutMenuIcon"
                                     Grid.Column="0"
-                                    Data="M508.5-291.5Q520-303 520-320v-160q0-17-11.5-28.5T480-520q-17 0-28.5 11.5T440-480v160q0 17 11.5 28.5T480-280q17 0 28.5-11.5Zm0-320Q520-623 520-640t-11.5-28.5Q497-680 480-680t-28.5 11.5Q440-657 440-640t11.5 28.5Q463-600 480-600t28.5-11.5ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"
+                                    Data="{x:Static controls:SettingsDestinationIconPaths.About}"
                                     WidthRequest="24"
                                     Scale="0.833333"
                                     HeightRequest="24"
@@ -429,7 +429,7 @@
                                 <controls:ThemedSvgPathIcon
                                     x:Name="AdvancedMenuIcon"
                                     Grid.Column="0"
-                                    Data="M433-80q-27 0-46.5-18T363-142l-9-66q-13-5-24.5-12T307-235l-62 26q-25 11-50 2t-39-32l-47-82q-14-23-8-49t27-43l53-40q-1-7-1-13.5v-27q0-6.5 1-13.5l-53-40q-21-17-27-43t8-49l47-82q14-23 39-32t50 2l62 26q11-8 23-15t24-12l9-66q4-26 23.5-44t46.5-18h94q27 0 46.5 18t23.5 44l9 66q13 5 24.5 12t22.5 15l62-26q25-11 50-2t39 32l47 82q14 23 8 49t-27 43l-53 40q1 7 1 13.5v27q0 6.5-2 13.5l53 40q21 17 27 43t-8 49l-48 82q-14 23-39 32t-50-2l-60-26q-11 8-23 15t-24 12l-9 66q-4 26-23.5 44T527-80h-94Zm7-80h79l14-106q31-8 57.5-23.5T639-327l99 41 39-68-86-65q5-14 7-29.5t2-31.5q0-16-2-31.5t-7-29.5l86-65-39-68-99 42q-22-23-48.5-38.5T533-694l-13-106h-79l-14 106q-31 8-57.5 23.5T321-633l-99-41-39 68 86 64q-5 15-7 30t-2 32q0 16 2 31t7 30l-86 65 39 68 99-42q22 23 48.5 38.5T427-266l13 106Zm42-180q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Zm-2-140Z"
+                                    Data="{x:Static controls:SettingsDestinationIconPaths.Settings}"
                                     WidthRequest="24"
                                     Scale="0.833333"
                                     HeightRequest="24"

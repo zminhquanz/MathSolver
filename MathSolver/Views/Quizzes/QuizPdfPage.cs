@@ -167,7 +167,7 @@ internal sealed class QuizPdfPage : ContentPage
         bool android = OperatingSystem.IsAndroid();
         var heading = new Grid
         {
-            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)],
+            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star)],
             ColumnSpacing = android ? 2 : 6,
             Padding = android ? new Thickness(0, 0, 8, 0) : new Thickness(2, 0, 10, 0)
         };
@@ -193,12 +193,19 @@ internal sealed class QuizPdfPage : ContentPage
             HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
         };
         backHost.Add(_back); backHost.Add(backIcon); heading.Add(backHost, 0);
+        heading.Add(new EmojiLabel
+        {
+            Text = "\U0001F4C4", // Page: PDF worksheet export.
+            FontSize = 24, WidthRequest = 32,
+            HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center,
+            VerticalOptions = LayoutOptions.Center
+        }, 1);
         _headerTitle.TranslationY = android ? 1 : 0;
         _headerTitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextPrimaryColor");
         _headerSubtitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextSecondaryColor");
         SemanticProperties.SetHeadingLevel(_headerTitle, SemanticHeadingLevel.Level1);
         var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
-        headerText.Add(_headerTitle); headerText.Add(_headerSubtitle); heading.Add(headerText, 1);
+        headerText.Add(_headerTitle); headerText.Add(_headerSubtitle); heading.Add(headerText, 2);
         Shell.SetTitleView(this, heading);
         RefreshHeader();
         var root = new Grid();
