@@ -17,8 +17,8 @@ internal sealed class ReasoningStoryCycle
         {
             var profiles=creativeProse && family==BankQuestionFamily.Decimal
                 ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
-                : family==BankQuestionFamily.Time&&variant is (int)SameMonthCalendarPilot.Type or (int)SameMonthCalendarPilot.InclusiveType
-                    ? SameMonthCalendarPilot.Profiles(language,variant==(int)SameMonthCalendarPilot.InclusiveType).ToArray()
+                : family==BankQuestionFamily.Time&&variant is (int)SameMonthCalendarPilot.Type or (int)SameMonthCalendarPilot.InclusiveType or (int)SameMonthCalendarPilot.AdjacentType
+                    ? SameMonthCalendarPilot.Profiles(language,variant==(int)SameMonthCalendarPilot.InclusiveType,variant==(int)SameMonthCalendarPilot.AdjacentType).ToArray()
                 : family==BankQuestionFamily.Time&&variant==(int)OvernightTimePilot.Type
                     ? OvernightTimePilot.Profiles(language).ToArray()
                 : family==BankQuestionFamily.Time&&variant==(int)SameDayBreakPilot.Type
@@ -70,7 +70,7 @@ internal sealed class ReasoningStoryCycle
                         .Where(c => (int)tier >= c.MinimumStar && (int)tier <= c.MaximumStar).Select(c => c.Id),
                 BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementContexts(language, (ElementaryQuizType)variant).Select(c => c.Id),
                 BankQuestionFamily.Remainder => ElementaryQuizGenerator.PackingStories(language).Select(c => c.Id),
-                BankQuestionFamily.Time when variant is (int)SameMonthCalendarPilot.Type or (int)SameMonthCalendarPilot.InclusiveType=>SameMonthCalendarPilot.Profiles(language,variant==(int)SameMonthCalendarPilot.InclusiveType),
+                BankQuestionFamily.Time when variant is (int)SameMonthCalendarPilot.Type or (int)SameMonthCalendarPilot.InclusiveType or (int)SameMonthCalendarPilot.AdjacentType=>SameMonthCalendarPilot.Profiles(language,variant==(int)SameMonthCalendarPilot.InclusiveType,variant==(int)SameMonthCalendarPilot.AdjacentType),
                 BankQuestionFamily.Time when variant==(int)OvernightTimePilot.Type=>OvernightTimePilot.Profiles(language),
                 BankQuestionFamily.Time when variant==(int)SameDayBreakPilot.Type=>SameDayBreakPilot.Profiles(language),
                 BankQuestionFamily.Time when SameDayTimePilot.IsType((ElementaryQuizType)variant)=>SameDayTimePilot.Profiles((ElementaryQuizType)variant,language),

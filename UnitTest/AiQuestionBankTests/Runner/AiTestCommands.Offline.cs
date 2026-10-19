@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--calendar-adjacent-open","--calendar-adjacent-open-model"],"--calendar-adjacent-open | --calendar-adjacent-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await AdjacentMonthCalendarTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,AdjacentMonthCalendarTests.NativeCases());
+        },args=>args is ["--calendar-adjacent-open"] or ["--calendar-adjacent-open-model",_] or ["--calendar-adjacent-open-model",_,_]),
         new(["--calendar-inclusive-open","--calendar-inclusive-open-model"],"--calendar-inclusive-open | --calendar-inclusive-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await SameMonthInclusiveTests.RunAsync();

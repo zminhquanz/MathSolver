@@ -20,7 +20,8 @@ public static class OpenQuestionProse
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
 
-    internal static BasicQuestionDraft Example(BasicQuestionContract c) => c.Version == ExpandedArithmeticCatalogue.Version
+    internal static BasicQuestionDraft Example(BasicQuestionContract c) => SameMonthCalendarCatalogue.IsProfile(c)&&SameMonthCalendarPilot.IsAdjacent(c.SceneId)
+        ? AdjacentMonthCalendarLanguage.Reference(c) : c.Version == ExpandedArithmeticCatalogue.Version
         ? ExpandedArithmeticCatalogue.Draft(c) : c.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryCatalogue.Draft(c)
         : c.Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.Draft(c)
         : c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Draft(c) : OneStepQuestionCatalogue.Draft(c);
@@ -247,11 +248,11 @@ public static class OpenQuestionProse
                     blocks.Add(Literal(matches[i].Value+" "+matches[i+1].Value+" "+matches[i+2].Value));i+=2;continue;
                 }
                 if(calendar&&i+2<matches.Length&&matches[i].Value is "{f0}" or "{f1}"
-                    &&matches[i+1].Value=="{f2}"&&matches[i+2].Value=="{f3}")
+                    &&matches[i+1].Value==(SameMonthCalendarPilot.IsAdjacent(c.SceneId)&&matches[i].Value=="{f1}"?"{f4}":"{f2}")&&matches[i+2].Value=="{f3}")
                 {
                     blocks.Add(Literal(c.Language==AppLanguage.Vietnamese
-                        ?"ngày "+matches[i].Value+" tháng {f2} năm {f3}"
-                        :"day "+matches[i].Value+" of month {f2} in year {f3}"));i+=2;continue;
+                        ?"ngày "+matches[i].Value+" tháng "+matches[i+1].Value+" năm {f3}"
+                        :"day "+matches[i].Value+" of month "+matches[i+1].Value+" in year {f3}"));i+=2;continue;
                 }
                 if(calendar&&property=="question"&&matches.Length==2)
                 {
@@ -330,6 +331,29 @@ public static class OpenQuestionProse
                     :time
                     ? "(character{0,"+prefix+"} "+Literal(" ")+")? "+string.Join(" "+Literal(" ")+" character{0,71} "+Literal(" ")+" ",order)+" ("+Literal(" ")+" character{0,79})?"
                     : "character{0,32} "+string.Join(" character{0,48} ",order)+" character{0,40}").Distinct())+")";
+            if(calendar&&SameMonthCalendarPilot.IsAdjacent(c.SceneId))
+            {
+                if(fieldIndex<2)
+                {
+                    // A complete record introduction may precede the event.
+                    // Keep complete actor/action/item and date groups intact; do
+                    // not attach a dangling "Day" label to a person's name.
+                    string actor=Literal(fieldIndex==0?"{v0} {v2} {v1}":"{v0} {v3} {v1}");
+                    string day=fieldIndex==0?"{f0}":"{f1}",month=fieldIndex==0?"{f2}":"{f4}";
+                    string date=Literal(c.Language==AppLanguage.Vietnamese?$"ngày {day} tháng {month} năm {{f3}}":$"day {day} of month {month} in year {{f3}}");
+                    branch="(("+Literal(c.Language==AppLanguage.Vietnamese?"Theo ghi chép, ":"According to the record, ")+")? "+actor+" word-gap "+date+" word-tail | "
+                        +Literal(c.Language==AppLanguage.Vietnamese?"Vào ":"On ")+" "+date+" "+Literal(", ")+" "+actor+" word-tail)";
+                }
+                if(property=="question"&&c.Language==AppLanguage.Vietnamese)
+                {
+                    // Bind the complete interval NP directly to the day-count
+                    // predicate. Predicates remain free prose; no complete
+                    // questions are enumerated. An arbitrary prefix, even with
+                    // a comma, can duplicate or fragment the interval noun.
+                    branch="("+Literal("Hỏi ")+" | "+Literal("Số ngày của ")+")? "
+                        +Literal("{v4} của {v0}")+" "+Literal(" ")+" character{1,79}";
+                }
+            }
             if(time&&blocks.Count==2)
             {
                 // Two clause structures bind the clock to its owner. A free

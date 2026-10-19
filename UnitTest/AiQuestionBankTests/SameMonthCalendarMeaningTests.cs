@@ -7,6 +7,7 @@ internal static class SameMonthCalendarMeaningTests
 {
     internal static void Run()
     {
+        SameMonthCalendarReviewTests.Run();
         CheckPriorClearEnglish();
         int clearCount=0,reviewCount=0,wrongCount=0;
         foreach(var (_,seed) in SameMonthCalendarTests.NativeCases())

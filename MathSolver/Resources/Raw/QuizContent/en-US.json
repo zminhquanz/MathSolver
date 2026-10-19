@@ -2,6 +2,7 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id": "Curriculum.Requirement.Time.AdjacentMonthElapsed", "Text": "Find elapsed days across two consecutive months, excluding the start date and including the end date.", "Variables": []},
     {"Id": "Choice.Skill.Quiz.PercentageRemaining", "Text": "Given the original whole and donated percentage, find the remaining count.", "Variables": []},
     {"Id": "Curriculum.Requirement.Percentage.FindRemainingAfterDonation", "Text": "Find the remaining count after one gift of a percentage of the original whole.", "Variables": []},
 
@@ -13046,6 +13047,152 @@
     }
   ],
   "Lists": {
+    "AdjacentMonthCalendarOpen.Contexts": [
+      {
+        "Id": "library",
+        "Actor": "Alex",
+        "Item": "books",
+        "StartAction": "borrowed",
+        "EndAction": "returned",
+        "Interval": "borrowing period",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f4} in year {f3}.",
+          "Month {f2} has {f5} days.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f4} in year {f3}, {v0} {v3} {v1}.",
+          "The number of days in month {f2} is {f5}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "equipment",
+        "Actor": "Sam",
+        "Item": "equipment",
+        "StartAction": "borrowed",
+        "EndAction": "returned",
+        "Interval": "equipment loan",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f4} in year {f3}.",
+          "Month {f2} has {f5} days.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f4} in year {f3}, {v0} {v3} {v1}.",
+          "The number of days in month {f2} is {f5}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "garden",
+        "Actor": "Taylor",
+        "Item": "plants",
+        "StartAction": "began tending",
+        "EndAction": "finished tending",
+        "Interval": "plant-care period",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f4} in year {f3}.",
+          "Month {f2} has {f5} days.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f4} in year {f3}, {v0} {v3} {v1}.",
+          "The number of days in month {f2} is {f5}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "model",
+        "Actor": "Jamie",
+        "Item": "a model",
+        "StartAction": "began making",
+        "EndAction": "finished making",
+        "Interval": "model-making project",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f4} in year {f3}.",
+          "Month {f2} has {f5} days.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f4} in year {f3}, {v0} {v3} {v1}.",
+          "The number of days in month {f2} is {f5}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      }
+    ],
     "RectangleAreaOpen.Contexts": [
       {"Id": "garden", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the garden", "Shape": "rectangle", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "{v0} has a length of {f0} {v2}.", "WidthFact": "{v0} has a width of {f1} {v2}.", "Question": "What is the area of {v0} in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
       {"Id": "playground", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "the playground", "Shape": "rectangle", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} is a {v1}.", "LengthFact": "The length of {v0} is {f0} {v2}.", "WidthFact": "The width of {v0} is {f1} {v2}.", "Question": "What is the area of {v0} in {v3}?", "Lead": "Area of {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},

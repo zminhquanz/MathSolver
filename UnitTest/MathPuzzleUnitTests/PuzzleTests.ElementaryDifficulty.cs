@@ -97,10 +97,12 @@ internal static partial class PuzzleTests
                     Require(offset==0||Get("end-day-offset")==1,"Overnight day role changed.");
                     expected=(decimal)(end-start).TotalMinutes-Get("included-break-minutes");
                 }
-                else if(type is ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive)
+                else if(type is ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive or ElementaryQuizType.AdjacentMonthElapsed)
                 {
-                    var start=new DateTime((int)Get("year"),(int)Get("month"),(int)Get("start-day"));
-                    var end=new DateTime((int)Get("year"),(int)Get("month"),(int)Get("end-day"));
+                    bool adjacent=type==ElementaryQuizType.AdjacentMonthElapsed;
+                    var start=new DateTime((int)Get("year"),(int)Get(adjacent?"start-month":"month"),(int)Get("start-day"));
+                    var end=new DateTime((int)Get("year"),(int)Get(adjacent?"end-month":"month"),(int)Get("end-day"));
+                    if(adjacent)Require(end.Month==start.Month+1&&start.Month>=3&&Get("start-month-length")==DateTime.DaysInMonth(start.Year,start.Month),"Adjacent month roles changed.");
                     int includeStart=type==ElementaryQuizType.SameMonthInclusive?1:0;
                     Require(Get("include-start")==includeStart&&Get("include-end")==1,"Same-month counting convention changed.");
                     expected=(end-start).Days+includeStart;

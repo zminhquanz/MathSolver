@@ -573,7 +573,7 @@ public partial class MathPuzzlePage : ContentPage
             bool unitConversion = question.ElementaryProblem?.Type is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion;
             bool timeResult = question.ElementaryProblem?.Type is ElementaryQuizType.ElapsedTime
-                or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar or ElementaryQuizType.SameDayElapsed or ElementaryQuizType.SameDayActiveDuration or ElementaryQuizType.OvernightElapsed or ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive;
+                or ElementaryQuizType.TimeAddition or ElementaryQuizType.Calendar or ElementaryQuizType.SameDayElapsed or ElementaryQuizType.SameDayActiveDuration or ElementaryQuizType.OvernightElapsed or ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive or ElementaryQuizType.AdjacentMonthElapsed;
             bool pictograph = question.ElementaryProblem?.Type == ElementaryQuizType.ReadPictograph;
             bool tableOrPieChart = question.ElementaryProblem?.Type is ElementaryQuizType.ReadTable or ElementaryQuizType.ReadPieChart;
             bool missingSide = question.ElementaryProblem?.Type == ElementaryQuizType.RectangleSide;

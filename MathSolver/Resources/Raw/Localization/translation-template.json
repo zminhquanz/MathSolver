@@ -155,7 +155,6 @@
     "AiBank.Review.Reject": "Discard this question",
     "AiBank.Review.Confirm": "Have you compared and confirmed the facts, units, mathematical relationship and target? Accepting makes this question available for practice.",
     "AiBank.Review.Error": "The question could not be processed. Please try again; saved questions are retained.",
-
     "Quiz.Elementary.MixedTimeAdd": "Add mixed time durations",
     "Quiz.Elementary.MixedTimeSubtract": "Subtract mixed time durations",
     "Quiz.Elementary.MixedTimeMultiply": "Multiply mixed time durations",
@@ -166,7 +165,6 @@
     "Curriculum.Requirement.Time.MixedTimeDivide": "Divide a mixed-unit duration by a whole number, exactly to the smallest unit.",
     "Quiz.MixedTimeInputHint": "Enter the duration with units, e.g. 2 hours 30 minutes, 2h30 or 1h5m20s. Equivalent durations such as 150 minutes are accepted. Working and an Answer prefix are optional.",
     "Quiz.MixedTimeInputPlaceholder": "E.g. 2 hours 30 minutes or 2h30",
-
     "AiBank.Error.TextProcessingTimeout": "Quá thời gian xử lý đề. Hãy thử lại; các đề đã lưu vẫn được giữ.",
     "Quiz.Elementary.SpatialFront": "Vị trí phía trước",
     "Curriculum.Requirement.VisualGeometry.SpatialFront": "Vị trí phía trước.",
@@ -1952,7 +1950,8 @@
     "AiBank.Error.ExcelUnexpectedVariable": "Biến không được C# hỗ trợ trong mẫu này:",
     "AiBank.TemplateScene": "Chọn tình huống và quan hệ toán",
     "AiBank.ImportLeaveHint": "Bỏ lượt xem trước dữ liệu nhập và quay lại? Các dòng này chưa được lưu.",
-    "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc."
+    "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
+    "Quiz.Elementary.AdjacentMonthElapsed": "Elapsed days across adjacent months"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

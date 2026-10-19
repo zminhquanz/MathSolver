@@ -33,7 +33,8 @@ public enum ElementaryQuizType
     SameDayActiveDuration,
     OvernightElapsed,
     SameMonthElapsed,
-    SameMonthInclusive
+    SameMonthInclusive,
+    AdjacentMonthElapsed
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,

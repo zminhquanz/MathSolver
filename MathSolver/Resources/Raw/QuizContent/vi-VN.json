@@ -2,6 +2,7 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id": "Curriculum.Requirement.Time.AdjacentMonthElapsed", "Text": "Tính số ngày qua hai tháng liền nhau, không tính ngày đầu và có tính ngày cuối.", "Variables": []},
     {"Id": "Choice.Skill.Quiz.PercentageRemaining", "Text": "Biết tổng số và phần trăm đã tặng, tìm số còn lại.", "Variables": []},
     {"Id": "Curriculum.Requirement.Percentage.FindRemainingAfterDonation", "Text": "Tìm số lượng còn lại sau một lần tặng một tỉ lệ phần trăm của tổng số ban đầu.", "Variables": []},
 
@@ -13075,6 +13076,152 @@
     }
   ],
   "Lists": {
+    "AdjacentMonthCalendarOpen.Contexts": [
+      {
+        "Id": "library",
+        "Actor": "Lan",
+        "Item": "sách",
+        "StartAction": "mượn",
+        "EndAction": "trả",
+        "Interval": "thời gian mượn sách",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f4} năm {f3}.",
+          "Tháng {f2} có {f5} ngày.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f4} năm {f3}, {v0} {v3} {v1}.",
+          "Số ngày của tháng {f2} là {f5}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "equipment",
+        "Actor": "Minh",
+        "Item": "dụng cụ",
+        "StartAction": "mượn",
+        "EndAction": "trả",
+        "Interval": "thời gian mượn dụng cụ",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f4} năm {f3}.",
+          "Tháng {f2} có {f5} ngày.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f4} năm {f3}, {v0} {v3} {v1}.",
+          "Số ngày của tháng {f2} là {f5}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "garden",
+        "Actor": "An",
+        "Item": "cây",
+        "StartAction": "bắt đầu chăm sóc",
+        "EndAction": "kết thúc chăm sóc",
+        "Interval": "đợt chăm sóc cây",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f4} năm {f3}.",
+          "Tháng {f2} có {f5} ngày.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f4} năm {f3}, {v0} {v3} {v1}.",
+          "Số ngày của tháng {f2} là {f5}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "model",
+        "Actor": "Hà",
+        "Item": "mô hình",
+        "StartAction": "bắt đầu làm",
+        "EndAction": "hoàn thành",
+        "Interval": "đợt làm mô hình",
+        "RelationId": "adjacent-months-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "start-month",
+          "end-month",
+          "year",
+          "start-month-length",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f4} năm {f3}.",
+          "Tháng {f2} có {f5} ngày.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f4} năm {f3}, {v0} {v3} {v1}.",
+          "Số ngày của tháng {f2} là {f5}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      }
+    ],
     "RectangleAreaOpen.Contexts": [
       {"Id": "garden", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "khu vườn", "Shape": "hình chữ nhật", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} có dạng {v1}.", "LengthFact": "{v0} có chiều dài {f0} {v2}.", "WidthFact": "{v0} có chiều rộng {f1} {v2}.", "Question": "Hỏi diện tích {v0} là bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},
       {"Id": "playground", "Relation": "rectangle-direct-length-width-find-area", "ShapeId": "rectangle", "LengthRole": "length", "WidthRole": "width", "TargetRole": "area", "Object": "sân chơi", "Shape": "hình chữ nhật", "Unit": "Meter", "MaximumLength": 100, "ShapeFact": "{v0} có hình dạng {v1}.", "LengthFact": "Chiều dài của {v0} bằng {f0} {v2}.", "WidthFact": "Chiều rộng của {v0} bằng {f1} {v2}.", "Question": "Hỏi diện tích {v0} là bao nhiêu {v3}?", "Lead": "Diện tích {v0}", "LengthUnitRole": "length-unit", "AreaUnitRole": "area-unit"},

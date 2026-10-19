@@ -155,7 +155,6 @@
     "AiBank.Review.Reject": "Bỏ đề này",
     "AiBank.Review.Confirm": "Bạn đã đối chiếu và xác nhận đề AI giữ đúng dữ kiện, đơn vị, quan hệ toán và đại lượng cần tìm? Đề được chấp nhận sẽ dùng để luyện tập.",
     "AiBank.Review.Error": "Chưa xử lý được đề. Hãy thử lại; các đề đã lưu vẫn được giữ.",
-
     "Quiz.Elementary.MixedTimeAdd": "Cộng thời gian hỗn hợp",
     "Quiz.Elementary.MixedTimeSubtract": "Trừ thời gian hỗn hợp",
     "Quiz.Elementary.MixedTimeMultiply": "Nhân thời gian hỗn hợp",
@@ -166,7 +165,6 @@
     "Curriculum.Requirement.Time.MixedTimeDivide": "Chia số đo thời gian hỗn hợp cho một số tự nhiên, bảo đảm chia hết đến đơn vị nhỏ nhất.",
     "Quiz.MixedTimeInputHint": "Nhập kết quả kèm đơn vị, ví dụ 2 giờ 30 phút, 2h30 hoặc 1 giờ 5 phút 20 giây. Chấp nhận kết quả tương đương như 150 phút. Không bắt buộc ghi lời giải, phép tính hay Đáp số.",
     "Quiz.MixedTimeInputPlaceholder": "Ví dụ: 2 giờ 30 phút hoặc 2h30",
-
     "Quiz.Elementary.SpatialFront": "Vị trí phía trước",
     "Curriculum.Requirement.VisualGeometry.SpatialFront": "Vị trí phía trước.",
     "Quiz.Elementary.SpatialBehind": "Vị trí phía sau",
@@ -2100,7 +2098,8 @@
     "AiBank.Error.ExcelUnexpectedVariable": "Biến không được C# hỗ trợ trong mẫu này:",
     "AiBank.TemplateScene": "Chọn tình huống và quan hệ toán",
     "AiBank.ImportLeaveHint": "Bỏ lượt xem trước dữ liệu nhập và quay lại? Các dòng này chưa được lưu.",
-    "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc."
+    "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
+    "Quiz.Elementary.AdjacentMonthElapsed": "Số ngày qua tháng kế tiếp"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

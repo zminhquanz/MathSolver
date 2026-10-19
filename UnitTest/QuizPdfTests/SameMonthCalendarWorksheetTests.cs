@@ -8,23 +8,23 @@ using System.Text.Json;
 internal static class SameMonthCalendarWorksheetTests
 {
     private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
-    internal static async Task Run(string directory,bool inclusive=false)
+    internal static async Task Run(string directory,bool inclusive=false,bool adjacent=false)
     {
         int cases=0;
         foreach(var language in Enum.GetValues<AppLanguage>())
         {
             bool vi=language==AppLanguage.Vietnamese;var items=new List<QuizPrintItem>();
-            foreach(var context in SameMonthCalendarPilot.Contexts(language,inclusive))
+            foreach(var context in SameMonthCalendarPilot.Contexts(language,inclusive,adjacent))
             foreach(var tier in Enum.GetValues<CurriculumTier>())
             {
-                var type=inclusive?SameMonthCalendarPilot.InclusiveType:SameMonthCalendarPilot.Type;
-                string prefix=inclusive?SameMonthCalendarPilot.InclusivePrefix:SameMonthCalendarPilot.Prefix;
-                string relation=inclusive?SameMonthCalendarPilot.InclusiveRelation:SameMonthCalendarPilot.Relation;
+                var type=adjacent?SameMonthCalendarPilot.AdjacentType:inclusive?SameMonthCalendarPilot.InclusiveType:SameMonthCalendarPilot.Type;
+                string prefix=adjacent?SameMonthCalendarPilot.AdjacentPrefix:inclusive?SameMonthCalendarPilot.InclusivePrefix:SameMonthCalendarPilot.Prefix;
+                string relation=adjacent?SameMonthCalendarPilot.AdjacentRelation:inclusive?SameMonthCalendarPilot.InclusiveRelation:SameMonthCalendarPilot.Relation;
                 var c=ReasoningStoryCatalogue.Create(BankQuestionFamily.Time,(int)type,tier,language,new(2813),prefix+context.Id) with {OpenProse=true};
                 var d=ReasoningStoryCatalogue.Draft(c) with {Facts=context.AlternativeFacts.Select((s,i)=>new NarrativeClause("fact_"+i,s)).ToArray(),Question=context.AlternativeQuestion};
                 Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c).IsValid,"PDF calendar fixture not verified.");
-                var store=new QuestionBankStore(Path.Combine(directory,$"calendar-{inclusive}-{language}-{context.Id}-{tier}.db3"));
-                var pending=d with {Facts=[d.Facts![0],d.Facts[1],new("fact_2",vi?"Hai ngày trong cùng tháng.":"Both dates are in the same month.")]};
+                var store=new QuestionBankStore(Path.Combine(directory,$"calendar-{(adjacent?"adjacent":inclusive.ToString())}-{language}-{context.Id}-{tier}.db3"));
+                var pending=d with {Facts=d.Facts!.Select((f,i)=>i==(adjacent?3:2)?new NarrativeClause(f.Role,vi?"Đếm ngày theo hai mốc.":"Count days using the two dates."):f).ToArray()};
                 string raw=QuestionBankStore.SerializeDraft(pending);
                 Check(BasicQuestionValidator.Validate(raw,c).NeedsReview,"Missing calendar convention must review.");
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf","review")),"Cannot queue unproved calendar.");
@@ -37,33 +37,35 @@ internal static class SameMonthCalendarWorksheetTests
                     var p=q.ElementaryProblem!;
                     Check(p.StoryContextId==c.SceneId&&p.Reasoning!.ScenarioId==relation,"PDF chose another calendar relation.");
                     var givens=p.Reasoning!.Givens.ToDictionary(g=>g.Role,g=>int.Parse(g.Value));
-                    var start=new DateTime(givens["year"],givens["month"],givens["start-day"]);
-                    var end=new DateTime(givens["year"],givens["month"],givens["end-day"]);
+                    var start=new DateTime(givens["year"],givens[adjacent?"start-month":"month"],givens["start-day"]);
+                    var end=new DateTime(givens["year"],givens[adjacent?"end-month":"month"],givens["end-day"]);
+                    if(adjacent)Check(end.Month==start.Month+1&&start.Month>=3&&givens["start-month-length"]==DateTime.DaysInMonth(start.Year,start.Month),"PDF adjacent month roles changed.");
                     int elapsed=(end-start).Days+(inclusive?1:0);
                     Check(elapsed>0&&p.Answers.Single().Value==new ReducedFraction(elapsed,1)&&givens["include-start"]==(inclusive?1:0)&&givens["include-end"]==1,"PDF calendar convention/oracle failed.");
                     var printed=QuizWorksheetBuilder.Format(q,language);
                     Check(!printed.Prompt.Contains('{')&&printed.Prompt.Contains(inclusive?(vi?"Tính cả ngày bắt đầu":"Include both the start date"):(vi?"Ngày bắt đầu không được tính":"Exclude the start date"),StringComparison.OrdinalIgnoreCase),"PDF lost convention or slots.");
                     Check(printed.Solution.Contains(p.Answers[0].Unit),"PDF lost day unit.");
+                    if(adjacent)Check(printed.Prompt.Contains(givens["start-month-length"].ToString()),"PDF lost start-month length.");
                     if(mode==ArithmeticQuizMode.Essay)items.Add(printed);cases++;
                 }
             }
-            if(inclusive)
+            if(inclusive||adjacent)
             {
                 // Force an equal-date example into each exported worksheet;
                 // random factory coverage alone must not stand in for this edge.
-                var boundary=ReasoningStoryCatalogue.Create(BankQuestionFamily.Time,(int)SameMonthCalendarPilot.InclusiveType,
-                    CurriculumTier.OneStar,language,new(341),SameMonthCalendarPilot.Profiles(language,true).First()) with {OpenProse=true};
+                var boundary=ReasoningStoryCatalogue.Create(BankQuestionFamily.Time,(int)(adjacent?SameMonthCalendarPilot.AdjacentType:SameMonthCalendarPilot.InclusiveType),
+                    CurriculumTier.OneStar,language,new(341),SameMonthCalendarPilot.Profiles(language,inclusive,adjacent).First()) with {OpenProse=true};
                 for(int seed=0;;seed++)
                 {
                     var data=SameMonthCalendarPilot.Create(boundary.SceneId,language,boundary.Tier,new(seed));
-                    if(data.StartDay!=data.EndDay)continue;
+                    if(adjacent?data.StartDay!=data.MonthLength||data.EndDay!=1:data.StartDay!=data.EndDay)continue;
                     boundary=boundary with {Story=boundary.Story! with {Seed=seed}};
                     var q=ReasoningStoryCatalogue.ToPractice(boundary,ReasoningStoryCatalogue.Draft(boundary),ArithmeticQuizMode.Essay);
                     Check(q.ElementaryProblem!.Answers.Single().Value==new ReducedFraction(1,1),"Equal-date PDF should answer one day.");
                     items.Add(QuizWorksheetBuilder.Format(q,language));break;
                 }
             }
-            var sheet=new QuizWorksheet(inclusive?"CALENDAR-INCLUSIVE":"CALENDAR-SAME-MONTH",inclusive?(vi?"Số ngày tính cả hai đầu mốc":"Calendar days including both endpoints"):(vi?"Số ngày trong cùng tháng":"Elapsed days within one month"),
+            var sheet=new QuizWorksheet(adjacent?"CALENDAR-ADJACENT":inclusive?"CALENDAR-INCLUSIVE":"CALENDAR-SAME-MONTH",adjacent?(vi?"Số ngày qua tháng kế tiếp":"Elapsed days across adjacent months"):inclusive?(vi?"Số ngày tính cả hai đầu mốc":"Calendar days including both endpoints"):(vi?"Số ngày trong cùng tháng":"Elapsed days within one month"),
                 inclusive?(vi?"Tính cả ngày đầu và ngày cuối":"Include both start and end dates"):(vi?"Không tính ngày đầu, có tính ngày cuối":"Exclude the start date, include the end date"),
                 language,CurriculumTier.ThreeStars,ArithmeticQuizMode.Essay,items.AsReadOnly());
             string snapshot=JsonSerializer.Serialize(sheet);
@@ -73,11 +75,11 @@ internal static class SameMonthCalendarWorksheetTests
                 string text=PdfTestReader.ExtractText(pdf);
                 Check(!text.Contains("{v")&&!text.Contains("{f"),"PDF contains calendar slots.");
                 if(!answers)Check(!text.Contains(vi?"Đáp số:":"Answer:"),"Calendar worksheet leaked answers.");
-                File.WriteAllBytes(Path.Combine(directory,$"calendar-{(inclusive?"inclusive":"same-month")}-{language}-{(answers?"answers":"worksheet")}.pdf"),pdf);
+                File.WriteAllBytes(Path.Combine(directory,$"calendar-{(adjacent?"adjacent":inclusive?"inclusive":"same-month")}-{language}-{(answers?"answers":"worksheet")}.pdf"),pdf);
             }
             Check(snapshot==JsonSerializer.Serialize(sheet),"PDF resampled calendar dates.");
         }
-        Console.WriteLine($"PASS {cases} same-month {(inclusive?"inclusive":"elapsed")} factory/mode cases; count rule, DateTime oracle, pending isolation, frozen bilingual worksheet/answer PDFs.");
+        Console.WriteLine($"PASS {cases} calendar {(adjacent?"adjacent-month":inclusive?"inclusive":"same-month elapsed")} factory/mode cases; count rule, DateTime oracle, pending isolation, frozen bilingual worksheet/answer PDFs.");
     }
     private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }
