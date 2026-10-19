@@ -29,11 +29,22 @@ public sealed class AiQuestionReviewPage : ContentPage
     private readonly ActivityIndicator _activity = new() { WidthRequest = 24, HeightRequest = 24, IsVisible = false };
     private readonly Button _retry = new();
     private readonly Button _back = new() { AutomationId = "AiReviewBack" };
+    private readonly Label _headerTitle = new()
+    {
+        FontSize = 20, FontAttributes = FontAttributes.Bold,
+        LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
+    };
+    private readonly Label _headerSubtitle = new()
+    {
+        FontSize = 11, LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
+    };
     private readonly LiveWallpaperView _wallpaper = new();
     private readonly Command<Card> _approveCommand;
     private readonly Command<Card> _rejectCommand;
     private bool _busy;
     private bool _goingBack;
+    private bool _visible;
+    private int _headerRefreshGeneration;
     private static string T(string key) => LocalizationService.TranslateKey("AiBank.Review." + key);
     private sealed record Card(PendingQuestionReview Pending, string Candidate, string Reference, string Calculation, string Heading);
 
@@ -43,6 +54,8 @@ public sealed class AiQuestionReviewPage : ContentPage
         _onResolved = onResolved;
         Title = T("Title");
         Shell.SetNavBarIsVisible(this, true);
+        Shell.SetTabBarIsVisible(this, false);
+        Shell.SetBackButtonBehavior(this, new BackButtonBehavior { IsVisible = false, IsEnabled = false });
         this.SetDynamicResource(BackgroundColorProperty, "PageBackgroundColor");
         _approveCommand = new Command<Card>(async card => await ActAsync(card, true), _ => !_busy);
         _rejectCommand = new Command<Card>(async card => await ActAsync(card, false), _ => !_busy);
@@ -58,11 +71,12 @@ public sealed class AiQuestionReviewPage : ContentPage
         _retry.SetDynamicResource(StyleProperty, "SolverOutlinedActionStyle");
         _retry.Clicked += async (_, _) => await RefreshAsync();
 
-        var title = Text(size: 17, bold: true);
-        title.Text = T("Title");
-        title.VerticalOptions = LayoutOptions.Center;
-        SemanticProperties.SetHeadingLevel(title, SemanticHeadingLevel.Level1);
-        _back.SetDynamicResource(StyleProperty, "RoundPlatformBackButtonStyle");
+        bool android = OperatingSystem.IsAndroid();
+        _headerTitle.TranslationY = android ? 1 : 0;
+        _headerTitle.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
+        _headerSubtitle.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
+        SemanticProperties.SetHeadingLevel(_headerTitle, SemanticHeadingLevel.Level1);
+        _back.SetDynamicResource(StyleProperty, "PlatformBackButtonStyle");
         InteractiveButtonAnimation.SetIsScopeEnabled(_back, true);
         InteractiveButtonAnimation.SetIsPlatformBackButton(_back, true);
         InteractiveButtonAnimation.SetIsPressAnimationEnabled(_back, false);
@@ -73,23 +87,32 @@ public sealed class AiQuestionReviewPage : ContentPage
         var backIcon = new ThemedSvgPathIcon
         {
             Data = "M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z",
-            WidthRequest = 20, HeightRequest = 20,
+            WidthRequest = android ? 20 : 18, HeightRequest = android ? 20 : 18,
+            TranslationX = android ? -2 : 0,
             HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
             InputTransparent = true
         };
         backIcon.SetBinding(OpacityProperty, new Binding(nameof(Opacity), source: _back));
         AutomationProperties.SetIsInAccessibleTree(backIcon, false);
-        var backHost = new Grid { WidthRequest = 48, HeightRequest = 48 };
+        var backHost = new Grid
+        {
+            WidthRequest = android ? 48 : 40, HeightRequest = android ? 48 : 40,
+            HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+        };
         backHost.Add(_back);
         backHost.Add(backIcon);
         var navigation = new Grid
         {
-            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 12,
-            Margin = new Thickness(0, 10), HorizontalOptions = LayoutOptions.Center
+            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = android ? 2 : 6,
+            Padding = android ? new Thickness(0, 0, 8, 0) : new Thickness(2, 0, 10, 0)
         };
         navigation.Add(backHost, 0);
-        navigation.Add(title, 1);
-        ConstrainWidth(navigation);
+        var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
+        headerText.Add(_headerTitle);
+        headerText.Add(_headerSubtitle);
+        navigation.Add(headerText, 1);
+        Shell.SetTitleView(this, navigation);
+        RefreshHeader();
         var count = new Border
         {
             Padding = new Thickness(12, 6), StrokeThickness = 0,
@@ -108,7 +131,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         progress.Add(_feedback, 1);
         var header = new VerticalStackLayout
         {
-            Spacing = 12, Margin = new Thickness(0, 8, 0, 16),
+            Spacing = 12, Margin = new Thickness(0, 16, 0, 16),
             HorizontalOptions = LayoutOptions.Center,
             Children = { count, hint, progress, _empty, _retry }
         };
@@ -119,11 +142,9 @@ public sealed class AiQuestionReviewPage : ContentPage
         _items.Footer = new BoxView { HeightRequest = 24, InputTransparent = true, Color = Colors.Transparent };
         _items.ItemsSource = _cards;
         _items.ItemTemplate = new DataTemplate(CreateCard);
-        var root = new Grid { RowDefinitions = [new(GridLength.Auto), new(GridLength.Star)] };
-        Grid.SetRowSpan(_wallpaper, 2);
+        var root = new Grid();
         root.Add(_wallpaper);
-        root.Add(navigation, 0, 0);
-        root.Add(_items, 0, 1);
+        root.Add(_items);
         Content = root;
     }
 
@@ -229,22 +250,76 @@ public sealed class AiQuestionReviewPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
+        _visible = true;
+        Shell.SetTabBarIsVisible(this, false);
+        AppThemeManager.ThemeChanged += OnHeaderResourcesChanged;
+        LocalizationService.CultureChanged += OnHeaderResourcesChanged;
+        OnHeaderResourcesChanged(this, EventArgs.Empty);
         _wallpaper.Resume();
         await RefreshAsync();
     }
 
     protected override void OnDisappearing()
     {
+        _visible = false;
+        ++_headerRefreshGeneration;
+        AppThemeManager.ThemeChanged -= OnHeaderResourcesChanged;
+        LocalizationService.CultureChanged -= OnHeaderResourcesChanged;
         _wallpaper.Pause();
         base.OnDisappearing();
     }
 
-    private async void OnBackClicked(object? sender, EventArgs e)
+    private void RefreshHeader()
+    {
+        Title = _headerTitle.Text = T("Title");
+        _headerSubtitle.Text = T("HeaderSubtitle");
+        string back = LocalizationService.TranslateKey("About.Back.Accessibility");
+        SemanticProperties.SetDescription(_back, back);
+        ToolTipProperties.SetText(_back, back);
+        // Use committed palette colors after native theme peers reconnect.
+        void ApplyColor(Label label, string key)
+        {
+            if (Application.Current?.Resources.TryGetValue(key, out var value) != true || value is not Color color) return;
+            try { label.TextColor = color; }
+            catch (Exception error) when (error is System.Runtime.InteropServices.COMException or ObjectDisposedException)
+            { System.Diagnostics.Debug.WriteLine($"AI review header theme text deferred: {error}"); }
+        }
+        ApplyColor(_headerTitle, "TextPrimaryColor");
+        ApplyColor(_headerSubtitle, "TextSecondaryColor");
+    }
+
+    private void OnHeaderResourcesChanged(object? sender, EventArgs e)
+    {
+        int generation = ++_headerRefreshGeneration;
+        void Refresh()
+        {
+            if (_visible && generation == _headerRefreshGeneration) RefreshHeader();
+        }
+        Dispatcher.Dispatch(Refresh);
+#if WINDOWS
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(180), Refresh);
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(420), Refresh);
+#endif
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        _ = GoBackAsync();
+        return true;
+    }
+
+    private async void OnBackClicked(object? sender, EventArgs e) => await GoBackAsync();
+
+    private async Task GoBackAsync()
     {
         if (_goingBack) return;
         _goingBack = true;
         _back.IsEnabled = false;
-        try { await Navigation.PopAsync(); }
+        try
+        {
+            if (Shell.Current is AppShell appShell) await appShell.CloseSettingsAsync(this);
+            else await Navigation.PopAsync();
+        }
         catch (Exception error)
         {
             System.Diagnostics.Debug.WriteLine(error);

@@ -4,12 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
+    Title="{localization:Translate AiBank.Title}"
+    Shell.TabBarIsVisible="False"
     Shell.NavBarIsVisible="True" BackgroundColor="{DynamicResource PageBackgroundColor}">
     <ContentPage.Resources>
-        <Style x:Key="AiBankBackButtonStyle" TargetType="Button" BasedOn="{StaticResource RoundPlatformBackButtonStyle}" />
-
-
-
         <!-- Native picker chrome is transparent; the outer border supplies the input shape. -->
         <Style x:Key="AiBankInputBorderStyle" TargetType="Border" BasedOn="{StaticResource SolverInputBorderStyle}">
             <Setter Property="HeightRequest" Value="-1" />
@@ -45,28 +43,55 @@
             </Setter>
         </Style>
     </ContentPage.Resources>
+    <Shell.BackButtonBehavior>
+        <BackButtonBehavior IsVisible="False" IsEnabled="False" />
+    </Shell.BackButtonBehavior>
+    <Shell.TitleView>
+        <Grid Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
+              ColumnDefinitions="Auto,Auto,*"
+              ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
+            <Grid WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                  HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                  HorizontalOptions="Center" VerticalOptions="Center">
+                <Button x:Name="AiBankBackButton" Style="{StaticResource PlatformBackButtonStyle}"
+                        controls:InteractiveButtonAnimation.IsScopeEnabled="True"
+                        controls:InteractiveButtonAnimation.IsPlatformBackButton="True"
+                        controls:InteractiveButtonAnimation.IsPressAnimationEnabled="False"
+                        SemanticProperties.Description="{localization:Translate About.Back.Accessibility}"
+                        ToolTipProperties.Text="{localization:Translate About.Back.Accessibility}"
+                        Clicked="OnBackClicked" />
+                <controls:ThemedSvgPathIcon
+                    Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
+                    WidthRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
+                    HeightRequest="{OnPlatform Android=20, WinUI=18, Default=18}"
+                    TranslationX="{OnPlatform Android=-2, WinUI=0, Default=0}"
+                    HorizontalOptions="Center" VerticalOptions="Center"
+                    AutomationProperties.IsInAccessibleTree="False"
+                    Opacity="{Binding Source={x:Reference AiBankBackButton}, Path=Opacity, x:DataType='Button'}" />
+            </Grid>
+            <controls:EmojiLabel x:Name="AiBankHeaderEmojiLabel" Grid.Column="1"
+                                 FontSize="24" WidthRequest="32"
+                                 VerticalOptions="Center" VerticalTextAlignment="Center"
+                                 HorizontalTextAlignment="Center" />
+            <VerticalStackLayout Grid.Column="2" Spacing="0" VerticalOptions="Center">
+                <Label x:Name="AiBankHeaderTitleLabel"
+                       Text="{localization:Translate AiBank.Title}"
+                       TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
+                       FontSize="20" FontAttributes="Bold"
+                       LineBreakMode="TailTruncation" MaxLines="1"
+                       TextColor="{DynamicResource TextPrimaryColor}"
+                       SemanticProperties.HeadingLevel="Level1" />
+                <Label x:Name="AiBankHeaderSubtitleLabel"
+                       Text="{localization:Translate AiBank.HeaderSubtitle}"
+                       FontSize="11" LineBreakMode="TailTruncation" MaxLines="1"
+                       TextColor="{DynamicResource TextSecondaryColor}" />
+            </VerticalStackLayout>
+        </Grid>
+    </Shell.TitleView>
     <Grid>
         <controls:LiveWallpaperView x:Name="LiveWallpaper" />
         <ScrollView>
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
-                    <Grid WidthRequest="48" HeightRequest="48" VerticalOptions="Center">
-                        <Button x:Name="AiBankBackButton" Style="{StaticResource AiBankBackButtonStyle}"
-                                controls:InteractiveButtonAnimation.IsScopeEnabled="True"
-                                controls:InteractiveButtonAnimation.IsPlatformBackButton="True"
-                                controls:InteractiveButtonAnimation.IsPressAnimationEnabled="False"
-                                SemanticProperties.Description="{localization:Translate About.Back.Accessibility}"
-                                ToolTipProperties.Text="{localization:Translate About.Back.Accessibility}"
-                                Clicked="OnBackClicked" />
-                        <controls:ThemedSvgPathIcon
-                            Data="M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z"
-                            WidthRequest="20" HeightRequest="20"
-                            HorizontalOptions="Center" VerticalOptions="Center"
-                            AutomationProperties.IsInAccessibleTree="False"
-                            Opacity="{Binding Source={x:Reference AiBankBackButton}, Path=Opacity, x:DataType='Button'}" />
-                    </Grid>
-                    <Label Grid.Column="1" Text="{localization:Translate AiBank.Title}" Style="{StaticResource SolverSectionTitleStyle}" VerticalOptions="Center" />
-                </Grid>
                 <Label Text="{localization:Translate AiBank.Description}" Style="{StaticResource SolverHeroSubtitleStyle}" />
                 <Border Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="10">

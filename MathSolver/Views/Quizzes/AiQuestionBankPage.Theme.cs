@@ -53,9 +53,13 @@ public partial class AiQuestionBankPage
         }
 
         RefreshLabels(ConfigurationPanel);
+        Apply(() => AiBankHeaderSubtitleLabel.TextColor = secondary);
         if (resources.TryGetValue("TextPrimaryColor", out var inputForeground) == true
             && inputForeground is Color inputPrimary)
+        {
+            Apply(() => AiBankHeaderTitleLabel.TextColor = inputPrimary);
             Apply(() => CountEntry.TextColor = CountEntry.IsEnabled ? inputPrimary : secondary);
+        }
         Apply(() => CountEntry.PlaceholderColor = secondary);
     }
 }

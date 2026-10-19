@@ -1037,6 +1037,18 @@
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     },
+    "AiBank.HeaderSubtitle": {
+      "context": "Math puzzles > Add questions with AI > Page header",
+      "translatorNote": "Short subtitle below the page title, summarizing the generate, review and save workflow. Keep concise for narrow screens."
+    },
+    "QuizPdf.HeaderSubtitle": {
+      "context": "Math puzzles > PDF worksheet > Page header",
+      "translatorNote": "Short subtitle below the page title describing worksheet creation, preview and A4 export. Keep concise for narrow screens."
+    },
+    "AiBank.Review.HeaderSubtitle": {
+      "context": "Math puzzles > AI question review > Page header",
+      "translatorNote": "Short subtitle below the review title. Questions must be compared and approved before practice. Keep concise for narrow screens."
+    },
     "AiBank.Description": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
@@ -1917,6 +1929,7 @@
     {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
     {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
     {"key": "AiBank.Review.Title", "source": "Duyệt đề AI", "mode": "exact"},
+    {"key": "AiBank.Review.HeaderSubtitle", "source": "Đối chiếu và duyệt đề trước khi đưa vào luyện tập", "mode": "exact"},
     {"key": "Quiz.PercentageRemaining", "source": "Phần trăm đã tặng → tìm phần còn lại", "mode": "exact"},
     {"key": "Quiz.PercentageRemainingEssayEquationPlaceholder", "source": "Ví dụ: 80 − 80 × 25 ÷ 100 = 60", "mode": "exact"},
     {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước.", "mode": "exact"},
@@ -9099,6 +9112,16 @@
     {
       "key": "AiBank.Title",
       "source": "Bổ sung đề bài bằng AI",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.HeaderSubtitle",
+      "source": "Tạo, kiểm duyệt và lưu vào ngân hàng đề",
+      "mode": "exact"
+    },
+    {
+      "key": "QuizPdf.HeaderSubtitle",
+      "source": "Tạo bộ đề, xem trước và xuất phiếu A4",
       "mode": "exact"
     },
     {

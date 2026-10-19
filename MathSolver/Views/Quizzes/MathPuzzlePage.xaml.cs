@@ -82,6 +82,7 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+        OpenAiQuestionBankEmojiLabel.Text = "\U0001F916"; // Match the AI authoring header's robot emoji.
         // The hero remains visible when the settings card is collapsed.
         // Native emoji fonts provide colour glyphs independently of the app's text font.
         PracticeHeroEmojiLabel.Text = "\U0001F9E0 \U0001F9E9"; // Brain + puzzle: mathematical reasoning.

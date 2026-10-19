@@ -250,8 +250,8 @@ public partial class MathPuzzlePage
             PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
             PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
         }
-        Grid.SetRow(OpenAiQuestionBankButton, stackActions ? 1 : 0);
-        Grid.SetColumn(OpenAiQuestionBankButton, stackActions ? 0 : 1);
+        Grid.SetRow(OpenAiQuestionBankHost, stackActions ? 1 : 0);
+        Grid.SetColumn(OpenAiQuestionBankHost, stackActions ? 0 : 1);
         Grid.SetRow(ExportQuizPdfButton, stackActions ? 2 : 0);
         Grid.SetColumn(ExportQuizPdfButton, stackActions ? 0 : 2);
         Grid.SetRow(AiQuestionBankProgressLabel, inline ? 1 : 2);

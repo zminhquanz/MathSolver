@@ -43,9 +43,10 @@ Thông tin phần cứng và benchmark số học CPU.
 Giao diện đề toán và bài tập.
 
 - [MathPuzzlePage.xaml](Quizzes/MathPuzzlePage.xaml)
-- [AiQuestionBankPage.xaml](Quizzes/AiQuestionBankPage.xaml): màn hình riêng để tạo, xem và lưu đề AI; không có phần làm bài.
+- [QuizPdfPage.cs](Quizzes/QuizPdfPage.cs): tiêu đề, dòng phụ và nút lùi nằm trong `Shell.TitleView` như Cài đặt/Thông tin phần cứng. Trang ẩn tab chính và nút cài đặt, dùng chung cơ chế khôi phục khi quay lại; vùng xem trước giữ một chủ thể cuộn sát mép phải.
+- [AiQuestionBankPage.xaml](Quizzes/AiQuestionBankPage.xaml): màn hình riêng để tạo, xem và lưu đề AI; không có phần làm bài. Tiêu đề, dòng phụ mô tả quy trình và nút lùi nằm cố định trong `Shell.TitleView`, dùng bố cục như Thông tin phần cứng/Cài đặt. `EmojiLabel` hiển thị biểu tượng robot bên phải nút lùi, gán bằng Unicode trong C#; ẩn tab chính và nút cài đặt của Shell, khôi phục khi quay về.
   [AiQuestionBankPage.Theme.cs](Quizzes/AiQuestionBankPage.Theme.cs) đồng bộ lại màu nhãn cấu hình và ô số lượng theo palette đã áp dụng khi đổi theme hoặc quay lại trang. `IllustratedQuizPicker` tự đồng bộ màu chữ lúc Loaded và ThemeChanged, hủy đăng ký lúc Unloaded; các lượt thử lại trên Windows bỏ qua callback của theme cũ.
-- [AiQuestionReviewPage.cs](Quizzes/AiQuestionReviewPage.cs): đối chiếu đề AI và đề tham khảo theo hai cột khi đủ rộng, xếp dọc trên cửa sổ hẹp hoặc khi tăng cỡ chữ. Nút quay về cố định trên đầu trang, dùng cùng kiểu với màn thêm đề AI và xuất PDF. Vùng cuộn phủ hết màn hình để thanh cuộn nằm sát mép phải; các thẻ giới hạn chiều rộng để dễ đọc. Duyệt/bỏ cập nhật từng thẻ trong hàng chờ, không tải lại cả danh sách.
+- [AiQuestionReviewPage.cs](Quizzes/AiQuestionReviewPage.cs): đối chiếu đề AI và đề tham khảo theo hai cột khi đủ rộng, xếp dọc trên cửa sổ hẹp hoặc khi tăng cỡ chữ. Tiêu đề, dòng phụ và nút quay về nằm trong `Shell.TitleView`, cùng bố cục và cơ chế quay lại như màn thêm đề AI/xuất PDF; ẩn tab chính và nút cài đặt khi trang đang mở. Vùng cuộn phủ hết màn hình để thanh cuộn nằm sát mép phải; các thẻ giới hạn chiều rộng để dễ đọc. Duyệt/bỏ cập nhật từng thẻ trong hàng chờ, không tải lại cả danh sách.
 
 ## Settings
 

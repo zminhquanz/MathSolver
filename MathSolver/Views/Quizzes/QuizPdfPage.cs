@@ -27,6 +27,15 @@ internal sealed class QuizPdfPage : ContentPage
     private readonly Button _create = new(), _stop = new(), _save = new(), _saveAnswers = new(), _share = new(), _shareAnswers = new(), _open = new();
     private readonly Button _change = new();
     private readonly Button _back = new() { AutomationId = "QuizPdfBack" };
+    private readonly Label _headerTitle = new()
+    {
+        FontSize = 20, FontAttributes = FontAttributes.Bold,
+        LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
+    };
+    private readonly Label _headerSubtitle = new()
+    {
+        FontSize = 11, LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
+    };
     private readonly Label _empty = new();
     private readonly Switch _answers = new() { IsToggled = true };
     private readonly CollectionView _preview = new();
@@ -39,6 +48,7 @@ internal sealed class QuizPdfPage : ContentPage
     private QuizWorksheet? _worksheet;
     private CancellationTokenSource? _run;
     private bool _visible, _busy, _goingBack;
+    private int _headerRefreshGeneration;
     private int _exportColumns, _exportVisibility;
     private int _fieldColumns, _generationColumns;
     public bool IsIdle => !_busy;
@@ -92,6 +102,9 @@ internal sealed class QuizPdfPage : ContentPage
         _selectionSummary.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "WallpaperTextPrimaryColor");
         _settingsForm.SettingsChanged += (_, _) => _selectionSummary.Text = _settingsForm.Summary();
         Title = T("Title"); SetDynamicResource(BackgroundColorProperty, "PageBackgroundColor");
+        Shell.SetNavBarIsVisible(this, true);
+        Shell.SetTabBarIsVisible(this, false);
+        Shell.SetBackButtonBehavior(this, new BackButtonBehavior { IsVisible = false, IsEnabled = false });
         _title.Text = _title.Placeholder = T("DefaultTitle"); _title.MaxLength = 120;
         _count.Placeholder = T("CountRange");
         _countPicker.ItemsSource = new[] { F("Questions", 10), F("Questions", 20), F("Questions", 30), T("CustomCount") };
@@ -111,7 +124,7 @@ internal sealed class QuizPdfPage : ContentPage
         _back.Clicked += OnBackClicked;
         _answers.Toggled += (_, _) => UpdateActions();
         _title.TextChanged += (_, _) => { if (_worksheet is { } w) _worksheet = w with { Title = CleanTitle() }; };
-        var top = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(16, 0, 16, 24), MaximumWidthRequest = 1320, HorizontalOptions = LayoutOptions.Center };
+        var top = new VerticalStackLayout { Spacing = 14, Padding = new Thickness(16, 16, 16, 24), MaximumWidthRequest = 1320, HorizontalOptions = LayoutOptions.Center };
         top.SetBinding(WidthRequestProperty, new Binding(nameof(Width), source: _preview));
         top.Add(Label(T("Description")));
         var settings = new VerticalStackLayout { Spacing = 12 };
@@ -151,9 +164,14 @@ internal sealed class QuizPdfPage : ContentPage
         _create.AutomationId = "QuizPdfGenerate"; _status.AutomationId = "QuizPdfStatus";
         _title.AutomationId = "QuizPdfTitle"; _countPicker.AutomationId = "QuizPdfCount";
         _save.AutomationId = "QuizPdfSave";
-        var heading = new Grid { ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 12,
-            Padding = new Thickness(16, 10), MaximumWidthRequest = 1320, HorizontalOptions = LayoutOptions.Center };
-        _back.SetDynamicResource(StyleProperty, "RoundPlatformBackButtonStyle");
+        bool android = OperatingSystem.IsAndroid();
+        var heading = new Grid
+        {
+            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)],
+            ColumnSpacing = android ? 2 : 6,
+            Padding = android ? new Thickness(0, 0, 8, 0) : new Thickness(2, 0, 10, 0)
+        };
+        _back.SetDynamicResource(StyleProperty, "PlatformBackButtonStyle");
         InteractiveButtonAnimation.SetIsScopeEnabled(_back, true);
         InteractiveButtonAnimation.SetIsPlatformBackButton(_back, true);
         InteractiveButtonAnimation.SetIsPressAnimationEnabled(_back, false);
@@ -162,19 +180,29 @@ internal sealed class QuizPdfPage : ContentPage
         var backIcon = new ThemedSvgPathIcon
         {
             Data = "M313-440h487v-80H313l223-223-56-57-320 320 320 320 56-57-223-223Z",
-            WidthRequest = 20, HeightRequest = 20, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
+            WidthRequest = android ? 20 : 18, HeightRequest = android ? 20 : 18,
+            TranslationX = android ? -2 : 0,
+            HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center,
             InputTransparent = true
         };
         backIcon.SetBinding(OpacityProperty, new Binding(nameof(Opacity), source: _back));
         AutomationProperties.SetIsInAccessibleTree(backIcon, false);
-        var backHost = new Grid { WidthRequest = 48, HeightRequest = 48 };
+        var backHost = new Grid
+        {
+            WidthRequest = android ? 48 : 40, HeightRequest = android ? 48 : 40,
+            HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
+        };
         backHost.Add(_back); backHost.Add(backIcon); heading.Add(backHost, 0);
-        var pageTitle = Label(T("Title"), true); pageTitle.SetDynamicResource(StyleProperty, "SolverSectionTitleStyle");
-        pageTitle.VerticalOptions = LayoutOptions.Center; heading.Add(pageTitle, 1);
-        var root = new Grid { RowDefinitions = [new(GridLength.Auto), new(GridLength.Star)] };
-        heading.SetBinding(WidthRequestProperty, new Binding(nameof(Width), source: root));
-        Grid.SetRowSpan(_wallpaper, 2); root.Add(_wallpaper);
-        root.Add(heading, 0, 0); root.Add(_preview, 0, 1); Content = root;
+        _headerTitle.TranslationY = android ? 1 : 0;
+        _headerTitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextPrimaryColor");
+        _headerSubtitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextSecondaryColor");
+        SemanticProperties.SetHeadingLevel(_headerTitle, SemanticHeadingLevel.Level1);
+        var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
+        headerText.Add(_headerTitle); headerText.Add(_headerSubtitle); heading.Add(headerText, 1);
+        Shell.SetTitleView(this, heading);
+        RefreshHeader();
+        var root = new Grid();
+        root.Add(_wallpaper); root.Add(_preview); Content = root;
         UpdateActions();
     }
     private void UpdateFormLayout()
@@ -198,11 +226,21 @@ internal sealed class QuizPdfPage : ContentPage
         for (int i = 0; i < 2 / actions; i++) _generation.RowDefinitions.Add(new(GridLength.Auto));
         Grid.SetRow(_stop, actions == 1 ? 1 : 0); Grid.SetColumn(_stop, actions == 1 ? 0 : 1);
     }
-    private async void OnBackClicked(object? sender, EventArgs e)
+    protected override bool OnBackButtonPressed()
+    {
+        _ = GoBackAsync();
+        return true;
+    }
+    private async void OnBackClicked(object? sender, EventArgs e) => await GoBackAsync();
+    private async Task GoBackAsync()
     {
         if (_goingBack) return;
         _goingBack = true; _run?.Cancel(); _back.IsEnabled = false;
-        try { await Navigation.PopAsync(); }
+        try
+        {
+            if (Shell.Current is AppShell appShell) await appShell.CloseSettingsAsync(this);
+            else await Navigation.PopAsync();
+        }
         catch (Exception error)
         { System.Diagnostics.Debug.WriteLine(error); if (_visible) _status.Text = T("Failed"); }
         finally { _goingBack = false; _back.IsEnabled = true; }
@@ -372,6 +410,52 @@ internal sealed class QuizPdfPage : ContentPage
         { System.Diagnostics.Debug.WriteLine(error); if (_visible) _status.Text = T(error.Message == "WorksheetNotEnoughDistinctQuestions" ? "DistinctError" : "Failed"); }
         finally { _run.Dispose(); _run = null; _busy = false; if (_visible) UpdateActions(); }
     }
-    protected override void OnAppearing() { base.OnAppearing(); _visible = true; _wallpaper.Resume(); UpdateActions(); }
-    protected override void OnDisappearing() { _visible = false; _run?.Cancel(); _wallpaper.Pause(); base.OnDisappearing(); }
+    private void RefreshHeader()
+    {
+        Title = _headerTitle.Text = T("Title");
+        _headerSubtitle.Text = T("HeaderSubtitle");
+        string back = LocalizationService.TranslateKey("About.Back.Accessibility");
+        SemanticProperties.SetDescription(_back, back);
+        ToolTipProperties.SetText(_back, back);
+        // Repair the committed foreground after a WinUI DynamicResource listener
+        // was disconnected during a theme change, as on the AI authoring page.
+        void ApplyColor(Label label, string key)
+        {
+            if (Application.Current?.Resources.TryGetValue(key, out var value) != true || value is not Color color) return;
+            try { label.TextColor = color; }
+            catch (Exception error) when (error is System.Runtime.InteropServices.COMException or ObjectDisposedException)
+            { System.Diagnostics.Debug.WriteLine($"PDF header theme text deferred: {error}"); }
+        }
+        ApplyColor(_headerTitle, "TextPrimaryColor");
+        ApplyColor(_headerSubtitle, "TextSecondaryColor");
+    }
+    private void OnHeaderResourcesChanged(object? sender, EventArgs e)
+    {
+        int generation = ++_headerRefreshGeneration;
+        void Refresh()
+        {
+            if (_visible && generation == _headerRefreshGeneration) RefreshHeader();
+        }
+        Dispatcher.Dispatch(Refresh);
+#if WINDOWS
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(180), Refresh);
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(420), Refresh);
+#endif
+    }
+    protected override void OnAppearing()
+    {
+        base.OnAppearing(); _visible = true;
+        Shell.SetTabBarIsVisible(this, false);
+        AppThemeManager.ThemeChanged += OnHeaderResourcesChanged;
+        LocalizationService.CultureChanged += OnHeaderResourcesChanged;
+        OnHeaderResourcesChanged(this, EventArgs.Empty);
+        _wallpaper.Resume(); UpdateActions();
+    }
+    protected override void OnDisappearing()
+    {
+        _visible = false; ++_headerRefreshGeneration;
+        AppThemeManager.ThemeChanged -= OnHeaderResourcesChanged;
+        LocalizationService.CultureChanged -= OnHeaderResourcesChanged;
+        _run?.Cancel(); _wallpaper.Pause(); base.OnDisappearing();
+    }
 }

@@ -2035,7 +2035,13 @@ public partial class AppShell : Shell
             Shell.Current?.CurrentState.Location.OriginalString ??
             string.Empty;
 
-        return location.Contains(
+        // AI authoring/review and PDF export share the settings/hardware chrome and Back
+        // recovery, including hiding the floating Windows settings action.
+        // Review/PDF are pushed as pages rather than through registered routes.
+        return Shell.Current?.CurrentPage is QuizPdfPage or AiQuestionReviewPage || location.Contains(
+                   nameof(AiQuestionBankPage),
+                   StringComparison.OrdinalIgnoreCase) ||
+               location.Contains(
                    nameof(DataManagementPage),
                    StringComparison.OrdinalIgnoreCase) ||
                location.Contains(

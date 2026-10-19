@@ -62,12 +62,20 @@
                                             AutomationProperties.IsInAccessibleTree="False"
                                             Opacity="{Binding Source={x:Reference ChangePracticeSettingsButton}, Path=Opacity, x:DataType='Button'}" />
                                 </Grid>
-                                <Button x:Name="OpenAiQuestionBankButton" Grid.Column="1"
-                                        Text="{localization:Translate AiBank.OpenCompact}"
-                                        SemanticProperties.Description="{localization:Translate AiBank.Open}"
-                                        ToolTipProperties.Text="{localization:Translate AiBank.Open}"
-                                        Style="{StaticResource PracticeToolbarButtonStyle}"
-                                        Clicked="OnOpenAiQuestionBankClicked" />
+                                <Grid x:Name="OpenAiQuestionBankHost" Grid.Column="1">
+                                    <Button x:Name="OpenAiQuestionBankButton"
+                                            Text="{localization:Translate AiBank.OpenCompact}"
+                                            Padding="32,4,10,4"
+                                            SemanticProperties.Description="{localization:Translate AiBank.Title}"
+                                            ToolTipProperties.Text="{localization:Translate AiBank.Title}"
+                                            Style="{StaticResource PracticeToolbarButtonStyle}"
+                                            Clicked="OnOpenAiQuestionBankClicked" />
+                                    <controls:EmojiLabel x:Name="OpenAiQuestionBankEmojiLabel"
+                                                        FontSize="16" WidthRequest="18" Margin="10,0,0,0"
+                                                        HorizontalOptions="Start" VerticalOptions="Center"
+                                                        HorizontalTextAlignment="Center"
+                                                        Opacity="{Binding Source={x:Reference OpenAiQuestionBankButton}, Path=Opacity, x:DataType='Button'}" />
+                                </Grid>
                                 <Button x:Name="ExportQuizPdfButton" Grid.Column="2"
                                         Text="{localization:Translate QuizPdf.Export}"
                                         ImageSource="quiz_export_pdf.png"

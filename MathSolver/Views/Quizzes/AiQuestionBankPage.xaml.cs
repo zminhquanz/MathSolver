@@ -31,6 +31,7 @@ public partial class AiQuestionBankPage : ContentPage
     public AiQuestionBankPage()
     {
         InitializeComponent();
+        AiBankHeaderEmojiLabel.Text = "\U0001F916"; // Robot: AI authoring, rendered with the native emoji font.
         CountEntry.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(Entry.IsEnabled)) RefreshConfigurationTheme();
@@ -53,7 +54,7 @@ public partial class AiQuestionBankPage : ContentPage
     {
         base.OnAppearing();
         _appeared = true;
-        Shell.SetTabBarIsVisible(this, true);
+        Shell.SetTabBarIsVisible(this, false);
         LiveWallpaper.Resume();
         AppThemeManager.ThemeChanged += OnConfigurationThemeChanged;
         AppThemeManager.WallpaperVisualResourcesChanged += OnConfigurationThemeChanged;
@@ -302,11 +303,24 @@ public partial class AiQuestionBankPage : ContentPage
         return text == key ? error : text;
     }
 
-    private async void OnBackClicked(object? sender, EventArgs e)
+    protected override bool OnBackButtonPressed()
+    {
+        _ = GoBackAsync();
+        return true;
+    }
+
+    private async void OnBackClicked(object? sender, EventArgs e) => await GoBackAsync();
+
+    private async Task GoBackAsync()
     {
         if (_goingBack) return;
         _goingBack = true;
-        try { await Shell.Current.GoToAsync(".."); }
+        try
+        {
+            if (Shell.Current is AppShell appShell) await appShell.CloseSettingsAsync(this);
+            else await Navigation.PopAsync();
+        }
+        catch (Exception error) { await ShowErrorAsync(error); }
         finally { _goingBack = false; }
     }
     private void OnBatchModeChanged(object? sender, EventArgs e)
