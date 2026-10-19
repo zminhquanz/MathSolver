@@ -10,6 +10,16 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--calendar-inclusive-open","--calendar-inclusive-open-model"],"--calendar-inclusive-open | --calendar-inclusive-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SameMonthInclusiveTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SameMonthInclusiveTests.NativeCases());
+        },args=>args is ["--calendar-inclusive-open"] or ["--calendar-inclusive-open-model",_] or ["--calendar-inclusive-open-model",_,_]),
+        new(["--calendar-open","--calendar-open-model"],"--calendar-open | --calendar-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SameMonthCalendarTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SameMonthCalendarTests.NativeCases());
+        },args=>args is ["--calendar-open"] or ["--calendar-open-model",_] or ["--calendar-open-model",_,_]),
         new(["--overnight-open","--overnight-open-model"],"--overnight-open | --overnight-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await OvernightTimeTests.RunAsync();

@@ -8647,6 +8647,8 @@
         "Text":  "Solve a map scale task using the supplied data.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameMonthInclusive", "Text": "Count every calendar day within one month, including both start and end dates, with equal dates counting as one day.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameMonthElapsed", "Text": "Find elapsed days within one month, excluding the start date and including the end date.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.OvernightElapsed", "Text": "Find elapsed minutes for one continuous activity without breaks ending the following day.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Find active same-day minutes, excluding one break included inside the session.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Calculate the duration of an uninterrupted same-day activity.", "Variables": []},
@@ -13118,6 +13120,266 @@
         "WidthFact": "{v0} has a width of {f1} {v2}.",
         "Question": "What is the perimeter of {v0} in {v2}?",
         "Lead": "Perimeter of {v0}"
+      }
+    ],
+    "SameMonthInclusiveOpen.Contexts": [
+      {
+        "Id": "garden",
+        "Actor": "Alex",
+        "Item": "plants",
+        "StartAction": "began tending",
+        "EndAction": "finished tending",
+        "Interval": "plant-care period",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "Count every calendar day, including both the start date and the end date."
+        ],
+        "Question": "How many calendar days are counted for {v0}'s {v4}?",
+        "Lead": "Number of calendar days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Include both the start date and the end date."
+        ],
+        "AlternativeQuestion": "What is the number of calendar days in {v0}'s {v4}?"
+      },
+      {
+        "Id": "practice",
+        "Actor": "Sam",
+        "Item": "basketball",
+        "StartAction": "began practising",
+        "EndAction": "finished practising",
+        "Interval": "basketball practice period",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "Count every calendar day, including both the start date and the end date."
+        ],
+        "Question": "How many calendar days are counted for {v0}'s {v4}?",
+        "Lead": "Number of calendar days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Include both the start date and the end date."
+        ],
+        "AlternativeQuestion": "What is the number of calendar days in {v0}'s {v4}?"
+      },
+      {
+        "Id": "exhibition",
+        "Actor": "Taylor",
+        "Item": "pictures",
+        "StartAction": "began exhibiting",
+        "EndAction": "finished exhibiting",
+        "Interval": "picture exhibition",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "Count every calendar day, including both the start date and the end date."
+        ],
+        "Question": "How many calendar days are counted for {v0}'s {v4}?",
+        "Lead": "Number of calendar days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Include both the start date and the end date."
+        ],
+        "AlternativeQuestion": "What is the number of calendar days in {v0}'s {v4}?"
+      },
+      {
+        "Id": "reading",
+        "Actor": "Jamie",
+        "Item": "books",
+        "StartAction": "began reading",
+        "EndAction": "finished reading",
+        "Interval": "reading period",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "Count every calendar day, including both the start date and the end date."
+        ],
+        "Question": "How many calendar days are counted for {v0}'s {v4}?",
+        "Lead": "Number of calendar days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Include both the start date and the end date."
+        ],
+        "AlternativeQuestion": "What is the number of calendar days in {v0}'s {v4}?"
+      }
+    ],
+    "SameMonthCalendarOpen.Contexts": [
+      {
+        "Id": "library",
+        "Actor": "Alex",
+        "Item": "books",
+        "StartAction": "borrowed",
+        "EndAction": "returned",
+        "Interval": "borrowing period",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "equipment",
+        "Actor": "Sam",
+        "Item": "equipment",
+        "StartAction": "borrowed",
+        "EndAction": "returned",
+        "Interval": "equipment loan",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "garden",
+        "Actor": "Taylor",
+        "Item": "plants",
+        "StartAction": "began tending",
+        "EndAction": "finished tending",
+        "Interval": "plant-care period",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
+      },
+      {
+        "Id": "model",
+        "Actor": "Jamie",
+        "Item": "a model",
+        "StartAction": "began making",
+        "EndAction": "finished making",
+        "Interval": "model-making project",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} on day {f0} of month {f2} in year {f3}.",
+          "{v0} {v3} {v1} on day {f1} of month {f2} in year {f3}.",
+          "The start date is excluded and the end date is included."
+        ],
+        "Question": "How many days does {v0}'s {v4} last?",
+        "Lead": "Elapsed days",
+        "AlternativeFacts": [
+          "On day {f0} of month {f2} in year {f3}, {v0} {v2} {v1}.",
+          "On day {f1} of month {f2} in year {f3}, {v0} {v3} {v1}.",
+          "Exclude the start date and include the end date."
+        ],
+        "AlternativeQuestion": "What is the duration of {v0}'s {v4} in days?"
       }
     ],
     "OvernightTimeOpen.Contexts": [

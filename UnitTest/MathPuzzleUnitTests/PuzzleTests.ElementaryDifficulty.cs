@@ -89,6 +89,22 @@ internal static partial class PuzzleTests
                         expected=Value();
                     }
                 }
+                else if(type is ElementaryQuizType.OvernightElapsed or ElementaryQuizType.SameDayActiveDuration)
+                {
+                    int offset=type==ElementaryQuizType.OvernightElapsed?1:0;
+                    var start=new DateTime(2026,1,10,(int)Get("start-hour"),(int)Get("start-minute"),0);
+                    var end=new DateTime(2026,1,10+offset,(int)Get("end-hour"),(int)Get("end-minute"),0);
+                    Require(offset==0||Get("end-day-offset")==1,"Overnight day role changed.");
+                    expected=(decimal)(end-start).TotalMinutes-Get("included-break-minutes");
+                }
+                else if(type is ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive)
+                {
+                    var start=new DateTime((int)Get("year"),(int)Get("month"),(int)Get("start-day"));
+                    var end=new DateTime((int)Get("year"),(int)Get("month"),(int)Get("end-day"));
+                    int includeStart=type==ElementaryQuizType.SameMonthInclusive?1:0;
+                    Require(Get("include-start")==includeStart&&Get("include-end")==1,"Same-month counting convention changed.");
+                    expected=(end-start).Days+includeStart;
+                }
                 else if (ElementaryQuizGenerator.IsMixedTime(type))
                 {
                     expected = type switch

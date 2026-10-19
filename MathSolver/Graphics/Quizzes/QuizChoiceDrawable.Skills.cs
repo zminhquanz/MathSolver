@@ -157,6 +157,10 @@ internal sealed partial class QuizChoiceDrawable
                 c.DrawCircle(77, 32, 17); c.DrawLine(77, 32, 77, 18); c.DrawLine(77, 32, 77, 45);
                 Arrow(18, 68, 82, 68); Text("?", y: 70); break;
             case "time-conversion": Equation("1 h", "= 60 min"); break;
+            case "time-calendar-inclusive": Equation("10 … 15", "15 − 10 + 1"); break;
+            case "time-calendar-elapsed": Equation("10 … 15", "15 − 10"); break;
+            case "time-overnight": Equation("22 → 1", "24 h + …"); break;
+            case "time-break": Equation("75 min", "− 15 min"); break;
             case "time-calendar":
                 c.DrawRoundedRectangle(14, 20, 72, 68, 5);
                 c.DrawLine(14, 39, 86, 39); c.DrawLine(30, 12, 30, 29); c.DrawLine(70, 12, 70, 29);
@@ -210,6 +214,7 @@ internal sealed partial class QuizChoiceDrawable
             case "fraction-common":
                 Fraction("1", "2", 6, 4); Fraction("1", "3", 68, 4); Text(";", 37, 17, 26);
                 Cells(6, 1, 3, 8, 76, 14); break;
+            case "fraction-remaining": Equation("1 − 1/3", "= 2/3"); break;
             case "fraction-part":
                 Fraction("1", "3", 5, 20);
                 for (int i = 0; i < 9; i++)
@@ -248,6 +253,7 @@ internal sealed partial class QuizChoiceDrawable
                 Arrow(75, 20, 90, 42); Arrow(75, 78, 90, 56); break;
             case "percentage-ratio":
                 Fraction("3", "4", 9, 16); Text("× 100", 40, 27, 57, 16); Text("= 75%", y: 77, size: 16); break;
+            case "percentage-remaining": Equation("100% − 25%", "= 75%"); break;
             case "percentage-part": Cells(5, 3, 3, 12, 10, 15); Text("20% → ?", y: 70, size: 17); break;
             case "percentage-whole":
                 Cells(4, 1, 1, 10, 38, 20); Text("25% = 5", y: 2, size: 17); Text("100% = ?", y: 74, size: 17); break;

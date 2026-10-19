@@ -694,7 +694,7 @@ public static class QuizCurriculumLayer
                     ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide, .. ElementaryQuizGenerator.SpatialSkillTypes]
                 : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.CalendarWeekday]
-                : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar, ElementaryQuizType.CalendarWeekday]
+                : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar, ElementaryQuizType.CalendarWeekday, ElementaryQuizType.SameMonthElapsed, ElementaryQuizType.SameMonthInclusive]
                 : ElementaryQuizGenerator.Types(kind).Where(t => level >= 4 || t is not (ElementaryQuizType.SecondsConversion or ElementaryQuizType.YearCentury)).ToArray(),
             QuizProblemKind.Data => level < 2 ? [] : level <= 3 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph]
                 : level == 4 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph, ElementaryQuizType.ReadBarChart,

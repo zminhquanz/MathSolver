@@ -45,7 +45,7 @@ internal static class OvernightTimeTests
     }
     internal static async Task RunAsync()
     {
-        QuizContentTests.Run();CheckMalformedLists();
+        QuizContentTests.Run();CheckMalformedLists();OvernightTimeMeaningTests.Run();
         var context=OvernightTimePilot.Contexts(AppLanguage.Vietnamese)[0];
         Check(new OvernightTimePilot.Data(context,OvernightTimePilot.Prefix+context.Id,22*60+45,20).Elapsed==95,"22:45 -> next-day 00:20 example failed.");
         Check(new OvernightTimePilot.Data(context,OvernightTimePilot.Prefix+context.Id,23*60+59,0).Elapsed==1,"Midnight boundary failed.");

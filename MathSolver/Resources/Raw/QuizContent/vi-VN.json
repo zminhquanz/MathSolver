@@ -8676,6 +8676,8 @@
         "Text":  "Thực hiện dạng tỉ lệ bản đồ với dữ kiện được cung cấp.",
         "Variables": []
     },
+    {"Id": "Curriculum.Requirement.Time.SameMonthInclusive", "Text": "Đếm mọi ngày trong cùng tháng, tính cả ngày bắt đầu và ngày kết thúc, cùng ngày tính một ngày.", "Variables": []},
+    {"Id": "Curriculum.Requirement.Time.SameMonthElapsed", "Text": "Tính số ngày trôi qua trong cùng tháng, không tính ngày bắt đầu và có tính ngày kết thúc.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.OvernightElapsed", "Text": "Tính số phút trôi qua của một hoạt động liên tục, không nghỉ, kết thúc ngày hôm sau.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayActiveDuration", "Text": "Tính thời gian thực hiện trong cùng ngày, không tính đúng một lần nghỉ nằm trong buổi.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.SameDayElapsed", "Text": "Tính khoảng thời gian của hoạt động liên tục trong cùng ngày.", "Variables": []},
@@ -13147,6 +13149,266 @@
         "WidthFact": "{v0} có chiều rộng {f1} {v2}.",
         "Question": "Hỏi chu vi {v0} là bao nhiêu {v2}?",
         "Lead": "Chu vi {v0}"
+      }
+    ],
+    "SameMonthInclusiveOpen.Contexts": [
+      {
+        "Id": "garden",
+        "Actor": "Lan",
+        "Item": "cây",
+        "StartAction": "bắt đầu chăm sóc",
+        "EndAction": "kết thúc chăm sóc",
+        "Interval": "đợt chăm sóc cây",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Tính mọi ngày, gồm cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} được tính bao nhiêu ngày?",
+        "Lead": "Số ngày được tính",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Tính cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "AlternativeQuestion": "Số ngày được tính cho {v4} của {v0} là bao nhiêu?"
+      },
+      {
+        "Id": "practice",
+        "Actor": "Minh",
+        "Item": "bóng rổ",
+        "StartAction": "bắt đầu tập",
+        "EndAction": "kết thúc tập",
+        "Interval": "đợt tập bóng rổ",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Tính mọi ngày, gồm cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} được tính bao nhiêu ngày?",
+        "Lead": "Số ngày được tính",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Tính cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "AlternativeQuestion": "Số ngày được tính cho {v4} của {v0} là bao nhiêu?"
+      },
+      {
+        "Id": "exhibition",
+        "Actor": "An",
+        "Item": "tranh",
+        "StartAction": "bắt đầu trưng bày",
+        "EndAction": "kết thúc trưng bày",
+        "Interval": "đợt trưng bày tranh",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Tính mọi ngày, gồm cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} được tính bao nhiêu ngày?",
+        "Lead": "Số ngày được tính",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Tính cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "AlternativeQuestion": "Số ngày được tính cho {v4} của {v0} là bao nhiêu?"
+      },
+      {
+        "Id": "reading",
+        "Actor": "Hà",
+        "Item": "sách",
+        "StartAction": "bắt đầu đọc",
+        "EndAction": "kết thúc đọc",
+        "Interval": "đợt đọc sách",
+        "RelationId": "same-month-include-start-include-end",
+        "CountRule": "include-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "counted-calendar-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Tính mọi ngày, gồm cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} được tính bao nhiêu ngày?",
+        "Lead": "Số ngày được tính",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Tính cả ngày bắt đầu và ngày kết thúc."
+        ],
+        "AlternativeQuestion": "Số ngày được tính cho {v4} của {v0} là bao nhiêu?"
+      }
+    ],
+    "SameMonthCalendarOpen.Contexts": [
+      {
+        "Id": "library",
+        "Actor": "Lan",
+        "Item": "sách",
+        "StartAction": "mượn",
+        "EndAction": "trả",
+        "Interval": "thời gian mượn sách",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "equipment",
+        "Actor": "Minh",
+        "Item": "dụng cụ",
+        "StartAction": "mượn",
+        "EndAction": "trả",
+        "Interval": "thời gian mượn dụng cụ",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "garden",
+        "Actor": "An",
+        "Item": "cây",
+        "StartAction": "bắt đầu chăm sóc",
+        "EndAction": "kết thúc chăm sóc",
+        "Interval": "đợt chăm sóc cây",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
+      },
+      {
+        "Id": "model",
+        "Actor": "Hà",
+        "Item": "mô hình",
+        "StartAction": "bắt đầu làm",
+        "EndAction": "hoàn thành",
+        "Interval": "đợt làm mô hình",
+        "RelationId": "same-month-exclude-start-include-end",
+        "CountRule": "exclude-start-include-end",
+        "KnownRoles": [
+          "start-day",
+          "end-day",
+          "month",
+          "year",
+          "include-start",
+          "include-end"
+        ],
+        "TargetRole": "elapsed-days",
+        "Facts": [
+          "{v0} {v2} {v1} vào ngày {f0} tháng {f2} năm {f3}.",
+          "{v0} {v3} {v1} vào ngày {f1} tháng {f2} năm {f3}.",
+          "Không tính ngày bắt đầu, có tính ngày kết thúc."
+        ],
+        "Question": "Hỏi {v4} của {v0} là bao nhiêu ngày?",
+        "Lead": "Số ngày trôi qua",
+        "AlternativeFacts": [
+          "Vào ngày {f0} tháng {f2} năm {f3}, {v0} {v2} {v1}.",
+          "Vào ngày {f1} tháng {f2} năm {f3}, {v0} {v3} {v1}.",
+          "Ngày bắt đầu không được tính, ngày kết thúc được tính."
+        ],
+        "AlternativeQuestion": "{v4} của {v0} kéo dài bao nhiêu ngày?"
       }
     ],
     "OvernightTimeOpen.Contexts": [

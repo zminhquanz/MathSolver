@@ -43,6 +43,8 @@
     "Fraction.Expression.Error.InvalidExpression": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
     "Fraction.Expression.Error.DivisionByZero": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
     "Fraction.Expression.Error.TooLarge": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
+    "Quiz.Elementary.SameMonthInclusive": {"context":"Practice, PDF and AI calendar relation selection", "translatorNote":"Count every day in one month/year, including both endpoints. Equal dates count once."},
+    "Quiz.Elementary.SameMonthElapsed": {"context":"Practice, PDF and AI calendar relation selection", "translatorNote":"Elapsed days in the same month/year; exclude the start date and include the end date."},
     "Quiz.Elementary.OvernightElapsed": {"context":"Practice, PDF and AI time relation selection", "translatorNote":"Continuous activity, no break, ends exactly the following day; ask elapsed minutes."},
     "Quiz.Elementary.SameDayActiveDuration": {"context":"Practice, PDF and AI time relation selection", "translatorNote":"One break included within the same-day session; ask active minutes excluding rest."},
     "Quiz.Elementary.SameDayElapsed": {"context": "Time practice, PDF and AI question-bank relation selection", "translatorNote": "Elapsed time within one day. One continuous activity within the same day."},
