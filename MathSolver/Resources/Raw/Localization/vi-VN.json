@@ -2242,7 +2242,9 @@
     "AiBank.TemplateScene": "Chọn tình huống và quan hệ toán",
     "AiBank.ImportLeaveHint": "Bỏ lượt xem trước dữ liệu nhập và quay lại? Các dòng này chưa được lưu.",
     "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
-    "Quiz.Elementary.AdjacentMonthElapsed": "Số ngày qua tháng kế tiếp"
+    "Quiz.Elementary.AdjacentMonthElapsed": "Số ngày qua tháng kế tiếp",
+    "Quiz.Elementary.AdjacentMonthInclusive": "Số ngày qua tháng kế tiếp (tính cả hai đầu)",
+    "Quiz.Elementary.FebruaryCommonInclusive": "Tháng Hai sang tháng Ba (năm thường, tính cả hai đầu)"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

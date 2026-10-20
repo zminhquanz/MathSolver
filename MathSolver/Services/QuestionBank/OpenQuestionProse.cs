@@ -353,6 +353,15 @@ public static class OpenQuestionProse
                     branch="("+Literal("Hỏi ")+" | "+Literal("Số ngày của ")+")? "
                         +Literal("{v4} của {v0}")+" "+Literal(" ")+" character{1,79}";
                 }
+                if(property=="question"&&c.Language==AppLanguage.English&&SameMonthCalendarPilot.IsAdjacentInclusive(c.SceneId))
+                {
+                    // Preserve the complete owner/interval NP and the requested
+                    // day unit as lexical groups, in either order. All question
+                    // wording between them stays generated, not enumerated.
+                    string owner=blocks.Single();
+                    branch="((character{1,31} "+Literal(" ")+")? calendar-days word-gap "+owner+" word-tail | "
+                        +"(character{1,31} "+Literal(" ")+")? "+owner+" word-gap calendar-days word-tail)";
+                }
             }
             if(time&&blocks.Count==2)
             {
@@ -374,6 +383,7 @@ public static class OpenQuestionProse
             + "character ::= [" + QuestionProseLanguage.GrammarLetters(c.Language) + (singleSentence?" ,()'\\u2019-]":" ,.;:!?()'\\u2019-]")
             + (calendar||clockActivity?"\nword-gap ::= (\" \" | \", \") (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,79})? | \", \" character{1,79}\npossessive ::= \"'s\" | \"\\u2019s\""
                 :PercentageWholeOpenCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)?"\nword-gap ::= \" \" (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,39})?\npossessive ::= \"'s\" | \"\\u2019s\"":"")
+            + (calendar&&SameMonthCalendarPilot.IsAdjacentInclusive(c.SceneId)&&c.Language==AppLanguage.English?"\ncalendar-days ::= (\"calendar \")? \"days\"":"")
             + (singleSentence?"\nending ::= [.!?:]?":"")+"\nws ::= [ \\t]{0,2}\n";
     }
 }

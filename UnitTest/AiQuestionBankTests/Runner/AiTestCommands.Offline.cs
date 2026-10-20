@@ -10,6 +10,16 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--calendar-february-common-open","--calendar-february-common-open-model"],"--calendar-february-common-open | --calendar-february-common-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await FebruaryCommonCalendarTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,FebruaryCommonCalendarTests.NativeCases());
+        },args=>args is ["--calendar-february-common-open"] or ["--calendar-february-common-open-model",_] or ["--calendar-february-common-open-model",_,_]),
+        new(["--calendar-adjacent-inclusive-open","--calendar-adjacent-inclusive-open-model"],"--calendar-adjacent-inclusive-open | --calendar-adjacent-inclusive-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await AdjacentMonthInclusiveTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,AdjacentMonthInclusiveTests.NativeCases());
+        },args=>args is ["--calendar-adjacent-inclusive-open"] or ["--calendar-adjacent-inclusive-open-model",_] or ["--calendar-adjacent-inclusive-open-model",_,_]),
         new(["--calendar-adjacent-open","--calendar-adjacent-open-model"],"--calendar-adjacent-open | --calendar-adjacent-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await AdjacentMonthCalendarTests.RunAsync();

@@ -7,7 +7,11 @@ namespace MathSolver.Services.QuestionBank;
 internal static class AdjacentMonthCalendarLanguage
 {
     internal const string Relation="; f0=start day; f1=end day; f2=start month; f3=the SAME year for both dates; f4=end month, exactly f2+1; f5=number of days in the START month; v0=actor; v1=item; v2=start action; v3=end action; v4=complete interval noun phrase. Both months have 30/31 days. EXCLUDE start, INCLUDE end, count every intervening day; target=elapsed DAYS. No February, holidays, extra months or year crossing.";
-    internal static string WritingInstructions(BasicQuestionContract c)=>c.Language==AppLanguage.Vietnamese?"""
+    internal static string PromptRelation(BasicQuestionContract c)=>SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)?FebruaryCommonCalendarLanguage.Relation:SameMonthCalendarPilot.IsInclusive(c.SceneId)
+        ?Relation.Replace("EXCLUDE start, INCLUDE end, count every intervening day; target=elapsed DAYS.","INCLUDE both start and end, count every intervening day; target=counted calendar DAYS.",StringComparison.Ordinal):Relation;
+    internal static string WritingInstructions(BasicQuestionContract c)=>SameMonthCalendarPilot.IsInclusive(c.SceneId)
+        ?AdjacentMonthInclusiveLanguage.WritingInstructions(c):ElapsedInstructions(c);
+    private static string ElapsedInstructions(BasicQuestionContract c)=>c.Language==AppLanguage.Vietnamese?"""
         Bạn biên soạn toán đố tiểu học tự nhiên. Được viết câu mới, thay cách mở đầu và từ nối; ví dụ chỉ tham khảo.
         Mỗi biến đã là một cụm hoàn chỉnh. fact_0 gắn {v0} {v2} {v1} với ngày {f0} tháng {f2} năm {f3}. fact_1 gắn {v0} {v3} {v1} với ngày {f1} tháng {f4} năm {f3}. Chọn cách đặt ngày trước hoặc sau người và hành động theo gợi ý riêng của bối cảnh. Giữ nguyên các cụm hành động và thứ tự sự kiện.
         Hai tháng liền nhau, cùng năm, mỗi tháng có 30 hoặc 31 ngày. fact_2 chỉ cho biết tháng {f2} có {f5} ngày. fact_3 là QUY ƯỚC ĐẾM: bỏ ngày bắt đầu, tính ngày kết thúc và mọi ngày ở giữa. Chẳng hạn: Khi đếm ngày, không tính ngày đầu và có tính ngày cuối. Các sự kiện vẫn xảy ra đúng hai ngày đã cho; chỉ việc đếm ngày bắt đầu từ ngày liền sau ngày đầu. Không thêm điều kiện hoặc ngày nghỉ.
@@ -39,7 +43,7 @@ internal static class AdjacentMonthCalendarLanguage
         }
         facts[0]=new("fact_0",Event(0,dateFirstStart));facts[1]=new("fact_1",Event(1,dateFirstEnd));
         if(context.Id=="model")facts[0]=new("fact_0",(vi?"Theo ghi chép, ":"According to the record, ")+Event(0,false));
-        return d with {Facts=facts,Question=vi?"Hỏi {v4} của {v0} kéo dài bao nhiêu ngày?":"What is the total duration of {v0}'s {v4} in days?"};
+        return d with {Facts=facts,Question=SameMonthCalendarPilot.IsInclusive(c.SceneId)?d.Question:vi?"Hỏi {v4} của {v0} kéo dài bao nhiêu ngày?":"What is the total duration of {v0}'s {v4} in days?"};
     }
     internal static string ContextNotes(BasicQuestionContract c)
     {
@@ -54,8 +58,8 @@ internal static class AdjacentMonthCalendarLanguage
         return "\n"+(vi?"Gợi ý đổi cách mở câu cho bối cảnh này, không phải mẫu câu bắt buộc: ":"Context-specific variation guidance, not mandatory sentences: ")+focus
             +"\n"+(vi?"Người {v0} và cụm hành động {v2}/{v3} đã hoàn chỉnh. Câu hỏi chỉ cần một cụm {v4} của {v0}; nối trực tiếp với kéo dài bao nhiêu ngày hoặc là bao nhiêu ngày.":"The actor {v0} and action phrases {v2}/{v3} are complete. The question needs just the complete phrase {v0}'s {v4}, directly linked to duration in days or how many days it lasted.");
     }
-    private static SameMonthCalendarPilot.Context Context(BasicQuestionContract c)=>SameMonthCalendarPilot.Contexts(c.Language,adjacent:true)
-        .Single(row=>SameMonthCalendarPilot.AdjacentPrefix+row.Id==c.SceneId);
+    private static SameMonthCalendarPilot.Context Context(BasicQuestionContract c)=>SameMonthCalendarPilot.Contexts(c.Language,SameMonthCalendarPilot.IsInclusive(c.SceneId),adjacent:true,february:SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId))
+        .Single(row=>SameMonthCalendarPilot.ProfilePrefix(SameMonthCalendarPilot.IsInclusive(c.SceneId),true,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId))+row.Id==c.SceneId);
 
     internal static string CountingRule(AppLanguage language)=>language==AppLanguage.Vietnamese
         ?@"khi đếm ngày, không tính ngày (?:bắt đầu|đầu) và (?:có )?tính (?:cả )?ngày (?:kết thúc|cuối)"

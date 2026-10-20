@@ -2242,7 +2242,9 @@
     "AiBank.TemplateScene": "Choose a situation and mathematical relation",
     "AiBank.ImportLeaveHint": "Discard the pending import review and go back? These rows have not been saved.",
     "AiBank.Error.ExcelInvalidVariableSyntax": "Invalid variable syntax. Use one pair of braces, such as {a} or {name}; do not omit or nest braces.",
-    "Quiz.Elementary.AdjacentMonthElapsed": "Elapsed days across adjacent months"
+    "Quiz.Elementary.AdjacentMonthElapsed": "Elapsed days across adjacent months",
+    "Quiz.Elementary.AdjacentMonthInclusive": "Calendar days across adjacent months (both endpoints)",
+    "Quiz.Elementary.FebruaryCommonInclusive": "February to March (common year, both endpoints)"
   },
   "templates": {
     "dynamic.calculation_add": "Add {first} and {second}.",

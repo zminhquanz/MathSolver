@@ -269,11 +269,11 @@ public static partial class ReasoningStoryCatalogue
 
     private static NarrativeLesson Build(BasicQuestionContract c)
     {
-        if(c.Family==BankQuestionFamily.Time&&c.BankVariant is (int)SameMonthCalendarPilot.Type or (int)SameMonthCalendarPilot.InclusiveType or (int)SameMonthCalendarPilot.AdjacentType)
+        if(c.Family==BankQuestionFamily.Time&&SameMonthCalendarPilot.IsType((ElementaryQuizType)c.BankVariant))
         {
             if(string.IsNullOrEmpty(c.Story!.NarrativeId))
             {
-                var profiles=SameMonthCalendarPilot.Profiles(c.Language,c.BankVariant==(int)SameMonthCalendarPilot.InclusiveType,c.BankVariant==(int)SameMonthCalendarPilot.AdjacentType).ToArray();
+                var profiles=SameMonthCalendarPilot.ProfilesForType(c.Language,c.BankVariant).ToArray();
                 c=c with {Story=c.Story with {NarrativeId=profiles[new Random(c.Story.Seed).Next(profiles.Length)]}};
             }
             return SameMonthCalendarCatalogue.Build(c);

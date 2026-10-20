@@ -159,6 +159,8 @@ internal sealed partial class QuizChoiceDrawable
             case "time-conversion": Equation("1 h", "= 60 min"); break;
             case "time-calendar-inclusive": Equation("10 … 15", "15 − 10 + 1"); break;
             case "time-calendar-elapsed": Equation("10 … 15", "15 − 10"); break;
+            case "time-february-common": Equation("28/2 → 1/3", "28−28+1+1"); break;
+            case "time-calendar-adjacent-inclusive": Equation("4 → 5", "30 − 28 + 3 + 1"); break;
             case "time-calendar-adjacent": Equation("4 → 5", "30 − 28 + 3"); break;
             case "time-overnight": Equation("22 → 1", "24 h + …"); break;
             case "time-break": Equation("75 min", "− 15 min"); break;

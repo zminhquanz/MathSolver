@@ -13,6 +13,8 @@ public sealed partial class ElementaryQuizGenerator
         QuizProblemKind.TwoNumbers => CreateTwoNumberDifficulty(type, language, tier),
         QuizProblemKind.Time when type==SameMonthCalendarPilot.Type => CreateSameMonthCalendar(language, tier),
         QuizProblemKind.Time when type==SameMonthCalendarPilot.InclusiveType => CreateSameMonthCalendar(language, tier, inclusive:true),
+        QuizProblemKind.Time when type==SameMonthCalendarPilot.FebruaryCommonType => CreateSameMonthCalendar(language, tier, inclusive:true, adjacent:true, february:true),
+        QuizProblemKind.Time when type==SameMonthCalendarPilot.AdjacentInclusiveType => CreateSameMonthCalendar(language, tier, inclusive:true, adjacent:true),
         QuizProblemKind.Time when type==SameMonthCalendarPilot.AdjacentType => CreateSameMonthCalendar(language, tier, adjacent:true),
         QuizProblemKind.Time when type==OvernightTimePilot.Type => CreateOvernightTime(language, tier),
         QuizProblemKind.Time when type==SameDayBreakPilot.Type => CreateSameDayBreak(language, tier),

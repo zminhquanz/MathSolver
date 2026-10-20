@@ -10,6 +10,8 @@ internal static class SameMonthCalendarMeaning
     {
         bool vi=c.Language==AppLanguage.Vietnamese,inclusive=SameMonthCalendarPilot.IsInclusive(c.SceneId),adjacent=SameMonthCalendarPilot.IsAdjacent(c.SceneId);
         var facts=d.Facts!;
+        if(SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)&&FebruaryCommonCalendarLanguage.HasContradiction(d,c.Language))
+            return new(null,"ChangedRelationOrTarget",ErrorDetails:"February has 28 days in the supplied common year; keep that year, both dates, and the inclusive day-count target.");
         int ruleIndex=adjacent?3:2;
         string Date(string day)
         {
@@ -88,6 +90,7 @@ internal static class SameMonthCalendarMeaning
             ?@"(?:hỏi )?"+owner+@" được tính bao nhiêu ngày|(?:hỏi )?số ngày được tính (?:cho|của) "+owner+@" là bao nhiêu"
                 +@"|(?:hỏi )?"+owner+@" (?:là|kéo dài) bao nhiêu ngày"
             :@"how many (?:calendar )?days are counted for "+owner+@"|what is the number of (?:calendar )?days in "+owner
+                +@"|how many (?:calendar )?days are in "+owner
                 +@"|how many (?:calendar )?days (?:does|did) "+owner+@" last";
         // Endpoint convention is proved separately; the same clear day-count
         // question may therefore serve either relation without changing its rule.
@@ -97,8 +100,8 @@ internal static class SameMonthCalendarMeaning
                 +@"|what is the (?:total )?(?:count|number) of (?:calendar )?days (?:for|in) "+owner;
         if(vi)
         {
-            var context=SameMonthCalendarPilot.Contexts(c.Language,inclusive,adjacent).Single(row=>
-                (adjacent?SameMonthCalendarPilot.AdjacentPrefix:inclusive?SameMonthCalendarPilot.InclusivePrefix:SameMonthCalendarPilot.Prefix)+row.Id==c.SceneId);
+            var context=SameMonthCalendarPilot.Contexts(c.Language,inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)).Single(row=>
+                SameMonthCalendarPilot.ProfilePrefix(inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId))+row.Id==c.SceneId);
             // "Thời gian đợt đọc sách" names a duration. Prefixing a loan
             // already named "thời gian mượn ..." repeats its interval label.
             if(!context.Interval.StartsWith("thời gian",StringComparison.OrdinalIgnoreCase)

@@ -97,13 +97,14 @@ internal static partial class PuzzleTests
                     Require(offset==0||Get("end-day-offset")==1,"Overnight day role changed.");
                     expected=(decimal)(end-start).TotalMinutes-Get("included-break-minutes");
                 }
-                else if(type is ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive or ElementaryQuizType.AdjacentMonthElapsed)
+                else if(type is ElementaryQuizType.SameMonthElapsed or ElementaryQuizType.SameMonthInclusive or ElementaryQuizType.AdjacentMonthElapsed or ElementaryQuizType.AdjacentMonthInclusive or ElementaryQuizType.FebruaryCommonInclusive)
                 {
-                    bool adjacent=type==ElementaryQuizType.AdjacentMonthElapsed;
+                    bool adjacent=type is ElementaryQuizType.AdjacentMonthElapsed or ElementaryQuizType.AdjacentMonthInclusive or ElementaryQuizType.FebruaryCommonInclusive;
                     var start=new DateTime((int)Get("year"),(int)Get(adjacent?"start-month":"month"),(int)Get("start-day"));
                     var end=new DateTime((int)Get("year"),(int)Get(adjacent?"end-month":"month"),(int)Get("end-day"));
-                    if(adjacent)Require(end.Month==start.Month+1&&start.Month>=3&&Get("start-month-length")==DateTime.DaysInMonth(start.Year,start.Month),"Adjacent month roles changed.");
-                    int includeStart=type==ElementaryQuizType.SameMonthInclusive?1:0;
+                    if(type==ElementaryQuizType.FebruaryCommonInclusive)Require(start.Month==2&&end.Month==3&&!DateTime.IsLeapYear(start.Year)&&Get("start-month-length")==28,"Common-February roles changed.");
+                    else if(adjacent)Require(end.Month==start.Month+1&&start.Month>=3&&Get("start-month-length")==DateTime.DaysInMonth(start.Year,start.Month),"Adjacent month roles changed.");
+                    int includeStart=type is ElementaryQuizType.SameMonthInclusive or ElementaryQuizType.AdjacentMonthInclusive or ElementaryQuizType.FebruaryCommonInclusive?1:0;
                     Require(Get("include-start")==includeStart&&Get("include-end")==1,"Same-month counting convention changed.");
                     expected=(end-start).Days+includeStart;
                 }

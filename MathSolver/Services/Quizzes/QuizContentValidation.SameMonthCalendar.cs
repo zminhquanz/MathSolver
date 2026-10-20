@@ -6,10 +6,12 @@ public static partial class QuizContentValidation
     {
         foreach(bool inclusive in new[]{false,true})CheckSameMonthCalendarList(pack,inclusive);
         CheckSameMonthCalendarList(pack,false,true);
+        CheckSameMonthCalendarList(pack,true,true);
+        CheckSameMonthCalendarList(pack,true,true,true);
     }
-    private static void CheckSameMonthCalendarList(QuizContentPack pack,bool inclusive,bool adjacent=false)
+    private static void CheckSameMonthCalendarList(QuizContentPack pack,bool inclusive,bool adjacent=false,bool february=false)
     {
-        if(!pack.Lists.TryGetValue(adjacent?SameMonthCalendarPilot.AdjacentListName:inclusive?SameMonthCalendarPilot.InclusiveListName:SameMonthCalendarPilot.ListName,out var rows))return;
+        if(!pack.Lists.TryGetValue(february?SameMonthCalendarPilot.FebruaryCommonListName:adjacent?(inclusive?SameMonthCalendarPilot.AdjacentInclusiveListName:SameMonthCalendarPilot.AdjacentListName):inclusive?SameMonthCalendarPilot.InclusiveListName:SameMonthCalendarPilot.ListName,out var rows))return;
         if(rows.ValueKind!=System.Text.Json.JsonValueKind.Array||rows.GetArrayLength()==0)Fail("Missing same-month contexts.");
         var ids=new HashSet<string>();
         foreach(var row in rows.EnumerateArray())
@@ -17,7 +19,7 @@ public static partial class QuizContentValidation
             if(!ids.Add(RequiredString(row,"Id")))Fail("Duplicate same-month context.");
             foreach(string field in new[]{"Actor","Item","StartAction","EndAction","Interval"})_=RequiredString(row,field);
             if(RequiredString(row,"StartAction")==RequiredString(row,"EndAction"))Fail("Same-month events must differ.");
-            if(RequiredString(row,"RelationId")!=(adjacent?SameMonthCalendarPilot.AdjacentRelation:inclusive?SameMonthCalendarPilot.InclusiveRelation:SameMonthCalendarPilot.Relation)
+            if(RequiredString(row,"RelationId")!=(february?SameMonthCalendarPilot.FebruaryCommonRelation:adjacent?(inclusive?SameMonthCalendarPilot.AdjacentInclusiveRelation:SameMonthCalendarPilot.AdjacentRelation):inclusive?SameMonthCalendarPilot.InclusiveRelation:SameMonthCalendarPilot.Relation)
                 ||RequiredString(row,"CountRule")!=(inclusive?"include-start-include-end":"exclude-start-include-end")
                 ||RequiredString(row,"TargetRole")!=(inclusive?"counted-calendar-days":"elapsed-days"))Fail("Changed same-month relation/counting rule.");
             string[] known=adjacent?["start-day","end-day","start-month","end-month","year","start-month-length","include-start","include-end"]:["start-day","end-day","month","year","include-start","include-end"];

@@ -12,7 +12,11 @@ internal static class SameMonthCalendarCatalogue
         ||c.BankVariant==(int)SameMonthCalendarPilot.InclusiveType
             &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.InclusivePrefix,StringComparison.Ordinal)==true
         ||c.BankVariant==(int)SameMonthCalendarPilot.AdjacentType
-            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.AdjacentPrefix,StringComparison.Ordinal)==true);
+            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.AdjacentPrefix,StringComparison.Ordinal)==true
+        ||c.BankVariant==(int)SameMonthCalendarPilot.AdjacentInclusiveType
+            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.AdjacentInclusivePrefix,StringComparison.Ordinal)==true
+        ||c.BankVariant==(int)SameMonthCalendarPilot.FebruaryCommonType
+            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.FebruaryCommonPrefix,StringComparison.Ordinal)==true);
     internal static NarrativeLesson Build(BasicQuestionContract c)
     {
         if(SameMonthCalendarPilot.ProfileType(c.Story!.NarrativeId)!=(ElementaryQuizType)c.BankVariant)
@@ -39,7 +43,7 @@ internal static class SameMonthCalendarCatalogue
             [d.Context.Question,d.Context.AlternativeQuestion],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string PromptRelation(BasicQuestionContract c)=>SameMonthCalendarPilot.ProfileRelation(c.SceneId)
-        +(SameMonthCalendarPilot.IsAdjacent(c.SceneId)?AdjacentMonthCalendarLanguage.Relation:"; f0=start day; f1=end day; f2=the SAME month in both dates; f3=the SAME year in both dates; v0=actor; v1=item; v2=start action; v3=end action; v4=interval noun phrase; "
+        +(SameMonthCalendarPilot.IsAdjacent(c.SceneId)?AdjacentMonthCalendarLanguage.PromptRelation(c):"; f0=start day; f1=end day; f2=the SAME month in both dates; f3=the SAME year in both dates; v0=actor; v1=item; v2=start action; v3=end action; v4=interval noun phrase; "
         +(SameMonthCalendarPilot.IsInclusive(c.SceneId)?"INCLUDE both endpoints, count EVERY calendar day; equal dates count once; target=counted calendar DAYS.":"EXCLUDE start, INCLUDE end; target=elapsed DAYS."));
     internal static string WritingInstructions(BasicQuestionContract c)
     {
@@ -67,7 +71,7 @@ internal static class SameMonthCalendarCatalogue
     {
         if(SameMonthCalendarPilot.IsAdjacent(c.SceneId))return AdjacentMonthCalendarLanguage.ContextNotes(c);
         bool inclusive=SameMonthCalendarPilot.IsInclusive(c.SceneId),adjacent=SameMonthCalendarPilot.IsAdjacent(c.SceneId);
-        string prefix=adjacent?SameMonthCalendarPilot.AdjacentPrefix:inclusive?SameMonthCalendarPilot.InclusivePrefix:SameMonthCalendarPilot.Prefix;
+        string prefix=SameMonthCalendarPilot.ProfilePrefix(inclusive,adjacent);
         var context=SameMonthCalendarPilot.Contexts(c.Language,inclusive,adjacent).Single(row=>prefix+row.Id==c.SceneId);
         bool vi=c.Language==AppLanguage.Vietnamese;
         string position=context.Id is "equipment" or "model" or "practice" or "reading"

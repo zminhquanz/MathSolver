@@ -24,6 +24,9 @@ internal static class CalendarCountingLanguage
             +@"|tính cả "+StartVi+@" và "+EndVi
             +@"|"+StartVi+@" và "+EndVi+@" đều được tính"
             +@"|đếm (?:mọi|tất cả các) ngày từ "+StartVi+@" đến hết "+EndVi
+            +@"|(?:cần )?(?:đếm|tính) (?:mọi|tất cả các) ngày, bao gồm cả "+StartVi+@" và "+EndVi
+            +@"|toàn bộ khoảng thời gian, bao gồm cả "+StartVi+@" và "+EndVi+@", (?:đều )?được tính"
+            +@"|mọi ngày trong khoảng thời gian từ "+StartVi+@" đến "+EndVi+@" (?:đều )?được tính"
         :@"include both "+StartEn+@" and "+EndEn
             +@"|count "+EveryEn+@", including both "+StartEn+@" and "+EndEn
             +@"|both "+StartEn+@" and "+EndEn+@" are included"
