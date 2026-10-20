@@ -1207,16 +1207,22 @@ public partial class FormulaPage : ContentPage
 
     private void OnFormulaSubTabGridSizeChanged(object? sender, EventArgs e)
     {
-        if (!FormulaSubTabBar.IsVisible) return;
+        if (!FormulaSubTabBar.IsVisible || !FormulaSubTabScrollView.CanUpdateTabLayout) return;
         if (FormulaSubTabScrollView.UpdateTabLayout(FormulaSubTabGrid))
-            Dispatcher.Dispatch(async () => await ScrollFormulaSubTabIntoViewAsync(_selectedSubTab));
+            Dispatcher.Dispatch(async () =>
+            {
+                if (FormulaSubTabScrollView.CanUpdateTabLayout)
+                    await ScrollFormulaSubTabIntoViewAsync(_selectedSubTab);
+            });
     }
 
     private async Task ScrollFormulaSubTabIntoViewAsync(FormulaSubTab tab)
     {
+        if (WindowUiLifetime.IsClosing(Window)) return;
 #if ANDROID
         await ScrollAndroidFormulaSubTabIntoViewAsync(tab);
 #else
+        if (!FormulaSubTabScrollView.CanUpdateTabLayout) return;
         Button selected = tab switch
         {
             FormulaSubTab.UnknownComponent => UnknownComponentTabButton,

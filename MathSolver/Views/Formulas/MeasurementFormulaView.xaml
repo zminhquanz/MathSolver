@@ -107,6 +107,10 @@
                                 TextChanged="OnValueTextChanged" />
                         </Border>
 
+                        <Label x:Name="PrecisionHintLabel"
+                               FontSize="13" LineBreakMode="WordWrap"
+                               TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
                         <!--
                             Reflow From / Swap / To by available content width and text scale.
                             Narrow windows and tablet split-screen use the same stacked layout.

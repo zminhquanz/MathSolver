@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using MathSolver.Services;
 
 namespace MathSolver.Controls;
 
@@ -37,13 +38,10 @@ public static class InteractiveButtonAnimation
     private static readonly ConditionalWeakTable<Button, AnimationState>
         States = new();
 
-    private static readonly ConditionalWeakTable<Window, WindowAnimationState>
-        Windows = new();
-
     /// <summary>Called on the UI thread before a window releases its scoped MAUI services.</summary>
     public static void StopForWindow(Window window)
     {
-        Windows.GetValue(window, static _ => new()).IsClosing = true;
+        WindowUiLifetime.BeginClose(window);
         foreach (var pair in States)
             if (ReferenceEquals(pair.Value.HostWindow, window) || ReferenceEquals(pair.Key.Window, window))
                 Reset(pair.Key, pair.Value);
@@ -241,8 +239,7 @@ public static class InteractiveButtonAnimation
             state.RestingScale, null, SettleDuration, Easing.SpringOut);
     }
 
-    private static bool IsWindowClosing(Window? window) => window is not null
-        && Windows.TryGetValue(window, out var lifetime) && lifetime.IsClosing;
+    private static bool IsWindowClosing(Window? window) => WindowUiLifetime.IsClosing(window);
 
     private static bool CanAnimate(Button button, AnimationState state, object? handler) =>
         state.IsLoaded && button.IsLoaded && button.IsEnabled
@@ -364,8 +361,4 @@ public static class InteractiveButtonAnimation
         public int Version { get; set; }
     }
 
-    private sealed class WindowAnimationState
-    {
-        public bool IsClosing { get; set; }
-    }
 }

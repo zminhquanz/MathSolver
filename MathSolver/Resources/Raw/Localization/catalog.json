@@ -33,6 +33,16 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "Formula.Measurement.OutputUnit.Hour.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese uses giờ/phút/giây/mili giây; English uses h/min/s/ms. Abbreviations do not change for the Other form."},
+    "Formula.Measurement.OutputUnit.Minute.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese: phút. English: min, including plural quantities."},
+    "Formula.Measurement.OutputUnit.Second.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese: giây. English: s, including plural quantities."},
+    "Formula.Measurement.OutputUnit.Millisecond.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese: mili giây. English: ms, including plural quantities."},
+    "Formula.Measurement.OutputUnit.Week.One": {"context":"Formula > Units: unit word after a quantity","translatorNote":"One means the displayed value is +1 or -1; Other covers all other values. These lowercase unit words are localized, while standard symbols such as km and kg stay unchanged."},
+    "Formula.Measurement.OutputUnit.Week.Other": {"context":"Formula > Units: plural unit word after a quantity","translatorNote":"Use the plural for all displayed values other than +1/-1. Vietnamese has the same word for both forms."},
+    "Formula.Measurement.OutputUnit.Day.One": {"context":"Formula > Units: unit word after a quantity","translatorNote":"One means the displayed value is +1 or -1; translate the unit word, e.g. ngày/day."},
+    "Formula.Measurement.OutputUnit.Day.Other": {"context":"Formula > Units: plural unit word after a quantity","translatorNote":"Use the plural for all displayed values other than +1/-1. Vietnamese has the same word for both forms."},
+    "Formula.Measurement.OutputUnit.Yen.One": {"context":"Formula > Units: Vietnamese mass unit yến, equal to 10 kg","translatorNote":"Word after the displayed quantity +1/-1; not Japanese currency. English describes the 10-kilogram unit."},
+    "Formula.Measurement.OutputUnit.Yen.Other": {"context":"Formula > Units: Vietnamese mass unit yến, equal to 10 kg","translatorNote":"Plural form after all displayed quantities other than +1/-1; not Japanese currency."},
     "Fraction.Expression.InputTitle": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
     "Fraction.Expression.InputHelp": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
     "Fraction.Expression.Placeholder": {"context": "Solve > Fractions > Expression mode", "translatorNote": "Exact fraction expressions share their evaluator with quizzes. Preserve mathematical symbols and placeholders."},
@@ -1821,6 +1831,21 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key":"Formula.Measurement.OutputUnit.Hour.Other","source":"giờ","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Hour.One","source":"giờ","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Minute.Other","source":"phút","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Minute.One","source":"phút","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Second.Other","source":"giây","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Second.One","source":"giây","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Millisecond.Other","source":"mili giây","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Millisecond.One","source":"mili giây","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Week.Other","source":"tuần","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Week.One","source":"tuần","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Day.Other","source":"ngày","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Day.One","source":"ngày","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Yen.Other","source":"yến","mode":"exact"},
+    {"key":"Formula.Measurement.OutputUnit.Yen.One","source":"yến","mode":"exact"},
+    {"key":"Formula.Measurement.PrecisionHint","source":"Nhập tối đa 10 chữ số thập phân. Kết quả làm tròn tối đa 10 chữ số thập phân; dấu ≈ cho biết giá trị đã làm tròn.","mode":"exact"},
     {"key":"NumberTheory.PrimeMethod","source":"Cách 1 · Thừa số nguyên tố (lớp 6)","mode":"exact"},
     {"key":"NumberTheory.EuclidMethod","source":"Cách 2 · Thuật toán Euclid","mode":"exact"},
     {"key":"NumberTheory.PrimeDecompose","source":"Phân tích số ra thừa số nguyên tố:","mode":"exact"},
@@ -8293,7 +8318,7 @@
     },
     {
       "key": "Formula.Measurement.InvalidNumber",
-      "source": "Giá trị nhập không phải là số hợp lệ.",
+      "source": "Nhập số hợp lệ với tối đa 10 chữ số thập phân. Giá trị phải nằm trong phạm vi hỗ trợ.",
       "mode": "exact"
     },
     {

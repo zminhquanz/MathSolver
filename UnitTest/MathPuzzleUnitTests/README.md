@@ -1,5 +1,12 @@
 # Math puzzle checks
 
+Filter `"Unit conversion"` exercises the real Formula → Units conversion engine:
+exact time/metric/speed/temperature fixtures, identity at decimal.MaxValue,
+large representable results with overflowing decimal intermediates, input rejection
+beyond ten effective decimal places, VI/EN separators, exponent notation, and
+ten-place rounding/display without negative zero. Inputs that decimal.TryParse
+would silently round are rejected. The shared engine retains precision for practice.
+
 `dotnet run --project UnitTest/MathPuzzleUnitTests -c Release -- "Number theory"`
 checks the shared GCD/LCM engine against independent divisor and multiple searches
 for 6,560 ordered pairs, validates every Euclidean division and stopping condition,

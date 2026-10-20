@@ -29,7 +29,7 @@ Tra cứu và tính theo công thức, chuyển đổi đơn vị, bảng cửu 
 
 - [AverageFormulaView.xaml](Formulas/AverageFormulaView.xaml)
 - [FormulaPage.xaml](Formulas/FormulaPage.xaml)
-- [MeasurementFormulaView.xaml](Formulas/MeasurementFormulaView.xaml)
+- [MeasurementFormulaView.xaml](Formulas/MeasurementFormulaView.xaml): ô quy đổi dùng parser `decimal` giới hạn 10 chữ số thập phân, có gợi ý và lỗi Việt/Anh. Kết quả và phương trình cùng dùng định dạng tối đa 10 chữ số; hiện dấu ≈ khi đã làm tròn, còn 1 giờ → phút hiển thị chính xác 60 phút (Việt) / 60 min (Anh). Cả hai dòng dùng `FormatQuantity` để dịch đơn vị viết bằng chữ theo ngôn ngữ hiện tại (1 giờ = 60 phút / 1 h = 60 min; 24 giờ = 1 ngày / 24 h = 1 day); đổi ngôn ngữ dựng lại cả danh sách và kết quả, giữ lựa chọn đang dùng.
 - [MotionFormulaView.xaml](Formulas/MotionFormulaView.xaml)
 - [MultiplicationTablePage.xaml](Formulas/MultiplicationTablePage.xaml)
 - [ProportionFormulaView.xaml](Formulas/ProportionFormulaView.xaml)

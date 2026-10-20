@@ -77,6 +77,7 @@ public partial class MeasurementFormulaView : ContentView
         TipsTitleLabel.Text = T("Formula.Measurement.TipsTitle");
         TipsTextLabel.Text = T("Formula.Measurement.TipsText");
         ValueEntry.Placeholder = T("Formula.Measurement.ValuePlaceholder");
+        PrecisionHintLabel.Text = T("Formula.Measurement.PrecisionHint");
         SemanticProperties.SetDescription(CategoryPicker, CategoryLabel.Text);
         SemanticProperties.SetDescription(ValueEntry, ValueLabel.Text);
         SemanticProperties.SetDescription(FromUnitPicker, FromLabel.Text);
@@ -339,16 +340,17 @@ public partial class MeasurementFormulaView : ContentView
         }
 
         string inputText =
-            MeasurementEngine.FormatValue(input);
+            MeasurementEngine.FormatQuantity(input, from);
 
         string resultText =
-            MeasurementEngine.FormatValue(result);
+            MeasurementEngine.FormatQuantity(result, to);
 
+        bool isRounded = result != decimal.Round(result, MeasurementEngine.MaximumDecimalPlaces, MidpointRounding.AwayFromZero);
         ResultLabel.Text =
-            $"{resultText} {to.Symbol}";
+            $"{(isRounded ? "≈ " : "")}{resultText}";
 
         EquationLabel.Text =
-            $"{inputText} {from.Symbol} = {resultText} {to.Symbol}";
+            $"{inputText} {(isRounded ? "≈" : "=")} {resultText}";
     }
 
     private void ShowError(

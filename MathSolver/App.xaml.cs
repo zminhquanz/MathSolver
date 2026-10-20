@@ -40,8 +40,8 @@ public partial class App : Application
         };
 #endif
 
-        // Register before other teardown callbacks: Released/animation
-        // continuations must stop before the window's scoped services disappear.
+        // Register before other teardown callbacks: the shared closing marker
+        // stops button feedback and late layout callbacks before scoped services disappear.
         window.Destroying += (_, _) => InteractiveButtonAnimation.StopForWindow(window);
 
 #if !ANDROID

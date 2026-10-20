@@ -6,6 +6,8 @@ using Microsoft.UI.Xaml.Media;
 using NativeScrollViewer = Microsoft.UI.Xaml.Controls.ScrollViewer;
 #endif
 
+using MathSolver.Services;
+
 namespace MathSolver.Controls;
 
 /// <summary>
@@ -22,22 +24,87 @@ public sealed class MouseDragScrollView : ScrollView
     public bool ScrollInPointerDirection { get; set; }
 
     private bool _isUpdatingTabs;
+    private bool _handlerChanging;
+    private int _layoutVersion;
     private double _lastTabViewportWidth = -1d;
+
+    internal bool CanUpdateTabLayout => !_handlerChanging && IsLoaded
+        && Handler?.MauiContext is not null
+        && Window is { Handler.MauiContext: not null } window && !WindowUiLifetime.IsClosing(window);
+
+    public MouseDragScrollView()
+    {
+        Unloaded += (_, _) => InvalidateTabLayout();
+        Loaded += (_, _) =>
+        {
+            InvalidateTabLayout();
+            if (!CanUpdateTabLayout) return;
+            int version = _layoutVersion;
+            // Loaded can precede the child buttons' Loaded events. Run once
+            // after those events, and reject the callback if the view detaches.
+            Dispatcher.Dispatch(() =>
+            {
+                if (version == _layoutVersion && CanUpdateTabLayout && Content is Grid tabs)
+                    UpdateTabLayout(tabs);
+            });
+        };
+    }
+
+    private void InvalidateTabLayout()
+    {
+        _layoutVersion++;
+        _lastTabViewportWidth = -1d;
+    }
+
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    {
+        _handlerChanging = true;
+        InvalidateTabLayout();
+#if WINDOWS
+        Detach();
+#endif
+        base.OnHandlerChanging(args);
+    }
+
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+        _handlerChanging = false;
+        InvalidateTabLayout();
+#if WINDOWS
+        AttachNativeHandler();
+#endif
+    }
 
     /// <summary>Fits one row when there is room, otherwise keeps its readable width for horizontal scrolling.</summary>
     public bool UpdateTabLayout(Grid tabs)
     {
-        if (_isUpdatingTabs || Width <= 0d || tabs.Children.Count == 0)
+        if (_isUpdatingTabs || !CanUpdateTabLayout || !tabs.IsLoaded
+            || tabs.Handler?.MauiContext is null || !ReferenceEquals(tabs.Window, Window)
+            || Width <= 0d || tabs.Children.Count == 0)
             return false;
+        int version = _layoutVersion;
+        var handler = Handler;
+        var tabsHandler = tabs.Handler;
+        var children = tabs.Children.ToArray();
+        bool IsCurrent() => version == _layoutVersion && CanUpdateTabLayout
+            && ReferenceEquals(Handler, handler) && ReferenceEquals(tabs.Handler, tabsHandler)
+            && tabs.IsLoaded && ReferenceEquals(tabs.Window, Window);
         _isUpdatingTabs = true;
         try
         {
             double available = Math.Max(1d, Width - Padding.HorizontalThickness);
             bool changed = Math.Abs(_lastTabViewportWidth - available) >= 0.5d;
-            _lastTabViewportWidth = available;
             double minimum = 170d * MathSolver.Services.ResponsiveLayoutPolicy.TextScale;
-            double[] widths = tabs.Children.Select(child => Math.Max(minimum,
-                child.Measure(double.PositiveInfinity, double.PositiveInfinity).Width)).ToArray();
+            double[] widths = new double[children.Length];
+            for (int i = 0; i < children.Length; i++)
+            {
+                if (!IsCurrent() || children[i].Handler?.MauiContext is null
+                    || children[i] is VisualElement { IsLoaded: false }) return false;
+                widths[i] = Math.Max(minimum,
+                    children[i].Measure(double.PositiveInfinity, double.PositiveInfinity).Width);
+            }
+            if (!IsCurrent() || !children.SequenceEqual(tabs.Children)) return false;
             double natural = widths.Sum() + tabs.ColumnSpacing * (widths.Length - 1);
             double extra = Math.Max(0d, available - natural) / widths.Length;
 
@@ -56,6 +123,7 @@ public sealed class MouseDragScrollView : ScrollView
             }
             for (int i = 0; i < widths.Length; i++)
             {
+                if (!IsCurrent()) return false;
                 double width = widths[i] + extra;
                 Microsoft.Maui.GridLength current = tabs.ColumnDefinitions[i].Width;
                 if (!current.IsAbsolute || Math.Abs(current.Value - width) >= 0.5d)
@@ -72,7 +140,14 @@ public sealed class MouseDragScrollView : ScrollView
                 changed = true;
                 tabs.WidthRequest = contentWidth;
             }
+            _lastTabViewportWidth = available;
             return changed;
+        }
+        catch (ObjectDisposedException) when (!IsCurrent())
+        {
+            // A native measurement can finish during re-entrant teardown.
+            // Do not hide failures while the view and window are still live.
+            return false;
         }
         finally
         {
@@ -89,15 +164,8 @@ public sealed class MouseDragScrollView : ScrollView
     private bool _dragging;
     private bool _transferringCapture;
 
-    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    private void AttachNativeHandler()
     {
-        Detach();
-        base.OnHandlerChanging(args);
-    }
-
-    protected override void OnHandlerChanged()
-    {
-        base.OnHandlerChanged();
         if (Handler?.PlatformView is not NativeScrollViewer viewer)
             return;
 

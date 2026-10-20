@@ -4240,13 +4240,21 @@ public partial class CalculationPage : ContentPage
 
     private void OnCalculationSubTabGridSizeChanged(object? sender, EventArgs e)
     {
-        if (!CalculationSubTabBar.IsVisible) return;
+        if (!CalculationSubTabBar.IsVisible || !CalculationSubTabScrollView.CanUpdateTabLayout) return;
         if (CalculationSubTabScrollView.UpdateTabLayout(CalculationSubTabGrid))
-            Dispatcher.Dispatch(async () => await ScrollSubTabIntoViewAsync(GetSubTabButton(_selectedSubTab)));
+            Dispatcher.Dispatch(async () =>
+            {
+                if (CalculationSubTabScrollView.CanUpdateTabLayout)
+                    await ScrollSubTabIntoViewAsync(GetSubTabButton(_selectedSubTab));
+            });
     }
 
     private async Task ScrollSubTabIntoViewAsync(Button selectedButton)
     {
+        if (WindowUiLifetime.IsClosing(Window)) return;
+#if !ANDROID
+        if (!CalculationSubTabScrollView.CanUpdateTabLayout) return;
+#endif
         try
         {
 #if ANDROID

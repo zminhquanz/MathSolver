@@ -2,6 +2,9 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Unit conversion exact decimal factors", PuzzleTests.CheckUnitConversionExactFactors),
+    ("Unit conversion ten-place decimal display", PuzzleTests.CheckUnitConversionDecimalDisplay),
+    ("Unit conversion ten-place input precision", PuzzleTests.CheckUnitConversionInputPrecision),
     ("Number theory exact GCD LCM and Euclidean steps", PuzzleTests.CheckNumberTheory),
     ("Number theory grade-six prime factor lessons", PuzzleTests.CheckPrimeFactorLessons),
     ("Fraction live preview without formatting exceptions", PuzzleTests.CheckFractionLivePreview),
