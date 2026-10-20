@@ -16,7 +16,9 @@ internal static class SameMonthCalendarCatalogue
         ||c.BankVariant==(int)SameMonthCalendarPilot.AdjacentInclusiveType
             &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.AdjacentInclusivePrefix,StringComparison.Ordinal)==true
         ||c.BankVariant==(int)SameMonthCalendarPilot.FebruaryCommonType
-            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.FebruaryCommonPrefix,StringComparison.Ordinal)==true);
+            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.FebruaryCommonPrefix,StringComparison.Ordinal)==true
+        ||c.BankVariant==(int)SameMonthCalendarPilot.FebruaryLeapType
+            &&c.Story?.NarrativeId.StartsWith(SameMonthCalendarPilot.FebruaryLeapPrefix,StringComparison.Ordinal)==true);
     internal static NarrativeLesson Build(BasicQuestionContract c)
     {
         if(SameMonthCalendarPilot.ProfileType(c.Story!.NarrativeId)!=(ElementaryQuizType)c.BankVariant)

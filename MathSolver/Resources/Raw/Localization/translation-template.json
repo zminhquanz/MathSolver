@@ -2096,7 +2096,8 @@
     "AiBank.Error.ExcelInvalidVariableSyntax": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
     "Quiz.Elementary.AdjacentMonthElapsed": "Elapsed days across adjacent months",
     "Quiz.Elementary.AdjacentMonthInclusive": "Calendar days across adjacent months (both endpoints)",
-    "Quiz.Elementary.FebruaryCommonInclusive": "February to March (common year, both endpoints)"
+    "Quiz.Elementary.FebruaryCommonInclusive": "February to March (common year, both endpoints)",
+    "Quiz.Elementary.FebruaryLeapInclusive": "February to March (leap year, both endpoints)"
   },
   "templates": {
     "dynamic.calculation_add": "Ta lấy {first} cộng với {second}.",

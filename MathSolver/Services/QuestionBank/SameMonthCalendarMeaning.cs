@@ -10,6 +10,8 @@ internal static class SameMonthCalendarMeaning
     {
         bool vi=c.Language==AppLanguage.Vietnamese,inclusive=SameMonthCalendarPilot.IsInclusive(c.SceneId),adjacent=SameMonthCalendarPilot.IsAdjacent(c.SceneId);
         var facts=d.Facts!;
+        if(SameMonthCalendarPilot.IsFebruaryLeap(c.SceneId)&&FebruaryLeapCalendarLanguage.HasContradiction(d,c.Language))
+            return new(null,"ChangedRelationOrTarget",ErrorDetails:"February has 29 days in the supplied leap year; keep that year, both dates, and the inclusive day-count target.");
         if(SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)&&FebruaryCommonCalendarLanguage.HasContradiction(d,c.Language))
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"February has 28 days in the supplied common year; keep that year, both dates, and the inclusive day-count target.");
         int ruleIndex=adjacent?3:2;
@@ -100,8 +102,8 @@ internal static class SameMonthCalendarMeaning
                 +@"|what is the (?:total )?(?:count|number) of (?:calendar )?days (?:for|in) "+owner;
         if(vi)
         {
-            var context=SameMonthCalendarPilot.Contexts(c.Language,inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)).Single(row=>
-                SameMonthCalendarPilot.ProfilePrefix(inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId))+row.Id==c.SceneId);
+            var context=SameMonthCalendarPilot.Contexts(c.Language,inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId),SameMonthCalendarPilot.IsFebruaryLeap(c.SceneId)).Single(row=>
+                SameMonthCalendarPilot.ProfilePrefix(inclusive,adjacent,SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId),SameMonthCalendarPilot.IsFebruaryLeap(c.SceneId))+row.Id==c.SceneId);
             // "Thời gian đợt đọc sách" names a duration. Prefixing a loan
             // already named "thời gian mượn ..." repeats its interval label.
             if(!context.Interval.StartsWith("thời gian",StringComparison.OrdinalIgnoreCase)

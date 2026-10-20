@@ -21,17 +21,22 @@ internal static class SameMonthCalendarPilot
     internal const string FebruaryCommonPrefix="calendar-february-common/",FebruaryCommonListName="FebruaryCommonCalendarOpen.Contexts";
     internal const string FebruaryCommonRelation="february-common-to-march-include-both";
     internal const ElementaryQuizType FebruaryCommonType=ElementaryQuizType.FebruaryCommonInclusive;
+    internal const string FebruaryLeapPrefix="calendar-february-leap/",FebruaryLeapListName="FebruaryLeapCalendarOpen.Contexts";
+    internal const string FebruaryLeapRelation="february-leap-to-march-include-both";
+    internal const ElementaryQuizType FebruaryLeapType=ElementaryQuizType.FebruaryLeapInclusive;
+    internal static bool IsFebruaryLeap(string profile)=>profile.StartsWith(FebruaryLeapPrefix,StringComparison.Ordinal);
     internal static bool IsFebruaryCommon(string profile)=>profile.StartsWith(FebruaryCommonPrefix,StringComparison.Ordinal);
-    internal static bool IsType(ElementaryQuizType type)=>type is Type or InclusiveType or AdjacentType or AdjacentInclusiveType or FebruaryCommonType;
+    internal static bool IsFebruary(string profile)=>IsFebruaryCommon(profile)||IsFebruaryLeap(profile);
+    internal static bool IsType(ElementaryQuizType type)=>type is Type or InclusiveType or AdjacentType or AdjacentInclusiveType or FebruaryCommonType or FebruaryLeapType;
     internal static IEnumerable<string> ProfilesForType(AppLanguage language,int variant)=>Profiles(language,
-        variant is (int)InclusiveType or (int)AdjacentInclusiveType or (int)FebruaryCommonType,
-        variant is (int)AdjacentType or (int)AdjacentInclusiveType or (int)FebruaryCommonType,variant==(int)FebruaryCommonType);
-    internal static bool IsAdjacentInclusive(string profile)=>profile.StartsWith(AdjacentInclusivePrefix,StringComparison.Ordinal)||IsFebruaryCommon(profile);
-    internal static string ProfilePrefix(bool inclusive,bool adjacent,bool february=false)=>february?FebruaryCommonPrefix:adjacent?(inclusive?AdjacentInclusivePrefix:AdjacentPrefix):inclusive?InclusivePrefix:Prefix;
+        variant is (int)InclusiveType or (int)AdjacentInclusiveType or (int)FebruaryCommonType or (int)FebruaryLeapType,
+        variant is (int)AdjacentType or (int)AdjacentInclusiveType or (int)FebruaryCommonType or (int)FebruaryLeapType,variant==(int)FebruaryCommonType,variant==(int)FebruaryLeapType);
+    internal static bool IsAdjacentInclusive(string profile)=>profile.StartsWith(AdjacentInclusivePrefix,StringComparison.Ordinal)||IsFebruary(profile);
+    internal static string ProfilePrefix(bool inclusive,bool adjacent,bool february=false,bool leap=false)=>leap?FebruaryLeapPrefix:february?FebruaryCommonPrefix:adjacent?(inclusive?AdjacentInclusivePrefix:AdjacentPrefix):inclusive?InclusivePrefix:Prefix;
     internal static bool IsAdjacent(string profile)=>profile.StartsWith(AdjacentPrefix,StringComparison.Ordinal)||IsAdjacentInclusive(profile);
     internal static bool IsInclusive(string profile)=>profile.StartsWith(InclusivePrefix,StringComparison.Ordinal)||IsAdjacentInclusive(profile);
-    internal static ElementaryQuizType ProfileType(string profile)=>IsFebruaryCommon(profile)?FebruaryCommonType:IsAdjacentInclusive(profile)?AdjacentInclusiveType:IsAdjacent(profile)?AdjacentType:IsInclusive(profile)?InclusiveType:Type;
-    internal static string ProfileRelation(string profile)=>IsFebruaryCommon(profile)?FebruaryCommonRelation:IsAdjacentInclusive(profile)?AdjacentInclusiveRelation:IsAdjacent(profile)?AdjacentRelation:IsInclusive(profile)?InclusiveRelation:Relation;
+    internal static ElementaryQuizType ProfileType(string profile)=>IsFebruaryLeap(profile)?FebruaryLeapType:IsFebruaryCommon(profile)?FebruaryCommonType:IsAdjacentInclusive(profile)?AdjacentInclusiveType:IsAdjacent(profile)?AdjacentType:IsInclusive(profile)?InclusiveType:Type;
+    internal static string ProfileRelation(string profile)=>IsFebruaryLeap(profile)?FebruaryLeapRelation:IsFebruaryCommon(profile)?FebruaryCommonRelation:IsAdjacentInclusive(profile)?AdjacentInclusiveRelation:IsAdjacent(profile)?AdjacentRelation:IsInclusive(profile)?InclusiveRelation:Relation;
     internal sealed record Context(string Id,string Actor,string Item,string StartAction,string EndAction,string Interval,
         string RelationId,string CountRule,string[] KnownRoles,string TargetRole,
         string[] Facts,string Question,string Lead,string[] AlternativeFacts,string AlternativeQuestion);
@@ -59,23 +64,23 @@ internal static class SameMonthCalendarPilot
         }
         internal string Problem=>Render(string.Join(" ",Context.Facts.Append(Context.Question)));
     }
-    internal static IReadOnlyList<Context> Contexts(AppLanguage language,bool inclusive=false,bool adjacent=false,bool february=false)
-        =>QuizContentCatalog.LoadList<Context>(february?FebruaryCommonListName:adjacent?(inclusive?AdjacentInclusiveListName:AdjacentListName):inclusive?InclusiveListName:ListName,QuizContentCatalog.Culture(language));
-    internal static IEnumerable<string> Profiles(AppLanguage language,bool inclusive=false,bool adjacent=false,bool february=false)
-        =>Contexts(language,inclusive,adjacent,february).Select(c=>ProfilePrefix(inclusive,adjacent,february)+c.Id);
+    internal static IReadOnlyList<Context> Contexts(AppLanguage language,bool inclusive=false,bool adjacent=false,bool february=false,bool leap=false)
+        =>QuizContentCatalog.LoadList<Context>(leap?FebruaryLeapListName:february?FebruaryCommonListName:adjacent?(inclusive?AdjacentInclusiveListName:AdjacentListName):inclusive?InclusiveListName:ListName,QuizContentCatalog.Culture(language));
+    internal static IEnumerable<string> Profiles(AppLanguage language,bool inclusive=false,bool adjacent=false,bool february=false,bool leap=false)
+        =>Contexts(language,inclusive,adjacent,february,leap).Select(c=>ProfilePrefix(inclusive,adjacent,february,leap)+c.Id);
     internal static Data Create(string profile,AppLanguage language,CurriculumTier tier,Random random)
     {
-        bool inclusive=IsInclusive(profile),adjacent=IsAdjacent(profile),february=IsFebruaryCommon(profile);
-        string prefix=ProfilePrefix(inclusive,adjacent,february);
+        bool inclusive=IsInclusive(profile),adjacent=IsAdjacent(profile),february=IsFebruaryCommon(profile),leap=IsFebruaryLeap(profile);
+        string prefix=ProfilePrefix(inclusive,adjacent,february,leap);
         if(!Enum.IsDefined(tier)||!profile.StartsWith(prefix,StringComparison.Ordinal))throw new ArgumentException("InvalidSameMonthProfile");
-        var context=Contexts(language,inclusive,adjacent,february).SingleOrDefault(c=>prefix+c.Id==profile)??throw new ArgumentException("InvalidSameMonthProfile");
-        if(february)
+        var context=Contexts(language,inclusive,adjacent,february,leap).SingleOrDefault(c=>prefix+c.Id==profile)??throw new ArgumentException("InvalidSameMonthProfile");
+        if(february||leap)
         {
-            int[] commonYears=Enumerable.Range(2025,11).Where(y=>!DateTime.IsLeapYear(y)).ToArray();
-            int commonYear=commonYears[random.Next(commonYears.Length)];
+            int[] februaryYears=Enumerable.Range(2025,11).Where(y=>DateTime.IsLeapYear(y)==leap).ToArray();
+            int februaryYear=februaryYears[random.Next(februaryYears.Length)];
             int window=new[]{3,5,8,12,15}[(int)tier-1];
-            int commonLength=DateTime.DaysInMonth(commonYear,2);
-            return new(context,profile,random.Next(commonLength-window+1,commonLength+1),random.Next(1,window+1),2,commonYear,3);
+            int februaryLength=DateTime.DaysInMonth(februaryYear,2);
+            return new(context,profile,random.Next(februaryLength-window+1,februaryLength+1),random.Next(1,window+1),2,februaryYear,3);
         }
         if(adjacent)
         {
@@ -99,11 +104,11 @@ public sealed partial class ElementaryQuizGenerator
 {
     internal ArithmeticQuizQuestion GenerateSameMonthCalendar(ArithmeticQuizMode mode,AppLanguage language,CurriculumTier tier,string profile)
         =>CompleteQuestion(mode,CreateSameMonthCalendar(language,tier,profile),[],null);
-    private ElementaryQuizContract CreateSameMonthCalendar(AppLanguage language,CurriculumTier tier,string profile="",bool inclusive=false,bool adjacent=false,bool february=false)
+    private ElementaryQuizContract CreateSameMonthCalendar(AppLanguage language,CurriculumTier tier,string profile="",bool inclusive=false,bool adjacent=false,bool february=false,bool leap=false)
     {
         if(profile.Length==0)
         {
-            var profiles=SameMonthCalendarPilot.Profiles(language,inclusive,adjacent,february).ToArray();
+            var profiles=SameMonthCalendarPilot.Profiles(language,inclusive,adjacent,february,leap).ToArray();
             profile=profiles[NextContextVariant(SameMonthCalendarPilot.ProfileType(profiles[0]),language,
                 SameMonthCalendarPilot.ProfileRelation(profiles[0]),profiles.Length)];
         }

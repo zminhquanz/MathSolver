@@ -162,7 +162,7 @@ public sealed partial class EssayAnswerValidator
         return !RequiresSolution(question) && question.WordProblem is null
             && (question.ElementaryProblem is null || question.ElementaryProblem.IsNumericDecimalCalculation
                 || ElementaryQuizGenerator.IsTimeFractionExtension(question.ElementaryProblem.Type)
-                || question.ElementaryProblem.Type is SameMonthCalendarPilot.Type or SameMonthCalendarPilot.InclusiveType or SameMonthCalendarPilot.AdjacentType or SameMonthCalendarPilot.AdjacentInclusiveType or SameMonthCalendarPilot.FebruaryCommonType
+                || question.ElementaryProblem.Type is SameMonthCalendarPilot.Type or SameMonthCalendarPilot.InclusiveType or SameMonthCalendarPilot.AdjacentType or SameMonthCalendarPilot.AdjacentInclusiveType or SameMonthCalendarPilot.FebruaryCommonType or SameMonthCalendarPilot.FebruaryLeapType
                 || question.ElementaryProblem.Type==OvernightTimePilot.Type
                 || question.ElementaryProblem.Type==SameDayBreakPilot.Type
                 || SameDayTimePilot.IsType(question.ElementaryProblem.Type)

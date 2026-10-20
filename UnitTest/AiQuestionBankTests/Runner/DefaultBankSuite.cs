@@ -20,6 +20,7 @@ internal static class DefaultBankSuite
         await AdjacentMonthCalendarTests.RunAsync();
         await AdjacentMonthInclusiveTests.RunAsync();
         await FebruaryCommonCalendarTests.RunAsync();
+        await FebruaryLeapCalendarTests.RunAsync();
         await SameDayBreakTests.RunAsync();
         await FractionPartOpenTests.RunAsync();
         await FractionRemainingOpenTests.RunAsync();

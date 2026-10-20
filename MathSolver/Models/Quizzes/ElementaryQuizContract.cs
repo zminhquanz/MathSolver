@@ -36,7 +36,8 @@ public enum ElementaryQuizType
     SameMonthInclusive,
     AdjacentMonthElapsed,
     AdjacentMonthInclusive,
-    FebruaryCommonInclusive
+    FebruaryCommonInclusive,
+    FebruaryLeapInclusive
 }
 
 public sealed record ElementaryAnswer(string Label, ReducedFraction Value, string Unit, string Expression,

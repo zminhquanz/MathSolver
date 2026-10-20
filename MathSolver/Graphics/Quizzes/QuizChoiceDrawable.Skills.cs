@@ -160,6 +160,7 @@ internal sealed partial class QuizChoiceDrawable
             case "time-calendar-inclusive": Equation("10 … 15", "15 − 10 + 1"); break;
             case "time-calendar-elapsed": Equation("10 … 15", "15 − 10"); break;
             case "time-february-common": Equation("28/2 → 1/3", "28−28+1+1"); break;
+            case "time-february-leap": Equation("29/2 → 1/3", "29−29+1+1"); break;
             case "time-calendar-adjacent-inclusive": Equation("4 → 5", "30 − 28 + 3 + 1"); break;
             case "time-calendar-adjacent": Equation("4 → 5", "30 − 28 + 3"); break;
             case "time-overnight": Equation("22 → 1", "24 h + …"); break;

@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--calendar-february-leap-open","--calendar-february-leap-open-model"],"--calendar-february-leap-open | --calendar-february-leap-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await FebruaryLeapCalendarTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,FebruaryLeapCalendarTests.NativeCases());
+        },args=>args is ["--calendar-february-leap-open"] or ["--calendar-february-leap-open-model",_] or ["--calendar-february-leap-open-model",_,_]),
         new(["--calendar-february-common-open","--calendar-february-common-open-model"],"--calendar-february-common-open | --calendar-february-common-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await FebruaryCommonCalendarTests.RunAsync();

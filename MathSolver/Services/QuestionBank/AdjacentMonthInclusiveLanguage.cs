@@ -8,10 +8,13 @@ internal static class AdjacentMonthInclusiveLanguage
     internal static string WritingInstructions(BasicQuestionContract c)
     {
         bool february=SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId);
+        bool leap=SameMonthCalendarPilot.IsFebruaryLeap(c.SceneId);
         string monthScope=c.Language==AppLanguage.Vietnamese
-            ?february?"Hai mốc thuộc tháng Hai và tháng Ba của cùng một năm thường do C# chọn; tháng Hai có 28 ngày. Giữ các biến tháng và năm trong đúng trường, không đổi thành năm nhuận."
+            ?leap?"Hai mốc thuộc tháng Hai và tháng Ba của cùng một năm nhuận do C# chọn; tháng Hai có 29 ngày. Giữ các biến tháng và năm trong đúng trường, không đổi thành năm thường."
+                :february?"Hai mốc thuộc tháng Hai và tháng Ba của cùng một năm thường do C# chọn; tháng Hai có 28 ngày. Giữ các biến tháng và năm trong đúng trường, không đổi thành năm nhuận."
                 :"Hai tháng liền nhau trong cùng năm, đều có 30 hoặc 31 ngày."
-            :february?"The dates are in February and March of the same common year chosen by C#; February has 28 days. Keep the month and year placeholders in their own fields; do not change this into a leap year."
+            :leap?"The dates are in February and March of the same leap year chosen by C#; February has 29 days. Keep the month and year placeholders in their own fields; do not change this into a common year."
+                :february?"The dates are in February and March of the same common year chosen by C#; February has 28 days. Keep the month and year placeholders in their own fields; do not change this into a leap year."
                 :"The months are consecutive within the same year, both with 30 or 31 days.";
         return c.Language==AppLanguage.Vietnamese?$$"""
         Bạn biên soạn toán đố tiểu học tự nhiên. Được viết câu mới, đổi cách mở đầu và từ nối; ví dụ chỉ để tham khảo.
