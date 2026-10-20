@@ -1,5 +1,6 @@
 using MathSolver.Services;
 using MathSolver.Views;
+using MathSolver.Controls;
 
 #if WINDOWS
 using MathSolver.Platforms.Windows;
@@ -39,6 +40,10 @@ public partial class App : Application
         };
 #endif
 
+        // Register before other teardown callbacks: Released/animation
+        // continuations must stop before the window's scoped services disappear.
+        window.Destroying += (_, _) => InteractiveButtonAnimation.StopForWindow(window);
+
 #if !ANDROID
         bool windowDestroyed = false;
 #endif
@@ -74,6 +79,7 @@ public partial class App : Application
 
         MathSolver.Platforms.Windows.WindowStateManager.Attach(window, () =>
         {
+            InteractiveButtonAnimation.StopForWindow(window);
             windowDestroyed = true;
             AppThemeManager.ThemeChanged -= titleBarThemeChanged;
             // Resetting TitleBar makes MAUI unsubscribe its LayoutUpdated

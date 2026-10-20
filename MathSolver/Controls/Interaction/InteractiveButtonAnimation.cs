@@ -37,6 +37,18 @@ public static class InteractiveButtonAnimation
     private static readonly ConditionalWeakTable<Button, AnimationState>
         States = new();
 
+    private static readonly ConditionalWeakTable<Window, WindowAnimationState>
+        Windows = new();
+
+    /// <summary>Called on the UI thread before a window releases its scoped MAUI services.</summary>
+    public static void StopForWindow(Window window)
+    {
+        Windows.GetValue(window, static _ => new()).IsClosing = true;
+        foreach (var pair in States)
+            if (ReferenceEquals(pair.Value.HostWindow, window) || ReferenceEquals(pair.Key.Window, window))
+                Reset(pair.Key, pair.Value);
+    }
+
     // Composite fields draw their caption and outline outside the input button.
     // Scaling only that button would pull its fill away from the surrounding frame.
     public static readonly BindableProperty IsPressAnimationEnabledProperty =
@@ -114,7 +126,10 @@ public static class InteractiveButtonAnimation
         button.Pressed += OnPressed;
         button.Released += OnReleased;
         button.Unloaded += OnUnloaded;
+        button.Loaded += OnLoaded;
+        button.HandlerChanging += OnHandlerChanging;
         button.PropertyChanged += OnButtonPropertyChanged;
+        if (button.IsLoaded) OnLoaded(button, EventArgs.Empty);
     }
 
     private static async void OnPressed(
@@ -136,6 +151,9 @@ public static class InteractiveButtonAnimation
             return;
         }
 
+        var handler = button.Handler;
+        if (!CanAnimate(button, state, handler)) return;
+
         bool isPlatformBackButton =
             GetIsPlatformBackButton(button);
 
@@ -148,7 +166,7 @@ public static class InteractiveButtonAnimation
         }
 #endif
 
-        state.Version++;
+        int version = ++state.Version;
 
         state.IsPressed = true;
         button.CancelAnimations();
@@ -168,16 +186,9 @@ public static class InteractiveButtonAnimation
                 ? WinBackPressDuration
                 : PressDuration;
 
-        await Task.WhenAll(
-            button.ScaleToAsync(
-                state.RestingScale * pressedScale,
-                pressDuration,
-                Easing.CubicOut),
-
-            button.FadeToAsync(
-                state.RestingOpacity * pressedOpacity,
-                pressDuration,
-                Easing.CubicOut));
+        await AnimatePhaseAsync(button, state, handler, version,
+            state.RestingScale * pressedScale, state.RestingOpacity * pressedOpacity,
+            pressDuration, Easing.CubicOut);
 
     }
 
@@ -198,45 +209,83 @@ public static class InteractiveButtonAnimation
         state.IsPressed = false;
         int version = ++state.Version;
 
+        var handler = button.Handler;
+        if (!CanAnimate(button, state, handler))
+        {
+            Reset(button, state);
+            return;
+        }
+
         button.CancelAnimations();
 
         if (isPlatformBackButton)
         {
-            await Task.WhenAll(
-                button.ScaleToAsync(
-                    state.RestingScale,
-                    WinBackReleaseDuration,
-                    Easing.CubicOut),
-
-                button.FadeToAsync(
-                    state.RestingOpacity,
-                    WinBackReleaseDuration,
-                    Easing.CubicOut));
+            await AnimatePhaseAsync(button, state, handler, version,
+                state.RestingScale, state.RestingOpacity,
+                WinBackReleaseDuration, Easing.CubicOut);
 
             return;
         }
 
-        await Task.WhenAll(
-            button.ScaleToAsync(
-                state.RestingScale * ReleaseOvershoot,
-                ReleaseDuration,
-                Easing.CubicOut),
+        bool completed = await AnimatePhaseAsync(button, state, handler, version,
+            state.RestingScale * ReleaseOvershoot, state.RestingOpacity,
+            ReleaseDuration, Easing.CubicOut);
 
-            button.FadeToAsync(
-                state.RestingOpacity,
-                ReleaseDuration,
-                Easing.CubicOut));
-
-        if (version != state.Version ||
+        if (!completed || version != state.Version ||
             state.IsPressed)
         {
             return;
         }
 
-        await button.ScaleToAsync(
-            state.RestingScale,
-            SettleDuration,
-            Easing.SpringOut);
+        await AnimatePhaseAsync(button, state, handler, version,
+            state.RestingScale, null, SettleDuration, Easing.SpringOut);
+    }
+
+    private static bool IsWindowClosing(Window? window) => window is not null
+        && Windows.TryGetValue(window, out var lifetime) && lifetime.IsClosing;
+
+    private static bool CanAnimate(Button button, AnimationState state, object? handler) =>
+        state.IsLoaded && button.IsLoaded && button.IsEnabled
+        && GetIsPressAnimationEnabled(button) && IsInsideEnabledScope(button)
+        && handler is not null && ReferenceEquals(button.Handler, handler)
+        && button.Handler.MauiContext is not null
+        && state.HostWindow is { Handler: not null } window
+        && ReferenceEquals(button.Window, window) && !IsWindowClosing(window);
+
+    private static async Task<bool> AnimatePhaseAsync(Button button, AnimationState state,
+        object? handler, int version, double scale, double? opacity, uint duration, Easing easing)
+    {
+        if (version != state.Version || !CanAnimate(button, state, handler)) return false;
+        try
+        {
+            var scaling = button.ScaleToAsync(scale, duration, easing);
+            bool cancelled = opacity is { } fade
+                ? (await Task.WhenAll(scaling, button.FadeToAsync(fade, duration, easing))).Any(value => value)
+                : await scaling;
+            return !cancelled && version == state.Version && CanAnimate(button, state, handler);
+        }
+        catch (ObjectDisposedException) when (!CanAnimate(button, state, handler))
+        {
+            // Covers a lifecycle change during native animation startup. Errors
+            // on a still-live view are not hidden by this teardown-only fallback.
+            return false;
+        }
+    }
+
+    private static void OnLoaded(object? sender, EventArgs e)
+    {
+        if (sender is Button button && States.TryGetValue(button, out var state))
+        {
+            state.HostWindow = button.Window;
+            state.IsLoaded = true;
+            Reset(button, state);
+        }
+    }
+
+    private static void OnHandlerChanging(object? sender, HandlerChangingEventArgs e)
+    {
+        if (e.OldHandler is not null && sender is Button button && States.TryGetValue(button, out var state))
+            Reset(button, state);
     }
 
     private static void OnUnloaded(
@@ -246,6 +295,7 @@ public static class InteractiveButtonAnimation
         if (sender is Button button &&
             States.TryGetValue(button, out AnimationState? state))
         {
+            state.IsLoaded = false;
             Reset(button, state);
         }
     }
@@ -288,8 +338,11 @@ public static class InteractiveButtonAnimation
         state.Version++;
 
         button.CancelAnimations();
-        button.Scale = state.RestingScale;
-        button.Opacity = state.RestingOpacity;
+        if (state.IsLoaded && button.IsLoaded && button.Handler is not null && !IsWindowClosing(state.HostWindow))
+        {
+            button.Scale = state.RestingScale;
+            button.Opacity = state.RestingOpacity;
+        }
     }
 
     private sealed class AnimationState(
@@ -302,8 +355,17 @@ public static class InteractiveButtonAnimation
 
         public bool IsAttached { get; set; }
 
+        public bool IsLoaded { get; set; }
+
+        public Window? HostWindow { get; set; }
+
         public bool IsPressed { get; set; }
 
         public int Version { get; set; }
+    }
+
+    private sealed class WindowAnimationState
+    {
+        public bool IsClosing { get; set; }
     }
 }

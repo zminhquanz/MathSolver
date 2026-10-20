@@ -3973,6 +3973,11 @@ public partial class CalculationPage : ContentPage
             CalculationSubTab.Basic);
     }
 
+    private async void OnNumberTheoryTabClicked(object? sender, EventArgs e)
+    {
+        await SwitchSubTabAsync(CalculationSubTab.NumberTheory);
+    }
+
     private async void OnAverageTabClicked(
         object? sender,
         EventArgs e)
@@ -4188,6 +4193,7 @@ public partial class CalculationPage : ContentPage
         Button[] desktopButtons =
         [
             BasicTabButton,
+            NumberTheoryTabButton,
             AverageTabButton,
             PowerRootTabButton,
             FractionTabButton,
@@ -4199,6 +4205,7 @@ public partial class CalculationPage : ContentPage
         Button[] androidButtons =
         [
             AndroidBasicTabButton,
+            AndroidNumberTheoryTabButton,
             AndroidAverageTabButton,
             AndroidPowerRootTabButton,
             AndroidFractionTabButton,
@@ -4259,6 +4266,7 @@ public partial class CalculationPage : ContentPage
         return tab switch
         {
             CalculationSubTab.Basic => BasicTabContent,
+            CalculationSubTab.NumberTheory => NumberTheoryTabContent,
             CalculationSubTab.Average => AverageTabContent,
             CalculationSubTab.PowerRoot => PowerRootTabContent,
             CalculationSubTab.Fraction => FractionTabContent,
@@ -4276,6 +4284,7 @@ public partial class CalculationPage : ContentPage
         return tab switch
         {
             CalculationSubTab.Basic => AndroidBasicTabButton,
+            CalculationSubTab.NumberTheory => AndroidNumberTheoryTabButton,
             CalculationSubTab.Average => AndroidAverageTabButton,
             CalculationSubTab.PowerRoot => AndroidPowerRootTabButton,
             CalculationSubTab.Fraction => AndroidFractionTabButton,
@@ -4288,6 +4297,7 @@ public partial class CalculationPage : ContentPage
         return tab switch
         {
             CalculationSubTab.Basic => BasicTabButton,
+            CalculationSubTab.NumberTheory => NumberTheoryTabButton,
             CalculationSubTab.Average => AverageTabButton,
             CalculationSubTab.PowerRoot => PowerRootTabButton,
             CalculationSubTab.Fraction => FractionTabButton,
@@ -4305,6 +4315,7 @@ public partial class CalculationPage : ContentPage
         _selectedSubTab = selectedTab;
 
         BasicTabContent.IsVisible = selectedTab == CalculationSubTab.Basic;
+        NumberTheoryTabContent.IsVisible = selectedTab == CalculationSubTab.NumberTheory;
 
         AverageTabContent.IsVisible =
             selectedTab ==
@@ -4336,6 +4347,7 @@ public partial class CalculationPage : ContentPage
     {
         switch (tab)
         {
+            case CalculationSubTab.NumberTheory: NumberTheorySolverHost.EnsureContent(); break;
             case CalculationSubTab.Average: AverageSolverHost.EnsureContent(); break;
             case CalculationSubTab.Fraction: FractionSolverHost.EnsureContent(); break;
             case CalculationSubTab.FindX: FindXSolverHost.EnsureContent(); break;
@@ -4358,6 +4370,11 @@ public partial class CalculationPage : ContentPage
             AndroidBasicTabButton,
             AndroidBasicTabIndicator,
             _selectedSubTab == CalculationSubTab.Basic);
+
+        ApplyAndroidSubTabState(
+            AndroidNumberTheoryTabButton,
+            AndroidNumberTheoryTabIndicator,
+            _selectedSubTab == CalculationSubTab.NumberTheory);
 
         ApplyAndroidSubTabState(
             AndroidAverageTabButton,
@@ -4393,6 +4410,7 @@ public partial class CalculationPage : ContentPage
             _selectedSubTab switch
             {
                 CalculationSubTab.Basic => BasicTabButton,
+                CalculationSubTab.NumberTheory => NumberTheoryTabButton,
                 CalculationSubTab.Average => AverageTabButton,
                 CalculationSubTab.PowerRoot => PowerRootTabButton,
                 CalculationSubTab.Fraction => FractionTabButton,
@@ -4405,6 +4423,7 @@ public partial class CalculationPage : ContentPage
         SelectionButtonStyler.Select(
             selectedButton,
             BasicTabButton,
+            NumberTheoryTabButton,
             AverageTabButton,
             PowerRootTabButton,
             FractionTabButton,
@@ -4685,6 +4704,7 @@ public enum NumberInputType
 public enum CalculationSubTab
 {
     Basic,
+    NumberTheory,
     Average,
     PowerRoot,
     Fraction,

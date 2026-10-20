@@ -21,7 +21,7 @@ Icon vector theo theme và icon sao chép.
 
 Hiệu ứng nút và cuộn bằng thao tác kéo chuột.
 
-- [InteractiveButtonAnimation.cs](Interaction/InteractiveButtonAnimation.cs)
+- [InteractiveButtonAnimation.cs](Interaction/InteractiveButtonAnimation.cs): theo dõi Loaded/Unloaded và thay handler, kiểm tra vòng đời trước/sau mỗi pha nhấn, nhả và ổn định. Khi đóng cửa sổ, `App` gọi `StopForWindow` trước khi hủy dịch vụ MAUI; hủy hiệu ứng sau khi tăng phiên bản để các continuation không chạy tiếp. Cửa sổ khác và nút được tải lại vẫn có hiệu ứng bình thường. Kiểm tra hồi quy dùng source thực tại [InteractionAnimationTests](../../UnitTest/InteractionAnimationTests/README.md).
 - [MouseDragScrollView.cs](Interaction/MouseDragScrollView.cs)
 
 ## Wallpaper

@@ -1,5 +1,14 @@
 # Math puzzle checks
 
+`dotnet run --project UnitTest/MathPuzzleUnitTests -c Release -- "Number theory"`
+checks the shared GCD/LCM engine against independent divisor and multiple searches
+for 6,560 ordered pairs, validates every Euclidean division and stopping condition,
+and covers zero inputs, invalid input, the 128-digit limit and exact large products.
+The same filter checks 6,400 grade-six prime-factor lessons against independent
+divisor searches, verifies actual primality and reconstruction, minimum/maximum
+exponents, 1 and coprime pairs, large smooth numbers and explicitly unfinished
+cofactors after the bounded factorization pass.
+
 Generators read language-specific wording and context lists from the bundled
 [quiz JSON content](../../MathSolver/QUIZ_CONTENT_AUTHORING.md). This suite checks
 their generated problems and independent answers after content changes. The bank

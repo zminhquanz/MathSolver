@@ -53,6 +53,16 @@
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
 
+                    <Grid MinimumWidthRequest="92" RowDefinitions="Auto,3">
+                        <Button x:Name="AndroidNumberTheoryTabButton" Grid.Row="0"
+                                Text="{localization:Translate Calculation.Tabs.NumberTheory}"
+                                Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                                Clicked="OnNumberTheoryTabClicked" />
+                        <BoxView x:Name="AndroidNumberTheoryTabIndicator" Grid.Row="1"
+                                 HeightRequest="3" Margin="10,0" IsVisible="False"
+                                 BackgroundColor="{DynamicResource PrimaryColor}" />
+                    </Grid>
+
                     <Grid MinimumWidthRequest="118" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidAverageTabButton"
@@ -176,7 +186,7 @@
             <controls:MouseDragScrollView x:Name="CalculationSubTabScrollView" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnCalculationSubTabGridSizeChanged">
             <Grid
                 x:Name="CalculationSubTabGrid"
-                ColumnDefinitions="*,*,*,*,*,*,*"
+                ColumnDefinitions="*,*,*,*,*,*,*,*"
                 RowDefinitions="Auto"
                 ColumnSpacing="6" RowSpacing="6">
 
@@ -188,43 +198,49 @@
                     TextColor="{DynamicResource OnPrimaryColor}"
                     Clicked="OnBasicTabClicked" />
 
+                <Button x:Name="NumberTheoryTabButton" Grid.Column="1"
+                        Text="{localization:Translate Calculation.Tabs.NumberTheory}"
+                        Style="{StaticResource SolverSubTabButtonStyle}"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}"
+                        Clicked="OnNumberTheoryTabClicked" />
+
                 <Button
-                    x:Name="AverageTabButton" Grid.Column="1"
+                    x:Name="AverageTabButton" Grid.Column="2"
                     Text="{localization:Translate Calculation.Tabs.Average}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnAverageTabClicked" />
 
                 <Button
-                    x:Name="PowerRootTabButton" Grid.Column="2"
+                    x:Name="PowerRootTabButton" Grid.Column="3"
                     Text="{localization:Translate Calculation.Tabs.PowerRoot}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnPowerRootTabClicked" />
 
                 <Button
-                    x:Name="FractionTabButton" Grid.Column="3"
+                    x:Name="FractionTabButton" Grid.Column="4"
                     Text="{localization:Translate Calculation.Tabs.Fraction}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
 
                 <Button
-                    x:Name="FindXTabButton" Grid.Column="4"
+                    x:Name="FindXTabButton" Grid.Column="5"
                     Text="{localization:Translate Calculation.Tabs.FindX}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
 
                 <Button
-                    x:Name="QuadraticTabButton" Grid.Column="5"
+                    x:Name="QuadraticTabButton" Grid.Column="6"
                     Text="{localization:Translate Calculation.Tabs.Quadratic}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnQuadraticTabClicked" />
 
                 <Button
-                    x:Name="GeometryTabButton" Grid.Column="6"
+                    x:Name="GeometryTabButton" Grid.Column="7"
                     Text="{localization:Translate Calculation.Tabs.Geometry}"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
@@ -1047,6 +1063,10 @@
     </VerticalStackLayout>
                 </ScrollView>
             </Grid>
+            <Grid x:Name="NumberTheoryTabContent" IsVisible="False">
+                <controls:LazyContentView x:Name="NumberTheorySolverHost" ContentTemplate="{DataTemplate views:NumberTheoryView}" />
+            </Grid>
+
             <!-- Tab trung bình cộng -->
             <Grid
                 x:Name="AverageTabContent"

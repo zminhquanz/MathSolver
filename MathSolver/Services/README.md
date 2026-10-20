@@ -26,6 +26,8 @@ Engine giải toán và điều phối thuật toán theo từng phép tính.
 - [LinearEquationEngine.cs](Calculations/LinearEquationEngine.cs)
 - [LongDivisionCalculator.cs](Calculations/LongDivisionCalculator.cs)
 - [MeasurementEngine.cs](Calculations/MeasurementEngine.cs)
+- [NumberTheoryEngine.cs](Calculations/NumberTheoryEngine.cs): tính UCLN/BCNN bằng `BigInteger`, trả các phép chia Euclid để giao diện trình bày từng bước. Chấp nhận số nguyên không âm và một số bằng 0; từ chối cặp 0, 0. BCNN có một số bằng 0 được lấy bằng 0 theo quy ước. Parser nhập liệu giới hạn 128 chữ số, không dùng số thực.
+- [NumberTheoryPrimeFactors.cs](Calculations/NumberTheoryPrimeFactors.cs): lời giải lớp 6 phân tích hai số dương thành lũy thừa nguyên tố, chọn số mũ nhỏ nhất cho UCLN và lớn nhất cho BCNN. Thử các số nguyên tố đến 100.000; phần còn lại chỉ được gắn là nguyên tố khi đã chứng minh đủ bằng giới hạn căn bậc hai. Phân tích chưa xong giữ riêng `UnfactoredPart`, không tạo kết luận theo thừa số; giao diện vẫn có đáp số và lời giải Euclid chính xác. Số 1 có phân tích rỗng, số 0 được giải thích bằng quy tắc riêng. Dữ liệu phân tích được giữ lại khi đổi UCLN/BCNN hoặc ngôn ngữ.
 - [PowerRootEngine.cs](Calculations/PowerRootEngine.cs)
 - [PowerDiagnosticsPresentation.cs](Calculations/PowerDiagnosticsPresentation.cs): chọn các công đoạn có số đo, giữ riêng mục con và chọn stage NTT theo thời gian; không thay đổi kernel hoặc bộ đếm thuật toán.
 - [QuadraticEquationEngine.cs](Calculations/QuadraticEquationEngine.cs)

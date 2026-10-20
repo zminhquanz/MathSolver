@@ -13,6 +13,7 @@ Lớp nền cho các giao diện tính toán được bản địa hóa.
 Nhập liệu và hiển thị kết quả các phép tính, lũy thừa, phân số, phương trình và hình học.
 
 - [AverageView.xaml](Calculators/AverageView.xaml)
+- [NumberTheoryView.xaml](Calculators/NumberTheoryView.xaml): tab Số học có hai chế độ UCLN/BCNN, hai số nguyên không âm tối đa 128 chữ số. Hiển thị cả cách phân tích thừa số nguyên tố lớp 6 và Euclid: đặt cạnh nhau khi vùng lời giải rộng từ 900 đơn vị, xếp dọc khi hẹp hơn. Cách lớp 6 có dạng tích khai triển, lũy thừa, quy tắc chọn số mũ và phép nhân kết luận; xử lý riêng số 0, số 1, hai số nguyên tố cùng nhau và phân tích số lớn chưa hoàn tất. Giữ đầu vào khi đổi chế độ; thay đầu vào sẽ ẩn kết quả cũ. Dùng tài nguyên giao diện chung, bố cục ô nhập xếp dọc trên màn hình hẹp và bản địa hóa Việt/Anh.
 - [CalculationPage.xaml](Calculators/CalculationPage.xaml): chế độ Biểu thức hiển thị bản xem trước cập nhật theo từng ký tự bằng `FractionExpressionView`. Nội dung lấy từ chuỗi nhập chính xác, đồng bộ khi đổi chế độ, xóa và chuyển focus; dấu chia được hiển thị là `÷` để giữ đúng nghĩa phép chia tuần tự của tab cơ bản.
 - [FindXView.xaml](Calculators/FindXView.xaml)
 - [FractionView.xaml](Calculators/FractionView.xaml)

@@ -2,6 +2,8 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Number theory exact GCD LCM and Euclidean steps", PuzzleTests.CheckNumberTheory),
+    ("Number theory grade-six prime factor lessons", PuzzleTests.CheckPrimeFactorLessons),
     ("Fraction live preview without formatting exceptions", PuzzleTests.CheckFractionLivePreview),
     ("Shared rational expressions and worked steps", PuzzleTests.CheckRationalExpressions),
     ("Function graph SIMD linear endpoints and parabola regression", PuzzleTests.CheckFunctionGraphSimd),
