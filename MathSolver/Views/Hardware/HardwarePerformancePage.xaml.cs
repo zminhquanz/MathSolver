@@ -1,5 +1,6 @@
 using MathSolver.Graphics;
 using MathSolver.Services;
+using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
 using System.Diagnostics;
 using System.Globalization;
@@ -728,13 +729,26 @@ public partial class HardwarePerformancePage : ContentPage
                     : "Scalar";
 #endif
 
+        string matrixBackendStatus = CalculationAccelerationManager.EffectiveMatrixBackend switch
+        {
+            MatrixBackend.Avx512 => "AVX-512F (512-bit)",
+            MatrixBackend.Avx2 => "AVX2 (256-bit)",
+            MatrixBackend.Sse2 => "SSE2 (128-bit)",
+            _ => "Scalar"
+        };
+        string matrixAccelerationStatus = string.Format(
+            CultureInfo.CurrentCulture,
+            LocalizationService.TranslateKey(LocalizationKeys.Hardware.MatrixAcceleration),
+            matrixBackendStatus);
+
         accelerationStatus +=
             Environment.NewLine +
             nttAccelerationStatus + " (" + nttBackendStatus + ")" +
             Environment.NewLine +
             powerExportAccelerationStatus +
             Environment.NewLine +
-            parabolaAccelerationStatus + " (" + ParabolaSimdEvaluator.BackendName + ")";
+            parabolaAccelerationStatus + " (" + ParabolaSimdEvaluator.BackendName + ")" +
+            Environment.NewLine + matrixAccelerationStatus;
 
         AccelerationStatusLabel.Text =
             accelerationStatus + Environment.NewLine + "SIMD: " + CalculationAccelerationManager.GetModeDisplayName(CalculationAccelerationManager.SelectedSimdMode) + " → " + (effectiveUseSimd ? CalculationAccelerationManager.GetModeDisplayName(selectedMode) : "Scalar");

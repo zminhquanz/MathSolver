@@ -158,6 +158,15 @@
                             IsVisible="False"
                             BackgroundColor="{DynamicResource PrimaryColor}" />
                     </Grid>
+                    <Grid MinimumWidthRequest="106" RowDefinitions="Auto,3">
+                        <Button x:Name="AndroidMatrixTabButton" Grid.Row="0"
+                                Text="{localization:Translate Calculation.Tabs.Matrix}"
+                                Style="{StaticResource AndroidNativeSubTabButtonStyle}"
+                                Clicked="OnMatrixTabClicked" />
+                        <BoxView x:Name="AndroidMatrixTabIndicator" Grid.Row="1"
+                                 HeightRequest="3" Margin="10,0" IsVisible="False"
+                                 BackgroundColor="{DynamicResource PrimaryColor}" />
+                    </Grid>
                 </HorizontalStackLayout>
             </ScrollView>
 
@@ -183,10 +192,10 @@
                 <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
-            <controls:MouseDragScrollView x:Name="CalculationSubTabScrollView" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnCalculationSubTabGridSizeChanged">
+            <controls:MouseDragScrollView x:Name="CalculationSubTabScrollView" IsTabLayoutEnabled="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnCalculationSubTabGridSizeChanged">
             <Grid
                 x:Name="CalculationSubTabGrid"
-                ColumnDefinitions="*,*,*,*,*,*,*,*"
+                ColumnDefinitions="*,*,*,*,*,*,*,*,*"
                 RowDefinitions="Auto"
                 ColumnSpacing="6" RowSpacing="6">
 
@@ -246,6 +255,11 @@
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
+                <Button x:Name="MatrixTabButton" Grid.Column="8"
+                        Text="{localization:Translate Calculation.Tabs.Matrix}"
+                        Style="{StaticResource SolverSubTabButtonStyle}"
+                        TextColor="{DynamicResource WallpaperTextSecondaryColor}"
+                        Clicked="OnMatrixTabClicked" />
                 </Grid>
 
             </controls:MouseDragScrollView>
@@ -1065,6 +1079,9 @@
             </Grid>
             <Grid x:Name="NumberTheoryTabContent" IsVisible="False">
                 <controls:LazyContentView x:Name="NumberTheorySolverHost" ContentTemplate="{DataTemplate views:NumberTheoryView}" />
+            </Grid>
+            <Grid x:Name="MatrixTabContent" IsVisible="False">
+                <controls:LazyContentView x:Name="MatrixSolverHost" ContentTemplate="{DataTemplate views:MatrixView}" />
             </Grid>
 
             <!-- Tab trung bình cộng -->

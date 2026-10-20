@@ -94,6 +94,7 @@ public partial class CalculationPage : ContentPage
     private bool _isPageActive;
 
     private PowerRootView? PowerRootSolverView => PowerRootSolverHost.Content as PowerRootView;
+    private MatrixView? MatrixSolverView => MatrixSolverHost.Content as MatrixView;
 
 #if ANDROID
     private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
@@ -114,7 +115,7 @@ public partial class CalculationPage : ContentPage
         _androidSubTabSwipe = new AndroidSubTabSwipeNavigator(
             CalculationSubTabContentHost,
             () => (int)_selectedSubTab,
-            (int)CalculationSubTab.Geometry,
+            (int)CalculationSubTab.Matrix,
             index => SwitchSubTabAsync((CalculationSubTab)index));
 #endif
 
@@ -165,9 +166,11 @@ public partial class CalculationPage : ContentPage
         base.OnAppearing();
         _isPageActive = true;
         PowerRootSolverView?.SetTabActive(_selectedSubTab == CalculationSubTab.PowerRoot);
+        MatrixSolverView?.SetTabActive(_selectedSubTab == CalculationSubTab.Matrix);
 
 #if ANDROID
-        _androidSubTabSwipe.Attach();
+        if (_selectedSubTab != CalculationSubTab.Matrix) _androidSubTabSwipe.Attach();
+        else _androidSubTabSwipe.Detach();
 #endif
 
         LocalizationService.CultureChanged -=
@@ -349,6 +352,7 @@ public partial class CalculationPage : ContentPage
     protected override void OnDisappearing()
     {
         _isPageActive = false;
+        MatrixSolverView?.SetTabActive(false);
         if (!SettingsMenuPage.IsTransparentOverlayActive)
             PowerRootSolverView?.SetTabActive(false);
 #if ANDROID
@@ -3978,6 +3982,9 @@ public partial class CalculationPage : ContentPage
         await SwitchSubTabAsync(CalculationSubTab.NumberTheory);
     }
 
+    private async void OnMatrixTabClicked(object? sender, EventArgs e) =>
+        await SwitchSubTabAsync(CalculationSubTab.Matrix);
+
     private async void OnAverageTabClicked(
         object? sender,
         EventArgs e)
@@ -4104,6 +4111,7 @@ public partial class CalculationPage : ContentPage
 
             EnsureSubTabCreated(selectedTab);
             PowerRootSolverView?.SetTabActive(_isPageActive && selectedTab == CalculationSubTab.PowerRoot);
+            MatrixSolverView?.SetTabActive(_isPageActive && selectedTab == CalculationSubTab.Matrix);
 
             int direction =
                 (int)selectedTab >
@@ -4199,7 +4207,8 @@ public partial class CalculationPage : ContentPage
             FractionTabButton,
             FindXTabButton,
             QuadraticTabButton,
-            GeometryTabButton
+            GeometryTabButton,
+            MatrixTabButton
         ];
 
         Button[] androidButtons =
@@ -4211,7 +4220,8 @@ public partial class CalculationPage : ContentPage
             AndroidFractionTabButton,
             AndroidFindXTabButton,
             AndroidQuadraticTabButton,
-            AndroidGeometryTabButton
+            AndroidGeometryTabButton,
+            AndroidMatrixTabButton
         ];
 
         foreach (Button button in desktopButtons)
@@ -4275,6 +4285,7 @@ public partial class CalculationPage : ContentPage
         {
             CalculationSubTab.Basic => BasicTabContent,
             CalculationSubTab.NumberTheory => NumberTheoryTabContent,
+            CalculationSubTab.Matrix => MatrixTabContent,
             CalculationSubTab.Average => AverageTabContent,
             CalculationSubTab.PowerRoot => PowerRootTabContent,
             CalculationSubTab.Fraction => FractionTabContent,
@@ -4293,6 +4304,7 @@ public partial class CalculationPage : ContentPage
         {
             CalculationSubTab.Basic => AndroidBasicTabButton,
             CalculationSubTab.NumberTheory => AndroidNumberTheoryTabButton,
+            CalculationSubTab.Matrix => AndroidMatrixTabButton,
             CalculationSubTab.Average => AndroidAverageTabButton,
             CalculationSubTab.PowerRoot => AndroidPowerRootTabButton,
             CalculationSubTab.Fraction => AndroidFractionTabButton,
@@ -4306,6 +4318,7 @@ public partial class CalculationPage : ContentPage
         {
             CalculationSubTab.Basic => BasicTabButton,
             CalculationSubTab.NumberTheory => NumberTheoryTabButton,
+            CalculationSubTab.Matrix => MatrixTabButton,
             CalculationSubTab.Average => AverageTabButton,
             CalculationSubTab.PowerRoot => PowerRootTabButton,
             CalculationSubTab.Fraction => FractionTabButton,
@@ -4324,6 +4337,8 @@ public partial class CalculationPage : ContentPage
 
         BasicTabContent.IsVisible = selectedTab == CalculationSubTab.Basic;
         NumberTheoryTabContent.IsVisible = selectedTab == CalculationSubTab.NumberTheory;
+        MatrixTabContent.IsVisible = selectedTab == CalculationSubTab.Matrix;
+        MatrixSolverView?.SetTabActive(_isPageActive && selectedTab == CalculationSubTab.Matrix);
 
         AverageTabContent.IsVisible =
             selectedTab ==
@@ -4356,6 +4371,7 @@ public partial class CalculationPage : ContentPage
         switch (tab)
         {
             case CalculationSubTab.NumberTheory: NumberTheorySolverHost.EnsureContent(); break;
+            case CalculationSubTab.Matrix: MatrixSolverHost.EnsureContent(); break;
             case CalculationSubTab.Average: AverageSolverHost.EnsureContent(); break;
             case CalculationSubTab.Fraction: FractionSolverHost.EnsureContent(); break;
             case CalculationSubTab.FindX: FindXSolverHost.EnsureContent(); break;
@@ -4374,6 +4390,9 @@ public partial class CalculationPage : ContentPage
     private void UpdateSubTabButtonStyles()
     {
 #if ANDROID
+        // Matrix panning owns horizontal gestures throughout this subtab.
+        if (_selectedSubTab == CalculationSubTab.Matrix) _androidSubTabSwipe.Detach();
+        else if (_isPageActive) _androidSubTabSwipe.Attach();
         ApplyAndroidSubTabState(
             AndroidBasicTabButton,
             AndroidBasicTabIndicator,
@@ -4383,6 +4402,9 @@ public partial class CalculationPage : ContentPage
             AndroidNumberTheoryTabButton,
             AndroidNumberTheoryTabIndicator,
             _selectedSubTab == CalculationSubTab.NumberTheory);
+
+        ApplyAndroidSubTabState(AndroidMatrixTabButton, AndroidMatrixTabIndicator,
+            _selectedSubTab == CalculationSubTab.Matrix);
 
         ApplyAndroidSubTabState(
             AndroidAverageTabButton,
@@ -4419,6 +4441,7 @@ public partial class CalculationPage : ContentPage
             {
                 CalculationSubTab.Basic => BasicTabButton,
                 CalculationSubTab.NumberTheory => NumberTheoryTabButton,
+                CalculationSubTab.Matrix => MatrixTabButton,
                 CalculationSubTab.Average => AverageTabButton,
                 CalculationSubTab.PowerRoot => PowerRootTabButton,
                 CalculationSubTab.Fraction => FractionTabButton,
@@ -4437,7 +4460,8 @@ public partial class CalculationPage : ContentPage
             FractionTabButton,
             FindXTabButton,
             QuadraticTabButton,
-            GeometryTabButton);
+            GeometryTabButton,
+            MatrixTabButton);
 #endif
     }
 
@@ -4718,7 +4742,8 @@ public enum CalculationSubTab
     Fraction,
     FindX,
     Quadratic,
-    Geometry
+    Geometry,
+    Matrix
 }
 public enum LongDivisionDisplayMode
 {

@@ -44,6 +44,9 @@ public static class LocalizationKeys
 
     public static class Hardware
     {
+        public const string MatrixAcceleration =
+            "Hardware.MatrixAcceleration";
+
         public const string RuntimeSimdUnavailable =
             "Hardware.RuntimeSimdUnavailable";
 

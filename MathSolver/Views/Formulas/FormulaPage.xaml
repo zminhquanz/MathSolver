@@ -156,7 +156,7 @@
                 <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
-            <controls:MouseDragScrollView x:Name="FormulaSubTabScrollView" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnFormulaSubTabGridSizeChanged">
+            <controls:MouseDragScrollView x:Name="FormulaSubTabScrollView" IsTabLayoutEnabled="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnFormulaSubTabGridSizeChanged">
             <Grid
                 x:Name="FormulaSubTabGrid"
                 ColumnDefinitions="*,*,*,*,*,*"

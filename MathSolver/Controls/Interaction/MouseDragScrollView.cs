@@ -23,12 +23,18 @@ public sealed class MouseDragScrollView : ScrollView
     /// </summary>
     public bool ScrollInPointerDirection { get; set; }
 
+    /// <summary>
+    /// Opt in only for tab strips. Other content (such as the SQL table) owns
+    /// its row/column definitions and must never be reflowed into one tab row.
+    /// </summary>
+    public bool IsTabLayoutEnabled { get; set; }
+
     private bool _isUpdatingTabs;
     private bool _handlerChanging;
     private int _layoutVersion;
     private double _lastTabViewportWidth = -1d;
 
-    internal bool CanUpdateTabLayout => !_handlerChanging && IsLoaded
+    internal bool CanUpdateTabLayout => IsTabLayoutEnabled && !_handlerChanging && IsLoaded
         && Handler?.MauiContext is not null
         && Window is { Handler.MauiContext: not null } window && !WindowUiLifetime.IsClosing(window);
 

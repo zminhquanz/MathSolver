@@ -1,4 +1,5 @@
 using Microsoft.Maui.Storage;
+using MathSolver.Services.Core;
 using System.Numerics;
 using System.Runtime.Intrinsics;
 using System.Runtime.Intrinsics.Arm;
@@ -200,6 +201,25 @@ public static class CalculationAccelerationManager
                 IsAndroidNeonExecutionAllowed &&
 #endif
                 IsSimdAvailable;
+        }
+    }
+
+    /// <summary>
+    /// Matrix backend allowed by the global switch and selected SIMD mode.
+    /// MatrixEngine separately keeps inputs below 16 rows or columns Scalar.
+    /// </summary>
+    public static MatrixBackend EffectiveMatrixBackend
+    {
+        get
+        {
+            if (!UseSimd) return MatrixBackend.Scalar;
+            return EffectiveSimdMode switch
+            {
+                CalculationSimdMode.Avx512 when IsAvx512Available => MatrixBackend.Avx512,
+                CalculationSimdMode.AvxAvx2 when IsAvxAvx2Available => MatrixBackend.Avx2,
+                CalculationSimdMode.Sse or CalculationSimdMode.Portable when IsSseAvailable => MatrixBackend.Sse2,
+                _ => MatrixBackend.Scalar
+            };
         }
     }
 
