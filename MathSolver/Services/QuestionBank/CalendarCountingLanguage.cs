@@ -8,7 +8,7 @@ internal static class CalendarCountingLanguage
     private const string StartEn=@"(?:the )?(?:start|initial|first) (?:date|day)";
     // The second supplied DATE is the end; the second DAY need not be.
     private const string EndEn=@"(?:the )?(?:(?:end|final|last) (?:date|day)|second date)";
-    private const string StartVi=@"ngày (?:bắt đầu|đầu)",EndVi=@"ngày (?:kết thúc|cuối)";
+    private const string StartVi=@"ngày (?:bắt đầu|khởi đầu|đầu)",EndVi=@"ngày (?:kết thúc|cuối(?: cùng)?)";
     private const string EveryEn=@"(?:all (?:calendar )?days|every (?:calendar )?day)";
     private const string AfterEn=@"the day (?:immediately )?(?:after|following) "+StartEn;
 

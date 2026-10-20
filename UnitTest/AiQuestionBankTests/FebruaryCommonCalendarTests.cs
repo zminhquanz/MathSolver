@@ -56,6 +56,7 @@ internal static class FebruaryCommonCalendarTests
     }
     internal static async Task RunAsync()
     {
+        FebruaryCommonCalendarReviewTests.Run();
         Check(Enum.TryParse<ElementaryQuizType>("FebruaryCommonInclusive",out _),"Missing separate February common-year type.");
         QuizContentTests.Run();MalformedLists();
         var context=Contexts(AppLanguage.Vietnamese)[0];

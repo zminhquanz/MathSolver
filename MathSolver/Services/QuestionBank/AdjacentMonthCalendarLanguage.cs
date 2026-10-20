@@ -33,7 +33,8 @@ internal static class AdjacentMonthCalendarLanguage
         var context=Context(c);
         var facts=d.Facts!.ToArray();
         bool dateFirstStart=context.Id is "equipment" or "garden";
-        bool dateFirstEnd=context.Id is "library" or "garden";
+        bool dateFirstEnd=context.Id is "library" or "garden"
+            ||c.Language==AppLanguage.English&&SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)&&context.Id=="model";
         string Event(int i,bool dateFirst)
         {
             string actor=$"{{v0}} {{v{i+2}}} {{v1}}",day=i==0?"{f0}":"{f1}",month=i==0?"{f2}":"{f4}";
@@ -55,6 +56,8 @@ internal static class AdjacentMonthCalendarLanguage
             "garden"=>vi?"Dùng hai câu mở bằng ngày để kể hai mốc chăm sóc.":"Use date-first openings to describe both plant-care dates.",
             _=>vi?"Có thể mở bằng Theo ghi chép, rồi kể người và hành động; sự kiện cuối nối trực tiếp với ngày.":"You may start with According to the record, then the actor and action; attach the last date directly to its event."
         };
+        if(!vi&&SameMonthCalendarPilot.IsFebruaryCommon(c.SceneId)&&Context(c).Id=="model")
+            focus="For this model-making context, use a record-first introduction, such as According to the record, followed by the actor, completed action and first date. Put the final date before its actor and completed action, as illustrated in the reference. Ask how many calendar days are counted for the project; name both endpoints explicitly in the counting rule. These are variation hints, not fixed sentences; other clear wording with the same roles is welcome.";
         return "\n"+(vi?"Gợi ý đổi cách mở câu cho bối cảnh này, không phải mẫu câu bắt buộc: ":"Context-specific variation guidance, not mandatory sentences: ")+focus
             +"\n"+(vi?"Người {v0} và cụm hành động {v2}/{v3} đã hoàn chỉnh. Câu hỏi chỉ cần một cụm {v4} của {v0}; nối trực tiếp với kéo dài bao nhiêu ngày hoặc là bao nhiêu ngày.":"The actor {v0} and action phrases {v2}/{v3} are complete. The question needs just the complete phrase {v0}'s {v4}, directly linked to duration in days or how many days it lasted.");
     }
