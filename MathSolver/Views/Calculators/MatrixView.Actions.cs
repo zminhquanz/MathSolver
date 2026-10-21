@@ -77,8 +77,13 @@ public sealed partial class MatrixView
         }
         finally { _updatingEditor = false; }
         RefreshSolution();
+        RefreshSizeControls();
     }
-    private void RefreshRange() => _range.Text = F("VisibleFrom", _viewport.FirstRow + 1, _viewport.FirstColumn + 1);
+    private void RefreshRange()
+    {
+        _range.Text = F("VisibleFrom", _viewport.FirstRow + 1, _viewport.FirstColumn + 1);
+        RefreshSizeControls();
+    }
 
     private bool ApplyCell(bool advance)
     {

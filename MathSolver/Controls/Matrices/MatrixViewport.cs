@@ -200,8 +200,13 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         double scale = Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6);
         // Keep a complete editable cell available on narrow, text-scaled screens.
         double width = Math.Max(1, _canvas.Width), height = Math.Max(1, _canvas.Height);
-        double cellWidth = Math.Min(184 * scale, Math.Max(80, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
-        _state.Arrange(width, height, cellWidth, 52 * scale, ScrollBarThickness);
+        double cellWidth = Math.Min(MatrixViewportState.DefaultColumnWidth * scale,
+            Math.Max(MatrixViewportState.MinColumnWidth, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
+        _state.Arrange(width, height, cellWidth, MatrixViewportState.DefaultRowHeight * scale, ScrollBarThickness);
+        // Small matrices occupy only the space they need; larger ones keep a bounded viewport.
+        double desiredHeight = Math.Min(340, _state.CellHeight + _state.ContentHeight
+            + (_state.ShowHorizontalScrollBar ? ScrollBarThickness : 0));
+        if (Math.Abs(_surface.HeightRequest - desiredHeight) > 0.01) _surface.HeightRequest = desiredHeight;
         PositionEditor(); _canvas.Invalidate();
     }
     private void Scrolled() { Refresh(); ViewportChanged?.Invoke(); }

@@ -94,6 +94,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         };
         editor.Add(_viewport);
         editor.Add(_range);
+        AddSizeControls(editor);
         editor.Add(Caption("NavigationHelp"));
         var navigation = FlowGrid(130, 3);
         navigation.Add(Labeled("Row", _row, 56)); navigation.Add(Labeled("Column", _column, 56));
@@ -105,7 +106,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         editor.Add(_selection);
         _value.Keyboard = Keyboard.Default; // Includes a minus key on mobile.
         _value.MaxLength = 64;
-        _value.FontSize = 17;
+        _value.FontSize = 14;
         _value.Completed += (_, _) =>
         {
 #if !WINDOWS

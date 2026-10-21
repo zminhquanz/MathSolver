@@ -9,6 +9,7 @@ internal readonly record struct MatrixCellBounds(double X, double Y, double Widt
 internal sealed class MatrixViewportState
 {
     public const double HeaderWidth = 58;
+    public const double DefaultColumnWidth = 96, DefaultRowHeight = 36;
     public const double MinColumnWidth = 60, MaxColumnWidth = 1000, MinRowHeight = 32, MaxRowHeight = 500;
     private readonly double[] _columnWidths = new double[1024], _rowHeights = new double[1024];
     private readonly double[] _columnStarts = new double[1025], _rowStarts = new double[1025];
@@ -23,8 +24,8 @@ internal sealed class MatrixViewportState
     public double OffsetY { get; private set; }
     public double Width { get; private set; } = 1;
     public double Height { get; private set; } = 1;
-    public double CellWidth { get; private set; } = 184;
-    public double CellHeight { get; private set; } = 52;
+    public double CellWidth { get; private set; } = DefaultColumnWidth;
+    public double CellHeight { get; private set; } = DefaultRowHeight;
     public bool ShowHorizontalScrollBar { get; private set; }
     public bool ShowVerticalScrollBar { get; private set; }
     public double ContentWidth => _columnStarts[Columns];
@@ -92,6 +93,12 @@ internal sealed class MatrixViewportState
     {
         if (row < 0 || row >= Rows || !double.IsFinite(height)) throw new ArgumentOutOfRangeException(nameof(row));
         _rowHeights[row] = Math.Clamp(height, MinRowHeight, MaxRowHeight);
+        RebuildDimensions(); ScrollTo(OffsetX, OffsetY);
+    }
+    public void ResetSelectedDimensions()
+    {
+        _columnWidths[SelectedColumn] = 0;
+        _rowHeights[SelectedRow] = 0;
         RebuildDimensions(); ScrollTo(OffsetX, OffsetY);
     }
     private static int IndexAt(double[] starts, int count, double position)

@@ -11,6 +11,8 @@ internal static partial class PuzzleTests
             if (!value) throw new InvalidOperationException(message);
         }
         var state = new MatrixViewportState();
+        Require(state.CellWidth == 96 && state.CellHeight == 36,
+            "Default matrix cells should be compact enough for ordinary small integers.");
         state.SetSource(3, 3);
         state.Arrange(700, 340, 184, 52, 20);
         state.SetColumnWidth(0, 250);
@@ -64,6 +66,20 @@ internal static partial class PuzzleTests
             "The final resized cell of a 1024 by 1024 matrix must remain reachable.");
         Require(state.TryHitCell(state.Width - 1, state.Height - 1, out row, out column) && row == 1023 && column == 1023,
             "Large-grid hit testing must still reach its final cell.");
+        state.SetSource(3, 3);
+        state.Arrange(700, 340, 96, 36, 20);
+        state.Select(1, 1);
+        state.SetColumnWidth(0, 120); state.SetColumnWidth(1, 800); state.SetRowHeight(1, 400);
+        state.Arrange(700, 340, 96, 36, 20);
+        Require(state.ShowHorizontalScrollBar && state.ShowVerticalScrollBar, "Oversized selected dimensions must cause overflow.");
+        state.ResetSelectedDimensions();
+        state.Arrange(700, 340, 96, 36, 20);
+        Require(state.GetColumnWidth(1) == 96 && state.GetRowHeight(1) == 36 && state.GetColumnWidth(0) == 120,
+            "Reset must restore only the selected row/column and retain adjacent manual sizes.");
+        Require(!state.ShowHorizontalScrollBar && !state.ShowVerticalScrollBar, "Resetting dimensions to fit must remove both rails.");
+        state.Arrange(700, 340, 144, 54, 20);
+        Require(state.GetColumnWidth(1) == 144 && state.GetRowHeight(1) == 54,
+            "Reset dimensions must follow later system text scaling rather than retain a fixed override.");
         Console.WriteLine("Checked independent row/column sizes, resize handles, scrolling, minimum sizes, refresh and the final cell at 1024 × 1024.");
     }
     public static void CheckMatrixAutomaticScrollBars()

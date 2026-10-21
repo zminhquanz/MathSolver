@@ -9,6 +9,26 @@ public sealed partial class MatrixViewport
     private bool _resizeInteraction;
     private double _resizeStartPosition, _resizeStartSize;
 
+    public double SelectedColumnWidth => _state.GetColumnWidth(SelectedColumn);
+    public double SelectedRowHeight => _state.GetRowHeight(SelectedRow);
+
+    /// <summary>Accessible alternative to dragging header edges; applies to the selected row/column.</summary>
+    public bool ResizeSelectedDimensions(double width, double height, bool reset = false)
+    {
+        if (!CanUseInput || !double.IsFinite(width) || !double.IsFinite(height)) return false;
+        if (!_state.EndEdit(CommitEdit)) return RestoreInvalidEditor();
+        CancelPointerGesture();
+        if (reset) _state.ResetSelectedDimensions();
+        else
+        {
+            if (width != SelectedColumnWidth) _state.SetColumnWidth(SelectedColumn, width);
+            if (height != SelectedRowHeight) _state.SetRowHeight(SelectedRow, height);
+        }
+        _state.RevealSelection();
+        Scrolled();
+        return true;
+    }
+
     private bool StartResize(PointF point)
     {
         _resizeAxis = MatrixResizeAxis.None;
