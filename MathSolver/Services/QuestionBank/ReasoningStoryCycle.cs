@@ -35,6 +35,10 @@ internal sealed class ReasoningStoryCycle
                     ? RectangleAreaPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Geometry && variant==RectanglePerimeterPilot.Variant
                     ? RectanglePerimeterPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.TwoNumbers && variant==(int)ElementaryQuizType.SumDifference
+                    ? SumDifferencePilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.MissingValue
+                    ? AverageMissingPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.Direct
                     ? AverageOpenPilot.Profiles(language).ToArray()
                 : family==BankQuestionFamily.Percentage && variant==(int)PercentageQuizType.FindRemainingAfterDonation

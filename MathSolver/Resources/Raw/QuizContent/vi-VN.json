@@ -14020,6 +14020,103 @@
         {"Id":"notebooks","Relation":"known-whole-find-percentage-part","Owner":"Cửa hàng Sao Mai","WholeUnit":"quyển vở","WholeNoun":"vở","PartNoun":"vở ô li","PartUnit":"quyển vở ô li","Capacity":1000,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"},
         {"Id":"trees","Relation":"known-whole-find-percentage-part","Owner":"Vườn trường Hòa Bình","WholeUnit":"cây","WholeNoun":"cây","PartNoun":"cây cam","PartUnit":"cây cam","Capacity":500,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"}
     ],
+    "SumDifferenceOpen.Contexts": [
+      {
+        "Id": "notebooks",
+        "LargerOwner": "Tổ Hoa Lan",
+        "SmallerOwner": "Tổ Hoa Mai",
+        "Unit": "quyển vở",
+        "Capacity": 2000,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Difference": "{v0} có nhiều hơn {v1} {f1} {v2}.",
+        "Question": "Hỏi {v0} có bao nhiêu {v2}, {v1} có bao nhiêu?",
+        "SmallerLead": "Số {v2} của {v1}",
+        "LargerLead": "Số {v2} của {v0}"
+      },
+      {
+        "Id": "books",
+        "LargerOwner": "Nhóm Xanh",
+        "SmallerOwner": "Nhóm Sạch",
+        "Unit": "quyển sách",
+        "Capacity": 2000,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Difference": "{v0} có nhiều hơn {v1} {f1} {v2}.",
+        "Question": "Hỏi {v0} có bao nhiêu {v2}, {v1} có bao nhiêu?",
+        "SmallerLead": "Số {v2} của {v1}",
+        "LargerLead": "Số {v2} của {v0}"
+      },
+      {
+        "Id": "planting",
+        "LargerOwner": "Đội Bình",
+        "SmallerOwner": "Đội An",
+        "Unit": "cây",
+        "Capacity": 500,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Difference": "{v0} có nhiều hơn {v1} {f1} {v2}.",
+        "Question": "Hỏi {v0} có bao nhiêu {v2}, {v1} có bao nhiêu?",
+        "SmallerLead": "Số {v2} của {v1}",
+        "LargerLead": "Số {v2} của {v0}"
+      }
+    ],
+    "AverageMissingOpen.Contexts": [
+      {
+        "Id": "notebooks",
+        "Groups": [
+          "Tổ Hoa Mai",
+          "Tổ Hoa Lan",
+          "Tổ Hoa Sen"
+        ],
+        "Unit": "quyển vở",
+        "GroupUnit": "tổ",
+        "GroupPlural": "tổ",
+        "Verb": "quyên góp được",
+        "BaseVerb": "quyên góp được",
+        "Capacity": 2000,
+        "Fact": "{owner} {v5} {count} {v3}.",
+        "Scope": "Có {f3} {v7} độc lập.",
+        "Question": "Hỏi {v2} {v6} bao nhiêu {v3}?",
+        "Lead": "Số {v3} của {v2}",
+        "Mean": "Số {v3} trung bình mỗi {v4} {v5} là {f2}."
+      },
+      {
+        "Id": "books",
+        "Groups": [
+          "Nhóm Xanh",
+          "Nhóm Sạch",
+          "Nhóm Đẹp"
+        ],
+        "Unit": "quyển sách",
+        "GroupUnit": "nhóm",
+        "GroupPlural": "nhóm",
+        "Verb": "thu gom được",
+        "BaseVerb": "thu gom được",
+        "Capacity": 2000,
+        "Fact": "{owner} {v5} {count} {v3}.",
+        "Scope": "Có {f3} {v7} độc lập.",
+        "Question": "Hỏi {v2} {v6} bao nhiêu {v3}?",
+        "Lead": "Số {v3} của {v2}",
+        "Mean": "Số {v3} trung bình mỗi {v4} {v5} là {f2}."
+      },
+      {
+        "Id": "planting",
+        "Groups": [
+          "Đội An",
+          "Đội Bình",
+          "Đội Chi"
+        ],
+        "Unit": "cây",
+        "GroupUnit": "đội",
+        "GroupPlural": "đội",
+        "Verb": "trồng được",
+        "BaseVerb": "trồng được",
+        "Capacity": 500,
+        "Fact": "{owner} {v5} {count} {v3}.",
+        "Scope": "Có {f3} {v7} độc lập.",
+        "Question": "Hỏi {v2} {v6} bao nhiêu {v3}?",
+        "Lead": "Số {v3} của {v2}",
+        "Mean": "Số {v3} trung bình mỗi {v4} {v5} là {f2}."
+      }
+    ],
     "AverageOpen.Contexts": [
         {"Id":"notebooks","Groups":["Tổ Hoa Mai","Tổ Hoa Lan","Tổ Hoa Sen"],"Unit":"quyển vở","GroupUnit":"tổ","GroupPlural":"tổ","Verb":"quyên góp được","BaseVerb":"quyên góp được","Capacity":2000,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},
         {"Id":"recycling","Groups":["Nhóm Xanh","Nhóm Sạch","Nhóm Đẹp"],"Unit":"kg giấy","GroupUnit":"nhóm","GroupPlural":"nhóm","Verb":"thu gom được","BaseVerb":"thu gom được","Capacity":200,"Fact":"{owner} {v5} {count} {v3}.","Scope":"Có {f3} {v7} độc lập.","Question":"Trung bình mỗi {v4} {v6} bao nhiêu {v3}?","Lead":"Số {v3} trung bình mỗi {v4}"},

@@ -14,6 +14,8 @@ public static partial class QuizContentValidation
         CheckFractionRemainingLists(pack);
         CheckFractionWholeLists(pack);
         CheckAverageOpenLists(pack);
+        CheckAverageMissingLists(pack);
+        CheckSumDifferenceLists(pack);
         CheckPercentagePartLists(pack);
         CheckPercentageRemainingLists(pack);
         CheckPercentageWholeLists(pack);

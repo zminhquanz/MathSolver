@@ -10,6 +10,16 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--sum-difference-open","--sum-difference-open-model"],"--sum-difference-open | --sum-difference-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SumDifferenceOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SumDifferenceOpenTests.NativeCases());
+        },args=>args is ["--sum-difference-open"] or ["--sum-difference-open-model",_] or ["--sum-difference-open-model",_,_]),
+        new(["--average-missing-open","--average-missing-open-model"],"--average-missing-open | --average-missing-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await AverageMissingOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,AverageMissingOpenTests.NativeCases());
+        },args=>args is ["--average-missing-open"] or ["--average-missing-open-model",_] or ["--average-missing-open-model",_,_]),
         new(["--calendar-february-leap-open","--calendar-february-leap-open-model"],"--calendar-february-leap-open | --calendar-february-leap-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await FebruaryLeapCalendarTests.RunAsync();

@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||SumDifferenceOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -99,6 +99,8 @@ public static class OpenQuestionProse
         if(PercentageWholeOpenCatalogue.IsProfile(c))return PercentageWholeOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentageRemainingOpenCatalogue.IsProfile(c))return PercentageRemainingOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenMeaning.Validate(c,syntax.Draft!);
+        if(SumDifferenceOpenCatalogue.IsProfile(c))return SumDifferenceOpenMeaning.Validate(c,syntax.Draft!);
+        if(AverageMissingOpenCatalogue.IsProfile(c))return AverageMissingOpenMeaning.Validate(c,syntax.Draft!);
         if(AverageOpenCatalogue.IsProfile(c))return AverageOpenMeaning.Validate(c,syntax.Draft!);
         if(FractionWholeOpenCatalogue.IsProfile(c))return FractionWholeOpenMeaning.Validate(c,syntax.Draft!);
         if(FractionRemainingOpenCatalogue.IsProfile(c))return FractionRemainingOpenMeaning.Validate(c,syntax.Draft!);
@@ -158,6 +160,8 @@ public static class OpenQuestionProse
         else if (SameDayBreakCatalogue.IsProfile(c)) instruction = SameDayBreakCatalogue.WritingInstructions(c);
         if (RectangleAreaOpenCatalogue.IsProfile(c)) instruction = RectangleAreaOpenCatalogue.WritingInstructions(c.Language);
         if (RectanglePerimeterOpenCatalogue.IsProfile(c)) instruction = RectanglePerimeterOpenCatalogue.WritingInstructions(c);
+        if (SumDifferenceOpenCatalogue.IsProfile(c)) instruction = SumDifferenceOpenCatalogue.WritingInstructions(c.Language);
+        if (AverageMissingOpenCatalogue.IsProfile(c)) instruction = AverageMissingOpenCatalogue.WritingInstructions(c.Language);
         if (AverageOpenCatalogue.IsProfile(c)) instruction = AverageOpenCatalogue.WritingInstructions(c.Language);
         if (FractionWholeOpenCatalogue.IsProfile(c)) instruction = FractionWholeOpenCatalogue.WritingInstructions(c.Language);
         if (FractionRemainingOpenCatalogue.IsProfile(c)) instruction = FractionRemainingOpenCatalogue.WritingInstructions(c.Language);
@@ -170,6 +174,8 @@ public static class OpenQuestionProse
             : RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.PromptRelation
             : RectanglePerimeterOpenCatalogue.IsProfile(c)?RectanglePerimeterOpenCatalogue.PromptRelation
             : SameDayTimeCatalogue.IsProfile(c)?SameDayTimeCatalogue.PromptRelation(c)
+            : SumDifferenceOpenCatalogue.IsProfile(c) ? SumDifferenceOpenCatalogue.PromptRelation(c)
+            : AverageMissingOpenCatalogue.IsProfile(c) ? AverageMissingOpenCatalogue.PromptRelation(c)
             : AverageOpenCatalogue.IsProfile(c) ? AverageOpenCatalogue.PromptRelation(c)
             : PercentageWholeOpenCatalogue.IsProfile(c) ? PercentageWholeOpenCatalogue.PromptRelation(c.Language)
             : PercentageRemainingOpenCatalogue.IsProfile(c) ? PercentageRemainingOpenCatalogue.PromptRelation(c.Language)
@@ -196,6 +202,7 @@ public static class OpenQuestionProse
             + "\n"+(vi?"Chủ thể dùng biến, không điền tên. Đơn vị/đồ vật đã chọn (chỉ để hiểu bối cảnh): ":"Use actor placeholders, never actual names. Selected units/objects (context only): ")+c.Unit+"; "+c.GroupUnit
             + "\nReference JSON:\n" + QuestionBankStore.SerializeDraft(Example(c))
             + (SameMonthCalendarCatalogue.IsProfile(c)?SameMonthCalendarCatalogue.ContextNotes(c):"")
+            + (SumDifferenceOpenCatalogue.IsProfile(c)?SumDifferenceOpenCatalogue.WritingFocus(c):"")
             + (RectanglePerimeterOpenCatalogue.IsProfile(c)?RectanglePerimeterOpenCatalogue.WritingFocus(c):"")
             + (RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.WritingFocus(c):"")
             + (OvernightTimeCatalogue.IsProfile(c)?OvernightTimeCatalogue.WritingFocus(c):"")
@@ -259,16 +266,27 @@ public static class OpenQuestionProse
                     blocks.Add(c.Language==AppLanguage.Vietnamese?Literal("{v4} của {v0}")
                         :"("+Literal("{v0}'s {v4}")+" | "+Literal("the {v4} for {v0}")+")");i=matches.Length;continue;
                 }
-                if(AverageOpenCatalogue.IsProfile(c)&&i+1<matches.Length
-                    &&matches[i].Value is "{v0}" or "{v1}" or "{v2}"&&matches[i+1].Value=="{v5}")
+                if(AverageMissingOpenCatalogue.IsProfile(c)&&i+1<matches.Length
+                    &&matches[i].Value=="{v5}"&&matches[i+1].Value=="{v4}")
+                {
+                    blocks.Add(c.Language==AppLanguage.English
+                        ?"("+Literal("{v5} by each {v4}")+" | "+Literal("{v4} {v5}")+")"
+                        :Literal("{v4} {v5}"));i++;continue;
+                }
+                if((AverageOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c))&&i+1<matches.Length
+                    &&(matches[i].Value is "{v0}" or "{v1}" or "{v2}" || AverageMissingOpenCatalogue.IsProfile(c)&&matches[i].Value=="{v4}")&&matches[i+1].Value=="{v5}")
                 {
                     // Bind the action to its owner in either voice, not a whole
                     // sentence. Independent amount/unit placement still allows
                     // unit-first clauses and amount-first passive observations.
                     string owner=matches[i].Value,action=matches[++i].Value;
                     block=c.Language==AppLanguage.Vietnamese?Literal(owner+" "+action)
-                        :"("+Literal(owner+" "+action)+" | "+Literal(action+" by "+owner)+")";
+                        :"("+Literal(owner+" "+action)+" | "+Literal(action+(AverageMissingOpenCatalogue.IsProfile(c)&&owner=="{v4}"?" by each ":" by ")+owner)+")";
                     blocks.Add(block);continue;
+                }
+                if(AverageMissingOpenCatalogue.IsProfile(c)&&matches[i].Value=="{v2}"&&i+1<matches.Length&&matches[i+1].Value=="{v6}")
+                {
+                    blocks.Add(Literal("{v2} {v6}"));i++;continue;
                 }
                 if(AverageOpenCatalogue.IsProfile(c)&&matches[i].Value=="{v4}"&&i+1<matches.Length&&matches[i+1].Value=="{v6}")
                 {
@@ -305,7 +323,7 @@ public static class OpenQuestionProse
                         :"("+Literal(hour+" hours "+minute+" minutes")+" | "+Literal(hour+" hours and "+minute+" minutes")+")";
                     blocks.Add(block); continue;
                 }
-                if(!RectangleAreaOpenCatalogue.IsProfile(c) && !RectanglePerimeterOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !FractionRemainingOpenCatalogue.IsProfile(c) && !FractionWholeOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c) && i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
+                if(!RectangleAreaOpenCatalogue.IsProfile(c) && !RectanglePerimeterOpenCatalogue.IsProfile(c) && !SumDifferenceOpenCatalogue.IsProfile(c) && !AverageMissingOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !FractionRemainingOpenCatalogue.IsProfile(c) && !FractionWholeOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c) && i+1<matches.Length && Regex.IsMatch(matches[i].Value,@"^\{(?:a|b|f\d+)\}$")
                     && Regex.IsMatch(matches[i+1].Value,@"^\{(?:unit(?:_[ab])?|items?|group(?:_one)?|v\d+)\}$")
                     && string.IsNullOrWhiteSpace(value[(matches[i].Index+matches[i].Length)..matches[i+1].Index]))
                     block += " " + Literal(" ") + " " + Literal(matches[++i].Value);
@@ -314,7 +332,7 @@ public static class OpenQuestionProse
             IEnumerable<string[]> Orders(string[] source)
             {
                 if(source.Length==0){yield return [];yield break;}
-                if(source.Length>(clockActivity||SameDayTimeCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
+                if(source.Length>(SumDifferenceOpenCatalogue.IsProfile(c)||clockActivity||SameDayTimeCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c)?4:3)){yield return source;yield break;}
                 for(int i=0;i<source.Length;i++)
                     foreach(var tail in Orders(source.Where((_,j)=>j!=i).ToArray()))yield return [source[i],..tail];
             }

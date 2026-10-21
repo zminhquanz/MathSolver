@@ -204,7 +204,8 @@ public partial class AiQuestionBankPage : ContentPage
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
     private bool SupportsCreativeProse => _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
             || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant)
-            || _family==BankQuestionFamily.Average && _storyVariant==(int)AverageQuizType.Direct
+            || _family==BankQuestionFamily.TwoNumbers && _storyVariant==(int)ElementaryQuizType.SumDifference
+            || _family==BankQuestionFamily.Average && _storyVariant is (int)AverageQuizType.Direct or (int)AverageQuizType.MissingValue
             || _family==BankQuestionFamily.Percentage && _storyVariant is (int)PercentageQuizType.FindWholeFromPercentageValue or (int)PercentageQuizType.FindPercentageValue or (int)PercentageQuizType.FindRemainingAfterDonation
             || _family==BankQuestionFamily.FractionQuantity && _storyVariant is (int)ElementaryQuizType.FractionOfNumber or (int)ElementaryQuizType.FractionRemaining or (int)ElementaryQuizType.WholeFromFraction
             || _family==BankQuestionFamily.Time && (SameDayTimePilot.IsType((ElementaryQuizType)_storyVariant) || _storyVariant==(int)SameDayBreakPilot.Type || _storyVariant==(int)OvernightTimePilot.Type || SameMonthCalendarPilot.IsType((ElementaryQuizType)_storyVariant))

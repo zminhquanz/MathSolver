@@ -8,7 +8,7 @@ using PdfSharp.Pdf.IO;
 using System.Text.Json;
 if (args is ["--help"] or ["--list"])
 {
-    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --average-open output-root | --percentage-part-open output-root | --fraction-remaining-open output-root | --fraction-whole-open output-root | --percentage-remaining-open output-root | --percentage-whole-open output-root | --rectangle-perimeter-open output-root | --rectangle-area-open output-root | --time-break-open output-root | --overnight-open output-root | --calendar-open output-root | --calendar-inclusive-open output-root | --calendar-adjacent-open output-root | --calendar-adjacent-inclusive-open output-root | --calendar-february-common-open output-root | --calendar-february-leap-open output-root]. Default: isolated temporary files, cleaned after tests.");
+    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --sum-difference-open output-root | --average-missing-open output-root | --average-open output-root | --percentage-part-open output-root | --fraction-remaining-open output-root | --fraction-whole-open output-root | --percentage-remaining-open output-root | --percentage-whole-open output-root | --rectangle-perimeter-open output-root | --rectangle-area-open output-root | --time-break-open output-root | --overnight-open output-root | --calendar-open output-root | --calendar-inclusive-open output-root | --calendar-adjacent-open output-root | --calendar-adjacent-inclusive-open output-root | --calendar-february-common-open output-root | --calendar-february-leap-open output-root]. Default: isolated temporary files, cleaned after tests.");
     return 0;
 }
 bool februaryLeapOnly=args is ["--calendar-february-leap-open",_];
@@ -25,9 +25,11 @@ bool percentageWholeOnly=args is ["--percentage-whole-open",_];
 bool percentageRemainingOnly=args is ["--percentage-remaining-open",_];
 bool wholeOnly=args is ["--fraction-whole-open",_];
 bool remainingOnly=args is ["--fraction-remaining-open",_];
+bool sumDifferenceOnly=args is ["--sum-difference-open",_];
+bool averageMissingOnly=args is ["--average-missing-open",_];
 bool averageOnly=args is ["--average-open",_];
 bool percentageOnly=args is ["--percentage-part-open",_];
-if(februaryLeapOnly||februaryCommonOnly||adjacentInclusiveOnly||adjacentCalendarOnly||inclusiveCalendarOnly||calendarOnly||overnightOnly||timeBreakOnly||rectangleAreaOnly||rectanglePerimeterOnly||percentageWholeOnly||averageOnly||percentageOnly||remainingOnly||wholeOnly||percentageRemainingOnly)args=["--artifacts",args[1]];
+if(februaryLeapOnly||februaryCommonOnly||adjacentInclusiveOnly||adjacentCalendarOnly||inclusiveCalendarOnly||calendarOnly||overnightOnly||timeBreakOnly||rectangleAreaOnly||rectanglePerimeterOnly||percentageWholeOnly||sumDifferenceOnly||averageMissingOnly||averageOnly||percentageOnly||remainingOnly||wholeOnly||percentageRemainingOnly)args=["--artifacts",args[1]];
 if (!(args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] || (args.Length == 1 && !args[0].StartsWith("--"))))
 {
     Console.Error.WriteLine("Invalid PDF test arguments. Use --help.");
@@ -98,6 +100,18 @@ try
         await PercentagePartOpenWorksheetTests.Run(directory);
     await PercentageRemainingOpenWorksheetTests.Run(directory);
         Console.WriteLine("Percentage PDF output: "+directory);
+        return 0;
+    }
+    if(sumDifferenceOnly)
+    {
+        await SumDifferenceOpenWorksheetTests.Run(directory);
+        Console.WriteLine("Sum/difference PDF output: "+directory);
+        return 0;
+    }
+    if(averageMissingOnly)
+    {
+        await AverageMissingWorksheetTests.Run(directory);
+        Console.WriteLine("Average missing-value PDF output: "+directory);
         return 0;
     }
     if(averageOnly)
@@ -224,6 +238,8 @@ try
     await FractionRemainingOpenWorksheetTests.Run(directory);
     await FractionWholeOpenWorksheetTests.Run(directory);
     await AverageOpenWorksheetTests.Run(directory);
+    await AverageMissingWorksheetTests.Run(directory);
+    await SumDifferenceOpenWorksheetTests.Run(directory);
     await PercentagePartOpenWorksheetTests.Run(directory);
     await PercentageRemainingOpenWorksheetTests.Run(directory);
     await PercentageWholeOpenWorksheetTests.Run(directory);
