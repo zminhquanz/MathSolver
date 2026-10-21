@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Matrix.SelectAll": "Chọn tất cả",
+    "Matrix.CopyGrid": "Sao chép bảng",
+    "Matrix.CopyHelp": "Chạm ô # ở góc bảng hoặc Ctrl+A để chọn tất cả. Ctrl+C sao chép ô/bảng đang chọn; nút Sao chép bảng lấy toàn bộ ma trận để dán vào Excel. Khi đang sửa ô, Ctrl+A/C chỉ áp dụng cho chữ trong ô.",
+    "Matrix.AllSelected": "Đã chọn toàn bộ ma trận {0}",
+    "Matrix.CopyingGrid": "Đang sao chép ma trận…",
+    "Matrix.CopiedGrid": "Đã sao chép. Mở Excel, chọn ô bắt đầu và dán (Ctrl+V).",
     "Matrix.CellSize": "Kích thước ô",
     "Matrix.ResetCellSize": "Khôi phục hàng và cột mặc định",
     "Matrix.CellSizeHelp": "Áp dụng cho hàng và cột của ô đang chọn, không thay đổi giá trị ma trận. Có thể kéo ranh giới tiêu đề để chỉnh trực tiếp.",

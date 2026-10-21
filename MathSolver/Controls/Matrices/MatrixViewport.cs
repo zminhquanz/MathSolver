@@ -22,6 +22,12 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public Func<bool>? CanInteract { get; set; }
     public Func<bool>? CanEdit { get; set; }
     public event Action? EditCancelled;
+    public event EventHandler? CopyRequested;
+    public bool AllSelected => _state.AllSelected;
+    private void RequestCopy()
+    {
+        if (CanUseInput && !_state.IsEditing) CopyRequested?.Invoke(this, EventArgs.Empty);
+    }
     public int SelectedRow => _state.SelectedRow;
     public int SelectedColumn => _state.SelectedColumn;
     public int FirstRow => _state.FirstRow;
@@ -98,6 +104,8 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             if (_dragged) { if (!_state.IsEditing) FocusSelection(); return; }
             if (e.Touches.Length == 0) return;
             var point = e.Touches[0];
+            if (point.X >= 0 && point.X < MatrixViewportState.HeaderWidth && point.Y >= 0 && point.Y < _state.CellHeight)
+            { SelectAll(); return; }
             if (_state.TryHitCell(point.X, point.Y, out int row, out int column)) TapCell(row, column);
         };
         _canvas.CancelInteraction += (_, _) =>
@@ -142,6 +150,14 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         FocusSelection();
         return true;
     }
+    public bool SelectAll()
+    {
+        if (!CanUseInput) return false;
+        if (!_state.SelectAll(CommitEdit)) return RestoreInvalidEditor();
+        Refresh(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        FocusSelection();
+        return true;
+    }
     internal bool Navigate(MatrixCellMove move)
     {
         if (!_state.Navigate(move, CommitEdit)) return RestoreInvalidEditor();
@@ -162,7 +178,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
 
     private void BeginInlineEdit()
     {
+        bool wasAllSelected = _state.AllSelected;
         if (!CanUseInput || !_state.BeginEdit(CanEdit?.Invoke() != false)) return;
+        if (wasAllSelected) CellSelected?.Invoke(SelectedRow, SelectedColumn);
         Scrolled(); FocusEditor();
     }
 
@@ -243,7 +261,8 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             {
                 var bounds = _state.Bounds(row, column);
                 if (bounds.X >= width) break;
-                DrawCell(canvas, bounds, _readCell(row, column), row == SelectedRow && column == SelectedColumn, false);
+                bool active = row == SelectedRow && column == SelectedColumn;
+                DrawCell(canvas, bounds, _readCell(row, column), _state.AllSelected || active, false, active);
             }
         }
         canvas.RestoreState();
@@ -253,7 +272,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         {
             var bounds = _state.Bounds(FirstRow, column);
             if (bounds.X >= width) break;
-            DrawCell(canvas, new(bounds.X, 0, bounds.Width, cellHeight), (column + 1).ToString(), false, true);
+            DrawCell(canvas, new(bounds.X, 0, bounds.Width, cellHeight), (column + 1).ToString(), _state.AllSelected, true, false);
             DrawColumnGrip(canvas, bounds.X + bounds.Width);
         }
         canvas.RestoreState();
@@ -263,15 +282,15 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         {
             var bounds = _state.Bounds(row, FirstColumn);
             if (bounds.Y >= height) break;
-            DrawCell(canvas, new(0, bounds.Y, headerWidth, bounds.Height), (row + 1).ToString(), false, true);
+            DrawCell(canvas, new(0, bounds.Y, headerWidth, bounds.Height), (row + 1).ToString(), _state.AllSelected, true, false);
             DrawRowGrip(canvas, bounds.Y + bounds.Height);
         }
         canvas.RestoreState();
-        DrawCell(canvas, new(0, 0, headerWidth, cellHeight), "#", false, true);
+        DrawCell(canvas, new(0, 0, headerWidth, cellHeight), "#", _state.AllSelected, true, false);
         DrawResizeGuide(canvas);
         DrawScrollBars(canvas);
     }
-    private void DrawCell(ICanvas canvas, MatrixCellBounds bounds, string text, bool selected, bool header)
+    private void DrawCell(ICanvas canvas, MatrixCellBounds bounds, string text, bool selected, bool header, bool outline = true)
     {
         float x = (float)bounds.X, y = (float)bounds.Y, width = (float)bounds.Width, height = (float)bounds.Height;
         canvas.FillColor = selected ? Accent.WithAlpha(0.18f) : header ? Line.WithAlpha(0.22f) : Paper;
@@ -280,7 +299,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         canvas.FontColor = selected ? Accent : Ink;
         canvas.DrawString(text, x + 6, y, width - 12, height, HorizontalAlignment.Center, VerticalAlignment.Center);
         canvas.DrawRectangle(x, y, width, height);
-        if (selected)
+        if (selected && outline)
         {
             canvas.StrokeColor = Accent; canvas.StrokeSize = 2;
             canvas.DrawRectangle(x + 1, y + 1, width - 2, height - 2);

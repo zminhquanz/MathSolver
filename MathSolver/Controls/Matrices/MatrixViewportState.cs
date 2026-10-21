@@ -19,6 +19,7 @@ internal sealed class MatrixViewportState
     public int SelectedRow { get; private set; }
     public int SelectedColumn { get; private set; }
     public bool IsEditing { get; private set; }
+    public bool AllSelected { get; private set; }
     private bool _hasSelection;
     public double OffsetX { get; private set; }
     public double OffsetY { get; private set; }
@@ -57,6 +58,7 @@ internal sealed class MatrixViewportState
         Rows = rows; Columns = columns;
         IsEditing = false;
         _hasSelection = false;
+        AllSelected = false;
         SelectedRow = Math.Min(SelectedRow, rows - 1);
         SelectedColumn = Math.Min(SelectedColumn, columns - 1);
         RebuildDimensions();
@@ -132,7 +134,7 @@ internal sealed class MatrixViewportState
     public bool ScrollBy(double x, double y) => ScrollTo(OffsetX + x, OffsetY + y);
     public MatrixCellAction TapCell(int row, int column, bool canEdit, Func<bool>? commit = null)
     {
-        if (_hasSelection && row == SelectedRow && column == SelectedColumn && canEdit)
+        if (!AllSelected && _hasSelection && row == SelectedRow && column == SelectedColumn && canEdit)
         {
             BeginEdit(canEdit);
             return MatrixCellAction.Editing;
@@ -142,6 +144,7 @@ internal sealed class MatrixViewportState
     public bool BeginEdit(bool canEdit)
     {
         if (!canEdit) return false;
+        AllSelected = false;
         _hasSelection = true;
         IsEditing = true;
         RevealSelection();
@@ -154,10 +157,18 @@ internal sealed class MatrixViewportState
         return true;
     }
     public void CancelEdit() => IsEditing = false;
+    public bool SelectAll(Func<bool>? commit = null)
+    {
+        if (!EndEdit(commit)) return false;
+        _hasSelection = true;
+        AllSelected = true;
+        return true;
+    }
     public bool Select(int row, int column, Func<bool>? commit = null)
     {
         // Validate/commit the old editor before changing either selection or scroll.
         if (!EndEdit(commit)) return false;
+        AllSelected = false;
         _hasSelection = true;
         SelectedRow = Math.Clamp(row, 0, Rows - 1);
         SelectedColumn = Math.Clamp(column, 0, Columns - 1);

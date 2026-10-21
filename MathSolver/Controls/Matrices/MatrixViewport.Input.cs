@@ -77,8 +77,16 @@ public sealed partial class MatrixViewport
     }
     private void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
-        if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Control)
-            || KeyDown(global::Windows.System.VirtualKey.Menu)) return;
+        if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Menu)) return;
+        if (KeyDown(global::Windows.System.VirtualKey.Control))
+        {
+            // Let the native TextBox own Ctrl+A/C while editing its text.
+            if (_state.IsEditing) return;
+            if (e.Key == global::Windows.System.VirtualKey.A) { e.Handled = true; SelectAll(); }
+            else if (e.Key == global::Windows.System.VirtualKey.C)
+            { e.Handled = true; RequestCopy(); }
+            return;
+        }
         if (!_state.IsEditing && e.Key is global::Windows.System.VirtualKey.F2 or global::Windows.System.VirtualKey.Enter)
         { e.Handled = true; BeginInlineEdit(); return; }
         // While editing, arrow keys belong to the native text caret.
@@ -97,7 +105,11 @@ public sealed partial class MatrixViewport
         };
         if (move is { } direction) { e.Handled = true; Navigate(direction); }
         else if (e.Key == global::Windows.System.VirtualKey.Escape)
-        { e.Handled = true; CancelInlineEdit(); }
+        {
+            e.Handled = true;
+            if (_state.AllSelected) Select(SelectedRow, SelectedColumn);
+            else CancelInlineEdit();
+        }
     }
 #endif
 }

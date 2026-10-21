@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Matrix.SelectAll": "Select all",
+    "Matrix.CopyGrid": "Copy table",
+    "Matrix.CopyHelp": "Tap # in the table corner or press Ctrl+A to select all. Ctrl+C copies the selected cell/table; Copy table copies the whole matrix for Excel. While editing, Ctrl+A/C applies to the cell text.",
+    "Matrix.AllSelected": "Entire matrix {0} selected",
+    "Matrix.CopyingGrid": "Copying matrix…",
+    "Matrix.CopiedGrid": "Copied. Open Excel, select the starting cell and paste (Ctrl+V).",
     "Matrix.CellSize": "Cell size",
     "Matrix.ResetCellSize": "Reset selected row and column",
     "Matrix.CellSizeHelp": "Changes the selected cell's row height and column width without changing matrix values. You can also drag header edges.",

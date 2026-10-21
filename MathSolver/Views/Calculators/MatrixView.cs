@@ -82,6 +82,15 @@ public sealed partial class MatrixView : LocalizedSolverView
         }
         editor.Add(matrixTabs);
         editor.Add(_inputStatus);
+        var clipboardActions = FlowGrid(180, 2);
+        clipboardActions.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
+        clipboardActions.Add(ActionButton("CopyGrid", "📋", OnCopyGrid));
+        editor.Add(clipboardActions);
+        var copyHelp = Caption("CopyHelp");
+        copyHelp.FontSize = 13;
+        copyHelp.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
+        editor.Add(copyHelp);
+        _viewport.CopyRequested += OnCopySelection;
         _viewport.SetInlineEditor(_value);
         _viewport.CommitEdit = CommitPendingCell;
         _viewport.CanInteract = () => _active;
@@ -214,7 +223,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         bool preserveInvalidEntry = !CommitPendingCell();
         foreach (var update in _translations) update();
         if (_calculate is null) return;
-        _viewport.SetAccessibility(T("TableHelp"));
+        _viewport.SetAccessibility(T("TableHelp") + " " + T("CopyHelp"));
         SemanticProperties.SetDescription(_value, T("CellValue"));
         RefreshSelection();
         if (!preserveInvalidEntry) RefreshCell();

@@ -66,7 +66,8 @@ public sealed partial class MatrixView
         int row = _viewport.SelectedRow, column = _viewport.SelectedColumn;
         _row.Text = (row + 1).ToString(CultureInfo.InvariantCulture);
         _column.Text = (column + 1).ToString(CultureInfo.InvariantCulture);
-        _selection.Text = F("Selected", "ABC"[_selected], row + 1, column + 1);
+        _selection.Text = _viewport.AllSelected ? F("AllSelected", "ABC"[_selected])
+            : F("Selected", "ABC"[_selected], row + 1, column + 1);
         SemanticProperties.SetDescription(_value, _selection.Text + ". " + T("CellValue"));
         _updatingEditor = true;
         try

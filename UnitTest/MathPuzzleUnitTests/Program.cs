@@ -2,6 +2,8 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix viewport select all and clipboard", PuzzleTests.CheckMatrixSelectAll),
+    ("Matrix clipboard Excel rows and exact integers", PuzzleTests.CheckMatrixClipboard),
     ("Matrix viewport select and edit interactions", PuzzleTests.CheckMatrixCellInteraction),
     ("Matrix viewport scrollbars and large table bounds", PuzzleTests.CheckMatrixScrollBars),
     ("Matrix viewport automatic scrollbars", PuzzleTests.CheckMatrixAutomaticScrollBars),
