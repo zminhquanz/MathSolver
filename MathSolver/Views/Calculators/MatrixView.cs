@@ -85,6 +85,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         _viewport.SetInlineEditor(_value);
         _viewport.CommitEdit = CommitPendingCell;
         _viewport.CanInteract = () => _active;
+        _viewport.CanEdit = () => !_busy && _selected != 2;
         _viewport.EditCancelled += () =>
         {
             if (!CanTouchUi || _busy) return;
@@ -149,11 +150,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         root.Add(fixedHeader);
         root.Add(new ScrollView { Content = body }, 0, 1);
         Content = root;
-        _viewport.CellSelected += (_, _) =>
-        {
-            RefreshCell();
-            if (!_busy && CanTouchUi) _viewport.FocusEditor();
-        };
+        _viewport.CellSelected += (_, _) => RefreshCell();
         _viewport.ViewportChanged += RefreshRange;
         InteractiveButtonAnimation.SetIsScopeEnabled(this, true);
         RefreshLocalizedContent();

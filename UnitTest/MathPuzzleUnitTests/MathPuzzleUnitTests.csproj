@@ -20,5 +20,7 @@
     <Compile Include="../../MathSolver/Views/Calculators/PowerRootView.Memory.cs" Link="Views/PowerRootView.Memory.cs" />
     <Compile Include="../../MathSolver/Services/Memory/RecoverableMemoryRegistry.cs" Link="Services/Memory/RecoverableMemoryRegistry.cs" />
     <ProjectReference Include="../TestHost/TestHost.csproj" />
+    <Compile Include="../../MathSolver/Controls/Matrices/MatrixViewportState.cs" Link="Controls/MatrixViewportState.cs" />
+    <Compile Include="../../MathSolver/Controls/Matrices/MatrixScrollBarState.cs" Link="Controls/MatrixScrollBarState.cs" />
   </ItemGroup>
 </Project>

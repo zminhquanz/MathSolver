@@ -4,6 +4,24 @@ namespace MathSolver.Controls;
 
 public sealed partial class MatrixViewport
 {
+    private void FocusSelection()
+    {
+        if (!CanUseInput) return;
+        int generation = ++_focusGeneration;
+        Dispatcher.Dispatch(() =>
+        {
+            if (generation != _focusGeneration || !CanUseInput || _state.IsEditing) return;
+            _editor?.Unfocus();
+            _canvas.Focus();
+#if WINDOWS
+            if (_canvas.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.Control control)
+            {
+                control.IsTabStop = true;
+                control.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+            }
+#endif
+        });
+    }
     private void SetParentPanLock(bool locked)
     {
 #if ANDROID
@@ -19,10 +37,13 @@ public sealed partial class MatrixViewport
         _inputSurface = surface;
         surface.AddHandler(Microsoft.UI.Xaml.UIElement.PointerWheelChangedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(OnWheel), true);
         surface.AddHandler(Microsoft.UI.Xaml.UIElement.PreviewKeyDownEvent, new Microsoft.UI.Xaml.Input.KeyEventHandler(OnKeyDown), true);
+        AttachPointerInput();
 #endif
     }
     private void DetachNativeInput()
     {
+        CancelPointerGesture();
+        DetachPointerInput();
 #if WINDOWS
         if (_inputSurface is not { } surface) return;
         _inputSurface = null;
@@ -44,16 +65,25 @@ public sealed partial class MatrixViewport
     private void OnWheel(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
     {
         if (!CanUseInput) return;
+        bool wasEditing = _state.IsEditing;
+        if (!_state.EndEdit(CommitEdit)) { RestoreInvalidEditor(); e.Handled = true; return; }
         var properties = e.GetCurrentPoint(_inputSurface).Properties;
         double amount = properties.MouseWheelDelta / 120d * _state.CellHeight * 3;
         bool moved = properties.IsHorizontalMouseWheel ? _state.ScrollBy(amount, 0)
             : KeyDown(global::Windows.System.VirtualKey.Shift) ? _state.ScrollBy(-amount, 0) : _state.ScrollBy(0, -amount);
         if (moved) { Scrolled(); e.Handled = true; }
+        else Refresh();
+        if (wasEditing) FocusSelection();
     }
     private void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
-        if (!CanUseInput || _editor?.IsFocused != true || KeyDown(global::Windows.System.VirtualKey.Control)
+        if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Control)
             || KeyDown(global::Windows.System.VirtualKey.Menu)) return;
+        if (!_state.IsEditing && e.Key is global::Windows.System.VirtualKey.F2 or global::Windows.System.VirtualKey.Enter)
+        { e.Handled = true; BeginInlineEdit(); return; }
+        // While editing, arrow keys belong to the native text caret.
+        if (_state.IsEditing && e.Key is global::Windows.System.VirtualKey.Left or global::Windows.System.VirtualKey.Right
+            or global::Windows.System.VirtualKey.Up or global::Windows.System.VirtualKey.Down) return;
         bool shift = KeyDown(global::Windows.System.VirtualKey.Shift);
         MatrixCellMove? move = e.Key switch
         {

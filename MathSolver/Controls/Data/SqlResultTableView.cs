@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Collections.ObjectModel;
+using MathSolver.Services;
 
 namespace MathSolver.Controls;
 
@@ -19,6 +20,9 @@ public sealed class SqlResultTableView : ContentView
     private const double RowHeight = 44;
     private const double NumberWidth = 52;
     private const double InsertRowHeight = 116;
+    private const double ScrollBarGutter = 20;
+    private static readonly IValueConverter RowScrollOffset = new NegativeScrollOffsetConverter();
+    private bool _handlerChanging;
     private readonly Grid _insertRow = new() { ColumnSpacing = 0, RowSpacing = 0, IsVisible = false };
     private readonly Dictionary<string, DraftCell> _insertCells = [];
     private readonly List<(InputView Input, CheckBox? Null, SqlInsertColumn Column)> _insertInputs = [];
@@ -33,6 +37,8 @@ public sealed class SqlResultTableView : ContentView
     private readonly Grid _header = new() { ColumnSpacing = 0, RowSpacing = 0, HeightRequest = RowHeight };
     private readonly CollectionView _rows = new()
     {
+        HorizontalOptions = LayoutOptions.Start,
+        WidthRequest = 1,
         SelectionMode = SelectionMode.None,
         ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Vertical) { ItemSpacing = 0 },
         ItemSizingStrategy = ItemSizingStrategy.MeasureAllItems,
@@ -49,6 +55,13 @@ public sealed class SqlResultTableView : ContentView
     };
 
     private sealed record ResultRow(int Number, string[] Values, bool Editing = false);
+    private sealed class NegativeScrollOffsetConverter : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            value is double offset ? -offset : 0d;
+        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
+            throw new NotSupportedException();
+    }
     private sealed class DraftCell : BindableObject
     {
         public static readonly BindableProperty TextProperty = BindableProperty.Create(nameof(Text), typeof(string), typeof(DraftCell), "");
@@ -71,6 +84,29 @@ public sealed class SqlResultTableView : ContentView
         _table.Add(_rows, 0, 2);
         _scroll.Content = _table;
         Content = _scroll;
+        _scroll.Scrolled += (_, _) => PinVerticalViewport();
+        _scroll.SizeChanged += (_, _) => PinVerticalViewport();
+        _scroll.Loaded += (_, _) => PinVerticalViewport();
+        Loaded += (_, _) => PinVerticalViewport();
+        HandlerChanging += (_, _) => _handlerChanging = true;
+        HandlerChanged += (_, _) => { _handlerChanging = false; PinVerticalViewport(); };
+    }
+
+    private void PinVerticalViewport()
+    {
+        if (_handlerChanging || !IsLoaded || !_scroll.IsLoaded || Handler?.MauiContext is null
+            || Window is not { Handler.MauiContext: not null } window || WindowUiLifetime.IsClosing(window)
+            || _scroll.Width <= 0) return;
+
+        // The horizontal viewport scrolls the header and draft normally. Keep
+        // the recycled list (and its native vertical scrollbar) at the visible
+        // left edge, then offset only each row's clipped column content.
+        // Screen X: -ScrollX + list.TranslationX + row.TranslationX = -ScrollX.
+        double viewportWidth = _scroll.Width;
+        if (_rows.WidthRequest != viewportWidth) _rows.WidthRequest = viewportWidth;
+        double tableWidth = Math.Max(viewportWidth, _columnWidths.Sum() + ScrollBarGutter);
+        if (_table.WidthRequest != tableWidth) _table.WidthRequest = tableWidth;
+        _rows.TranslationX = _scroll.ScrollX;
     }
 
     public void Clear()
@@ -102,13 +138,15 @@ public sealed class SqlResultTableView : ContentView
         for (int i = 0; i < columns.Length; i++)
             _header.Add(CreateCell(columns[i], true), i + 1, 0);
 
-        _table.WidthRequest = widths.Sum();
+        // Leave room to expose the final column before the pinned vertical rail.
+        _table.WidthRequest = widths.Sum() + ScrollBarGutter;
         // Both axes have an explicit viewport; the outer page never measures all rows.
         _rows.ItemTemplate = new DataTemplate(() => CreateRow(columns, widths));
         _resultRows = new(rows.Select((values, index) => new ResultRow(index + 1, values)));
         _rows.ItemsSource = _resultRows;
         UpdateViewport();
         IsVisible = true;
+        PinVerticalViewport();
         // A new result starts at its first column; header and body share this viewport.
         _ = _scroll.ScrollToAsync(0, 0, false);
     }
@@ -266,9 +304,16 @@ public sealed class SqlResultTableView : ContentView
         return cell;
     }
 
-    private Grid CreateRow(string[] columns, double[] widths)
+    private AbsoluteLayout CreateRow(string[] columns, double[] widths)
     {
         var grid = new Grid { ColumnSpacing = 0, RowSpacing = 0, HeightRequest = RowHeight };
+        var viewport = new AbsoluteLayout { HeightRequest = RowHeight, IsClippedToBounds = true,
+            HorizontalOptions = LayoutOptions.Start };
+        viewport.SetBinding(WidthRequestProperty, new Binding(nameof(WidthRequest), source: _rows));
+        grid.SetBinding(TranslationXProperty, new Binding(nameof(ScrollView.ScrollX), source: _scroll, converter: RowScrollOffset));
+        viewport.Add(grid);
+        double rowWidth = widths.Sum();
+        AbsoluteLayout.SetLayoutBounds(grid, new Rect(0, 0, rowWidth, RowHeight));
         foreach (double width in widths) grid.ColumnDefinitions.Add(new ColumnDefinition(width));
         grid.BindingContextChanged += (_, _) =>
         {
@@ -276,7 +321,9 @@ public sealed class SqlResultTableView : ContentView
             if (grid.BindingContext is not ResultRow row) return;
             bool editing = row.Editing && row.Number == EditingRowNumber && _editColumns.Length == columns.Length
                 && row.Number <= _resultRows.Count && ReferenceEquals(_resultRows[row.Number - 1], row);
-            grid.HeightRequest = editing ? InsertRowHeight : RowHeight;
+            double height = editing ? InsertRowHeight : RowHeight;
+            viewport.HeightRequest = grid.HeightRequest = height;
+            AbsoluteLayout.SetLayoutBounds(grid, new Rect(0, 0, rowWidth, height));
             grid.SetDynamicResource(BackgroundColorProperty, editing ? "PrimarySoftColor"
                 : row.Number % 2 == 0 ? "SurfaceAltColor" : "SurfaceColor");
             grid.Add(CreateCell(row.Number.ToString(CultureInfo.CurrentCulture), editing));
@@ -299,7 +346,7 @@ public sealed class SqlResultTableView : ContentView
                 grid.Add(cell, i + 1, 0);
             }
         };
-        return grid;
+        return viewport;
     }
 
     private static Border CreateCell(string text, bool header)

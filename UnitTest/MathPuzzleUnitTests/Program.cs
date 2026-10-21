@@ -2,6 +2,10 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix viewport select and edit interactions", PuzzleTests.CheckMatrixCellInteraction),
+    ("Matrix viewport scrollbars and large table bounds", PuzzleTests.CheckMatrixScrollBars),
+    ("Matrix viewport automatic scrollbars", PuzzleTests.CheckMatrixAutomaticScrollBars),
+    ("Matrix viewport variable row and column sizes", PuzzleTests.CheckMatrixResizing),
     ("Unit conversion exact decimal factors", PuzzleTests.CheckUnitConversionExactFactors),
     ("Unit conversion ten-place decimal display", PuzzleTests.CheckUnitConversionDecimalDisplay),
     ("Unit conversion ten-place input precision", PuzzleTests.CheckUnitConversionInputPrecision),

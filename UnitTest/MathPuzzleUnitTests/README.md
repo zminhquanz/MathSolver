@@ -1,5 +1,13 @@
 # Math puzzle checks
 
+Filter `"Matrix viewport"` checks the source-linked matrix selection/edit state and
+scrollbar geometry: first/second clicks, read-only results, invalid edits, cancel,
+Tab wrapping, matrix switching, both axes at 1024 × 1024, fitting tables and tiny
+viewports. It also checks independent row/column sizes, resized header hit testing,
+oversized cells and automatic scrollbar visibility (single-axis, coupled axes,
+exact fits, shrinking cells and growing the viewport). These checks do not launch
+MAUI or exercise native pointer/focus events.
+
 Filter `"Unit conversion"` exercises the real Formula → Units conversion engine:
 exact time/metric/speed/temperature fixtures, identity at decimal.MaxValue,
 large representable results with overflowing decimal intermediates, input rejection

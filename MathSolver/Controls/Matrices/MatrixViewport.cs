@@ -17,8 +17,10 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     private double _panX, _panY;
     private bool _dragged, _everLoaded;
     private int _focusGeneration;
+    private float _drawFontSize = 14;
     public Func<bool>? CommitEdit { get; set; }
     public Func<bool>? CanInteract { get; set; }
+    public Func<bool>? CanEdit { get; set; }
     public event Action? EditCancelled;
     public int SelectedRow => _state.SelectedRow;
     public int SelectedColumn => _state.SelectedColumn;
@@ -60,26 +62,50 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         };
         _canvas.StartInteraction += (_, e) =>
         {
-            if (!CanUseInput || e.Touches.Length == 0) return;
+            if (!CanUseInput || HasPointerCapture || e.Touches.Length == 0) return;
             SetParentPanLock(_state.MaxX > 0 || _state.MaxY > 0);
             _panStart = e.Touches[0]; _panX = _state.OffsetX; _panY = _state.OffsetY; _dragged = false;
+            _panBlocked = false;
+            _scrollAxis = ScrollAxis.None;
+            _resizeInteraction = StartResize(_panStart);
+            _barInteraction = !_resizeInteraction && StartScrollBar(_panStart);
+            if (_barInteraction || _resizeInteraction) _dragged = true;
         };
         _canvas.DragInteraction += (_, e) =>
         {
-            if (!CanUseInput || e.Touches.Length == 0) return;
+            if (!CanUseInput || HasPointerCapture || e.Touches.Length == 0) return;
             var point = e.Touches[0];
+            if (_resizeInteraction) { DragResize(point); return; }
+            if (_barInteraction) { DragScrollBar(point); return; }
+            if (_panBlocked) return;
             if (Math.Abs(point.X - _panStart.X) + Math.Abs(point.Y - _panStart.Y) < 6) return;
+            if (!_dragged && !_state.EndEdit(CommitEdit))
+            { _dragged = _panBlocked = true; RestoreInvalidEditor(); return; }
             _dragged = true;
             if (_state.ScrollTo(_panX + _panStart.X - point.X, _panY + _panStart.Y - point.Y)) Scrolled();
+            else Refresh();
         };
         _canvas.EndInteraction += (_, e) =>
         {
+            // Captured Windows scrollbar drags are completed by the native
+            // release/capture-lost events, including releases outside the canvas.
+            if (HasPointerCapture) return;
             SetParentPanLock(false);
-            if (!CanUseInput || _dragged || e.Touches.Length == 0) return;
+            _scrollAxis = ScrollAxis.None;
+            _resizeAxis = MatrixResizeAxis.None;
+            if (!CanUseInput) return;
+            Refresh();
+            if (_dragged) { if (!_state.IsEditing) FocusSelection(); return; }
+            if (e.Touches.Length == 0) return;
             var point = e.Touches[0];
-            if (_state.TryHitCell(point.X, point.Y, out int row, out int column)) Select(row, column);
+            if (_state.TryHitCell(point.X, point.Y, out int row, out int column)) TapCell(row, column);
         };
-        _canvas.CancelInteraction += (_, _) => SetParentPanLock(false);
+        _canvas.CancelInteraction += (_, _) =>
+        {
+            if (HasPointerCapture) return;
+            _scrollAxis = ScrollAxis.None; _resizeAxis = MatrixResizeAxis.None; SetParentPanLock(false);
+            if (CanUseInput) Refresh();
+        };
         Loaded += (_, _) => { _everLoaded = true; AttachNativeInput(); Refresh(); };
         Unloaded += (_, _) => { _focusGeneration++; SetParentPanLock(false); DetachNativeInput(); };
         HandlerChanging += (_, _) => { _focusGeneration++; DetachNativeInput(); };
@@ -105,6 +131,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public void SetSource(int rows, int columns, Func<int, int, string> readCell)
     {
         _focusGeneration++;
+        CancelPointerGesture();
         _state.SetSource(rows, columns); _readCell = readCell;
         Refresh(); ViewportChanged?.Invoke();
     }
@@ -112,20 +139,37 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     {
         if (!_state.Select(row, column, CommitEdit)) return RestoreInvalidEditor();
         Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        FocusSelection();
         return true;
     }
     internal bool Navigate(MatrixCellMove move)
     {
         if (!_state.Navigate(move, CommitEdit)) return RestoreInvalidEditor();
         Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        FocusSelection();
         return true;
+    }
+
+    private void TapCell(int row, int column)
+    {
+        var action = _state.TapCell(row, column, CanEdit?.Invoke() != false, CommitEdit);
+        if (action == MatrixCellAction.Rejected) { RestoreInvalidEditor(); return; }
+        if (action == MatrixCellAction.Selected) CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        Scrolled();
+        if (action == MatrixCellAction.Editing) FocusEditor();
+        else FocusSelection();
+    }
+
+    private void BeginInlineEdit()
+    {
+        if (!CanUseInput || !_state.BeginEdit(CanEdit?.Invoke() != false)) return;
+        Scrolled(); FocusEditor();
     }
 
     private bool RestoreInvalidEditor()
     {
-        // A wheel/drag may have hidden an unfinished edit; reveal it without
-        // overwriting its text or attempting the rejected commit a second time.
-        _state.Select(SelectedRow, SelectedColumn);
+        // Reveal an unfinished edit without overwriting its text or committing again.
+        _state.RevealSelection();
         Scrolled(); FocusEditor(false);
         return false;
     }
@@ -133,8 +177,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     private void CancelInlineEdit()
     {
         if (!CanUseInput) return;
+        _state.CancelEdit();
         EditCancelled?.Invoke();
-        FocusEditor();
+        Refresh(); FocusSelection();
     }
 
     public void FocusEditor(bool selectAll = true)
@@ -154,8 +199,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         if ((_everLoaded && !CanUseInput) || WindowUiLifetime.IsClosing(Window)) return;
         double scale = Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6);
         // Keep a complete editable cell available on narrow, text-scaled screens.
-        double cellWidth = Math.Min(184 * scale, Math.Max(80, _canvas.Width - MatrixViewportState.HeaderWidth));
-        _state.Resize(_canvas.Width, _canvas.Height, cellWidth, 52 * scale);
+        double width = Math.Max(1, _canvas.Width), height = Math.Max(1, _canvas.Height);
+        double cellWidth = Math.Min(184 * scale, Math.Max(80, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
+        _state.Arrange(width, height, cellWidth, 52 * scale, ScrollBarThickness);
         PositionEditor(); _canvas.Invalidate();
     }
     private void Scrolled() { Refresh(); ViewportChanged?.Invoke(); }
@@ -163,19 +209,22 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     {
         if (_editorHost is null) return;
         var bounds = _state.Bounds(SelectedRow, SelectedColumn);
-        // Hide off-screen editors instead of moving focus into another page section.
-        bool visible = _readCell is not null && bounds.X >= MatrixViewportState.HeaderWidth - 0.1
-            && bounds.Y >= _state.CellHeight - 0.1 && bounds.X + bounds.Width <= _state.Width + 0.1
-            && bounds.Y + bounds.Height <= _state.Height + 0.1;
+        // An intentionally oversized cell can still be edited in the visible
+        // part of the body, without placing the Entry over headers or rails.
+        double left = Math.Max(MatrixViewportState.HeaderWidth, bounds.X), top = Math.Max(_state.CellHeight, bounds.Y);
+        double right = Math.Min(_state.Width, bounds.X + bounds.Width), bottom = Math.Min(_state.Height, bounds.Y + bounds.Height);
+        bool visible = _state.IsEditing && CanEdit?.Invoke() != false && _readCell is not null && right - left >= 24 && bottom - top >= 24;
         _editorHost.IsVisible = visible;
-        if (visible) AbsoluteLayout.SetLayoutBounds(_editorHost, new Rect(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+        if (visible) AbsoluteLayout.SetLayoutBounds(_editorHost, new Rect(left, top, right - left, bottom - top));
     }
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         canvas.FillColor = Paper; canvas.FillRectangle(dirtyRect);
         if (_readCell is null) return;
-        canvas.FontSize = (float)(14 * Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6));
+        _drawFontSize = (float)(14 * Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6));
+        canvas.Font = Microsoft.Maui.Graphics.Font.Default;
+        canvas.FontSize = _drawFontSize;
         canvas.StrokeColor = Line; canvas.StrokeSize = 1;
         float width = (float)_state.Width, height = (float)_state.Height;
         float headerWidth = (float)MatrixViewportState.HeaderWidth, cellHeight = (float)_state.CellHeight;
@@ -200,6 +249,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             var bounds = _state.Bounds(FirstRow, column);
             if (bounds.X >= width) break;
             DrawCell(canvas, new(bounds.X, 0, bounds.Width, cellHeight), (column + 1).ToString(), false, true);
+            DrawColumnGrip(canvas, bounds.X + bounds.Width);
         }
         canvas.RestoreState();
         canvas.SaveState();
@@ -208,20 +258,42 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         {
             var bounds = _state.Bounds(row, FirstColumn);
             if (bounds.Y >= height) break;
-            DrawCell(canvas, new(0, bounds.Y, headerWidth, cellHeight), (row + 1).ToString(), false, true);
+            DrawCell(canvas, new(0, bounds.Y, headerWidth, bounds.Height), (row + 1).ToString(), false, true);
+            DrawRowGrip(canvas, bounds.Y + bounds.Height);
         }
         canvas.RestoreState();
         DrawCell(canvas, new(0, 0, headerWidth, cellHeight), "#", false, true);
+        DrawResizeGuide(canvas);
+        DrawScrollBars(canvas);
     }
     private void DrawCell(ICanvas canvas, MatrixCellBounds bounds, string text, bool selected, bool header)
     {
         float x = (float)bounds.X, y = (float)bounds.Y, width = (float)bounds.Width, height = (float)bounds.Height;
         canvas.FillColor = selected ? Accent.WithAlpha(0.18f) : header ? Line.WithAlpha(0.22f) : Paper;
         canvas.FillRectangle(x, y, width, height);
-        if (text.Length > 20) text = text[..17] + "…";
+        text = FitCellText(canvas, text.Length == 0 ? "·" : text, Math.Max(0, width - 12), _drawFontSize);
         canvas.FontColor = selected ? Accent : Ink;
-        canvas.DrawString(text.Length == 0 ? "·" : text, x + 6, y, width - 12, height, HorizontalAlignment.Center, VerticalAlignment.Center);
+        canvas.DrawString(text, x + 6, y, width - 12, height, HorizontalAlignment.Center, VerticalAlignment.Center);
         canvas.DrawRectangle(x, y, width, height);
+        if (selected)
+        {
+            canvas.StrokeColor = Accent; canvas.StrokeSize = 2;
+            canvas.DrawRectangle(x + 1, y + 1, width - 2, height - 2);
+            canvas.StrokeColor = Line; canvas.StrokeSize = 1;
+        }
+    }
+
+    private static string FitCellText(ICanvas canvas, string text, double width, float fontSize)
+    {
+        if (canvas.GetStringSize(text, Microsoft.Maui.Graphics.Font.Default, fontSize).Width <= width) return text;
+        int low = 0, high = text.Length;
+        while (low < high)
+        {
+            int middle = (low + high + 1) / 2;
+            if (canvas.GetStringSize(text[..middle] + "…", Microsoft.Maui.Graphics.Font.Default, fontSize).Width <= width) low = middle;
+            else high = middle - 1;
+        }
+        return text[..low] + "…";
     }
 }
 
