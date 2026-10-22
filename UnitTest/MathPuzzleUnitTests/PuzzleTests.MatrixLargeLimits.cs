@@ -8,8 +8,8 @@ internal static partial class PuzzleTests
 {
     public static void CheckMatrixLargeDimensions()
     {
-        var tall = new MatrixDraft(16384, 1);
-        var wide = new MatrixDraft(1, 16384);
+        using var tall = new MatrixDraft(16384, 1);
+        using var wide = new MatrixDraft(1, 16384);
         TestAssert.That(tall.TrySetCell(16383, 0, "19") && wide.TrySetCell(0, 16383, "23"),
             "The final row and column at the supported maximum must be editable.");
         TestAssert.That(tall.GetCellText(16383, 0) == "19" && wide.GetCellText(0, 16383) == "23",
@@ -41,7 +41,9 @@ internal static partial class PuzzleTests
         string wide = string.Join('\t', Enumerable.Repeat("8", 16384));
         using var tallReader = new StringReader(tall);
         using var wideReader = new StringReader(wide);
-        TestAssert.That(MatrixTextCodec.Read(tallReader).Rows == 16384 && MatrixTextCodec.Read(wideReader).Columns == 16384,
+        using var tallMatrix = MatrixTextCodec.Read(tallReader);
+        using var wideMatrix = MatrixTextCodec.Read(wideReader);
+        TestAssert.That(tallMatrix.Rows == 16384 && wideMatrix.Columns == 16384,
             "Streaming table imports must accept both full-height and full-width matrices.");
         TestAssert.That(MatrixClipboardCodec.Read(tall).Rows == 16384 && MatrixClipboardCodec.Read(wide).Columns == 16384,
             "Clipboard parsing must share the model's dimension limit.");
@@ -67,7 +69,7 @@ internal static partial class PuzzleTests
 
     public static void CheckMatrixSelectionCsvExport()
     {
-        var draft = new MatrixDraft(3, 4);
+        using var draft = new MatrixDraft(3, 4);
         draft.TrySetCell(1, 1, "9223372036854775807");
         draft.TrySetCell(2, 1, "-42"); draft.TrySetCell(2, 2, "0");
         using var writer = new StringWriter { NewLine = "\n" };

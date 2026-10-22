@@ -22,7 +22,7 @@ internal sealed record MatrixWorkPlan(int BlockSize, int WorkerLimit, bool FileB
     long WorkspaceBytes, long CacheBytes, long ResidentResultBytes, MatrixMemoryCheck Memory)
 {
     internal static MatrixWorkPlan Create(int rows, int inner, int columns, MatrixOperation operation,
-        int requestedWorkers, MatrixExecutionOptions options, long availableBytes)
+        int requestedWorkers, MatrixExecutionOptions options, long availableBytes, bool allowDenseResult = true)
     {
         options.Validate();
         if (rows is < 1 or > MatrixLimits.MaximumDimension) throw new ArgumentOutOfRangeException(nameof(rows));
@@ -39,7 +39,7 @@ internal sealed record MatrixWorkPlan(int BlockSize, int WorkerLimit, bool FileB
         long workspaceCap = Math.Min(options.WorkspaceBudgetBytes, availableBytes);
 
         // Keep the existing small elementwise kernels: their only large buffer is the Int128 result.
-        if (operation != MatrixOperation.Multiply && denseBytes <= options.InMemoryResultLimitBytes)
+        if (allowDenseResult && operation != MatrixOperation.Multiply && denseBytes <= options.InMemoryResultLimitBytes)
         {
             int denseWorkers = (int)Math.Min(Math.Min(workers, rows),
                 Math.Min(workspaceCap, Math.Max(0, availableBytes - denseBytes)) / 65536);
@@ -59,6 +59,8 @@ internal sealed record MatrixWorkPlan(int BlockSize, int WorkerLimit, bool FileB
             long metadata = tileCount * 128 + 65536;
             // Two packed panels, Signed192 accumulators, Int128 elementwise scratch,
             // BigInteger output including limbs, and one encoded tile (no per-cell file index).
+            // The 64 KiB headroom also covers the <=2 KiB B-row transpose scratch
+            // and the <=32 KiB sequential paged verification buffer.
             long workerBytes = (long)size * size * 160 + 65536;
             long minimum = metadata + workerBytes;
             smallestRefusal = Math.Min(smallestRefusal, minimum);

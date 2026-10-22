@@ -11,6 +11,53 @@ internal readonly record struct MatrixUniformScanResult(bool IsUniform, long Val
 
 public static partial class MatrixEngine
 {
+    private static MatrixUniformScanResult? TryScanUniform(IntegerMatrix matrix, MatrixBackend maximumBackend,
+        int maximumWorkers, CancellationToken token, IProgress<double>? progress)
+    {
+        if (token.IsCancellationRequested) return null;
+        if (matrix.DenseData is { } dense)
+            return TryScanUniform(dense, maximumBackend, maximumWorkers, token, progress);
+        // A missing metadata proof is inconclusive: verify the stored values.
+        // Constant regions need no comparisons and must not claim SIMD work.
+        if (matrix.TryGetUniformValue(out long constant))
+        {
+            progress?.Report(1);
+            return token.IsCancellationRequested ? null
+                : new(true, constant, new(MatrixBackend.Scalar, 0, 0, 0, 0));
+        }
+
+        MatrixBackend backend = maximumBackend == MatrixBackend.Scalar ? MatrixBackend.Scalar
+            : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512) && Avx512F.IsSupported ? MatrixBackend.Avx512
+            : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512 or MatrixBackend.Avx2) && Avx2.IsSupported ? MatrixBackend.Avx2
+            : Sse2.IsSupported ? MatrixBackend.Sse2 : MatrixBackend.Scalar;
+        // One bounded reader avoids multiplying paged-storage contention or
+        // allocating a dense scan buffer. Arithmetic still uses planned workers.
+        var panel = new long[Math.Min(4096, matrix.Columns)];
+        long value = matrix.GetValue(0, 0), batches = 0, cells = 0, completed = 0, reported = 0;
+        long total = (long)matrix.Rows * matrix.Columns;
+        bool uniform = true;
+        progress?.Report(0);
+        for (int row = 0; row < matrix.Rows && uniform; row++)
+        for (int column = 0; column < matrix.Columns; column += panel.Length)
+        {
+            if (token.IsCancellationRequested) return null;
+            int length = Math.Min(panel.Length, matrix.Columns - column);
+            matrix.CopyRowTo(row, column, panel.AsSpan(0, length));
+            if (!CompareUniformRange(panel, 0, length, value, backend, ref batches, ref cells))
+            { uniform = false; break; }
+            completed += length;
+            if (completed == total || completed - reported >= Math.Max(1, total / 100))
+            {
+                reported = completed;
+                progress?.Report((double)completed / total);
+            }
+        }
+        if (token.IsCancellationRequested) return null;
+        progress?.Report(1);
+        if (token.IsCancellationRequested) return null;
+        return new(uniform, value, new(batches == 0 ? MatrixBackend.Scalar : backend, batches, 1, 1, cells));
+    }
+
     // Register-only comparisons over bounded chunks; never duplicate the source matrix.
     internal static MatrixUniformScanResult ScanUniform(long[] values, MatrixBackend maximumBackend,
         int maximumWorkers, CancellationToken token = default, IProgress<double>? progress = null)

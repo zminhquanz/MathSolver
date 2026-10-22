@@ -44,20 +44,25 @@ public sealed partial class MatrixView
     {
         _closing = true; _active = false; _version++; _work?.Cancel();
         _viewportResult = null;
+        _viewportDraft = null;
         if (_busy) _statusKey = "Cancelled";
-        else ReleaseClosedResult();
+        else ReleaseClosedStorage();
         CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
         CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;
         if (_hostWindow is not null) _hostWindow.Destroying -= OnWindowClosing;
         _hostWindow = null;
     }
 
-    private void ReleaseClosedResult()
+    private void ReleaseClosedStorage()
     {
         _viewportResult = null;
+        _viewportDraft = null;
+        _failedReadDraft = null;
         var result = _result;
         _result = null; _failedReadResult = null;
         DisposeOutcome(result);
+        DisposeOutcome(_a);
+        DisposeOutcome(_b);
     }
 
     private static void DisposeOutcome(object? value)
@@ -79,7 +84,7 @@ public sealed partial class MatrixView
         else Invalidate();
     }
 
-    private async Task RunWorkAsync<TResult>(Func<CancellationToken, IProgress<double>, Task<TResult>> work, Func<TResult, Task> publish, string status)
+    private async Task RunWorkAsync<TResult>(Func<CancellationToken, IProgress<double>, Task<TResult>> work, Func<TResult, Task<bool>> publish, string status)
     {
         if (_busy || !CanTouchUi || !_active) return;
         var cancellation = new CancellationTokenSource();
@@ -99,8 +104,7 @@ public sealed partial class MatrixView
             }
             else if (CanPublish(version))
             {
-                await publish(value);
-                published = true;
+                published = await publish(value);
             }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
@@ -128,7 +132,7 @@ public sealed partial class MatrixView
             _busy = false; cancellation.Dispose();
             // Copy/export may have been reading the current result when close was
             // requested. Release it only after that work has stopped using GetValue.
-            if (_closing) ReleaseClosedResult();
+            if (_closing) ReleaseClosedStorage();
             if (CanTouchUi) SetBusyState();
         }
     }

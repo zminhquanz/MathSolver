@@ -20,7 +20,7 @@ public sealed partial class MatrixView
             await RunWorkAsync((token, _) => Task.Run(() =>
             {
                 using var reader = new StringReader(text);
-                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
+                return new MatrixDraft(MatrixTextCodec.Read(reader, token, InputDimensionLimit));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (Exception error)
@@ -52,7 +52,7 @@ public sealed partial class MatrixView
             {
                 await using Stream stream = await file.OpenReadAsync();
                 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
+                return new MatrixDraft(MatrixTextCodec.Read(reader, token, InputDimensionLimit));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (OperationCanceledException) { /* Native picker cancelled; existing drafts are retained. */ }
@@ -63,18 +63,15 @@ public sealed partial class MatrixView
         }
     }
 
-    private async Task AcceptImportAsync(int target, MatrixDraft matrix)
+    private async Task<bool> AcceptImportAsync(int target, MatrixDraft matrix)
     {
         int version = _version;
         if (!await ConfirmAsync(F("AcceptImport", "AB"[target], matrix.Rows, matrix.Columns)))
-        { if (CanPublish(version)) Status("Cancelled"); return; }
-        if (!CanPublish(version)) return;
-        if (_work?.IsCancellationRequested != false) { Status("Cancelled"); return; }
-        _editorMatrix = -1;
-        if (target == 0) _a = matrix; else _b = matrix;
-        _aRows.Text = _a.Rows.ToString(); _aColumns.Text = _a.Columns.ToString();
-        _bRows.Text = _b.Rows.ToString(); _bColumns.Text = _b.Columns.ToString();
-        _selected = target; InvalidateResult(); RefreshSource(); Status("Imported");
+        { if (CanPublish(version)) Status("Cancelled"); return false; }
+        if (!CanPublish(version)) return false;
+        if (_work?.IsCancellationRequested != false) { Status("Cancelled"); return false; }
+        PublishDrafts(target == 0 ? matrix : _a, target == 1 ? matrix : _b, target, "Imported");
+        return true;
     }
 
     private async void OnExport(object? sender, EventArgs e)
@@ -103,10 +100,11 @@ public sealed partial class MatrixView
                 int version = _version;
                 await using var stream = File.OpenRead(temporary);
                 var saved = await FileSaver.Default.SaveAsync(fileName, stream, _work!.Token);
-                if (!CanPublish(version)) return;
+                if (!CanPublish(version)) return false;
                 if (saved.IsSuccessful) Status("Exported");
                 else if (saved.Exception is OperationCanceledException) Status("Cancelled");
                 else ReportError("Failed");
+                return true;
             }, "Exporting");
         }
         finally

@@ -2,6 +2,14 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix input compact storage and snapshots", PuzzleTests.CheckMatrixInputStorage),
+    ("Matrix input memory evidence at desktop ceiling", PuzzleTests.CheckMatrixInputMemoryEvidence),
+    ("Matrix paged input engine exact results", PuzzleTests.CheckMatrixPagedEngineExact),
+    ("Matrix paged input uniform metadata", PuzzleTests.CheckMatrixPagedEngineUniform),
+    ("Matrix paged input cancellation", PuzzleTests.CheckMatrixPagedEngineCancellation),
+    ("Matrix streaming import bounded allocation", PuzzleTests.CheckMatrixStreamingImport),
+    ("Matrix streaming import bounds and failures", PuzzleTests.CheckMatrixStreamingImportBoundsAndFailures),
+    ("Matrix streaming import cancellation", PuzzleTests.CheckMatrixStreamingImportCancellation),
     ("Matrix shared hardware threading preference", PuzzleTests.CheckMatrixThreadingPreference),
     ("Matrix uniform scan exact kernels and tails", PuzzleTests.CheckMatrixUniformScanExact),
     ("Matrix uniform scan parallel cancellation", PuzzleTests.CheckMatrixUniformScanParallel),
@@ -14,6 +22,7 @@ var tests = new (string Name, Action Run)[]
     ("Matrix blocked cancellation and result file lifetime", PuzzleTests.CheckMatrixBlockedCancellation),
     ("Matrix block storage exact encodings and bounded cache", PuzzleTests.CheckMatrixBlockStorage),
     ("Matrix block storage concurrent lifetime and cleanup", PuzzleTests.CheckMatrixBlockStorageLifetime),
+    ("Matrix platform input limits", PuzzleTests.CheckMatrixPlatformInputLimits),
     ("Matrix large dimension limits", PuzzleTests.CheckMatrixLargeDimensions),
     ("Matrix large virtual viewport", PuzzleTests.CheckMatrixLargeViewport),
     ("Matrix large import and clipboard bounds", PuzzleTests.CheckMatrixLargeImportAndClipboard),

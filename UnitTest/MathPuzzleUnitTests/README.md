@@ -1,5 +1,18 @@
 # Math puzzle checks
 
+Filter `"Matrix input"`, `"Matrix paged"` and `"Matrix streaming import"` checks
+constant region compression, bitmap occupancy, copy-on-write snapshots, bounded
+input file/cache storage, streamed strict CSV parsing, exact arithmetic with paged
+panels and deterministic cleanup. The desktop-ceiling evidence group creates and
+fills constant 16384-square A+B without dense arrays; its uniform shortcut timing
+does not describe arbitrary-matrix multiplication speed or mobile device speed.
+
+Filter `"Matrix platform input limits"` checks the mobile 8192 and desktop
+benchmark 16384 input ceilings. CSV/whole-table and cell clipboard readers must
+reject overflow while reading, preserve boundary values, and reject invalid
+caller-provided caps. The UI applies the same platform limit to creation and all
+input routes; the reusable engine retains the desktop benchmark ceiling.
+
 Filter `"Matrix shared hardware threading"` runs the actual shared threading
 manager and application calculation runner, replacing only platform preferences
 with in-memory storage. It checks off/on/off settings across add/subtract/multiply,
@@ -121,7 +134,8 @@ A filter that matches no group exits with a nonzero status.
 
 The command returns a nonzero exit code when any check fails. It needs no
 AI model, API key or unit-test package. Platform stubs let the shared math and
-storage code run outside MAUI. No benchmark is run by this test harness.
+storage code run outside MAUI. Matrix evidence groups print host allocation and
+timing samples; these do not replace measurements on Windows/Android devices.
 
 ## Primary curriculum and foundation skills
 

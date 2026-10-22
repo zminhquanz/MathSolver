@@ -19,14 +19,14 @@ internal static class MatrixSolutionPresentation
         {
             string op = result.Operation == MatrixOperation.Add ? "+" : "−";
             return new(cell, $"{cell} = A[{row + 1}, {column + 1}] {op} B[{row + 1}, {column + 1}]", [],
-                answer, 0, 0, $"{Number(a.Data[row * a.Columns + column])} {op} {Number(b.Data[row * b.Columns + column])} = {Number(answer, false)}", answer);
+                answer, 0, 0, $"{Number(a.GetValue(row, column))} {op} {Number(b.GetValue(row, column))} = {Number(answer, false)}", answer);
         }
 
         var terms = new List<MatrixSolutionTerm>(Math.Min(4, a.Columns));
         BigInteger leadingSum = 0;
         for (int k = 0; k < Math.Min(4, a.Columns); k++)
         {
-            long left = a.Data[row * a.Columns + k], right = b.Data[k * b.Columns + column];
+            long left = a.GetValue(row, k), right = b.GetValue(k, column);
             BigInteger value = (BigInteger)left * right;
             leadingSum += value;
             terms.Add(new($"A[{row + 1}, {k + 1}] × B[{k + 1}, {column + 1}]",

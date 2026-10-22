@@ -7,6 +7,7 @@ public static partial class MatrixEngine
     private sealed class TileWorkspace(int size)
     {
         internal readonly long[] Left = new long[size * size], Right = new long[size * size];
+        internal readonly long[] Row = new long[size];
         internal readonly Signed192[] Accumulators = new Signed192[size * size];
         internal readonly Int128[] Wide = new Int128[size * size];
         internal readonly BigInteger[] Values = new BigInteger[size * size];
@@ -119,11 +120,20 @@ public static partial class MatrixEngine
             if (token.IsCancellationRequested) return null;
             int depth = Math.Min(size, a.Columns - k);
             for (int i = 0; i < height; i++)
-                Array.Copy(a.Data, (row + i) * a.Columns + k, workspace.Left, i * depth, depth);
+            {
+                if (token.IsCancellationRequested) return null;
+                a.CopyRowTo(row + i, k, workspace.Left.AsSpan(i * depth, depth));
+            }
             // Transpose only the current panel, never the full B matrix.
-            for (int j = 0; j < width; j++)
-                for (int d = 0; d < depth; d++)
-                    workspace.Right[j * depth + d] = b.Data[(k + d) * b.Columns + column + j];
+            // Read each source row once so file-backed storage can copy a range
+            // under one cache lookup instead of locking/seeking for each cell.
+            for (int d = 0; d < depth; d++)
+            {
+                if (token.IsCancellationRequested) return null;
+                b.CopyRowTo(k + d, column, workspace.Row.AsSpan(0, width));
+                for (int j = 0; j < width; j++)
+                    workspace.Right[j * depth + d] = workspace.Row[j];
+            }
             for (int i = 0; i < height; i++)
             {
                 if (token.IsCancellationRequested) return null;
@@ -160,8 +170,8 @@ public static partial class MatrixEngine
         for (int r = 0; r < height; r++)
         {
             if (token.IsCancellationRequested) return null;
-            Array.Copy(a.Data, (row + r) * a.Columns + column, workspace.Left, r * width, width);
-            Array.Copy(b.Data, (row + r) * b.Columns + column, workspace.Right, r * width, width);
+            a.CopyRowTo(row + r, column, workspace.Left.AsSpan(r * width, width));
+            b.CopyRowTo(row + r, column, workspace.Right.AsSpan(r * width, width));
         }
         bool subtract = operation == MatrixOperation.Subtract;
         int count = height * width;
@@ -190,7 +200,7 @@ public static partial class MatrixEngine
         out BigInteger value, out MatrixUniformScanStatistics statistics)
     {
         value = 0;
-        var leftScan = TryScanUniform(a.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, 0));
+        var leftScan = TryScanUniform(a, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, 0));
         statistics = default;
         if (leftScan is not { } left) return false;
         statistics = left.Statistics;
@@ -199,7 +209,7 @@ public static partial class MatrixEngine
             progress?.Report(.2);
             return true;
         }
-        var rightScan = TryScanUniform(b.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, .1));
+        var rightScan = TryScanUniform(b, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, .1));
         if (rightScan is not { } right) return false;
         statistics = new((MatrixBackend)Math.Max((int)left.Statistics.Backend, (int)right.Statistics.Backend),
             left.Statistics.VectorBatches + right.Statistics.VectorBatches,

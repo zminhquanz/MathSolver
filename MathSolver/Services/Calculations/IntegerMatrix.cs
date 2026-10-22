@@ -5,7 +5,7 @@ namespace MathSolver.Services.Core;
 public enum MatrixOperation { Add, Subtract, Multiply }
 public enum MatrixBackend { Auto, Scalar, Sse2, Avx2, Avx512 }
 
-public sealed class IntegerMatrix
+public sealed class IntegerMatrix : IDisposable
 {
     public IntegerMatrix(int rows, int columns, long[]? data = null)
     {
@@ -16,12 +16,52 @@ public sealed class IntegerMatrix
         Rows = rows;
         Columns = columns;
         if (data is null) MatrixMemoryGuard.EnsureAvailable((long)rows * columns * sizeof(long));
-        Data = data ?? new long[rows * columns];
+        DenseData = data ?? new long[rows * columns];
     }
     public int Rows { get; }
     public int Columns { get; }
     /// <summary>Row-major mutable input. Callers must not edit it during Calculate.</summary>
-    public long[] Data { get; }
+    public long[] Data => DenseData ?? throw new InvalidOperationException("Paged matrix inputs do not expose a dense array. Use GetValue or CopyRowTo.");
+    public long[]? DenseData { get; }
+    internal MatrixInputStorage? Storage { get; }
+    private int _disposed;
+    internal IntegerMatrix(MatrixInputStorage storage)
+    {
+        Storage = storage; Rows = storage.Rows; Columns = storage.Columns;
+    }
+    public bool IsFileBacked => Storage?.IsFileBacked ?? false;
+    public long StoredBytes => Storage?.StoredBytes ?? (long)Rows * Columns * sizeof(long);
+    public long CachedBytes => Storage?.CachedBytes ?? 0;
+    public long CacheLimitBytes => Storage?.CacheLimitBytes ?? 0;
+    public long GetValue(int row, int column)
+    {
+        CheckCoordinates(row, column);
+        return DenseData is { } data ? data[row * Columns + column] : Storage!.GetValue(row * Columns + column);
+    }
+    public void CopyRowTo(int row, int column, Span<long> destination)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        if ((uint)row >= (uint)Rows) throw new ArgumentOutOfRangeException(nameof(row));
+        if ((uint)column > (uint)Columns || destination.Length > Columns - column) throw new ArgumentOutOfRangeException(nameof(column));
+        if (DenseData is { } data) data.AsSpan(row * Columns + column, destination.Length).CopyTo(destination);
+        else Storage!.CopyTo(row * Columns + column, destination);
+    }
+    public bool TryGetUniformValue(out long value)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        value = 0;
+        return Storage is not null && Storage.TryGetUniformValue(out value);
+    }
+    private void CheckCoordinates(int row, int column)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        if ((uint)row >= (uint)Rows) throw new ArgumentOutOfRangeException(nameof(row));
+        if ((uint)column >= (uint)Columns) throw new ArgumentOutOfRangeException(nameof(column));
+    }
+    public void Dispose()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 0) Storage?.Dispose();
+    }
 }
 
 public sealed class MatrixCalculation : IDisposable

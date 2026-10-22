@@ -41,21 +41,22 @@ public sealed partial class MatrixView
             token: token, progress: progress), token), async content =>
         {
             int version = _version;
-            if (_work?.IsCancellationRequested != false || !CanPublish(version)) return;
+            if (_work?.IsCancellationRequested != false || !CanPublish(version)) return false;
             if (content is null)
             {
                 // Capacity is an expected outcome, not an input error at row 1 / column 1.
                 // Leave the current clipboard intact and offer a streaming export of A, B or C.
                 Status("CopyTooLarge");
                 bool accepted = await ConfirmAsync(F("CopyTooLargePrompt", rows, columns), "ExportSelection");
-                if (_work?.IsCancellationRequested != false || !CanPublish(version)) return;
+                if (_work?.IsCancellationRequested != false || !CanPublish(version)) return false;
                 exportCsv = accepted;
                 sourceVersion = version;
                 if (!accepted) Status("Cancelled");
-                return;
+                return true;
             }
             await MatrixClipboardService.SetAsync(content);
             if (CanPublish(version)) Status("CopiedGrid");
+            return true;
         }, "CopyingGrid");
         if (exportCsv && CanPublish(sourceVersion) && !_busy)
             await ExportCsvAsync(rows, columns, read, $"Matrix-{matrixName}-selection.csv");
@@ -73,12 +74,12 @@ public sealed partial class MatrixView
             token.ThrowIfCancellationRequested();
             var value = await Task.Run(() =>
             {
-                var block = MatrixClipboardCodec.Read(text ?? string.Empty, token);
+                var block = MatrixClipboardCodec.Read(text ?? string.Empty, token, InputDimensionLimit);
                 bool singleCell = block.Rows == 1 && block.Columns == 1;
                 int rows = singleCell ? destination.Rows : block.Rows;
                 int columns = singleCell ? destination.Columns : block.Columns;
                 var attempt = original.TryWithPastedCells(destination.Row, destination.Column, rows, columns, block, token);
-                return (Attempt: attempt, Rows: rows, Columns: columns);
+                return new PastedCells(attempt, rows, columns);
             }, token);
             progress.Report(1);
             return value;
@@ -89,14 +90,16 @@ public sealed partial class MatrixView
                 const double bytesPerGiB = 1024d * 1024 * 1024;
                 ReportError("PasteMemoryUnavailable", pasted.Attempt.Memory.RequiredBytes / bytesPerGiB,
                     pasted.Attempt.Memory.AvailableBytes / bytesPerGiB);
-                return Task.CompletedTask;
+                return Task.FromResult(false);
             }
-            _editorMatrix = -1;
-            if (target == 0) _a = draft; else _b = draft;
-            InvalidateResult(); RefreshSource();
-            _viewport.SelectRange(destination.Row, destination.Column, pasted.Rows, pasted.Columns);
-            Status("PastedCells");
-            return Task.CompletedTask;
+            PublishDrafts(target == 0 ? draft : _a, target == 1 ? draft : _b, target, "PastedCells",
+                () => _viewport.SelectRange(destination.Row, destination.Column, pasted.Rows, pasted.Columns));
+            return Task.FromResult(true);
         }, "PastingCells");
+    }
+
+    private sealed record PastedCells(MatrixPasteAttempt Attempt, int Rows, int Columns) : IDisposable
+    {
+        public void Dispose() => Attempt.Dispose();
     }
 }

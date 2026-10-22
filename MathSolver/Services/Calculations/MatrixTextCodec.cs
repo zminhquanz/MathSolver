@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace MathSolver.Services.Core;
 
@@ -16,108 +17,110 @@ public static class MatrixTextCodec
 {
     private const int MaximumDimension = MatrixLimits.MaximumDimension;
 
-    /// <summary>Stages a complete, strictly rectangular integer table before returning it.</summary>
-    public static IntegerMatrix Read(TextReader reader, CancellationToken cancellationToken = default)
+    /// <summary>Streams a strictly rectangular integer table into bounded input storage before returning it.</summary>
+    public static IntegerMatrix Read(TextReader reader, CancellationToken cancellationToken = default,
+        int maximumDimension = MaximumDimension)
     {
         ArgumentNullException.ThrowIfNull(reader);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDimension, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDimension, MaximumDimension);
         cancellationToken.ThrowIfCancellationRequested();
-        var values = new List<long>();
-        var rowValues = new List<long>();
-        var row = 1;
-        var columns = 0;
-        var rows = 0;
-        var firstBlankRow = 0;
-        char? delimiter = null;
-        var hasContent = false;
-        var skipLineFeed = false;
-        var cell = new IntegerCell();
-
-        MatrixInputException Error(MatrixInputError code, int? errorColumn = null) =>
-            new(code, row, errorColumn ?? rowValues.Count + 1);
-
-        void BeginContent()
+        MatrixInputBuilder? builder = null;
+        try
         {
-            if (hasContent) return;
-            if (firstBlankRow != 0)
-                throw new MatrixInputException(MatrixInputError.InvalidShape, firstBlankRow, 1);
-            if (rows == MaximumDimension)
-                throw Error(MatrixInputError.TooLarge, 1);
-            hasContent = true;
-        }
+            var rowValues = new List<long>();
+            var row = 1;
+            var columns = 0;
+            var rows = 0;
+            var firstBlankRow = 0;
+            char? delimiter = null;
+            var hasContent = false;
+            var skipLineFeed = false;
+            var cell = new IntegerCell();
 
-        void FinishCell()
-        {
-            if (!cell.TryGetValue(out var value)) throw Error(MatrixInputError.InvalidInteger);
-            rowValues.Add(value);
-            cell = new IntegerCell();
-        }
+            MatrixInputException Error(MatrixInputError code, int? errorColumn = null) =>
+                new(code, row, errorColumn ?? rowValues.Count + 1);
 
-        void FinishRow()
-        {
-            if (!hasContent)
+            void BeginContent()
             {
-                if (firstBlankRow == 0) firstBlankRow = row;
+                if (hasContent) return;
+                if (firstBlankRow != 0)
+                    throw new MatrixInputException(MatrixInputError.InvalidShape, firstBlankRow, 1);
+                if (rows == maximumDimension)
+                    throw Error(MatrixInputError.TooLarge, 1);
+                hasContent = true;
             }
-            else
+
+            void FinishCell()
             {
-                FinishCell();
-                if (columns == 0) columns = rowValues.Count;
-                else if (columns != rowValues.Count)
-                    throw Error(MatrixInputError.InvalidShape, rowValues.Count + 1);
-                int needed = checked(values.Count + rowValues.Count);
-                if (needed > values.Capacity)
+                if (!cell.TryGetValue(out var value)) throw Error(MatrixInputError.InvalidInteger);
+                rowValues.Add(value);
+                cell = new IntegerCell();
+            }
+
+            void FinishRow()
+            {
+                if (!hasContent)
                 {
-                    int capacity = Math.Min(MaximumDimension * MaximumDimension,
-                        Math.Max(needed, Math.Max(4, values.Capacity * 2)));
-                    MatrixMemoryGuard.EnsureAvailable((long)capacity * sizeof(long));
-                    values.Capacity = capacity;
+                    if (firstBlankRow == 0) firstBlankRow = row;
                 }
-                values.AddRange(rowValues);
-                rows++;
+                else
+                {
+                    FinishCell();
+                    if (columns == 0)
+                    {
+                        columns = rowValues.Count;
+                        builder = new MatrixInputBuilder(columns, maximumDimension);
+                    }
+                    else if (columns != rowValues.Count)
+                        throw Error(MatrixInputError.InvalidShape, rowValues.Count + 1);
+                    builder!.AddRow(CollectionsMarshal.AsSpan(rowValues), cancellationToken);
+                    rows++;
+                }
+                rowValues.Clear();
+                cell = new IntegerCell();
+                hasContent = false;
+                if (row < int.MaxValue) row++;
             }
-            rowValues.Clear();
-            cell = new IntegerCell();
-            hasContent = false;
-            if (row < int.MaxValue) row++;
-        }
 
-        while (true)
-        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var next = reader.Read();
+                if (next < 0) break;
+                var character = (char)next;
+                if (skipLineFeed && character == '\n') { skipLineFeed = false; continue; }
+                skipLineFeed = false;
+
+                if (character is '\r' or '\n')
+                {
+                    FinishRow();
+                    skipLineFeed = character == '\r';
+                    continue;
+                }
+
+                if (character is ',' or ';' or '\t')
+                {
+                    BeginContent();
+                    if (cell.InQuotes || (delimiter.HasValue && delimiter != character))
+                        throw Error(MatrixInputError.InvalidInteger);
+                    delimiter ??= character;
+                    FinishCell();
+                    if (rowValues.Count == maximumDimension) throw Error(MatrixInputError.TooLarge);
+                    if (columns > 0 && rowValues.Count == columns) throw Error(MatrixInputError.InvalidShape);
+                    continue;
+                }
+
+                if (!char.IsWhiteSpace(character)) BeginContent();
+                if (!cell.Append(character)) throw Error(MatrixInputError.InvalidInteger);
+            }
+
             cancellationToken.ThrowIfCancellationRequested();
-            var next = reader.Read();
-            if (next < 0) break;
-            var character = (char)next;
-            if (skipLineFeed && character == '\n') { skipLineFeed = false; continue; }
-            skipLineFeed = false;
-
-            if (character is '\r' or '\n')
-            {
-                FinishRow();
-                skipLineFeed = character == '\r';
-                continue;
-            }
-
-            if (character is ',' or ';' or '\t')
-            {
-                BeginContent();
-                if (cell.InQuotes || (delimiter.HasValue && delimiter != character))
-                    throw Error(MatrixInputError.InvalidInteger);
-                delimiter ??= character;
-                FinishCell();
-                if (rowValues.Count == MaximumDimension) throw Error(MatrixInputError.TooLarge);
-                if (columns > 0 && rowValues.Count == columns) throw Error(MatrixInputError.InvalidShape);
-                continue;
-            }
-
-            if (!char.IsWhiteSpace(character)) BeginContent();
-            if (!cell.Append(character)) throw Error(MatrixInputError.InvalidInteger);
+            if (hasContent) FinishRow();
+            if (rows == 0) throw new MatrixInputException(MatrixInputError.Empty, 1, 1);
+            return builder!.Complete();
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
-        if (hasContent) FinishRow();
-        if (rows == 0) throw new MatrixInputException(MatrixInputError.Empty, 1, 1);
-        MatrixMemoryGuard.EnsureAvailable((long)values.Count * sizeof(long));
-        return new IntegerMatrix(rows, columns, values.ToArray());
+        finally { builder?.Dispose(); }
     }
 
     /// <summary>Writes exact invariant decimal values, one comma-separated record per row.</summary>

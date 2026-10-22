@@ -38,7 +38,8 @@ public static partial class MatrixEngine
         var available = MatrixMemoryGuard.CheckAvailable(0);
         int requested = Math.Max(1, Math.Min(Environment.ProcessorCount,
             maximumDegreeOfParallelism == 0 ? Environment.ProcessorCount : maximumDegreeOfParallelism));
-        var plan = MatrixWorkPlan.Create(a.Rows, a.Columns, b.Columns, operation, requested, options, available.AvailableBytes);
+        var plan = MatrixWorkPlan.Create(a.Rows, a.Columns, b.Columns, operation, requested, options, available.AvailableBytes,
+            allowDenseResult: a.DenseData is not null && b.DenseData is not null);
         if (cancellationToken.IsCancellationRequested) return new(null, plan.Memory, IsCancelled: true);
         if (!plan.Memory.CanAllocate) return new(null, plan.Memory);
         MatrixBackend backend = SelectBackend(a, b, maximumBackend);
@@ -68,7 +69,10 @@ public static partial class MatrixEngine
     private static MatrixCalculation? AddOrSubtract(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
         MatrixBackend backend, int workers, CancellationToken cancellationToken, IProgress<double>? progress)
     {
-        var values = GC.AllocateUninitializedArray<Int128>(a.Data.Length);
+        // This path is planned only for two explicitly dense legacy inputs.
+        var left = a.DenseData!;
+        var right = b.DenseData!;
+        var values = GC.AllocateUninitializedArray<Int128>(left.Length);
         bool subtract = operation == MatrixOperation.Subtract;
         int lanes = backend == MatrixBackend.Sse2 ? 2 : backend == MatrixBackend.Avx2 ? 4 : 8;
         var execution = ExecuteRows(a.Rows, workers, row =>
@@ -78,13 +82,13 @@ public static partial class MatrixEngine
             int index = start;
             switch (backend)
             {
-                case MatrixBackend.Sse2: index = Elementwise128(a.Data, b.Data, values, start, end, subtract); break;
-                case MatrixBackend.Avx2: index = Elementwise256(a.Data, b.Data, values, start, end, subtract); break;
-                case MatrixBackend.Avx512: index = Elementwise512(a.Data, b.Data, values, start, end, subtract); break;
+                case MatrixBackend.Sse2: index = Elementwise128(left, right, values, start, end, subtract); break;
+                case MatrixBackend.Avx2: index = Elementwise256(left, right, values, start, end, subtract); break;
+                case MatrixBackend.Avx512: index = Elementwise512(left, right, values, start, end, subtract); break;
             }
             long batches = backend == MatrixBackend.Scalar ? 0 : (index - start) / lanes;
             for (; index < end; index++)
-                values[index] = subtract ? (Int128)a.Data[index] - b.Data[index] : (Int128)a.Data[index] + b.Data[index];
+                values[index] = subtract ? (Int128)left[index] - right[index] : (Int128)left[index] + right[index];
             return batches;
         }, cancellationToken, progress, 0, 1);
         if (execution is not { } completed || cancellationToken.IsCancellationRequested) return null;

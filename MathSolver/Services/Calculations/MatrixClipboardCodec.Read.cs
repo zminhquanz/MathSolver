@@ -12,9 +12,12 @@ public sealed class MatrixClipboardBlock
 public static partial class MatrixClipboardCodec
 {
     /// <summary>Reads Excel-style TSV, retaining empty cells and rejecting non-Int64 input.</summary>
-    public static MatrixClipboardBlock Read(string text, CancellationToken token = default)
+    public static MatrixClipboardBlock Read(string text, CancellationToken token = default,
+        int maximumDimension = MatrixLimits.MaximumDimension)
     {
         ArgumentNullException.ThrowIfNull(text);
+        ArgumentOutOfRangeException.ThrowIfLessThan(maximumDimension, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(maximumDimension, MatrixLimits.MaximumDimension);
         token.ThrowIfCancellationRequested();
         if (text.Length > MatrixLimits.MaximumClipboardCharacters) throw new MatrixInputException(MatrixInputError.ClipboardTooLarge, 1, 1);
         using var reader = new StringReader(text);
@@ -23,13 +26,13 @@ public static partial class MatrixClipboardCodec
         while (reader.ReadLine() is { } line)
         {
             token.ThrowIfCancellationRequested();
-            if (rows == MatrixLimits.MaximumDimension) throw new MatrixInputException(MatrixInputError.TooLarge, rows + 1, 1);
+            if (rows == maximumDimension) throw new MatrixInputException(MatrixInputError.TooLarge, rows + 1, 1);
             int count = 0;
             var remaining = line.AsSpan();
             while (true)
             {
                 token.ThrowIfCancellationRequested();
-                if (count == MatrixLimits.MaximumDimension) throw new MatrixInputException(MatrixInputError.TooLarge, rows + 1, count + 1);
+                if (count == maximumDimension) throw new MatrixInputException(MatrixInputError.TooLarge, rows + 1, count + 1);
                 int separator = remaining.IndexOf('\t');
                 var cell = separator < 0 ? remaining : remaining[..separator];
                 if (!MatrixDraft.TryParseCell(cell, out long? value))
