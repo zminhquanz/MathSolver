@@ -127,6 +127,7 @@
     "Matrix.Cancelled": "Đã dừng. Dữ liệu đầu vào được giữ lại.",
     "Matrix.Failed": "Không thể hoàn tất thao tác. Kiểm tra dữ liệu hoặc thử lại.",
     "Matrix.CalculationMemoryUnavailable": "Phép tính cần dự trù thêm {0:0.00} GiB, vượt ngân sách bộ nhớ khả dụng {1:0.00} GiB. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. A, B và kết quả hiện tại được giữ nguyên.",
+    "Matrix.PasteMemoryUnavailable": "Thao tác dán cần thêm {0:0.00} GiB, vượt ngân sách bộ nhớ khả dụng {1:0.00} GiB. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. Ma trận A, B và kết quả hiện tại được giữ nguyên.",
     "Matrix.MemoryUnavailable": "Không đủ bộ nhớ để hoàn tất thao tác. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. Dữ liệu đầu vào hiện tại được giữ lại.",
     "Matrix.Error.ClipboardTooLarge": "Bảng vượt giới hạn dung lượng bảng nhớ tạm. Hãy chọn vùng nhỏ hơn hoặc dùng tệp CSV để nhập, xuất dữ liệu.",
     "Matrix.CopyTooLarge": "Vùng chọn vượt dung lượng sao chép. Hãy xuất CSV hoặc chọn vùng nhỏ hơn.",

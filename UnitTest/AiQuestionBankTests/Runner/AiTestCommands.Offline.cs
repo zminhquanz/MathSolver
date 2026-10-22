@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--sum-ratio-open","--sum-ratio-open-model"],"--sum-ratio-open | --sum-ratio-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await SumRatioOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,SumRatioOpenTests.NativeCases());
+        },args=>args is ["--sum-ratio-open"] or ["--sum-ratio-open-model",_] or ["--sum-ratio-open-model",_,_]),
         new(["--sum-difference-open","--sum-difference-open-model"],"--sum-difference-open | --sum-difference-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await SumDifferenceOpenTests.RunAsync();

@@ -127,6 +127,7 @@
     "Matrix.Cancelled": "Stopped. Input data has been retained.",
     "Matrix.Failed": "The operation could not be completed. Check the data or try again.",
     "Matrix.CalculationMemoryUnavailable": "This calculation needs an additional reserve of {0:0.00} GiB, exceeding the available memory budget of {1:0.00} GiB. Use smaller matrices or close other applications and try again. A, B and the current result are retained.",
+    "Matrix.PasteMemoryUnavailable": "This paste needs an additional {0:0.00} GiB, exceeding the available memory budget of {1:0.00} GiB. Use smaller matrices or close other applications and try again. A, B and the current result are retained.",
     "Matrix.MemoryUnavailable": "There is not enough memory to complete this operation. Reduce the matrix dimensions or close other applications and try again. Existing input data has been retained.",
     "Matrix.Error.ClipboardTooLarge": "The table exceeds the clipboard size limit. Select a smaller range or use a CSV file to import or export data.",
     "Matrix.CopyTooLarge": "The selection exceeds clipboard capacity. Export it as CSV or select a smaller range.",

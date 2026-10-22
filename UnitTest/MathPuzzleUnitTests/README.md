@@ -8,6 +8,14 @@ oversized cells and automatic scrollbar visibility (single-axis, coupled axes,
 exact fits, shrinking cells and growing the viewport). These checks do not launch
 MAUI or exercise native pointer/focus events.
 
+Filter `"Matrix paste memory"` checks the non-throwing paste preflight: a denied
+budget must return no staged draft, allocate neither full-sized clone and retain
+the source values. It observes first-chance memory exceptions, reproduces the
+reported 16384 × 16384 byte-budget refusal without allocating gigabyte buffers,
+and covers permitted scalar/rectangular pastes, blanks, zeros, bounds and
+cancellation. This is a source-linked test; it does not automate the native
+clipboard or MAUI UI.
+
 Filter `"Unit conversion"` exercises the real Formula → Units conversion engine:
 exact time/metric/speed/temperature fixtures, identity at decimal.MaxValue,
 large representable results with overflowing decimal intermediates, input rejection

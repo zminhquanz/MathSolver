@@ -21,6 +21,7 @@ var tests = new (string Name, Action Run)[]
     ("Matrix parallel exact kernels and cancellation", PuzzleTests.CheckMatrixParallel),
     ("Matrix maximum-length SIMD dot products", PuzzleTests.CheckMatrixLongDot),
     ("Matrix parallel performance samples", PuzzleTests.CheckMatrixParallelBenchmark),
+    ("Matrix paste memory preflight without exceptions", PuzzleTests.CheckMatrixPasteMemoryPreflight),
     ("Matrix clipboard single-value fill across selection", PuzzleTests.CheckMatrixPasteFillSelection),
     ("Matrix viewport Shift rectangle selection", PuzzleTests.CheckMatrixRangeSelection),
     ("Matrix clipboard paste cells across drafts", PuzzleTests.CheckMatrixPasteCells),

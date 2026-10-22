@@ -283,6 +283,9 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
             work.Add(answers[0].Label + ": " + ElementaryQuizContract.FormatAnswer(answers[0]));
         contract = contract with { SolutionText = string.Join(Environment.NewLine,
             work.Append(answerLabel + ": " + contract.AnswerText)) };
+        bool sumRatioTuple = contract.Type == ElementaryQuizType.SumRatio && answers.Count == 2
+            && contract.Reasoning?.ScenarioId == SumRatioPilot.Relation;
+        bool pairedProposal = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2 || sumRatioTuple;
         var choices = new List<string> { contract.AnswerText };
         if (textChoices is not null)
             choices.AddRange(textChoices.Where(text => !string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)));
@@ -295,10 +298,11 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         }
         else if (textChoices is null) for (int delta = 1; delta <= 3; delta++)
         {
-            // A quotient/remainder proposal must exercise both requested results.
-            // Offer a wrong quotient, a wrong remainder, and a tuple with both wrong.
-            bool packingTuple = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2;
-            var alternative = answers.Select((answer, index) => (packingTuple ? delta < 3 && index != delta - 1 : index != 0) ? answer : answer.Text is not null
+            // Paired proposals exercise either result and both. A direct ratio
+            // also offers swapped owners: the sum stays correct, the ratio does not.
+            var alternative = answers.Select((answer, index) => (pairedProposal ? delta < 3 && index != delta - 1 : index != 0) ? answer
+                : sumRatioTuple && delta == 3 ? answer with { Value = answers[1-index].Value }
+                : answer.Text is not null
                 ? answer with { Text = WrongText(answer, delta, vi) }
                 : answer with { Value = new(answer.Value.Numerator + delta * answer.Value.Denominator, answer.Value.Denominator),
                     DisplayValue = answer.DisplayValue is not null
@@ -312,7 +316,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         _random.Shuffle(options);
         bool correct = _random.Next(2) == 0;
         contract = contract with { PresentedText = correct ? contract.AnswerText
-            : choices[contract.Type == ElementaryQuizType.QuotientRemainder ? _random.Next(1, choices.Count) : 1], ChoiceTexts = options };
+            : choices[pairedProposal ? _random.Next(1, choices.Count) : 1], ChoiceTexts = options };
         return new(new(0, ArithmeticOperation.Add, 0), mode, 0, null, correct, [], ElementaryProblem: contract);
     }
 

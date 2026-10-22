@@ -14020,6 +14020,47 @@
         {"Id":"notebooks","Relation":"known-whole-find-percentage-part","Owner":"Cửa hàng Sao Mai","WholeUnit":"quyển vở","WholeNoun":"vở","PartNoun":"vở ô li","PartUnit":"quyển vở ô li","Capacity":1000,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"},
         {"Id":"trees","Relation":"known-whole-find-percentage-part","Owner":"Vườn trường Hòa Bình","WholeUnit":"cây","WholeNoun":"cây","PartNoun":"cây cam","PartUnit":"cây cam","Capacity":500,"Whole":"{v0} có tất cả {f0} {v1}.","Share":"Trong số {v2} đó, {f1} là {v3}.","Question":"{v0} có bao nhiêu {v4}?","Lead":"Số {v4}"}
     ],
+    "SumRatioOpen.Contexts": [
+      {
+        "Id": "books",
+        "SmallerOwner": "Lan",
+        "LargerOwner": "An",
+        "Unit": "quyển sách",
+        "Capacity": 2000,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Ratio": "Số {v2} của {v0} bằng {f1} số {v2} của {v1}.",
+        "Question": "Hỏi số {v2} của {v0} và {v1} lần lượt là bao nhiêu?",
+        "PartLead": "Số {v2} ứng với mỗi phần",
+        "SmallerLead": "Số {v2} của {v0}",
+        "LargerLead": "Số {v2} của {v1}"
+      },
+      {
+        "Id": "pens",
+        "SmallerOwner": "Minh",
+        "LargerOwner": "Hoa",
+        "Unit": "cây bút",
+        "Capacity": 2000,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Ratio": "Số {v2} của {v0} bằng {f1} số {v2} của {v1}.",
+        "Question": "Hỏi số {v2} của {v0} và {v1} lần lượt là bao nhiêu?",
+        "PartLead": "Số {v2} ứng với mỗi phần",
+        "SmallerLead": "Số {v2} của {v0}",
+        "LargerLead": "Số {v2} của {v1}"
+      },
+      {
+        "Id": "notebooks",
+        "SmallerOwner": "Bình",
+        "LargerOwner": "Mai",
+        "Unit": "quyển vở",
+        "Capacity": 2000,
+        "Total": "{v0} và {v1} có tất cả {f0} {v2}.",
+        "Ratio": "Số {v2} của {v0} bằng {f1} số {v2} của {v1}.",
+        "Question": "Hỏi số {v2} của {v0} và {v1} lần lượt là bao nhiêu?",
+        "PartLead": "Số {v2} ứng với mỗi phần",
+        "SmallerLead": "Số {v2} của {v0}",
+        "LargerLead": "Số {v2} của {v1}"
+      }
+    ],
     "SumDifferenceOpen.Contexts": [
       {
         "Id": "notebooks",

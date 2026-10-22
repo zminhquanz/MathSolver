@@ -2,6 +2,8 @@ using System.Globalization;
 
 namespace MathSolver.Services.Core;
 
+public readonly record struct MatrixPasteAttempt(MatrixDraft? Draft, MatrixMemoryCheck Memory);
+
 public sealed class MatrixDraft
 {
     private readonly bool[] _filled;
@@ -22,6 +24,13 @@ public sealed class MatrixDraft
         Matrix = imported;
         _filled = new bool[imported.Data.Length];
         Array.Fill(_filled, true);
+    }
+
+    private MatrixDraft(IntegerMatrix matrix, bool[] filled, int missingCount)
+    {
+        Matrix = matrix;
+        _filled = filled;
+        MissingCount = missingCount;
     }
 
     public IntegerMatrix Matrix { get; }
@@ -77,6 +86,19 @@ public sealed class MatrixDraft
     /// <summary>A single clipboard cell fills the destination rectangle; multi-cell blocks retain their shape.</summary>
     public MatrixDraft WithPastedCells(int row, int column, int rows, int columns, MatrixClipboardBlock block, CancellationToken token = default)
     {
+        var attempt = TryWithPastedCells(row, column, rows, columns, block, token);
+        return attempt.Draft ?? throw new MatrixMemoryException(attempt.Memory.RequiredBytes, attempt.Memory.AvailableBytes);
+    }
+
+    /// <summary>Returns an expected memory refusal before cloning; the source is unchanged on refusal or cancellation.</summary>
+    public MatrixPasteAttempt TryWithPastedCells(int row, int column, int rows, int columns, MatrixClipboardBlock block, CancellationToken token = default) =>
+        TryWithPastedCells(row, column, rows, columns, block, token, MatrixMemoryGuard.CheckAvailable);
+
+    // Keep machine measurement at the boundary so low-memory outcomes can be
+    // exercised without allocating multiple gigabytes or exhausting the test host.
+    internal MatrixPasteAttempt TryWithPastedCells(int row, int column, int rows, int columns, MatrixClipboardBlock block,
+        CancellationToken token, Func<long, MatrixMemoryCheck> checkMemory)
+    {
         ArgumentNullException.ThrowIfNull(block);
         token.ThrowIfCancellationRequested();
         bool singleCell = block.Rows == 1 && block.Columns == 1;
@@ -84,10 +106,18 @@ public sealed class MatrixDraft
             throw new MatrixInputException(MatrixInputError.InvalidShape, row + 1, column + 1);
         if (rows < 1 || columns < 1 || row < 0 || column < 0 || row > Rows - rows || column > Columns - columns)
             throw new MatrixInputException(MatrixInputError.OutsideBounds, row + 1, column + 1);
-        var pasted = new MatrixDraft(Rows, Columns);
-        Array.Copy(Matrix.Data, pasted.Matrix.Data, Matrix.Data.Length);
-        Array.Copy(_filled, pasted._filled, _filled.Length);
-        pasted.MissingCount = MissingCount;
+        var memory = checkMemory(Matrix.Data.LongLength * (sizeof(long) + sizeof(bool)));
+        token.ThrowIfCancellationRequested();
+        if (!memory.CanAllocate) return new(null, memory);
+
+        // The single preflight budgets both buffers. Do not re-enter the throwing
+        // draft constructor after an expected refusal has already been checked.
+        // Actual allocation failures still propagate to the UI's memory handler.
+        var values = (long[])Matrix.Data.Clone();
+        token.ThrowIfCancellationRequested();
+        var filled = (bool[])_filled.Clone();
+        token.ThrowIfCancellationRequested();
+        var pasted = new MatrixDraft(new IntegerMatrix(Rows, Columns, values), filled, MissingCount);
         for (int r = 0; r < rows; r++)
         {
             token.ThrowIfCancellationRequested();
@@ -95,7 +125,7 @@ public sealed class MatrixDraft
                 pasted.SetValue((row + r) * Columns + column + c, block.Values[singleCell ? 0 : r * block.Columns + c]);
         }
         token.ThrowIfCancellationRequested();
-        return pasted;
+        return new(pasted, memory);
     }
 
     public string GetCellText(int row, int column)

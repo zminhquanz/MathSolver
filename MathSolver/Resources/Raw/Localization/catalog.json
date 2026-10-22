@@ -1952,6 +1952,7 @@
     {"key":"Matrix.Cancelled","source":"Đã dừng. Dữ liệu đầu vào được giữ lại.","mode":"exact"},
     {"key":"Matrix.Failed","source":"Không thể hoàn tất thao tác. Kiểm tra dữ liệu hoặc thử lại.","mode":"exact"},
     {"key":"Matrix.CalculationMemoryUnavailable","source":"Phép tính cần dự trù thêm {0:0.00} GiB, vượt ngân sách bộ nhớ khả dụng {1:0.00} GiB. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. A, B và kết quả hiện tại được giữ nguyên.","mode":"exact"},
+    {"key":"Matrix.PasteMemoryUnavailable","source":"Thao tác dán cần thêm {0:0.00} GiB, vượt ngân sách bộ nhớ khả dụng {1:0.00} GiB. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. Ma trận A, B và kết quả hiện tại được giữ nguyên.","mode":"exact"},
     {"key":"Matrix.MemoryUnavailable","source":"Không đủ bộ nhớ để hoàn tất thao tác. Hãy giảm kích thước ma trận hoặc đóng bớt ứng dụng rồi thử lại. Dữ liệu đầu vào hiện tại được giữ lại.","mode":"exact"},
     {"key":"Matrix.Error.ClipboardTooLarge","source":"Bảng vượt giới hạn dung lượng bảng nhớ tạm. Hãy chọn vùng nhỏ hơn hoặc dùng tệp CSV để nhập, xuất dữ liệu.","mode":"exact"},
     {"key":"Matrix.CopyTooLarge","source":"Vùng chọn vượt dung lượng sao chép. Hãy xuất CSV hoặc chọn vùng nhỏ hơn.","mode":"exact"},

@@ -2,6 +2,12 @@ Runner commands are registered under Runner/, native generation checks under Mod
 
 # AI question bank checks
 
+`--sum-ratio-open` checks the direct combined-total/oriented-ratio pilot: 600
+fresh fixtures, paired owner-specific grading and choices, semantic mutations,
+review-once routing, SQLite/Excel and deduplication. `--sum-ratio-open-model
+<gguf> [directory]` runs six real bilingual requests at 0.5. See
+[sum-ratio open prose](../../MathSolver/SUM_RATIO_OPEN_AI.md).
+
 `--time-open` checks 150 bilingual same-day time profiles across five contexts,
 three distinct targets and five star levels, plus fresh facts, role mutations,
 grading, worker/review isolation and Excel. `--time-open-model <gguf> [directory]`

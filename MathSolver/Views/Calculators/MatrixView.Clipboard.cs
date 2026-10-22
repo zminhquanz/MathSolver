@@ -77,15 +77,22 @@ public sealed partial class MatrixView
                 bool singleCell = block.Rows == 1 && block.Columns == 1;
                 int rows = singleCell ? destination.Rows : block.Rows;
                 int columns = singleCell ? destination.Columns : block.Columns;
-                var draft = original.WithPastedCells(destination.Row, destination.Column, rows, columns, block, token);
-                return (Draft: draft, Rows: rows, Columns: columns);
+                var attempt = original.TryWithPastedCells(destination.Row, destination.Column, rows, columns, block, token);
+                return (Attempt: attempt, Rows: rows, Columns: columns);
             }, token);
             progress.Report(1);
             return value;
         }, pasted =>
         {
+            if (pasted.Attempt.Draft is not { } draft)
+            {
+                const double bytesPerGiB = 1024d * 1024 * 1024;
+                ReportError("PasteMemoryUnavailable", pasted.Attempt.Memory.RequiredBytes / bytesPerGiB,
+                    pasted.Attempt.Memory.AvailableBytes / bytesPerGiB);
+                return Task.CompletedTask;
+            }
             _editorMatrix = -1;
-            if (target == 0) _a = pasted.Draft; else _b = pasted.Draft;
+            if (target == 0) _a = draft; else _b = draft;
             InvalidateResult(); RefreshSource();
             _viewport.SelectRange(destination.Row, destination.Column, pasted.Rows, pasted.Columns);
             Status("PastedCells");
