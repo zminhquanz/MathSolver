@@ -2,6 +2,7 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix shared hardware threading preference", PuzzleTests.CheckMatrixThreadingPreference),
     ("Matrix uniform scan exact kernels and tails", PuzzleTests.CheckMatrixUniformScanExact),
     ("Matrix uniform scan parallel cancellation", PuzzleTests.CheckMatrixUniformScanParallel),
     ("Matrix uniform scan integration telemetry", PuzzleTests.CheckMatrixUniformScanIntegration),
@@ -9,6 +10,7 @@ var tests = new (string Name, Action Run)[]
     ("Matrix blocked exact products and elementwise edges", PuzzleTests.CheckMatrixBlockedExact),
     ("Matrix blocked workspace budget and worker limits", PuzzleTests.CheckMatrixBlockedBudget),
     ("Matrix blocked uniform exact compact values", PuzzleTests.CheckMatrixBlockedUniform),
+    ("Matrix cancellation outcome without exceptions", PuzzleTests.CheckMatrixCancellationOutcome),
     ("Matrix blocked cancellation and result file lifetime", PuzzleTests.CheckMatrixBlockedCancellation),
     ("Matrix block storage exact encodings and bounded cache", PuzzleTests.CheckMatrixBlockStorage),
     ("Matrix block storage concurrent lifetime and cleanup", PuzzleTests.CheckMatrixBlockStorageLifetime),

@@ -142,7 +142,8 @@ internal static partial class PuzzleTests
         TestAssert.That(a.Data.All(value => value == 2), "Preflight and multiplication must retain the input values.");
         using var cancelled = new CancellationTokenSource();
         cancelled.Cancel();
-        TestAssert.Throws<OperationCanceledException>(() => MatrixEngine.TryCalculate(a, a, MatrixOperation.Multiply,
-            cancellationToken: cancelled.Token), "Cancellation must take precedence over starting a calculation.");
+        using var stopped = MatrixEngine.TryCalculate(a, a, MatrixOperation.Multiply, cancellationToken: cancelled.Token);
+        TestAssert.That(stopped.IsCancelled && stopped.Result is null,
+            "Cancellation must take precedence over starting a calculation and return a normal stopped outcome.");
     }
 }

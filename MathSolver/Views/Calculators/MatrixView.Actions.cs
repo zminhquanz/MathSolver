@@ -223,11 +223,16 @@ public sealed partial class MatrixView
                 {
                     TemporaryDirectory = Path.Combine(FileSystem.CacheDirectory, "matrix-results")
                 };
-                return MatrixEngine.TryCalculate(a, b, operation, backend, token, progress, executionOptions: options);
+                return MatrixCalculationRunner.TryCalculate(a, b, operation, backend, token, progress, executionOptions: options);
             }
             finally { timer.Stop(); }
-        }, token), attempt =>
+        }), attempt =>
         {
+            if (attempt.IsCancelled)
+            {
+                Status("Cancelled");
+                return Task.CompletedTask;
+            }
             if (attempt.Result is not { } result)
             {
                 const double bytesPerGiB = 1024d * 1024 * 1024;

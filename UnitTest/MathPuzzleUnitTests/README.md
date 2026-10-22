@@ -1,5 +1,23 @@
 # Math puzzle checks
 
+Filter `"Matrix shared hardware threading"` runs the actual shared threading
+manager and application calculation runner, replacing only platform preferences
+with in-memory storage. It checks off/on/off settings across add/subtract/multiply,
+Scalar/SIMD, 1024-square and boundary sizes, uniform-scan workers and exact sample
+answers. Disabled threading must cap every matrix/verification plan to one worker;
+enabled threading retains size/tile/workspace limits. No native switch is automated.
+
+Filter `"Matrix cancellation outcome"` checks the non-throwing calculation path
+used by the UI: 20 cancellation cases across sequential/parallel verification,
+uniform shortcuts, dense add/subtract, blocked multiplication/elementwise work,
+and final publication. It observes first-chance cancellation exceptions, requires
+zero for expected stop requests, checks that partial files are deleted while the
+previous result remains readable, and verifies a new calculation can run next.
+One case stops a large, nonuniform multiplication from a separate thread after
+input verification, rather than cancelling synchronously in a progress callback.
+The explicit throwing `Calculate` API retains its cancellation contract. These
+tests do not automate native navigation or closing a MAUI window.
+
 Filter `"Matrix viewport"` checks the source-linked matrix selection/edit state and
 scrollbar geometry: first/second clicks, read-only results, invalid edits, cancel,
 Tab wrapping, matrix switching, both axes at 1024 × 1024, fitting tables and tiny

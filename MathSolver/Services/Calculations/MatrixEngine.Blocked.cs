@@ -12,11 +12,11 @@ public static partial class MatrixEngine
         internal readonly BigInteger[] Values = new BigInteger[size * size];
     }
 
-    private static MatrixCalculation CalculateBlocked(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
+    private static MatrixCalculation? CalculateBlocked(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
         MatrixBackend backend, MatrixWorkPlan plan, MatrixExecutionOptions options,
         CancellationToken token, IProgress<double>? progress)
     {
-        token.ThrowIfCancellationRequested();
+        if (token.IsCancellationRequested) return null;
         var store = new MatrixBlockStore(a.Rows, b.Columns, plan.BlockSize, plan.FileBacked,
             options.TemporaryDirectory, plan.CacheBytes);
         bool published = false;
@@ -31,14 +31,14 @@ public static partial class MatrixEngine
             {
                 for (int index = 0; index < count; index++)
                 {
-                    token.ThrowIfCancellationRequested();
+                    if (token.IsCancellationRequested) return null;
                     int r = index / blockColumns, c = index % blockColumns;
                     store.WriteConstantBlock(r, c, Math.Min(size, a.Rows - r * size),
                         Math.Min(size, b.Columns - c * size), constant);
                     if (index == count - 1 || index % Math.Max(1, count / 100) == 0)
                         progress?.Report(.2 + .8 * (index + 1d) / count);
                 }
-                token.ThrowIfCancellationRequested();
+                if (token.IsCancellationRequested) return null;
                 store.Complete();
                 var result = new MatrixCalculation(store, operation, MatrixBackend.Scalar, 0, 1, plan, uniform: true)
                     { UniformScan = scan };
@@ -46,12 +46,13 @@ public static partial class MatrixEngine
                 return result;
             }
 
+            if (token.IsCancellationRequested) return null;
             int next = -1, active = 0, peak = 0, completed = 0, reported = 0;
             long batches = 0;
             object progressGate = new();
             void Worker(int _)
             {
-                token.ThrowIfCancellationRequested();
+                if (token.IsCancellationRequested) return;
                 var workspace = new TileWorkspace(size);
                 int current = Interlocked.Increment(ref active);
                 int observed;
@@ -63,14 +64,15 @@ public static partial class MatrixEngine
                     int index;
                     while ((index = Interlocked.Increment(ref next)) < count)
                     {
-                        token.ThrowIfCancellationRequested();
+                        if (token.IsCancellationRequested) return;
                         int blockRow = index / blockColumns, blockColumn = index % blockColumns;
                         int row = blockRow * size, column = blockColumn * size;
                         int height = Math.Min(size, a.Rows - row), width = Math.Min(size, b.Columns - column);
-                        localBatches += operation == MatrixOperation.Multiply
+                        long? tileBatches = operation == MatrixOperation.Multiply
                             ? MultiplyTile(a, b, row, column, height, width, size, backend, workspace, token)
                             : ElementwiseTile(a, b, row, column, height, width, operation, backend, workspace, token);
-                        token.ThrowIfCancellationRequested();
+                        if (tileBatches is not { } completedBatches || token.IsCancellationRequested) return;
+                        localBatches += completedBatches;
                         store.WriteBlock(blockRow, blockColumn, height, width, workspace.Values.AsSpan(0, height * width));
                         Array.Clear(workspace.Values, 0, height * width);
                         if (progress is not null)
@@ -95,8 +97,8 @@ public static partial class MatrixEngine
             }
             if (plan.WorkerLimit == 1) Worker(0);
             else Parallel.For(0, plan.WorkerLimit,
-                new ParallelOptions { MaxDegreeOfParallelism = plan.WorkerLimit, CancellationToken = token }, Worker);
-            token.ThrowIfCancellationRequested();
+                new ParallelOptions { MaxDegreeOfParallelism = plan.WorkerLimit }, Worker);
+            if (token.IsCancellationRequested) return null;
             store.Complete();
             var completedResult = new MatrixCalculation(store, operation, backend, batches, peak, plan)
                 { UniformScan = scan };
@@ -106,7 +108,7 @@ public static partial class MatrixEngine
         finally { if (!published) store.Dispose(); }
     }
 
-    private static long MultiplyTile(IntegerMatrix a, IntegerMatrix b, int row, int column, int height, int width,
+    private static long? MultiplyTile(IntegerMatrix a, IntegerMatrix b, int row, int column, int height, int width,
         int size, MatrixBackend backend, TileWorkspace workspace, CancellationToken token)
     {
         Array.Clear(workspace.Accumulators, 0, height * width);
@@ -114,7 +116,7 @@ public static partial class MatrixEngine
         long batches = 0;
         for (int k = 0; k < a.Columns; k += size)
         {
-            token.ThrowIfCancellationRequested();
+            if (token.IsCancellationRequested) return null;
             int depth = Math.Min(size, a.Columns - k);
             for (int i = 0; i < height; i++)
                 Array.Copy(a.Data, (row + i) * a.Columns + k, workspace.Left, i * depth, depth);
@@ -124,7 +126,7 @@ public static partial class MatrixEngine
                     workspace.Right[j * depth + d] = b.Data[(k + d) * b.Columns + column + j];
             for (int i = 0; i < height; i++)
             {
-                token.ThrowIfCancellationRequested();
+                if (token.IsCancellationRequested) return null;
                 for (int j = 0; j < width; j++)
                 {
                     int startA = i * depth, startB = j * depth;
@@ -146,18 +148,18 @@ public static partial class MatrixEngine
         }
         for (int i = 0; i < height * width; i++)
         {
-            if ((i & 4095) == 0) token.ThrowIfCancellationRequested();
+            if ((i & 4095) == 0 && token.IsCancellationRequested) return null;
             workspace.Values[i] = workspace.Accumulators[i].ToBigInteger();
         }
         return batches;
     }
 
-    private static long ElementwiseTile(IntegerMatrix a, IntegerMatrix b, int row, int column, int height, int width,
+    private static long? ElementwiseTile(IntegerMatrix a, IntegerMatrix b, int row, int column, int height, int width,
         MatrixOperation operation, MatrixBackend backend, TileWorkspace workspace, CancellationToken token)
     {
         for (int r = 0; r < height; r++)
         {
-            token.ThrowIfCancellationRequested();
+            if (token.IsCancellationRequested) return null;
             Array.Copy(a.Data, (row + r) * a.Columns + column, workspace.Left, r * width, width);
             Array.Copy(b.Data, (row + r) * b.Columns + column, workspace.Right, r * width, width);
         }
@@ -177,7 +179,7 @@ public static partial class MatrixEngine
                 : (Int128)workspace.Left[processed] + workspace.Right[processed];
         for (int i = 0; i < count; i++)
         {
-            if ((i & 4095) == 0) token.ThrowIfCancellationRequested();
+            if ((i & 4095) == 0 && token.IsCancellationRequested) return null;
             workspace.Values[i] = (BigInteger)workspace.Wide[i];
         }
         return batches;
@@ -188,14 +190,17 @@ public static partial class MatrixEngine
         out BigInteger value, out MatrixUniformScanStatistics statistics)
     {
         value = 0;
-        var left = ScanUniform(a.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, 0));
+        var leftScan = TryScanUniform(a.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, 0));
+        statistics = default;
+        if (leftScan is not { } left) return false;
         statistics = left.Statistics;
         if (operation == MatrixOperation.Multiply && left.IsUniform && left.Value == 0)
         {
             progress?.Report(.2);
             return true;
         }
-        var right = ScanUniform(b.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, .1));
+        var rightScan = TryScanUniform(b.Data, backend, workers, token, progress is null ? null : new UniformScanProgress(progress, .1));
+        if (rightScan is not { } right) return false;
         statistics = new((MatrixBackend)Math.Max((int)left.Statistics.Backend, (int)right.Statistics.Backend),
             left.Statistics.VectorBatches + right.Statistics.VectorBatches,
             Math.Max(left.Statistics.WorkerCount, right.Statistics.WorkerCount),

@@ -5,7 +5,7 @@ using System.Buffers.Binary;
 
 namespace MathSolver.Services.Core;
 
-public readonly record struct MatrixCalculationAttempt(MatrixCalculation? Result, MatrixMemoryCheck Memory) : IDisposable
+public readonly record struct MatrixCalculationAttempt(MatrixCalculation? Result, MatrixMemoryCheck Memory, bool IsCancelled = false) : IDisposable
 {
     public void Dispose() => Result?.Dispose();
 }
@@ -17,10 +17,11 @@ public static partial class MatrixEngine
         IProgress<double>? progress = null, int maximumDegreeOfParallelism = 0, MatrixExecutionOptions? executionOptions = null)
     {
         var attempt = TryCalculate(a, b, operation, maximumBackend, cancellationToken, progress, maximumDegreeOfParallelism, executionOptions);
+        if (attempt.IsCancelled) throw new OperationCanceledException(cancellationToken);
         return attempt.Result ?? throw new MatrixMemoryException(attempt.Memory.RequiredBytes, attempt.Memory.AvailableBytes);
     }
 
-    /// <summary>Returns a memory refusal before allocating workspace; expected low memory does not throw.</summary>
+    /// <summary>Returns resource refusal or cancellation as an outcome; expected stop requests do not throw in workers.</summary>
     public static MatrixCalculationAttempt TryCalculate(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
         MatrixBackend maximumBackend = MatrixBackend.Auto, CancellationToken cancellationToken = default,
         IProgress<double>? progress = null, int maximumDegreeOfParallelism = 0, MatrixExecutionOptions? executionOptions = null)
@@ -32,20 +33,25 @@ public static partial class MatrixEngine
         ArgumentOutOfRangeException.ThrowIfNegative(maximumDegreeOfParallelism);
         if (operation == MatrixOperation.Multiply ? a.Columns != b.Rows : a.Rows != b.Rows || a.Columns != b.Columns)
             throw new ArgumentException("Matrix dimensions are incompatible for this operation.", nameof(b));
-        cancellationToken.ThrowIfCancellationRequested();
+        if (cancellationToken.IsCancellationRequested) return new(null, default, IsCancelled: true);
         var options = executionOptions ?? new MatrixExecutionOptions();
         var available = MatrixMemoryGuard.CheckAvailable(0);
         int requested = Math.Max(1, Math.Min(Environment.ProcessorCount,
             maximumDegreeOfParallelism == 0 ? Environment.ProcessorCount : maximumDegreeOfParallelism));
         var plan = MatrixWorkPlan.Create(a.Rows, a.Columns, b.Columns, operation, requested, options, available.AvailableBytes);
-        cancellationToken.ThrowIfCancellationRequested();
+        if (cancellationToken.IsCancellationRequested) return new(null, plan.Memory, IsCancelled: true);
         if (!plan.Memory.CanAllocate) return new(null, plan.Memory);
         MatrixBackend backend = SelectBackend(a, b, maximumBackend);
         progress?.Report(0);
-        cancellationToken.ThrowIfCancellationRequested();
+        if (cancellationToken.IsCancellationRequested) return new(null, plan.Memory, IsCancelled: true);
         var result = plan.DenseResult
             ? AddOrSubtract(a, b, operation, backend, plan.WorkerLimit, cancellationToken, progress)
             : CalculateBlocked(a, b, operation, backend, plan, options, cancellationToken, progress);
+        if (result is null || cancellationToken.IsCancellationRequested)
+        {
+            result?.Dispose();
+            return new(null, plan.Memory, IsCancelled: true);
+        }
         result.WorkspaceLimitBytes = plan.WorkspaceBytes;
         return new(result, plan.Memory);
     }
@@ -59,7 +65,7 @@ public static partial class MatrixEngine
         return Sse2.IsSupported ? MatrixBackend.Sse2 : MatrixBackend.Scalar;
     }
 
-    private static MatrixCalculation AddOrSubtract(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
+    private static MatrixCalculation? AddOrSubtract(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
         MatrixBackend backend, int workers, CancellationToken cancellationToken, IProgress<double>? progress)
     {
         var values = GC.AllocateUninitializedArray<Int128>(a.Data.Length);
@@ -81,9 +87,9 @@ public static partial class MatrixEngine
                 values[index] = subtract ? (Int128)a.Data[index] - b.Data[index] : (Int128)a.Data[index] + b.Data[index];
             return batches;
         }, cancellationToken, progress, 0, 1);
-        cancellationToken.ThrowIfCancellationRequested();
-        return new MatrixCalculation(a.Rows, a.Columns, operation, backend, execution.Batches, values, null,
-            execution.Workers, Math.Min(a.Rows, workers));
+        if (execution is not { } completed || cancellationToken.IsCancellationRequested) return null;
+        return new MatrixCalculation(a.Rows, a.Columns, operation, backend, completed.Batches, values, null,
+            completed.Workers, Math.Min(a.Rows, workers));
     }
 
     // The magnitude of an Int64 product is at most 2^126; summing at most 16384

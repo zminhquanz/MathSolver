@@ -15,11 +15,18 @@ public static partial class MatrixEngine
     internal static MatrixUniformScanResult ScanUniform(long[] values, MatrixBackend maximumBackend,
         int maximumWorkers, CancellationToken token = default, IProgress<double>? progress = null)
     {
+        return TryScanUniform(values, maximumBackend, maximumWorkers, token, progress)
+            ?? throw new OperationCanceledException(token);
+    }
+
+    private static MatrixUniformScanResult? TryScanUniform(long[] values, MatrixBackend maximumBackend,
+        int maximumWorkers, CancellationToken token, IProgress<double>? progress)
+    {
         ArgumentNullException.ThrowIfNull(values);
         if (values.Length == 0) throw new ArgumentException("A uniform scan requires at least one value.", nameof(values));
         if (maximumWorkers < 1) throw new ArgumentOutOfRangeException(nameof(maximumWorkers));
         if (!Enum.IsDefined(maximumBackend)) throw new ArgumentOutOfRangeException(nameof(maximumBackend));
-        token.ThrowIfCancellationRequested();
+        if (token.IsCancellationRequested) return null;
         MatrixBackend backend = maximumBackend == MatrixBackend.Scalar ? MatrixBackend.Scalar
             : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512) && Avx512F.IsSupported ? MatrixBackend.Avx512
             : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512 or MatrixBackend.Avx2) && Avx2.IsSupported ? MatrixBackend.Avx2
@@ -47,7 +54,7 @@ public static partial class MatrixEngine
                     int end = Math.Min(values.Length, (chunk + 1) * chunkSize);
                     for (int start = chunk * chunkSize; start < end; start += 4096)
                     {
-                        token.ThrowIfCancellationRequested();
+                        if (token.IsCancellationRequested) return;
                         if (Volatile.Read(ref mismatch) != 0) return;
                         if (!CompareUniformRange(values, start, Math.Min(end, start + 4096), value,
                             backend, ref localBatches, ref localCells))
@@ -78,10 +85,10 @@ public static partial class MatrixEngine
             }
         }
         if (workers == 1) Worker(0);
-        else Parallel.For(0, workers, new ParallelOptions { MaxDegreeOfParallelism = workers, CancellationToken = token }, Worker);
-        token.ThrowIfCancellationRequested();
+        else Parallel.For(0, workers, new ParallelOptions { MaxDegreeOfParallelism = workers }, Worker);
+        if (token.IsCancellationRequested) return null;
         progress?.Report(1);
-        token.ThrowIfCancellationRequested();
+        if (token.IsCancellationRequested) return null;
         return new(mismatch == 0, value, new(batches == 0 ? MatrixBackend.Scalar : backend, batches, peak, workers, cells));
     }
 
