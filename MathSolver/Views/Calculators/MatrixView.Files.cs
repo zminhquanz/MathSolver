@@ -15,12 +15,12 @@ public sealed partial class MatrixView
             string? text = await Clipboard.Default.GetTextAsync();
             if (!CanPublish(version) || _busy || _selected != target) return;
             if (string.IsNullOrWhiteSpace(text)) { ReportError("ClipboardEmpty"); return; }
-            // More than enough for 1024² quoted signed Int64 cells and CRLF rows.
-            if (text.Length > 32 * 1024 * 1024) { ReportError("Error.TooLarge"); return; }
+            // Clipboard size is bounded separately; file imports use a streaming reader.
+            if (text.Length > MatrixLimits.MaximumClipboardCharacters) { ReportError("Error.ClipboardTooLarge"); return; }
             await RunWorkAsync((token, _) => Task.Run(() =>
             {
                 using var reader = new StringReader(text);
-                return MatrixTextCodec.Read(reader, token);
+                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (Exception error)
@@ -52,7 +52,7 @@ public sealed partial class MatrixView
             {
                 await using Stream stream = await file.OpenReadAsync();
                 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-                return MatrixTextCodec.Read(reader, token);
+                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (OperationCanceledException) { /* Native picker cancelled; existing drafts are retained. */ }
@@ -63,7 +63,7 @@ public sealed partial class MatrixView
         }
     }
 
-    private async Task AcceptImportAsync(int target, IntegerMatrix matrix)
+    private async Task AcceptImportAsync(int target, MatrixDraft matrix)
     {
         int version = _version;
         if (!await ConfirmAsync(F("AcceptImport", "AB"[target], matrix.Rows, matrix.Columns)))
@@ -71,7 +71,7 @@ public sealed partial class MatrixView
         if (!CanPublish(version)) return;
         if (_work?.IsCancellationRequested != false) { Status("Cancelled"); return; }
         _editorMatrix = -1;
-        if (target == 0) _a = new(matrix); else _b = new(matrix);
+        if (target == 0) _a = matrix; else _b = matrix;
         _aRows.Text = _a.Rows.ToString(); _aColumns.Text = _a.Columns.ToString();
         _bRows.Text = _b.Rows.ToString(); _bColumns.Text = _b.Columns.ToString();
         _selected = target; InvalidateResult(); RefreshSource(); Status("Imported");
@@ -80,6 +80,12 @@ public sealed partial class MatrixView
     private async void OnExport(object? sender, EventArgs e)
     {
         if (_busy || _result is not { } result) return;
+        await ExportCsvAsync(result.Rows, result.Columns,
+            (r, c) => result.GetValue(r, c).ToString(System.Globalization.CultureInfo.InvariantCulture), "Matrix-C.csv");
+    }
+
+    private async Task ExportCsvAsync(int rows, int columns, Func<int, int, string> readCell, string fileName)
+    {
         // Stream through a unique temporary file rather than duplicating a large CSV in memory.
         string path = Path.Combine(FileSystem.CacheDirectory, "matrix-" + Guid.NewGuid().ToString("N") + ".csv");
         try
@@ -89,14 +95,14 @@ public sealed partial class MatrixView
                 await Task.Run(() =>
                 {
                     using var writer = new StreamWriter(path, false, new UTF8Encoding(false));
-                    MatrixTextCodec.Write(writer, result, token, progress);
+                    MatrixTextCodec.Write(writer, rows, columns, readCell, token, progress);
                 }, token);
                 return path;
             }, async temporary =>
             {
                 int version = _version;
                 await using var stream = File.OpenRead(temporary);
-                var saved = await FileSaver.Default.SaveAsync("Matrix-C.csv", stream, _work!.Token);
+                var saved = await FileSaver.Default.SaveAsync(fileName, stream, _work!.Token);
                 if (!CanPublish(version)) return;
                 if (saved.IsSuccessful) Status("Exported");
                 else if (saved.Exception is OperationCanceledException) Status("Cancelled");

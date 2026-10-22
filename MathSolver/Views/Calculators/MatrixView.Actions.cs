@@ -11,7 +11,10 @@ public sealed partial class MatrixView
     private void InvalidateResult()
     {
         bool wasResult = _selected == 2;
+        var previous = _result;
+        _viewportResult = null; _failedReadResult = null;
         _result = null; _elapsed = null; _statusKey = null; _errorKey = null;
+        DisposeOutcome(previous);
         _message.Text = "";
         RefreshExecution();
         if (wasResult) { _selected = 0; RefreshSource(); }
@@ -21,14 +24,40 @@ public sealed partial class MatrixView
     private void RefreshSource()
     {
         if (_selected == 2 && _result is { } result)
-            _viewport.SetSource(result.Rows, result.Columns, (r, c) => result.GetValue(r, c).ToString(CultureInfo.InvariantCulture));
+        {
+            _viewportResult = result;
+            _viewport.SetSource(result.Rows, result.Columns, ReadViewportResultCell);
+        }
         else
         {
+            _viewportResult = null;
             if (_selected == 2) _selected = 0;
             MatrixDraft draft = CurrentDraft;
             _viewport.SetSource(draft.Rows, draft.Columns, draft.GetCellText);
         }
         RefreshSelection(); RefreshCell(); RefreshRange();
+    }
+
+    private string ReadViewportResultCell(int row, int column)
+    {
+        if (_viewportResult is not { } result) return string.Empty;
+        try { return result.GetValue(row, column).ToString(CultureInfo.InvariantCulture); }
+        catch (Exception error) when (IsResultStorageFailure(error))
+        {
+            ReportResultReadFailure(result, error);
+            return T("UnavailableCell");
+        }
+    }
+
+    private static bool IsResultStorageFailure(Exception error) =>
+        error is IOException or UnauthorizedAccessException or ObjectDisposedException;
+
+    private void ReportResultReadFailure(MatrixCalculation result, Exception error)
+    {
+        if (ReferenceEquals(_failedReadResult, result)) return;
+        _failedReadResult = result;
+        Debug.WriteLine(error);
+        if (CanTouchUi) ReportError("StorageUnavailable");
     }
 
     private void RefreshSelection()
@@ -57,6 +86,7 @@ public sealed partial class MatrixView
         _export.IsEnabled = !_busy && _result is not null;
         _matrices[2].IsEnabled = !_busy && _result is not null;
         _apply.IsEnabled = _fill.IsEnabled = _paste.IsEnabled = _import.IsEnabled = !_busy && _selected != 2;
+        _pasteCells.IsEnabled = !_busy && _selected != 2;
         _progress.IsVisible = _busy;
         _activity.IsVisible = _activity.IsRunning = _busy;
     }
@@ -66,14 +96,17 @@ public sealed partial class MatrixView
         int row = _viewport.SelectedRow, column = _viewport.SelectedColumn;
         _row.Text = (row + 1).ToString(CultureInfo.InvariantCulture);
         _column.Text = (column + 1).ToString(CultureInfo.InvariantCulture);
+        var range = _viewport.Selection;
         _selection.Text = _viewport.AllSelected ? F("AllSelected", "ABC"[_selected])
+            : _viewport.HasRangeSelection ? F("RangeSelected", "ABC"[_selected], range.Row + 1, range.Column + 1,
+                range.Row + range.Rows, range.Column + range.Columns, range.Rows, range.Columns)
             : F("Selected", "ABC"[_selected], row + 1, column + 1);
         SemanticProperties.SetDescription(_value, _selection.Text + ". " + T("CellValue"));
         _updatingEditor = true;
         try
         {
-            _value.Text = _selected == 2 && _result is { } result
-                ? result.GetValue(row, column).ToString(CultureInfo.InvariantCulture) : CurrentDraft.GetCellText(row, column);
+            _value.Text = _selected == 2 && _result is not null
+                ? ReadViewportResultCell(row, column) : CurrentDraft.GetCellText(row, column);
             _editorMatrix = _selected; _editorRow = row; _editorColumn = column;
         }
         finally { _updatingEditor = false; }
@@ -120,7 +153,7 @@ public sealed partial class MatrixView
         }
     }
     private static bool TryDimension(string? text, out int value) =>
-        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value is >= 1 and <= 1024;
+        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value is >= 1 and <= MatrixLimits.MaximumDimension;
 
     private async void OnCreate(object? sender, EventArgs e)
     {
@@ -131,14 +164,29 @@ public sealed partial class MatrixView
         int version = _version;
         if ((_a.HasAnyValues || _b.HasAnyValues) && !await ConfirmAsync(T("ReplaceAll"))) return;
         if (!CanPublish(version) || _busy) return;
-        _editorMatrix = -1; _a = new(ar, ac); _b = new(br, bc); _selected = 0;
-        InvalidateResult(); RefreshSource();
+        await RunWorkAsync((token, progress) => Task.Run(() =>
+        {
+            token.ThrowIfCancellationRequested();
+            MatrixMemoryGuard.EnsureAvailable(((long)ar * ac + (long)br * bc) * 9);
+            var a = new MatrixDraft(ar, ac);
+            token.ThrowIfCancellationRequested();
+            progress.Report(0.5);
+            var b = new MatrixDraft(br, bc);
+            token.ThrowIfCancellationRequested();
+            progress.Report(1);
+            return (A: a, B: b);
+        }, token), drafts =>
+        {
+            _editorMatrix = -1; _a = drafts.A; _b = drafts.B; _selected = 0;
+            InvalidateResult(); RefreshSource(); Status("Created");
+            return Task.CompletedTask;
+        }, "Creating");
     }
-    private async Task<bool> ConfirmAsync(string message)
+    private async Task<bool> ConfirmAsync(string message, string acceptKey = "Confirm")
     {
         Element? parent = this;
         while (parent is not null && parent is not Page) parent = parent.Parent;
-        return parent is Page page && CanTouchUi && await page.DisplayAlertAsync(T("Title"), message, T("Confirm"), T("Cancel"));
+        return parent is Page page && CanTouchUi && await page.DisplayAlertAsync(T("Title"), message, T(acceptKey), T("Cancel"));
     }
     private string FormatError() => F(_errorKey!, _errorArguments.Select(argument =>
         argument is MatrixInputError code ? T("Error." + code) : argument).ToArray());
@@ -169,12 +217,48 @@ public sealed partial class MatrixView
         await RunWorkAsync((token, progress) => Task.Run(() =>
         {
             timer.Start();
-            try { return MatrixEngine.Calculate(a, b, operation, backend, token, progress); }
+            try
+            {
+                var options = new MatrixExecutionOptions
+                {
+                    TemporaryDirectory = Path.Combine(FileSystem.CacheDirectory, "matrix-results")
+                };
+                return MatrixEngine.TryCalculate(a, b, operation, backend, token, progress, executionOptions: options);
+            }
             finally { timer.Stop(); }
-        }, token), result =>
+        }, token), attempt =>
         {
+            if (attempt.Result is not { } result)
+            {
+                const double bytesPerGiB = 1024d * 1024 * 1024;
+                ReportError("CalculationMemoryUnavailable", attempt.Memory.RequiredBytes / bytesPerGiB,
+                    attempt.Memory.AvailableBytes / bytesPerGiB);
+                return Task.CompletedTask;
+            }
+            var previous = _result;
+            double? previousElapsed = _elapsed;
+            int previousSelection = _selected;
+            _viewportResult = null; _failedReadResult = null;
             _result = result; _elapsed = timer.Elapsed.TotalSeconds; _selected = 2;
-            RefreshSource(); RefreshExecution(); Status("Completed");
+            try
+            {
+                RefreshSource(); RefreshExecution();
+                if (ReferenceEquals(_failedReadResult, result))
+                    throw new IOException("The new matrix result could not be read during publication.");
+                Status("Completed");
+            }
+            catch
+            {
+                // Publication has not transferred ownership yet. Keep the old result
+                // readable, and let RunWorkAsync dispose the unpublished attempt.
+                _viewportResult = previousSelection == 2 ? previous : null;
+                _failedReadResult = null;
+                _result = previous; _elapsed = previousElapsed; _selected = previousSelection;
+                try { RefreshSource(); RefreshExecution(); }
+                catch (Exception error) { Debug.WriteLine(error); }
+                throw;
+            }
+            DisposeOutcome(previous);
             return Task.CompletedTask;
         }, "Calculating");
     }

@@ -1,9 +1,12 @@
+using MathSolver.Services.Core;
+
 namespace MathSolver.Controls;
 
 internal enum MatrixCellMove { Left, Right, Up, Down, Next, Previous }
 internal enum MatrixCellAction { Selected, Editing, Rejected }
 internal enum MatrixResizeAxis { None, Column, Row }
 internal readonly record struct MatrixCellBounds(double X, double Y, double Width, double Height);
+public readonly record struct MatrixCellRange(int Row, int Column, int Rows, int Columns);
 
 /// <summary>Pixel scrolling, hit testing and guarded selection without native UI dependencies.</summary>
 internal sealed class MatrixViewportState
@@ -11,8 +14,8 @@ internal sealed class MatrixViewportState
     public const double HeaderWidth = 58;
     public const double DefaultColumnWidth = 96, DefaultRowHeight = 36;
     public const double MinColumnWidth = 60, MaxColumnWidth = 1000, MinRowHeight = 32, MaxRowHeight = 500;
-    private readonly double[] _columnWidths = new double[1024], _rowHeights = new double[1024];
-    private readonly double[] _columnStarts = new double[1025], _rowStarts = new double[1025];
+    private readonly double[] _columnWidths = new double[MatrixLimits.MaximumDimension], _rowHeights = new double[MatrixLimits.MaximumDimension];
+    private readonly double[] _columnStarts = new double[MatrixLimits.MaximumDimension + 1], _rowStarts = new double[MatrixLimits.MaximumDimension + 1];
     public MatrixViewportState() => RebuildDimensions();
     public int Rows { get; private set; } = 1;
     public int Columns { get; private set; } = 1;
@@ -20,6 +23,19 @@ internal sealed class MatrixViewportState
     public int SelectedColumn { get; private set; }
     public bool IsEditing { get; private set; }
     public bool AllSelected { get; private set; }
+    private int _endRow, _endColumn;
+    public int SelectionEndRow => _endRow;
+    public int SelectionEndColumn => _endColumn;
+    public MatrixCellRange Selection => AllSelected ? new(0, 0, Rows, Columns)
+        : new(Math.Min(SelectedRow, _endRow), Math.Min(SelectedColumn, _endColumn),
+            Math.Abs(SelectedRow - _endRow) + 1, Math.Abs(SelectedColumn - _endColumn) + 1);
+    public bool HasRangeSelection => AllSelected || _endRow != SelectedRow || _endColumn != SelectedColumn;
+    public bool IsSelected(int row, int column)
+    {
+        var selection = Selection;
+        return row >= selection.Row && row < selection.Row + selection.Rows
+            && column >= selection.Column && column < selection.Column + selection.Columns;
+    }
     private bool _hasSelection;
     public double OffsetX { get; private set; }
     public double OffsetY { get; private set; }
@@ -54,13 +70,14 @@ internal sealed class MatrixViewportState
     public double MaxY => Math.Max(0, ContentHeight - Math.Max(1, Height - CellHeight));
     public void SetSource(int rows, int columns)
     {
-        if (rows is < 1 or > 1024 || columns is < 1 or > 1024) throw new ArgumentOutOfRangeException(nameof(rows));
+        if (rows is < 1 or > MatrixLimits.MaximumDimension || columns is < 1 or > MatrixLimits.MaximumDimension) throw new ArgumentOutOfRangeException(nameof(rows));
         Rows = rows; Columns = columns;
         IsEditing = false;
         _hasSelection = false;
         AllSelected = false;
         SelectedRow = Math.Min(SelectedRow, rows - 1);
         SelectedColumn = Math.Min(SelectedColumn, columns - 1);
+        _endRow = SelectedRow; _endColumn = SelectedColumn;
         RebuildDimensions();
         ScrollTo(OffsetX, OffsetY);
     }
@@ -134,7 +151,7 @@ internal sealed class MatrixViewportState
     public bool ScrollBy(double x, double y) => ScrollTo(OffsetX + x, OffsetY + y);
     public MatrixCellAction TapCell(int row, int column, bool canEdit, Func<bool>? commit = null)
     {
-        if (!AllSelected && _hasSelection && row == SelectedRow && column == SelectedColumn && canEdit)
+        if (!HasRangeSelection && _hasSelection && row == SelectedRow && column == SelectedColumn && canEdit)
         {
             BeginEdit(canEdit);
             return MatrixCellAction.Editing;
@@ -145,6 +162,7 @@ internal sealed class MatrixViewportState
     {
         if (!canEdit) return false;
         AllSelected = false;
+        _endRow = SelectedRow; _endColumn = SelectedColumn;
         _hasSelection = true;
         IsEditing = true;
         RevealSelection();
@@ -160,8 +178,18 @@ internal sealed class MatrixViewportState
     public bool SelectAll(Func<bool>? commit = null)
     {
         if (!EndEdit(commit)) return false;
+        _endRow = SelectedRow; _endColumn = SelectedColumn;
         _hasSelection = true;
         AllSelected = true;
+        return true;
+    }
+    public bool ExtendSelection(int row, int column, Func<bool>? commit = null)
+    {
+        if (!EndEdit(commit)) return false;
+        _hasSelection = true; AllSelected = false;
+        _endRow = Math.Clamp(row, 0, Rows - 1);
+        _endColumn = Math.Clamp(column, 0, Columns - 1);
+        RevealCell(_endRow, _endColumn);
         return true;
     }
     public bool Select(int row, int column, Func<bool>? commit = null)
@@ -172,15 +200,17 @@ internal sealed class MatrixViewportState
         _hasSelection = true;
         SelectedRow = Math.Clamp(row, 0, Rows - 1);
         SelectedColumn = Math.Clamp(column, 0, Columns - 1);
+        _endRow = SelectedRow; _endColumn = SelectedColumn;
         RevealSelection();
         return true;
     }
-    public void RevealSelection()
+    public void RevealSelection() => RevealCell(SelectedRow, SelectedColumn);
+    private void RevealCell(int row, int column)
     {
         double availableWidth = Math.Max(1, Width - HeaderWidth), availableHeight = Math.Max(1, Height - CellHeight);
         double x = OffsetX, y = OffsetY;
-        double left = _columnStarts[SelectedColumn], top = _rowStarts[SelectedRow];
-        double cellWidth = GetColumnWidth(SelectedColumn), cellHeight = GetRowHeight(SelectedRow);
+        double left = _columnStarts[column], top = _rowStarts[row];
+        double cellWidth = GetColumnWidth(column), cellHeight = GetRowHeight(row);
         if (left < x || cellWidth > availableWidth) x = left;
         else if (left + cellWidth > x + availableWidth) x = left + cellWidth - availableWidth;
         if (top < y || cellHeight > availableHeight) y = top;

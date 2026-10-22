@@ -15,7 +15,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     private Func<int, int, string>? _readCell;
     private PointF _panStart;
     private double _panX, _panY;
-    private bool _dragged, _everLoaded;
+    private bool _dragged, _everLoaded, _extendSelectionGesture;
     private int _focusGeneration;
     private float _drawFontSize = 14;
     public Func<bool>? CommitEdit { get; set; }
@@ -23,10 +23,17 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public Func<bool>? CanEdit { get; set; }
     public event Action? EditCancelled;
     public event EventHandler? CopyRequested;
+    public event EventHandler? PasteRequested;
     public bool AllSelected => _state.AllSelected;
+    public bool HasRangeSelection => _state.HasRangeSelection;
+    public MatrixCellRange Selection => _state.Selection;
     private void RequestCopy()
     {
         if (CanUseInput && !_state.IsEditing) CopyRequested?.Invoke(this, EventArgs.Empty);
+    }
+    private void RequestPaste()
+    {
+        if (CanUseInput && !_state.IsEditing && CanEdit?.Invoke() != false) PasteRequested?.Invoke(this, EventArgs.Empty);
     }
     public int SelectedRow => _state.SelectedRow;
     public int SelectedColumn => _state.SelectedColumn;
@@ -72,6 +79,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             SetParentPanLock(_state.MaxX > 0 || _state.MaxY > 0);
             _panStart = e.Touches[0]; _panX = _state.OffsetX; _panY = _state.OffsetY; _dragged = false;
             _panBlocked = false;
+            _extendSelectionGesture = IsRangeExtensionPressed();
             _scrollAxis = ScrollAxis.None;
             _resizeInteraction = StartResize(_panStart);
             _barInteraction = !_resizeInteraction && StartScrollBar(_panStart);
@@ -84,6 +92,12 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             if (_resizeInteraction) { DragResize(point); return; }
             if (_barInteraction) { DragScrollBar(point); return; }
             if (_panBlocked) return;
+            if (_extendSelectionGesture)
+            {
+                if (_state.TryHitCell(point.X, point.Y, out int r, out int c))
+                { _dragged = true; if (!ExtendSelection(r, c)) _panBlocked = true; }
+                return;
+            }
             if (Math.Abs(point.X - _panStart.X) + Math.Abs(point.Y - _panStart.Y) < 6) return;
             if (!_dragged && !_state.EndEdit(CommitEdit))
             { _dragged = _panBlocked = true; RestoreInvalidEditor(); return; }
@@ -106,7 +120,11 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             var point = e.Touches[0];
             if (point.X >= 0 && point.X < MatrixViewportState.HeaderWidth && point.Y >= 0 && point.Y < _state.CellHeight)
             { SelectAll(); return; }
-            if (_state.TryHitCell(point.X, point.Y, out int row, out int column)) TapCell(row, column);
+            if (_state.TryHitCell(point.X, point.Y, out int row, out int column))
+            {
+                if (_extendSelectionGesture) ExtendSelection(row, column);
+                else TapCell(row, column);
+            }
         };
         _canvas.CancelInteraction += (_, _) =>
         {
@@ -158,6 +176,30 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         FocusSelection();
         return true;
     }
+    internal bool FinishEdit()
+    {
+        if (!CanUseInput) return false;
+        if (!_state.EndEdit(CommitEdit)) return RestoreInvalidEditor();
+        Refresh();
+        return true;
+    }
+    public bool ExtendSelection(int row, int column)
+    {
+        if (!CanUseInput) return false;
+        if (!_state.ExtendSelection(row, column, CommitEdit)) return RestoreInvalidEditor();
+        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn); FocusSelection();
+        return true;
+    }
+    public bool SelectRange(int row, int column, int rows, int columns)
+    {
+        if (!CanUseInput || row < 0 || column < 0 || rows < 1 || columns < 1
+            || row > _state.Rows - rows || column > _state.Columns - columns) return false;
+        if (!_state.Select(row, column, CommitEdit)) return RestoreInvalidEditor();
+        _state.ExtendSelection(row + rows - 1, column + columns - 1);
+        _state.RevealSelection();
+        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn); FocusSelection();
+        return true;
+    }
     internal bool Navigate(MatrixCellMove move)
     {
         if (!_state.Navigate(move, CommitEdit)) return RestoreInvalidEditor();
@@ -178,7 +220,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
 
     private void BeginInlineEdit()
     {
-        bool wasAllSelected = _state.AllSelected;
+        bool wasAllSelected = _state.HasRangeSelection;
         if (!CanUseInput || !_state.BeginEdit(CanEdit?.Invoke() != false)) return;
         if (wasAllSelected) CellSelected?.Invoke(SelectedRow, SelectedColumn);
         Scrolled(); FocusEditor();
@@ -262,7 +304,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
                 var bounds = _state.Bounds(row, column);
                 if (bounds.X >= width) break;
                 bool active = row == SelectedRow && column == SelectedColumn;
-                DrawCell(canvas, bounds, _readCell(row, column), _state.AllSelected || active, false, active);
+                DrawCell(canvas, bounds, _readCell(row, column), _state.IsSelected(row, column), false, active);
             }
         }
         canvas.RestoreState();

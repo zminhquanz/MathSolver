@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace MathSolver.Services.Core;
 
-public enum MatrixInputError { InvalidInteger, InvalidShape, TooLarge, Empty }
+public enum MatrixInputError { InvalidInteger, InvalidShape, TooLarge, Empty, OutsideBounds, ClipboardTooLarge }
 
 public sealed class MatrixInputException(MatrixInputError code, int row, int column)
     : FormatException($"{code} at row {row}, column {column}.")
@@ -14,7 +14,7 @@ public sealed class MatrixInputException(MatrixInputError code, int row, int col
 
 public static class MatrixTextCodec
 {
-    private const int MaximumDimension = 1024;
+    private const int MaximumDimension = MatrixLimits.MaximumDimension;
 
     /// <summary>Stages a complete, strictly rectangular integer table before returning it.</summary>
     public static IntegerMatrix Read(TextReader reader, CancellationToken cancellationToken = default)
@@ -64,6 +64,14 @@ public static class MatrixTextCodec
                 if (columns == 0) columns = rowValues.Count;
                 else if (columns != rowValues.Count)
                     throw Error(MatrixInputError.InvalidShape, rowValues.Count + 1);
+                int needed = checked(values.Count + rowValues.Count);
+                if (needed > values.Capacity)
+                {
+                    int capacity = Math.Min(MaximumDimension * MaximumDimension,
+                        Math.Max(needed, Math.Max(4, values.Capacity * 2)));
+                    MatrixMemoryGuard.EnsureAvailable((long)capacity * sizeof(long));
+                    values.Capacity = capacity;
+                }
                 values.AddRange(rowValues);
                 rows++;
             }
@@ -108,6 +116,7 @@ public static class MatrixTextCodec
         cancellationToken.ThrowIfCancellationRequested();
         if (hasContent) FinishRow();
         if (rows == 0) throw new MatrixInputException(MatrixInputError.Empty, 1, 1);
+        MatrixMemoryGuard.EnsureAvailable((long)values.Count * sizeof(long));
         return new IntegerMatrix(rows, columns, values.ToArray());
     }
 
@@ -117,17 +126,31 @@ public static class MatrixTextCodec
     {
         ArgumentNullException.ThrowIfNull(writer);
         ArgumentNullException.ThrowIfNull(result);
+        Write(writer, result.Rows, result.Columns,
+            (row, column) => result.GetValue(row, column).ToString(CultureInfo.InvariantCulture), cancellationToken, progress);
+    }
+
+    /// <summary>Streams an integer selection, including empty input cells, without staging a clipboard string.</summary>
+    public static void Write(TextWriter writer, int rows, int columns, Func<int, int, string> readCell,
+        CancellationToken cancellationToken = default, IProgress<double>? progress = null)
+    {
+        ArgumentNullException.ThrowIfNull(writer);
+        ArgumentNullException.ThrowIfNull(readCell);
+        ArgumentOutOfRangeException.ThrowIfLessThan(rows, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(rows, MaximumDimension);
+        ArgumentOutOfRangeException.ThrowIfLessThan(columns, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(columns, MaximumDimension);
         cancellationToken.ThrowIfCancellationRequested();
-        for (var row = 0; row < result.Rows; row++)
+        for (var row = 0; row < rows; row++)
         {
-            for (var column = 0; column < result.Columns; column++)
+            for (var column = 0; column < columns; column++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 if (column > 0) writer.Write(',');
-                writer.Write(result.GetValue(row, column).ToString(CultureInfo.InvariantCulture));
+                writer.Write(readCell(row, column));
             }
             writer.WriteLine();
-            progress?.Report((row + 1d) / result.Rows);
+            progress?.Report((row + 1d) / rows);
         }
         cancellationToken.ThrowIfCancellationRequested();
     }

@@ -45,26 +45,26 @@ internal static partial class PuzzleTests
         {
             CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("vi-VN");
             var content = MatrixClipboardCodec.Create(2, 3, draft.GetCellText, includeHtml: true);
-            TestAssert.That(content.Text == "1\t\t9223372036854775807\r\n-2\t0\t\r\n",
+            TestAssert.That(content!.Text == "1\t\t9223372036854775807\r\n-2\t0\t\r\n",
                 "Excel text must preserve blank cells, negatives, zeros and complete long values without headers.");
             TestAssert.That(content.Html!.Contains("mso-number-format") && content.Html.Contains("9223372036854775807"),
                 "Rich clipboard must protect long integers against Excel numeric rounding.");
-            TestAssert.That(!MatrixClipboardCodec.Create(1, 1, (_, _) => "42").Text.Contains('#'), "Single cell copies must not include grid headers.");
-            TestAssert.That(MatrixClipboardCodec.Create(1, 1, (_, _) => "").Text == "\r\n",
+            TestAssert.That(!MatrixClipboardCodec.Create(1, 1, (_, _) => "42")!.Text.Contains('#'), "Single cell copies must not include grid headers.");
+            TestAssert.That(MatrixClipboardCodec.Create(1, 1, (_, _) => "")!.Text == "\r\n",
                 "Copying an empty cell must retain a blank table cell rather than a display placeholder.");
             var escaped = MatrixClipboardCodec.Create(1, 1, (_, _) => "<cell>&", includeHtml: true);
-            TestAssert.That(escaped.Html!.Contains("&lt;cell&gt;&amp;"), "HTML clipboard cell contents must be encoded.");
+            TestAssert.That(escaped!.Html!.Contains("&lt;cell&gt;&amp;"), "HTML clipboard cell contents must be encoded.");
             var a = new IntegerMatrix(1, 1, [long.MaxValue]);
             var sum = MatrixEngine.Calculate(a, a, MatrixOperation.Add);
             var product = MatrixEngine.Calculate(a, a, MatrixOperation.Multiply);
             foreach (var result in new[] { sum, product })
             {
                 string expected = result.GetValue(0, 0).ToString(CultureInfo.InvariantCulture);
-                TestAssert.That(MatrixClipboardCodec.Create(1, 1, (r, c) => result.GetValue(r, c).ToString(CultureInfo.InvariantCulture)).Text == expected + "\r\n",
+                TestAssert.That(MatrixClipboardCodec.Create(1, 1, (r, c) => result.GetValue(r, c).ToString(CultureInfo.InvariantCulture))!.Text == expected + "\r\n",
                     "Int128 and BigInteger results must copy every digit.");
             }
             var full = MatrixClipboardCodec.Create(1024, 1024, (_, _) => "1");
-            TestAssert.That(full.Text.Count(c => c == '\n') == 1024 && full.Text.Count(c => c == '\t') == 1024 * 1023,
+            TestAssert.That(full!.Text.Count(c => c == '\n') == 1024 && full!.Text.Count(c => c == '\t') == 1024 * 1023,
                 "Copying must cover the entire 1024x1024 matrix, not only rendered cells.");
             using var cancellation = new CancellationTokenSource();
             cancellation.Cancel();

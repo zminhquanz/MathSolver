@@ -10,9 +10,11 @@ public sealed partial class MatrixView
 {
     private Border _resultCard = null!;
     private readonly Label _resultOperation = TextLabel(), _resultSize = TextLabel(),
-        _resultDuration = TextLabel(), _resultMode = TextLabel(), _technicalBackend = TextLabel(),
+        _resultDuration = TextLabel(), _resultMode = TextLabel(), _resultWorkers = TextLabel(), _technicalBackend = TextLabel(),
         _technicalStorage = TextLabel(), _technicalBatches = TextLabel(), _solutionHeading = TextLabel(),
-        _solutionPrompt = TextLabel();
+        _solutionPrompt = TextLabel(), _technicalLocation = TextLabel(), _technicalWorkspace = TextLabel(),
+        _technicalCache = TextLabel(), _technicalShortcut = TextLabel(), _technicalScanBackend = TextLabel(),
+        _technicalScanWorkers = TextLabel(), _technicalScanComparisons = TextLabel();
     private readonly VerticalStackLayout _technical = new() { IsVisible = false, Spacing = 8 },
         _solutionSteps = new() { Spacing = 16 };
 
@@ -25,6 +27,7 @@ public sealed partial class MatrixView
         metrics.Add(ResultMetric("ResultSize", _resultSize));
         metrics.Add(ResultMetric("ResultDuration", _resultDuration));
         metrics.Add(ResultMetric("ResultMode", _resultMode));
+        metrics.Add(ResultMetric("ResultWorkers", _resultWorkers));
         content.Add(metrics);
         var exact = Caption("ExactResult");
         exact.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
@@ -44,7 +47,14 @@ public sealed partial class MatrixView
         content.Add(toggle);
         _technical.Add(_technicalBackend);
         _technical.Add(_technicalStorage);
+        _technical.Add(_technicalLocation);
+        _technical.Add(_technicalWorkspace);
+        _technical.Add(_technicalCache);
+        _technical.Add(_technicalShortcut);
         _technical.Add(_technicalBatches);
+        _technical.Add(_technicalScanBackend);
+        _technical.Add(_technicalScanWorkers);
+        _technical.Add(_technicalScanComparisons);
         _technical.Add(Caption("BackendHelp"));
         content.Add(_technical);
         _resultCard = Card(content);
@@ -86,18 +96,44 @@ public sealed partial class MatrixView
             _resultDuration.Text = elapsed < 0.001 ? T("UnderMillisecond")
                 : elapsed < 1 ? F("Milliseconds", (elapsed * 1000).ToString("0.##", CultureInfo.CurrentCulture))
                 : F("Seconds", elapsed.ToString("0.###", CultureInfo.CurrentCulture));
-            _resultMode.Text = T(result.VectorBatches > 0 ? "SimdMode" : "ScalarMode");
-            string backend = result.Backend switch
-            {
-                MatrixBackend.Sse2 => "SSE2 · 128-bit", MatrixBackend.Avx2 => "AVX2 · 256-bit",
-                MatrixBackend.Avx512 => "AVX-512F · 512-bit", _ => "Scalar"
-            };
-            _technicalBackend.Text = F("RecordedBackend", backend);
-            _technicalStorage.Text = F("ResultStorage", result.Operation == MatrixOperation.Multiply ? "BigInteger" : "Int128");
+            _resultMode.Text = T(result.UsedUniformShortcut ? "UniformShortcutMode" : result.WorkerCount > 1
+                ? result.VectorBatches > 0 ? "ParallelSimdMode" : "ParallelScalarMode"
+                : result.VectorBatches > 0 ? "SimdMode" : "ScalarMode");
+            var scan = result.UniformScan;
+            _resultWorkers.Text = result.UsedUniformShortcut
+                ? F("UniformWorkerUsage", scan.WorkerCount, scan.WorkerLimit, result.WorkerCount)
+                : F("WorkerUsage", result.WorkerCount, result.WorkerLimit);
+            _technicalBackend.Text = F("RecordedBackend", MatrixBackendLabel(result.Backend));
+            _technicalStorage.Text = F("ResultStorage", string.Join(", ", result.StorageKinds.OrderBy(kind => kind)));
+            _technicalLocation.Text = F("StorageDetails", T(result.IsFileBacked ? "DiskStorage" : "MemoryStorage"),
+                result.BlockSize > 0 ? F("BlockSizeValue", result.BlockSize) : T("DenseStorage"),
+                result.StoredBytes.ToString("N0", CultureInfo.CurrentCulture));
+            _technicalWorkspace.Text = F("WorkspaceLimit", Mebibytes(result.WorkspaceLimitBytes));
+            RefreshCacheDetails(result);
+            _technicalShortcut.Text = T(result.UsedUniformShortcut ? "UniformShortcutUsed" : "UniformShortcutUnused");
             _technicalBatches.Text = F("VectorBatches", result.VectorBatches);
+            bool showScan = result.UsedUniformShortcut || scan.CellsExamined > 0;
+            _technicalScanBackend.IsVisible = _technicalScanWorkers.IsVisible = _technicalScanComparisons.IsVisible = showScan;
+            if (showScan)
+            {
+                _technicalScanBackend.Text = F("UniformScanBackend", MatrixBackendLabel(scan.Backend));
+                _technicalScanWorkers.Text = F("UniformScanWorkers", scan.WorkerCount, scan.WorkerLimit);
+                _technicalScanComparisons.Text = F("UniformScanComparisons", scan.VectorBatches, scan.CellsExamined);
+            }
         }
         RefreshSolution();
     }
+
+    private static string MatrixBackendLabel(MatrixBackend backend) => backend switch
+    {
+        MatrixBackend.Sse2 => "SSE2 · 128-bit", MatrixBackend.Avx2 => "AVX2 · 256-bit",
+        MatrixBackend.Avx512 => "AVX-512F · 512-bit", _ => "Scalar"
+    };
+
+    private static string Mebibytes(long bytes) => (bytes / (1024d * 1024)).ToString("0.###", CultureInfo.CurrentCulture);
+
+    private void RefreshCacheDetails(MatrixCalculation result) =>
+        _technicalCache.Text = F("CacheUsage", Mebibytes(result.CachedBytes), Mebibytes(result.CacheLimitBytes));
 
     private void RefreshSolution()
     {
@@ -110,7 +146,20 @@ public sealed partial class MatrixView
         if (!hasCell) return;
 
         int row = _viewport.SelectedRow, column = _viewport.SelectedColumn;
-        var solution = MatrixSolutionPresentation.ForCell(_a.Matrix, _b.Matrix, _result!, row, column);
+        MatrixCellSolution solution;
+        try
+        {
+            solution = MatrixSolutionPresentation.ForCell(_a.Matrix, _b.Matrix, _result!, row, column);
+            RefreshCacheDetails(_result!);
+        }
+        catch (Exception error) when (IsResultStorageFailure(error))
+        {
+            ReportResultReadFailure(_result!, error);
+            _solutionPrompt.IsVisible = true;
+            _solutionSteps.IsVisible = false;
+            _solutionPrompt.Text = T("StorageUnavailable");
+            return;
+        }
         _solutionHeading.Text = F("SolutionForCell", row + 1, column + 1);
         if (_result!.Operation == MatrixOperation.Multiply)
         {

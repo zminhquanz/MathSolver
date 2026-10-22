@@ -4,6 +4,12 @@ namespace MathSolver.Controls;
 
 public sealed partial class MatrixViewport
 {
+    private static bool IsRangeExtensionPressed() =>
+#if WINDOWS
+        KeyDown(global::Windows.System.VirtualKey.Shift);
+#else
+        false;
+#endif
     private void FocusSelection()
     {
         if (!CanUseInput) return;
@@ -80,11 +86,13 @@ public sealed partial class MatrixViewport
         if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Menu)) return;
         if (KeyDown(global::Windows.System.VirtualKey.Control))
         {
-            // Let the native TextBox own Ctrl+A/C while editing its text.
+            // Let the native TextBox own Ctrl+A/C/V while editing its text.
             if (_state.IsEditing) return;
             if (e.Key == global::Windows.System.VirtualKey.A) { e.Handled = true; SelectAll(); }
             else if (e.Key == global::Windows.System.VirtualKey.C)
             { e.Handled = true; RequestCopy(); }
+            else if (e.Key == global::Windows.System.VirtualKey.V)
+            { e.Handled = true; RequestPaste(); }
             return;
         }
         if (!_state.IsEditing && e.Key is global::Windows.System.VirtualKey.F2 or global::Windows.System.VirtualKey.Enter)
@@ -103,11 +111,23 @@ public sealed partial class MatrixViewport
             global::Windows.System.VirtualKey.Tab => shift ? MatrixCellMove.Previous : MatrixCellMove.Next,
             _ => null
         };
-        if (move is { } direction) { e.Handled = true; Navigate(direction); }
+        if (move is { } direction)
+        {
+            e.Handled = true;
+            if (shift && !_state.IsEditing && e.Key is global::Windows.System.VirtualKey.Left or global::Windows.System.VirtualKey.Right
+                or global::Windows.System.VirtualKey.Up or global::Windows.System.VirtualKey.Down)
+            {
+                // Keep the moving endpoint, including a reverse selection.
+                int endRow = _state.SelectionEndRow, endColumn = _state.SelectionEndColumn;
+                ExtendSelection(endRow + (direction == MatrixCellMove.Down ? 1 : direction == MatrixCellMove.Up ? -1 : 0),
+                    endColumn + (direction == MatrixCellMove.Right ? 1 : direction == MatrixCellMove.Left ? -1 : 0));
+            }
+            else Navigate(direction);
+        }
         else if (e.Key == global::Windows.System.VirtualKey.Escape)
         {
             e.Handled = true;
-            if (_state.AllSelected) Select(SelectedRow, SelectedColumn);
+            if (_state.HasRangeSelection) Select(SelectedRow, SelectedColumn);
             else CancelInlineEdit();
         }
     }

@@ -6,7 +6,7 @@ namespace MathSolver.Views;
 
 public sealed partial class MatrixView
 {
-    private bool CanTouchUi => IsLoaded && Handler?.MauiContext is not null
+    private bool CanTouchUi => !_closing && IsLoaded && Handler?.MauiContext is not null
         && Window is { Handler.MauiContext: not null } window && !WindowUiLifetime.IsClosing(window);
     private bool CanRefreshLocalization => !_constructed || CanTouchUi;
     private bool CanPublish(int version) => CanTouchUi && _active && version == _version;
@@ -24,6 +24,8 @@ public sealed partial class MatrixView
         _active = true; SetBusyState();
         CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
         CalculationAccelerationManager.AccelerationChanged += OnAccelerationChanged;
+        if (_hostWindow is not null && !ReferenceEquals(_hostWindow, Window))
+            _hostWindow.Destroying -= OnWindowClosing;
         _hostWindow = Window;
         if (_hostWindow is not null) { _hostWindow.Destroying -= OnWindowClosing; _hostWindow.Destroying += OnWindowClosing; }
     }
@@ -32,11 +34,34 @@ public sealed partial class MatrixView
         _active = false; _version++; _work?.Cancel();
         if (_busy) _statusKey = "Cancelled";
         CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
+        // Tab switches unload this view. Retain its result and closing subscription
+        // so a cached, inactive tab still releases its backing file at window close.
+    }
+    private void OnWindowClosing(object? sender, EventArgs e)
+    {
+        _closing = true; _active = false; _version++; _work?.Cancel();
+        _viewportResult = null;
+        if (_busy) _statusKey = "Cancelled";
+        else ReleaseClosedResult();
+        CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
         if (_hostWindow is not null) _hostWindow.Destroying -= OnWindowClosing;
         _hostWindow = null;
     }
-    private void OnWindowClosing(object? sender, EventArgs e)
-    { _active = false; _version++; _work?.Cancel(); if (_busy) _statusKey = "Cancelled"; }
+
+    private void ReleaseClosedResult()
+    {
+        _viewportResult = null;
+        var result = _result;
+        _result = null; _failedReadResult = null;
+        DisposeOutcome(result);
+    }
+
+    private static void DisposeOutcome(object? value)
+    {
+        if (value is not IDisposable disposable) return;
+        try { disposable.Dispose(); }
+        catch (Exception error) { Debug.WriteLine(error); }
+    }
     private void OnAccelerationChanged(object? sender, EventArgs e)
     {
         if (!CanTouchUi) return;
@@ -58,15 +83,29 @@ public sealed partial class MatrixView
         int version = ++_version;
         SetBusyState(); _progress.Progress = 0; Status(status);
         var progress = new Progress<double>(p => { if (CanPublish(version)) _progress.Progress = Math.Clamp(p, 0, 1); });
+        TResult? value = default;
+        bool hasOutcome = false, published = false;
         try
         {
-            var value = await work(cancellation.Token, progress);
-            if (!cancellation.IsCancellationRequested && CanPublish(version)) await publish(value);
+            value = await work(cancellation.Token, progress);
+            hasOutcome = true;
+            if (!cancellation.IsCancellationRequested && CanPublish(version))
+            {
+                await publish(value);
+                published = true;
+            }
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         { if (CanPublish(version)) Status("Cancelled"); }
         catch (MatrixInputException error)
         { if (CanPublish(version)) ReportError("ImportError", error.Row, error.Column, error.Code); }
+        catch (Exception error) when (MatrixMemoryGuard.IsMemoryFailure(error))
+        { if (CanPublish(version)) ReportError("MemoryUnavailable"); }
+        catch (Exception error) when (IsResultStorageFailure(error))
+        {
+            Debug.WriteLine(error);
+            if (CanPublish(version)) ReportError("StorageUnavailable");
+        }
         catch (Exception error)
         {
             Debug.WriteLine(error);
@@ -74,8 +113,14 @@ public sealed partial class MatrixView
         }
         finally
         {
+            // A completed calculation may arrive after cancellation, a tab switch,
+            // or closure; it still owns its temporary file until publication succeeds.
+            if (hasOutcome && !published) DisposeOutcome(value);
             if (ReferenceEquals(_work, cancellation)) _work = null;
             _busy = false; cancellation.Dispose();
+            // Copy/export may have been reading the current result when close was
+            // requested. Release it only after that work has stopped using GetValue.
+            if (_closing) ReleaseClosedResult();
             if (CanTouchUi) SetBusyState();
         }
     }

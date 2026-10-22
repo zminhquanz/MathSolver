@@ -9,7 +9,7 @@ internal static class MatrixInputField
     internal static Entry CreateEntry(string text)
     {
         var entry = new Entry { Text = text, Keyboard = Keyboard.Numeric, MinimumHeightRequest = 46,
-            IsSpellCheckEnabled = false, IsTextPredictionEnabled = false, MaxLength = 4,
+            IsSpellCheckEnabled = false, IsTextPredictionEnabled = false, MaxLength = 5,
             BackgroundColor = Colors.Transparent };
         entry.SetDynamicResource(Entry.TextColorProperty, "WallpaperTextPrimaryColor");
         entry.SetDynamicResource(Entry.PlaceholderColorProperty, "WallpaperTextSecondaryColor");

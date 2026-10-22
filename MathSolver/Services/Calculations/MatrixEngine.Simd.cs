@@ -78,7 +78,7 @@ public static partial class MatrixEngine
     }
 
     // Accumulate base-2^32 limbs in registers; normalize once per dot product.
-    // Each limb is bounded by a few multiples of 1024 * 2^32, below signed Int64.
+    // Each limb is bounded by a few multiples of 16384 * 2^32, below signed Int64.
     // Signed correction: ab = unsigned(a)unsigned(b)
     //   - sign(a)unsigned(b)2^64 - sign(b)unsigned(a)2^64
     //   + sign(a)sign(b)2^128.

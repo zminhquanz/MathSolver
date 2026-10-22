@@ -11,6 +11,9 @@ public sealed partial class MatrixView : LocalizedSolverView
 {
     private MatrixDraft _a = new(3, 3), _b = new(3, 3);
     private MatrixCalculation? _result;
+    // The viewport reads through this indirection so teardown can detach its reader
+    // without touching a native control or disposing an in-flight CSV/copy source.
+    private MatrixCalculation? _viewportResult, _failedReadResult;
     private MatrixOperation _operation;
     private int _selected, _version;
     private bool _busy, _active = true;
@@ -27,7 +30,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     private readonly List<Action> _translations = [];
     private readonly List<Button> _lockDuringWork = [];
     private readonly Button[] _operations = new Button[3], _matrices = new Button[3];
-    private readonly Button _apply, _fill, _paste, _import, _export, _calculate, _stop;
+    private readonly Button _apply, _fill, _paste, _pasteCells, _import, _export, _calculate, _stop;
     private readonly Grid _dimensions = new() { ColumnSpacing = 12, RowSpacing = 12 };
     private string? _statusKey;
     private double? _elapsed;
@@ -35,6 +38,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     private bool _updatingEditor;
     private Window? _hostWindow;
     private bool _constructed;
+    private bool _closing;
     private string? _errorKey;
     private object[] _errorArguments = [];
 
@@ -82,15 +86,18 @@ public sealed partial class MatrixView : LocalizedSolverView
         }
         editor.Add(matrixTabs);
         editor.Add(_inputStatus);
-        var clipboardActions = FlowGrid(180, 2);
+        var clipboardActions = FlowGrid(180, 3);
         clipboardActions.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
-        clipboardActions.Add(ActionButton("CopyGrid", "📋", OnCopyGrid));
+        clipboardActions.Add(ActionButton("CopySelection", "📋", OnCopySelection));
+        _pasteCells = ActionButton("PasteCells", "📥", OnPasteCells);
+        clipboardActions.Add(_pasteCells);
         editor.Add(clipboardActions);
         var copyHelp = Caption("CopyHelp");
         copyHelp.FontSize = 13;
         copyHelp.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(copyHelp);
         _viewport.CopyRequested += OnCopySelection;
+        _viewport.PasteRequested += OnPasteCells;
         _viewport.SetInlineEditor(_value);
         _viewport.CommitEdit = CommitPendingCell;
         _viewport.CanInteract = () => _active;
