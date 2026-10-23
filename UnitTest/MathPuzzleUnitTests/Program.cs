@@ -2,6 +2,41 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix file-backed streaming import and cleanup", PuzzleTests.CheckMatrixFileStreamingImport),
+    ("Matrix parallel storage error classification", PuzzleTests.CheckMatrixParallelStorageErrors),
+    ("Matrix input store round trip and bounded eviction", PuzzleTests.CheckMatrixInputStoreRoundTrip),
+    ("Matrix input store fill and clone isolation", PuzzleTests.CheckMatrixInputStoreFillAndClone),
+    ("Matrix input store storage failure", PuzzleTests.CheckMatrixInputStoreStorageFailure),
+    ("Matrix input store bulk and maximum shape", PuzzleTests.CheckMatrixInputStoreBulkAndMaximum),
+    ("Matrix input store failed eviction recovery", PuzzleTests.CheckMatrixInputStoreFailedEviction),
+    ("Matrix input store reuses cache buffers", PuzzleTests.CheckMatrixInputStoreReusesBuffers),
+    ("Matrix input store clone responsiveness", PuzzleTests.CheckMatrixInputStoreCloneResponsiveness),
+    ("Matrix file-backed draft editing", PuzzleTests.CheckMatrixFileDraftEditing),
+    ("Matrix file-backed transfer ownership", PuzzleTests.CheckMatrixFileTransferOwnership),
+    ("Matrix file-backed draft failed import ownership", PuzzleTests.CheckMatrixFileDraftFailedImportOwnership),
+    ("Matrix file-backed draft paste", PuzzleTests.CheckMatrixFileDraftPaste),
+    ("Matrix file-backed draft import and creation ownership", PuzzleTests.CheckMatrixFileDraftImportAndCreationOwnership),
+    ("Matrix file-backed exact kernels and panel packing", PuzzleTests.CheckMatrixFileEngine),
+    ("Matrix file-backed uniform calculation and stop", PuzzleTests.CheckMatrixFileUniformCalculation),
+    ("Matrix file-backed parallel nonuniform panels", PuzzleTests.CheckMatrixFileParallelPanels),
+    ("Matrix recreation releases old inputs result and cache", PuzzleTests.CheckMatrixRecreationRelease),
+    ("Matrix recreation collection and nonthrowing stop", PuzzleTests.CheckMatrixRecreationCollectionAndStop),
+    ("Matrix disposed dense result releases buffers", PuzzleTests.CheckMatrixDisposedDenseBuffers),
+    ("Matrix creation publication keeps requested dimensions", PuzzleTests.CheckMatrixCreationPublication),
+    ("Matrix fresh memory headroom and GC snapshot fallback", PuzzleTests.CheckMatrixFreshMemorySnapshots),
+    ("Matrix grouped packing exactness and reuse", PuzzleTests.CheckMatrixGroupedPacking),
+    ("Matrix paired kernels full-range BigInteger", PuzzleTests.CheckMatrixPairedKernelsMatchBigInteger),
+    ("Matrix storage profiling", PuzzleTests.CheckMatrixStorageProfiling),
+    ("Matrix storage publication races", PuzzleTests.CheckMatrixStoragePublicationRaces),
+    ("Matrix detailed progress terminal and cancellation", PuzzleTests.CheckMatrixDetailedProgress),
+    ("Matrix grouped parallel wide storage and bounded progress", PuzzleTests.CheckMatrixParallelGroupedTuning),
+    ("Matrix progress observer failure cleanup", PuzzleTests.CheckMatrixProgressObserverFailureCleanup),
+    ("Matrix type-to-edit numeric keys and pending focus", PuzzleTests.CheckMatrixTypingKeys),
+    ("Matrix type-to-edit selection commit and cancel", PuzzleTests.CheckMatrixTypingInteraction),
+    ("Matrix Delete clears single range and all cells", PuzzleTests.CheckMatrixDeleteCells),
+    ("Matrix Delete preserves text editing and read-only results", PuzzleTests.CheckMatrixDeleteInteraction),
+    ("Matrix stop without cancellation exceptions", PuzzleTests.CheckMatrixStopWithoutExceptions),
+    ("Matrix stop preserves prior result and cleans partial files", PuzzleTests.CheckMatrixStopStorage),
     ("Matrix uniform scan exact kernels and tails", PuzzleTests.CheckMatrixUniformScanExact),
     ("Matrix uniform scan parallel cancellation", PuzzleTests.CheckMatrixUniformScanParallel),
     ("Matrix uniform scan integration telemetry", PuzzleTests.CheckMatrixUniformScanIntegration),
@@ -107,10 +142,22 @@ var tests = new (string Name, Action Run)[]
     ("Structural difficulty across five stars", PuzzleTests.CheckStructuralDifficulty)
 };
 
+// Longer tuning sweeps are explicit so routine correctness runs stay practical
+// on scalar-only machines. Existing test groups keep their default behavior.
+(string Name, Action Run)[] tuningBenchmarks =
+[
+    ("Matrix actual maximum creation", PuzzleTests.CheckMatrixMaximumCreation),
+    ("Matrix actual maximum recreation", PuzzleTests.CheckMatrixMaximumRecreation),
+    ("Matrix actual maximum file calculation", PuzzleTests.CheckMatrixMaximumFileCalculation),
+    ("Matrix tuning performance samples", PuzzleTests.CheckMatrixTuningPerformance),
+    ("Matrix policy performance samples", PuzzleTests.CheckMatrixPolicyPerformance)
+];
+
 if (args is ["--help"] or ["--list"])
 {
     Console.WriteLine("Usage: MathPuzzleUnitTests [test group name filters]. No arguments: all groups.");
     foreach (var test in tests) Console.WriteLine(test.Name);
+    foreach (var test in tuningBenchmarks) Console.WriteLine(test.Name + " (explicit filter only)");
     return 0;
 }
 if (args.Any(a => a.StartsWith("--")))
@@ -121,7 +168,7 @@ if (args.Any(a => a.StartsWith("--")))
 await MathSolver.Testing.HarnessInfrastructureTests.RunAsync();
 if (args.Length > 0)
 {
-    tests = tests.Where(test => args.Any(filter =>
+    tests = tests.Concat(tuningBenchmarks).Where(test => args.Any(filter =>
         test.Name.Contains(filter, StringComparison.OrdinalIgnoreCase))).ToArray();
     if (tests.Length == 0)
     {

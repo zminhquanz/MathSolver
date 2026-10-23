@@ -9,21 +9,23 @@ namespace MathSolver.Views;
 /// <summary>Exact integer matrix editor. Only one bounded viewport is instantiated.</summary>
 public sealed partial class MatrixView : LocalizedSolverView
 {
-    private MatrixDraft _a = new(3, 3), _b = new(3, 3);
+    private MatrixDraft? _a = new(3, 3), _b = new(3, 3);
     private MatrixCalculation? _result;
     // The viewport reads through this indirection so teardown can detach its reader
     // without touching a native control or disposing an in-flight CSV/copy source.
     private MatrixCalculation? _viewportResult, _failedReadResult;
+    private MatrixDraft? _failedReadDraft;
     private MatrixOperation _operation;
     private int _selected, _version;
-    private bool _busy, _active = true;
+    private bool _busy, _active = true, _confirmingStop;
     private CancellationTokenSource? _work;
     private readonly MatrixViewport _viewport = new();
     private readonly Entry _aRows = NumberEntry("3"), _aColumns = NumberEntry("3"),
         _bRows = NumberEntry("3"), _bColumns = NumberEntry("3");
     private readonly Entry _row = NumberEntry("1"), _column = NumberEntry("1"), _value = NumberEntry("");
     private readonly Label _selection = TextLabel(), _inputStatus = TextLabel(), _message = TextLabel(),
-        _range = TextLabel();
+        _range = TextLabel(), _progressText = TextLabel(), _creationNotice = TextLabel();
+    private Border _editorCard = null!;
     private readonly Label _heroSymbol = new();
     private readonly ProgressBar _progress = new() { IsVisible = false };
     private readonly ActivityIndicator _activity = new() { IsVisible = false, WidthRequest = 24, HeightRequest = 24 };
@@ -34,6 +36,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     private readonly Grid _dimensions = new() { ColumnSpacing = 12, RowSpacing = 12 };
     private string? _statusKey;
     private double? _elapsed;
+    private MatrixCalculationStage? _calculationStage;
     private int _editorMatrix = -1, _editorRow, _editorColumn;
     private bool _updatingEditor;
     private Window? _hostWindow;
@@ -73,6 +76,8 @@ public sealed partial class MatrixView : LocalizedSolverView
         _dimensions.Add(DimensionPanel("B", _bRows, _bColumns));
         setup.Add(_dimensions);
         setup.Add(ActionButton("Create", "▦", OnCreate));
+        _creationNotice.IsVisible = false;
+        setup.Add(_creationNotice);
         body.Add(Card(setup));
 
         var editor = new VerticalStackLayout { Spacing = 10 };
@@ -98,10 +103,11 @@ public sealed partial class MatrixView : LocalizedSolverView
         editor.Add(copyHelp);
         _viewport.CopyRequested += OnCopySelection;
         _viewport.PasteRequested += OnPasteCells;
+        _viewport.DeleteRequested += OnDeleteSelection;
         _viewport.SetInlineEditor(_value);
         _viewport.CommitEdit = CommitPendingCell;
-        _viewport.CanInteract = () => _active;
-        _viewport.CanEdit = () => !_busy && _selected != 2;
+        _viewport.CanInteract = () => _active && HasInputs;
+        _viewport.CanEdit = () => !_busy && HasInputs && _selected != 2 && !ReferenceEquals(_failedReadDraft, CurrentDraft);
         _viewport.EditCancelled += () =>
         {
             if (!CanTouchUi || _busy) return;
@@ -141,12 +147,18 @@ public sealed partial class MatrixView : LocalizedSolverView
         editor.Add(cellActions);
         var transfers = FlowGrid(180, 3);
         _fill = ActionButton("FillZero", "0", (_, _) =>
-        { if (!CommitPendingCell()) return; CurrentDraft.FillMissingWithZero(); InvalidateResult(); RefreshSource(); });
+        {
+            if (!CommitPendingCell()) return;
+            InvalidateResult();
+            TryUpdateInput(() => { CurrentDraft.FillMissingWithZero(); return true; });
+            RefreshSource();
+        });
         _paste = ActionButton("Paste", "📋", OnPaste);
         _import = ActionButton("Import", "📂", OnImport);
         transfers.Add(_fill); transfers.Add(_paste); transfers.Add(_import);
         editor.Add(transfers);
-        body.Add(Card(editor));
+        _editorCard = Card(editor);
+        body.Add(_editorCard);
 
         var outcome = new VerticalStackLayout { Spacing = 10 };
         _activity.SetDynamicResource(ActivityIndicator.ColorProperty, "PrimaryColor");
@@ -154,9 +166,13 @@ public sealed partial class MatrixView : LocalizedSolverView
         statusLine.Add(_activity, 0, 0); statusLine.Add(_message, 1, 0);
         outcome.Add(statusLine);
         outcome.Add(_progress);
+        _progressText.FontSize = 13;
+        _progressText.IsVisible = false;
+        _progressText.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
+        outcome.Add(_progressText);
         var run = FlowGrid(160, 3);
         _calculate = ActionButton("Calculate", "🧮", OnCalculate, primary: true);
-        _stop = ActionButton("Stop", "■", (_, _) => _work?.Cancel(), lockDuringWork: false);
+        _stop = ActionButton("Stop", "■", OnStop, lockDuringWork: false);
         _export = ActionButton("Export", "💾", OnExport);
         run.Add(_calculate); run.Add(_stop); run.Add(_export);
         outcome.Add(run);
@@ -175,7 +191,9 @@ public sealed partial class MatrixView : LocalizedSolverView
         _constructed = true;
     }
 
-    private MatrixDraft CurrentDraft => _selected == 1 ? _b : _a;
+    private bool HasInputs => _a is not null && _b is not null;
+    private MatrixDraft CurrentDraft => (_selected == 1 ? _b : _a)
+        ?? throw new InvalidOperationException("No matrix inputs have been created.");
     private static string T(string key) => LocalizationService.TranslateKey("Matrix." + key);
     private static string F(string key, params object[] args) => string.Format(CultureInfo.InvariantCulture, T(key), args);
     private static Style GetStyle(string key) => (Style)Application.Current!.Resources[key];
@@ -235,9 +253,9 @@ public sealed partial class MatrixView : LocalizedSolverView
         RefreshSelection();
         if (!preserveInvalidEntry) RefreshCell();
         else _selection.Text = F("Selected", "ABC"[_selected], _viewport.SelectedRow + 1, _viewport.SelectedColumn + 1);
-        RefreshRange(); RefreshExecution();
-        if (_statusKey is not null) _message.Text = T(_statusKey);
+        RefreshRange(); RefreshExecution(); RefreshProgress();
+        if (_statusKey is not null) _message.Text = FormatStatus(_statusKey);
         else if (_errorKey is not null) _message.Text = FormatError();
-        _viewport.Refresh();
+        _viewport.Refresh(); RefreshCreationNotice();
     }
 }

@@ -43,12 +43,23 @@ public static class MatrixMemoryGuard
     {
         ArgumentOutOfRangeException.ThrowIfNegative(additionalBytes);
         var memory = GC.GetGCMemoryInfo();
-        long available = Math.Max(0, memory.TotalAvailableMemoryBytes - GC.GetTotalMemory(false));
-        // Respect machine memory pressure too; other processes do not count toward the managed heap.
-        if (memory.MemoryLoadBytes > 0 && memory.HighMemoryLoadThresholdBytes > 0)
-            available = Math.Min(available, Math.Max(0, memory.HighMemoryLoadThresholdBytes - memory.MemoryLoadBytes));
+        var system = MatrixSystemMemory.Read();
+        long available = MeasureHeadroom(memory.TotalAvailableMemoryBytes, GC.GetTotalMemory(false),
+            memory.HighMemoryLoadThresholdBytes, memory.MemoryLoadBytes, system?.PhysicalAvailable, system?.CommitAvailable);
         using var process = Process.GetCurrentProcess();
         return CheckAvailable(additionalBytes, available, process.PrivateMemorySize64, Environment.Is64BitProcess);
+    }
+
+    internal static long MeasureHeadroom(long managedLimit, long managedUsed, long gcHighThreshold, long gcLoad,
+        long? physicalAvailable, long? commitAvailable)
+    {
+        long available = Math.Max(0, managedLimit - managedUsed);
+        if (physicalAvailable is { } physical)
+            available = Math.Min(available, Math.Max(0, physical));
+        else if (gcLoad > 0 && gcHighThreshold > 0)
+            available = Math.Min(available, Math.Max(0, gcHighThreshold - gcLoad));
+        if (commitAvailable is { } commit) available = Math.Min(available, Math.Max(0, commit));
+        return available;
     }
 
     // Separate the policy from machine measurements so its boundaries can be verified without large allocations.

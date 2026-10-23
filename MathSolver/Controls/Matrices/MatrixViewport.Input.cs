@@ -83,7 +83,8 @@ public sealed partial class MatrixViewport
     }
     private void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
-        if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Menu)) return;
+        if (!CanUseInput || KeyDown(global::Windows.System.VirtualKey.Menu)
+            || KeyDown(global::Windows.System.VirtualKey.LeftWindows) || KeyDown(global::Windows.System.VirtualKey.RightWindows)) return;
         if (KeyDown(global::Windows.System.VirtualKey.Control))
         {
             // Let the native TextBox own Ctrl+A/C/V while editing its text.
@@ -95,12 +96,16 @@ public sealed partial class MatrixViewport
             { e.Handled = true; RequestPaste(); }
             return;
         }
+        if (!_state.IsEditing && e.Key == global::Windows.System.VirtualKey.Delete)
+        { e.Handled = true; RequestDelete(); return; }
+        bool shift = KeyDown(global::Windows.System.VirtualKey.Shift);
+        if (MatrixTypingInput.TryGetText((int)e.Key, shift, false, out string text) && TypeIntoSelectedCell(text))
+        { e.Handled = true; return; }
         if (!_state.IsEditing && e.Key is global::Windows.System.VirtualKey.F2 or global::Windows.System.VirtualKey.Enter)
         { e.Handled = true; BeginInlineEdit(); return; }
         // While editing, arrow keys belong to the native text caret.
         if (_state.IsEditing && e.Key is global::Windows.System.VirtualKey.Left or global::Windows.System.VirtualKey.Right
             or global::Windows.System.VirtualKey.Up or global::Windows.System.VirtualKey.Down) return;
-        bool shift = KeyDown(global::Windows.System.VirtualKey.Shift);
         MatrixCellMove? move = e.Key switch
         {
             global::Windows.System.VirtualKey.Left => MatrixCellMove.Left,

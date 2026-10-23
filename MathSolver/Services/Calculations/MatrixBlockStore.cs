@@ -1,10 +1,11 @@
+using System.Diagnostics;
 using System.Numerics;
 
 namespace MathSolver.Services.Core;
 
 public enum MatrixNumberStorage { Int64, Int128, Signed192, BigInteger }
 
-/// <summary>An append-only exact tile store. Publication and all file/cache access share one lock.</summary>
+/// <summary>An append-only exact tile store. Encoding is parallel; publication and file/cache access share one lock.</summary>
 internal sealed class MatrixBlockStore : IDisposable
 {
     private static readonly BigInteger Int128Minimum = -(BigInteger.One << 127);
@@ -19,6 +20,7 @@ internal sealed class MatrixBlockStore : IDisposable
     private int _cacheHead = -1, _cacheTail = -1;
     private int _written;
     private long _storedBytes, _cachedBytes;
+    private long _encodingTicks, _lockWaitTicks, _writeTicks;
     private bool _complete, _disposed;
 
     // O(number of tiles), with no per-cell index or decoded BigInteger cache.
@@ -67,6 +69,19 @@ internal sealed class MatrixBlockStore : IDisposable
     internal long CacheLimitBytes { get; }
     internal long StoredBytes { get { lock (_gate) return _storedBytes; } }
     internal long CachedBytes { get { lock (_gate) return _cachedBytes; } }
+    // Durations sum actual worker activity, rather than elapsed calculation time.
+    // Encoding may still be in flight when an unpublished store is inspected.
+    internal MatrixStorageStatistics Statistics
+    {
+        get
+        {
+            lock (_gate)
+                return new MatrixStorageStatistics(
+                    Stopwatch.GetElapsedTime(0, Interlocked.Read(ref _encodingTicks)),
+                    Stopwatch.GetElapsedTime(0, _lockWaitTicks),
+                    Stopwatch.GetElapsedTime(0, _writeTicks), _written);
+        }
+    }
     internal IReadOnlyCollection<MatrixNumberStorage> StorageKinds
     {
         get
@@ -81,16 +96,23 @@ internal sealed class MatrixBlockStore : IDisposable
         }
     }
 
-    internal void WriteBlock(int blockRow, int blockColumn, int height, int width, ReadOnlySpan<BigInteger> values)
+    internal void WriteBlock(int blockRow, int blockColumn, int height, int width, ReadOnlySpan<BigInteger> values,
+        Action<MatrixCalculationStage>? activity = null)
     {
-        lock (_gate)
+        ValidateBeforeEncoding(blockRow, blockColumn, height, width);
+        if (values.Length != checked(height * width)) throw new ArgumentException("Value count must match the exact tile shape.", nameof(values));
+        activity?.Invoke(MatrixCalculationStage.Encoding);
+        long start = Stopwatch.GetTimestamp();
+        byte[] payload;
+        bool uniform;
+        MatrixNumberStorage kind;
+        int stride;
+        try
         {
-            int index = ValidateWrite(blockRow, blockColumn, height, width);
-            if (values.Length != checked(height * width)) throw new ArgumentException("Value count must match the exact tile shape.", nameof(values));
             BigInteger first = values[0];
-            bool uniform = true;
-            MatrixNumberStorage kind = MatrixNumberStorage.Int64;
-            int stride = 8;
+            uniform = true;
+            kind = MatrixNumberStorage.Int64;
+            stride = 8;
             foreach (BigInteger value in values)
             {
                 uniform &= value == first;
@@ -99,25 +121,65 @@ internal sealed class MatrixBlockStore : IDisposable
                 stride = Math.Max(stride, value.GetByteCount());
             }
             stride = Width(kind, stride);
-            var payload = new byte[checked(stride * (uniform ? 1 : values.Length))];
+            payload = new byte[checked(stride * (uniform ? 1 : values.Length))];
             if (uniform) Encode(first, payload);
             else
                 for (int i = 0; i < values.Length; i++) Encode(values[i], payload.AsSpan(i * stride, stride));
-            Store(index, payload, kind, stride, uniform);
         }
+        finally { Interlocked.Add(ref _encodingTicks, Stopwatch.GetTimestamp() - start); }
+        activity?.Invoke(MatrixCalculationStage.Writing);
+        Commit(blockRow, blockColumn, height, width, payload, kind, stride, uniform);
     }
 
-    internal void WriteConstantBlock(int blockRow, int blockColumn, int height, int width, BigInteger value)
+    internal void WriteConstantBlock(int blockRow, int blockColumn, int height, int width, BigInteger value,
+        Action<MatrixCalculationStage>? activity = null)
     {
-        lock (_gate)
+        ValidateBeforeEncoding(blockRow, blockColumn, height, width);
+        activity?.Invoke(MatrixCalculationStage.Encoding);
+        long start = Stopwatch.GetTimestamp();
+        byte[] payload;
+        MatrixNumberStorage kind;
+        int stride;
+        try
         {
-            int index = ValidateWrite(blockRow, blockColumn, height, width);
-            MatrixNumberStorage kind = Classify(value);
-            int stride = Width(kind, value.GetByteCount());
-            var payload = new byte[stride];
+            kind = Classify(value);
+            stride = Width(kind, value.GetByteCount());
+            payload = new byte[stride];
             Encode(value, payload);
-            Store(index, payload, kind, stride, true);
         }
+        finally { Interlocked.Add(ref _encodingTicks, Stopwatch.GetTimestamp() - start); }
+        activity?.Invoke(MatrixCalculationStage.Writing);
+        Commit(blockRow, blockColumn, height, width, payload, kind, stride, true);
+    }
+
+    private void EnterWriteGate()
+    {
+        long start = Stopwatch.GetTimestamp();
+        Monitor.Enter(_gate);
+        _lockWaitTicks += Stopwatch.GetTimestamp() - start;
+    }
+
+    private void ValidateBeforeEncoding(int blockRow, int blockColumn, int height, int width)
+    {
+        EnterWriteGate();
+        try { ValidateWrite(blockRow, blockColumn, height, width); }
+        finally { Monitor.Exit(_gate); }
+    }
+
+    private void Commit(int blockRow, int blockColumn, int height, int width,
+        byte[] payload, MatrixNumberStorage kind, int stride, bool uniform)
+    {
+        EnterWriteGate();
+        try
+        {
+            // Encoding owns only its tile buffer. Another writer, completion, or disposal
+            // may have won while it ran, so no file access/publication precedes this check.
+            int index = ValidateWrite(blockRow, blockColumn, height, width);
+            long start = Stopwatch.GetTimestamp();
+            try { Store(index, payload, kind, stride, uniform); }
+            finally { _writeTicks += Stopwatch.GetTimestamp() - start; }
+        }
+        finally { Monitor.Exit(_gate); }
     }
 
     private int ValidateWrite(int blockRow, int blockColumn, int height, int width)

@@ -12,7 +12,7 @@ public static partial class MatrixEngine
         object progressGate = new();
         long Run(int row)
         {
-            token.ThrowIfCancellationRequested();
+            if (token.IsCancellationRequested) return 0;
             int current = Interlocked.Increment(ref active);
             int observed;
             do { observed = Volatile.Read(ref peak); }
@@ -24,6 +24,7 @@ public static partial class MatrixEngine
             {
                 lock (progressGate)
                 {
+                    if (token.IsCancellationRequested) return batches;
                     completed++;
                     if (completed == rows || completed - reported >= reportEvery)
                     {
@@ -38,15 +39,19 @@ public static partial class MatrixEngine
         long total = 0;
         if (workers <= 1 || rows <= 1)
         {
-            for (int row = 0; row < rows; row++) total += Run(row);
+            for (int row = 0; row < rows && !token.IsCancellationRequested; row++) total += Run(row);
         }
         else
         {
-            var options = new ParallelOptions { MaxDegreeOfParallelism = Math.Min(rows, workers), CancellationToken = token };
-            Parallel.For(0, rows, options, () => 0L, (row, _, local) => local + Run(row),
+            // Passing the token to Parallel.For would throw on normal user stop.
+            var options = new ParallelOptions { MaxDegreeOfParallelism = Math.Min(rows, workers) };
+            Parallel.For(0, rows, options, () => 0L, (row, state, local) =>
+            {
+                if (token.IsCancellationRequested) { state.Stop(); return local; }
+                return local + Run(row);
+            },
                 local => Interlocked.Add(ref total, local));
         }
-        token.ThrowIfCancellationRequested();
         return new(total, peak);
     }
 }

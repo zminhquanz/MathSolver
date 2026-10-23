@@ -14,7 +14,9 @@ public sealed partial class MatrixView
         _technicalStorage = TextLabel(), _technicalBatches = TextLabel(), _solutionHeading = TextLabel(),
         _solutionPrompt = TextLabel(), _technicalLocation = TextLabel(), _technicalWorkspace = TextLabel(),
         _technicalCache = TextLabel(), _technicalShortcut = TextLabel(), _technicalScanBackend = TextLabel(),
-        _technicalScanWorkers = TextLabel(), _technicalScanComparisons = TextLabel();
+        _technicalScanWorkers = TextLabel(), _technicalScanComparisons = TextLabel(),
+        _technicalExecutionTimes = TextLabel(), _technicalPackedElements = TextLabel(),
+        _technicalPairedBatches = TextLabel(), _technicalStorageTimes = TextLabel(), _technicalBlocks = TextLabel();
     private readonly VerticalStackLayout _technical = new() { IsVisible = false, Spacing = 8 },
         _solutionSteps = new() { Spacing = 16 };
 
@@ -52,6 +54,12 @@ public sealed partial class MatrixView
         _technical.Add(_technicalCache);
         _technical.Add(_technicalShortcut);
         _technical.Add(_technicalBatches);
+        _technical.Add(_technicalPairedBatches);
+        _technical.Add(_technicalPackedElements);
+        _technical.Add(_technicalExecutionTimes);
+        _technical.Add(_technicalStorageTimes);
+        _technical.Add(_technicalBlocks);
+        _technical.Add(Caption("WorkerTimingHelp"));
         _technical.Add(_technicalScanBackend);
         _technical.Add(_technicalScanWorkers);
         _technical.Add(_technicalScanComparisons);
@@ -112,6 +120,15 @@ public sealed partial class MatrixView
             RefreshCacheDetails(result);
             _technicalShortcut.Text = T(result.UsedUniformShortcut ? "UniformShortcutUsed" : "UniformShortcutUnused");
             _technicalBatches.Text = F("VectorBatches", result.VectorBatches);
+            var execution = result.Execution;
+            var storage = execution.Storage;
+            _technicalPairedBatches.Text = F("PairedVectorBatches", execution.PairVectorBatches);
+            _technicalPackedElements.Text = F("PackedElements", execution.PackedAElements, execution.PackedBElements);
+            _technicalExecutionTimes.Text = F("ExecutionTimings", Milliseconds(execution.PackingTime),
+                Milliseconds(execution.KernelTime), Milliseconds(execution.ResultConversionTime));
+            _technicalStorageTimes.Text = F("StorageTimings", Milliseconds(storage.EncodingTime),
+                Milliseconds(storage.LockWaitTime), Milliseconds(storage.WriteTime));
+            _technicalBlocks.Text = F("BlocksWritten", storage.BlocksWritten);
             bool showScan = result.UsedUniformShortcut || scan.CellsExamined > 0;
             _technicalScanBackend.IsVisible = _technicalScanWorkers.IsVisible = _technicalScanComparisons.IsVisible = showScan;
             if (showScan)
@@ -131,6 +148,7 @@ public sealed partial class MatrixView
     };
 
     private static string Mebibytes(long bytes) => (bytes / (1024d * 1024)).ToString("0.###", CultureInfo.CurrentCulture);
+    private static string Milliseconds(TimeSpan duration) => duration.TotalMilliseconds.ToString("0.###", CultureInfo.CurrentCulture);
 
     private void RefreshCacheDetails(MatrixCalculation result) =>
         _technicalCache.Text = F("CacheUsage", Mebibytes(result.CachedBytes), Mebibytes(result.CacheLimitBytes));
@@ -143,13 +161,13 @@ public sealed partial class MatrixView
         _solutionSteps.IsVisible = hasCell;
         _solutionHeading.Text = T("CellSolution");
         _solutionPrompt.Text = T(_result is null ? "CellSolutionHelp" : "SelectResultCell");
-        if (!hasCell) return;
+        if (!hasCell || _a is not { } a || _b is not { } b) return;
 
         int row = _viewport.SelectedRow, column = _viewport.SelectedColumn;
         MatrixCellSolution solution;
         try
         {
-            solution = MatrixSolutionPresentation.ForCell(_a.Matrix, _b.Matrix, _result!, row, column);
+            solution = MatrixSolutionPresentation.ForCell(a.Matrix, b.Matrix, _result!, row, column);
             RefreshCacheDetails(_result!);
         }
         catch (Exception error) when (IsResultStorageFailure(error))
@@ -163,9 +181,9 @@ public sealed partial class MatrixView
         _solutionHeading.Text = F("SolutionForCell", row + 1, column + 1);
         if (_result!.Operation == MatrixOperation.Multiply)
         {
-            _solutionSteps.Add(SolutionStep(1, "ChooseRowColumn", F("RowColumnRule", row + 1, column + 1, _a.Columns)));
+            _solutionSteps.Add(SolutionStep(1, "ChooseRowColumn", F("RowColumnRule", row + 1, column + 1, a.Columns)));
             var products = SolutionStep(2, "MultiplyElements");
-            if (solution.RemainingCount > 0) products.Add(SolutionText(F("ProductPreview", solution.Terms.Count, _a.Columns), secondary: true));
+            if (solution.RemainingCount > 0) products.Add(SolutionText(F("ProductPreview", solution.Terms.Count, a.Columns), secondary: true));
             foreach (var term in solution.Terms)
             {
                 products.Add(SolutionText(term.Formula, secondary: true));

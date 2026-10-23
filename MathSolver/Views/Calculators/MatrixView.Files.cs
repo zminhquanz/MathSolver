@@ -8,7 +8,7 @@ public sealed partial class MatrixView
 {
     private async void OnPaste(object? sender, EventArgs e)
     {
-        if (_busy || _selected == 2) return;
+        if (_busy || !HasInputs || _selected == 2) return;
         int target = _selected, version = _version;
         try
         {
@@ -20,7 +20,7 @@ public sealed partial class MatrixView
             await RunWorkAsync((token, _) => Task.Run(() =>
             {
                 using var reader = new StringReader(text);
-                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
+                return new MatrixDraftTransfer(ReadImportedDraft(reader, token));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (Exception error)
@@ -32,7 +32,7 @@ public sealed partial class MatrixView
 
     private async void OnImport(object? sender, EventArgs e)
     {
-        if (_busy || _selected == 2) return;
+        if (_busy || !HasInputs || _selected == 2) return;
         int target = _selected, version = _version;
         try
         {
@@ -52,7 +52,7 @@ public sealed partial class MatrixView
             {
                 await using Stream stream = await file.OpenReadAsync();
                 using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-                return new MatrixDraft(MatrixTextCodec.Read(reader, token));
+                return new MatrixDraftTransfer(ReadImportedDraft(reader, token));
             }, token), matrix => AcceptImportAsync(target, matrix), "Importing");
         }
         catch (OperationCanceledException) { /* Native picker cancelled; existing drafts are retained. */ }
@@ -63,18 +63,37 @@ public sealed partial class MatrixView
         }
     }
 
-    private async Task AcceptImportAsync(int target, MatrixDraft matrix)
+    private async Task AcceptImportAsync(int target, MatrixDraftTransfer transfer)
     {
+        using var owned = transfer;
+        var matrix = transfer.Draft ?? throw new InvalidOperationException("Import ownership has already transferred.");
         int version = _version;
         if (!await ConfirmAsync(F("AcceptImport", "AB"[target], matrix.Rows, matrix.Columns)))
         { if (CanPublish(version)) Status("Cancelled"); return; }
         if (!CanPublish(version)) return;
         if (_work?.IsCancellationRequested != false) { Status("Cancelled"); return; }
         _editorMatrix = -1;
-        if (target == 0) _a = matrix; else _b = matrix;
-        _aRows.Text = _a.Rows.ToString(); _aColumns.Text = _a.Columns.ToString();
-        _bRows.Text = _b.Rows.ToString(); _bColumns.Text = _b.Columns.ToString();
+        ReplaceInput(target, matrix);
+        transfer.Detach();
+        if (_a is { } a) { _aRows.Text = a.Rows.ToString(); _aColumns.Text = a.Columns.ToString(); }
+        if (_b is { } b) { _bRows.Text = b.Rows.ToString(); _bColumns.Text = b.Columns.ToString(); }
         _selected = target; InvalidateResult(); RefreshSource(); Status("Imported");
+    }
+
+    private static MatrixDraft ReadImportedDraft(TextReader reader, CancellationToken token)
+    {
+        string directory = Path.Combine(FileSystem.CacheDirectory, "matrix-inputs");
+        Directory.CreateDirectory(directory);
+        return new MatrixDraft(MatrixTextCodec.Read(reader, token, directory));
+    }
+
+    private void ReplaceInput(int target, MatrixDraft matrix)
+    {
+        var old = target == 0 ? _a : _b;
+        // Detach any grid reader before disposing the replaced backing file.
+        _viewport.DetachSourceReader();
+        if (target == 0) _a = matrix; else _b = matrix;
+        DisposeOutcome(old);
     }
 
     private async void OnExport(object? sender, EventArgs e)

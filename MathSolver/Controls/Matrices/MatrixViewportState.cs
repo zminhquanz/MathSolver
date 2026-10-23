@@ -30,6 +30,13 @@ internal sealed class MatrixViewportState
         : new(Math.Min(SelectedRow, _endRow), Math.Min(SelectedColumn, _endColumn),
             Math.Abs(SelectedRow - _endRow) + 1, Math.Abs(SelectedColumn - _endColumn) + 1);
     public bool HasRangeSelection => AllSelected || _endRow != SelectedRow || _endColumn != SelectedColumn;
+    public bool TryGetDeleteRange(bool canEdit, out MatrixCellRange range)
+    {
+        range = default;
+        if (!canEdit || IsEditing) return false;
+        range = Selection;
+        return true;
+    }
     public bool IsSelected(int row, int column)
     {
         var selection = Selection;
@@ -168,6 +175,11 @@ internal sealed class MatrixViewportState
         RevealSelection();
         return true;
     }
+    public bool TryBeginTyping(string text, bool canEdit)
+    {
+        if (IsEditing || text.Length != 1 || text[0] is not (>= '0' and <= '9' or '+' or '-')) return false;
+        return BeginEdit(canEdit);
+    }
     public bool EndEdit(Func<bool>? commit = null)
     {
         if (IsEditing && commit?.Invoke() == false) return false;
@@ -237,6 +249,43 @@ internal sealed class MatrixViewportState
         double px = x - HeaderWidth + OffsetX, py = y - CellHeight + OffsetY;
         if (px >= ContentWidth || py >= ContentHeight) return false;
         row = IndexAt(_rowStarts, Rows, py); column = IndexAt(_columnStarts, Columns, px);
+        return true;
+    }
+}
+
+/// <summary>Windows integer-key decoding and text forwarding while native editor focus is pending.</summary>
+internal static class MatrixTypingInput
+{
+    public static bool TryGetText(int virtualKey, bool shift, bool commandModifier, out string text)
+    {
+        text = string.Empty;
+        if (commandModifier) return false;
+        // Windows.System.VirtualKey values; keep native dependencies out of the selection model.
+        string? value = virtualKey switch
+        {
+            >= 0x30 and <= 0x39 when !shift => ((char)('0' + virtualKey - 0x30)).ToString(),
+            >= 0x60 and <= 0x69 => ((char)('0' + virtualKey - 0x60)).ToString(),
+            0xBD when !shift => "-", // OEM minus
+            0x6D => "-", // Numpad subtract
+            0xBB when shift => "+", // OEM plus
+            0x6B => "+", // Numpad add
+            _ => null
+        };
+        if (value is null) return false;
+        text = value;
+        return true;
+    }
+
+    public static bool TryInsert(string text, int cursor, int selectionLength, string input, int maxLength,
+        out string inserted, out int caret)
+    {
+        inserted = text; caret = cursor;
+        if (input.Length != 1 || input[0] is not (>= '0' and <= '9' or '+' or '-')) return false;
+        int start = Math.Clamp(cursor, 0, text.Length);
+        int count = Math.Clamp(selectionLength, 0, text.Length - start);
+        if ((long)text.Length - count + input.Length > maxLength) return false;
+        inserted = text[..start] + input + text[(start + count)..];
+        caret = start + input.Length;
         return true;
     }
 }

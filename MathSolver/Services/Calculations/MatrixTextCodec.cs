@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Runtime.InteropServices;
 
 namespace MathSolver.Services.Core;
 
@@ -17,11 +18,12 @@ public static class MatrixTextCodec
     private const int MaximumDimension = MatrixLimits.MaximumDimension;
 
     /// <summary>Stages a complete, strictly rectangular integer table before returning it.</summary>
-    public static IntegerMatrix Read(TextReader reader, CancellationToken cancellationToken = default)
+    public static IntegerMatrix Read(TextReader reader, CancellationToken cancellationToken = default,
+        string? temporaryDirectory = null)
     {
         ArgumentNullException.ThrowIfNull(reader);
         cancellationToken.ThrowIfCancellationRequested();
-        var values = new List<long>();
+        using var values = new MatrixInputBuilder(temporaryDirectory);
         var rowValues = new List<long>();
         var row = 1;
         var columns = 0;
@@ -64,15 +66,7 @@ public static class MatrixTextCodec
                 if (columns == 0) columns = rowValues.Count;
                 else if (columns != rowValues.Count)
                     throw Error(MatrixInputError.InvalidShape, rowValues.Count + 1);
-                int needed = checked(values.Count + rowValues.Count);
-                if (needed > values.Capacity)
-                {
-                    int capacity = Math.Min(MaximumDimension * MaximumDimension,
-                        Math.Max(needed, Math.Max(4, values.Capacity * 2)));
-                    MatrixMemoryGuard.EnsureAvailable((long)capacity * sizeof(long));
-                    values.Capacity = capacity;
-                }
-                values.AddRange(rowValues);
+                values.AddRow(CollectionsMarshal.AsSpan(rowValues), cancellationToken);
                 rows++;
             }
             rowValues.Clear();
@@ -116,8 +110,7 @@ public static class MatrixTextCodec
         cancellationToken.ThrowIfCancellationRequested();
         if (hasContent) FinishRow();
         if (rows == 0) throw new MatrixInputException(MatrixInputError.Empty, 1, 1);
-        MatrixMemoryGuard.EnsureAvailable((long)values.Count * sizeof(long));
-        return new IntegerMatrix(rows, columns, values.ToArray());
+        return values.Complete(rows, columns, cancellationToken);
     }
 
     /// <summary>Writes exact invariant decimal values, one comma-separated record per row.</summary>

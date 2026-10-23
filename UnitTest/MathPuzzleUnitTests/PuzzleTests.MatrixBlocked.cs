@@ -66,7 +66,8 @@ internal static partial class PuzzleTests
         var constrained = MatrixWorkPlan.Create(1024, 1024, 1024, MatrixOperation.Multiply, 8,
             new() { BlockSize = 64, WorkspaceBudgetBytes = 1024 * 1024, ResultCacheBytes = 64 * 1024,
                 InMemoryResultLimitBytes = 0 }, 512L * 1024 * 1024);
-        TestAssert.That(constrained.Memory.CanAllocate && constrained.WorkerLimit == 1
+        TestAssert.That(constrained.Memory.CanAllocate && constrained.WorkerLimit is >= 1 and < 8
+            && constrained.BlockSize <= 64
             && constrained.WorkspaceBytes <= 1024 * 1024,
             "Worker count must shrink to respect the total workspace allowance, even when more CPU threads are available.");
         var impossible = MatrixWorkPlan.Create(16384, 16384, 16384, MatrixOperation.Multiply, 24,

@@ -16,6 +16,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     private PointF _panStart;
     private double _panX, _panY;
     private bool _dragged, _everLoaded, _extendSelectionGesture;
+    private bool _selectAllOnEditorFocus = true;
     private int _focusGeneration;
     private float _drawFontSize = 14;
     public Func<bool>? CommitEdit { get; set; }
@@ -24,6 +25,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public event Action? EditCancelled;
     public event EventHandler? CopyRequested;
     public event EventHandler? PasteRequested;
+    public event Action<MatrixCellRange>? DeleteRequested;
     public bool AllSelected => _state.AllSelected;
     public bool HasRangeSelection => _state.HasRangeSelection;
     public MatrixCellRange Selection => _state.Selection;
@@ -34,6 +36,11 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     private void RequestPaste()
     {
         if (CanUseInput && !_state.IsEditing && CanEdit?.Invoke() != false) PasteRequested?.Invoke(this, EventArgs.Empty);
+    }
+    private void RequestDelete()
+    {
+        if (CanUseInput && _state.TryGetDeleteRange(CanEdit?.Invoke() != false, out var range))
+            DeleteRequested?.Invoke(range);
     }
     public int SelectedRow => _state.SelectedRow;
     public int SelectedColumn => _state.SelectedColumn;
@@ -150,9 +157,12 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         _editorHost.SetDynamicResource(Border.StrokeProperty, "PrimaryColor");
         _editorHost.IsVisible = false;
         _surface.Add(_editorHost);
-        editor.Focused += (_, _) => FocusEditor();
+        editor.Focused += (_, _) => FocusEditor(selectAll: _selectAllOnEditorFocus);
     }
     public void SetAccessibility(string table) => SemanticProperties.SetDescription(_canvas, table);
+    // Closing a window may already have disposed native handlers. Dropping a reader
+    // must also work without refreshing controls or raising layout callbacks.
+    internal void DetachSourceReader() => _readCell = null;
 
     public void SetSource(int rows, int columns, Func<int, int, string> readCell)
     {
@@ -226,6 +236,35 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         Scrolled(); FocusEditor();
     }
 
+    private bool TypeIntoSelectedCell(string text)
+    {
+        if (!CanUseInput || _editor is null || CanEdit?.Invoke() == false) return false;
+        if (_state.IsEditing)
+        {
+            // Once focus arrives, let the native TextBox own typing and caret keys.
+            if (_editor.IsFocused) return false;
+            if (MatrixTypingInput.TryInsert(_editor.Text ?? string.Empty, _editor.CursorPosition,
+                _editor.SelectionLength, text, _editor.MaxLength, out var inserted, out int caret))
+            {
+                _editor.Text = inserted;
+                _editor.SelectionLength = 0;
+                _editor.CursorPosition = caret;
+            }
+        }
+        else
+        {
+            if (!_state.TryBeginTyping(text, true)) return false;
+            CellSelected?.Invoke(SelectedRow, SelectedColumn);
+            Scrolled();
+            // The draft remains unchanged until the existing commit callback runs.
+            _editor.Text = text;
+            _editor.SelectionLength = 0;
+            _editor.CursorPosition = text.Length;
+        }
+        FocusEditor(selectAll: false, immediate: true);
+        return true;
+    }
+
     private bool RestoreInvalidEditor()
     {
         // Reveal an unfinished edit without overwriting its text or committing again.
@@ -242,16 +281,35 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         Refresh(); FocusSelection();
     }
 
-    public void FocusEditor(bool selectAll = true)
+    public void FocusEditor(bool selectAll = true, bool immediate = false)
     {
         if (!CanUseInput || _editor is null || _editorHost?.IsVisible != true) return;
+        // Focused may arrive after Focus(). Preserve the caller's caret policy so
+        // type-to-edit's first character is not selected and replaced by the next.
+        _selectAllOnEditorFocus = selectAll;
         int generation = ++_focusGeneration;
-        Dispatcher.Dispatch(() =>
+        void ApplyFocus()
         {
             if (generation != _focusGeneration || !CanUseInput || _editorHost?.IsVisible != true || !_editor.IsEnabled) return;
+            int caret = _editor.CursorPosition, selectionLength = _editor.SelectionLength;
             _editor.Focus();
             if (selectAll) { _editor.CursorPosition = 0; _editor.SelectionLength = _editor.Text?.Length ?? 0; }
-        });
+            else
+            {
+                _editor.SelectionLength = 0;
+                _editor.CursorPosition = Math.Clamp(caret, 0, _editor.Text?.Length ?? 0);
+                _editor.SelectionLength = Math.Clamp(selectionLength, 0, (_editor.Text?.Length ?? 0) - _editor.CursorPosition);
+            }
+        }
+        // Typed input must not wait behind another queued selection-focus callback.
+        if (immediate)
+        {
+            ApplyFocus();
+            // A newly shown native editor may need its first layout before Focus
+            // succeeds. Retry once on the dispatcher, retaining any queued digits.
+            if (generation == _focusGeneration && !_editor.IsFocused) Dispatcher.Dispatch(ApplyFocus);
+        }
+        else Dispatcher.Dispatch(ApplyFocus);
     }
 
     public void Refresh()

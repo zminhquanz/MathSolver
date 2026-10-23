@@ -8,13 +8,13 @@ public sealed partial class MatrixView
 {
     private async void OnCopySelection(object? sender, EventArgs e)
     {
-        if (_busy || !CanTouchUi || !_active || !_viewport.FinishEdit()) return;
+        if (_busy || !HasInputs || !CanTouchUi || !_active || !_viewport.FinishEdit()) return;
         await CopySelectionAsync();
     }
 
     private async Task CopySelectionAsync()
     {
-        if (_busy || !CanTouchUi || !_active) return;
+        if (_busy || !HasInputs || !CanTouchUi || !_active) return;
         var selection = _viewport.Selection;
         char matrixName = "ABC"[_selected];
         int rows = selection.Rows, columns = selection.Columns;
@@ -63,7 +63,7 @@ public sealed partial class MatrixView
 
     private async void OnPasteCells(object? sender, EventArgs e)
     {
-        if (_busy || !CanTouchUi || !_active || _selected == 2 || !_viewport.FinishEdit()) return;
+        if (_busy || !HasInputs || !CanTouchUi || !_active || _selected == 2 || !_viewport.FinishEdit()) return;
         int target = _selected;
         var destination = _viewport.Selection;
         var original = CurrentDraft;
@@ -77,15 +77,17 @@ public sealed partial class MatrixView
                 bool singleCell = block.Rows == 1 && block.Columns == 1;
                 int rows = singleCell ? destination.Rows : block.Rows;
                 int columns = singleCell ? destination.Columns : block.Columns;
-                var draft = original.WithPastedCells(destination.Row, destination.Column, rows, columns, block, token);
-                return (Draft: draft, Rows: rows, Columns: columns);
+                var draft = original.WithPastedCells(destination.Row, destination.Column, rows, columns, block, token, progress);
+                return new MatrixDraftTransfer(draft, rows, columns);
             }, token);
             progress.Report(1);
             return value;
         }, pasted =>
         {
+            using var owned = pasted;
             _editorMatrix = -1;
-            if (target == 0) _a = pasted.Draft; else _b = pasted.Draft;
+            ReplaceInput(target, pasted.Draft ?? throw new InvalidOperationException("Paste ownership has already transferred."));
+            pasted.Detach();
             InvalidateResult(); RefreshSource();
             _viewport.SelectRange(destination.Row, destination.Column, pasted.Rows, pasted.Columns);
             Status("PastedCells");
