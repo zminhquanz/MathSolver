@@ -49,22 +49,44 @@ internal static class SumRatioOpenCatalogue
         The item placeholder {v2} occurs twice in the ratio fact, once for each owner's item count. Preserve the reference's placeholder multiplicities in each field.
         Use {v0} and {v1} as the grammatical owners in each noun phrase and in the question; refer to them by these placeholders throughout the JSON.
         Every concrete item name and numeric value is supplied through its placeholder. Keep words separate from placeholders; an English possessive is {v0}'s or {v1}'s.
-        Ask How many for BOTH owners; do not ask for a total, difference or ratio. Prefer number/count for countable items, not amount.
+        Ask explicitly for EACH owner's separate count. Use each/respectively or ask how many one owner has AND how many the other has.
+        Do not ask only for the count for both owners: that can mean their combined total, which is already known. Do not ask for a difference or ratio.
+        Prefer simple number/count wording for countable items, not amount. Equal parts are units in the ratio, not equal shares between the two owners.
         step_0 names the number of items per equal ratio part; step_1 names {v0}'s count; step_2 names {v1}'s count. No calculations or answers.
         Write one short sentence per field; end facts with periods and the question with a question mark. Keep prose suitable for pupils.
         Do not add transfers, events, conditions, technical instructions or filled names/numbers/units. Return only JSON.
         """;
+
+    // Vary only the prompt's reference, not the stored context/schema or the
+    // closed example used by existing contracts and duplicate detection.
+    internal static BasicQuestionDraft PromptExample(BasicQuestionContract c,BasicQuestionDraft example)
+    {
+        if(c.Language!=AppLanguage.English)return example;
+        var (total,ratio,question)=c.SceneId[SumRatioPilot.Prefix.Length..] switch
+        {
+            "books"=>("Together, {v0} and {v1} have {f0} {v2}.",
+                "The number of {v2} that {v0} possesses equals {f1} times the number of {v2} that {v1} holds.",
+                "How many {v2} does {v0} have and how many does {v1} have?"),
+            "pens"=>("The combined number of {v2} held by {v0} and {v1} amounts to {f0}.",
+                "{v0}'s number of {v2} is {f1} of {v1}'s number of {v2}.",
+                "How many {v2} does each of {v0} and {v1} have?"),
+            _=>("{v0} and {v1} own {f0} {v2} in total.",
+                "The count of {v2} that {v0} holds equals {f1} of the count of {v2} owned by {v1}.",
+                "How many {v2} does {v1} hold, and how many does {v0} hold?")
+        };
+        return example with {Facts=[new("fact_0",total),new("fact_1",ratio)],Question=question};
+    }
     internal static string PromptRelation(BasicQuestionContract c)
     {
         var d=SumRatioPilot.Create(c.SceneId,c.Language,c.Tier,new(c.Story!.Seed));
         string focus=c.SceneId[SumRatioPilot.Prefix.Length..] switch
         {
             "books"=>c.Language==AppLanguage.Vietnamese?"Ưu tiên mở câu tổng bằng hai người; câu tỉ số mở bằng số đồ vật của người có lượng bé."
-                :"Favor the two owners as the total sentence subject; start the ratio fact with the smaller owner's item count.",
+                :"Prefer the two owners as the total sentence subject and a short relative ownership clause in the ratio. Ask the two separate counts explicitly, not a count for both.",
             "pens"=>c.Language==AppLanguage.Vietnamese?"Ưu tiên mở câu tổng bằng tổng số đồ vật; câu tỉ số có thể mở bằng người có lượng bé."
-                :"Favor the combined number of items as the total subject; the ratio fact may use the owners' possessive item counts.",
+                :"Prefer a combined-number opening for the total and possessive item counts in the ratio. Ask each owner's count.",
             _=>c.Language==AppLanguage.Vietnamese?"Thay cách mở câu tổng và dùng từ bằng khi nói rõ tỉ số hai lượng."
-                :"Vary the total opening and use a clear equality between the two owner-specific item counts."
+                :"Prefer an owners-first total with in total. State the oriented ratio and ask each owner separately; the larger owner may be asked first."
         };
         return Relation+"\nContext only: {v0}="+d.Context.SmallerOwner+"; {v1}="+d.Context.LargerOwner+"; {v2}="+d.Context.Unit
             +". Never put these values in the JSON.\n"+focus;

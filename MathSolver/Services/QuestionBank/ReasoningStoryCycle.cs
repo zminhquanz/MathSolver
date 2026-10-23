@@ -37,6 +37,8 @@ internal sealed class ReasoningStoryCycle
                     ? RectanglePerimeterPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.TwoNumbers && variant==(int)ElementaryQuizType.SumRatio
                     ? SumRatioPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.TwoNumbers && variant==(int)ElementaryQuizType.DifferenceRatio
+                    ? DifferenceRatioPilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.TwoNumbers && variant==(int)ElementaryQuizType.SumDifference
                     ? SumDifferencePilot.Profiles(language).ToArray()
                 : creativeProse && family==BankQuestionFamily.Average && variant==(int)AverageQuizType.MissingValue

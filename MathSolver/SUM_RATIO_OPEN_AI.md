@@ -22,6 +22,12 @@ AI giữ nguyên số lần xuất hiện của biến trong từng trường; k
 chia hoặc điền tử/mẫu bên ngoài `{f1}`. GBNF cho đổi thứ tự các khối biến và
 viết câu mới; C# kiểm tra ý nghĩa riêng, không xóa phủ định/điều kiện để làm câu khớp.
 
+Bộ kiểm chứng tiếng Anh nhận thêm mệnh đề sở hữu rõ (`the number ... that ...
+possesses`), quan hệ `times`, câu hỏi tách hai người có hoặc không có dấu phẩy,
+và câu dẫn `one equal share`. Câu chỉ hỏi số lượng `for both` vẫn chờ duyệt.
+Các ví dụ tham khảo tiếng Anh trong prompt khác nhau theo bối cảnh; không đổi
+schema, dữ kiện hay ví dụ đóng của các hợp đồng đã lưu.
+
 C# chọn các tỉ số tối giản dương, tổng chia hết cho tổng số phần và hai kết quả
 nguyên. Ba câu dẫn lời giải lần lượt gọi lượng ứng với mỗi phần, lượng của
 `{v0}`, lượng của `{v1}`. Sơ đồ dùng số đoạn bằng nhau theo tỉ số; mọi đoạn chưa
@@ -44,3 +50,8 @@ Lệnh model chạy sáu yêu cầu thật, ba bối cảnh × hai ngôn ngữ, 
 lưu prompt, JSON gốc, trạng thái, số lần thử và tốc độ vào thư mục chỉ định.
 Mỗi lượt mới nên dùng thư mục mới để giữ nguyên bằng chứng cũ. Có thể phát lại
 bằng `--open-prose-evidence <directory>` trên đúng mã cuối.
+
+Lượt củng cố tiếng Anh ngày 23/10/2026 dùng thư mục
+`artifacts/verification/sum-ratio-english/native-final` và pipeline
+`sum-ratio-english-v4`. Xem báo cáo trong thư mục cha để phân biệt lượt sinh mới
+với phát lại bằng chứng cũ trên bộ kiểm chứng mới.

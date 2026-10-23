@@ -26,13 +26,13 @@ internal static class SumRatioOpenMeaning
         bool Proof(string text,string vietnamese,string english)=>Match(text,vi?vietnamese:english);
         string Owner(int i)=>@"\{v"+i+@"\}";
         string owners=@"(?:\{v0\} và \{v1\}|\{v1\} và \{v0\})",enOwners=@"(?:\{v0\} and \{v1\}|\{v1\} and \{v0\})";
-        string Count(int i)=>@"(?:the )?(?:number|count) of \{v2\} (?:belonging to|owned by|held by|for) "+Owner(i);
+        string Count(int i)=>@"(?:(?:the )?(?:number|count) of \{v2\} (?:(?:belonging to|owned by|held by|for) "+Owner(i)
+            +@"|(?:that|which) "+Owner(i)+@" (?:has|owns|possesses|holds))|"+Owner(i)+@"['’]s (?:number|count) of \{v2\})";
         string ViCount(int i)=>@"(?:số|số lượng) \{v2\} (?:của|thuộc về) "+Owner(i);
         bool Ratio(int numeratorOwner,int denominatorOwner)=>Proof(d.Facts![1].Text,
             ViCount(numeratorOwner)+@" (?:bằng|là) \{f1\} "+ViCount(denominatorOwner)
                 +"|"+Owner(numeratorOwner)+@" có số \{v2\} bằng \{f1\} số \{v2\} của "+Owner(denominatorOwner),
-            Count(numeratorOwner)+@" (?:is|equals) \{f1\} of "+Count(denominatorOwner)
-                +"|"+Owner(numeratorOwner)+@"['’]s (?:number|count) of \{v2\} (?:is|equals) \{f1\} of "+Owner(denominatorOwner)+@"['’]s (?:number|count) of \{v2\}");
+            Count(numeratorOwner)+@" (?:is|equals|is equal to) \{f1\} (?:of|times) "+Count(denominatorOwner));
         bool wrongTotal=Proof(d.Facts![0].Text,owners+@" mỗi người có \{f0\} \{v2\}",enOwners+@" each have \{f0\} \{v2\}");
         bool increment=Proof(d.Facts[1].Text,ViCount(0)+@" (?:nhiều hơn|tăng thêm) \{f1\} "+ViCount(1),
             Count(0)+@" is \{f1\} more than "+Count(1));
@@ -45,12 +45,12 @@ internal static class SumRatioOpenMeaning
         if(wrongTotal||Ratio(1,0)||increment||transfer||wrongTarget)
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"Combined total, ratio ownership, static equality or both-owner target changed.");
         bool total=Proof(d.Facts[0].Text,owners+@" (?:có|sở hữu) (?:tất cả|tổng cộng|chung) \{f0\} \{v2\}|(?:tổng số|tổng cộng số) \{v2\} của "+owners+@" là \{f0\}",
-            @"(?:together,? )?"+enOwners+@" have \{f0\} \{v2\}(?: (?:in total|altogether))?|the (?:(?:total|combined) (?:number|count)|combined total) of \{v2\} (?:belonging to|owned by|held by|for) "+enOwners+@" (?:is|equals|amounts to) \{f0\}");
-        string Pair(int first,int second)=>@"how many \{v2\} does "+Owner(first)+@" (?:have|possess|hold), and how many does "+Owner(second)+@" (?:have|possess|hold)";
+            @"(?:together,? )?"+enOwners+@" (?:have|own|possess|hold) \{f0\} \{v2\}(?: (?:in total|altogether))?|the (?:(?:total|combined) (?:number|count)|combined total) of \{v2\} (?:belonging to|owned by|held by|for) "+enOwners+@" (?:is|equals|amounts to) \{f0\}");
+        string Pair(int first,int second)=>@"how many \{v2\} does "+Owner(first)+@" (?:have|possess|hold|own),? and how many does "+Owner(second)+@" (?:have|possess|hold|own)";
         bool question=Proof(d.Question,@"(?:hỏi )?số \{v2\} của "+owners+@" lần lượt là bao nhiêu|(?:hỏi )?\{v0\} có bao nhiêu \{v2\}, \{v1\} có bao nhiêu",
-            @"how many \{v2\} do "+enOwners+@" have (?:each|respectively)|"+Pair(0,1)+"|"+Pair(1,0));
+            @"how many \{v2\} do "+enOwners+@" (?:have|possess|hold|own) (?:each|respectively)|how many \{v2\} does each of "+enOwners+@" (?:have|possess|hold|own)|"+Pair(0,1)+"|"+Pair(1,0));
         bool PartLead()=>Proof(d.SolutionLeads![0].Text,@"số \{v2\} (?:ứng với|trong) mỗi phần",
-            @"(?:the )?(?:number|count) of \{v2\} (?:in|per) each equal part");
+            @"(?:the )?(?:number|count) of \{v2\} (?:in|per) (?:each|one) equal (?:part|share|portion)");
         bool Lead(int index,int owner)=>Proof(d.SolutionLeads![index].Text,@"(?:số|số lượng) \{v2\} của "+Owner(owner),
             @"(?:the )?(?:number|count) of \{v2\} (?:for|belonging to|owned by|held by) "+Owner(owner));
         return total&&Ratio(0,1)&&question&&PartLead()&&Lead(1,0)&&Lead(2,1)?new(d,null,c):new(d,"SemanticReviewRequired",c,

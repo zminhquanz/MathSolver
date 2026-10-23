@@ -285,7 +285,9 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
             work.Append(answerLabel + ": " + contract.AnswerText)) };
         bool sumRatioTuple = contract.Type == ElementaryQuizType.SumRatio && answers.Count == 2
             && contract.Reasoning?.ScenarioId == SumRatioPilot.Relation;
-        bool pairedProposal = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2 || sumRatioTuple;
+        bool differenceRatioTuple = contract.Type == ElementaryQuizType.DifferenceRatio && answers.Count == 2
+            && contract.Reasoning?.ScenarioId == DifferenceRatioPilot.Relation;
+        bool pairedProposal = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2 || sumRatioTuple || differenceRatioTuple;
         var choices = new List<string> { contract.AnswerText };
         if (textChoices is not null)
             choices.AddRange(textChoices.Where(text => !string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)));
@@ -299,7 +301,8 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
         else if (textChoices is null) for (int delta = 1; delta <= 3; delta++)
         {
             // Paired proposals exercise either result and both. A direct ratio
-            // also offers swapped owners: the sum stays correct, the ratio does not.
+            // sum-ratio also swaps owners; difference-ratio shifts both counts
+            // equally, preserving the difference while changing the ratio.
             var alternative = answers.Select((answer, index) => (pairedProposal ? delta < 3 && index != delta - 1 : index != 0) ? answer
                 : sumRatioTuple && delta == 3 ? answer with { Value = answers[1-index].Value }
                 : answer.Text is not null
