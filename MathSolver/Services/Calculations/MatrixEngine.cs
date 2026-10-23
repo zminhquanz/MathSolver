@@ -9,6 +9,11 @@ namespace MathSolver.Services.Core;
 public readonly record struct MatrixCalculationAttempt(MatrixCalculation? Result, MatrixMemoryCheck Memory) : IDisposable
 {
     public bool IsCanceled { get; init; }
+    public bool IsCancelled { get => IsCanceled; init => IsCanceled = value; }
+    public MatrixCalculationAttempt(MatrixCalculation? Result, MatrixMemoryCheck Memory, bool IsCancelled)
+        : this(Result, Memory) { IsCanceled = IsCancelled; }
+    public void Deconstruct(out MatrixCalculation? result, out MatrixMemoryCheck memory, out bool isCancelled)
+    { result = Result; memory = Memory; isCancelled = IsCanceled; }
     internal static MatrixCalculationAttempt Canceled => new(null, default) { IsCanceled = true };
     public void Dispose() => Result?.Dispose();
 }
@@ -50,7 +55,7 @@ public static partial class MatrixEngine
             maximumDegreeOfParallelism == 0 ? Environment.ProcessorCount : maximumDegreeOfParallelism));
         MatrixBackend backend = SelectBackend(a, b, maximumBackend);
         var plan = MatrixWorkPlan.Create(a.Rows, a.Columns, b.Columns, operation, requested, options, available.AvailableBytes, backend,
-            allowDenseResult: !a.IsFileBacked && !b.IsFileBacked);
+            allowDenseResult: a.DenseData is not null && b.DenseData is not null);
         if (cancellationToken.IsCancellationRequested) return MatrixCalculationAttempt.Canceled;
         if (!plan.Memory.CanAllocate) return new(null, plan.Memory);
         reporting.Report(0);
@@ -67,6 +72,11 @@ public static partial class MatrixEngine
         result.WorkspaceLimitBytes = plan.WorkspaceBytes;
         try { reporting.Complete(); }
         catch { result.Dispose(); throw; }
+        if (cancellationToken.IsCancellationRequested)
+        {
+            result.Dispose();
+            return MatrixCalculationAttempt.Canceled;
+        }
         return new(result, plan.Memory);
     }
 
@@ -83,7 +93,9 @@ public static partial class MatrixEngine
         MatrixBackend backend, int workers, CancellationToken cancellationToken, IProgress<double>? progress)
     {
         if (progress is MatrixProgressReporter reporting) reporting.Phase(MatrixCalculationStage.Multiplying);
-        var values = GC.AllocateUninitializedArray<Int128>(a.Data.Length);
+        var left = a.DenseData!;
+        var right = b.DenseData!;
+        var values = GC.AllocateUninitializedArray<Int128>(left.Length);
         bool subtract = operation == MatrixOperation.Subtract;
         int lanes = backend == MatrixBackend.Sse2 ? 2 : backend == MatrixBackend.Avx2 ? 4 : 8;
         long kernelTicks = 0;
@@ -95,13 +107,13 @@ public static partial class MatrixEngine
             int index = start;
             switch (backend)
             {
-                case MatrixBackend.Sse2: index = Elementwise128(a.Data, b.Data, values, start, end, subtract); break;
-                case MatrixBackend.Avx2: index = Elementwise256(a.Data, b.Data, values, start, end, subtract); break;
-                case MatrixBackend.Avx512: index = Elementwise512(a.Data, b.Data, values, start, end, subtract); break;
+                case MatrixBackend.Sse2: index = Elementwise128(left, right, values, start, end, subtract); break;
+                case MatrixBackend.Avx2: index = Elementwise256(left, right, values, start, end, subtract); break;
+                case MatrixBackend.Avx512: index = Elementwise512(left, right, values, start, end, subtract); break;
             }
             long batches = backend == MatrixBackend.Scalar ? 0 : (index - start) / lanes;
             for (; index < end; index++)
-                values[index] = subtract ? (Int128)a.Data[index] - b.Data[index] : (Int128)a.Data[index] + b.Data[index];
+                values[index] = subtract ? (Int128)left[index] - right[index] : (Int128)left[index] + right[index];
             Interlocked.Add(ref kernelTicks, Stopwatch.GetTimestamp() - started);
             return batches;
         }, cancellationToken, progress, 0, 1);

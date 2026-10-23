@@ -69,7 +69,8 @@ public sealed partial class MatrixView : LocalizedSolverView
             operationGrid.Add(_operations[i]);
         }
         setup.Add(operationGrid);
-        setup.Add(Caption("DimensionsHelp"));
+        setup.Add(Caption("DimensionsHelp", null, InputDimensionLimit));
+        setup.Add(Caption("DesktopBenchmarkHelp"));
         AdaptiveColumns.SetMaximumColumns(_dimensions, 2);
         AdaptiveColumns.SetMinimumColumnWidth(_dimensions, 270);
         _dimensions.Add(DimensionPanel("A", _aRows, _aColumns));
@@ -146,13 +147,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         cellActions.Add(ActionButton("Next", "→", (_, _) => MoveSelection(1), lockDuringWork: false));
         editor.Add(cellActions);
         var transfers = FlowGrid(180, 3);
-        _fill = ActionButton("FillZero", "0", (_, _) =>
-        {
-            if (!CommitPendingCell()) return;
-            InvalidateResult();
-            TryUpdateInput(() => { CurrentDraft.FillMissingWithZero(); return true; });
-            RefreshSource();
-        });
+        _fill = ActionButton("FillZero", "0", OnFillMissing);
         _paste = ActionButton("Paste", "📋", OnPaste);
         _import = ActionButton("Import", "📂", OnImport);
         transfers.Add(_fill); transfers.Add(_paste); transfers.Add(_import);
@@ -192,6 +187,8 @@ public sealed partial class MatrixView : LocalizedSolverView
     }
 
     private bool HasInputs => _a is not null && _b is not null;
+    private static int InputDimensionLimit => MatrixLimits.GetInputMaximumDimension(
+        OperatingSystem.IsWindows() || OperatingSystem.IsMacCatalyst());
     private MatrixDraft CurrentDraft => (_selected == 1 ? _b : _a)
         ?? throw new InvalidOperationException("No matrix inputs have been created.");
     private static string T(string key) => LocalizationService.TranslateKey("Matrix." + key);
@@ -204,11 +201,11 @@ public sealed partial class MatrixView : LocalizedSolverView
         return label;
     }
     private static Entry NumberEntry(string text) => MatrixInputField.CreateEntry(text);
-    private Label Caption(string key, string? style = null)
+    private Label Caption(string key, string? style = null, params object[] arguments)
     {
         var label = TextLabel();
         if (style is not null) label.Style = GetStyle(style);
-        _translations.Add(() => label.Text = T(key));
+        _translations.Add(() => label.Text = arguments.Length == 0 ? T(key) : F(key, arguments));
         return label;
     }
     private View Labeled(string key, Entry entry, double? height = null)

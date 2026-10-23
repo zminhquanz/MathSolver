@@ -811,9 +811,9 @@ public partial class HardwarePerformancePage : ContentPage
             (useEnglish, isLocked) switch
             {
                 (true, true) => "Multithreading is locked while the benchmark is running.",
-                (true, false) => "Turn benchmark multithreading on or off.",
+                (true, false) => "Turn multithreading on or off for benchmarks and calculations.",
                 (false, true) => "Đa luồng đang bị khóa trong lúc đo sức mạnh.",
-                _ => "Bật hoặc tắt đa luồng cho benchmark."
+                _ => "Bật hoặc tắt đa luồng cho benchmark và các phép tính."
             };
 
         SemanticProperties.SetDescription(

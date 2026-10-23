@@ -60,7 +60,7 @@ internal static partial class PuzzleTests
                 TestAssert.That(imported.IsComplete && imported.GetCellText(0, 0) == "42" && imported.GetCellText(1, 1) == "0",
                     "An imported disk input must mark implicit zero cells complete without a dense filled mask.");
             MatrixDraft? a = null, b = null;
-            using (var created = MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0, temporaryDirectory: directory))
+            using (var created = MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0, temporaryDirectory: directory, fileBacked: true))
             {
                 TestAssert.That(created.TryPublish(ref a, ref b, 1024, 1024, 1024, 1024), "Matching drafts must publish.");
             }
@@ -72,14 +72,14 @@ internal static partial class PuzzleTests
                 "Release must delete both input files and account resident memory instead of logical arrays.");
             using var stop = new CancellationTokenSource();
             using var canceled = MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0, stop.Token,
-                new MatrixProgress(p => { if (p >= .5) stop.Cancel(); }), directory);
+                new MatrixProgress(p => { if (p >= .5) stop.Cancel(); }), directory, fileBacked: true);
             TestAssert.That(canceled.IsCanceled && Directory.GetFiles(directory).Length == 0,
                 "Cancellation after A allocation must delete every unpublished input file.");
-            using (var unpublished = MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0, temporaryDirectory: directory)) { }
+            using (var unpublished = MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0, temporaryDirectory: directory, fileBacked: true)) { }
             TestAssert.That(Directory.GetFiles(directory).Length == 0, "Rejected attempts must dispose their unpublished drafts.");
             TestAssert.Throws<InvalidOperationException>(() => MatrixRecreation.TryCreate(1024, 1024, 1024, 1024, 0,
                 progress: new MatrixProgress(p => { if (p >= 1) throw new InvalidOperationException("observer failed"); }),
-                temporaryDirectory: directory), "Creation observer failures must propagate.");
+                temporaryDirectory: directory, fileBacked: true), "Creation observer failures must propagate.");
             TestAssert.That(Directory.GetFiles(directory).Length == 0, "A failure after allocating B must delete both unpublished files.");
         }
         finally { Directory.Delete(directory); }

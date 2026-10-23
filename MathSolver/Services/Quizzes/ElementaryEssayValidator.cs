@@ -222,8 +222,12 @@ internal static partial class ElementaryEssayValidator
             if (colon >= 0 && entry[..colon].Any(char.IsLetter))
             {
                 string label = entry[..colon].Trim();
-                target = Array.FindIndex(contract.Answers.ToArray(), answer => ContainsCue(label, answer.Label)
-                    || ContainsCue(answer.Label, label));
+                // Prefer an exact owner before abbreviated cues: "An" must not
+                // bind to "Lan" simply because one name contains the other.
+                target = Array.FindIndex(contract.Answers.ToArray(), answer => string.Equals(label, answer.Label, StringComparison.OrdinalIgnoreCase));
+                if(target<0)
+                    target = Array.FindIndex(contract.Answers.ToArray(), answer => ContainsCue(label, answer.Label)
+                        || ContainsCue(answer.Label, label));
                 entry = entry[(colon + 1)..].Trim();
             }
             else if (contract.Kind == QuizProblemKind.TwoNumbers)

@@ -37,7 +37,7 @@ internal static partial class PuzzleTests
 
     public static void CheckMatrixClipboard()
     {
-        var draft = new MatrixDraft(2, 3);
+        using var draft = new MatrixDraft(2, 3);
         draft.TrySetCell(0, 0, "1"); draft.TrySetCell(0, 2, long.MaxValue.ToString(CultureInfo.InvariantCulture));
         draft.TrySetCell(1, 0, "-2"); draft.TrySetCell(1, 1, "0");
         var previous = CultureInfo.CurrentCulture;

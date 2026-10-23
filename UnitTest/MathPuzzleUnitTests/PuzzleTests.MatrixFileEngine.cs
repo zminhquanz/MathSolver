@@ -42,7 +42,7 @@ internal static partial class PuzzleTests
 
     public static void CheckMatrixFileUniformCalculation()
     {
-        using var empty = new MatrixDraft(1024, 1024);
+        using var empty = new MatrixDraft(1024, 1024, fileBacked: true);
         using var a = empty.WithPastedCells(0, 0, 1024, 1024, MatrixClipboardCodec.Read("3"));
         using var b = empty.WithPastedCells(0, 0, 1024, 1024, MatrixClipboardCodec.Read("-7"));
         using var result = MatrixEngine.Calculate(a.Matrix, b.Matrix, MatrixOperation.Multiply);
@@ -63,7 +63,7 @@ internal static partial class PuzzleTests
     public static void CheckMatrixFileParallelPanels()
     {
         const int size = 1024;
-        using var a = new MatrixDraft(size, size); using var b = new MatrixDraft(size, size);
+        using var a = new MatrixDraft(size, size, fileBacked: true); using var b = new MatrixDraft(size, size, fileBacked: true);
         a.Matrix.InputStore!.Fill(0, a.CellCount, 3); b.Matrix.InputStore!.Fill(0, b.CellCount, 7);
         a.TrySetCell(size - 1, size - 1, long.MaxValue.ToString());
         b.TrySetCell(0, 0, long.MinValue.ToString());

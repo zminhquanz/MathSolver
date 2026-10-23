@@ -1,4 +1,5 @@
 using MathSolver.Models;
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace MathSolver.Services.QuestionBank;
@@ -6,8 +7,12 @@ namespace MathSolver.Services.QuestionBank;
 internal static class PercentageRemainingOpenMeaning
 {
     private static readonly TimeSpan Timeout=TimeSpan.FromMilliseconds(100);
-    private static bool Has(string text,string pattern)=>Regex.IsMatch(text,pattern,
-        RegexOptions.IgnoreCase|RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,Timeout);
+    // These are internal fixed role patterns, never patterns supplied by an LLM.
+    // The static Regex API's small shared cache churns across the bilingual
+    // rules and repeatedly rebuilds the non-backtracking automata.
+    private static readonly ConcurrentDictionary<string,Regex> Rules=new(StringComparer.Ordinal);
+    private static bool Has(string text,string pattern)=>Rules.GetOrAdd(pattern,static rule=>new Regex(rule,
+        RegexOptions.IgnoreCase|RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,Timeout)).IsMatch(text);
     private static bool Match(string text,string pattern)=>Has(Regex.Replace(text.Trim(),@"\s+"," ",
         RegexOptions.CultureInvariant|RegexOptions.NonBacktracking,Timeout).TrimEnd('.', '?', '!', ':').Trim(),@"\A(?:"+pattern+@")\z");
 

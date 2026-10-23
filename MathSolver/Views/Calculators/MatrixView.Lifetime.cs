@@ -22,8 +22,10 @@ public sealed partial class MatrixView
     {
         if (!CanTouchUi) return;
         _active = true; SetBusyState();
-        CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
-        CalculationAccelerationManager.AccelerationChanged += OnAccelerationChanged;
+        CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
+        CalculationAccelerationManager.AccelerationChanged += OnExecutionSettingsChanged;
+        CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;
+        CalculationThreadingManager.ThreadingChanged += OnExecutionSettingsChanged;
         if (_hostWindow is not null && !ReferenceEquals(_hostWindow, Window))
             _hostWindow.Destroying -= OnWindowClosing;
         _hostWindow = Window;
@@ -33,7 +35,8 @@ public sealed partial class MatrixView
     {
         _active = false; _version++; _work?.Cancel();
         if (_busy) _statusKey = "Cancelled";
-        CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
+        CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
+        CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;
         // Tab switches unload this view. Retain its result and closing subscription
         // so a cached, inactive tab still releases its backing file at window close.
     }
@@ -45,7 +48,8 @@ public sealed partial class MatrixView
         _failedReadDraft = null;
         if (_busy) _statusKey = "Cancelled";
         else ReleaseClosedResult();
-        CalculationAccelerationManager.AccelerationChanged -= OnAccelerationChanged;
+        CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
+        CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;
         if (_hostWindow is not null) _hostWindow.Destroying -= OnWindowClosing;
         _hostWindow = null;
     }
@@ -66,7 +70,7 @@ public sealed partial class MatrixView
         try { disposable.Dispose(); }
         catch (Exception error) { Debug.WriteLine(error); }
     }
-    private void OnAccelerationChanged(object? sender, EventArgs e)
+    private void OnExecutionSettingsChanged(object? sender, EventArgs e)
     {
         if (!CanTouchUi) return;
         int version = _version;

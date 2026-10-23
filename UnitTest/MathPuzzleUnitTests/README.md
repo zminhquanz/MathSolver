@@ -1,5 +1,36 @@
 # Math puzzle checks
 
+Filter `"Matrix input"`, `"Matrix paged"` and `"Matrix streaming import"` checks
+constant region compression, bitmap occupancy, copy-on-write snapshots, bounded
+input file/cache storage, streamed strict CSV parsing, exact arithmetic with paged
+panels and deterministic cleanup. The desktop-ceiling evidence group creates and
+fills constant 16384-square A+B without dense arrays; its uniform shortcut timing
+does not describe arbitrary-matrix multiplication speed or mobile device speed.
+
+Filter `"Matrix platform input limits"` checks the mobile 8192 and desktop
+benchmark 16384 input ceilings. CSV/whole-table and cell clipboard readers must
+reject overflow while reading, preserve boundary values, and reject invalid
+caller-provided caps. The UI applies the same platform limit to creation and all
+input routes; the reusable engine retains the desktop benchmark ceiling.
+
+Filter `"Matrix shared hardware threading"` runs the actual shared threading
+manager and application calculation runner, replacing only platform preferences
+with in-memory storage. It checks off/on/off settings across add/subtract/multiply,
+Scalar/SIMD, 1024-square and boundary sizes, uniform-scan workers and exact sample
+answers. Disabled threading must cap every matrix/verification plan to one worker;
+enabled threading retains size/tile/workspace limits. No native switch is automated.
+
+Filter `"Matrix cancellation outcome"` checks the non-throwing calculation path
+used by the UI: 20 cancellation cases across sequential/parallel verification,
+uniform shortcuts, dense add/subtract, blocked multiplication/elementwise work,
+and final publication. It observes first-chance cancellation exceptions, requires
+zero for expected stop requests, checks that partial files are deleted while the
+previous result remains readable, and verifies a new calculation can run next.
+One case stops a large, nonuniform multiplication from a separate thread after
+input verification, rather than cancelling synchronously in a progress callback.
+The explicit throwing `Calculate` API retains its cancellation contract. These
+tests do not automate native navigation or closing a MAUI window.
+
 Filter `"Matrix viewport"` checks the source-linked matrix selection/edit state and
 scrollbar geometry: first/second clicks, read-only results, invalid edits, cancel,
 Tab wrapping, matrix switching, both axes at 1024 × 1024, fitting tables and tiny
@@ -7,6 +38,14 @@ viewports. It also checks independent row/column sizes, resized header hit testi
 oversized cells and automatic scrollbar visibility (single-axis, coupled axes,
 exact fits, shrinking cells and growing the viewport). These checks do not launch
 MAUI or exercise native pointer/focus events.
+
+Filter `"Matrix paste memory"` checks the non-throwing paste preflight: a denied
+budget must return no staged draft, allocate neither full-sized clone and retain
+the source values. It observes first-chance memory exceptions, reproduces the
+reported 16384 × 16384 byte-budget refusal without allocating gigabyte buffers,
+and covers permitted scalar/rectangular pastes, blanks, zeros, bounds and
+cancellation. This is a source-linked test; it does not automate the native
+clipboard or MAUI UI.
 
 Filter `"Unit conversion"` exercises the real Formula → Units conversion engine:
 exact time/metric/speed/temperature fixtures, identity at decimal.MaxValue,
@@ -95,7 +134,8 @@ A filter that matches no group exits with a nonzero status.
 
 The command returns a nonzero exit code when any check fails. It needs no
 AI model, API key or unit-test package. Platform stubs let the shared math and
-storage code run outside MAUI. No benchmark is run by this test harness.
+storage code run outside MAUI. Matrix evidence groups print host allocation and
+timing samples; these do not replace measurements on Windows/Android devices.
 
 ## Primary curriculum and foundation skills
 

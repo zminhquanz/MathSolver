@@ -57,7 +57,7 @@ internal static class MatrixRecreation
 
     internal static MatrixCreationAttempt TryCreate(int aRows, int aColumns, int bRows, int bColumns,
         long releasedBytes, CancellationToken token = default, IProgress<double>? progress = null,
-        string? temporaryDirectory = null)
+        string? temporaryDirectory = null, bool? fileBacked = null)
     {
         ValidateDimension(aRows, nameof(aRows)); ValidateDimension(aColumns, nameof(aColumns));
         ValidateDimension(bRows, nameof(bRows)); ValidateDimension(bColumns, nameof(bColumns));
@@ -65,8 +65,8 @@ internal static class MatrixRecreation
         // Run on the worker, after the UI drops all old readers. Return unused
         // committed segments as well: an ordinary full GC can retain multi-GB
         // buffers' backing memory and make the fresh OS commit check refuse a retry.
-        long required = MatrixDraft.EstimateResidentBytes(aRows, aColumns)
-            + MatrixDraft.EstimateResidentBytes(bRows, bColumns);
+        long required = MatrixDraft.EstimateResidentBytes(aRows, aColumns, fileBacked)
+            + MatrixDraft.EstimateResidentBytes(bRows, bColumns, fileBacked);
         // Retrying after a canceled/refused creation has no live input models,
         // but unpublished large buffers may still await collection.
         if (releasedBytes >= CollectionThreshold || required >= CollectionThreshold)
@@ -77,10 +77,10 @@ internal static class MatrixRecreation
         MatrixDraft? a = null, b = null;
         try
         {
-            a = new MatrixDraft(aRows, aColumns, temporaryDirectory: temporaryDirectory);
+            a = new MatrixDraft(aRows, aColumns, fileBacked, temporaryDirectory);
             progress?.Report(.5);
             if (token.IsCancellationRequested) return new(canceled: true);
-            b = new MatrixDraft(bRows, bColumns, temporaryDirectory: temporaryDirectory);
+            b = new MatrixDraft(bRows, bColumns, fileBacked, temporaryDirectory);
             progress?.Report(1);
             if (token.IsCancellationRequested) return new(canceled: true);
             var attempt = new MatrixCreationAttempt(a, b, memory);

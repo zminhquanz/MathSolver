@@ -23,8 +23,17 @@ public static partial class MatrixEngine
 
     private static MatrixUniformScanResult? TryScanUniform(IntegerMatrix matrix, MatrixBackend maximumBackend,
         int maximumWorkers, CancellationToken token, IProgress<double>? progress)
-        => TryScanUniformCore(matrix.DenseData, matrix.IsFileBacked ? matrix : null,
+    {
+        if (token.IsCancellationRequested) return null;
+        if (matrix.TryGetUniformValue(out long constant))
+        {
+            progress?.Report(1);
+            return token.IsCancellationRequested ? null
+                : new(true, constant, new(MatrixBackend.Scalar, 0, 0, 0, 0));
+        }
+        return TryScanUniformCore(matrix.DenseData, matrix.DenseData is null ? matrix : null,
             maximumBackend, maximumWorkers, token, progress);
+    }
 
     private static MatrixUniformScanResult? TryScanUniformCore(long[]? values, IntegerMatrix? source,
         MatrixBackend maximumBackend, int maximumWorkers, CancellationToken token, IProgress<double>? progress)

@@ -22,7 +22,7 @@ internal static partial class PuzzleTests
         TestAssert.That(created.A is { Rows: size, Columns: size } && created.B is { Rows: size, Columns: size },
             "The actual 16384-square creation must produce both requested matrices, never the reset placeholder.");
         TestAssert.That(created.A!.CellCount == size * size && created.B!.MissingCount == size * size
-            && created.A.Matrix.IsFileBacked && created.B.Matrix.IsFileBacked && required < 12L * 1024 * 1024,
+            && created.A.Matrix.DenseData is null && created.B.Matrix.DenseData is null && required < 12L * 1024 * 1024,
             "Maximum inputs must have the exact shape with bounded disk/cache memory, not full arrays.");
         created.A.TrySetCell(0, 0, "-9223372036854775808");
         created.A.TrySetCell(size - 1, size - 1, "7");
@@ -62,7 +62,7 @@ internal static partial class PuzzleTests
     public static void CheckMatrixMaximumFileCalculation()
     {
         const int size = 16384;
-        using var attempt = MatrixRecreation.TryCreate(size, size, size, size, 0);
+        using var attempt = MatrixRecreation.TryCreate(size, size, size, size, 0, fileBacked: true);
         var a = attempt.A!; var b = attempt.B!;
         a.Matrix.InputStore!.Fill(0, a.CellCount, 3);
         b.Matrix.InputStore!.Fill(0, b.CellCount, 3);
@@ -83,7 +83,7 @@ internal static partial class PuzzleTests
     {
         GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, blocking: true, compacting: false);
         const int size = 8192;
-        MatrixDraft? a = new(size, size), b = new(size, size);
+        MatrixDraft? a = new(size, size, fileBacked: true), b = new(size, size, fileBacked: true);
         a.Matrix.InputStore!.Fill(0, a.CellCount, 1); b.Matrix.InputStore!.Fill(0, b.CellCount, 1);
         MatrixCalculation? c = MatrixEngine.Calculate(a.Matrix, b.Matrix, MatrixOperation.Multiply);
         TestAssert.That(c.GetValue(size - 1, size - 1) == size, "Old populated session must have a usable result/cache.");

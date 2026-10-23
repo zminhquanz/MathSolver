@@ -37,22 +37,22 @@ internal static partial class PuzzleTests
 
     public static void CheckMatrixPasteCells()
     {
-        var a = new MatrixDraft(2, 2);
+        using var a = new MatrixDraft(2, 2);
         a.TrySetCell(0, 0, "-12"); a.TrySetCell(0, 1, "9223372036854775807");
         a.TrySetCell(1, 1, "0");
-        var b = new MatrixDraft(4, 4); b.FillMissingWithZero(); b.TrySetCell(3, 3, "99");
+        using var b = new MatrixDraft(4, 4); b.FillMissingWithZero(); b.TrySetCell(3, 3, "99");
         var text = MatrixClipboardCodec.Create(2, 2, a.GetCellText)!.Text;
         var block = MatrixClipboardCodec.Read(text);
-        var pasted = b.WithPastedCells(1, 1, block);
+        using var pasted = b.WithPastedCells(1, 1, block);
         TestAssert.That(pasted.Rows == 4 && pasted.Columns == 4 && pasted.GetCellText(3, 3) == "99" && b.GetCellText(1, 1) == "0",
             "Pasting must stage a new draft, retain dimensions and preserve values outside the target rectangle.");
         TestAssert.That(pasted.GetCellText(1, 1) == "-12" && pasted.GetCellText(1, 2) == "9223372036854775807"
             && pasted.GetCellText(2, 1) == "" && pasted.GetCellText(2, 2) == "0" && pasted.MissingCount == 1,
             "A-to-B paste must preserve Int64 precision, empty cells and explicit zero.");
         var one = MatrixClipboardCodec.Read("42\r\n");
-        var cell = b.WithPastedCells(2, 3, one);
+        using var cell = b.WithPastedCells(2, 3, one);
         TestAssert.That(cell.GetCellText(2, 3) == "42" && cell.GetCellText(3, 3) == "99", "A single copied cell must paste into exactly the destination cell.");
-        var blank = b.WithPastedCells(0, 0, MatrixClipboardCodec.Read("\r\n"));
+        using var blank = b.WithPastedCells(0, 0, MatrixClipboardCodec.Read("\r\n"));
         TestAssert.That(blank.GetCellText(0, 0) == "" && blank.MissingCount == 1, "An empty copied cell must clear its destination.");
         TestAssert.Throws<MatrixInputException>(() => b.WithPastedCells(3, 3, block), "Out-of-bounds paste must be rejected atomically.");
         foreach (string invalid in new[] { "1\t2\r\n3", "1\tnope", "9223372036854775808", "1.5", "2\0" })
@@ -62,14 +62,15 @@ internal static partial class PuzzleTests
             TestAssert.That(!b.TrySetCell(3, 3, invalid) && b.GetCellText(3, 3) == "99", "Cell editing must retain its strict Int64 validation after sharing the paste parser.");
         using var cancelled = new CancellationTokenSource(); cancelled.Cancel();
         TestAssert.Throws<OperationCanceledException>(() => b.WithPastedCells(0, 0, block, cancelled.Token), "Cancelled paste must not publish a new draft.");
-        var edge = new MatrixDraft(1024, 1024).WithPastedCells(1023, 1023, one);
+        using var edgeSource = new MatrixDraft(1024, 1024);
+        using var edge = edgeSource.WithPastedCells(1023, 1023, one);
         TestAssert.That(edge.GetCellText(1023, 1023) == "42" && edge.MissingCount == 1024 * 1024 - 1, "Pasting into the final cell must work at the maximum matrix size.");
         Console.WriteLine("Checked single-cell A-to-B paste, partial rectangles, blanks, Int64 precision, bounds, validation, cancellation and 1024x1024 edges.");
     }
 
     public static void CheckMatrixPasteFillSelection()
     {
-        var original = new MatrixDraft(100, 100);
+        using var original = new MatrixDraft(100, 100);
         original.TrySetCell(0, 0, "99");
         original.TrySetCell(99, 99, "-7");
         var selection = new MatrixViewportState();
@@ -77,7 +78,7 @@ internal static partial class PuzzleTests
         selection.Select(70, 80); selection.ExtendSelection(10, 20);
         var range = selection.Selection;
         var one = MatrixClipboardCodec.Read("2\r\n");
-        var filled = original.WithPastedCells(range.Row, range.Column, range.Rows, range.Columns, one);
+        using var filled = original.WithPastedCells(range.Row, range.Column, range.Rows, range.Columns, one);
         for (int row = 0; row < 100; row++)
             for (int column = 0; column < 100; column++)
                 TestAssert.That(filled.GetCellText(row, column) == (selection.IsSelected(row, column) ? "2" : original.GetCellText(row, column)),
@@ -85,16 +86,16 @@ internal static partial class PuzzleTests
         TestAssert.That(filled.MissingCount == 10000 - range.Rows * range.Columns - 2 && original.MissingCount == 9998,
             "Filling must update the entered-cell count without mutating the original draft.");
 
-        var all = original.WithPastedCells(0, 0, 100, 100, MatrixClipboardCodec.Read("-9223372036854775808\r\n"));
+        using var all = original.WithPastedCells(0, 0, 100, 100, MatrixClipboardCodec.Read("-9223372036854775808\r\n"));
         TestAssert.That(all.MissingCount == 0 && all.GetCellText(0, 0) == "-9223372036854775808" && all.GetCellText(99, 99) == "-9223372036854775808",
             "Select-all paste must fill all 10,000 cells exactly, including Int64 minimum.");
-        var cleared = all.WithPastedCells(range.Row, range.Column, range.Rows, range.Columns, MatrixClipboardCodec.Read("\r\n"));
+        using var cleared = all.WithPastedCells(range.Row, range.Column, range.Rows, range.Columns, MatrixClipboardCodec.Read("\r\n"));
         TestAssert.That(cleared.MissingCount == range.Rows * range.Columns && cleared.GetCellText(70, 80) == "" && cleared.GetCellText(0, 0) == "-9223372036854775808",
             "Pasting a blank cell must clear the selected rectangle without changing surrounding cells.");
-        var zeros = original.WithPastedCells(0, 0, 1, 100, MatrixClipboardCodec.Read("0\r\n"));
+        using var zeros = original.WithPastedCells(0, 0, 1, 100, MatrixClipboardCodec.Read("0\r\n"));
         TestAssert.That(zeros.GetCellText(0, 99) == "0" && zeros.MissingCount == 9899,
             "A one-row range must be filled with explicit zeros, not left empty.");
-        var columnFill = original.WithPastedCells(0, 99, 100, 1, one);
+        using var columnFill = original.WithPastedCells(0, 99, 100, 1, one);
         TestAssert.That(columnFill.GetCellText(99, 99) == "2" && columnFill.GetCellText(0, 99) == "2", "One-column filling must reach the final row.");
         TestAssert.Throws<MatrixInputException>(() => original.WithPastedCells(99, 99, 2, 2, one), "Out-of-bounds fills must be rejected atomically.");
         TestAssert.Throws<MatrixInputException>(() => original.WithPastedCells(0, 0, 0, 1, one), "Empty destination shapes must be rejected.");

@@ -8,12 +8,13 @@ internal static partial class PuzzleTests
     public static void CheckMatrixFileStreamingImport()
     {
         using var workspace = TestWorkspace.Temporary("file-input-import");
-        string row = string.Join(',', Enumerable.Repeat("7", 1024)) + "\n";
+        // Nonuniform data must exercise physical storage; constant blocks use metadata only.
+        string row = string.Join(',', Enumerable.Repeat("7", 1023).Append("8")) + "\n";
         using (var reader = new MatrixRepeatingRows(row, 1025))
         using (var matrix = MatrixTextCodec.Read(reader, temporaryDirectory: workspace.DirectoryPath))
         {
             TestAssert.That(matrix.IsFileBacked && matrix.Rows == 1025 && matrix.Columns == 1024
-                && matrix.GetValue(1024, 1023) == 7 && matrix.ResidentBytes < 6L * 1024 * 1024,
+                && matrix.GetValue(1024, 1023) == 8 && matrix.ResidentBytes < 6L * 1024 * 1024,
                 "Large CSV input must stream into a bounded disk store with its actual final shape.");
             TestAssert.That(Directory.GetFiles(workspace.DirectoryPath).Length == 1,
                 "A completed import must retain only its owned input file, not its staging spool.");

@@ -10,6 +10,8 @@ namespace MathSolver.Services;
 /// chạy song song với ngân sách theo toàn bộ bộ xử lý logic. Engine lũy thừa
 /// tự chia ngân sách này thành hai nhánh để tận dụng cả hai luồng SMT của mỗi
 /// nhân, rồi dùng lại toàn bộ ngân sách cho phép nhân ghép cuối.
+/// Ma trận đọc cùng ngân sách cho mỗi phép tính, gồm cả bước quét dữ liệu;
+/// khi tắt, ma trận lớn cũng chỉ dùng một worker, độc lập với lựa chọn SIMD.
 /// </summary>
 public static class CalculationThreadingManager
 {

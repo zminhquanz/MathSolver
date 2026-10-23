@@ -13991,6 +13991,47 @@
         {"Id":"notebooks","Relation":"known-whole-find-percentage-part","Owner":"Sunrise Stationery","WholeUnit":"notebooks","WholeNoun":"notebooks","PartNoun":"squared notebooks","PartUnit":"squared notebooks","Capacity":1000,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"},
         {"Id":"trees","Relation":"known-whole-find-percentage-part","Owner":"Harmony School Garden","WholeUnit":"trees","WholeNoun":"trees","PartNoun":"orange trees","PartUnit":"orange trees","Capacity":500,"Whole":"{v0} has {f0} {v1}.","Share":"{f1} of those {v2} are {v3}.","Question":"How many {v4} does {v0} have?","Lead":"Number of {v4}"}
     ],
+    "SumRatioOpen.Contexts": [
+      {
+        "Id": "books",
+        "SmallerOwner": "Lan",
+        "LargerOwner": "An",
+        "Unit": "books",
+        "Capacity": 2000,
+        "Total": "Together, {v0} and {v1} have {f0} {v2}.",
+        "Ratio": "The number of {v2} belonging to {v0} is {f1} of the number of {v2} belonging to {v1}.",
+        "Question": "How many {v2} do {v0} and {v1} have respectively?",
+        "PartLead": "Number of {v2} in each equal part",
+        "SmallerLead": "Number of {v2} for {v0}",
+        "LargerLead": "Number of {v2} for {v1}"
+      },
+      {
+        "Id": "pens",
+        "SmallerOwner": "Minh",
+        "LargerOwner": "Hoa",
+        "Unit": "pens",
+        "Capacity": 2000,
+        "Total": "Together, {v0} and {v1} have {f0} {v2}.",
+        "Ratio": "The number of {v2} belonging to {v0} is {f1} of the number of {v2} belonging to {v1}.",
+        "Question": "How many {v2} do {v0} and {v1} have respectively?",
+        "PartLead": "Number of {v2} in each equal part",
+        "SmallerLead": "Number of {v2} for {v0}",
+        "LargerLead": "Number of {v2} for {v1}"
+      },
+      {
+        "Id": "notebooks",
+        "SmallerOwner": "Binh",
+        "LargerOwner": "Mai",
+        "Unit": "notebooks",
+        "Capacity": 2000,
+        "Total": "Together, {v0} and {v1} have {f0} {v2}.",
+        "Ratio": "The number of {v2} belonging to {v0} is {f1} of the number of {v2} belonging to {v1}.",
+        "Question": "How many {v2} do {v0} and {v1} have respectively?",
+        "PartLead": "Number of {v2} in each equal part",
+        "SmallerLead": "Number of {v2} for {v0}",
+        "LargerLead": "Number of {v2} for {v1}"
+      }
+    ],
     "SumDifferenceOpen.Contexts": [
       {
         "Id": "notebooks",

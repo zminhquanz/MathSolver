@@ -72,28 +72,15 @@ public sealed partial class MatrixView
         { if (CanPublish(version)) Status("Cancelled"); return; }
         if (!CanPublish(version)) return;
         if (_work?.IsCancellationRequested != false) { Status("Cancelled"); return; }
-        _editorMatrix = -1;
-        ReplaceInput(target, matrix);
+        PublishDrafts(target == 0 ? matrix : _a, target == 1 ? matrix : _b, target, "Imported");
         transfer.Detach();
-        if (_a is { } a) { _aRows.Text = a.Rows.ToString(); _aColumns.Text = a.Columns.ToString(); }
-        if (_b is { } b) { _bRows.Text = b.Rows.ToString(); _bColumns.Text = b.Columns.ToString(); }
-        _selected = target; InvalidateResult(); RefreshSource(); Status("Imported");
     }
 
     private static MatrixDraft ReadImportedDraft(TextReader reader, CancellationToken token)
     {
         string directory = Path.Combine(FileSystem.CacheDirectory, "matrix-inputs");
         Directory.CreateDirectory(directory);
-        return new MatrixDraft(MatrixTextCodec.Read(reader, token, directory));
-    }
-
-    private void ReplaceInput(int target, MatrixDraft matrix)
-    {
-        var old = target == 0 ? _a : _b;
-        // Detach any grid reader before disposing the replaced backing file.
-        _viewport.DetachSourceReader();
-        if (target == 0) _a = matrix; else _b = matrix;
-        DisposeOutcome(old);
+        return new MatrixDraft(MatrixTextCodec.Read(reader, token, directory, maximumDimension: InputDimensionLimit));
     }
 
     private async void OnExport(object? sender, EventArgs e)

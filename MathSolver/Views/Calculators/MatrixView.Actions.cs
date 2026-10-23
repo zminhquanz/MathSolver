@@ -217,14 +217,14 @@ public sealed partial class MatrixView
         }
     }
     private static bool TryDimension(string? text, out int value) =>
-        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value is >= 1 and <= MatrixLimits.MaximumDimension;
+        int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value >= 1 && value <= InputDimensionLimit;
 
     private async void OnCreate(object? sender, EventArgs e)
     {
         if (_busy) return;
         if (!TryDimension(_aRows.Text, out int ar) || !TryDimension(_aColumns.Text, out int ac)
             || !TryDimension(_bRows.Text, out int br) || !TryDimension(_bColumns.Text, out int bc))
-        { ReportError("InvalidDimensions"); return; }
+        { ReportError("InvalidDimensions", InputDimensionLimit); return; }
         int version = _version;
         if ((_a?.HasAnyValues == true || _b?.HasAnyValues == true || _result is not null) && !await ConfirmAsync(T("ReplaceAll"))) return;
         if (!CanPublish(version) || _busy) return;
@@ -273,6 +273,67 @@ public sealed partial class MatrixView
             Status("Creating");
         }
     }
+    // Keep the existing inputs and result alive until the new draft can be read
+    // and displayed. The caller owns staged drafts until this method returns.
+    private void PublishDrafts(MatrixDraft? a, MatrixDraft? b, int selection, string status, Action? afterRefresh = null)
+    {
+        ArgumentNullException.ThrowIfNull(a);
+        ArgumentNullException.ThrowIfNull(b);
+        var oldA = _a; var oldB = _b; int oldSelection = _selected;
+        var oldResult = _result; double? oldElapsed = _elapsed;
+        var oldViewportResult = _viewportResult;
+        var oldFailedReadDraft = _failedReadDraft; var oldFailedReadResult = _failedReadResult;
+        var oldDimensions = (_aRows.Text, _aColumns.Text, _bRows.Text, _bColumns.Text);
+        _editorMatrix = -1; _a = a; _b = b; _selected = selection;
+        _result = null; _elapsed = null;
+        _viewportResult = null; _failedReadDraft = null; _failedReadResult = null;
+        try
+        {
+            RefreshExecution(); RefreshSource();
+            afterRefresh?.Invoke();
+            if (ReferenceEquals(_failedReadDraft, a) || ReferenceEquals(_failedReadDraft, b))
+                throw new IOException("The staged matrix input could not be read during publication.");
+            _aRows.Text = a.Rows.ToString(CultureInfo.InvariantCulture);
+            _aColumns.Text = a.Columns.ToString(CultureInfo.InvariantCulture);
+            _bRows.Text = b.Rows.ToString(CultureInfo.InvariantCulture);
+            _bColumns.Text = b.Columns.ToString(CultureInfo.InvariantCulture);
+            Status(status);
+        }
+        catch
+        {
+            _a = oldA; _b = oldB; _selected = oldSelection;
+            _result = oldResult; _elapsed = oldElapsed;
+            _viewportResult = oldViewportResult;
+            _failedReadDraft = oldFailedReadDraft; _failedReadResult = oldFailedReadResult;
+            try
+            {
+                (_aRows.Text, _aColumns.Text, _bRows.Text, _bColumns.Text) = oldDimensions;
+                RefreshSource(); RefreshExecution();
+            }
+            catch (Exception error) { Debug.WriteLine(error); }
+            throw;
+        }
+        DisposeOutcome(oldResult);
+        if (!ReferenceEquals(oldA, a)) DisposeOutcome(oldA);
+        if (!ReferenceEquals(oldB, b)) DisposeOutcome(oldB);
+    }
+
+    private async void OnFillMissing(object? sender, EventArgs e)
+    {
+        if (_busy || !HasInputs || _selected == 2 || !CanTouchUi || !_active || !CommitPendingCell()) return;
+        int target = _selected;
+        var original = CurrentDraft;
+        await RunWorkAsync((token, _) => Task.Run(() =>
+            new MatrixDraftTransfer(original.WithMissingFilledWithZero(token)), token), transfer =>
+        {
+            using var owned = transfer;
+            var draft = transfer.Draft ?? throw new InvalidOperationException("Fill ownership has already transferred.");
+            PublishDrafts(target == 0 ? draft : _a, target == 1 ? draft : _b, target, "Created");
+            transfer.Detach();
+            return Task.CompletedTask;
+        }, "Creating");
+    }
+
     private async Task<bool> ConfirmAsync(string message, string acceptKey = "Confirm", string cancelKey = "Cancel", string titleKey = "Title")
     {
         Element? parent = this;
@@ -304,7 +365,9 @@ public sealed partial class MatrixView
         }
     }
     private string FormatError() => F(_errorKey!, _errorArguments.Select(argument =>
-        argument is MatrixInputError code ? T("Error." + code) : argument).ToArray());
+        argument is MatrixInputError code
+            ? code == MatrixInputError.TooLarge ? F("Error.TooLarge", InputDimensionLimit) : T("Error." + code)
+            : argument).ToArray());
     private void ReportError(string key, params object[] arguments)
     {
         _statusKey = null; _errorKey = key; _errorArguments = arguments;
@@ -356,8 +419,8 @@ public sealed partial class MatrixView
         if (key != "Created" || _a is not { } a || _b is not { } b) return T(key);
         string value = F("CreatedShape", a.Rows, a.Columns, b.Rows, b.Columns);
         if (a.Matrix.IsFileBacked || b.Matrix.IsFileBacked)
-            value += "\n" + F("InputDiskStorage", ((a.Matrix.InputStore?.CacheLimitBytes ?? 0)
-                + (b.Matrix.InputStore?.CacheLimitBytes ?? 0)) / (1024 * 1024));
+            value += "\n" + F("InputDiskStorage", (a.Matrix.CacheLimitBytes
+                + b.Matrix.CacheLimitBytes) / (1024 * 1024));
         return value;
     }
 
@@ -382,7 +445,7 @@ public sealed partial class MatrixView
                 {
                     TemporaryDirectory = Path.Combine(FileSystem.CacheDirectory, "matrix-results")
                 };
-                return MatrixEngine.TryCalculate(a, b, operation, backend, token, progress, executionOptions: options,
+                return MatrixCalculationRunner.TryCalculate(a, b, operation, backend, token, progress, executionOptions: options,
                     calculationProgress: calculationProgress);
             }
             finally { timer.Stop(); }

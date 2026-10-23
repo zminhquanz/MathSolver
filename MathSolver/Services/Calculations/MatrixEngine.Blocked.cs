@@ -153,9 +153,15 @@ public static partial class MatrixEngine
             progress.Activity(MatrixCalculationStage.Packing);
             long start = Stopwatch.GetTimestamp();
             for (int i = 0; i < height; i++)
+            {
+                if (token.IsCancellationRequested) return 0;
                 a.ReadRow(row + i, k, workspace.Left.AsSpan(i * depth, depth));
+            }
             for (int d = 0; d < depth; d++)
+            {
+                if (token.IsCancellationRequested) return 0;
                 b.ReadRow(k + d, column, workspace.SourceRight.AsSpan(d * width, width));
+            }
             // Transpose small cache-local squares: source reads are contiguous within each square.
             for (int d0 = 0; d0 < depth; d0 += 8)
             for (int j0 = 0; j0 < width; j0 += 8)

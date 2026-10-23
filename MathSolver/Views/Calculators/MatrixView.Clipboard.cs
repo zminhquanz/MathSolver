@@ -73,25 +73,36 @@ public sealed partial class MatrixView
             token.ThrowIfCancellationRequested();
             var value = await Task.Run(() =>
             {
-                var block = MatrixClipboardCodec.Read(text ?? string.Empty, token);
+                var block = MatrixClipboardCodec.Read(text ?? string.Empty, token, maximumDimension: InputDimensionLimit);
                 bool singleCell = block.Rows == 1 && block.Columns == 1;
                 int rows = singleCell ? destination.Rows : block.Rows;
                 int columns = singleCell ? destination.Columns : block.Columns;
-                var draft = original.WithPastedCells(destination.Row, destination.Column, rows, columns, block, token, progress);
-                return new MatrixDraftTransfer(draft, rows, columns);
+                var attempt = original.TryWithPastedCells(destination.Row, destination.Column, rows, columns, block, token);
+                return new PastedCells(attempt.Draft is { } draft ? new MatrixDraftTransfer(draft, rows, columns) : null,
+                    attempt.Memory);
             }, token);
             progress.Report(1);
             return value;
         }, pasted =>
         {
             using var owned = pasted;
-            _editorMatrix = -1;
-            ReplaceInput(target, pasted.Draft ?? throw new InvalidOperationException("Paste ownership has already transferred."));
-            pasted.Detach();
-            InvalidateResult(); RefreshSource();
-            _viewport.SelectRange(destination.Row, destination.Column, pasted.Rows, pasted.Columns);
-            Status("PastedCells");
+            var transfer = pasted.Transfer;
+            if (transfer?.Draft is not { } draft)
+            {
+                const double bytesPerGiB = 1024d * 1024 * 1024;
+                ReportError("PasteMemoryUnavailable", pasted.Memory.RequiredBytes / bytesPerGiB,
+                    pasted.Memory.AvailableBytes / bytesPerGiB);
+                return Task.CompletedTask;
+            }
+            PublishDrafts(target == 0 ? draft : _a, target == 1 ? draft : _b, target, "PastedCells",
+                () => _viewport.SelectRange(destination.Row, destination.Column, transfer.Rows, transfer.Columns));
+            transfer.Detach();
             return Task.CompletedTask;
         }, "PastingCells");
+    }
+
+    private sealed record PastedCells(MatrixDraftTransfer? Transfer, MatrixMemoryCheck Memory) : IDisposable
+    {
+        public void Dispose() => Transfer?.Dispose();
     }
 }

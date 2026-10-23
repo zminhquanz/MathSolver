@@ -36,11 +36,19 @@ public sealed class IntegerMatrix : IDisposable
     public int Columns { get; }
     public int CellCount => Rows * Columns;
     internal MatrixInputStore? InputStore { get; }
-    internal long[]? DenseData => _data;
-    public bool IsFileBacked => InputStore is not null;
-    public long ResidentBytes => Volatile.Read(ref _disposed) != 0 ? 0 : InputStore?.ResidentBytes ?? (long)CellCount * sizeof(long);
-    public long CachedBytes => InputStore?.CachedBytes ?? 0;
-    public string? StoragePath => InputStore?.FilePath;
+    internal MatrixInputStorage? Storage { get; }
+    internal IntegerMatrix(MatrixInputStorage storage)
+    {
+        ArgumentNullException.ThrowIfNull(storage);
+        Rows = storage.Rows; Columns = storage.Columns; Storage = storage;
+    }
+    public long[]? DenseData => _data;
+    public bool IsFileBacked => InputStore is not null || (Storage?.IsFileBacked ?? false);
+    public long ResidentBytes => Volatile.Read(ref _disposed) != 0 ? 0 : InputStore?.ResidentBytes ?? Storage?.ResidentBytes ?? (long)CellCount * sizeof(long);
+    public long StoredBytes => InputStore?.StoredBytes ?? Storage?.StoredBytes ?? (long)CellCount * sizeof(long);
+    public long CachedBytes => InputStore?.CachedBytes ?? Storage?.CachedBytes ?? 0;
+    public long CacheLimitBytes => InputStore?.CacheLimitBytes ?? Storage?.CacheLimitBytes ?? 0;
+    public string? StoragePath => InputStore?.FilePath ?? Storage?.StoragePath;
     /// <summary>Row-major mutable input. Callers must not edit it during Calculate.</summary>
     public long[] Data
     {
@@ -57,7 +65,7 @@ public sealed class IntegerMatrix : IDisposable
         if ((uint)row >= (uint)Rows) throw new ArgumentOutOfRangeException(nameof(row));
         if ((uint)column >= (uint)Columns) throw new ArgumentOutOfRangeException(nameof(column));
         int index = row * Columns + column;
-        return InputStore?.Read(index) ?? _data![index];
+        return InputStore?.Read(index) ?? Storage?.GetValue(index) ?? _data![index];
     }
 
     public void ReadValues(int start, Span<long> destination)
@@ -65,7 +73,17 @@ public sealed class IntegerMatrix : IDisposable
         ThrowIfDisposed();
         if (start < 0 || start > CellCount - destination.Length) throw new ArgumentOutOfRangeException(nameof(start));
         if (InputStore is { } store) store.CopyValues(start, destination);
+        else if (Storage is { } storage) storage.CopyTo(start, destination);
         else _data.AsSpan(start, destination.Length).CopyTo(destination);
+    }
+
+    public void CopyRowTo(int row, int column, Span<long> destination) => ReadRow(row, column, destination);
+
+    public bool TryGetUniformValue(out long value)
+    {
+        ThrowIfDisposed();
+        value = 0;
+        return Storage is not null && Storage.TryGetUniformValue(out value);
     }
 
     public void ReadRow(int row, int column, Span<long> destination)
@@ -81,7 +99,7 @@ public sealed class IntegerMatrix : IDisposable
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0) return;
-        try { InputStore?.Dispose(); }
+        try { InputStore?.Dispose(); Storage?.Dispose(); }
         finally { _data = null; }
     }
 }
