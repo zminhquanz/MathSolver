@@ -10,6 +10,21 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--motion-open","--motion-open-model"],"--motion-open | --motion-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await MotionOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,MotionOpenTests.NativeCases());
+        },args=>args is ["--motion-open"] or ["--motion-open-model",_] or ["--motion-open-model",_,_]),
+        new(["--unitary-groups-open","--unitary-groups-open-model"],"--unitary-groups-open | --unitary-groups-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await UnitaryGroupsOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,UnitaryGroupsOpenTests.NativeCases());
+        },args=>args is ["--unitary-groups-open"] or ["--unitary-groups-open-model",_] or ["--unitary-groups-open-model",_,_]),
+        new(["--unitary-total-open","--unitary-total-open-model"],"--unitary-total-open | --unitary-total-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await UnitaryTotalOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,UnitaryTotalOpenTests.NativeCases());
+        },args=>args is ["--unitary-total-open"] or ["--unitary-total-open-model",_] or ["--unitary-total-open-model",_,_]),
         new(["--difference-ratio-open","--difference-ratio-open-model"],"--difference-ratio-open | --difference-ratio-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await DifferenceRatioOpenTests.RunAsync();

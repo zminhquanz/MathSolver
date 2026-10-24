@@ -63,7 +63,7 @@ internal static class NarrativeDepthTests
         foreach (var language in new[] { AppLanguage.Vietnamese, AppLanguage.English })
         foreach (int variant in ReasoningStoryCatalogue.Variants(BankQuestionFamily.Proportion, tier))
         foreach (string id in ProportionQuizGenerator.NarrativeIds((ProportionQuizType)variant, tier, language)
-            .Where(id => int.Parse(id.Split('.').Last()) >= 48))
+            .Where(id => int.TryParse(id.Split('.').Last(),out int suffix) && suffix >= 48))
         {
             Verify(ReasoningStoryCatalogue.Create(BankQuestionFamily.Proportion, variant, tier, language, new(73), id));
             cases++;

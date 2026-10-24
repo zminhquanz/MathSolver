@@ -32,3 +32,12 @@ Lượt thật gồm ba bối cảnh × hai ngôn ngữ, temperature 0,5. Giữ 
 cho mỗi lượt; log mọi lần thử, đọc riêng chất lượng câu và so sánh với xác minh
 tự động. Báo cáo, thời gian, tốc độ, độ trùng và phát lại đặt trong thư mục
 verification ở trên. SQLite test tách khỏi ngân hàng người dùng.
+
+Lượt củng cố ngày 24/10/2026 dùng thư mục mới
+`artifacts/verification/difference-ratio-editorial/native-final`, pipeline
+`difference-ratio-editorial-v2`. Hướng dẫn hỏi rõ từng người, giữ chữ “của”
+trong liên kết sở hữu Việt và chủ ngữ/động từ đầy đủ trong tiếng Anh. Riêng
+prompt hiệu–tỉ dùng mô tả đồ vật đếm được thay tên đồ vật/profile cụ thể để
+giảm việc điền từ ngoài biến; List<>/schema và dữ kiện thực vẫn giữ nguyên.
+Grammar tiếp tục mở câu chữ; câu gượng không được tự chuẩn hóa thành câu đúng.
+Đối chiếu bằng chứng cũ là audit khác phiên bản, tách khỏi lượt AI sinh mới.

@@ -27,21 +27,27 @@ internal static class DifferenceRatioOpenCatalogue
     }
     internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""
         Viết đề hiệu–tỉ ngắn, tự nhiên cho học sinh tiểu học. Ví dụ chỉ tham khảo; được đổi cách mở đầu và cấu trúc câu.
-        Hai người có cùng loại đồ vật. {v1} có nhiều hơn {v0} một lượng {f0} {v2}; đây là hiệu, không phải tổng.
+        Hai người có cùng loại đồ vật. {v1} có nhiều hơn {v0} {f0} {v2}; đây là hiệu.
         Số {v2} của {v0} bằng {f1} số {v2} của {v1}. Phân số thuộc lượng của {v1}, không thuộc tổng hay hiệu.
-        Hỏi rõ số đồ vật riêng của từng người. Không chỉ hỏi chung cả hai, hỏi tổng hoặc hỏi hiệu.
+        Gắn số đồ vật với người sở hữu bằng chữ của, ví dụ số {v2} của {v0}, số của {v1}.
+        Hỏi rõ từng người: {v0} có bao nhiêu {v2} và {v1} có bao nhiêu? Hoặc hỏi số của hai người lần lượt là bao nhiêu.
         Giữ nguyên các biến và số lần xuất hiện trong từng trường. {f1} đã chứa toàn bộ phân số. Không điền tên, số hoặc đồ vật cụ thể.
-        Câu dẫn chỉ gọi số đồ vật ứng với mỗi phần, rồi số của {v0}, rồi số của {v1}; không viết phép tính hay đáp án.
+        Câu dẫn là tên đại lượng: Số {v2} ứng với mỗi phần, Số {v2} của {v0}, Số {v2} của {v1}. Không thêm lời yêu cầu tính hay tìm, phép tính hoặc đáp án.
         Không thêm tặng, nhận, thay đổi số lượng hoặc điều kiện. Mỗi trường một câu ngắn; dữ kiện kết thúc bằng dấu chấm, câu hỏi bằng dấu hỏi. Chỉ trả JSON.
         """:"""
         Write a short, natural difference-and-ratio word problem for primary pupils. The example is a reference; vary the opening and sentence structure.
         {v1} has {f0} more {v2} than {v0}. This is the difference, not a combined total.
         The number of {v2} owned by {v0} equals {f1} of the number of {v2} owned by {v1}. Keep the ratio direction and its base owner.
-        Ask explicitly for each owner's separate count, using each/respectively or two separate questions. Do not ask only for a count for both, a total or a difference.
+        Ask how many items each person has. Keep each person linked to their own item count with a complete subject and verb.
+        A clear question is: How many {v2} does {v0} have, and how many does {v1} have? Another is: How many {v2} does each of {v0} and {v1} have?
+        Prefer simple has/have and number/count wording for counted objects. Keep every ownership link explicit in both facts and the question.
         Preserve each field's placeholders and multiplicities. {f1} already contains the whole fraction. All names, counts and item names come from placeholders; do not fill them in.
-        Headings name the count per equal ratio part, then {v0}'s count, then {v1}'s count. No calculation or answer.
+        Use noun-phrase headings: Number of {v2} in each equal part, Number of {v2} for {v0}, Number of {v2} for {v1}. No imperative, calculation or answer.
         No transfers, changes or extra conditions. One short sentence per field; facts end in periods, the question in a question mark. Return only JSON.
         """;
     internal static string PromptRelation(BasicQuestionContract c)=>
         "relation="+DifferenceRatioPilot.Relation+"; f0=larger-minus-smaller difference; f1=smaller/larger fraction; v0=smaller owner; v1=larger owner; v2=common counted unit. Find both counts, labeled by owner. C# owns all numbers, arithmetic and answers. Write new prose; keep these roles.";
+    internal static string ContextHint(AppLanguage language)=>language==AppLanguage.Vietnamese
+        ? "Hai người sở hữu đồ vật đếm được cùng loại. Dùng {v0}, {v1} làm tên người và {v2} làm đơn vị đồ vật; các giá trị được ứng dụng điền sau."
+        : "Two people own counted items of the same kind. Use {v0} and {v1} for the people and {v2} for the counted-item unit; the app fills these values later.";
 }

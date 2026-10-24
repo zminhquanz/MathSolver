@@ -43,4 +43,5 @@ public sealed record MotionQuizContract(
     // Actors are bound independently from numeric facts; AI cannot swap the
     // leading/trailing travellers or replace the watercraft with a road vehicle.
     public IReadOnlyList<string> NarrativeActors { get; init; } = [];
+    public string? NarrativeId { get; init; }
 }

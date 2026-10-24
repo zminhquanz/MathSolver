@@ -5,18 +5,33 @@ namespace MathSolver.Services.QuestionBank;
 internal sealed class ReasoningStoryCycle
 {
     private readonly Dictionary<(BankQuestionFamily, int, CurriculumTier, AppLanguage), Queue<string>> _recent = [];
+    private readonly Dictionary<(CurriculumTier,AppLanguage),int> _motionRotation = [];
 
     public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
         IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
     {
         var key = (family, variant, tier, language);
+        string? motionRelation=null;
+        if(creativeProse&&family==BankQuestionFamily.Motion&&variant==(int)MotionQuizType.Basic)
+        {
+            var relations=MotionOpenPilot.Relations(language).OrderBy(r=>r.Kind).ToArray();
+            _motionRotation.TryGetValue((tier,language),out int cursor);
+            motionRelation=relations[cursor%relations.Length].Id;
+            _motionRotation[(tier,language)]=(cursor+1)%relations.Length;
+        }
         if (!_recent.TryGetValue(key, out var history)) _recent[key] = history = new();
         BasicQuestionContract? best = null;
         int bestCount = int.MaxValue;
         for (int attempt = 0; attempt < 12; attempt++)
         {
-            var profiles=creativeProse && family==BankQuestionFamily.Decimal
+            var profiles=creativeProse && family==BankQuestionFamily.Motion&&variant==(int)MotionQuizType.Basic
+                ? MotionOpenPilot.Profiles(language).Where(id=>id.StartsWith(MotionOpenPilot.Prefix+motionRelation+"/",StringComparison.Ordinal)).ToArray()
+                : creativeProse && family==BankQuestionFamily.Decimal
                 ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
+                : family==BankQuestionFamily.Proportion && variant==(int)ProportionQuizType.UnitaryGroupCount
+                    ? UnitaryGroupsPilot.Profiles(language).ToArray()
+                : creativeProse && family==BankQuestionFamily.Proportion && variant==(int)ProportionQuizType.Direct
+                    ? UnitaryTotalPilot.Profiles(language).ToArray()
                 : family==BankQuestionFamily.Time&&SameMonthCalendarPilot.IsType((ElementaryQuizType)variant)
                     ? SameMonthCalendarPilot.ProfilesForType(language,variant).ToArray()
                 : family==BankQuestionFamily.Time&&variant==(int)OvernightTimePilot.Type

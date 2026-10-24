@@ -112,6 +112,7 @@ public partial class MathPuzzlePage
             {
                 ProportionQuizType.Direct => DirectProportionButton,
                 ProportionQuizType.Inverse => InverseProportionButton,
+                    ProportionQuizType.UnitaryGroupCount => UnitaryGroupCountButton,
                 _ => MixedProportionButton
             }).Text);
         if (ProblemOperationPanel.IsVisible)

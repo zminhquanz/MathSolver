@@ -28,7 +28,7 @@ internal static class DifferenceRatioOpenMeaning
         string owners=@"(?:\{v0\} và \{v1\}|\{v1\} và \{v0\})",enOwners=@"(?:\{v0\} and \{v1\}|\{v1\} and \{v0\})";
         string Count(int i)=>@"(?:(?:the )?(?:number|count) of \{v2\} (?:(?:belonging to|owned by|held by|for) "+Owner(i)
             +@"|(?:that|which) "+Owner(i)+@" (?:has|owns|possesses|holds))|"+Owner(i)+@"['’]s (?:number|count) of \{v2\})";
-        string ViCount(int i)=>@"(?:số|số lượng) \{v2\} (?:của|thuộc về) "+Owner(i);
+        string ViCount(int i)=>@"(?:số|số lượng) \{v2\} (?:(?:của|thuộc về) "+Owner(i)+"|mà "+Owner(i)+" có)";
         bool Ratio(int numeratorOwner,int denominatorOwner)=>Proof(d.Facts![1].Text,
             ViCount(numeratorOwner)+@" (?:bằng|là) \{f1\} "+ViCount(denominatorOwner)
                 +"|"+Owner(numeratorOwner)+@" có số \{v2\} bằng \{f1\} số \{v2\} của "+Owner(denominatorOwner),
@@ -49,12 +49,12 @@ internal static class DifferenceRatioOpenMeaning
         if(Difference(0,1)||Ratio(1,0)||total||individual||wrongTarget||increment||transfer)
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"Direct difference direction, ratio ownership/base or separate-owner target changed.");
         string Pair(int first,int second)=>@"how many \{v2\} does "+Owner(first)+@" (?:have|possess|hold|own),? and how many does "+Owner(second)+@" (?:have|possess|hold|own)";
-        bool question=Proof(d.Question,@"(?:hỏi )?số \{v2\} của "+owners+@" lần lượt là bao nhiêu|(?:hỏi )?\{v0\} có bao nhiêu \{v2\}, \{v1\} có bao nhiêu",
+        bool question=Proof(d.Question,@"(?:hỏi )?số \{v2\} của "+owners+@" lần lượt là bao nhiêu|(?:hỏi )?\{v0\} có bao nhiêu \{v2\}(?:,| và) \{v1\} có bao nhiêu",
             @"how many \{v2\} do "+enOwners+@" (?:have|possess|hold|own) (?:each|respectively)|how many \{v2\} does each of "+enOwners+@" (?:have|possess|hold|own)|"+Pair(0,1)+"|"+Pair(1,0));
         bool PartLead()=>Proof(d.SolutionLeads![0].Text,@"số \{v2\} (?:ứng với|trong) mỗi phần",
             @"(?:the )?(?:number|count) of \{v2\} (?:in|per) (?:each|one) equal (?:part|share|portion)");
         bool Lead(int index,int owner)=>Proof(d.SolutionLeads![index].Text,@"(?:số|số lượng) \{v2\} của "+Owner(owner),
-            @"(?:the )?(?:number|count) of \{v2\} (?:for|belonging to|owned by|held by) "+Owner(owner));
+            Count(owner));
         return Difference(1,0)&&Ratio(0,1)&&question&&PartLead()&&Lead(1,0)&&Lead(2,1)?new(d,null,c):new(d,"SemanticReviewRequired",c,
             "The direct larger-minus-smaller difference, smaller/larger ratio, two targets or equal-part/owner headings could not be proved.");
     }

@@ -29,6 +29,8 @@ internal static class DefaultBankSuite
         await AverageMissingOpenTests.RunAsync();
         await SumRatioOpenTests.RunAsync();
         await DifferenceRatioOpenTests.RunAsync();
+        await UnitaryTotalOpenTests.RunAsync();
+        await UnitaryGroupsOpenTests.RunAsync();
         await SumDifferenceOpenTests.RunAsync();
         await PercentagePartOpenTests.RunAsync();
         await PercentageRemainingOpenTests.RunAsync();
@@ -143,6 +145,7 @@ internal static class DefaultBankSuite
         await NextAiFormsTests.RunAsync();
         await MultiStepBankTests.RunAsync();
         await MotionBankTests.RunAsync();
+        await MotionOpenTests.RunAsync();
         await ProportionBankTests.RunAsync();
         await DecimalBankTests.RunAsync();
         await MeasurementBankTests.RunAsync();

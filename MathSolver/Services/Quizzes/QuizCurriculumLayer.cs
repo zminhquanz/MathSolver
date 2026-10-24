@@ -510,7 +510,7 @@ public static class QuizCurriculumLayer
 
         // Mixed Mode: tỉ lệ thuận/nghịch chỉ bắt đầu ở ★★★★★.
         return context.Tier == CurriculumTier.FiveStars
-            ? [ProportionQuizType.Direct, ProportionQuizType.Inverse]
+            ? [ProportionQuizType.Direct, ProportionQuizType.Inverse, ProportionQuizType.UnitaryGroupCount]
             : Array.Empty<ProportionQuizType>();
     }
 

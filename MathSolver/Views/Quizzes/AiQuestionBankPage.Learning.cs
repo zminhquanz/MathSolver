@@ -34,7 +34,7 @@ public partial class AiQuestionBankPage
                     BankQuestionFamily.MultiStep => ElementaryQuizGenerator.Types(QuizProblemKind.MultiStep)
                         .Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Motion => ["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"],
-                    BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse"],
+                    BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse", "Quiz.ProportionUnitaryGroupCount"],
                     BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
                     BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),

@@ -64,12 +64,14 @@ public static partial class ReasoningStoryCatalogue
                 throw new ArgumentException("InvalidDataChartProfile");
         }
         else if (chartProfile is not null) throw new ArgumentException("UnexpectedDataChartProfile");
+        if(family==BankQuestionFamily.Proportion&&variant==(int)ProportionQuizType.UnitaryGroupCount&&narrativeId.Length==0)
+            narrativeId=UnitaryGroupsPilot.Profiles(language).ElementAt(random.Next(UnitaryGroupsPilot.Contexts(language).Count));
         var provisional = new BasicQuestionContract(Version, ArithmeticOperation.Add, tier, language,
             1, 1, "", "", "") { Story = new(random.Next(), family, variant, "", narrativeId, chartProfile, contextVersion) };
         var lesson = Build(provisional);
         return provisional with { Subject = lesson.Subject, Unit = lesson.Unit, SceneId = lesson.Context,
             TopicId = family.ToString(), Story = provisional.Story! with { Schema = lesson.Schema,
-                NarrativeId = RectangleAreaOpenCatalogue.IsProfile(provisional) || RectanglePerimeterOpenCatalogue.IsProfile(provisional) || DifferenceRatioOpenCatalogue.IsProfile(provisional) || SumRatioOpenCatalogue.IsProfile(provisional) || SumDifferenceOpenCatalogue.IsProfile(provisional) || AverageMissingOpenCatalogue.IsProfile(provisional) || AverageOpenCatalogue.IsProfile(provisional) || PercentagePartOpenCatalogue.IsProfile(provisional) || PercentageWholeOpenCatalogue.IsProfile(provisional) || PercentageRemainingOpenCatalogue.IsProfile(provisional) || family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
+                NarrativeId = MotionOpenCatalogue.IsProfile(provisional) || RectangleAreaOpenCatalogue.IsProfile(provisional) || RectanglePerimeterOpenCatalogue.IsProfile(provisional) || DifferenceRatioOpenCatalogue.IsProfile(provisional) || SumRatioOpenCatalogue.IsProfile(provisional) || SumDifferenceOpenCatalogue.IsProfile(provisional) || AverageMissingOpenCatalogue.IsProfile(provisional) || AverageOpenCatalogue.IsProfile(provisional) || PercentagePartOpenCatalogue.IsProfile(provisional) || PercentageWholeOpenCatalogue.IsProfile(provisional) || PercentageRemainingOpenCatalogue.IsProfile(provisional) || family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial ? lesson.Context : lesson.QuestionModel.ProportionProblem?.NarrativeId ?? "" } };
     }
 
     internal static NarrativeLesson Lesson(BasicQuestionContract c) => Lessons.GetValue(c, Build);
@@ -95,7 +97,7 @@ public static partial class ReasoningStoryCatalogue
             || c.PartA != "" || c.PartB != ""
             || (seed.Family == BankQuestionFamily.Data) != (seed.ChartProfile is not null)
             || seed.ChartProfile is { } chart && ((int)chart.Type != seed.Variant || chart.Tier != c.Tier || chart.Language != c.Language)
-            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "" && !RectangleAreaOpenCatalogue.IsProfile(c) && !RectanglePerimeterOpenCatalogue.IsProfile(c) && !DifferenceRatioOpenCatalogue.IsProfile(c) && !SumRatioOpenCatalogue.IsProfile(c) && !SumDifferenceOpenCatalogue.IsProfile(c) && !AverageMissingOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !PercentagePartOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c))
+            || (seed.Family is not (BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial) && seed.NarrativeId != "" && !MotionOpenCatalogue.IsProfile(c) && !RectangleAreaOpenCatalogue.IsProfile(c) && !RectanglePerimeterOpenCatalogue.IsProfile(c) && !DifferenceRatioOpenCatalogue.IsProfile(c) && !SumRatioOpenCatalogue.IsProfile(c) && !SumDifferenceOpenCatalogue.IsProfile(c) && !AverageMissingOpenCatalogue.IsProfile(c) && !AverageOpenCatalogue.IsProfile(c) && !PercentagePartOpenCatalogue.IsProfile(c) && !PercentageWholeOpenCatalogue.IsProfile(c) && !PercentageRemainingOpenCatalogue.IsProfile(c))
             || (seed.Family is BankQuestionFamily.Proportion or BankQuestionFamily.Decimal or BankQuestionFamily.Measurement or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity or BankQuestionFamily.Spatial && string.IsNullOrEmpty(seed.NarrativeId))) return false;
         NarrativeLesson lesson;
         try { lesson = Lesson(c); }
@@ -118,7 +120,7 @@ public static partial class ReasoningStoryCatalogue
         }
         // A schema binds roles, context, question and step order. Resample the
         // original generator, retaining precisely that schema, never just two values.
-        bool requiresNewQuantities = RectangleAreaOpenCatalogue.IsProfile(c) || RectanglePerimeterOpenCatalogue.IsProfile(c) || DifferenceRatioOpenCatalogue.IsProfile(c) || SumRatioOpenCatalogue.IsProfile(c) || SumDifferenceOpenCatalogue.IsProfile(c) || AverageMissingOpenCatalogue.IsProfile(c) || AverageOpenCatalogue.IsProfile(c) || PercentagePartOpenCatalogue.IsProfile(c) || PercentageWholeOpenCatalogue.IsProfile(c) || PercentageRemainingOpenCatalogue.IsProfile(c) || c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
+        bool requiresNewQuantities = MotionOpenCatalogue.IsProfile(c) || UnitaryGroupsOpenCatalogue.IsProfile(c) || UnitaryTotalOpenCatalogue.IsProfile(c) || RectangleAreaOpenCatalogue.IsProfile(c) || RectanglePerimeterOpenCatalogue.IsProfile(c) || DifferenceRatioOpenCatalogue.IsProfile(c) || SumRatioOpenCatalogue.IsProfile(c) || SumDifferenceOpenCatalogue.IsProfile(c) || AverageMissingOpenCatalogue.IsProfile(c) || AverageOpenCatalogue.IsProfile(c) || PercentagePartOpenCatalogue.IsProfile(c) || PercentageWholeOpenCatalogue.IsProfile(c) || PercentageRemainingOpenCatalogue.IsProfile(c) || c.Family is BankQuestionFamily.Decimal or BankQuestionFamily.Measurement
             or BankQuestionFamily.Remainder or BankQuestionFamily.Time or BankQuestionFamily.FractionQuantity
             || c.Family == BankQuestionFamily.Spatial && ElementaryQuizGenerator.IsAppliedNarrative((ElementaryQuizType)c.BankVariant);
         for (int attempt = 0; attempt < 512; attempt++)
@@ -195,6 +197,8 @@ public static partial class ReasoningStoryCatalogue
     private static ArithmeticQuizQuestion Generate(BasicQuestionContract c, ArithmeticQuizMode mode)
     {
         var random = new Random(c.Story!.Seed);
+        if(UnitaryTotalOpenCatalogue.IsProfile(c))
+            return new ProportionQuizGenerator(random).GenerateOpenUnitaryTotal(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(RectangleAreaOpenCatalogue.IsProfile(c))
             return new GeometryQuizGenerator(new MathSolver.Services.Core.GeometryCalculationEngine(),random).GenerateOpenRectangleArea(mode,c.Language,c.Tier,c.Story.NarrativeId);
         if(RectanglePerimeterOpenCatalogue.IsProfile(c))
@@ -248,8 +252,8 @@ public static partial class ReasoningStoryCatalogue
                 (AverageQuizType)c.Story.Variant, c.Language, new(c.Tier, false)),
             BankQuestionFamily.Percentage => new PercentageQuizGenerator(random, expanded).GenerateAlgorithm(mode,
                 (PercentageQuizType)c.Story.Variant, c.Language, new(c.Tier, false)),
-            BankQuestionFamily.Motion => new MotionQuizGenerator(random, expanded).GenerateAlgorithm(mode,
-                c.Language, (MotionQuizType)c.Story.Variant, new(c.Tier, false)),
+            BankQuestionFamily.Motion => new MotionQuizGenerator(random, expanded).GenerateNarrative(mode,
+                c.Language, (MotionQuizType)c.Story.Variant, new(c.Tier, false),c.Story.NarrativeId),
             BankQuestionFamily.Proportion => new ProportionQuizGenerator(random, expanded).GenerateNarrative(mode,
                 (ProportionQuizType)c.Story.Variant, c.Language, new(c.Tier, false), c.Story.NarrativeId),
             BankQuestionFamily.Decimal => new ElementaryQuizGenerator(random, c.Story.ContextVersion >= 2).GenerateDecimalStory(mode,
@@ -311,6 +315,9 @@ public static partial class ReasoningStoryCatalogue
         if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenCatalogue.Build(c);
         if(SumRatioOpenCatalogue.IsProfile(c))return SumRatioOpenCatalogue.Build(c);
         if(DifferenceRatioOpenCatalogue.IsProfile(c))return DifferenceRatioOpenCatalogue.Build(c);
+        if(MotionOpenCatalogue.IsProfile(c))return MotionOpenCatalogue.Build(c);
+        if(UnitaryGroupsOpenCatalogue.IsProfile(c))return UnitaryGroupsOpenCatalogue.Build(c);
+        if(UnitaryTotalOpenCatalogue.IsProfile(c))return UnitaryTotalOpenCatalogue.Build(c);
         if(SumDifferenceOpenCatalogue.IsProfile(c))return SumDifferenceOpenCatalogue.Build(c);
         if(AverageMissingOpenCatalogue.IsProfile(c))return AverageMissingOpenCatalogue.Build(c);
         if(AverageOpenCatalogue.IsProfile(c))return AverageOpenCatalogue.Build(c);

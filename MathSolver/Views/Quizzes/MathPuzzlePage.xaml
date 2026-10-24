@@ -456,7 +456,7 @@
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="8">
                                     <Button
                                         x:Name="MixedProportionButton"
                                         Grid.Row="0"
@@ -487,6 +487,16 @@
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         Clicked="OnInverseProportionClicked" />
+                                    <Button
+                                        x:Name="UnitaryGroupCountButton"
+                                        Grid.Row="2"
+                                        Grid.ColumnSpan="2"
+                                        Text="{localization:QuizTranslate Quiz.ProportionUnitaryGroupCount}"
+                                        MinimumHeightRequest="48"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        Clicked="OnUnitaryGroupCountClicked" />
                                 </Grid>
 
                             </VerticalStackLayout>

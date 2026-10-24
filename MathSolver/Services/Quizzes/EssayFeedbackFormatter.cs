@@ -70,6 +70,7 @@ public static class EssayFeedbackFormatter
     private static string DescribeStep(EssayStepValidationResult step, string expectedUnit,
         string expectedAnswer, bool vi)
     {
+        expectedUnit=step.ExpectedUnit??expectedUnit;
         string prefix = QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "EssayFeedbackFormatter.DescribeStep.003", ("step_Number", $"{step.Number}"));
         return prefix + (step.Error switch
         {
@@ -269,6 +270,8 @@ public static class EssayFeedbackFormatter
             return percentage.EquationText;
         if (question.ProportionProblem is ProportionQuizContract proportion)
         {
+            if(proportion.Type==ProportionQuizType.UnitaryGroupCount)
+                return $"{proportion.C} ÷ ({proportion.B} ÷ {proportion.A}) = {proportion.CorrectAnswer}";
             if (proportion.IsDirect)
                 return $"{proportion.B} ÷ {proportion.A} × {proportion.C} = {proportion.CorrectAnswer}";
             string calculation = $"{proportion.A} × {proportion.B} ÷ {proportion.C}";

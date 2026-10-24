@@ -5,7 +5,8 @@ namespace MathSolver.Models;
 public enum ProportionQuizType
 {
     Direct,
-    Inverse
+    Inverse,
+    UnitaryGroupCount
 }
 
 public enum ProportionScenarioKind
@@ -51,6 +52,7 @@ public sealed record ProportionQuizContract(
 {
     public string? SolutionText { get; init; }
     public string NarrativeId { get; init; } = "";
+    public UnitaryGroupUnits? GroupCountUnits { get; init; }
     public bool IsDirect => Type == ProportionQuizType.Direct;
 
     // For these inverse questions C replaces B, rather than A: e.g. a new
@@ -60,4 +62,10 @@ public sealed record ProportionQuizContract(
         ProportionScenarioKind.MachinesRequired or
         ProportionScenarioKind.SalesStock or
         ProportionScenarioKind.PackagingCount || AsksForAdditionalPeople;
+}
+
+/// <summary>Distinct dimensions for items per group and the unknown group count.</summary>
+public sealed record UnitaryGroupUnits(string Items,string Group,string Groups)
+{
+    public string Rate => Items + "/" + Group;
 }

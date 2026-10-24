@@ -82,14 +82,17 @@ public sealed partial class EssayAnswerValidator
         IReadOnlyList<EssayStepValidationResult> steps = [];
         bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
         bool geometryWork = question.GeometryProblem?.Reasoning is not null;
-        (bool equationIsCorrect, EssayAnswerError equationError) = question.WordProblem?.ConversionStep is not null
+        bool unitaryWork = IsUnitaryTotal(question)||IsUnitaryGroups(question);
+        (bool equationIsCorrect, EssayAnswerError equationError) = unitaryWork
+            ? IsUnitaryGroups(question)?ValidateUnitaryGroupsCalculations(question,equationText,out steps)
+                :ValidateUnitaryTotalCalculations(question,equationText,out steps) : question.WordProblem?.ConversionStep is not null
             || question.WordProblem?.PracticeDetails?.Steps.Count > 1
             ? ValidateDimensionCalculations(question, equationText, out steps) : indirect
             ? AverageIndirectEssayValidator.Validate(question, equationText, out steps)
             : geometryWork ? GeometryWorkedEssayValidator.Validate(question, equationText, out steps)
             : ValidateCalculatedEquation(question, calculation);
 
-        if (!indirect && !geometryWork && equationIsCorrect &&
+        if (!unitaryWork && !indirect && !geometryWork && equationIsCorrect &&
             !IsExpectedUnit(question, enteredEquationUnit))
         {
             equationIsCorrect = false;
@@ -132,6 +135,8 @@ public sealed partial class EssayAnswerValidator
             input = TimeFractionAnswerRules.NormalizeCentury(input);
         submission = EssayCombinedInputParser.Parse(input, RequiresSolution(question),
             preserveAllCalculations: question.WordProblem?.ConversionStep is not null
+                || IsUnitaryTotal(question)
+                || IsUnitaryGroups(question)
                 || question.WordProblem?.PracticeDetails?.Steps.Count > 1
                 || question.GeometryProblem?.Reasoning is not null || question.ElementaryProblem is not null
                 || question.AverageProblem?.Type == AverageQuizType.IndirectData,
@@ -234,6 +239,10 @@ public sealed partial class EssayAnswerValidator
         ArithmeticQuizQuestion question,
         string enteredUnit)
     {
+        if(IsUnitaryGroups(question))
+            return question.ProportionProblem?.GroupCountUnits is { } groups&&GroupCountUnitMatches(enteredUnit,groups.Groups);
+        if (IsUnitaryTotal(question))
+            return UnitaryItemUnitMatches(enteredUnit, GetExpectedUnit(question));
         string expectedUnit = NormalizeUnit(GetExpectedUnit(question));
         return expectedUnit.Length == 0 ||
                enteredUnit.Length > 0 &&
@@ -485,6 +494,10 @@ public sealed partial class EssayAnswerValidator
 
         if (!containsOperation || equationValue is null)
             return (false, EssayAnswerError.InvalidEquationFormat);
+
+        if(question.MotionProblem is { } openMotion&&MotionOpenPilot.IsProfile(openMotion.NarrativeId)
+            &&!MotionOpenOperands(openMotion,parts[firstCalculationPart]))
+            return (false,EssayAnswerError.WrongOperandsOrOperation);
 
         if (question.ExpressionProblem is ExpressionQuizContract expressionProblem)
         {

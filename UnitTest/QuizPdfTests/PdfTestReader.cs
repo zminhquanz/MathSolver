@@ -36,8 +36,17 @@ internal static class PdfTestReader
                 maps[name] = map;
             }
             string currentFont = "";
+            var savedFonts = new Stack<string>();
             foreach (var op in ContentReader.ReadContent(page).OfType<COperator>())
             {
+                // Text font is part of the PDF graphics state. A restored
+                // state can reuse its font without another Tf operator.
+                if (op.OpCode.Name == "q") savedFonts.Push(currentFont);
+                if (op.OpCode.Name == "Q")
+                {
+                    if (savedFonts.Count == 0) throw new InvalidDataException("Unbalanced PDF graphics state.");
+                    currentFont = savedFonts.Pop();
+                }
                 if (op.OpCode.Name == "Tf") currentFont = ((CName)op.Operands[0]).Name;
                 if (op.OpCode.Name != "Tj" || op.Operands[0] is not CString content) continue;
                 if (maps[currentFont] is not { } map)

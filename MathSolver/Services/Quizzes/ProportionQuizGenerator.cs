@@ -9,7 +9,7 @@ namespace MathSolver.Services;
 /// chọn bằng Random và dữ kiện số cũng được sinh bằng Random nhưng luôn đảm
 /// bảo đáp án nguyên để phù hợp chương trình tiểu học/THCS cơ bản.
 /// </summary>
-public sealed class ProportionQuizGenerator
+public sealed partial class ProportionQuizGenerator
 {
     private enum DirectRateProfile
     {
@@ -98,6 +98,8 @@ public sealed class ProportionQuizGenerator
                 ? requestedType.Value
                 : allowedTypes[_random.Next(allowedTypes.Count)];
 
+        if(type==ProportionQuizType.UnitaryGroupCount)
+            return CreateUnitaryGroupsContract(language,curriculumContext?.Tier??CurriculumTier.ThreeStars,narrativeId);
         TemplateDefinition[] candidates = Candidates(type, language, level, _expandNarratives);
 
         if (!string.IsNullOrEmpty(narrativeId))
@@ -133,7 +135,8 @@ public sealed class ProportionQuizGenerator
     }
 
     internal static string[] NarrativeIds(ProportionQuizType type, CurriculumTier tier, AppLanguage language)
-        => Candidates(type, language, (int)tier).Select(t => t.NarrativeId).Where(id => id.Length > 0).ToArray();
+        => type==ProportionQuizType.UnitaryGroupCount?UnitaryGroupsPilot.Profiles(language).ToArray()
+            : Candidates(type, language, (int)tier).Select(t => t.NarrativeId).Where(id => id.Length > 0).ToArray();
 
     private static TemplateDefinition[] Candidates(ProportionQuizType type, AppLanguage language, int? level, bool expanded = true)
         => Templates(language, expanded)
@@ -525,6 +528,11 @@ public sealed class ProportionQuizGenerator
     private static IntegerArithmeticExpression CreateRepresentativeExpression(
         ProportionQuizContract contract)
     {
+        if(contract.Type==ProportionQuizType.UnitaryGroupCount)
+        {
+            if(!UnitaryGroupsPilot.ValidContract(contract,out int rate,out _))throw new InvalidDataException("InvalidUnitaryGroupsFacts");
+            return new(contract.C,ArithmeticOperation.Divide,rate);
+        }
         if (contract.IsDirect)
         {
             if (contract.B % contract.A != 0)

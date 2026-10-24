@@ -79,6 +79,7 @@
       {"Key":"Quiz.ProblemProportion","IllustrationId":"proportion","DescriptionKey":"Choice.Description.proportion"},
       {"Key":"Quiz.ProportionDirect","IllustrationId":"proportion-direct","DescriptionKey":"Choice.Skill.Quiz.ProportionDirect"},
       {"Key":"Quiz.ProportionInverse","IllustrationId":"proportion-inverse","DescriptionKey":"Choice.Skill.Quiz.ProportionInverse"},
+      {"Key":"Quiz.ProportionUnitaryGroupCount","IllustrationId":"proportion-direct","DescriptionKey":"Choice.Skill.Quiz.ProportionUnitaryGroupCount"},
       {"Key":"Quiz.ProblemDecimal","IllustrationId":"decimal","DescriptionKey":"Choice.Description.decimal"},
       {"Key":"Quiz.ProblemPercentage","IllustrationId":"percentage","DescriptionKey":"Choice.Description.percentage"},
       {"Key":"Quiz.ProblemVisualGeometry","IllustrationId":"visual-angle","DescriptionKey":"Choice.Description.visual-angle"},

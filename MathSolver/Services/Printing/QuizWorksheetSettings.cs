@@ -117,7 +117,7 @@ public static class QuizWorksheetChoices
                 Add<GeometryQuizShape>(Enum.GetValues<GeometryQuizShape>().Select(v => "Quiz.Geometry" + v).ToArray(), v => new(kind, GeometryShape: v));
                 break;
             case QuizProblemKind.Proportion:
-                Add<ProportionQuizType>(["Quiz.ProportionDirect", "Quiz.ProportionInverse"], v => new(kind, ProportionType: v));
+                Add<ProportionQuizType>(["Quiz.ProportionDirect", "Quiz.ProportionInverse", "Quiz.ProportionUnitaryGroupCount"], v => new(kind, ProportionType: v));
                 break;
             case QuizProblemKind.Motion:
                 Add<MotionQuizType>(["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"], v => new(kind, MotionType: v));

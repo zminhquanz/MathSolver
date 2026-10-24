@@ -487,7 +487,8 @@ public partial class MathPuzzlePage : ContentPage
 
         if (_currentQuestion?.ProportionProblem is not null)
         {
-            return TranslateQuiz("Quiz.ProportionQuestionTitle");
+            return TranslateQuiz(_currentQuestion.ProportionProblem.Type==ProportionQuizType.UnitaryGroupCount
+                ?"Quiz.ProportionUnitaryGroupCount":"Quiz.ProportionQuestionTitle");
         }
 
         if (_currentQuestion?.MotionProblem is not null)
@@ -609,6 +610,8 @@ public partial class MathPuzzlePage : ContentPage
         bool isProportion = question is not null
             ? question.ProportionProblem is not null
             : IsProportionProblemSelected();
+        bool isUnitaryGroups=question?.ProportionProblem?.Type==ProportionQuizType.UnitaryGroupCount
+            ||question is null&&isProportion&&_selectedProportionType==ProportionQuizType.UnitaryGroupCount;
         bool isMotion = question is not null
             ? question.MotionProblem is not null
             : IsMotionProblemSelected();
@@ -637,13 +640,13 @@ public partial class MathPuzzlePage : ContentPage
                     : isFraction
                     ? "Quiz.FractionEssayValidationHint"
                     : isProportion
-                    ? "Quiz.ProportionEssayValidationHint"
+                    ? isUnitaryGroups?"Quiz.UnitaryGroupsEssayHint":"Quiz.ProportionEssayValidationHint"
                     : isMotion
                     ? "Quiz.MotionEssayValidationHint"
                     : requiresSolution
                         ? "Quiz.EssayValidationHintAlgorithmWordProblem"
                         : "Quiz.EssayValidationHintAlgorithm");
-        if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
+        if (!isUnitaryGroups&&!string.IsNullOrWhiteSpace(expectedEquationUnit))
         {
             EssayValidationHintLabel.Text += " " +
                 TranslateQuiz("Quiz.EssayEquationUnitHint");
@@ -661,7 +664,7 @@ public partial class MathPuzzlePage : ContentPage
                 : isGeometry
                 ? Translate("Quiz.GeometryEssayEquationPlaceholder")
                 : isProportion
-                ? TranslateQuiz("Quiz.ProportionEssayEquationPlaceholder")
+                ? TranslateQuiz(isUnitaryGroups?"Quiz.UnitaryGroupsEquationPlaceholder":"Quiz.ProportionEssayEquationPlaceholder")
                 : isMotion
                 ? TranslateQuiz("Quiz.MotionEssayEquationPlaceholder")
                 : isAverage
@@ -675,7 +678,7 @@ public partial class MathPuzzlePage : ContentPage
                 : percentageType == PercentageQuizType.FindWholeFromPercentageValue
                 ? TranslateQuiz("Quiz.PercentageWholeEssayEquationPlaceholder")
                 : Translate("Quiz.EssayEquationPlaceholder");
-        if (!string.IsNullOrWhiteSpace(expectedEquationUnit))
+        if (!isUnitaryGroups&&!string.IsNullOrWhiteSpace(expectedEquationUnit))
         {
             equationPlaceholder +=
                 expectedEquationUnit == "%"
@@ -1351,20 +1354,24 @@ public partial class MathPuzzlePage : ContentPage
             MixedProportionButton.IsEnabled = true;
             DirectProportionButton.IsEnabled = true;
             InverseProportionButton.IsEnabled = true;
+            UnitaryGroupCountButton.IsEnabled = true;
             MixedProportionButton.Opacity = 1d;
             DirectProportionButton.Opacity = 1d;
             InverseProportionButton.Opacity = 1d;
+            UnitaryGroupCountButton.Opacity = 1d;
 
             SelectionButtonStyler.Select(
                 _selectedProportionType switch
                 {
                     ProportionQuizType.Direct => DirectProportionButton,
                     ProportionQuizType.Inverse => InverseProportionButton,
+                    ProportionQuizType.UnitaryGroupCount => UnitaryGroupCountButton,
                     _ => MixedProportionButton
                 },
                 MixedProportionButton,
                 DirectProportionButton,
-                InverseProportionButton);
+                InverseProportionButton,
+                UnitaryGroupCountButton);
         }
 
         if (!showOperations)
@@ -1490,6 +1497,9 @@ public partial class MathPuzzlePage : ContentPage
 
     private void OnInverseProportionClicked(object? sender, EventArgs e) =>
         SelectProportionType(ProportionQuizType.Inverse);
+
+    private void OnUnitaryGroupCountClicked(object? sender, EventArgs e) =>
+        SelectProportionType(ProportionQuizType.UnitaryGroupCount);
 
     private void SelectProportionType(ProportionQuizType? type)
     {

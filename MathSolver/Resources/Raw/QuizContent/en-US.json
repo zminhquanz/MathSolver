@@ -2,6 +2,11 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id":"Quiz.MotionOpenHint","Text":"For one moving object, diverse prose cycles four relations: distance, speed, actual travel time and distance with one included stop. Units are km/h–hours–km; elapsed time includes the stop.","Variables":[]},
+    {"Id":"Choice.Skill.Quiz.ProportionUnitaryGroupCount","Text":"Use an original group count and total to find the number of groups for a new total, with the same amount in every group.","Variables":[]},
+    {"Id":"Quiz.ProportionUnitaryGroupCount","Text":"Unitary method · find the group count","Variables":[]},
+    {"Id":"Quiz.UnitaryGroupsEssayHint","Text":"Give an explanation and two calculations, or a combined calculation using all givens. First find items per group, then give the group count. Example units: pens/box, then boxes.","Variables":[]},
+    {"Id":"Quiz.UnitaryGroupsEquationPlaceholder","Text":"24 ÷ 4 = 6 pens/box\n42 ÷ 6 = 7 boxes","Variables":[]},
     {"Id": "Curriculum.Requirement.Time.FebruaryCommonInclusive", "Text": "Count calendar days from February to March in the same common year, including both endpoints; February has 28 days.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.FebruaryLeapInclusive", "Text": "Count calendar days from February to March in the same leap year, including both endpoints; February has 29 days.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.AdjacentMonthInclusive", "Text": "Count calendar days across two consecutive months, including both start and end dates.", "Variables": []},
@@ -13050,6 +13055,27 @@
     }
   ],
   "Lists": {
+    "MotionOpen.Contexts": [
+      {"Id":"car","Subject":"car","MinimumSpeed":30,"MaximumSpeed":80},
+      {"Id":"bus","Subject":"bus","MinimumSpeed":25,"MaximumSpeed":60},
+      {"Id":"bicycle","Subject":"bicycle","MinimumSpeed":8,"MaximumSpeed":20}
+    ],
+    "MotionOpen.Relations": [
+      {"Id":"distance","Kind":"BasicDistance","Fact0":"A {v0} travels at a constant speed of {f0} {v1}.","AlternateFact0":"A {v0} maintains a speed of {f0} {v1}.","Fact1":"The actual travel time is {f1} {v2}, continuously with no stops.","Question":"What distance is travelled in {v3}?","Lead":"Distance travelled"},
+      {"Id":"speed","Kind":"BasicSpeed","Fact0":"A {v0} travels {f0} {v3}.","AlternateFact0":"A {v0} covers a distance of {f0} {v3}.","Fact1":"The actual travel time is {f1} {v2}, at constant speed with no stops.","Question":"What is the speed in {v1}?","Lead":"Speed"},
+      {"Id":"time","Kind":"BasicTime","Fact0":"A {v0} travels {f0} {v3}.","AlternateFact0":"A {v0} covers a distance of {f0} {v3}.","Fact1":"The speed remains {f1} {v1} throughout a continuous journey with no stops.","Question":"What is the actual travel time in {v2}?","Lead":"Actual travel time"},
+      {"Id":"rest","Kind":"BasicRestDistance","Fact0":"A {v0} maintains a speed of {f0} {v1} while moving.","AlternateFact0":"While moving, a {v0} keeps a speed of {f0} {v1}.","Fact1":"The total elapsed time from start to finish is {f1} {v2}.","Fact2":"That interval includes exactly one stop lasting {f2} {v4}.","Question":"What distance is travelled in {v3}?","Lead":"Distance travelled"}
+    ],
+    "UnitaryGroupsOpen.Contexts": [
+      {"Id":"pens","Group":"box","Groups":"boxes","Items":"pens","Capacity":2000,"GivenAlternate":"Altogether, {f0} {v0} hold {f1} {v1}.","Given":"{f0} {v0} contain {f1} {v1} altogether.","Condition":"Each {v2} has the same number of {v1}, and the new groups keep that count.","Question":"How many {v0} like these are needed to hold {f2} {v1} in total?","RateLead":"Number of {v1} in each {v2}","CountLead":"Number of {v0} needed"},
+      {"Id":"gifts","Group":"bag","Groups":"bags","Items":"gifts","Capacity":2000,"GivenAlternate":"Altogether, {f0} {v0} hold {f1} {v1}.","Given":"There are {f1} {v1} in total in {f0} {v0}.","Condition":"The number of {v1} in each {v2} is equal, and it remains unchanged for the new groups.","Question":"To hold {f2} {v1} in the same way, how many {v0} are needed?","RateLead":"Number of {v1} in each {v2}","CountLead":"Number of {v0} needed"},
+      {"Id":"notebooks","Group":"stack","Groups":"stacks","Items":"notebooks","Capacity":2000,"GivenAlternate":"Altogether, {f0} {v0} hold {f1} {v1}.","Given":"The total number of {v1} in {f0} {v0} is {f1}.","Condition":"Each {v2} contains the same number of {v1}, and that count stays the same in the new groups.","Question":"How many {v0} are needed for a total of {f2} {v1} like these?","RateLead":"Number of {v1} in each {v2}","CountLead":"Number of {v0} needed"}
+    ],
+    "UnitaryTotalOpen.Contexts": [
+      {"Id":"pens","Group":"box","Groups":"boxes","Unit":"pens","Capacity":2000,"Given":"{f0} {v0} contain {f1} {v1} altogether.","Condition":"The number of {v1} in each {v2} is the same and does not change.","Question":"How many {v1} do {f2} {v0} like these contain in total?","UnitLead":"Number of {v1} in each {v2}","TotalLead":"Total number of {v1} in the new {v0}"},
+      {"Id":"gifts","Group":"bag","Groups":"bags","Unit":"gifts","Capacity":2000,"Given":"There are {f1} {v1} in total in {f0} {v0}.","Condition":"Each {v2} contains the same number of {v1}, and that number does not change.","Question":"What is the total number of {v1} in {f2} {v0} like these?","UnitLead":"Number of {v1} in each {v2}","TotalLead":"Total number of {v1} in the new {v0}"},
+      {"Id":"notebooks","Group":"stack","Groups":"stacks","Unit":"notebooks","Capacity":2000,"Given":"The total number of {v1} in {f0} {v0} is {f1}.","Condition":"The number of {v1} in each {v2} is the same and does not change.","Question":"How many {v1} are there altogether in {f2} {v0} like these?","UnitLead":"Number of {v1} in each {v2}","TotalLead":"Total number of {v1} in the new {v0}"}
+    ],
     "DifferenceRatioOpen.Contexts": [
       {"Id":"books","SmallerOwner":"Lan","LargerOwner":"An","Unit":"books","Capacity":2000,"Difference":"{v1} has {f0} more {v2} than {v0}.","Ratio":"The number of {v2} that {v0} possesses equals {f1} times the number of {v2} that {v1} holds.","Question":"How many {v2} does {v0} have and how many does {v1} have?","PartLead":"Number of {v2} in one equal share","SmallerLead":"Number of {v2} for {v0}","LargerLead":"Number of {v2} for {v1}"},
       {"Id":"pens","SmallerOwner":"Minh","LargerOwner":"Hoa","Unit":"pens","Capacity":2000,"Difference":"{v0} has {f0} fewer {v2} than {v1}.","Ratio":"{v0}'s number of {v2} is {f1} of {v1}'s number of {v2}.","Question":"How many {v2} does each of {v0} and {v1} have?","PartLead":"Number of {v2} in each equal part","SmallerLead":"Number of {v2} for {v0}","LargerLead":"Number of {v2} for {v1}"},

@@ -496,6 +496,16 @@ public sealed class ArithmeticQuizValidator
                 return new(false, "InvalidFindXFacts");
         }
 
+        if(question.MotionProblem is { } motion && MotionOpenPilot.IsProfile(motion.NarrativeId)
+            && (!MotionOpenPilot.ValidContract(motion)||question.CorrectAnswer!=motion.CorrectAnswer
+                ||question.Expression.LeftOperand!=motion.RepresentativeLeft||question.Expression.RightOperand!=motion.RepresentativeRight
+                ||question.Expression.Operation!=motion.RepresentativeOperation)) return new(false,"InvalidMotionRelation");
+        if(question.ProportionProblem is {Type:ProportionQuizType.UnitaryGroupCount} groups
+            &&(!UnitaryGroupsPilot.ValidContract(groups,out int groupRate,out var groupAnswer)||question.CorrectAnswer!=groupAnswer
+                ||question.Expression.Operation!=ArithmeticOperation.Divide||question.Expression.LeftOperand!=groups.C
+                ||question.Expression.RightOperand!=groupRate))
+            return new(false,"InvalidUnitaryGroupsFacts");
+
         IntegerArithmeticResult calculation;
 
         try

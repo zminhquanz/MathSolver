@@ -21,7 +21,8 @@ public static class ProportionQuizSolutionFormatter
         string b = contract.B.ToString("N0", culture);
         string c = contract.C.ToString("N0", culture);
         string answer = contract.CorrectAnswer.ToString("N0", culture);
-        string calculation = contract.IsDirect
+        string calculation = contract.Type==ProportionQuizType.UnitaryGroupCount
+            ? $"{c} ÷ ({b} ÷ {a})" : contract.IsDirect
             ? $"{b} ÷ {a} × {c}"
             : $"{a} × {b} ÷ {c}";
 

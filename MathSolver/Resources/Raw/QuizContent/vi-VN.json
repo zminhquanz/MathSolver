@@ -2,6 +2,11 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id":"Quiz.MotionOpenHint","Text":"Trong nhóm Một vật chuyển động, diễn đạt đa dạng luân phiên bốn quan hệ: tìm quãng đường, vận tốc, thời gian di chuyển và quãng đường có một lần nghỉ. Dùng km/h–giờ–km; tổng thời gian của bài có nghỉ đã bao gồm lần nghỉ đó.","Variables":[]},
+    {"Id":"Choice.Skill.Quiz.ProportionUnitaryGroupCount","Text":"Biết số nhóm và tổng lượng ban đầu, tìm số nhóm để chứa tổng lượng mới với lượng mỗi nhóm không đổi.","Variables":[]},
+    {"Id":"Quiz.ProportionUnitaryGroupCount","Text":"Rút về đơn vị · tìm số nhóm","Variables":[]},
+    {"Id":"Quiz.UnitaryGroupsEssayHint","Text":"Ghi lời giải, hai bước tính hoặc phép tính gộp dùng đủ dữ kiện. Bước đầu là số đồ vật mỗi nhóm, bước cuối và đáp số là số nhóm. Ví dụ đơn vị: cây bút/hộp rồi hộp.","Variables":[]},
+    {"Id":"Quiz.UnitaryGroupsEquationPlaceholder","Text":"24 ÷ 4 = 6 cây bút/hộp\n42 ÷ 6 = 7 hộp","Variables":[]},
     {"Id": "Curriculum.Requirement.Time.FebruaryCommonInclusive", "Text": "Tính số ngày từ tháng Hai có 28 ngày sang tháng Ba trong cùng năm thường, tính cả hai đầu.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.FebruaryLeapInclusive", "Text": "Tính số ngày từ tháng Hai có 29 ngày sang tháng Ba trong cùng năm nhuận, tính cả hai đầu.", "Variables": []},
     {"Id": "Curriculum.Requirement.Time.AdjacentMonthInclusive", "Text": "Tính số ngày qua hai tháng liền nhau, tính cả ngày đầu và ngày cuối.", "Variables": []},
@@ -13079,6 +13084,27 @@
     }
   ],
   "Lists": {
+    "MotionOpen.Contexts": [
+      {"Id":"car","Subject":"ô tô","MinimumSpeed":30,"MaximumSpeed":80},
+      {"Id":"bus","Subject":"xe buýt","MinimumSpeed":25,"MaximumSpeed":60},
+      {"Id":"bicycle","Subject":"xe đạp","MinimumSpeed":8,"MaximumSpeed":20}
+    ],
+    "MotionOpen.Relations": [
+      {"Id":"distance","Kind":"BasicDistance","Fact0":"Một {v0} chuyển động đều với vận tốc {f0} {v1}.","AlternateFact0":"Một {v0} đi với vận tốc không đổi {f0} {v1}.","Fact1":"Thời gian thực sự di chuyển là {f1} {v2}, liên tục và không nghỉ.","Question":"Quãng đường đi được là bao nhiêu {v3}?","Lead":"Quãng đường đi được"},
+      {"Id":"speed","Kind":"BasicSpeed","Fact0":"Một {v0} đi được {f0} {v3}.","AlternateFact0":"Một {v0} đi quãng đường dài {f0} {v3}.","Fact1":"Thời gian thực sự di chuyển là {f1} {v2}, chuyển động đều và không nghỉ.","Question":"Vận tốc là bao nhiêu {v1}?","Lead":"Vận tốc"},
+      {"Id":"time","Kind":"BasicTime","Fact0":"Một {v0} đi được {f0} {v3}.","AlternateFact0":"Một {v0} đi quãng đường dài {f0} {v3}.","Fact1":"Vận tốc luôn là {f1} {v1} trong suốt chuyến đi liên tục, không nghỉ.","Question":"Thời gian thực sự di chuyển là bao nhiêu {v2}?","Lead":"Thời gian thực sự di chuyển"},
+      {"Id":"rest","Kind":"BasicRestDistance","Fact0":"Một {v0} giữ vận tốc {f0} {v1} khi đang di chuyển.","AlternateFact0":"Khi di chuyển, một {v0} giữ vận tốc {f0} {v1}.","Fact1":"Tổng thời gian từ lúc bắt đầu đến lúc kết thúc là {f1} {v2}.","Fact2":"Trong khoảng đó có đúng một lần nghỉ {f2} {v4}.","Question":"Quãng đường đi được là bao nhiêu {v3}?","Lead":"Quãng đường đi được"}
+    ],
+    "UnitaryGroupsOpen.Contexts": [
+      {"Id":"pens","Group":"hộp","Groups":"hộp","Items":"cây bút","Capacity":2000,"GivenAlternate":"{f0} {v0} có tất cả {f1} {v1}.","Given":"{f0} {v0} chứa tổng cộng {f1} {v1}.","Condition":"Số {v1} trong mỗi {v2} bằng nhau và giữ nguyên ở các nhóm mới.","Question":"Cần bao nhiêu {v0} như vậy để chứa tổng cộng {f2} {v1}?","RateLead":"Số {v1} trong mỗi {v2}","CountLead":"Số {v0} cần dùng"},
+      {"Id":"gifts","Group":"túi","Groups":"túi","Items":"gói quà","Capacity":2000,"GivenAlternate":"{f0} {v0} có tất cả {f1} {v1}.","Given":"Có tổng cộng {f1} {v1} trong {f0} {v0}.","Condition":"Mỗi {v2} có cùng số {v1}, các nhóm mới cũng giữ nguyên số đó.","Question":"Để chứa {f2} {v1} theo cách đó, cần bao nhiêu {v0}?","RateLead":"Số {v1} trong mỗi {v2}","CountLead":"Số {v0} cần dùng"},
+      {"Id":"notebooks","Group":"chồng","Groups":"chồng","Items":"quyển vở","Capacity":2000,"GivenAlternate":"{f0} {v0} có tất cả {f1} {v1}.","Given":"Tổng số {v1} trong {f0} {v0} là {f1}.","Condition":"Số {v1} trong mỗi {v2} bằng nhau và không đổi khi xếp các nhóm mới.","Question":"Muốn xếp tổng cộng {f2} {v1} như vậy thì cần bao nhiêu {v0}?","RateLead":"Số {v1} trong mỗi {v2}","CountLead":"Số {v0} cần dùng"}
+    ],
+    "UnitaryTotalOpen.Contexts": [
+      {"Id":"pens","Group":"hộp","Groups":"hộp","Unit":"cây bút","Capacity":2000,"Given":"{f0} {v0} chứa tổng cộng {f1} {v1}.","Condition":"Số {v1} trong mỗi {v2} bằng nhau và không thay đổi.","Question":"Hỏi {f2} {v0} như vậy chứa tổng cộng bao nhiêu {v1}?","UnitLead":"Số {v1} trong mỗi {v2}","TotalLead":"Tổng số {v1} trong các {v0} mới"},
+      {"Id":"gifts","Group":"túi","Groups":"túi","Unit":"gói quà","Capacity":2000,"Given":"Có tổng cộng {f1} {v1} trong {f0} {v0}.","Condition":"Mỗi {v2} có cùng số {v1} và số đó không thay đổi.","Question":"Hỏi tổng số {v1} trong {f2} {v0} như vậy là bao nhiêu?","UnitLead":"Số {v1} trong mỗi {v2}","TotalLead":"Tổng số {v1} trong các {v0} mới"},
+      {"Id":"notebooks","Group":"chồng","Groups":"chồng","Unit":"quyển vở","Capacity":2000,"Given":"Tổng số {v1} trong {f0} {v0} là {f1}.","Condition":"Số {v1} trong mỗi {v2} bằng nhau và không thay đổi.","Question":"Hỏi {f2} {v0} như vậy có tất cả bao nhiêu {v1}?","UnitLead":"Số {v1} trong mỗi {v2}","TotalLead":"Tổng số {v1} trong các {v0} mới"}
+    ],
     "DifferenceRatioOpen.Contexts": [
       {"Id":"books","SmallerOwner":"Lan","LargerOwner":"An","Unit":"quyển sách","Capacity":2000,"Difference":"{v1} có nhiều hơn {v0} {f0} {v2}.","Ratio":"Số {v2} của {v0} bằng {f1} số {v2} của {v1}.","Question":"Hỏi số {v2} của {v0} và {v1} lần lượt là bao nhiêu?","PartLead":"Số {v2} ứng với mỗi phần","SmallerLead":"Số {v2} của {v0}","LargerLead":"Số {v2} của {v1}"},
       {"Id":"pens","SmallerOwner":"Minh","LargerOwner":"Hoa","Unit":"cây bút","Capacity":2000,"Difference":"{v0} có ít hơn {v1} {f0} {v2}.","Ratio":"Số {v2} của {v0} bằng {f1} số {v2} của {v1}.","Question":"{v0} có bao nhiêu {v2}, {v1} có bao nhiêu?","PartLead":"Số {v2} ứng với mỗi phần","SmallerLead":"Số {v2} của {v0}","LargerLead":"Số {v2} của {v1}"},

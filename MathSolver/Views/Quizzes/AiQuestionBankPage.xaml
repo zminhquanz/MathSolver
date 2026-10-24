@@ -161,6 +161,7 @@
                             <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
                             <Switch x:Name="CreativeProseSwitch" Grid.Column="1" IsToggled="False" />
                         </Grid>
+                        <Label x:Name="MotionOpenHintLabel" Text="{localization:QuizTranslate Quiz.MotionOpenHint}" FontSize="13" IsVisible="False" />
                         <Label Text="{localization:Translate AiBank.ProblemType}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="ProblemPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankProblemChanged" />

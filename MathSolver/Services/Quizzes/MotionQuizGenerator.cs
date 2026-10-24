@@ -8,7 +8,7 @@ namespace MathSolver.Services;
 /// Sinh 4 nhóm toán chuyển động cơ bản bằng Random: một vật, đuổi kịp,
 /// gặp nhau và xuôi/ngược dòng. Không chứa các dạng nâng cao.
 /// </summary>
-public sealed class MotionQuizGenerator
+public sealed partial class MotionQuizGenerator
 {
     private enum MotionUnitKind
     {
