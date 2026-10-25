@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--motion-extended","--motion-extended-model"],"--motion-extended | --motion-extended-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await MotionExtendedTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,MotionExtendedTests.NativeCases());
+        },args=>args is ["--motion-extended"] or ["--motion-extended-model",_] or ["--motion-extended-model",_,_]),
         new(["--motion-open","--motion-open-model"],"--motion-open | --motion-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await MotionOpenTests.RunAsync();

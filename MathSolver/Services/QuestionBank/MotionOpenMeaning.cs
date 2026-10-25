@@ -19,6 +19,9 @@ internal static class MotionOpenMeaning
             return new(null,"InvalidText",ErrorDetails:"Keep placeholders as complete words.");
         string kind=c.SceneId.Split('/')[1];
         var novel=NovelFactPatterns(kind,vi);
+        var editorial=EditorialFactPatterns(kind,vi);
+        if(d.Facts!.Any(f=>Regex.IsMatch(f.Text,vi?@"\bchiếc\s+\{f\d+\}":@"\bthe\s+\{f\d+\}\s+\{v\d+\}\s+travels\b",RegexOptions.IgnoreCase|RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100))))
+            return new(null,"ChangedRelationOrTarget",ErrorDetails:"A measurement was used as the vehicle.");
         var reference=MotionOpenPilot.Relations(c.Language).Single(r=>r.Id==kind);
         var clauses=new[]{reference.Fact0,reference.Fact1,reference.Fact2};
         for(int i=0;i<d.Facts!.Count;i++)
@@ -31,7 +34,7 @@ internal static class MotionOpenMeaning
             }
         }
         for(int i=0;i<d.Facts.Count;i++)
-            if(Match(d.Facts[i].Text,Regex.Escape(vi?"không phải ":"it is not true that ")+"(?:"+novel[i]+")"))
+            if(Match(d.Facts[i].Text,Regex.Escape(vi?"không phải ":"it is not true that ")+"(?:"+novel[i]+"|"+editorial[i]+")"))
                 return new(null,"ChangedRelationOrTarget",ErrorDetails:"An explicitly required motion premise is denied.");
         if(kind=="rest"&&Proof(d.Facts[2].Text,@"sau khi kết thúc mới nghỉ \{f2\} \{v4\}",@"after arrival there is one stop lasting \{f2\} \{v4\}"))
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"The stop was moved outside the supplied elapsed duration.");
@@ -64,6 +67,9 @@ internal static class MotionOpenMeaning
         given|=Match(d.Facts[0].Text,novel[0]);
         duration|=Match(d.Facts[1].Text,novel[1]);
         if(kind=="rest")rest|=Match(d.Facts[2].Text,novel[2]);
+        given|=Match(d.Facts[0].Text,editorial[0]);
+        duration|=Match(d.Facts[1].Text,editorial[1]);
+        if(kind=="rest")rest|=Match(d.Facts[2].Text,editorial[2]);
         bool target=kind switch {
             "speed"=>Proof(d.Question,@"vận tốc là bao nhiêu \{v1\}",@"what is the speed in \{v1\}"),
             "time"=>Proof(d.Question,@"thời gian thực sự di chuyển là bao nhiêu \{v2\}",@"what is the actual travel time in \{v2\}"),
@@ -79,8 +85,31 @@ internal static class MotionOpenMeaning
         lead|=kind switch {"speed"=>Proof(d.SolutionLeads[0].Text,"vận tốc chuyển động","uniform speed"),
             "time"=>Proof(d.SolutionLeads[0].Text,"thời gian di chuyển thực tế","actual time spent travelling"),
             _=>Proof(d.SolutionLeads[0].Text,"quãng đường đã đi","distance covered")};
+        target|=kind switch {
+            "speed"=>Proof(d.Question,@"vận tốc của (?:chiếc xe|xe) là bao nhiêu \{v1\}",@"what is (?:its|the vehicle's) (?:constant |uniform )?speed in \{v1\}"),
+            "time"=>Proof(d.Question,@"(?:khoảng )?thời gian thực sự di chuyển là bao nhiêu \{v2\}",@"how long is the actual travel duration in \{v2\}"),
+            _=>Proof(d.Question,@"(?:tổng )?quãng đường (?:đã đi được|mà chiếc xe đã đi được) là bao nhiêu \{v3\}",@"what distance does (?:it|the vehicle) cover in \{v3\}")};
+        lead|=kind switch {"speed"=>Proof(d.SolutionLeads[0].Text,"vận tốc","constant speed"),
+            "time"=>Proof(d.SolutionLeads[0].Text,"thời gian di chuyển",@"actual (?:moving|travel) duration"),
+            _=>Proof(d.SolutionLeads[0].Text,"quãng đường",@"(?:total )?distance covered")};
         return given&&duration&&rest&&target&&lead?new(d,null,c):new(d,"SemanticReviewRequired",c,
             "The single traveller, uniform moving speed, actual versus elapsed time, included stop or requested quantity could not be proved.");
+    }
+    // Full-clause proofs preserve roles and logical scope; no negation stripping.
+    private static string[] EditorialFactPatterns(string kind,bool vi)
+    {
+        string vehicle=vi?@"(?:một chiếc|một|chiếc) \{v0\}":@"(?:a|the) \{v0\}";
+        string first=kind is "speed" or "time"
+            ?vehicle+(vi?@" (?:đã )?(?:đi hết quãng đường|di chuyển được|đi được) \{f0\} \{v3\}":@" covers a distance of \{f0\} \{v3\}")
+            :vehicle+(kind=="rest"
+                ?vi?@" duy trì (?:vận tốc|tốc độ) \{f0\} \{v1\} khi đang di chuyển":@" maintains a constant speed of \{f0\} \{v1\} while moving"
+                :vi?@" duy trì (?:vận tốc|tốc độ) \{f0\} \{v1\} trong suốt hành trình":@" maintains a (?:steady|constant) speed of \{f0\} \{v1\}");
+        string second=kind switch {
+            "distance"=>vi?@"khoảng thời gian di chuyển liên tục là \{f1\} \{v2\} mà không hề dừng lại":@"the (?:uninterrupted travel duration|total time spent moving without interruption) amounts to \{f1\} \{v2\}",
+            "speed"=>vi?@"thời gian di chuyển là \{f1\} \{v2\}, vận tốc không đổi và không nghỉ":@"the actual moving duration is \{f1\} \{v2\}, with constant speed and no stops",
+            "time"=>vi?@"vận tốc là \{f1\} \{v1\} và không đổi trong suốt hành trình không nghỉ":@"its constant speed is maintained at \{f1\} \{v1\} during the entire trip without any (?:interruptions|pauses)",
+            _=>vi?@"tổng thời gian trôi qua cho hành trình này là \{f1\} \{v2\}":@"the total elapsed duration is \{f1\} \{v2\}"};
+        return kind=="rest"?[first,second,vi?@"trong suốt quá trình đó, có một lần dừng lại với thời gian là \{f2\} \{v4\}":@"this elapsed duration includes exactly one rest lasting \{f2\} \{v4\}"]:[first,second];
     }
     private static string[] NovelFactPatterns(string kind,bool vi)
     {

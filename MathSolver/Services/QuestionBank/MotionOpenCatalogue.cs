@@ -30,6 +30,9 @@ internal static class MotionOpenCatalogue
         bool vi=c.Language==AppLanguage.Vietnamese;
         string kind=c.SceneId.Split('/')[1];
         string target=kind switch {"speed"=>vi?"vận tốc":"speed","time"=>vi?"thời gian thực sự di chuyển":"actual travel time",_=>vi?"quãng đường":"distance"};
+        string placement=kind=="time"
+            ?"Không viết tốc độ của {f1}; hãy viết vận tốc là {f1} {v1}."
+            :"Đặt số đo thời gian sau là, trong hoặc kéo dài; không đặt sau chiếc hay của chiếc. {f1} {v2} đo thời gian, không phải vận tốc hay phương tiện.";
         string condition=kind=="rest"
             ?vi?"Tổng thời gian gồm đúng một lần nghỉ bên trong; vận tốc chỉ áp dụng khi đang di chuyển. Không biến tổng thời gian thành thời gian chạy xe hay dời nghỉ ra sau chuyến đi."
                 :"The supplied elapsed time INCLUDES exactly one stop INSIDE the journey; speed applies only while moving. Do not call elapsed time actual travel time or move the stop after arrival."
@@ -46,14 +49,20 @@ internal static class MotionOpenCatalogue
             Dữ kiện và câu hỏi là câu hoàn chỉnh. Câu dẫn lời giải chỉ là tên đại lượng, không mở bằng Tìm/Tính hay ghi chỉ dẫn kỹ thuật.
             Dùng chủ thể và đơn vị trong biến; không thêm tên người, phương tiện, điều kiện, số hoặc đơn vị viết ngoài biến. Không tính toán/tiết lộ đáp án. Chỉ trả JSON.
             {v0} là danh từ chỉ phương tiện: một {v0} hoặc chiếc {v0}. Câu hỏi kết thúc bằng bao nhiêu rồi biến đơn vị; đơn vị không phải người hay xe.
+            Đi liên tục không đồng nghĩa với vận tốc không đổi. Phải nêu rõ vận tốc không đổi khi di chuyển, kể cả bài hỏi vận tốc.
+            {{placement}}
+            Sau lần giới thiệu {v0}, gọi là xe hoặc dùng câu không lặp chủ thể. Được thay cách mở đầu, thứ tự cụm và động từ để câu tự nhiên.
             """:$$"""
-            Write a new natural one-traveller motion problem. References do not limit sentence wording.
+            Write a new natural motion problem about one vehicle. References do not limit sentence wording.
             Keep each quantity role and the constant speed while moving; the supplied measurement units already agree. Fill no placeholders.
             Ask only for {{target}}, not another quantity, a clock time, a multi-leg average or a return journey.
             {{condition}}
             Facts and question are full sentences; the solution heading is a noun phrase naming the target, not Find/Determine or a procedural instruction.
             Keep the vehicle and units in their placeholders. Do not add names, vehicles, facts, conditions or filled units. No calculations or answers. Return only JSON.
             {v0} is a vehicle noun: a {v0} or the {v0}. End the question with in followed by its unit variable. Units are measurements, never actors.
+            Continuous travel does not imply constant speed. Explicitly state constant speed while moving, also when speed is the unknown.
+            Put a duration after is, for, takes or lasts; never use a duration as a vehicle or owner. Put a speed after at, remains or speed of, not after speed belonging to.
+            Do not call the vehicle a traveller, traveler or person. After introducing {v0}, use it or the vehicle. Vary openings, clause order and verbs naturally without changing roles.
             """;
     }
     internal static string Relation(BasicQuestionContract c)
@@ -61,7 +70,7 @@ internal static class MotionOpenCatalogue
         string kind=c.SceneId.Split('/')[1];
         return kind switch {
             "distance"=>"motion-uniform-distance: f0=speed, f1=actual moving duration; TARGET=distance; continuous, no stops.",
-            "speed"=>"motion-uniform-speed: f0=distance, f1=actual moving duration; TARGET=speed; continuous, no stops.",
+            "speed"=>"motion-uniform-speed: f0=distance, f1=actual moving duration; TARGET=speed; speed explicitly constant, continuous, no stops.",
             "time"=>"motion-uniform-travel-time: f0=distance, f1=speed; TARGET=actual moving duration; continuous, no stops.",
             _=>"motion-one-included-stop-distance: f0=speed while moving, f1=total elapsed INCLUDING the stop, f2=one rest INSIDE elapsed; TARGET=distance; C# subtracts rest before using speed."};
     }

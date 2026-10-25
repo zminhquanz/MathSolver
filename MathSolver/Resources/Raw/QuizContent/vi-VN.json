@@ -2,6 +2,7 @@
   "Version": 1,
   "Culture": "vi-VN",
   "Texts": [
+    {"Id":"Quiz.MotionExtendedHint","Text":"Diễn đạt đa dạng có bài gặp nhau ngược chiều, đuổi kịp cùng chiều, vận tốc xuôi dòng, ngược dòng, vận tốc khi nước yên lặng và vận tốc dòng nước. Bài đường bộ dùng km/h–giờ–km; vận tốc trên sông dùng km/h.","Variables":[]},
     {"Id":"Quiz.MotionOpenHint","Text":"Trong nhóm Một vật chuyển động, diễn đạt đa dạng luân phiên bốn quan hệ: tìm quãng đường, vận tốc, thời gian di chuyển và quãng đường có một lần nghỉ. Dùng km/h–giờ–km; tổng thời gian của bài có nghỉ đã bao gồm lần nghỉ đó.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.ProportionUnitaryGroupCount","Text":"Biết số nhóm và tổng lượng ban đầu, tìm số nhóm để chứa tổng lượng mới với lượng mỗi nhóm không đổi.","Variables":[]},
     {"Id":"Quiz.ProportionUnitaryGroupCount","Text":"Rút về đơn vị · tìm số nhóm","Variables":[]},
@@ -13084,6 +13085,158 @@
     }
   ],
   "Lists": {
+    "MotionExtended.Contexts": [
+      {
+        "Id": "cyclists",
+        "Group": "road",
+        "First": "người đi xe đạp thứ nhất",
+        "Second": "người đi xe đạp thứ hai",
+        "MinimumSpeed": 8,
+        "MaximumSpeed": 24,
+        "MaximumCurrent": 0
+      },
+      {
+        "Id": "cars",
+        "Group": "road",
+        "First": "ô tô thứ nhất",
+        "Second": "ô tô thứ hai",
+        "MinimumSpeed": 30,
+        "MaximumSpeed": 80,
+        "MaximumCurrent": 0
+      },
+      {
+        "Id": "canoe",
+        "Group": "river",
+        "First": "ca nô",
+        "Second": "",
+        "MinimumSpeed": 8,
+        "MaximumSpeed": 16,
+        "MaximumCurrent": 3
+      },
+      {
+        "Id": "motorboat",
+        "Group": "river",
+        "First": "thuyền máy",
+        "Second": "",
+        "MinimumSpeed": 18,
+        "MaximumSpeed": 45,
+        "MaximumCurrent": 6
+      }
+    ],
+    "MotionExtended.Relations": [
+      {
+        "Id": "meeting",
+        "Type": "Meeting",
+        "Kind": "MeetingTime",
+        "Group": "road",
+        "Facts": [
+          "Ban đầu, {v0} và {v1} cách nhau {f0} {v4} trên một đoạn đường thẳng.",
+          "Vận tốc của {v0} là {f1} {v2}.",
+          "Vận tốc của {v1} là {f2} {v2}.",
+          "Hai bên xuất phát cùng lúc, đi ngược chiều về phía nhau trên cùng đoạn đường, mỗi bên giữ vận tốc không đổi và không dừng nghỉ."
+        ],
+        "Question": "Sau bao nhiêu {v3} thì hai bên gặp nhau?",
+        "Lead": "Thời gian để hai bên gặp nhau",
+        "AlternateFacts": [
+          "Trên một đoạn đường thẳng, khoảng cách ban đầu giữa {v0} và {v1} là {f0} {v4}.",
+          "Di chuyển với vận tốc {f1} {v2}, {v0} giữ đều vận tốc đó.",
+          "Di chuyển với vận tốc {f2} {v2}, {v1} giữ đều vận tốc đó.",
+          "Hai bên bắt đầu đồng thời và tiến về phía nhau theo hai chiều ngược nhau trên cùng đoạn đường, vận tốc từng bên không đổi và không nghỉ."
+        ]
+      },
+      {
+        "Id": "chasing",
+        "Type": "Chasing",
+        "Kind": "CatchUpTime",
+        "Group": "road",
+        "Facts": [
+          "Ban đầu, {v0} ở phía trước {v1} một khoảng {f0} {v4} trên một đoạn đường thẳng.",
+          "Vận tốc của {v0} là {f1} {v2}.",
+          "Vận tốc của {v1} là {f2} {v2}.",
+          "Hai bên xuất phát cùng lúc, đi cùng chiều trên cùng đoạn đường, mỗi bên giữ vận tốc không đổi và không dừng nghỉ."
+        ],
+        "Question": "Sau bao nhiêu {v3} thì bên nhanh đuổi kịp bên chậm?",
+        "Lead": "Thời gian để bên nhanh đuổi kịp bên chậm",
+        "AlternateFacts": [
+          "Trên một đoạn đường thẳng, {v0} dẫn trước {v1} một khoảng {f0} {v4} lúc bắt đầu.",
+          "Di chuyển với vận tốc {f1} {v2}, {v0} giữ đều vận tốc đó.",
+          "Di chuyển với vận tốc {f2} {v2}, {v1} giữ đều vận tốc đó.",
+          "Hai bên bắt đầu đồng thời và chuyển động cùng chiều trên cùng đoạn đường, vận tốc từng bên không đổi và không nghỉ."
+        ]
+      },
+      {
+        "Id": "downstream",
+        "Type": "River",
+        "Kind": "RiverDownstreamSpeed",
+        "Group": "river",
+        "Facts": [
+          "Khi nước yên lặng, vận tốc của {v0} là {f0} {v2}.",
+          "Vận tốc dòng nước so với bờ là {f1} {v2}.",
+        "Phương tiện chuyển động xuôi dòng, vận tốc khi nước yên lặng và vận tốc dòng nước không đổi, vận tốc chuyển động được đo so với bờ."
+        ],
+        "Question": "Vận tốc xuôi dòng so với bờ là bao nhiêu {v2}?",
+        "Lead": "Vận tốc xuôi dòng so với bờ",
+        "AlternateFacts": [
+          "Vận tốc của {v0} trong nước yên lặng là {f0} {v2}.",
+          "Dòng nước chảy với vận tốc {f1} {v2} so với bờ.",
+        "Trong khi đi xuôi dòng, vận tốc của phương tiện khi nước yên lặng và vận tốc dòng nước giữ nguyên, vận tốc di chuyển là vận tốc so với bờ."
+        ]
+      },
+      {
+        "Id": "upstream",
+        "Type": "River",
+        "Kind": "RiverUpstreamSpeed",
+        "Group": "river",
+        "Facts": [
+          "Khi nước yên lặng, vận tốc của {v0} là {f0} {v2}.",
+          "Vận tốc dòng nước so với bờ là {f1} {v2}.",
+        "Phương tiện chuyển động ngược dòng, vận tốc khi nước yên lặng và vận tốc dòng nước không đổi, vận tốc chuyển động được đo so với bờ."
+        ],
+        "Question": "Vận tốc ngược dòng so với bờ là bao nhiêu {v2}?",
+        "Lead": "Vận tốc ngược dòng so với bờ",
+        "AlternateFacts": [
+          "Vận tốc của {v0} trong nước yên lặng là {f0} {v2}.",
+          "Dòng nước chảy với vận tốc {f1} {v2} so với bờ.",
+        "Trong khi đi ngược dòng, vận tốc của phương tiện khi nước yên lặng và vận tốc dòng nước giữ nguyên, vận tốc di chuyển là vận tốc so với bờ."
+        ]
+      },
+      {
+        "Id": "boat",
+        "Type": "River",
+        "Kind": "RiverBoatSpeed",
+        "Group": "river",
+        "Facts": [
+          "Vận tốc xuôi dòng của {v0} so với bờ là {f0} {v2}.",
+          "Vận tốc ngược dòng của {v0} so với bờ là {f1} {v2}.",
+          "Cùng một phương tiện có vận tốc khi nước yên lặng không đổi và vận tốc dòng nước giữ nguyên ở cả hai chiều."
+        ],
+        "Question": "Vận tốc của phương tiện khi nước yên lặng là bao nhiêu {v2}?",
+        "Lead": "Vận tốc của phương tiện khi nước yên lặng",
+        "AlternateFacts": [
+          "So với bờ, {v0} chuyển động xuôi dòng với vận tốc {f0} {v2}.",
+          "So với bờ, {v0} chuyển động ngược dòng với vận tốc {f1} {v2}.",
+          "Hai chiều đều dùng cùng một phương tiện, với vận tốc khi nước yên lặng và vận tốc dòng nước không thay đổi."
+        ]
+      },
+      {
+        "Id": "current",
+        "Type": "River",
+        "Kind": "RiverCurrentSpeed",
+        "Group": "river",
+        "Facts": [
+          "Vận tốc xuôi dòng của {v0} so với bờ là {f0} {v2}.",
+          "Vận tốc ngược dòng của {v0} so với bờ là {f1} {v2}.",
+          "Cùng một phương tiện có vận tốc khi nước yên lặng không đổi và vận tốc dòng nước giữ nguyên ở cả hai chiều."
+        ],
+        "Question": "Vận tốc dòng nước so với bờ là bao nhiêu {v2}?",
+        "Lead": "Vận tốc dòng nước so với bờ",
+        "AlternateFacts": [
+          "So với bờ, {v0} chuyển động xuôi dòng với vận tốc {f0} {v2}.",
+          "So với bờ, {v0} chuyển động ngược dòng với vận tốc {f1} {v2}.",
+          "Hai chiều đều dùng cùng một phương tiện, với vận tốc khi nước yên lặng và vận tốc dòng nước không thay đổi."
+        ]
+      }
+    ],
     "MotionOpen.Contexts": [
       {"Id":"car","Subject":"ô tô","MinimumSpeed":30,"MaximumSpeed":80},
       {"Id":"bus","Subject":"xe buýt","MinimumSpeed":25,"MaximumSpeed":60},

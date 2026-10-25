@@ -283,6 +283,10 @@ public sealed partial class EssayAnswerValidator
             return (false, EssayAnswerError.MissingSolution);
         }
 
+        if(question.MotionProblem is { } extended && MotionExtendedPilot.IsProfile(extended.NarrativeId))
+            return MotionExtendedHeading(extended,solutionText)
+                ?(true,EssayAnswerError.None):(false,EssayAnswerError.WrongSolutionContent);
+
         if (MentionsSolutionCue(question, solution, solutionText))
         {
             return (true, EssayAnswerError.None);
@@ -304,8 +308,10 @@ public sealed partial class EssayAnswerValidator
         }
 
         if (question.MotionProblem is MotionQuizContract motion &&
-            GetMotionQuantityPhrases(motion.QuestionKind)
-                .Any(phrase => ContainsNormalizedPhrase(solution, phrase)))
+            (GetMotionQuantityPhrases(motion.QuestionKind)
+                .Any(phrase => ContainsNormalizedPhrase(solution, phrase))
+             || MotionOpenPilot.IsProfile(motion.NarrativeId) && motion.QuestionKind==MotionQuestionKind.BasicTime
+                && new[]{"actual moving duration","actual travel duration"}.Any(phrase=>ContainsNormalizedPhrase(solution,phrase))))
         {
             return (true, EssayAnswerError.None);
         }
@@ -497,6 +503,9 @@ public sealed partial class EssayAnswerValidator
 
         if(question.MotionProblem is { } openMotion&&MotionOpenPilot.IsProfile(openMotion.NarrativeId)
             &&!MotionOpenOperands(openMotion,parts[firstCalculationPart]))
+            return (false,EssayAnswerError.WrongOperandsOrOperation);
+        if(question.MotionProblem is { } extendedMotion&&MotionExtendedPilot.IsProfile(extendedMotion.NarrativeId)
+            &&!MotionExtendedOperands(extendedMotion,parts[firstCalculationPart]))
             return (false,EssayAnswerError.WrongOperandsOrOperation);
 
         if (question.ExpressionProblem is ExpressionQuizContract expressionProblem)

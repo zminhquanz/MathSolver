@@ -4,7 +4,8 @@ Trong Thêm đề AI, chọn **Chuyển động → Một vật chuyển động
 đa dạng**. Mỗi vòng bốn yêu cầu lần lượt tìm quãng đường, vận tốc, thời gian
 thực sự di chuyển và quãng đường có một lần nghỉ. Bối cảnh ô tô, xe buýt,
 xe đạp chọn riêng trong từng quan hệ; số sao không thay đại lượng cần tìm.
-Các nhóm đuổi kịp/gặp nhau/dòng nước chưa bật lời văn mở trong đợt này.
+Các nhóm đuổi kịp/gặp nhau/dòng nước dùng hồ sơ mở riêng; xem
+`MOTION_EXTENDED_OPEN_AI.md` cho phạm vi và cách chọn.
 
 Giữ nguyên enum Basic/Chasing/Meeting/River. Hồ sơ
 `motion-open/{distance|speed|time|rest}/{car|bus|bicycle}` dùng các
@@ -51,3 +52,23 @@ Lượt cuối v2 ngày24/10/2026 hoàn tất16 yêu cầu/16 lần gọi thật
 gượng,3 câu mơ hồ,3 câu sai vai trò. Chưa tự đưa các đầu ra này vào luyện
 tập. V2 giữ cụm danh từ phương tiện và cụm đơn vị ở câu hỏi để giảm nhầm
 vai trò; phần vị ngữ vẫn tự sinh. Không đổi bộ kiểm chứng để nhận câu sai.
+
+Củng cố ngày 25/10/2026: nhận thêm bốn câu rõ bị bỏ sót trong lượt v2,
+kiểm tra toàn mệnh đề với phủ định/điều kiện, giữ rõ vận tốc không đổi và
+nghỉ nằm trong tổng thời gian. Các câu chỉ nêu đi liên tục chưa chứng minh
+được chuyển động đều vẫn chờ duyệt. Trường hợp chắc chắn dùng thời lượng
+làm phương tiện bị từ chối để thử lại; câu chưa hiểu rõ vẫn chờ duyệt ngay.
+
+Prompt phân biệt phương tiện với số đo và dùng it/the vehicle trong tiếng
+Anh. Grammar gắn số đo thời lượng với cụm đo lường (is/for/là/trong/kéo dài),
+không liệt kê nguyên câu; tiêu đề Actual moving duration/Actual travel duration
+được bộ chấm nhận cho đúng hồ sơ tìm thời gian. Phép tính, dữ kiện, List<>,
+schema và điều kiện lưu/chờ duyệt/thử lại giữ nguyên. Kết quả phát lại v2
+và lượt AI mới được ghi riêng tại
+`artifacts/verification/motion-open-editorial/REPORT.md`.
+
+Lượt native v3 bằng mã cuối hoàn tất 16 yêu cầu/16 lần gọi: 0 tự xác minh,
+16 chờ duyệt, 0 thử lại/trùng; đọc riêng 8 rõ, 6 gượng, 2 mơ hồ, không gặp lại
+lỗi dùng thời lượng làm xe hay gọi xe là traveller trong mẫu này. Tám câu rõ
+mới vẫn chưa được C# chứng minh: bộ kiểm chứng còn hẹp, chưa đủ chất lượng
+để tự đưa các đầu ra đó vào luyện tập. Không sửa matcher theo lượt v3.

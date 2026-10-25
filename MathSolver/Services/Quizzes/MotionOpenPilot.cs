@@ -80,6 +80,7 @@ public sealed partial class MotionQuizGenerator
 {
     public ArithmeticQuizQuestion GenerateNarrative(ArithmeticQuizMode mode,AppLanguage language,MotionQuizType type,QuizCurriculumContext context,string? profile=null)
     {
+        if(MotionExtendedPilot.IsProfile(profile))return GenerateExtendedNarrative(mode,language,type,context,profile!);
         if(!MotionOpenPilot.IsProfile(profile))return GenerateAlgorithm(mode,language,type,context);
         if(type!=MotionQuizType.Basic)throw new ArgumentException("InvalidMotionRelation");
         var d=MotionOpenPilot.Create(profile!,language,context.Tier,_random);

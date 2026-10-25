@@ -203,7 +203,7 @@ public partial class AiQuestionBankPage : ContentPage
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
     private bool SupportsCreativeProse => _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
-            || _family==BankQuestionFamily.Motion&&_storyVariant==(int)MotionQuizType.Basic
+            || _family==BankQuestionFamily.Motion&&Enum.IsDefined((MotionQuizType)_storyVariant)
             || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant)
             || _family==BankQuestionFamily.Proportion && _storyVariant is (int)ProportionQuizType.Direct or (int)ProportionQuizType.UnitaryGroupCount
             || _family==BankQuestionFamily.TwoNumbers && _storyVariant is (int)ElementaryQuizType.SumDifference or (int)ElementaryQuizType.SumRatio or (int)ElementaryQuizType.DifferenceRatio
@@ -217,6 +217,7 @@ public partial class AiQuestionBankPage : ContentPage
         CreativeProsePanel.IsEnabled = SupportsCreativeProse;
         CreativeProsePanel.Opacity = SupportsCreativeProse ? 1 : 0.5;
         MotionOpenHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant==(int)MotionQuizType.Basic;
+        MotionExtendedHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant is (int)MotionQuizType.Meeting or (int)MotionQuizType.Chasing or (int)MotionQuizType.River;
     }
 
     private void RenderSelected()

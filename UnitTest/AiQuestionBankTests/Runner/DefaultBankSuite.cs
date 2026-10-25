@@ -146,6 +146,7 @@ internal static class DefaultBankSuite
         await MultiStepBankTests.RunAsync();
         await MotionBankTests.RunAsync();
         await MotionOpenTests.RunAsync();
+        await MotionExtendedTests.RunAsync();
         await ProportionBankTests.RunAsync();
         await DecimalBankTests.RunAsync();
         await MeasurementBankTests.RunAsync();

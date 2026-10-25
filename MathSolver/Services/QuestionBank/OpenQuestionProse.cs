@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (MotionOpenCatalogue.IsProfile(c)||(UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||SumDifferenceOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||(UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||SumDifferenceOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -100,6 +100,7 @@ public static class OpenQuestionProse
         if(PercentageRemainingOpenCatalogue.IsProfile(c))return PercentageRemainingOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenMeaning.Validate(c,syntax.Draft!);
         if(DifferenceRatioOpenCatalogue.IsProfile(c))return DifferenceRatioOpenMeaning.Validate(c,syntax.Draft!);
+        if(MotionExtendedCatalogue.IsProfile(c))return MotionExtendedMeaning.Validate(c,syntax.Draft!);
         if(MotionOpenCatalogue.IsProfile(c))return MotionOpenMeaning.Validate(c,syntax.Draft!);
         if(UnitaryGroupsOpenCatalogue.IsProfile(c))return UnitaryGroupsOpenMeaning.Validate(c,syntax.Draft!);
         if(UnitaryTotalOpenCatalogue.IsProfile(c))return UnitaryTotalOpenMeaning.Validate(c,syntax.Draft!);
@@ -167,6 +168,7 @@ public static class OpenQuestionProse
         if (RectanglePerimeterOpenCatalogue.IsProfile(c)) instruction = RectanglePerimeterOpenCatalogue.WritingInstructions(c);
         if (DifferenceRatioOpenCatalogue.IsProfile(c)) instruction = DifferenceRatioOpenCatalogue.WritingInstructions(c.Language);
         if (MotionOpenCatalogue.IsProfile(c)) instruction = MotionOpenCatalogue.Instructions(c);
+        if (MotionExtendedCatalogue.IsProfile(c)) instruction = MotionExtendedCatalogue.Instructions(c);
         if (UnitaryGroupsOpenCatalogue.IsProfile(c)) instruction = UnitaryGroupsOpenCatalogue.Instructions(c.Language);
         if (UnitaryTotalOpenCatalogue.IsProfile(c)) instruction = UnitaryTotalOpenCatalogue.WritingInstructions(c.Language);
         if (SumRatioOpenCatalogue.IsProfile(c)) instruction = SumRatioOpenCatalogue.WritingInstructions(c.Language);
@@ -178,7 +180,7 @@ public static class OpenQuestionProse
         if (PercentageWholeOpenCatalogue.IsProfile(c)) instruction = PercentageWholeOpenCatalogue.WritingInstructions(c.Language);
         if (PercentageRemainingOpenCatalogue.IsProfile(c)) instruction = PercentageRemainingOpenCatalogue.WritingInstructions(c.Language);
         if (PercentagePartOpenCatalogue.IsProfile(c)) instruction = PercentagePartOpenCatalogue.WritingInstructions(c.Language);
-        string relation = MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.Relation(c):SameMonthCalendarCatalogue.IsProfile(c)?SameMonthCalendarCatalogue.PromptRelation(c)
+        string relation = MotionExtendedCatalogue.IsProfile(c)?MotionExtendedCatalogue.Relation(c):MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.Relation(c):SameMonthCalendarCatalogue.IsProfile(c)?SameMonthCalendarCatalogue.PromptRelation(c)
             :OvernightTimeCatalogue.IsProfile(c)?OvernightTimeCatalogue.PromptRelation
             :SameDayBreakCatalogue.IsProfile(c)?SameDayBreakCatalogue.PromptRelation
             : RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.PromptRelation
@@ -212,8 +214,8 @@ public static class OpenQuestionProse
                 BasicQuestionStructure.CountGroups => "a: total items; b: items per group; target: number of groups.",
                 _ => "Preserve the reference's owners, event direction and target exactly."
             });
-        return instruction + "\nC# relation: " + relation + "; context=" + (MotionOpenCatalogue.IsProfile(c)?"one-vehicle-journey":UnitaryGroupsOpenCatalogue.IsProfile(c)?"equal-counted-groups-find-group-count":UnitaryTotalOpenCatalogue.IsProfile(c)?"equal-counted-groups":DifferenceRatioOpenCatalogue.IsProfile(c)?"direct-counted-items":c.SceneId)
-            + "\n"+(MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.ContextHint(c.Language):UnitaryGroupsOpenCatalogue.IsProfile(c)?UnitaryGroupsOpenCatalogue.ContextHint(c.Language):UnitaryTotalOpenCatalogue.IsProfile(c)?UnitaryTotalOpenCatalogue.ContextHint(c.Language):DifferenceRatioOpenCatalogue.IsProfile(c)?DifferenceRatioOpenCatalogue.ContextHint(c.Language)
+        return instruction + "\nC# relation: " + relation + "; context=" + (MotionExtendedCatalogue.IsProfile(c)?"extended-motion-roles":MotionOpenCatalogue.IsProfile(c)?"one-vehicle-journey":UnitaryGroupsOpenCatalogue.IsProfile(c)?"equal-counted-groups-find-group-count":UnitaryTotalOpenCatalogue.IsProfile(c)?"equal-counted-groups":DifferenceRatioOpenCatalogue.IsProfile(c)?"direct-counted-items":c.SceneId)
+            + "\n"+(MotionExtendedCatalogue.IsProfile(c)?MotionExtendedCatalogue.ContextHint(c.Language):MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.ContextHint(c.Language):UnitaryGroupsOpenCatalogue.IsProfile(c)?UnitaryGroupsOpenCatalogue.ContextHint(c.Language):UnitaryTotalOpenCatalogue.IsProfile(c)?UnitaryTotalOpenCatalogue.ContextHint(c.Language):DifferenceRatioOpenCatalogue.IsProfile(c)?DifferenceRatioOpenCatalogue.ContextHint(c.Language)
                 :(vi?"Chủ thể dùng biến, không điền tên. Đơn vị/đồ vật đã chọn (chỉ để hiểu bối cảnh): ":"Use actor placeholders, never actual names. Selected units/objects (context only): ")+c.Unit+"; "+c.GroupUnit)
             + "\nReference JSON:\n" + QuestionBankStore.SerializeDraft(UnitaryTotalOpenCatalogue.IsProfile(c)
                 ? UnitaryTotalOpenCatalogue.PromptExample(c,Example(c)) : SumRatioOpenCatalogue.IsProfile(c)
@@ -239,6 +241,7 @@ public static class OpenQuestionProse
     public static string Grammar(BasicQuestionContract c)
     {
         if (!Supports(c)) throw new ArgumentException("Unsupported open prose profile.");
+        if(MotionExtendedCatalogue.IsProfile(c))return MotionExtendedGrammar.Build(c);
         bool clockActivity=SameDayBreakCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c);
         bool calendar=SameMonthCalendarCatalogue.IsProfile(c);
         bool singleSentence=MotionOpenCatalogue.IsProfile(c)||(UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||calendar||clockActivity||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c);
@@ -265,6 +268,17 @@ public static class OpenQuestionProse
             for(int i=0;i<matches.Length;i++)
             {
                 string block=Literal(matches[i].Value);
+                if(MotionOpenCatalogue.IsProfile(c)&&fieldIndex==1&&matches[i].Value=="{f1}"&&i+1<matches.Length)
+                {
+                    // Bind only the measurement predicate; surrounding prose stays open.
+                    bool speed=c.SceneId.Split('/')[1]=="time";
+                    string unit=speed?"{v1}":"{v2}";
+                    if(matches[i+1].Value!=unit)throw new InvalidDataException("Motion measurement unit role changed.");
+                    string[] predicates=c.Language==AppLanguage.Vietnamese
+                        ?speed?["là ","ở mức ","vận tốc ","tốc độ "]:["là ","trong ","kéo dài ","dài "]
+                        :speed?["at ","of ","remains ","stays at "]:["is ","for ","takes ","lasts ","amounts to "];
+                    blocks.Add("("+string.Join(" | ",predicates.Select(p=>Literal(p+"{f1} "+unit)))+")");i++;continue;
+                }
                 if(MotionOpenCatalogue.IsProfile(c)&&fieldIndex==0&&matches[i].Value=="{v0}")
                 {
                     // Bind the vehicle noun phrase, not a whole fact sentence.
@@ -438,14 +452,14 @@ public static class OpenQuestionProse
         string root = Node(doc.RootElement);
         // Unitary conditions express equality and invariance after their final
         // slot. The shorter shared limit can cut even the prompt reference.
-        string proseTailLimit=(MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))?"159":"39";
+        string proseTailLimit=(MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))?"159":"39";
         // A comma may join the equality and invariance clauses immediately
         // after the final unit slot; preserve every other profile's boundary.
-        string proseTailSeparator=(MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c))?"(\" \" | \", \")":"\" \"";
+        string proseTailSeparator=(MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c))?"(\" \" | \", \")":"\" \"";
         return "root ::= " + root + " ws\n" + rules
             + "character ::= [" + QuestionProseLanguage.GrammarLetters(c.Language) + (singleSentence?" ,()'\\u2019-]":" ,.;:!?()'\\u2019-]")
             + (calendar||clockActivity?"\nword-gap ::= (\" \" | \", \") (character{1,46} \" \")?\nword-tail ::= (\" \" character{1,79})? | \", \" character{1,79}\npossessive ::= \"'s\" | \"\\u2019s\""
-                :(MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||PercentageWholeOpenCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)?"\nword-gap ::= \" \" (character{1,46} \" \")?\nword-tail ::= ("+proseTailSeparator+" character{1,"+proseTailLimit+"})?\npossessive ::= \"'s\" | \"\\u2019s\"":"")
+                :(MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||PercentageWholeOpenCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)?"\nword-gap ::= \" \" (character{1,46} \" \")?\nword-tail ::= ("+proseTailSeparator+" character{1,"+proseTailLimit+"})?\npossessive ::= \"'s\" | \"\\u2019s\"":"")
             + (calendar&&SameMonthCalendarPilot.IsAdjacentInclusive(c.SceneId)&&c.Language==AppLanguage.English?"\ncalendar-days ::= (\"calendar \")? \"days\"":"")
             + (singleSentence?"\nending ::= [.!?:]?":"")+"\nws ::= [ \\t]{0,2}\n";
     }

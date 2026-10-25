@@ -2,6 +2,7 @@
   "Version": 1,
   "Culture": "en-US",
   "Texts": [
+    {"Id":"Quiz.MotionExtendedHint","Text":"Diverse prose includes meeting head-on, same-direction catch-up, downstream and upstream speeds, and finding still-water or current speed. Road problems use km/h–hours–km; river speeds are in km/h.","Variables":[]},
     {"Id":"Quiz.MotionOpenHint","Text":"For one moving object, diverse prose cycles four relations: distance, speed, actual travel time and distance with one included stop. Units are km/h–hours–km; elapsed time includes the stop.","Variables":[]},
     {"Id":"Choice.Skill.Quiz.ProportionUnitaryGroupCount","Text":"Use an original group count and total to find the number of groups for a new total, with the same amount in every group.","Variables":[]},
     {"Id":"Quiz.ProportionUnitaryGroupCount","Text":"Unitary method · find the group count","Variables":[]},
@@ -13055,6 +13056,158 @@
     }
   ],
   "Lists": {
+    "MotionExtended.Contexts": [
+      {
+        "Id": "cyclists",
+        "Group": "road",
+        "First": "the first cyclist",
+        "Second": "the second cyclist",
+        "MinimumSpeed": 8,
+        "MaximumSpeed": 24,
+        "MaximumCurrent": 0
+      },
+      {
+        "Id": "cars",
+        "Group": "road",
+        "First": "the first car",
+        "Second": "the second car",
+        "MinimumSpeed": 30,
+        "MaximumSpeed": 80,
+        "MaximumCurrent": 0
+      },
+      {
+        "Id": "canoe",
+        "Group": "river",
+        "First": "the canoe",
+        "Second": "",
+        "MinimumSpeed": 8,
+        "MaximumSpeed": 16,
+        "MaximumCurrent": 3
+      },
+      {
+        "Id": "motorboat",
+        "Group": "river",
+        "First": "the motorboat",
+        "Second": "",
+        "MinimumSpeed": 18,
+        "MaximumSpeed": 45,
+        "MaximumCurrent": 6
+      }
+    ],
+    "MotionExtended.Relations": [
+      {
+        "Id": "meeting",
+        "Type": "Meeting",
+        "Kind": "MeetingTime",
+        "Group": "road",
+        "Facts": [
+          "Initially, {v0} and {v1} are {f0} {v4} apart on a straight road.",
+          "The speed of {v0} is {f1} {v2}.",
+          "The speed of {v1} is {f2} {v2}.",
+          "They start simultaneously towards each other along the same road, each at a constant speed with no stops."
+        ],
+        "Question": "How long does it take for them to meet, in {v3}?",
+        "Lead": "Time until they meet",
+        "AlternateFacts": [
+          "On a straight road, the initial distance between {v0} and {v1} is {f0} {v4}.",
+          "Travelling at {f1} {v2}, {v0} keeps a constant speed.",
+          "Travelling at {f2} {v2}, {v1} keeps a constant speed.",
+          "They set off at the same time, moving towards one another along the same road without stopping, with both speeds constant."
+        ]
+      },
+      {
+        "Id": "chasing",
+        "Type": "Chasing",
+        "Kind": "CatchUpTime",
+        "Group": "road",
+        "Facts": [
+          "Initially, {v0} is {f0} {v4} ahead of {v1} on a straight road.",
+          "The speed of {v0} is {f1} {v2}.",
+          "The speed of {v1} is {f2} {v2}.",
+          "They start simultaneously in the same direction along the same road, each at a constant speed with no stops."
+        ],
+      "Question": "How long until the one behind catches up with the one ahead, in {v3}?",
+      "Lead": "Time needed to catch up",
+        "AlternateFacts": [
+          "On a straight road, {v0} starts with a lead of {f0} {v4} over {v1}.",
+          "Travelling at {f1} {v2}, {v0} keeps a constant speed.",
+          "Travelling at {f2} {v2}, {v1} keeps a constant speed.",
+          "They set off at the same time and travel in the same direction along the same road without stopping, with both speeds constant."
+        ]
+      },
+      {
+        "Id": "downstream",
+        "Type": "River",
+        "Kind": "RiverDownstreamSpeed",
+        "Group": "river",
+        "Facts": [
+          "In still water, the speed of {v0} is {f0} {v2}.",
+          "The current speed relative to the riverbank is {f1} {v2}.",
+        "The craft moves downstream, with constant still-water and current speeds, its travel speed is measured relative to the riverbank."
+        ],
+        "Question": "What is the downstream speed relative to the riverbank in {v2}?",
+        "Lead": "Downstream speed relative to the riverbank",
+        "AlternateFacts": [
+          "The speed of {v0} in still water is {f0} {v2}.",
+          "The water flows at {f1} {v2} relative to the riverbank.",
+        "During downstream travel, the craft's speed in still water and the current speed remain unchanged, the travel speed is relative to the riverbank."
+        ]
+      },
+      {
+        "Id": "upstream",
+        "Type": "River",
+        "Kind": "RiverUpstreamSpeed",
+        "Group": "river",
+        "Facts": [
+          "In still water, the speed of {v0} is {f0} {v2}.",
+          "The current speed relative to the riverbank is {f1} {v2}.",
+        "The craft moves upstream, with constant still-water and current speeds, its travel speed is measured relative to the riverbank."
+        ],
+        "Question": "What is the upstream speed relative to the riverbank in {v2}?",
+        "Lead": "Upstream speed relative to the riverbank",
+        "AlternateFacts": [
+          "The speed of {v0} in still water is {f0} {v2}.",
+          "The water flows at {f1} {v2} relative to the riverbank.",
+        "During upstream travel, the craft's speed in still water and the current speed remain unchanged, the travel speed is relative to the riverbank."
+        ]
+      },
+      {
+        "Id": "boat",
+        "Type": "River",
+        "Kind": "RiverBoatSpeed",
+        "Group": "river",
+        "Facts": [
+          "The downstream speed of {v0} relative to the riverbank is {f0} {v2}.",
+          "The upstream speed of {v0} relative to the riverbank is {f1} {v2}.",
+          "The same craft has a constant speed in still water, and the current speed remains unchanged in both directions."
+        ],
+        "Question": "What is the craft's speed in still water in {v2}?",
+        "Lead": "Craft speed in still water",
+        "AlternateFacts": [
+          "Relative to the riverbank, {v0} travels downstream at {f0} {v2}.",
+          "Relative to the riverbank, {v0} travels upstream at {f1} {v2}.",
+          "Both directions use the same craft with unchanged still-water speed and constant current speed."
+        ]
+      },
+      {
+        "Id": "current",
+        "Type": "River",
+        "Kind": "RiverCurrentSpeed",
+        "Group": "river",
+        "Facts": [
+          "The downstream speed of {v0} relative to the riverbank is {f0} {v2}.",
+          "The upstream speed of {v0} relative to the riverbank is {f1} {v2}.",
+          "The same craft has a constant speed in still water, and the current speed remains unchanged in both directions."
+        ],
+        "Question": "What is the current speed relative to the riverbank in {v2}?",
+        "Lead": "Current speed relative to the riverbank",
+        "AlternateFacts": [
+          "Relative to the riverbank, {v0} travels downstream at {f0} {v2}.",
+          "Relative to the riverbank, {v0} travels upstream at {f1} {v2}.",
+          "Both directions use the same craft with unchanged still-water speed and constant current speed."
+        ]
+      }
+    ],
     "MotionOpen.Contexts": [
       {"Id":"car","Subject":"car","MinimumSpeed":30,"MaximumSpeed":80},
       {"Id":"bus","Subject":"bus","MinimumSpeed":25,"MaximumSpeed":60},

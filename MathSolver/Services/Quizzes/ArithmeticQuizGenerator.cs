@@ -496,8 +496,8 @@ public sealed class ArithmeticQuizValidator
                 return new(false, "InvalidFindXFacts");
         }
 
-        if(question.MotionProblem is { } motion && MotionOpenPilot.IsProfile(motion.NarrativeId)
-            && (!MotionOpenPilot.ValidContract(motion)||question.CorrectAnswer!=motion.CorrectAnswer
+        if(question.MotionProblem is { } motion && (MotionOpenPilot.IsProfile(motion.NarrativeId)||MotionExtendedPilot.IsProfile(motion.NarrativeId))
+            && (!(MotionExtendedPilot.IsProfile(motion.NarrativeId)?MotionExtendedPilot.ValidContract(motion):MotionOpenPilot.ValidContract(motion))||question.CorrectAnswer!=motion.CorrectAnswer
                 ||question.Expression.LeftOperand!=motion.RepresentativeLeft||question.Expression.RightOperand!=motion.RepresentativeRight
                 ||question.Expression.Operation!=motion.RepresentativeOperation)) return new(false,"InvalidMotionRelation");
         if(question.ProportionProblem is {Type:ProportionQuizType.UnitaryGroupCount} groups

@@ -6,12 +6,22 @@ internal sealed class ReasoningStoryCycle
 {
     private readonly Dictionary<(BankQuestionFamily, int, CurriculumTier, AppLanguage), Queue<string>> _recent = [];
     private readonly Dictionary<(CurriculumTier,AppLanguage),int> _motionRotation = [];
+    private readonly Dictionary<(int,CurriculumTier,AppLanguage),int> _extendedMotionRotation = [];
 
     public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
         IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
     {
         var key = (family, variant, tier, language);
         string? motionRelation=null;
+        string? extendedRelation=null;
+        if(creativeProse&&family==BankQuestionFamily.Motion&&variant is (int)MotionQuizType.Meeting or (int)MotionQuizType.Chasing or (int)MotionQuizType.River)
+        {
+            var relations=MotionExtendedPilot.Relations(language).Where(r=>(int)r.Type==variant).OrderBy(r=>r.Kind).ToArray();
+            var rotationKey=(variant,tier,language);
+            _extendedMotionRotation.TryGetValue(rotationKey,out int cursor);
+            extendedRelation=relations[cursor%relations.Length].Id;
+            _extendedMotionRotation[rotationKey]=(cursor+1)%relations.Length;
+        }
         if(creativeProse&&family==BankQuestionFamily.Motion&&variant==(int)MotionQuizType.Basic)
         {
             var relations=MotionOpenPilot.Relations(language).OrderBy(r=>r.Kind).ToArray();
@@ -24,7 +34,9 @@ internal sealed class ReasoningStoryCycle
         int bestCount = int.MaxValue;
         for (int attempt = 0; attempt < 12; attempt++)
         {
-            var profiles=creativeProse && family==BankQuestionFamily.Motion&&variant==(int)MotionQuizType.Basic
+            var profiles=extendedRelation is not null
+                ?MotionExtendedPilot.Profiles(language,(MotionQuizType)variant).Where(id=>id.StartsWith(MotionExtendedPilot.Prefix+extendedRelation+"/",StringComparison.Ordinal)).ToArray()
+                :creativeProse && family==BankQuestionFamily.Motion&&variant==(int)MotionQuizType.Basic
                 ? MotionOpenPilot.Profiles(language).Where(id=>id.StartsWith(MotionOpenPilot.Prefix+motionRelation+"/",StringComparison.Ordinal)).ToArray()
                 : creativeProse && family==BankQuestionFamily.Decimal
                 ? DecimalStoryPilot.Profiles((ElementaryQuizType)variant,language).ToArray()
