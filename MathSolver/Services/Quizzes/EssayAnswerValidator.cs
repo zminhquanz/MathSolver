@@ -69,7 +69,12 @@ public sealed partial class EssayAnswerValidator
         ArgumentNullException.ThrowIfNull(question);
 
         if (question.ElementaryProblem is not null)
-            return ElementaryEssayValidator.Validate(question, solutionText, equationText, answerText);
+        {
+            var elementary = ElementaryEssayValidator.Validate(question, solutionText, equationText, answerText);
+            return elementary.EquationIsCorrect && !PracticalWorkedRules.Validate(question, equationText)
+                ? elementary with { EquationIsCorrect = false, EquationError = EssayAnswerError.WrongOperandsOrOperation }
+                : elementary;
+        }
 
         (bool solutionIsCorrect, EssayAnswerError solutionError) =
             ValidateSolution(
@@ -108,6 +113,9 @@ public sealed partial class EssayAnswerValidator
                 : ValidateAnswer(
                     question,
                     answerText);
+
+        if (equationIsCorrect && !PracticalWorkedRules.Validate(question, equationText))
+        { equationIsCorrect = false; equationError = EssayAnswerError.WrongOperandsOrOperation; }
 
         return new(
             solutionIsCorrect,

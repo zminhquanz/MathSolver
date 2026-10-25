@@ -9,6 +9,7 @@ namespace MathSolver.Services;
 /// <summary>Grades chosen steps and independently labeled answers, without prescribing step count.</summary>
 internal static partial class ElementaryEssayValidator
 {
+    internal static bool PracticalUnitMatches(ArithmeticQuizQuestion q, string entered, string expected) => UnitsMatch(q, entered, expected);
     internal static EssayAnswerValidationResult Validate(ArithmeticQuizQuestion question,
         string? solution, string? equations, string? answerText)
     {

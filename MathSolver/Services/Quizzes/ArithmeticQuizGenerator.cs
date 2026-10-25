@@ -482,6 +482,8 @@ public sealed class ArithmeticQuizValidator
         ArgumentNullException.ThrowIfNull(
             question);
 
+        if(PracticalModelValidator.Validate(question) is { } practical)return practical;
+
         if (question.FindXProblem is { } findX)
         {
             if (question.Expression != findX.SolutionExpression || question.CorrectAnswer != findX.CorrectAnswer)

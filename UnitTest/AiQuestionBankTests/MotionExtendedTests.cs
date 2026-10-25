@@ -110,6 +110,7 @@ internal static partial class MotionExtendedTests
 
     internal static async Task RunAsync()
     {
+        CheckEditorial();
         Require((int)MotionQuizType.Basic==0&&(int)MotionQuizType.Chasing==1&&(int)MotionQuizType.Meeting==2&&(int)MotionQuizType.River==3,"Stored motion enum identities changed.");
         Require(NativeCases().Count()==12,"Native motion evidence must have six relations in both languages.");
         int cases=0,freshCount=0,mutations=0;

@@ -9,7 +9,7 @@ public sealed partial class EssayAnswerValidator
         string normalized=NormalizeComparisonText(text??"");
         bool Has(params string[] phrases)=>phrases.Any(phrase=>ContainsNormalizedPhrase(normalized,phrase));
         if(Has("không phải","không cần","not","if","nếu"))return false;
-        bool time=Has("thời gian","time"),speed=Has("vận tốc","tốc độ","speed");
+        bool time=Has("thời gian","time","duration"),speed=Has("vận tốc","tốc độ","speed");
         bool waterFrame=Has("so với nước","relative to water","relative to the water");
         bool stillWater=Has("nước yên","nước yên lặng","still water","still-water","calm water");
         return p.QuestionKind switch {

@@ -36,6 +36,13 @@ internal static class MotionExtendedGrammar
                     block+=" "+matches[++i].Value;
                 blocks.Add(L(block));
             }
+            // Units in questions are measures, never subjects. Bind only the
+            // short measure phrase, preserving free wording before/after it.
+            if(property=="question")
+            {
+                string unit=matches.Single().Value;
+                blocks=[L((c.Language==AppLanguage.Vietnamese?"bao nhiêu ":"in ")+unit)];
+            }
             // Preserve role slots and numeric-unit pairs; every surrounding
             // predicate and block order is still generated, not a sentence list.
             string body=blocks.Count==0?"character{1,260}":"("+string.Join(" | ",Orders(blocks.ToArray()).Select(order=>

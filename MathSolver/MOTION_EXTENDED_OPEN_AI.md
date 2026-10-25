@@ -55,3 +55,23 @@ vẫn cần mở rộng khả năng nhận diện trước khi tự lưu. SQLite
 active và 12 pending; phát lại không đổi kết luận, 862 hash nguồn/binary
 không đổi. Cần củng cố câu hỏi đặt sai vị trí đơn vị, điều kiện và cách viết;
 chưa nới điều kiện tự lưu. Xem báo cáo để biết giới hạn mẫu và tải nền.
+
+Đợt củng cố tiếp theo giữ nguyên sáu quan hệ, Lists, phép tính và chính sách
+lưu/chờ duyệt/thử lại. Grammar ghép biến đơn vị với cụm đo `bao nhiêu ...`
+hoặc `in ...` trong câu hỏi; các phần câu còn lại vẫn được AI viết. Prompt
+phân biệt tên phương tiện và đơn vị, chỉ nêu biến thực sự có ở từng hồ sơ,
+yêu cầu dữ kiện mô tả hoạt động thực tế thay vì chỉ dẫn tính toán.
+
+Bộ chứng minh bổ sung các mệnh đề sông rõ, câu hỏi và câu dẫn tương ứng.
+So khớp cả mệnh đề, giữ nguyên phủ định/điều kiện/hệ quy chiếu và văn bản gốc;
+không chỉ dựa vào từ khóa hay đáp án số. Ba câu rõ của lượt cũ được kiểm tra
+kèm biến thể sai và phát lại riêng; kết quả phát lại không phải lượt AI mới.
+Báo cáo đợt củng cố: `artifacts/verification/motion-extended-editorial/REPORT.md`.
+
+Kết quả lượt củng cố cuối (v3, 25/10/2026): 12 yêu cầu, 13 lần gọi (một retry
+do trùng), 0 tự xác minh, 12 pending; không thử lại sau khi chưa chứng minh.
+Đọc riêng 4 câu rõ, 5 câu gượng, 3 câu mơ hồ; không thấy lỗi dùng đơn vị làm
+đối tượng trong 13 đầu ra. Phát lại dữ liệu cũ nhận ra cả 3 câu rõ. Câu Anh
+và các biến thể đúng mới vẫn cần củng cố; chưa nới điều kiện tự lưu. Bộ chấm
+nhận duration cho câu dẫn thời gian; lỗi này đã được tái hiện RED/GREEN.
+Lượt v2 dở được giữ riêng là chẩn đoán, không cộng vào kết quả v3.

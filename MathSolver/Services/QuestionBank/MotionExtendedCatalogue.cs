@@ -73,12 +73,18 @@ internal static class MotionExtendedCatalogue
         return vi ? $$"""
             Viết bài chuyển động tự nhiên, có thể đổi cách mở đầu và nối câu. {{condition}}
             Giữ nguyên từng biến, đúng vai trò và đúng chủ thể. Các vận tốc không đổi; không dừng nghỉ, xuất phát muộn hay thêm chặng.
-            Dữ kiện và câu hỏi là câu đầy đủ. Câu dẫn lời giải là tên đại lượng cần tìm, không phải chỉ dẫn tính toán.
+            Mỗi dữ kiện chỉ kể một sự việc hoặc điều kiện thực tế, không viết hướng dẫn tính, cách đo kết quả hoặc lời nhắc cho người làm bài.
+            Câu hỏi là câu nghi vấn tự nhiên gọi đúng đại lượng, kèm bao nhiêu và biến đơn vị; không ghép lời ra lệnh với dấu hỏi. Biến đơn vị không phải tên phương tiện hay con người.
+            Dùng nguyên cụm chủ thể trong biến, không thêm một người hoặc loại xe khác. Các biến được đặt trong câu đầy đủ, không treo ở cuối câu.
+            Câu dẫn lời giải chỉ gọi tên đại lượng cần tìm. Viết ngắn, không lặp lại câu hỏi trong dữ kiện.
             Không thêm tên, số, đơn vị hay điều kiện ngoài biến. Không tính toán hoặc tiết lộ đáp án. Chỉ trả JSON.
             """ : $$"""
             Write a natural motion problem; vary openings and linking words. {{condition}}
             Keep every placeholder, its role and its owner. Subject variables are complete noun phrases, with the article already included in English; never add a/an/the before them. Speeds are constant; no stops, later starts or extra legs.
-            Facts and the question are complete sentences. The solution heading names the requested quantity, with no calculation instructions.
+            Each fact describes a real event or physical condition; do not write calculation instructions, output requirements or advice for solving the problem inside a fact.
+            Write a natural question about the requested quantity, using a measurement phrase with in and the unit variable. A unit is not a craft or a person. Never make it the object whose speed is requested.
+            Use the supplied subject phrases without inventing another person or vehicle. Place each variable in a complete clause, never dangling at the end.
+            Use an interrogative question, not a command with a question mark. The solution heading only names the requested quantity. Keep sentences short without repeating the question inside a fact.
             Add no names, numbers, units or conditions outside the variables. No calculations or answer disclosure. Return only JSON.
             """;
     }
@@ -93,7 +99,15 @@ internal static class MotionExtendedCatalogue
         _ => "river-current: f0=downstream speed relative to bank; f1=upstream speed relative to bank; TARGET=current speed relative to bank; same craft and invariant speeds."
     };
 
-    internal static string ContextHint(AppLanguage language) => language == AppLanguage.Vietnamese
-        ? "{v0}, {v1} là các chủ thể được cung cấp; giữ đúng vận tốc của từng bên. {v2} là đơn vị vận tốc, {v3} là đơn vị thời gian, {v4} là đơn vị khoảng cách khi có mặt. Dùng nguyên biến và không điền giá trị."
-        : "{v0} and {v1} name the two supplied subjects; preserve each speed's owner. Where present, {v2} is a speed unit, {v3} a duration unit and {v4} a distance unit. Keep placeholders without filling values; English subject variables already include the article.";
+    internal static string ContextHint(BasicQuestionContract c)
+    {
+        bool vi=c.Language==AppLanguage.Vietnamese;
+        bool road=c.SceneId.Split('/')[1] is "meeting" or "chasing";
+        return road?vi
+            ? "{v0}, {v1} là hai cụm chủ thể đã có; {v2} chỉ đơn vị vận tốc, {v3} chỉ đơn vị thời gian, {v4} chỉ đơn vị khoảng cách. Câu hỏi dùng bao nhiêu {v3} để hỏi thời gian. Giữ nguyên mọi biến, không điền giá trị."
+            : "{v0} and {v1} are complete subject phrases; {v2} is only a speed unit, {v3} a time unit, {v4} a distance unit. Use in {v3} as a measurement phrase in the duration question. Keep placeholders unfilled."
+            :vi
+            ? "{v0} là cụm tên phương tiện đã có; {v2} chỉ là đơn vị vận tốc. Câu hỏi dùng bao nhiêu {v2} để hỏi giá trị vận tốc, không dùng biến đơn vị làm đối tượng. Giữ nguyên mọi biến, không điền giá trị."
+            : "{v0} is the complete craft name; {v2} is only the speed unit. Use in {v2} as a measurement phrase when asking for a speed. Preserve the target craft or current; do not replace it with the unit. Keep placeholders unfilled.";
+    }
 }

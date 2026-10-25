@@ -10,6 +10,15 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--practical-open","--practical-open-model"],"--practical-open | --practical-open-model <gguf> [directory]",async args=>
+        {
+            if(args.Length==1)await PracticalOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args.Length>2?args[2]:null,PracticalOpenTests.NativeCases());
+        },args=>args is ["--practical-open"] or ["--practical-open-model",_] or ["--practical-open-model",_,_]),
+        new(["--percentage-ratio-open"],"--percentage-ratio-open",args=>PercentageRatioOpenTests.RunAsync(),args=>args is ["--percentage-ratio-open"]),
+        new(["--money-change-open"],"--money-change-open",args=>MoneyChangeOpenTests.RunAsync(),args=>args is ["--money-change-open"]),
+        new(["--triangle-area-open"],"--triangle-area-open",args=>TriangleAreaOpenTests.RunAsync(),args=>args is ["--triangle-area-open"]),
+        new(["--rectangle-side-open"],"--rectangle-side-open",args=>RectangleSideOpenTests.RunAsync(),args=>args is ["--rectangle-side-open"]),
         new(["--motion-extended","--motion-extended-model"],"--motion-extended | --motion-extended-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await MotionExtendedTests.RunAsync();

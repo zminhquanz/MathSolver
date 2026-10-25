@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace MathSolver.Services.QuestionBank;
 
-internal static class MotionExtendedMeaning
+internal static partial class MotionExtendedMeaning
 {
     private static string Normal(string text)=>Regex.Replace(text.Trim().ToLowerInvariant(),@"\s+"," ",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100)).TrimEnd(' ','.','?',':','!');
     private static bool Matches(string text,string pattern)=>Regex.IsMatch(Normal(text),@"\A(?:"+pattern+@")\z",RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100));
@@ -14,37 +14,43 @@ internal static class MotionExtendedMeaning
         var relation=MotionExtendedPilot.Relations(c.Language).Single(r=>r.Id==c.SceneId.Split('/')[1]);
         var facts=d.Facts!;
         var novel=NovelFacts(relation.Id,vi);
+        string all=string.Join(" ",OpenQuestionProse.Fields(d).Select(f=>f.Text));
+        if(Regex.IsMatch(all,@"(?:vận tốc|tốc độ) của \{v[23]\}|\b(?:speed|velocity) of \{v[23]\}",RegexOptions.IgnoreCase|RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100)))
+            return Wrong("A measurement unit was used as a craft or speed owner.");
+        if(facts.Any(f=>Regex.IsMatch(f.Text,vi?@"không viết hướng dẫn|kết quả cần được đo|được tính dựa trên|cần tìm vận tốc":@"\bin terms of the given speeds and units\b|\bthe result must be calculated\b",
+            RegexOptions.IgnoreCase|RegexOptions.CultureInvariant,TimeSpan.FromMilliseconds(100))))
+            return new(null,"InvalidText",ErrorDetails:"Facts describe the journey, not calculation or output instructions.");
         if(KnownWrongFact(relation.Id,facts,vi))return Wrong("A definite direction, starting order or river-speed frame contradicts this profile.");
         string? targetKind=KnownTarget(d.Question,vi);
         if(targetKind is not null&&targetKind!=relation.Id)return Wrong("A different motion quantity was requested.");
         bool FactProof(int index,string text)=>Equal(text,relation.Facts[index])||Equal(text,relation.AlternateFacts[index])
-            ||novel[index].Length>0&&Matches(text,novel[index]);
+            ||novel[index].Length>0&&Matches(text,novel[index])||EditorialFact(relation.Id,index,text,vi);
         string denial=vi?"không phải ":"it is not true that ";
         for(int i=0;i<facts.Count;i++)
         {
             string text=Normal(facts[i].Text);
             if(text.StartsWith(denial,StringComparison.Ordinal)&&FactProof(i,text[denial.Length..]))
                 return Wrong("A required extended-motion premise was explicitly denied.");
-            foreach(string source in new[]{relation.Facts[i],relation.AlternateFacts[i]})
             foreach(var (before,after) in WrongSubstitutions(vi))
             {
-                string changed=source.Replace(before,after,StringComparison.OrdinalIgnoreCase);
-                if(changed!=source&&Equal(changed,facts[i].Text))return Wrong("An owner, direction, departure time or speed frame changed.");
+                string repaired=text.Replace(after,before,StringComparison.OrdinalIgnoreCase);
+                if(repaired!=text&&FactProof(i,repaired))return Wrong("An owner, direction, departure time or speed frame changed.");
             }
         }
         // Definite target replacements within this family are retryable, not an
         // unproved synonym. Inverse river relations intentionally share facts.
         foreach(var other in MotionExtendedPilot.Relations(c.Language).Where(r=>r.Id!=relation.Id))
-            if(Equal(d.Question,other.Question)||Equal(d.SolutionLeads![0].Text,other.Lead))
+            if(Equal(d.Question,other.Question)||Equal(d.SolutionLeads![0].Text,other.Lead)
+                ||EditorialTarget(other.Id,d.Question,vi)||EditorialHeading(other.Id,d.SolutionLeads![0].Text,vi))
             {
                 // Downstream/upstream share no target; meeting/catch-up differ.
-                if(other.Question!=relation.Question&&Equal(d.Question,other.Question)
-                    ||other.Lead!=relation.Lead&&Equal(d.SolutionLeads![0].Text,other.Lead))return Wrong("The requested motion quantity changed.");
+                return Wrong("The requested motion quantity changed.");
             }
         static bool Complete(string value,char ending)=>value.TrimEnd().EndsWith(ending)&&value.TrimEnd().Length>1
             &&".!?:".IndexOf(value.TrimEnd()[^2])<0;
         bool proved=facts.Select((f,i)=>Complete(f.Text,'.')&&FactProof(i,f.Text)).All(x=>x)
-            &&Complete(d.Question,'?')&&Equal(d.Question,relation.Question)&&Equal(d.SolutionLeads![0].Text,relation.Lead);
+            &&Complete(d.Question,'?')&&(Equal(d.Question,relation.Question)||EditorialTarget(relation.Id,d.Question,vi))
+            &&(Equal(d.SolutionLeads![0].Text,relation.Lead)||EditorialHeading(relation.Id,d.SolutionLeads![0].Text,vi));
         return proved?new(d,null,c):new(d,"SemanticReviewRequired",c,
             "Could not prove actor-speed ownership, initial order, simultaneous direction, constant speeds/no stops, riverbank/still-water frame and the requested quantity.");
     }
@@ -82,12 +88,13 @@ internal static class MotionExtendedMeaning
          ("cùng chiều","ngược chiều"),("ngược chiều về phía nhau","cùng chiều ra xa nhau"),("tiến về phía nhau","đi ra xa nhau"),
          ("không dừng nghỉ","có dừng nghỉ"),("không nghỉ","có nghỉ"),("không đổi","thay đổi"),("giữ nguyên","thay đổi"),
          ("ở phía trước","ở phía sau"),("dẫn trước","ở phía sau"),("xuôi dòng","ngược dòng"),("ngược dòng","xuôi dòng"),
-         ("so với bờ","so với nước"),("nước yên lặng","nước đang chảy")]
+         ("so với bờ","so với nước"),("nước yên lặng","nước đang chảy"),("hằng số","thay đổi")]
         :[("simultaneously","at different times"),("at the same time","at different times"),("towards each other","away from each other"),
           ("towards one another","away from one another"),("in the same direction","in opposite directions"),
           ("with no stops","with a stop"),("without stopping","with a stop"),("constant","variable"),("unchanged","changing"),
           ("ahead of","behind"),("with a lead of","with a delay of"),("downstream","upstream"),("upstream","downstream"),
-          ("relative to the riverbank","relative to the water"),("still water","flowing water")];
+          ("relative to the riverbank","relative to the water"),("relative to riverbank","relative to water"),
+          ("still water","flowing water"),("uniform","variable"),("consistent","variable")];
     private static string[] NovelFacts(string kind,bool vi)
     {
         if(kind is "meeting" or "chasing")return ["",
