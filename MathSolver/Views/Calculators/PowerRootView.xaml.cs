@@ -478,7 +478,7 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder);
         HideError();
         HideResult();
 
@@ -943,7 +943,7 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        using var autoScroll = CalculationAutoScroll.Begin(sender, RootResultBorder, RootErrorBorder);
+        using var autoScroll = CalculationAutoScroll.Begin(sender, RootResultBorder);
         HideRootError();
         HideRootResult();
 

@@ -1,4 +1,5 @@
 using MathSolver.Controls;
+using MathSolver.Services;
 using Microsoft.Maui.Controls;
 using System.Globalization;
 
@@ -12,7 +13,6 @@ public sealed partial class MatrixView
     {
         var panel = new VerticalStackLayout { IsVisible = false, Spacing = 8 };
         var toggle = ActionButton("CellSize", "↔", (_, _) => panel.IsVisible = !panel.IsVisible);
-        toggle.MinimumHeightRequest = 48;
         editor.Add(toggle);
         panel.Add(_sizeSelection);
         var dimensions = FlowGrid(240, 2);
@@ -21,7 +21,6 @@ public sealed partial class MatrixView
         panel.Add(dimensions);
         var reset = ActionButton("ResetCellSize", "↺", (_, _) =>
             _viewport.ResizeSelectedDimensions(_viewport.SelectedColumnWidth, _viewport.SelectedRowHeight, reset: true));
-        reset.MinimumHeightRequest = 48;
         panel.Add(reset);
         var help = Caption("CellSizeHelp");
         help.FontSize = 13;
@@ -41,6 +40,7 @@ public sealed partial class MatrixView
             int direction = i == 0 ? -1 : 1;
             var button = new Button { Text = i == 0 ? "−" : "+", Style = GetStyle("SolverSecondaryActionStyle"),
                 MinimumHeightRequest = 48, MinimumWidthRequest = 48, Padding = new Thickness(8) };
+            DisplayDensityManager.BindControl(button, square: true);
             _translations.Add(() => SemanticProperties.SetDescription(button,
                 T((column ? "ColumnWidth" : "RowHeight") + (direction < 0 ? "Decrease" : "Increase"))));
             button.Clicked += (_, _) =>

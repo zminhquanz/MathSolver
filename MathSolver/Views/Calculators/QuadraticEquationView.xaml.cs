@@ -1060,7 +1060,6 @@ public partial class QuadraticEquationView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         HideResultAndError();
 
         if (_equationMode == EquationMode.Linear)
@@ -1071,6 +1070,10 @@ public partial class QuadraticEquationView : LocalizedSolverView
         {
             CalculateQuadraticEquation();
         }
+        // Localization/number-display refreshes also call this handler with the
+        // view as sender; only an explicit calculation requests result reveal.
+        if (sender is Button && ResultBorder.IsVisible)
+            SolverWorkspace.RevealResult(ResultBorder);
     }
 
     private void CalculateLinearEquation()

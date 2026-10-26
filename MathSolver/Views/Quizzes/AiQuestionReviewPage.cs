@@ -231,6 +231,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         button.SetDynamicResource(StyleProperty, style);
         button.MinimumHeightRequest = 48;
         button.Padding = new Thickness(16, 12);
+        DisplayDensityManager.BindControl(button);
         button.FontSize = 14;
         button.LineBreakMode = LineBreakMode.WordWrap;
         button.SetBinding(Button.CommandParameterProperty, ".");

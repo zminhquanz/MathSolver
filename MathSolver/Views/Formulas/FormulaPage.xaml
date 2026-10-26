@@ -42,7 +42,7 @@
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.UnknownComponent}"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            TextColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource ContentAccentTextColor}"
                             Clicked="OnUnknownComponentTabClicked" />
                         <BoxView
                             x:Name="AndroidUnknownComponentTabIndicator"
@@ -259,13 +259,13 @@
                             Margin="0,4,0,6"
                             Spacing="2">
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Symbol"
                                 Text="𝑥  + − × ÷"
                                 FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Title"
                                 x:Name="UnknownPageTitle"
                                 Text="TÌM THÀNH PHẦN CHƯA BIẾT"
                                 FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
@@ -273,7 +273,7 @@
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Description"
                                 x:Name="UnknownPageSubtitle"
                                 Text="Dạng tổng quát • Quy tắc • Ví dụ minh họa"
                                 FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
@@ -353,7 +353,7 @@
                                                             FontAttributes="Bold"
                                                             HorizontalTextAlignment="Center"
                                                             VerticalTextAlignment="Center"
-                                                            TextColor="{DynamicResource PrimaryColor}" />
+                                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                                     </Border>
 
@@ -398,7 +398,7 @@
                                                             FontAttributes="Bold"
                                                             HorizontalTextAlignment="Center"
                                                             LineBreakMode="WordWrap"
-                                                            TextColor="{DynamicResource PrimaryColor}" />
+                                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                                     </Grid>
 
@@ -445,7 +445,7 @@
                                                             Text="Ví dụ : "
                                                             FontSize="20"
                                                             FontAttributes="Bold"
-                                                            TextColor="{DynamicResource PrimaryColor}" />
+                                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                                         <VerticalStackLayout
                                                             Grid.Column="1"
@@ -498,7 +498,7 @@
                                             FontSize="26"
                                             FontAttributes="Bold"
                                             HorizontalTextAlignment="Center"
-                                            TextColor="{DynamicResource PrimaryColor}" />
+                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                         <Label
                                             Text="Khi tìm thành phần chưa biết, cần xác định đúng vai trò của x, dùng phép tính ngược phù hợp và luôn kiểm tra lại kết quả trong phép tính ban đầu."
@@ -524,7 +524,7 @@
                                                 Text="+  PHÉP CỘNG"
                                                 FontSize="20"
                                                 FontAttributes="Bold"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             <Label
                                                 Text="• Giao hoán: a + b = b + a. Đổi chỗ hai số hạng thì tổng không thay đổi."
@@ -561,7 +561,7 @@
                                                 FontAttributes="Italic"
                                                 LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
                                     </Border>
 
@@ -580,7 +580,7 @@
                                                 Text="−  PHÉP TRỪ"
                                                 FontSize="20"
                                                 FontAttributes="Bold"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             <Label
                                                 Text="• Không giao hoán: a − b thường khác b − a. Vì vậy không được tự ý đổi chỗ số bị trừ và số trừ."
@@ -617,7 +617,7 @@
                                                 FontAttributes="Italic"
                                                 LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
                                     </Border>
 
@@ -636,7 +636,7 @@
                                                 Text="×  PHÉP NHÂN"
                                                 FontSize="20"
                                                 FontAttributes="Bold"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             <Label
                                                 Text="• Giao hoán: a × b = b × a. Đổi chỗ hai thừa số thì tích không thay đổi."
@@ -673,7 +673,7 @@
                                                 FontAttributes="Italic"
                                                 LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
                                     </Border>
 
@@ -692,7 +692,7 @@
                                                 Text="÷  PHÉP CHIA"
                                                 FontSize="20"
                                                 FontAttributes="Bold"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             <Label
                                                 Text="• Không giao hoán: a ÷ b thường khác b ÷ a. Phép chia cũng không có tính kết hợp."
@@ -730,7 +730,7 @@
                                                 FontAttributes="Italic"
                                                 LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
                                     </Border>
 
@@ -749,7 +749,7 @@
                                             FontAttributes="Bold"
                                             LineHeight="1.25"
                                             LineBreakMode="WordWrap"
-                                            TextColor="{DynamicResource PrimaryColor}" />
+                                            TextColor="{DynamicResource ContentAccentTextColor}" />
                                     </Border>
 
                                 </VerticalStackLayout>
@@ -828,7 +828,7 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     VerticalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <GraphicsView
                                     Grid.Row="1"
@@ -903,7 +903,7 @@
                                                     FontSize="14"
                                                     FontAttributes="Italic"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource PrimaryColor}" />
+                                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -965,13 +965,13 @@
                             Margin="0,4,0,6"
                             Spacing="2">
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Symbol"
                                 Text="□  △  ○"
                                 FontSize="40"
                                 HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Title"
                                 x:Name="GeometryPageTitle"
                                 Text="CHU VI, DIỆN TÍCH VÀ THỂ TÍCH"
                                 FontSize="27"
@@ -979,7 +979,7 @@
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                            <Label
+                            <Label controls:SolverHeader.Role="Description"
                                 x:Name="GeometryPageSubtitle"
                                 Text="Hình học mặt phẳng • Hình học không gian • Công thức thường dùng"
                                 FontSize="17"
@@ -1022,7 +1022,7 @@
                                         FontSize="30"
                                         FontAttributes="Bold"
                                         VerticalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                     <VerticalStackLayout
                                         Grid.Column="1"
@@ -1032,7 +1032,7 @@
                                             Text="HÌNH HỌC MẶT PHẲNG"
                                             FontSize="21"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource PrimaryColor}" />
+                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                         <Label
                                             Text="Các hình hai chiều • Chu vi và diện tích"
@@ -1079,7 +1079,7 @@
                                         FontSize="30"
                                         FontAttributes="Bold"
                                         VerticalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                     <VerticalStackLayout
                                         Grid.Column="1"
@@ -1089,7 +1089,7 @@
                                             Text="HÌNH HỌC KHÔNG GIAN"
                                             FontSize="21"
                                             FontAttributes="Bold"
-                                            TextColor="{DynamicResource PrimaryColor}" />
+                                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                         <Label
                                             Text="Các khối ba chiều • Diện tích và thể tích"

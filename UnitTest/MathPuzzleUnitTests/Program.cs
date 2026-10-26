@@ -2,6 +2,8 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Readable content contrast and user accents", PuzzleTests.CheckReadableColors),
+    ("Display density capabilities preferences and matrix sizes", PuzzleTests.CheckDisplayDensity),
     ("Matrix file-backed streaming import and cleanup", PuzzleTests.CheckMatrixFileStreamingImport),
     ("Matrix parallel storage error classification", PuzzleTests.CheckMatrixParallelStorageErrors),
     ("Matrix input store round trip and bounded eviction", PuzzleTests.CheckMatrixInputStoreRoundTrip),
@@ -73,6 +75,7 @@ var tests = new (string Name, Action Run)[]
     ("Matrix clipboard paste cells across drafts", PuzzleTests.CheckMatrixPasteCells),
     ("Matrix viewport select all and clipboard", PuzzleTests.CheckMatrixSelectAll),
     ("Matrix clipboard Excel rows and exact integers", PuzzleTests.CheckMatrixClipboard),
+    ("Matrix clipboard busy retries and persistence failure", PuzzleTests.CheckMatrixClipboardPublication),
     ("Matrix viewport select and edit interactions", PuzzleTests.CheckMatrixCellInteraction),
     ("Matrix viewport scrollbars and large table bounds", PuzzleTests.CheckMatrixScrollBars),
     ("Matrix viewport automatic scrollbars", PuzzleTests.CheckMatrixAutomaticScrollBars),
@@ -104,6 +107,7 @@ var tests = new (string Name, Action Run)[]
     ("Comma separators for multiple essay answers", PuzzleTests.CheckMultipleAnswerCommas),
     ("Quiz localization", PuzzleTests.CheckQuizLocalization),
     ("Question prompt comma punctuation", PuzzleTests.CheckPromptPunctuation),
+    ("Responsive solver workspace and compact headers", PuzzleTests.CheckSolverLayoutPolicy),
     ("Responsive quiz layouts and accessible diagrams", PuzzleTests.CheckResponsivePresentation),
     ("Integer and fraction comparisons", PuzzleTests.CheckComparisons),
     ("Quiz diagrams and hidden answers", PuzzleTests.CheckQuizDiagrams),

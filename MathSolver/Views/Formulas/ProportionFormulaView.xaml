@@ -16,20 +16,20 @@
                 Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
                 Spacing="2">
 
-                <Label
+                <Label controls:SolverHeader.Role="Symbol"
                     Text="↗  ↘  ⤢"
                     FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Title"
                     Text="{localization:Translate Formula.Proportion.Title}"
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Description"
                     Text="{localization:Translate Formula.Proportion.Subtitle}"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
@@ -62,7 +62,7 @@
                             Text="{localization:Translate Formula.Common.Relationship}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Grid
                             x:Name="RelationshipGrid"
@@ -84,7 +84,7 @@
                                         Text="{localization:Translate Formula.Proportion.Direct.Title}"
                                         FontSize="19"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <Label
                                         Text="{localization:Translate Formula.Proportion.Direct.Relationship}"
                                         FontSize="16"
@@ -96,7 +96,7 @@
                                         FontSize="20"
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -127,7 +127,7 @@
                                         FontSize="20"
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -146,7 +146,7 @@
                                     Text="{localization:Translate Formula.Proportion.Compound.Title}"
                                     FontSize="19"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Compound.Relationship}"
                                     FontSize="16"
@@ -158,7 +158,7 @@
                                     FontSize="20"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                             </VerticalStackLayout>
                         </Border>
                     </VerticalStackLayout>
@@ -180,7 +180,7 @@
                             Text="{localization:Translate Formula.Proportion.Graph.Title}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.Graph.Subtitle}"
                             FontSize="16"
@@ -238,7 +238,7 @@
                                         x:Name="GraphXValueLabel"
                                         FontSize="17"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <Label
                                         x:Name="GraphDirectValueLabel"
                                         FontSize="16"
@@ -320,7 +320,7 @@
                                         FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                                         FontAttributes="Bold"
                                         HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <Label
                                         Text="{localization:Translate Formula.Proportion.Compound.InteractiveFormula}"
                                         FontSize="15"
@@ -419,7 +419,7 @@
                                                 FontSize="18"
                                                 FontAttributes="Bold"
                                                 HorizontalTextAlignment="Center"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
                                             <Label
                                                 Text="{localization:Translate Formula.Proportion.Compound.InteractiveHint}"
                                                 FontSize="14"
@@ -466,7 +466,7 @@
                             Text="{localization:Translate Formula.Common.Formulas}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Border
                             Padding="14,11"
@@ -543,7 +543,7 @@
                             Text="{localization:Translate Formula.Common.Properties}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.Direct.Properties}"
                             FontSize="17"
@@ -586,7 +586,7 @@
                             Text="{localization:Translate Formula.Common.HowToSolve}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.Steps}"
                             FontSize="17"
@@ -613,7 +613,7 @@
                                         Text="{localization:Translate Formula.Proportion.Direct.ExampleTitle}"
                                         FontSize="18"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                     <Border
                                         Padding="12"
@@ -630,14 +630,14 @@
                                                     FontSize="15"
                                                     FontAttributes="Bold"
                                                     TextDecorations="Underline"
-                                                    TextColor="{DynamicResource PrimaryColor}" />
+                                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                                 <Label
                                                     Grid.Column="1"
                                                     Text="{localization:Translate Formula.Proportion.Direct.Method}"
                                                     FontSize="15"
                                                     FontAttributes="Bold"
                                                     HorizontalTextAlignment="End"
-                                                    TextColor="{DynamicResource PrimaryColor}" />
+                                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                             </Grid>
 
                                             <Grid
@@ -647,8 +647,8 @@
                                                 ColumnSpacing="10">
                                                 <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftTop}" FontSize="16" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                                 <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                                <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                                <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
+                                                <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Direct.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Direct.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource ContentAccentTextColor}" />
                                             </Grid>
 
                                             <BoxView HeightRequest="1" Color="{DynamicResource WallpaperPrimaryBorderColor}" />
@@ -680,15 +680,15 @@
                                         </Border.StrokeShape>
                                         <VerticalStackLayout Spacing="8">
                                             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                                <Label Text="{localization:Translate Formula.Proportion.Summary.Title}" FontSize="15" FontAttributes="Bold" TextDecorations="Underline" TextColor="{DynamicResource PrimaryColor}" />
-                                                <Label Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.Method}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
+                                                <Label Text="{localization:Translate Formula.Proportion.Summary.Title}" FontSize="15" FontAttributes="Bold" TextDecorations="Underline" TextColor="{DynamicResource ContentAccentTextColor}" />
+                                                <Label Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.Method}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource ContentAccentTextColor}" />
                                             </Grid>
 
                                             <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="7" ColumnSpacing="10">
                                                 <Label Grid.Row="0" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftTop}" FontSize="16" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                                 <Label Grid.Row="0" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightTop}" FontSize="16" HorizontalTextAlignment="End" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                                <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
-                                                <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource PrimaryColor}" />
+                                                <Label Grid.Row="1" Grid.Column="0" Text="{localization:Translate Formula.Proportion.Inverse.LeftBottom}" FontSize="16" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
+                                                <Label Grid.Row="1" Grid.Column="1" Text="{localization:Translate Formula.Proportion.Inverse.RightBottom}" FontSize="16" FontAttributes="Bold" HorizontalTextAlignment="End" TextColor="{DynamicResource ContentAccentTextColor}" />
                                             </Grid>
 
                                             <BoxView HeightRequest="1" Color="{DynamicResource WallpaperDividerColor}" />
@@ -715,7 +715,7 @@
                                     Text="{localization:Translate Formula.Proportion.Compound.ExampleTitle}"
                                     FontSize="18"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Compound.ExampleSummary}"
                                     FontSize="16"

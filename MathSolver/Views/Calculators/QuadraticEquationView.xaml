@@ -37,6 +37,7 @@
         </VerticalStackLayout>
 
         <ScrollView Grid.Row="1"
+            controls:SolverWorkspace.IsEnabled="True"
             x:Name="QuadraticScrollView"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
@@ -128,7 +129,7 @@
                                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     <Border
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -139,7 +140,7 @@
                                         </Border.StrokeShape>
 
                                         <Entry
-                                            x:Name="CoefficientAEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientADescriptionLabel}, x:DataType=Label}"
+                                            x:Name="CoefficientAEntry" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientADescriptionLabel}, x:DataType=Label}"
                                             Placeholder="Ví dụ: 1"
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                             Keyboard="Text"
@@ -191,7 +192,7 @@
                                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     <Border
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -202,7 +203,7 @@
                                         </Border.StrokeShape>
 
                                         <Entry
-                                            x:Name="CoefficientBEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientBDescriptionLabel}, x:DataType=Label}"
+                                            x:Name="CoefficientBEntry" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientBDescriptionLabel}, x:DataType=Label}"
                                             Placeholder="Ví dụ: −3"
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                             Keyboard="Text"
@@ -253,7 +254,7 @@
                                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
                                     <Border
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -264,7 +265,7 @@
                                         </Border.StrokeShape>
 
                                         <Entry
-                                            x:Name="CoefficientCEntry" MinimumHeightRequest="48" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientCDescriptionLabel}, x:DataType=Label}"
+                                            x:Name="CoefficientCEntry" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" SemanticProperties.Description="{Binding Text, Source={x:Reference CoefficientCDescriptionLabel}, x:DataType=Label}"
                                             Placeholder="Ví dụ: 2"
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                             Keyboard="Text"
@@ -363,13 +364,13 @@
                         Text="❌"
                         FontSize="22"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource DangerColor}" />
+                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                         <Label
                         Grid.Column="1"
                         x:Name="ErrorLabel"
                         FontSize="17"
-                        TextColor="{DynamicResource DangerColor}"
+                        TextColor="{DynamicResource ContentDangerTextColor}"
                         LineBreakMode="WordWrap" />
 
                     </Grid>
@@ -379,6 +380,7 @@
                 <!-- 2. Kết quả -->
                 <Border
                     x:Name="ResultBorder"
+                    controls:SolverWorkspace.StartsResult="True"
                     IsVisible="False"
                     Padding="14"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
@@ -403,7 +405,7 @@
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Border
                             Padding="14"
@@ -431,7 +433,7 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <BoxView
                                     HeightRequest="1"
@@ -444,7 +446,7 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource SuccessColor}" />
+                                    TextColor="{DynamicResource ContentSuccessTextColor}" />
 
                                 <Label
                                     x:Name="RootsLabel"
@@ -458,13 +460,13 @@
 
                         </Border>
 
-                        <Grid MinimumHeightRequest="48">
+                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
                             <controls:ResultCopyButton
                                 x:Name="QuadraticCopyResultButton"
                                 NormalTextKey="PowerRoot.CopyResult"
                                 Text=""
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 CornerRadius="12"
                                 FontSize="15"
                                 FontAttributes="Bold"
@@ -533,7 +535,7 @@
                                     x:Name="Step1TitleLabel"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <Label
                                     x:Name="Step1BodyLabel"
@@ -562,7 +564,7 @@
                                     x:Name="Step2TitleLabel"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <Label
                                     x:Name="Step2BodyLabel"
@@ -592,7 +594,7 @@
                                     x:Name="Step3TitleLabel"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <Label
                                     x:Name="Step3BodyLabel"
@@ -622,7 +624,7 @@
                                     x:Name="Step4TitleLabel"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <VerticalStackLayout
                                     x:Name="Step4ContentLayout"
@@ -703,7 +705,7 @@
                                 HorizontalOptions="End">
                                     <Button
                                         Text="−"
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="0"
                                         CornerRadius="10"
                                         FontSize="24"
@@ -717,19 +719,19 @@
                                         Grid.Column="1"
                                         Text="100%"
                                         MinimumWidthRequest="74"
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="10,8"
                                         CornerRadius="10"
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                        TextColor="{DynamicResource PrimaryColor}"
+                                        TextColor="{DynamicResource ContentAccentTextColor}"
                                         SemanticProperties.Description="{localization:Translate Equation.Graph.ResetZoom}"
                                         Clicked="OnGraphResetZoomClicked" />
                                     <Button
                                         Grid.Column="2"
                                         Text="+"
-                                        MinimumHeightRequest="48"
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                         Padding="0"
                                         CornerRadius="10"
                                         FontSize="22"
@@ -753,7 +755,7 @@
                                     CornerRadius="10"
                                     LineBreakMode="WordWrap"
                                     BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                    TextColor="{DynamicResource PrimaryColor}"
+                                    TextColor="{DynamicResource ContentAccentTextColor}"
                                     Clicked="OnEnlargeGraphClicked" />
                             </Grid>
                         </Grid>

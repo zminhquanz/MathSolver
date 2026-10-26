@@ -69,7 +69,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         SetDynamicResource(InkProperty, "WallpaperTextPrimaryColor");
         SetDynamicResource(PaperProperty, "WallpaperSurfaceColor");
         SetDynamicResource(LineProperty, "WallpaperDividerColor");
-        SetDynamicResource(AccentProperty, "PrimaryColor");
+        SetDynamicResource(AccentProperty, "ContentAccentTextColor");
         _canvas.Drawable = this;
         _surface.Add(_canvas);
         AbsoluteLayout.SetLayoutFlags(_canvas, Microsoft.Maui.Layouts.AbsoluteLayoutFlags.All);
@@ -139,8 +139,18 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             _scrollAxis = ScrollAxis.None; _resizeAxis = MatrixResizeAxis.None; SetParentPanLock(false);
             if (CanUseInput) Refresh();
         };
-        Loaded += (_, _) => { _everLoaded = true; AttachNativeInput(); Refresh(); };
-        Unloaded += (_, _) => { _focusGeneration++; SetParentPanLock(false); DetachNativeInput(); };
+        Loaded += (_, _) =>
+        {
+            _everLoaded = true;
+            DisplayDensityManager.Changed -= OnDensityChanged;
+            DisplayDensityManager.Changed += OnDensityChanged;
+            AttachNativeInput(); Refresh();
+        };
+        Unloaded += (_, _) =>
+        {
+            DisplayDensityManager.Changed -= OnDensityChanged;
+            _focusGeneration++; SetParentPanLock(false); DetachNativeInput();
+        };
         HandlerChanging += (_, _) => { _focusGeneration++; DetachNativeInput(); };
         HandlerChanged += (_, _) => { if (IsLoaded) AttachNativeInput(); };
     }
@@ -318,9 +328,10 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         double scale = Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6);
         // Keep a complete editable cell available on narrow, text-scaled screens.
         double width = Math.Max(1, _canvas.Width), height = Math.Max(1, _canvas.Height);
-        double cellWidth = Math.Min(MatrixViewportState.DefaultColumnWidth * scale,
+        var density = DisplayDensityManager.Metrics;
+        double cellWidth = Math.Min(density.MatrixColumnWidth * scale,
             Math.Max(MatrixViewportState.MinColumnWidth, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
-        _state.Arrange(width, height, cellWidth, MatrixViewportState.DefaultRowHeight * scale, ScrollBarThickness);
+        _state.Arrange(width, height, cellWidth, density.MatrixRowHeight * scale, ScrollBarThickness);
         // Small matrices occupy only the space they need; larger ones keep a bounded viewport.
         double desiredHeight = Math.Min(340, _state.CellHeight + _state.ContentHeight
             + (_state.ShowHorizontalScrollBar ? ScrollBarThickness : 0));
@@ -328,6 +339,11 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         PositionEditor(); _canvas.Invalidate();
     }
     private void Scrolled() { Refresh(); ViewportChanged?.Invoke(); }
+
+    private void OnDensityChanged(object? sender, EventArgs e)
+    {
+        if (CanUseInput) { Refresh(); ViewportChanged?.Invoke(); }
+    }
     private void PositionEditor()
     {
         if (_editorHost is null) return;
@@ -396,7 +412,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         canvas.FillColor = selected ? Accent.WithAlpha(0.18f) : header ? Line.WithAlpha(0.22f) : Paper;
         canvas.FillRectangle(x, y, width, height);
         text = FitCellText(canvas, text.Length == 0 ? "·" : text, Math.Max(0, width - 12), _drawFontSize);
-        canvas.FontColor = selected ? Accent : Ink;
+        canvas.FontColor = Ink;
         canvas.DrawString(text, x + 6, y, width - 12, height, HorizontalAlignment.Center, VerticalAlignment.Center);
         canvas.DrawRectangle(x, y, width, height);
         if (selected && outline)

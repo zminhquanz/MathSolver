@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.MeasurementFormulaView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill"
     VerticalOptions="Fill">
@@ -11,20 +12,20 @@
     <Grid RowDefinitions="Auto,*">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout Spacing="3">
-                <Label
+                <Label controls:SolverHeader.Role="Symbol"
                     Text="↔  ⚖  ◷  □  ▣"
                     FontSize="{OnPlatform Android=26, WinUI=36, Default=34}"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Title"
                     x:Name="PageTitleLabel"
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Description"
                     x:Name="PageSubtitleLabel"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
@@ -56,7 +57,7 @@
                             x:Name="ConverterTitleLabel"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             x:Name="CategoryLabel"
@@ -176,7 +177,7 @@
                                 BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                 BorderColor="{DynamicResource WallpaperPrimaryBorderColor}"
                                 BorderWidth="1"
-                                TextColor="{DynamicResource PrimaryColor}"
+                                TextColor="{DynamicResource ContentAccentTextColor}"
                                 Clicked="OnSwapClicked" />
 
                             <Border
@@ -225,8 +226,8 @@
                                     FontSize="{OnPlatform Android=25, WinUI=30, Default=28}"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    LineBreakMode="CharacterWrap"
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                 <Label
                                     x:Name="EquationLabel"
@@ -242,7 +243,7 @@
                             IsVisible="False"
                             FontSize="14"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource DangerColor}" />
+                            TextColor="{DynamicResource ContentDangerTextColor}" />
                     </VerticalStackLayout>
                 </Border>
 
@@ -260,7 +261,7 @@
                             x:Name="ReferenceTitleLabel"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             x:Name="ReferenceTextLabel"
@@ -293,7 +294,7 @@
                             x:Name="TipsTitleLabel"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             x:Name="TipsTextLabel"

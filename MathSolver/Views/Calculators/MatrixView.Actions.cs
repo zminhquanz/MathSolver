@@ -108,8 +108,8 @@ public sealed partial class MatrixView
         SelectionButtonStyler.Select(_operations[(int)_operation], _operations);
         SelectionButtonStyler.Select(_matrices[_selected], _matrices);
         _inputStatus.Text = _a is { } a && _b is { } b
-            ? F("DraftStatus", "A", a.Rows, a.Columns, a.CellCount - a.MissingCount, a.CellCount)
-                + "\n" + F("DraftStatus", "B", b.Rows, b.Columns, b.CellCount - b.MissingCount, b.CellCount)
+            ? F("Workspace.InputStatus", a.Rows, a.Columns, a.CellCount - a.MissingCount, a.CellCount,
+                b.Rows, b.Columns, b.CellCount - b.MissingCount, b.CellCount)
             : T("CreateRequired");
         SetBusyState();
     }
@@ -121,6 +121,8 @@ public sealed partial class MatrixView
         foreach (var button in _lockDuringWork) button.IsEnabled = !_busy;
         _dimensions.IsEnabled = !_busy;
         _calculate.IsEnabled = !_busy && HasInputs;
+        _calculate.IsVisible = !_busy;
+        _stop.IsVisible = _busy;
         _value.IsEnabled = !_busy;
         _value.IsReadOnly = _selected == 2;
         _stop.IsEnabled = _busy && !_confirmingStop && _work is { IsCancellationRequested: false };
@@ -130,11 +132,12 @@ public sealed partial class MatrixView
         _pasteCells.IsEnabled = !_busy && HasInputs && _selected != 2;
         _progress.IsVisible = _progressText.IsVisible = _busy;
         _activity.IsVisible = _activity.IsRunning = _busy;
+        RefreshWorkspacePresentation();
     }
 
     private void RefreshCell()
     {
-        if (!HasInputs) { _editorMatrix = -1; return; }
+        if (!HasInputs) { _editorMatrix = -1; _selectedValue.Text = ""; return; }
         int row = _viewport.SelectedRow, column = _viewport.SelectedColumn;
         _row.Text = (row + 1).ToString(CultureInfo.InvariantCulture);
         _column.Text = (column + 1).ToString(CultureInfo.InvariantCulture);
@@ -154,8 +157,15 @@ public sealed partial class MatrixView
             _editorMatrix = failed ? -1 : _selected; _editorRow = row; _editorColumn = column;
         }
         finally { _updatingEditor = false; }
+        RefreshSelectedValue();
         RefreshSolution();
         RefreshSizeControls();
+    }
+    private void RefreshSelectedValue()
+    {
+        _selectedValue.Text = string.IsNullOrEmpty(_value.Text) ? T("EmptyCell") : _value.Text;
+        ToolTipProperties.SetText(_selectedValue, _selectedValue.Text);
+        SemanticProperties.SetDescription(_selectedValue, T("CellValue") + ": " + _selectedValue.Text);
     }
     private void RefreshRange()
     {
@@ -215,6 +225,15 @@ public sealed partial class MatrixView
             _row.Text = (_viewport.SelectedRow + 1).ToString(CultureInfo.InvariantCulture);
             _column.Text = (_viewport.SelectedColumn + 1).ToString(CultureInfo.InvariantCulture);
         }
+        else
+        {
+            _coordinatePanel.IsVisible = false;
+            if (_errorKey == "InvalidCoordinate")
+            {
+                _errorKey = null; _message.Text = "";
+                RefreshWorkspacePresentation();
+            }
+        }
     }
     private static bool TryDimension(string? text, out int value) =>
         int.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out value) && value >= 1 && value <= InputDimensionLimit;
@@ -255,6 +274,7 @@ public sealed partial class MatrixView
             if (_a?.Rows != ar || _a.Columns != ac || _b?.Rows != br || _b.Columns != bc)
                 throw new InvalidOperationException("Published matrix dimensions changed while updating the view.");
             Status("Created");
+            CollapseSetupAfterCreation();
             return Task.CompletedTask;
         }, "Creating", memoryErrorKey: "CreateMemoryUnavailable");
     }
@@ -371,7 +391,7 @@ public sealed partial class MatrixView
     private void ReportError(string key, params object[] arguments)
     {
         _statusKey = null; _errorKey = key; _errorArguments = arguments;
-        _message.SetDynamicResource(Label.TextColorProperty, "DangerColor");
+        _message.SetDynamicResource(Label.TextColorProperty, "ContentDangerTextColor");
         _message.Text = FormatError();
         RefreshCreationNotice();
     }
@@ -411,7 +431,8 @@ public sealed partial class MatrixView
         if (_busy && _statusKey == "Creating")
             _creationNotice.Text += "\n" + F("EstimatedProgress", Math.Floor(_progress.Progress * 100));
         _creationNotice.SetDynamicResource(Label.TextColorProperty,
-            _errorKey is null ? "WallpaperTextSecondaryColor" : "DangerColor");
+            _errorKey is null ? "WallpaperTextSecondaryColor" : "ContentDangerTextColor");
+        RefreshWorkspacePresentation();
     }
 
     private string FormatStatus(string key)

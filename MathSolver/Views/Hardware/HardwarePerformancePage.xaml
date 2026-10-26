@@ -24,8 +24,8 @@
 
             <Grid
                 Grid.Column="0"
-                WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
-                HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                WidthRequest="{DynamicResource Density.ControlWidth}"
+                HeightRequest="{DynamicResource Density.ControlHeight}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
 

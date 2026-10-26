@@ -193,14 +193,14 @@
                                     <Label
                                         Text="❌"
                                         FontSize="22"
-                                        TextColor="{DynamicResource DangerColor}" />
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                                     <Label
                                         x:Name="ErrorLabel"
                                         Grid.Column="1"
                                         FontSize="15"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource DangerColor}" />
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                                 </Grid>
 
@@ -292,7 +292,7 @@
                                     Text="0%"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             </Grid>
 
@@ -304,7 +304,7 @@
                             <Button
                                 x:Name="StopButton"
                                 Text="{localization:Translate PowerRoot.Stop}"
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 CornerRadius="12"
                                 FontSize="16"
                                 FontAttributes="Bold"
@@ -351,7 +351,7 @@
                                     FontAttributes="Bold"
                                     LineBreakMode="WordWrap"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             </Border>
 
@@ -362,7 +362,7 @@
                                 <Grid
                                     x:Name="CopyResultButtonContainer"
                                     Grid.Column="0"
-                                    HeightRequest="48">
+                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
                                     <controls:ResultCopyButton
                                         x:Name="CopyResultButton"
@@ -374,24 +374,23 @@
                                         BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                         Clicked="OnCopyResultClicked" />
 
-                                    <HorizontalStackLayout
+                                    <Grid
                                         InputTransparent="True"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        Spacing="8">
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
 
                                         <controls:ThemedCopyIcon
                                             WidthRequest="20"
                                             HeightRequest="20" />
 
-                                        <Label
+                                        <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                             Text="{Binding DisplayText, Source={x:Reference CopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                             FontSize="15"
                                             FontAttributes="Bold"
                                             TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                             VerticalTextAlignment="Center" />
 
-                                    </HorizontalStackLayout>
+                                    </Grid>
 
                                 </Grid>
 
@@ -400,7 +399,7 @@
                                     Grid.Column="1"
                                     IsVisible="False"
                                     Text="{localization:Translate PowerRoot.ExportTxt}"
-                                    MinimumHeightRequest="48"
+                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                     CornerRadius="12"
                                     FontSize="15"
                                     FontAttributes="Bold"
@@ -470,7 +469,7 @@
                                 IsVisible="False"
                                 Text="{localization:Translate PowerRoot.ShowDetails}"
                                 HorizontalOptions="End"
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 Padding="12,4"
                                 CornerRadius="9"
                                 FontSize="12"
@@ -626,14 +625,14 @@
                                     <Label
                                         Text="❌"
                                         FontSize="22"
-                                        TextColor="{DynamicResource DangerColor}" />
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                                     <Label
                                         x:Name="RootErrorLabel"
                                         Grid.Column="1"
                                         FontSize="15"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource DangerColor}" />
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                                 </Grid>
 
@@ -716,7 +715,7 @@
                                                 DegreeFontSize="18"
                                                 FontAttributes="Bold"
                                                 LineColor="{DynamicResource PrimaryColor}"
-                                                TextColor="{DynamicResource PrimaryColor}"
+                                                TextColor="{DynamicResource ContentAccentTextColor}"
                                                 HorizontalOptions="Center" />
 
                                             <Label
@@ -724,7 +723,7 @@
                                                 FontSize="32"
                                                 FontAttributes="Bold"
                                                 VerticalTextAlignment="Center"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                             <Label
                                                 x:Name="RootResultValueLabel"
@@ -732,7 +731,7 @@
                                                 FontAttributes="Bold"
                                                 VerticalTextAlignment="Center"
                                                 LineBreakMode="NoWrap"
-                                                TextColor="{DynamicResource PrimaryColor}" />
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                         </HorizontalStackLayout>
 
@@ -749,7 +748,7 @@
 
                             </Border>
 
-                            <Grid HeightRequest="48">
+                            <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
                                 <controls:ResultCopyButton
                                     x:Name="RootCopyResultButton"
@@ -759,24 +758,23 @@
                                     BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                     Clicked="OnRootCopyResultClicked" />
 
-                                <HorizontalStackLayout
+                                <Grid
                                     InputTransparent="True"
-                                    HorizontalOptions="Center"
-                                    VerticalOptions="Center"
-                                    Spacing="8">
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
 
                                     <controls:ThemedCopyIcon
                                         WidthRequest="20"
                                         HeightRequest="20" />
 
-                                    <Label
+                                    <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                         Text="{Binding DisplayText, Source={x:Reference RootCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                         FontSize="15"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                         VerticalTextAlignment="Center" />
 
-                                </HorizontalStackLayout>
+                                </Grid>
 
                             </Grid>
 

@@ -27,8 +27,8 @@
 
             <Grid
                 Grid.Column="0"
-                WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
-                HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+                WidthRequest="{DynamicResource Density.ControlWidth}"
+                HeightRequest="{DynamicResource Density.ControlHeight}"
                 HorizontalOptions="Center"
                 VerticalOptions="Center">
 
@@ -84,10 +84,30 @@
     <ScrollView
         x:Name="SettingsPageContentRoot">
             <VerticalStackLayout
-            Padding="{OnPlatform Android=12, WinUI=18, Default=18}"
-            Spacing="{OnPlatform Android=12, WinUI=16, Default=16}"
+            Padding="{DynamicResource Density.PagePadding}"
+            Spacing="{DynamicResource Density.Spacing}"
             HorizontalOptions="Center"
             MaximumWidthRequest="900">
+
+                <Border x:Name="DensitySettingsCard" Style="{StaticResource ThemeCardStyle}">
+                    <VerticalStackLayout Spacing="{DynamicResource Density.Spacing}">
+                        <Label Text="{localization:Translate Settings.Density.Title}"
+                               FontSize="19" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                        <Label Text="{localization:Translate Settings.Density.Help}"
+                               FontSize="14" TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid x:Name="DensityChoices" ColumnDefinitions="*" RowDefinitions="Auto,Auto,Auto"
+                              ColumnSpacing="10" RowSpacing="8" SizeChanged="OnDensityChoicesSizeChanged">
+                            <Button x:Name="AutomaticDensityButton" CommandParameter="{x:Static services:DisplayDensityMode.Automatic}"
+                                    Clicked="OnDensityChoiceClicked" />
+                            <Button x:Name="CompactDensityButton" Grid.Row="1" CommandParameter="{x:Static services:DisplayDensityMode.Compact}"
+                                    Clicked="OnDensityChoiceClicked" />
+                            <Button x:Name="TouchDensityButton" Grid.Row="2" CommandParameter="{x:Static services:DisplayDensityMode.Touch}"
+                                    Clicked="OnDensityChoiceClicked" />
+                        </Grid>
+                        <Label x:Name="DensityEffectiveLabel" FontSize="14"
+                               TextColor="{DynamicResource TextSecondaryColor}" />
+                    </VerticalStackLayout>
+                </Border>
 
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">
@@ -605,7 +625,7 @@
                             <Grid>
                                 <Picker
                                     x:Name="LiveWallpaperModePicker"
-                                    MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                     Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
@@ -775,7 +795,7 @@
                             <Grid>
                                 <Picker
                                     x:Name="FontPicker"
-                                    MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                     Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
@@ -869,7 +889,7 @@
                             <Grid>
                                 <Picker
                                     x:Name="LanguagePicker"
-                                    MinimumHeightRequest="{OnPlatform Android=56, WinUI=46, Default=46}"
+                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                     Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"

@@ -78,7 +78,7 @@ internal sealed class QuizPdfPage : ContentPage
         button.Text = string.IsNullOrEmpty(icon) ? text : $"{icon} {text}";
         SemanticProperties.SetDescription(button, text);
         button.SetDynamicResource(StyleProperty, primary ? "SolverPrimaryActionStyle" : "SolverOutlinedActionStyle");
-        button.MinimumHeightRequest = 48; button.LineBreakMode = LineBreakMode.WordWrap; return button;
+        DisplayDensityManager.BindControl(button); button.LineBreakMode = LineBreakMode.WordWrap; return button;
     }
     private static Border Card(View content)
     {
@@ -88,6 +88,7 @@ internal sealed class QuizPdfPage : ContentPage
     private static Border Input(View content)
     {
         var border = new Border { Content = content, MinimumHeightRequest = OperatingSystem.IsAndroid() ? 56 : 48 };
+        DisplayDensityManager.BindControl(border);
         border.SetDynamicResource(StyleProperty, "SolverInputBorderStyle");
         border.SetDynamicResource(BackgroundColorProperty, "SurfaceAltColor");
         border.SetDynamicResource(Border.StrokeProperty, "PrimaryBorderBrush");

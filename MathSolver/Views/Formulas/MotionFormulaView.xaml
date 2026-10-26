@@ -16,20 +16,20 @@
                 Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
                 Spacing="2">
 
-                <Label
+                <Label controls:SolverHeader.Role="Symbol"
                     Text="➜  ⏱  📍"
                     FontSize="36"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Title"
                     Text="{localization:Translate Formula.Motion.Title}"
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Description"
                     Text="{localization:Translate Formula.Motion.Subtitle}"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
@@ -62,7 +62,7 @@
                             Text="{localization:Translate Formula.Common.Relationship}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Motion.Relationship}"
                             FontSize="17"
@@ -87,21 +87,21 @@
                                     FontSize="21"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                 <Label
                                     Grid.Column="1"
                                     Text="v = d ÷ t"
                                     FontSize="21"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                 <Label
                                     Grid.Column="2"
                                     Text="t = d ÷ v"
                                     FontSize="21"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                             </Grid>
                         </Border>
 
@@ -124,7 +124,7 @@
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="9" />
                                         </Border.StrokeShape>
-                                        <Label Text="{localization:Translate Formula.Motion.Symbol.Distance}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource PrimaryColor}" />
+                                        <Label Text="{localization:Translate Formula.Motion.Symbol.Distance}" FontSize="15" FontAttributes="Bold" HorizontalTextAlignment="Center" TextColor="{DynamicResource ContentAccentTextColor}" />
                                     </Border>
                                     <Border Grid.Column="1" Padding="10,8" BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
                                         <Border.StrokeShape>
@@ -166,7 +166,7 @@
                             Text="{localization:Translate Formula.Motion.Graph.Title}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Motion.Graph.Subtitle}"
                             FontSize="16"
@@ -211,7 +211,7 @@
 
                                     <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
                                         <Label Grid.Column="0" Text="d" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                        <Label Grid.Column="1" x:Name="MotionDistanceValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                        <Label Grid.Column="1" x:Name="MotionDistanceValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
                                         <Label Grid.Column="2" Text="m" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                     </Grid>
                                     <Border
@@ -233,7 +233,7 @@
 
                                     <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
                                         <Label Grid.Column="0" Text="t" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                        <Label Grid.Column="1" x:Name="MotionTimeValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                        <Label Grid.Column="1" x:Name="MotionTimeValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
                                         <Label Grid.Column="2" Text="s" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                     </Grid>
                                     <Border
@@ -299,7 +299,7 @@
                             Text="{localization:Translate Formula.Motion.Types.Title}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Motion.Types.Subtitle}"
                             FontSize="16"
@@ -323,7 +323,7 @@
                                     <RoundRectangle CornerRadius="10" />
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
-                                    <Label Text="{localization:Translate Formula.Motion.Types.Basic.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource PrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.Basic.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <Label Text="{localization:Translate Formula.Motion.Types.Basic.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
@@ -411,7 +411,7 @@
                             Text="{localization:Translate Formula.Common.Formulas}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Grid
                             controls:AdaptiveColumns.MinimumColumnWidth="320" ColumnDefinitions="*,*"
@@ -514,7 +514,7 @@
                             Text="{localization:Translate Formula.Common.Properties}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Motion.Properties}"
                             FontSize="17"
@@ -534,7 +534,7 @@
                                 FontSize="16"
                                 FontAttributes="Bold"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
                         </Border>
                     </VerticalStackLayout>
                 </Border>
@@ -554,7 +554,7 @@
                             Text="{localization:Translate Formula.Common.HowToSolve}"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
                         <Label
                             Text="{localization:Translate Formula.Motion.Steps}"
                             FontSize="17"
@@ -579,7 +579,7 @@
                                         Text="{localization:Translate Formula.Motion.MeetingExampleTitle}"
                                         FontSize="18"
                                         FontAttributes="Bold"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <Label
                                         Text="{localization:Translate Formula.Motion.MeetingExample}"
                                         FontSize="16"

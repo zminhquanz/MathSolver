@@ -257,6 +257,7 @@ public partial class PowerRootView
     {
         var content = new VerticalStackLayout { IsVisible = false, Spacing = 10 };
         var toggle = new Button { MinimumHeightRequest = 48, FontSize = 14, FontAttributes = FontAttributes.Bold, LineBreakMode = LineBreakMode.WordWrap };
+        DisplayDensityManager.BindControl(toggle);
         toggle.SetDynamicResource(BackgroundColorProperty, "WallpaperSurfaceAltColor");
         toggle.SetDynamicResource(Button.TextColorProperty, "WallpaperTextPrimaryColor");
         toggle.AutomationId = "PowerDiagnostics" + key;

@@ -7,6 +7,9 @@ namespace MathSolver.Controls;
 
 public sealed class FractionExpressionView : ContentView
 {
+    private readonly List<ScrollView> _boundedMathItems = [];
+    private bool _rebuildQueued, _measureQueued;
+    private int _visualGeneration;
     public static readonly BindableProperty ParseArithmeticExpressionsProperty = BindableProperty.Create(
         nameof(ParseArithmeticExpressions), typeof(bool), typeof(FractionExpressionView), false,
         propertyChanged: OnVisualPropertyChanged);
@@ -101,35 +104,66 @@ public sealed class FractionExpressionView : ContentView
 
     public FractionExpressionView()
     {
+        SizeChanged += (_, _) => QueueMathItemMeasurement();
         Loaded += OnLoaded;
         Unloaded += (_, _) => AppLanguageManager.LanguageChanged -= OnLanguageChanged;
         SetDynamicResource(
             MathColorProperty,
             "WallpaperTextPrimaryColor");
 
-        Rebuild();
+        QueueRebuild();
     }
 
     private void OnLoaded(object? sender, EventArgs e)
     {
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
-        Rebuild();
+        QueueRebuild();
     }
 
     private void OnLanguageChanged(object? sender, EventArgs e) =>
-        Dispatcher.Dispatch(Rebuild);
+        Dispatcher.Dispatch(QueueRebuild);
 
     private static void OnVisualPropertyChanged(
         BindableObject bindable,
         object oldValue,
         object newValue)
     {
-        ((FractionExpressionView)bindable).Rebuild();
+        ((FractionExpressionView)bindable).QueueRebuild();
+    }
+
+    private void QueueRebuild()
+    {
+        if (Handler is null) { Rebuild(); return; }
+        if (!CanMeasureMath) return;
+        if (_rebuildQueued) return;
+        _rebuildQueued = true;
+        Dispatcher.Dispatch(() =>
+        {
+            _rebuildQueued = false;
+            if (CanMeasureMath) Rebuild();
+        });
+    }
+
+    private bool CanMeasureMath => IsLoaded && Handler?.MauiContext is not null
+        && Window is { Handler.MauiContext: not null } window && !WindowUiLifetime.IsClosing(window);
+
+    private void QueueMathItemMeasurement()
+    {
+        if (_measureQueued || !CanMeasureMath || Width <= 0 || _boundedMathItems.Count == 0) return;
+        _measureQueued = true;
+        Dispatcher.Dispatch(() =>
+        {
+            _measureQueued = false;
+            if (CanMeasureMath) UpdateMathItemWidths();
+        });
     }
 
     private void Rebuild()
     {
+        _boundedMathItems.Clear();
+        _visualGeneration++;
+        if (WrapContent) HorizontalOptions = LayoutOptions.Fill;
         var rootLayout = new VerticalStackLayout
         {
             Spacing = 8,
@@ -158,6 +192,7 @@ public sealed class FractionExpressionView : ContentView
         }
 
         Content = rootLayout;
+        QueueMathItemMeasurement();
     }
 
     private View CreateExpressionLine(
@@ -188,7 +223,9 @@ public sealed class FractionExpressionView : ContentView
             Label textLine = CreateTextToken(line);
             textLine.HorizontalTextAlignment = HorizontalTextAlignment;
             textLine.HorizontalOptions = WrapContent ? LayoutOptions.Fill : GetHorizontalLayoutOptions();
-            textLine.LineBreakMode = WrapContent ? LineBreakMode.WordWrap : LineBreakMode.NoWrap;
+            bool numericLine = line.Any(char.IsDigit) && !line.Any(char.IsLetter);
+            textLine.LineBreakMode = !WrapContent ? LineBreakMode.NoWrap
+                : numericLine ? LineBreakMode.CharacterWrap : LineBreakMode.WordWrap;
             return textLine;
         }
 
@@ -226,8 +263,9 @@ public sealed class FractionExpressionView : ContentView
                 HorizontalOptions = LayoutOptions.Fill
             };
 
-        foreach (View tokenView in CreateTokenViews(tokens))
+        foreach (View token in CreateTokenViews(tokens))
         {
+            View tokenView = BoundWrappedMathItem(token);
             FlexLayout.SetShrink(tokenView, 0);
             tokenView.Margin = new Thickness(
                 0,
@@ -260,13 +298,50 @@ public sealed class FractionExpressionView : ContentView
         var wrap = new FlexLayout { Direction = FlexDirection.Row, Wrap = FlexWrap.Wrap, AlignItems = FlexAlignItems.Center,
             JustifyContent = HorizontalTextAlignment switch { TextAlignment.Center => FlexJustify.Center,
                 TextAlignment.End => FlexJustify.End, _ => FlexJustify.Start }, HorizontalOptions = LayoutOptions.Fill };
-        foreach (var item in items)
+        foreach (var source in items)
         {
+            var item = BoundWrappedMathItem(source);
             FlexLayout.SetShrink(item, 0);
             item.Margin = new Thickness(0, 0, TokenSpacing, Math.Min(4, TokenSpacing));
             wrap.Children.Add(item);
         }
         return wrap;
+    }
+
+    private View BoundWrappedMathItem(View item)
+    {
+        // Operators/prose can wrap normally. A long integer is an atomic math
+        // item too, and must remain accessible without clipping its final digits.
+        if (item is Label label && !(label.Text?.Any(char.IsDigit) ?? false)) return item;
+        var scroll = new ScrollView
+        {
+            Content = item, Orientation = ScrollOrientation.Horizontal,
+            HorizontalScrollBarVisibility = ScrollBarVisibility.Default,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Never,
+            HorizontalOptions = LayoutOptions.Start, VerticalOptions = LayoutOptions.Center,
+            MaximumWidthRequest = Width > 0 ? Math.Max(1, Width - TokenSpacing) : double.PositiveInfinity
+        };
+        _boundedMathItems.Add(scroll);
+        item.Loaded += (_, _) => QueueMathItemMeasurement();
+        item.SizeChanged += (_, _) => QueueMathItemMeasurement();
+        return scroll;
+    }
+
+    private void UpdateMathItemWidths()
+    {
+        if (Width <= 0) return;
+        double maximum = Math.Max(1, Width - TokenSpacing);
+        int generation = _visualGeneration;
+        foreach (var item in _boundedMathItems)
+        {
+            if (generation != _visualGeneration || item.Content is not IView content || item.Handler is null) return;
+            var natural = content.Measure(double.PositiveInfinity, double.PositiveInfinity);
+            double width = Math.Min(maximum, Math.Ceiling(natural.Width));
+            double height = Math.Ceiling(natural.Height) + (natural.Width > maximum ? 18 : 0);
+            if (Math.Abs(item.MaximumWidthRequest - maximum) > .5) item.MaximumWidthRequest = maximum;
+            if (Math.Abs(item.WidthRequest - width) > .5) item.WidthRequest = width;
+            if (Math.Abs(item.HeightRequest - height) > .5) item.HeightRequest = height;
+        }
     }
 
     private IEnumerable<View> TopLevelMathViews(TextbookFractionParser.Node node)

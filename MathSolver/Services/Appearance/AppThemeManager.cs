@@ -164,9 +164,12 @@ public static class AppThemeManager
     }
 
     public static void SetThemeMode(AppThemeMode mode)
+        => SetThemeMode(mode, persist: true);
+
+    internal static void SetThemeMode(AppThemeMode mode, bool persist)
     {
         CurrentMode = mode;
-        ApplyCurrentTheme(savePreferences: true);
+        ApplyCurrentTheme(savePreferences: persist);
     }
 
     public static bool SetAccentColor(string hexColor)
@@ -886,10 +889,8 @@ public static class AppThemeManager
     {
         Color accentDark = Mix(accent, Colors.Black, 0.18);
 
-        Color onAccent =
-            GetRelativeLuminance(accent) > 0.56
-                ? Color.FromArgb("#111827")
-                : Colors.White;
+        var foreground = ReadableColorPolicy.OnBackground(ToReadableRgb(accent));
+        Color onAccent = new((float)foreground.Red, (float)foreground.Green, (float)foreground.Blue);
 
         if (theme == AppTheme.Dark)
         {
@@ -1034,13 +1035,20 @@ public static class AppThemeManager
         ThemePalette palette,
         AppTheme effectiveTheme)
     {
-        bool wallpaperEnabled = LiveWallpaperManager.IsEnabled;
+        bool enabled = LiveWallpaperManager.IsEnabled;
+        if (!enabled) _liveWallpaperUseLightText = null;
+        ApplyWallpaperReadingPalette(resources, palette, effectiveTheme, enabled,
+            LiveWallpaperManager.Mode != LiveWallpaperMode.Mp4, _liveWallpaperUseLightText);
+    }
 
+    private static void ApplyWallpaperReadingPalette(
+        ResourceDictionary resources, ThemePalette palette, AppTheme effectiveTheme,
+        bool wallpaperEnabled, bool builtInAnimation, bool? useLightText)
+    {
         if (!wallpaperEnabled)
         {
             // Wallpaper OFF must be an absolute return to the app theme. Never
             // carry the last MP4 luminance polarity into the static UI.
-            _liveWallpaperUseLightText = null;
 
             // IMPORTANT (WinUI): apply text tokens FIRST. Resource propagation
             // can transiently throw while the outgoing MediaElement native
@@ -1071,12 +1079,10 @@ public static class AppThemeManager
             SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", palette.DangerSoft);
             SetColorAndBrush(resources, "WallpaperDangerActionBorderColor", "WallpaperDangerActionBorderBrush", palette.DangerBorder);
             SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", Colors.Transparent);
+            SetReadableContentText(resources, palette, palette.Surface, palette.SurfaceAlt, palette.InputBackground,
+                palette.AccentSoft, palette.SuccessSoft, palette.WarningSoft, palette.DangerSoft, palette.InfoSoft);
             return;
         }
-
-        bool builtInAnimation =
-            LiveWallpaperManager.Mode !=
-            LiveWallpaperMode.Mp4;
 
         bool themeIsDark =
             effectiveTheme == AppTheme.Dark;
@@ -1087,13 +1093,13 @@ public static class AppThemeManager
         bool darkGlass;
 
         if (builtInAnimation ||
-            _liveWallpaperUseLightText is null)
+            useLightText is null)
         {
             darkGlass = themeIsDark;
         }
         else
         {
-            darkGlass = _liveWallpaperUseLightText.Value;
+            darkGlass = useLightText.Value;
         }
 
         Color surfaceBase = darkGlass
@@ -1124,43 +1130,41 @@ public static class AppThemeManager
             ? Color.FromArgb("#F1F5F9")
             : Color.FromArgb("#1F2937");
 
-        Color surfaceStrong =
-            WithAlpha(surfaceBase, darkGlass ? 0.86 : 0.84);
-        Color surface =
-            WithAlpha(surfaceBase, darkGlass ? 0.76 : 0.74);
-        Color surfaceAlt =
-            WithAlpha(surfaceAltBase, darkGlass ? 0.66 : 0.62);
-        Color input =
-            WithAlpha(inputBase, darkGlass ? 0.90 : 0.88);
+        // Reading regions deliberately block moving wallpaper. The decoration
+        // stays visible in the page margins rather than through digits/tables.
+        Color surfaceStrong = surfaceBase;
+        Color surface = surfaceBase;
+        Color surfaceAlt = surfaceAltBase;
+        Color input = inputBase;
 
         // On bright MP4 frames the app can still be in Dark theme. Do not use
         // the dark-theme soft palette directly for in-content chips/actions,
         // otherwise selected pills and semantic buttons stay visually dark.
         Color accentSoftBase = darkGlass
-            ? palette.AccentSoft
+            ? Mix(surfaceBase, palette.Accent, 0.16)
             : Mix(palette.Accent, Colors.White, 0.88);
         Color accentBorderBase = darkGlass
             ? palette.AccentBorder
             : Mix(palette.Accent, Colors.White, 0.62);
         Color successSoftBase = darkGlass
-            ? palette.SuccessSoft
+            ? Mix(surfaceBase, palette.Success, 0.12)
             : Mix(palette.Success, Colors.White, 0.88);
         Color warningSoftBase = darkGlass
-            ? palette.WarningSoft
+            ? Mix(surfaceBase, palette.Warning, 0.12)
             : Mix(palette.Warning, Colors.White, 0.88);
         Color dangerSoftBase = darkGlass
-            ? palette.DangerSoft
+            ? Mix(surfaceBase, palette.Danger, 0.12)
             : Mix(palette.Danger, Colors.White, 0.88);
         Color dangerBorderBase = darkGlass
             ? palette.DangerBorder
             : Mix(palette.Danger, Colors.White, 0.62);
         Color infoSoftBase = darkGlass
-            ? palette.InfoSoft
+            ? Mix(surfaceBase, palette.Info, 0.12)
             : Mix(palette.Info, Colors.White, 0.88);
 
         Color selectedBackground = darkGlass
-            ? WithAlpha(palette.Accent, 0.96)
-            : WithAlpha(accentSoftBase, 0.92);
+            ? palette.Accent
+            : accentSoftBase;
         Color selectedBorder = darkGlass
             ? WithAlpha(palette.Accent, 0.96)
             : WithAlpha(accentBorderBase, 0.96);
@@ -1168,9 +1172,7 @@ public static class AppThemeManager
             ? palette.OnAccent
             : Colors.Black;
 
-        Color dangerActionBackground = darkGlass
-            ? WithAlpha(dangerSoftBase, 0.78)
-            : WithAlpha(dangerSoftBase, 0.92);
+        Color dangerActionBackground = dangerSoftBase;
         Color dangerActionBorder = darkGlass
             ? WithAlpha(dangerBorderBase, 0.92)
             : WithAlpha(dangerBorderBase, 0.96);
@@ -1198,12 +1200,14 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
         SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, darkGlass ? 0.46 : 0.42));
         SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, darkGlass ? 0.34 : 0.38));
-        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", WithAlpha(accentSoftBase, darkGlass ? 0.70 : 0.80));
+        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", accentSoftBase);
         SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(accentBorderBase, 0.92));
-        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", WithAlpha(successSoftBase, darkGlass ? 0.74 : 0.82));
-        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", WithAlpha(warningSoftBase, darkGlass ? 0.74 : 0.82));
-        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", WithAlpha(dangerSoftBase, darkGlass ? 0.74 : 0.82));
-        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", WithAlpha(infoSoftBase, darkGlass ? 0.74 : 0.82));
+        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", successSoftBase);
+        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", warningSoftBase);
+        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", dangerSoftBase);
+        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", infoSoftBase);
+        SetReadableContentText(resources, palette, surface, surfaceAlt, input, accentSoftBase,
+            successSoftBase, warningSoftBase, dangerSoftBase, infoSoftBase);
         SetColorAndBrush(resources, "WallpaperSelectionBackgroundColor", "WallpaperSelectionBackgroundBrush", selectedBackground);
         SetColorAndBrush(resources, "WallpaperSelectionBorderColor", "WallpaperSelectionBorderBrush", selectedBorder);
         SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", dangerActionBackground);
@@ -1222,6 +1226,29 @@ public static class AppThemeManager
                 : new Color(1f, 1f, 1f, 0.22f));
 
         SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", scrim);
+    }
+
+    private static ReadableRgb ToReadableRgb(Color color) => new(color.Red, color.Green, color.Blue);
+
+    private static void SetReadableContentText(ResourceDictionary resources, ThemePalette palette, params Color[] surfaces)
+    {
+        var backgrounds = surfaces.Select(ToReadableRgb).ToArray();
+        var text = ReadableColorPolicy.EnsureText(ToReadableRgb(palette.Accent), backgrounds);
+        SetColorAndBrush(resources, "ContentAccentTextColor", "ContentAccentTextBrush",
+            new Color((float)text.Red, (float)text.Green, (float)text.Blue));
+        if (resources.TryGetValue("WallpaperTextSecondaryColor", out var muted) && muted is Color secondary)
+        {
+            var readable = ReadableColorPolicy.EnsureText(ToReadableRgb(secondary), backgrounds);
+            SetColorAndBrush(resources, "WallpaperTextSecondaryColor", "WallpaperTextSecondaryBrush",
+                new Color((float)readable.Red, (float)readable.Green, (float)readable.Blue));
+        }
+        foreach (var (role, color) in new[] { ("Success", palette.Success), ("Warning", palette.Warning),
+            ("Danger", palette.Danger), ("Info", palette.Info) })
+        {
+            var readable = ReadableColorPolicy.EnsureText(ToReadableRgb(color), backgrounds);
+            SetColorAndBrush(resources, "Content" + role + "TextColor", "Content" + role + "TextBrush",
+                new Color((float)readable.Red, (float)readable.Green, (float)readable.Blue));
+        }
     }
 
     private static Color WithAlpha(Color color, double alpha)
@@ -1348,7 +1375,7 @@ public static class AppThemeManager
         Color surface,
         bool preferLighter)
     {
-        if (GetContrastRatio(color, surface) >= 3.0)
+        if (GetContrastRatio(color, surface) >= 4.5)
         {
             return color;
         }
@@ -1359,7 +1386,7 @@ public static class AppThemeManager
         {
             Color candidate = Mix(color, target, amount);
 
-            if (GetContrastRatio(candidate, surface) >= 3.0)
+            if (GetContrastRatio(candidate, surface) >= 4.5)
             {
                 return candidate;
             }
@@ -1369,14 +1396,7 @@ public static class AppThemeManager
     }
 
     private static double GetContrastRatio(Color first, Color second)
-    {
-        double firstLuminance = GetRelativeLuminance(first);
-        double secondLuminance = GetRelativeLuminance(second);
-        double lighter = Math.Max(firstLuminance, secondLuminance);
-        double darker = Math.Min(firstLuminance, secondLuminance);
-
-        return (lighter + 0.05) / (darker + 0.05);
-    }
+        => ReadableColorPolicy.Contrast(ToReadableRgb(first), ToReadableRgb(second));
 
     private static Color Mix(
         Color first,
@@ -1390,21 +1410,6 @@ public static class AppThemeManager
             (float)(first.Green + (second.Green - first.Green) * value),
             (float)(first.Blue + (second.Blue - first.Blue) * value),
             1f);
-    }
-
-    private static double GetRelativeLuminance(Color color)
-    {
-        static double ConvertChannel(double channel)
-        {
-            return channel <= 0.03928
-                ? channel / 12.92
-                : Math.Pow((channel + 0.055) / 1.055, 2.4);
-        }
-
-        return
-            0.2126 * ConvertChannel(color.Red) +
-            0.7152 * ConvertChannel(color.Green) +
-            0.0722 * ConvertChannel(color.Blue);
     }
 
     private static byte ToByte(float component)

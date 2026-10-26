@@ -1805,8 +1805,10 @@ public sealed class ParabolaGraphDrawable : IDrawable
                     xMinimum,
                     xMaximum);
 
-            const float symmetryLabelWidth =
-                104f;
+            // A live column resize can briefly leave less than 104 px of plot
+            // width. Keep the label inside it so Clamp never receives min > max.
+            float symmetryLabelWidth =
+                Math.Min(104f, plotRect.Width);
 
             const float symmetryLabelHeight =
                 26f;
@@ -1819,8 +1821,9 @@ public sealed class ParabolaGraphDrawable : IDrawable
                     symmetryLabelWidth /
                     2f,
                     plotRect.Left,
-                    plotRect.Right -
-                    symmetryLabelWidth);
+                    Math.Max(
+                        plotRect.Left,
+                        plotRect.Right - symmetryLabelWidth));
 
             float symmetryLabelY =
                 plotRect.Top +

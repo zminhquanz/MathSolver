@@ -54,8 +54,14 @@ public sealed partial class MatrixView
                 if (!accepted) Status("Cancelled");
                 return;
             }
-            await MatrixClipboardService.SetAsync(content);
-            if (CanPublish(version)) Status("CopiedGrid");
+            var copyWork = _work;
+            bool copied = await MatrixClipboardService.TrySetAsync(content,
+                () => copyWork?.IsCancellationRequested == false && CanPublish(version));
+            if (CanPublish(version))
+            {
+                if (copied) Status("CopiedGrid");
+                else if (copyWork?.IsCancellationRequested == false) ReportError("ClipboardBusy");
+            }
         }, "CopyingGrid");
         if (exportCsv && CanPublish(sourceVersion) && !_busy)
             await ExportCsvAsync(rows, columns, read, $"Matrix-{matrixName}-selection.csv");

@@ -186,6 +186,7 @@ public partial class AiQuestionBankPage : ContentPage
         int pending=snapshot.Items.Count(i=>i.State==AiItemState.PendingReview);
         if(pending>0) JobStatusLabel.Text += " · " + string.Format(CultureInfo.CurrentCulture,T("Review.Count"),pending);
         RenderGenerationStatus(snapshot, busy);
+        RenderWorkflow(running, pending);
         int previous = QuestionPicker.SelectedIndex;
         _updating = true;
         string[] labels = snapshot.Items.Select(i => $"{T("Question")} {i.Number} · {T("Item." + i.State)}").ToArray();

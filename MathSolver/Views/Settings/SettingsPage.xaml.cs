@@ -44,6 +44,7 @@ public partial class SettingsPage : ContentPage
     public SettingsPage()
     {
         InitializeComponent();
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(DensitySettingsCard);
 
         LocalizationService.Attach(
             this);
@@ -132,6 +133,7 @@ public partial class SettingsPage : ContentPage
 
         AppThemeManager.ThemeChanged += OnThemeChanged;
         AppFontManager.FontChanged += OnFontChanged;
+        DisplayDensityManager.Changed += OnDensityChanged;
         AppLanguageManager.LanguageChanged += OnLanguageChanged;
         LocalizationService.CultureChanged += OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged += OnDeveloperModeChanged;
@@ -170,6 +172,7 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.ThemeChanged -= OnThemeChanged;
         AppFontManager.FontChanged -= OnFontChanged;
+        DisplayDensityManager.Changed -= OnDensityChanged;
         AppLanguageManager.LanguageChanged -= OnLanguageChanged;
         LocalizationService.CultureChanged -= OnLocalizationCultureChanged;
         DeveloperModeManager.DeveloperModeChanged -= OnDeveloperModeChanged;
@@ -694,6 +697,7 @@ public partial class SettingsPage : ContentPage
     {
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
+        DisplayDensityManager.ResetToDefault();
         AppLanguageManager.ResetToDefault();
         DeveloperModeManager.ResetToDefault();
         ResultNumberDisplayMode.ResetToDefault();
@@ -1394,6 +1398,7 @@ public partial class SettingsPage : ContentPage
         UpdateThemeModeButtons();
         LoadLanguageSettings();
         LoadFontSettings();
+        LoadDensitySettings();
         UpdateLiveWallpaperSettings();
         UpdateAdvancedSettingsState();
     }
@@ -1588,6 +1593,7 @@ public partial class SettingsPage : ContentPage
         UpdateThemeModeButton(
             DarkThemeButton,
             AppThemeManager.CurrentMode == AppThemeMode.Dark);
+        LoadDensitySettings();
     }
 
     private static void UpdateThemeModeButton(Button button, bool selected)

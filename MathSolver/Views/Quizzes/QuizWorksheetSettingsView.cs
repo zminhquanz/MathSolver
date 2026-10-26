@@ -48,7 +48,7 @@ internal sealed class QuizWorksheetSettingsView : ContentView
         {
             frame.Padding = 0;
             picker.FontSize = 15; picker.FontAttributes = FontAttributes.Bold;
-            picker.MinimumHeightRequest = OperatingSystem.IsAndroid() ? 56 : 50;
+            DisplayDensityManager.BindControl(picker);
             picker.HorizontalOptions = picker.VerticalOptions = LayoutOptions.Fill;
             picker.SetDynamicResource(Picker.TextColorProperty, "WallpaperTextPrimaryColor");
 #if ANDROID

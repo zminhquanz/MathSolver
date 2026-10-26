@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Services.Core;
@@ -95,7 +96,7 @@ public partial class FractionView : LocalizedSolverView
 
         if (ResultBorder.IsVisible)
         {
-            OnCalculateClicked(this, EventArgs.Empty);
+            CalculateFractions();
         }
     }
 
@@ -209,7 +210,15 @@ public partial class FractionView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
+        CalculateFractions();
+        if (ResultBorder.IsVisible)
+        {
+            SolverWorkspace.RevealResult(ResultBorder);
+        }
+    }
+
+    private void CalculateFractions()
+    {
         ResetOutput();
 
         if (_isExpressionMode)
@@ -314,9 +323,7 @@ public partial class FractionView : LocalizedSolverView
     {
         if (ResultBorder.IsVisible)
         {
-            OnCalculateClicked(
-                this,
-                EventArgs.Empty);
+            CalculateFractions();
         }
     }
 
@@ -1149,9 +1156,17 @@ public partial class FractionView : LocalizedSolverView
             width,
             height);
 
+        UpdateInputLayout(OperationButtonsGrid.Width > 0 ? OperationButtonsGrid.Width : width);
+    }
+
+    private void OnFractionInputsSizeChanged(object? sender, EventArgs e) =>
+        UpdateInputLayout(OperationButtonsGrid.Width);
+
+    private void UpdateInputLayout(double width)
+    {
         bool shouldBeCompact =
             width > 0 &&
-            width < 700;
+            ResponsiveLayoutPolicy.UseStackedLayout(width, 700d);
 
         if (_isCompact ==
             shouldBeCompact)
@@ -1299,43 +1314,6 @@ public partial class FractionView : LocalizedSolverView
         FractionInputGrid.ColumnSpacing =
             0;
 
-        // Nút thao tác xếp dọc để không bị chật trên điện thoại.
-        ActionButtonsGrid.ColumnDefinitions.Clear();
-        ActionButtonsGrid.RowDefinitions.Clear();
-
-        ActionButtonsGrid.ColumnDefinitions.Add(
-            new ColumnDefinition(
-                GridLength.Star));
-
-        ActionButtonsGrid.RowDefinitions.Add(
-            new RowDefinition(
-                GridLength.Auto));
-
-        ActionButtonsGrid.RowDefinitions.Add(
-            new RowDefinition(
-                GridLength.Auto));
-
-        Grid.SetRow(
-            CalculateButton,
-            0);
-
-        Grid.SetColumn(
-            CalculateButton,
-            0);
-
-        Grid.SetRow(
-            ClearButton,
-            1);
-
-        Grid.SetColumn(
-            ClearButton,
-            0);
-
-        ActionButtonsGrid.ColumnSpacing =
-            0;
-
-        ActionButtonsGrid.RowSpacing =
-            8;
     }
 
     private void ConfigureExpandedLayout()
@@ -1459,43 +1437,6 @@ public partial class FractionView : LocalizedSolverView
         FractionInputGrid.ColumnSpacing =
             12;
 
-        // Hai nút thao tác nằm trên một hàng.
-        ActionButtonsGrid.RowDefinitions.Clear();
-        ActionButtonsGrid.ColumnDefinitions.Clear();
-
-        ActionButtonsGrid.RowDefinitions.Add(
-            new RowDefinition(
-                GridLength.Auto));
-
-        ActionButtonsGrid.ColumnDefinitions.Add(
-            new ColumnDefinition(
-                GridLength.Star));
-
-        ActionButtonsGrid.ColumnDefinitions.Add(
-            new ColumnDefinition(
-                GridLength.Star));
-
-        Grid.SetRow(
-            CalculateButton,
-            0);
-
-        Grid.SetColumn(
-            CalculateButton,
-            0);
-
-        Grid.SetRow(
-            ClearButton,
-            0);
-
-        Grid.SetColumn(
-            ClearButton,
-            1);
-
-        ActionButtonsGrid.ColumnSpacing =
-            10;
-
-        ActionButtonsGrid.RowSpacing =
-            0;
     }
 
 }

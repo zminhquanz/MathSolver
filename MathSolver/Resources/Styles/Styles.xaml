@@ -36,9 +36,9 @@
         <Setter Property="FontSize" Value="14"/>
         <Setter Property="BorderWidth" Value="0"/>
         <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=8, Default=8}"/>
-        <Setter Property="Padding" Value="{OnPlatform Android='16,10', WinUI='14,10', Default='14,10'}"/>
-        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
-        <Setter Property="MinimumWidthRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
+        <Setter Property="Padding" Value="{DynamicResource Density.ButtonPadding}"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -58,10 +58,10 @@
     <Style TargetType="Button" BasedOn="{StaticResource AppButtonBaseStyle}" />
 
     <Style x:Key="PlatformBackButtonStyle" TargetType="Button">
-        <Setter Property="WidthRequest" Value="{OnPlatform Android=48, WinUI=40, Default=40}" />
-        <Setter Property="HeightRequest" Value="{OnPlatform Android=48, WinUI=40, Default=40}" />
-        <Setter Property="MinimumWidthRequest" Value="{OnPlatform Android=48, WinUI=40, Default=40}" />
-        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, WinUI=40, Default=40}" />
+        <Setter Property="WidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="HeightRequest" Value="{DynamicResource Density.ControlHeight}" />
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="CornerRadius" Value="{OnPlatform Android=24, WinUI=6, Default=6}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
@@ -91,8 +91,8 @@
     <Style x:Key="RoundPlatformBackButtonStyle" TargetType="Button" BasedOn="{StaticResource PlatformBackButtonStyle}">
         <Setter Property="WidthRequest" Value="48" />
         <Setter Property="HeightRequest" Value="48" />
-        <Setter Property="MinimumWidthRequest" Value="48" />
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="CornerRadius" Value="24" />
         <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
         <Setter Property="VisualStateManager.VisualStateGroups">
@@ -122,8 +122,8 @@
 
     <Style TargetType="CheckBox">
         <Setter Property="Color" Value="{DynamicResource PrimaryColor}" />
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -143,8 +143,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -165,8 +165,8 @@
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource TextSecondaryColor}" />
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -187,8 +187,8 @@
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14" />
         <Setter Property="PlaceholderColor" Value="{DynamicResource TextSecondaryColor}" />
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -208,8 +208,8 @@
         <Setter Property="BorderColor" Value="Transparent"/>
         <Setter Property="BorderWidth" Value="0"/>
         <Setter Property="CornerRadius" Value="{OnPlatform Android=24, WinUI=0, Default=0}"/>
-        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
-        <Setter Property="MinimumWidthRequest" Value="{OnPlatform Android=48, WinUI=44, Default=44}"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -263,8 +263,8 @@
         <Setter Property="TitleColor" Value="{DynamicResource ShellUnselectedColor}" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=56, WinUI=44, Default=44}"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -303,8 +303,8 @@
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -330,8 +330,8 @@
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         <Setter Property="FontSize" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -442,8 +442,8 @@
         <Setter Property="BackgroundColor" Value="Transparent"/>
         <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}"/>
         <Setter Property="FontSize" Value="14"/>
-        <Setter Property="MinimumHeightRequest" Value="44"/>
-        <Setter Property="MinimumWidthRequest" Value="44"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -460,7 +460,7 @@
   
     <!--
     <Style TargetType="TitleBar">
-        <Setter Property="MinimumHeightRequest" Value="32"/>
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}"/>
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="TitleActiveStates">
@@ -523,7 +523,7 @@
         <Setter Property="Stroke" Value="Transparent" />
         <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
-        <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=50, WinUI=58, Default=58}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
     </Style>
 
     <Style x:Key="ThemeMenuIconStyle" TargetType="Label">
@@ -549,8 +549,8 @@
     <Style x:Key="ThemeMenuChevronContainerStyle" TargetType="Border">
         <Setter Property="WidthRequest" Value="28" />
         <Setter Property="HeightRequest" Value="28" />
-        <Setter Property="MinimumWidthRequest" Value="28" />
-        <Setter Property="MinimumHeightRequest" Value="28" />
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
@@ -577,8 +577,8 @@
     <Style x:Key="AccentSwatchButtonStyle" TargetType="Button">
         <Setter Property="WidthRequest" Value="48" />
         <Setter Property="HeightRequest" Value="48" />
-        <Setter Property="MinimumWidthRequest" Value="48" />
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="CornerRadius" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="3" />
@@ -627,7 +627,7 @@
     </Style>
 
     <Style x:Key="SettingsMenuPickerFrameStyle" TargetType="Border">
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor" Value="{DynamicResource InputBackgroundColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
@@ -638,8 +638,8 @@
     <Style x:Key="SettingsMenuAccentSwatchStyle" TargetType="Button">
         <Setter Property="WidthRequest" Value="48" />
         <Setter Property="HeightRequest" Value="48" />
-        <Setter Property="MinimumWidthRequest" Value="48" />
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="CornerRadius" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="Margin" Value="0" />

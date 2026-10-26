@@ -50,8 +50,8 @@
         <Grid Padding="{OnPlatform Android='0,0,8,0', WinUI='2,0,10,0', Default='2,0,10,0'}"
               ColumnDefinitions="Auto,Auto,*"
               ColumnSpacing="{OnPlatform Android=2, WinUI=6, Default=6}">
-            <Grid WidthRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
-                  HeightRequest="{OnPlatform Android=48, WinUI=40, Default=40}"
+            <Grid WidthRequest="{DynamicResource Density.ControlWidth}"
+                  HeightRequest="{DynamicResource Density.ControlHeight}"
                   HorizontalOptions="Center" VerticalOptions="Center">
                 <Button x:Name="AiBankBackButton" Style="{StaticResource PlatformBackButtonStyle}"
                         controls:InteractiveButtonAnimation.IsScopeEnabled="True"
@@ -88,12 +88,18 @@
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>
-    <Grid>
+    <Grid RowDefinitions="*,Auto">
         <controls:LiveWallpaperView x:Name="LiveWallpaper" />
-        <ScrollView>
+        <ScrollView x:Name="WorkflowScroll">
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
-                <Label Text="{localization:Translate AiBank.Description}" Style="{StaticResource SolverHeroSubtitleStyle}" />
                 <Border Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{localization:Translate AiBank.Workflow.Sequence}" FontSize="13" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        <Label x:Name="WorkflowStatusLabel" Style="{StaticResource SolverSectionTitleStyle}" SemanticProperties.HeadingLevel="Level2" />
+                        <Button x:Name="WorkflowNextButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnWorkflowNextClicked" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="ModelCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="10">
                         <Label Text="{localization:Translate AiBank.ModelSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Label x:Name="ModelStatusLabel" LineBreakMode="WordWrap" />
@@ -102,59 +108,25 @@
                                                WidthRequest="24" HeightRequest="24" Color="{DynamicResource PrimaryColor}" VerticalOptions="Center" />
                             <Label x:Name="ModelGenerationStatusLabel" Grid.Column="1" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
-                        <Label x:Name="ModelTokenSpeedLabel" FontSize="13" TextColor="{DynamicResource PrimaryColor}" IsVisible="False" />
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Button x:Name="ChooseModelButton" Text="{localization:Translate AiBank.ChooseModel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnChooseModelClicked" />
-                            <Button x:Name="EjectModelButton" Grid.Column="1" Text="{localization:Translate AiBank.Eject}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnEjectClicked" />
-                        </Grid>
+                        <Label x:Name="ModelTokenSpeedLabel" FontSize="13" TextColor="{DynamicResource ContentAccentTextColor}" IsVisible="False" />
+                        <Button x:Name="ChooseModelButton" Text="{localization:Translate AiBank.ChooseModel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnChooseModelClicked" />
+                        <Button x:Name="ModelToolsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleModelToolsClicked" />
+                        <VerticalStackLayout x:Name="ModelToolsPanel" IsVisible="False" Spacing="8">
+                        <Button x:Name="EjectModelButton" Text="{localization:Translate AiBank.Eject}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnEjectClicked" />
                         <Button x:Name="OpenFolderButton" Text="{localization:Translate AiBank.OpenFolder}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnOpenFolderClicked" />
                         <Label Text="{localization:Translate AiBank.DownloadHint}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="DownloadModelPicker" Style="{StaticResource AiBankPickerStyle}" />
                         </Border>
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                            <Button x:Name="DownloadButton" Text="{localization:Translate AiBank.Download}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
-                            <Button x:Name="CancelModelButton" Grid.Column="1" Text="{localization:Translate AiBank.CancelModelAction}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" />
-                        </Grid>
+                        <Button x:Name="DownloadButton" Text="{localization:Translate AiBank.Download}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
+                        </VerticalStackLayout>
+                        <Button x:Name="CancelModelButton" Text="{localization:Translate AiBank.CancelModelAction}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" IsVisible="False" />
                         <ProgressBar x:Name="DownloadProgressBar" IsVisible="False" />
                         <Label x:Name="DownloadStatusLabel" LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Border>
-                <Button Text="{localization:Translate AiBank.Review.Open}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
-                <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" />
-                <Border x:Name="DiagnosticsCard" Style="{StaticResource SolverCardStyle}" IsVisible="False">
-                    <VerticalStackLayout Spacing="10">
-                        <Button x:Name="DiagnosticsToggleButton" Text="{localization:Translate AiBank.ShowDiagnostics}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleDiagnosticsClicked" />
-                        <Grid x:Name="DiagnosticsPanel" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*"
-                              RowSpacing="12" ColumnSpacing="12" IsVisible="False" SizeChanged="OnDiagnosticsSizeChanged">
-                            <Border x:Name="ContractDiagnosticCard" Style="{StaticResource AiBankDiagnosticCardStyle}">
-                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                                    <Label Text="{localization:Translate AiBank.Contract}" FontAttributes="Bold" />
-                                    <Editor x:Name="ContractEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
-                                </Grid>
-                            </Border>
-                            <Border x:Name="RawJsonDiagnosticCard" Grid.Row="1" Style="{StaticResource AiBankDiagnosticCardStyle}">
-                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                                    <Label Text="{localization:Translate AiBank.RawJson}" FontAttributes="Bold" />
-                                    <Editor x:Name="RawJsonEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
-                                </Grid>
-                            </Border>
-                            <Border x:Name="ValidationDiagnosticCard" Grid.Row="2" Style="{StaticResource AiBankDiagnosticCardStyle}">
-                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                                    <Label Text="{localization:Translate AiBank.ValidationLog}" FontAttributes="Bold" />
-                                    <Editor x:Name="ValidationLogEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
-                                </Grid>
-                            </Border>
-                            <Border x:Name="PromptDiagnosticCard" Grid.Row="3" Style="{StaticResource AiBankDiagnosticCardStyle}">
-                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
-                                    <Label Text="{localization:Translate AiBank.Prompt}" FontAttributes="Bold" />
-                                    <Editor x:Name="PromptEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
-                                </Grid>
-                            </Border>
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
-                <Border Style="{StaticResource SolverCardStyle}">
+                <Button x:Name="ReviewButton" Text="{localization:Translate AiBank.Review.Open}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
+                <Border x:Name="ProblemCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout x:Name="ConfigurationPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
@@ -172,7 +144,6 @@
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="LearningGroupPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnLearningGroupChanged" />
                         </Border>
-                        <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
                         </VerticalStackLayout>
                         <Label Text="{localization:Translate AiBank.Operation}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
@@ -205,15 +176,11 @@
                             <Label Text="{localization:Translate AiBank.AutoInsert}" VerticalOptions="Center" />
                             <Switch x:Name="AutoInsertSwitch" Grid.Column="1" IsToggled="True" />
                         </Grid>
-                        <Label Text="{localization:Translate AiBank.InsertHint}" FontSize="13" />
                     </VerticalStackLayout>
                 </Border>
-                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <Button x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />
-                    <Button x:Name="StopButton" Grid.Column="1" Text="{localization:Translate AiBank.Stop}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnStopClicked" IsEnabled="False" />
-                </Grid>
-                <Label x:Name="JobStatusLabel" FontAttributes="Bold" />
-                <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" />
+                <Label Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
+                       IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
+                       FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                 <VerticalStackLayout Spacing="8">
                     <Label Text="{localization:Translate AiBank.ProcessedQuestions}" FontAttributes="Bold" />
                     <Border Style="{StaticResource AiBankPickerBorderStyle}">
@@ -246,7 +213,61 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
+                <Border Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Button x:Name="GuidanceToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleGuidanceClicked" />
+                        <VerticalStackLayout x:Name="GuidancePanel" IsVisible="False" Spacing="10">
+                            <Label Text="{localization:Translate AiBank.Description}" FontSize="13" />
+                            <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" />
+                            <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
+                            <Label Text="{localization:Translate AiBank.InsertHint}" FontSize="13" />
+                            <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="DiagnosticsCard" Style="{StaticResource SolverCardStyle}" IsVisible="False">
+                    <VerticalStackLayout Spacing="10">
+                        <Button x:Name="DiagnosticsToggleButton" Text="{localization:Translate AiBank.ShowDiagnostics}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleDiagnosticsClicked" />
+                        <Grid x:Name="DiagnosticsPanel" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*"
+                              RowSpacing="12" ColumnSpacing="12" IsVisible="False" SizeChanged="OnDiagnosticsSizeChanged">
+                            <Border x:Name="ContractDiagnosticCard" Style="{StaticResource AiBankDiagnosticCardStyle}">
+                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                    <Label Text="{localization:Translate AiBank.Contract}" FontAttributes="Bold" />
+                                    <Editor x:Name="ContractEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                </Grid>
+                            </Border>
+                            <Border x:Name="RawJsonDiagnosticCard" Grid.Row="1" Style="{StaticResource AiBankDiagnosticCardStyle}">
+                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                    <Label Text="{localization:Translate AiBank.RawJson}" FontAttributes="Bold" />
+                                    <Editor x:Name="RawJsonEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                </Grid>
+                            </Border>
+                            <Border x:Name="ValidationDiagnosticCard" Grid.Row="2" Style="{StaticResource AiBankDiagnosticCardStyle}">
+                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                    <Label Text="{localization:Translate AiBank.ValidationLog}" FontAttributes="Bold" />
+                                    <Editor x:Name="ValidationLogEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                </Grid>
+                            </Border>
+                            <Border x:Name="PromptDiagnosticCard" Grid.Row="3" Style="{StaticResource AiBankDiagnosticCardStyle}">
+                                <Grid RowDefinitions="Auto,*" RowSpacing="8">
+                                    <Label Text="{localization:Translate AiBank.Prompt}" FontAttributes="Bold" />
+                                    <Editor x:Name="PromptEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                </Grid>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
             </VerticalStackLayout>
         </ScrollView>
+        <Border x:Name="GenerationActionBar" Grid.Row="1" Style="{StaticResource SolverActionBarStyle}">
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <Button x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />
+                    <Button x:Name="StopButton" Grid.Column="1" Text="{localization:Translate AiBank.Stop}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnStopClicked" IsEnabled="False" />
+                </Grid>
+                <Label x:Name="JobStatusLabel" FontAttributes="Bold" FontSize="13" MaxLines="2" LineBreakMode="TailTruncation"
+                       ToolTipProperties.Text="{Binding Text, Source={RelativeSource Self}, x:DataType='Label'}" />
+            </VerticalStackLayout>
+        </Border>
     </Grid>
 </ContentPage>

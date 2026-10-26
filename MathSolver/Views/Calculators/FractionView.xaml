@@ -15,8 +15,8 @@
 
     <!-- FractionView tự quản lý vùng cuộn.
          Không bọc thêm ScrollView tại CalculationPage. -->
-    <Grid RowDefinitions="Auto,*">
-        <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
+    <Grid RowDefinitions="Auto,*,Auto">
+        <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}" controls:SolverHeader.CompactTitle="{localization:Translate Solver.Compact.Fraction}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
 
@@ -38,6 +38,7 @@
         </VerticalStackLayout>
 
         <ScrollView Grid.Row="1"
+            controls:SolverWorkspace.IsEnabled="True"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
             <VerticalStackLayout
@@ -58,6 +59,7 @@
 
                         <Grid
                             x:Name="OperationButtonsGrid"
+                            SizeChanged="OnFractionInputsSizeChanged"
                             ColumnDefinitions="{OnPlatform Android='*,*,*,*', WinUI='*,*,*,*,1.35*', Default='*,*,*,*,1.35*'}"
                             RowDefinitions="Auto,Auto"
                             ColumnSpacing="8"
@@ -111,7 +113,7 @@
                                 Text="Quy đồng"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 Padding="10,0"
                                 CornerRadius="12"
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
@@ -175,7 +177,7 @@
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                     <Border
-                                        HeightRequest="46"
+                                        HeightRequest="{DynamicResource Density.InputFrameHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -204,7 +206,7 @@
                                         BackgroundColor="{DynamicResource PrimaryColor}" />
 
                                     <Border
-                                        HeightRequest="46"
+                                        HeightRequest="{DynamicResource Density.InputFrameHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -241,7 +243,7 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 VerticalTextAlignment="Center"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             <!-- Phân số thứ hai -->
                             <Border
@@ -268,7 +270,7 @@
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                     <Border
-                                        HeightRequest="46"
+                                        HeightRequest="{DynamicResource Density.InputFrameHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -297,7 +299,7 @@
                                         BackgroundColor="{DynamicResource PrimaryColor}" />
 
                                     <Border
-                                        HeightRequest="46"
+                                        HeightRequest="{DynamicResource Density.InputFrameHeight}"
                                         Padding="10,0"
                                         BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
                                         Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -344,32 +346,6 @@
                                 MathColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </VerticalStackLayout>
 
-                        <Grid
-                            x:Name="ActionButtonsGrid"
-                            ColumnDefinitions="*,*"
-                            RowDefinitions="Auto"
-                            ColumnSpacing="10"
-                            RowSpacing="8">
-
-                            <Button
-                                x:Name="CalculateButton"
-                                Grid.Row="0"
-                                Grid.Column="0"
-                                Text="{localization:Translate Actions.Calculate}"
-                                Style="{StaticResource SolverPrimaryActionStyle}"
-                                Clicked="OnCalculateClicked" />
-
-                            <Button
-                                x:Name="ClearButton"
-                                Grid.Row="0"
-                                Grid.Column="1"
-                                Text="{localization:Translate Actions.Clear}"
-                                Style="{StaticResource SolverSecondaryActionStyle}"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                Clicked="OnClearClicked" />
-
-                        </Grid>
 
                     </VerticalStackLayout>
                 </Border>
@@ -396,13 +372,13 @@
                         Text="❌"
                         FontSize="22"
                         FontAttributes="Bold"
-                        TextColor="{DynamicResource DangerColor}" />
+                        TextColor="{DynamicResource ContentDangerTextColor}" />
 
                         <Label
                         Grid.Column="1"
                         x:Name="ErrorLabel"
                         FontSize="17"
-                        TextColor="{DynamicResource DangerColor}"
+                        TextColor="{DynamicResource ContentDangerTextColor}"
                         LineBreakMode="WordWrap" />
 
                     </Grid>
@@ -411,6 +387,7 @@
                 <!-- 3. Kết quả -->
                 <Border
                     x:Name="ResultBorder"
+                    controls:SolverWorkspace.StartsResult="True"
                     IsVisible="False"
                     Padding="14"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
@@ -433,7 +410,7 @@
                             x:Name="FullExpressionMathView"
                             WrapContent="True"
                             MathFontSize="23"
-                            MathColor="{DynamicResource PrimaryColor}"
+                            MathColor="{DynamicResource ContentAccentTextColor}"
                             HorizontalOptions="Center" />
 
                         <BoxView
@@ -453,37 +430,36 @@
                             MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                             HorizontalOptions="Center" />
 
-                        <Grid HeightRequest="48">
+                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
                             <controls:ResultCopyButton
                                 x:Name="FractionCopyResultButton"
                                 NormalTextKey="PowerRoot.CopyResult"
                                 Text=""
-                                HeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 CornerRadius="12"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Clicked="OnFractionCopyResultClicked" />
 
-                            <HorizontalStackLayout
+                            <Grid
                                 InputTransparent="True"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                Spacing="8">
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
 
                                 <controls:ThemedCopyIcon
                                     WidthRequest="20"
                                     HeightRequest="20" />
 
-                                <Label
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                     Text="{Binding DisplayText, Source={x:Reference FractionCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     VerticalTextAlignment="Center" />
 
-                            </HorizontalStackLayout>
+                            </Grid>
 
                         </Grid>
 
@@ -529,7 +505,7 @@
                                                         Text="{Binding Title}"
                                                         FontSize="17"
                                                         FontAttributes="Bold"
-                                                        TextColor="{DynamicResource PrimaryColor}" />
+                                                        TextColor="{DynamicResource ContentAccentTextColor}" />
 
                                                     <Label
                                                         Text="{Binding Description}"
@@ -581,5 +557,33 @@
                 </Border>
     </VerticalStackLayout>
         </ScrollView>
+        <Border Grid.Row="2" Style="{StaticResource SolverActionBarStyle}">
+            <Grid Style="{StaticResource SolverActionButtonsStyle}"
+                x:Name="ActionButtonsGrid"
+                ColumnDefinitions="*,*"
+                RowDefinitions="Auto"
+                ColumnSpacing="10"
+                RowSpacing="8">
+
+                <Button
+                    x:Name="CalculateButton"
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Text="{localization:Translate Actions.Calculate}"
+                    Style="{StaticResource SolverPrimaryActionStyle}"
+                    Clicked="OnCalculateClicked" />
+
+                <Button
+                    x:Name="ClearButton"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Text="{localization:Translate Actions.Clear}"
+                    Style="{StaticResource SolverSecondaryActionStyle}"
+                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                    Clicked="OnClearClicked" />
+
+            </Grid>
+        </Border>
     </Grid>
 </base:LocalizedSolverView>

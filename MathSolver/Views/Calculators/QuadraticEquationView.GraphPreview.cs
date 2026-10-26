@@ -202,6 +202,7 @@ public partial class QuadraticEquationView
             LineBreakMode = LineBreakMode.WordWrap
         };
         button.SetDynamicResource(Button.BackgroundColorProperty, "WallpaperSurfaceAltColor");
+        DisplayDensityManager.BindControl(button);
         button.SetDynamicResource(Button.TextColorProperty, "WallpaperTextPrimaryColor");
         SemanticProperties.SetDescription(button, descriptionKey is null
             ? text : T(descriptionKey));

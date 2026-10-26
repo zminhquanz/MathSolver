@@ -39,6 +39,6 @@ public partial class AiQuestionBankPage
         }
         ModelGenerationStatusLabel.Text = status;
         ModelGenerationStatusLabel.SetDynamicResource(Label.TextColorProperty,
-            error is not null ? "DangerColor" : busy ? "PrimaryColor" : "TextSecondaryColor");
+            error is not null ? "ContentDangerTextColor" : busy ? "ContentAccentTextColor" : "WallpaperTextSecondaryColor");
     }
 }

@@ -269,6 +269,7 @@ public sealed class SqlResultTableView : ContentView
             ? new Editor { AutoSize = EditorAutoSizeOption.Disabled, HeightRequest = 60 }
             : new Entry { MinimumHeightRequest = 48, Placeholder = column.IsKey ? _keyPlaceholder : null };
         input.FontSize = 13;
+        MathSolver.Services.DisplayDensityManager.BindControl(input);
         input.SetDynamicResource(InputView.FontFamilyProperty, "AppFontFamily");
         input.SetDynamicResource(InputView.TextColorProperty, "TextPrimaryColor");
         input.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");

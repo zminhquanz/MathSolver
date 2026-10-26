@@ -64,6 +64,7 @@ public partial class FindXView : LocalizedSolverView
     public FindXView()
     {
         InitializeComponent();
+        FindXValueInputGrid.SizeChanged += (_, _) => UpdateFindXInputLayout(Width);
 
         InitializeLocalization();
         LocalizationService.SetTextDisplayFormatter(this, FindXDisplayText.Format);
@@ -83,13 +84,18 @@ public partial class FindXView : LocalizedSolverView
             width,
             height);
 
+        UpdateFindXInputLayout(width);
+    }
+
+    private void UpdateFindXInputLayout(double width)
+    {
         if (width <= 0)
         {
             return;
         }
 
         bool useCompactLayout =
-            width < 700;
+            ResponsiveLayoutPolicy.UseStackedLayout(FindXValueInputGrid.Width > 0 ? FindXValueInputGrid.Width : width, 700d);
 
         if (_isCompactInputLayout ==
             useCompactLayout)
@@ -1183,7 +1189,7 @@ public partial class FindXView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, FindXResultBorder, FindXErrorBorder);
+        using var autoScroll = CalculationAutoScroll.Begin(sender, FindXResultBorder);
         FindXErrorBorder.IsVisible =
             false;
 

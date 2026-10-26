@@ -189,7 +189,7 @@
                             FontSize="{OnPlatform Android=24, WinUI=28, Default=28}"
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             Text="{localization:Translate TimesTables.Title}"
@@ -401,7 +401,7 @@
                                     x:Name="StatusLabel"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                             </Border>
                         </VerticalStackLayout>
                     </Border>
@@ -438,7 +438,7 @@
                                 HorizontalTextAlignment="Center"
                                 FontSize="20"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             <BoxView
                                 HeightRequest="1"

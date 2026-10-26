@@ -9,6 +9,12 @@
     <Color x:Key="PrimarySoftColor">#EDE9FE</Color>
     <Color x:Key="PrimaryBorderColor">#C4B5FD</Color>
     <Color x:Key="OnPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="ContentAccentTextColor">#6D28D9</Color>
+    <SolidColorBrush x:Key="ContentAccentTextBrush" Color="#6D28D9" />
+    <Color x:Key="ContentSuccessTextColor">#15803D</Color>
+    <Color x:Key="ContentWarningTextColor">#C2410C</Color>
+    <Color x:Key="ContentDangerTextColor">#B91C1C</Color>
+    <Color x:Key="ContentInfoTextColor">#2563EB</Color>
 
     <Color x:Key="PageBackgroundColor">#F4F7FB</Color>
     <Color x:Key="SurfaceColor">#FFFFFF</Color>
@@ -48,7 +54,8 @@
     <!--
         Adaptive live-wallpaper presentation tokens. AppThemeManager maps
         these back to the normal opaque palette while wallpaper is disabled,
-        and to translucent glass surfaces while an MP4 wallpaper is active.
+        and to polarity-matched opaque reading surfaces while wallpaper is active.
+        Moving decoration remains visible outside formulas, cards and tables.
         Only the four main learning tabs consume these keys; Settings and
         Hardware keep their existing opaque surfaces.
     -->
@@ -191,7 +198,7 @@
         <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceContainerLowColor}" />
         <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
         <Setter Property="StrokeThickness" Value="{OnPlatform Android=0, WinUI=1, Default=1}" />
-        <Setter Property="Padding" Value="{OnPlatform Android=16, WinUI=14, Default=14}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.CardPadding}" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=14, Default=14}" />

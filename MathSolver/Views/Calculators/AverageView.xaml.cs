@@ -1,3 +1,4 @@
+using MathSolver.Controls;
 using MathSolver.Numerics;
 using MathSolver.Services;
 using MathSolver.Services.Core;
@@ -198,8 +199,11 @@ public partial class AverageView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         CalculateAverage();
+        if (ResultBorder.IsVisible)
+        {
+            SolverWorkspace.RevealResult(ResultBorder);
+        }
     }
 
     public void RefreshNumberDisplay()

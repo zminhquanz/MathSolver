@@ -812,7 +812,7 @@
                                 Grid.Column="1"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource SuccessColor}"
+                                TextColor="{DynamicResource ContentSuccessTextColor}"
                                 VerticalTextAlignment="Center" />
 
                             <Label
@@ -820,7 +820,7 @@
                                 Grid.Column="2"
                                 FontSize="16"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource DangerColor}"
+                                TextColor="{DynamicResource ContentDangerTextColor}"
                                 VerticalTextAlignment="Center" />
 
                         </Grid>
@@ -863,20 +863,20 @@
                                     <controls:QuestionFactTableView x:Name="PracticeFactTable" />
                                     <Label x:Name="QuestionExpressionLabel" FontSize="34" FontAttributes="Bold"
                                            HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                           TextColor="{DynamicResource PrimaryColor}" />
+                                           TextColor="{DynamicResource ContentAccentTextColor}" />
                                     <controls:FractionExpressionView x:Name="QuestionFractionExpressionView"
-                                        IsVisible="False" MathFontSize="21" MathColor="{DynamicResource PrimaryColor}"
+                                        IsVisible="False" MathFontSize="21" MathColor="{DynamicResource ContentAccentTextColor}"
                                         HorizontalTextAlignment="Center" WrapContent="True" TokenSpacing="4"
                                         HorizontalOptions="Fill" />
                                     <controls:FractionExpressionView x:Name="QuestionComparisonFractionView"
-                                        IsVisible="False" MathFontSize="32" MathColor="{DynamicResource PrimaryColor}"
+                                        IsVisible="False" MathFontSize="32" MathColor="{DynamicResource ContentAccentTextColor}"
                                         HorizontalTextAlignment="Center" WrapContent="True" TokenSpacing="4"
                                         HorizontalOptions="Fill" />
                                     <Label x:Name="NumericResultLabel" IsVisible="False"
                                            FontSize="34" FontAttributes="Bold" MinimumHeightRequest="56"
                                            HorizontalOptions="Fill" HorizontalTextAlignment="Center"
                                            VerticalTextAlignment="Center" LineBreakMode="WordWrap"
-                                           TextColor="{DynamicResource PrimaryColor}" />
+                                           TextColor="{DynamicResource ContentAccentTextColor}" />
                                 </VerticalStackLayout>
                                 <VerticalStackLayout x:Name="QuizDiagramPanel" Grid.Row="1" IsVisible="False" Spacing="8">
                                     <Label x:Name="QuizDiagramCaptionLabel" FontSize="15" FontAttributes="Bold"
@@ -911,13 +911,13 @@
                                 FontAttributes="Bold"
                                 HorizontalTextAlignment="Center"
                                 LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource PrimaryColor}" />
+                                TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             <controls:FractionExpressionView
                                 x:Name="PresentedAnswerFractionView"
                                 IsVisible="False"
                                 MathFontSize="18"
-                                MathColor="{DynamicResource PrimaryColor}"
+                                MathColor="{DynamicResource ContentAccentTextColor}"
                                 HorizontalTextAlignment="Center"
                                 WrapContent="True"
                                 HorizontalOptions="Fill" />
@@ -938,7 +938,7 @@
                                     BackgroundColor="{DynamicResource WallpaperSuccessSoftColor}"
                                     BorderColor="{DynamicResource SuccessColor}"
                                     BorderWidth="1"
-                                    TextColor="{DynamicResource SuccessColor}"
+                                    TextColor="{DynamicResource ContentSuccessTextColor}"
                                     Clicked="OnTrueFalseAnswerClicked" />
 
                                 <Button
@@ -952,7 +952,7 @@
                                     BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
                                     BorderColor="{DynamicResource DangerColor}"
                                     BorderWidth="1"
-                                    TextColor="{DynamicResource DangerColor}"
+                                    TextColor="{DynamicResource ContentDangerTextColor}"
                                     Clicked="OnTrueFalseAnswerClicked" />
 
                             </Grid>
@@ -1162,7 +1162,7 @@
                                         HorizontalTextAlignment="Center"
                                         VerticalTextAlignment="Center"
                                         LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource SuccessColor}" />
+                                        TextColor="{DynamicResource ContentSuccessTextColor}" />
 
                                     <controls:FractionExpressionView
                                         x:Name="FeedbackFractionView"

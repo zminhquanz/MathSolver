@@ -110,6 +110,7 @@ public partial class CalculationPage : ContentPage
     public CalculationPage()
     {
         InitializeComponent();
+        OperationButtonsGrid.SizeChanged += (_, _) => UpdateArithmeticInputLayout(Width);
 
 #if ANDROID
         _androidSubTabSwipe = new AndroidSubTabSwipeNavigator(
@@ -222,7 +223,14 @@ public partial class CalculationPage : ContentPage
             OnCalculationSubTabGridSizeChanged(CalculationSubTabGrid, EventArgs.Empty);
         }
 
-        bool compact = width < 720d;
+        UpdateArithmeticInputLayout(width);
+    }
+
+    private void UpdateArithmeticInputLayout(double width)
+    {
+        if (width <= 0d) return;
+        double inputWidth = OperationButtonsGrid.Width > 0d ? OperationButtonsGrid.Width : width;
+        bool compact = ResponsiveLayoutPolicy.UseStackedLayout(inputWidth, 720d);
 
         if (_isCompactOperationLayout == compact)
         {
@@ -560,7 +568,7 @@ public partial class CalculationPage : ContentPage
 
     private void OnCalculateClicked(object? sender, EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
+        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder);
         HideMessages();
 
         if (_isExpressionMode)

@@ -1,27 +1,56 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:controls="clr-namespace:MathSolver.Controls">
 
     <!-- Shared spacing and visual hierarchy for every tab in Giải toán. -->
     <Style x:Key="SolverContentStyle" TargetType="VerticalStackLayout">
-        <Setter Property="Padding" Value="{OnPlatform Android='12,10,12,20', WinUI='20,16,20,24', Default='20,16,20,24'}" />
-        <Setter Property="Spacing" Value="{OnPlatform Android=10, WinUI=14, Default=14}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.PagePadding}" />
+        <Setter Property="Spacing" Value="{DynamicResource Density.Spacing}" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="MaximumWidthRequest" Value="1320" />
         <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type ScrollView}}, Path=Width, x:DataType='ScrollView'}" />
     </Style>
 
-    <!-- Fixed titles share the content width without depending on a ScrollView. -->
+    <!-- Hero titles sit directly on the page backdrop; reading cards own their surfaces. -->
     <Style x:Key="SolverFixedHeaderStyle" TargetType="VerticalStackLayout">
-        <Setter Property="Padding" Value="{OnPlatform Android='12,10,12,10', WinUI='20,16,20,14', Default='20,16,20,14'}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="controls:SolverHeader.IsEnabled" Value="True" />
+        <Setter Property="Padding" Value="{DynamicResource Density.HeaderPadding}" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="MaximumWidthRequest" Value="1320" />
         <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type Grid}}, Path=Width, x:DataType='Grid'}" />
     </Style>
 
+    <Style x:Key="SolverCompactHeaderTitleStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="{OnPlatform Android=18, Default=20}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="MaxLines" Value="1" />
+        <Setter Property="LineBreakMode" Value="TailTruncation" />
+        <Setter Property="HorizontalTextAlignment" Value="Start" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+    </Style>
+
+    <Style x:Key="SolverActionBarStyle" TargetType="Border">
+        <Setter Property="Padding" Value="{DynamicResource Density.ActionPadding}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
+        <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
+        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="MaximumWidthRequest" Value="1320" />
+        <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type Grid}}, Path=Width, x:DataType='Grid'}" />
+    </Style>
+
+    <Style x:Key="SolverActionButtonsStyle" TargetType="Grid">
+        <Setter Property="controls:AdaptiveColumns.MinimumColumnWidth" Value="140" />
+        <Setter Property="controls:AdaptiveColumns.MaximumColumns" Value="2" />
+        <Setter Property="ColumnSpacing" Value="10" />
+        <Setter Property="RowSpacing" Value="8" />
+    </Style>
+
     <Style x:Key="SolverScrollableContentStyle" TargetType="VerticalStackLayout" BasedOn="{StaticResource SolverContentStyle}">
-        <Setter Property="Padding" Value="{OnPlatform Android='12,0,12,20', WinUI='20,0,20,24', Default='20,0,20,24'}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.ScrollPadding}" />
     </Style>
 
     <!-- Diagrams and plots get more room than ordinary reading/input pages. -->
@@ -35,12 +64,14 @@
     </Style>
 
     <Style x:Key="SolverHeroSymbolStyle" TargetType="Label">
+        <Setter Property="controls:SolverHeader.Role" Value="Symbol" />
         <Setter Property="FontSize" Value="{OnPlatform Android=25, WinUI=30, Default=30}" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
-        <Setter Property="TextColor" Value="{DynamicResource PrimaryColor}" />
+        <Setter Property="TextColor" Value="{DynamicResource ContentAccentTextColor}" />
     </Style>
 
     <Style x:Key="SolverHeroTitleStyle" TargetType="Label">
+        <Setter Property="controls:SolverHeader.Role" Value="Title" />
         <Setter Property="FontSize" Value="{OnPlatform Android=24, WinUI=30, Default=30}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
@@ -49,6 +80,7 @@
     </Style>
 
     <Style x:Key="SolverHeroSubtitleStyle" TargetType="Label">
+        <Setter Property="controls:SolverHeader.Role" Value="Description" />
         <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=17, Default=17}" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
@@ -56,7 +88,7 @@
     </Style>
 
     <Style x:Key="SolverCardStyle" TargetType="Border">
-        <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=16, Default=16}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.CardPadding}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
         <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
         <Setter Property="StrokeThickness" Value="1" />
@@ -79,8 +111,8 @@
     </Style>
 
     <Style x:Key="SolverChoiceButtonStyle" TargetType="Button">
-        <Setter Property="MinimumHeightRequest" Value="48" />
-        <Setter Property="Padding" Value="8,8" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.ButtonPadding}" />
         <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=12, Default=12}" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -91,7 +123,7 @@
          Integer/Decimal segmented controls; other SolverChoice buttons are
          intentionally left unchanged. -->
     <Style x:Key="SolverNumberTypeButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
-        <Setter Property="Padding" Value="{OnPlatform Android='8,11,8,8', WinUI='8,8', Default='8,8'}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.NumberTypePadding}" />
     </Style>
 
     <Style x:Key="SolverOperationButtonStyle" TargetType="Button" BasedOn="{StaticResource SolverChoiceButtonStyle}">
@@ -101,8 +133,8 @@
     </Style>
 
     <Style x:Key="SolverInputBorderStyle" TargetType="Border">
-        <Setter Property="MinimumHeightRequest" Value="48" />
-        <Setter Property="Padding" Value="12,0" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
+        <Setter Property="Padding" Value="{DynamicResource Density.InputPadding}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperInputBackgroundColor}" />
         <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
         <Setter Property="StrokeThickness" Value="1" />
@@ -114,7 +146,7 @@
     </Style>
 
     <Style x:Key="SolverPrimaryActionStyle" TargetType="Button">
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
@@ -166,7 +198,7 @@
     </Style>
 
     <Style x:Key="SolverSubTabButtonStyle" TargetType="Button">
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="LineBreakMode" Value="NoWrap" />
         <Setter Property="FontAutoScalingEnabled" Value="True" />
         <Setter Property="Padding" Value="{OnPlatform Android='7,8', WinUI='8,8', Default='8,8'}" />
@@ -181,7 +213,7 @@
 
     <!-- Android-only visual style for Material/DevCheck-like sub tabs. -->
     <Style x:Key="AndroidNativeSubTabButtonStyle" TargetType="Button">
-        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="BorderWidth" Value="0" />

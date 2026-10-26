@@ -25,6 +25,8 @@ public sealed partial class MatrixView : LocalizedSolverView
     private readonly Entry _row = NumberEntry("1"), _column = NumberEntry("1"), _value = NumberEntry("");
     private readonly Label _selection = TextLabel(), _inputStatus = TextLabel(), _message = TextLabel(),
         _range = TextLabel(), _progressText = TextLabel(), _creationNotice = TextLabel();
+    private readonly Label _selectedValue = TextLabel();
+    private readonly VerticalStackLayout _shortcutsPanel = new() { IsVisible = false, Spacing = 8 };
     private Border _editorCard = null!;
     private readonly Label _heroSymbol = new();
     private readonly ProgressBar _progress = new() { IsVisible = false };
@@ -58,7 +60,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         var fixedHeader = new VerticalStackLayout { Style = GetStyle("SolverFixedHeaderStyle"), Children = { hero } };
         var body = new VerticalStackLayout { Style = GetStyle("SolverScrollableContentStyle"), Spacing = 14 };
 
-        var setup = new VerticalStackLayout { Spacing = 12 };
+        var setup = _setupPanel;
         setup.Add(Caption("Operation", "SolverSectionTitleStyle"));
         var operationGrid = FlowGrid(150, 3);
         for (int i = 0; i < 3; i++)
@@ -70,16 +72,17 @@ public sealed partial class MatrixView : LocalizedSolverView
         }
         setup.Add(operationGrid);
         setup.Add(Caption("DimensionsHelp", null, InputDimensionLimit));
-        setup.Add(Caption("DesktopBenchmarkHelp"));
         AdaptiveColumns.SetMaximumColumns(_dimensions, 2);
         AdaptiveColumns.SetMinimumColumnWidth(_dimensions, 270);
         _dimensions.Add(DimensionPanel("A", _aRows, _aColumns));
         _dimensions.Add(DimensionPanel("B", _bRows, _bColumns));
         setup.Add(_dimensions);
-        setup.Add(ActionButton("Create", "▦", OnCreate));
+        var create = ActionButton("Create", "▦", OnCreate);
+        create.AutomationId = "MatrixCreate";
+        setup.Add(create);
         _creationNotice.IsVisible = false;
         setup.Add(_creationNotice);
-        body.Add(Card(setup));
+        body.Add(BuildSetupCard());
 
         var editor = new VerticalStackLayout { Spacing = 10 };
         var matrixTabs = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Star), new(GridLength.Star) } };
@@ -90,18 +93,31 @@ public sealed partial class MatrixView : LocalizedSolverView
             { if (!CommitPendingCell()) return; _selected = index; RefreshSource(); });
             matrixTabs.Add(_matrices[i], i, 0);
         }
+        _translations.Add(() =>
+        {
+            for (int i = 0; i < _matrices.Length; i++)
+            {
+                // Matrix letters stay identifiable even with large text on narrow screens.
+                ((EmojiActionButton)_matrices[i]).Caption = "ABC"[i].ToString();
+                ToolTipProperties.SetText(_matrices[i], T("Matrix" + "ABC"[i]));
+                SemanticProperties.SetDescription(_matrices[i], T("Matrix" + "ABC"[i]));
+            }
+        });
         editor.Add(matrixTabs);
+        _inputStatus.FontSize = 12;
+        _inputStatus.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(_inputStatus);
-        var clipboardActions = FlowGrid(180, 3);
-        clipboardActions.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
-        clipboardActions.Add(ActionButton("CopySelection", "📋", OnCopySelection));
-        _pasteCells = ActionButton("PasteCells", "📥", OnPasteCells);
-        clipboardActions.Add(_pasteCells);
-        editor.Add(clipboardActions);
+        _pasteCells = ActionButton("Workspace.Paste", "📥", OnPasteCells);
+        ToolTipProperties.SetText(_pasteCells, T("PasteCells"));
+        editor.Add(BuildCellToolbar());
+        editor.Add(_coordinatePanel);
+        editor.Add(_moreTools);
         var copyHelp = Caption("CopyHelp");
         copyHelp.FontSize = 13;
         copyHelp.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
-        editor.Add(copyHelp);
+        _shortcutsPanel.Add(copyHelp);
+        _shortcutsPanel.Add(Caption("NavigationHelp"));
+        _shortcutsPanel.Add(Caption("DesktopBenchmarkHelp"));
         _viewport.CopyRequested += OnCopySelection;
         _viewport.PasteRequested += OnPasteCells;
         _viewport.DeleteRequested += OnDeleteSelection;
@@ -113,20 +129,26 @@ public sealed partial class MatrixView : LocalizedSolverView
         {
             if (!CanTouchUi || _busy) return;
             RefreshCell();
-            if (_errorKey == "InvalidCell") { _errorKey = null; _message.Text = ""; }
+            if (_errorKey == "InvalidCell")
+            { _errorKey = null; _message.Text = ""; RefreshWorkspacePresentation(); }
         };
         editor.Add(_viewport);
+        _range.FontSize = 12;
+        _range.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(_range);
-        AddSizeControls(editor);
-        editor.Add(Caption("NavigationHelp"));
-        var navigation = FlowGrid(130, 3);
-        navigation.Add(Labeled("Row", _row, 56)); navigation.Add(Labeled("Column", _column, 56));
-        var go = ActionButton("Go", "↪", OnGo, lockDuringWork: false);
-        go.HeightRequest = 56;
-        go.VerticalOptions = LayoutOptions.End;
-        navigation.Add(go);
-        editor.Add(navigation);
-        editor.Add(_selection);
+        AddSizeControls(_moreTools);
+        Button shortcuts = null!;
+        shortcuts = ActionButton("KeyboardHelp", "▸", (_, _) =>
+        { _shortcutsPanel.IsVisible = !_shortcutsPanel.IsVisible; RefreshShortcutsDisclosure(); }, lockDuringWork: false);
+        void RefreshShortcutsDisclosure()
+        {
+            ((EmojiActionButton)shortcuts).Emoji = _shortcutsPanel.IsVisible ? "▾" : "▸";
+            SemanticProperties.SetDescription(shortcuts, T("KeyboardHelp") + ". "
+                + T(_shortcutsPanel.IsVisible ? "HelpExpanded" : "HelpCollapsed"));
+        }
+        _translations.Add(RefreshShortcutsDisclosure);
+        _moreTools.Add(shortcuts);
+        _moreTools.Add(_shortcutsPanel);
         _value.Keyboard = Keyboard.Default; // Includes a minus key on mobile.
         _value.MaxLength = 64;
         _value.FontSize = 14;
@@ -138,45 +160,37 @@ public sealed partial class MatrixView : LocalizedSolverView
         };
         _value.Unfocused += (_, _) => { if (CanTouchUi && !_updatingEditor && !_busy) CommitPendingCell(); };
         _value.TextChanged += (_, _) =>
-        { if (!_updatingEditor && !_busy && _selected != 2) InvalidateResult(); };
+        {
+            RefreshSelectedValue();
+            if (!_updatingEditor && !_busy && _selected != 2) InvalidateResult();
+        };
         SemanticProperties.SetDescription(_value, T("CellValue"));
         var cellActions = FlowGrid(140, 3);
         _apply = ActionButton("Apply", "✓", (_, _) => ApplyCell(advance: true));
         cellActions.Add(_apply);
         cellActions.Add(ActionButton("Previous", "←", (_, _) => MoveSelection(-1), lockDuringWork: false));
         cellActions.Add(ActionButton("Next", "→", (_, _) => MoveSelection(1), lockDuringWork: false));
-        editor.Add(cellActions);
+        _moreTools.Add(cellActions);
         var transfers = FlowGrid(180, 3);
         _fill = ActionButton("FillZero", "0", OnFillMissing);
         _paste = ActionButton("Paste", "📋", OnPaste);
         _import = ActionButton("Import", "📂", OnImport);
         transfers.Add(_fill); transfers.Add(_paste); transfers.Add(_import);
-        editor.Add(transfers);
+        _moreTools.Add(transfers);
+        _export = ActionButton("Export", "💾", OnExport);
+        _moreTools.Add(_export);
         _editorCard = Card(editor);
         body.Add(_editorCard);
-
-        var outcome = new VerticalStackLayout { Spacing = 10 };
-        _activity.SetDynamicResource(ActivityIndicator.ColorProperty, "PrimaryColor");
-        var statusLine = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) } };
-        statusLine.Add(_activity, 0, 0); statusLine.Add(_message, 1, 0);
-        outcome.Add(statusLine);
-        outcome.Add(_progress);
-        _progressText.FontSize = 13;
-        _progressText.IsVisible = false;
-        _progressText.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
-        outcome.Add(_progressText);
-        var run = FlowGrid(160, 3);
+        body.Add(BuildStatusDetails());
         _calculate = ActionButton("Calculate", "🧮", OnCalculate, primary: true);
-        _stop = ActionButton("Stop", "■", OnStop, lockDuringWork: false);
-        _export = ActionButton("Export", "💾", OnExport);
-        run.Add(_calculate); run.Add(_stop); run.Add(_export);
-        outcome.Add(run);
-        body.Add(Card(outcome));
+        _stop = ActionButton("Stop", "■", OnStop, primary: true, lockDuringWork: false);
         body.Add(BuildResultCard());
         body.Add(BuildSolutionCard());
-        var root = new Grid { RowDefinitions = { new(GridLength.Auto), new(GridLength.Star) } };
+        var root = new Grid { RowDefinitions = { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) } };
         root.Add(fixedHeader);
-        root.Add(new ScrollView { Content = body }, 0, 1);
+        _workspaceScroll.Content = body;
+        root.Add(_workspaceScroll, 0, 1);
+        root.Add(BuildWorkspaceActions(), 0, 2);
         Content = root;
         _viewport.CellSelected += (_, _) => RefreshCell();
         _viewport.ViewportChanged += RefreshRange;
@@ -212,7 +226,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     {
         _translations.Add(() => SemanticProperties.SetDescription(entry, T(key)));
         var field = MatrixInputField.Wrap(entry);
-        if (height is { } fixedHeight) field.HeightRequest = fixedHeight;
+        if (height is not null) field.SetDynamicResource(HeightRequestProperty, "Density.InputFrameHeight");
         return new VerticalStackLayout { Spacing = 4, Children = { Caption(key), field } };
     }
     private View DimensionPanel(string name, Entry rows, Entry columns)
@@ -233,6 +247,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     {
         var button = new EmojiActionButton { Emoji = emoji, Style = GetStyle(primary ? "SolverPrimaryActionStyle" : "SolverSecondaryActionStyle"),
             FontSize = 15, MinimumHeightRequest = 46, Padding = new Thickness(10, 8) };
+        DisplayDensityManager.BindControl(button);
         _translations.Add(() => button.Caption = T(key));
         button.Clicked += handler;
         if (lockDuringWork) _lockDuringWork.Add(button);
@@ -253,6 +268,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         RefreshRange(); RefreshExecution(); RefreshProgress();
         if (_statusKey is not null) _message.Text = FormatStatus(_statusKey);
         else if (_errorKey is not null) _message.Text = FormatError();
+        RefreshWorkspacePresentation();
         _viewport.Refresh(); RefreshCreationNotice();
     }
 }

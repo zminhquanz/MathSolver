@@ -38,6 +38,7 @@ public sealed partial class MatrixView
         var toggle = new EmojiActionButton { Style = GetStyle("SolverSecondaryActionStyle"),
             MinimumHeightRequest = 46, FontSize = 15, Padding = new Thickness(10, 8) };
         toggle.AutomationId = "MatrixTechnicalDetails";
+        DisplayDensityManager.BindControl(toggle);
         void RefreshToggle()
         {
             toggle.Emoji = _technical.IsVisible ? "▾" : "▸";
@@ -207,7 +208,7 @@ public sealed partial class MatrixView
         var answer = SolutionText($"{solution.Cell} = {solution.Answer.ToString(CultureInfo.InvariantCulture)}");
         answer.FontSize = 22;
         answer.FontAttributes = FontAttributes.Bold;
-        answer.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
+        answer.SetDynamicResource(Label.TextColorProperty, "ContentAccentTextColor");
         _solutionSteps.Add(new VerticalStackLayout { Spacing = 6, Children = { SolutionText(T("CellAnswer"), secondary: true), answer } });
     }
 
@@ -215,7 +216,7 @@ public sealed partial class MatrixView
     {
         var heading = SolutionText(F("StepTitle", number, T(title)));
         heading.FontAttributes = FontAttributes.Bold;
-        heading.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
+        heading.SetDynamicResource(Label.TextColorProperty, "ContentAccentTextColor");
         var step = new VerticalStackLayout { Spacing = 6, Children = { heading } };
         foreach (string line in lines) step.Add(SolutionText(line));
         return step;

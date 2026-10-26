@@ -26,7 +26,7 @@ public sealed class IllustratedQuizPicker : ContentView
     {
         _picker = picker;
         _captionKey = captionKey;
-        MinimumHeightRequest = DeviceInfo.Platform == DevicePlatform.Android ? 56 : 48;
+        DisplayDensityManager.BindControl(this);
         _open = ChoiceButton(drawFocusBorder: false);
         // Focus belongs to the field's single outer outline, not a second inner
         // button outline. Keep stroke thickness constant so content never shifts.
@@ -246,6 +246,7 @@ public sealed class IllustratedQuizPicker : ContentView
     {
         var button = new Button { Text = "", Padding = 0, CornerRadius = 12,
             MinimumHeightRequest = 48, BackgroundColor = Colors.Transparent, BorderWidth = 0 };
+        DisplayDensityManager.BindControl(button, square: true);
         InteractiveButtonAnimation.SetIsPressAnimationEnabled(button, false);
         button.SetDynamicResource(Button.BorderColorProperty, "PrimaryColor");
         if (drawFocusBorder)

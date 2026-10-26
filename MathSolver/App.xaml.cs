@@ -19,6 +19,7 @@ public partial class App : Application
         DeveloperModeManager.Initialize();
         AppThemeManager.Initialize(this);
         AppFontManager.Initialize(this);
+        DisplayDensityManager.Initialize(this);
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

@@ -17,20 +17,20 @@
                 Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
                 Spacing="2">
 
-                <Label
+                <Label controls:SolverHeader.Role="Symbol"
                     Text="x̄  ∑  ÷"
                     FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
                     HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource PrimaryColor}" />
+                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Title"
                     x:Name="PageTitleLabel"
                     FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
                     FontAttributes="Bold"
                     HorizontalTextAlignment="Center"
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                <Label
+                <Label controls:SolverHeader.Role="Description"
                     x:Name="PageSubtitleLabel"
                     FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
                     HorizontalTextAlignment="Center"
@@ -63,7 +63,7 @@
                             x:Name="InteractiveTitleLabel"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             x:Name="InteractiveSubtitleLabel"
@@ -168,7 +168,7 @@
                             x:Name="SixTypesTitleLabel"
                             FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Label
                             x:Name="SixTypesSubtitleLabel"
@@ -213,7 +213,7 @@
                                                     FontAttributes="Bold"
                                                     HorizontalTextAlignment="Center"
                                                     LineBreakMode="WordWrap"
-                                                    TextColor="{DynamicResource PrimaryColor}" />
+                                                    TextColor="{DynamicResource ContentAccentTextColor}" />
                                             </Border>
 
                                             <Label

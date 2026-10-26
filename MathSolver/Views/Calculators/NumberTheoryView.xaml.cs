@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Numerics;
+using MathSolver.Controls;
 using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Views.Base;
@@ -64,7 +65,6 @@ public partial class NumberTheoryView : LocalizedSolverView
 
     private void OnCalculateClicked(object? sender, EventArgs e)
     {
-        using var scroll = CalculationAutoScroll.Begin(sender, ResultBorder, ErrorBorder);
         if (!NumberTheoryEngine.TryParseInput(FirstEntry.Text, out var a))
         {
             ShowError("NumberTheory.InvalidFirst");
@@ -86,6 +86,7 @@ public partial class NumberTheoryView : LocalizedSolverView
         _calculation = NumberTheoryEngine.Calculate(a, b);
         _primeLesson = a.IsZero || b.IsZero ? null : NumberTheoryEngine.ExplainByPrimeFactors(a, b);
         RenderResult();
+        SolverWorkspace.RevealResult(ResultBorder);
     }
 
     private void ShowError(string key)
@@ -140,7 +141,7 @@ public partial class NumberTheoryView : LocalizedSolverView
         return text =>
         {
             var title = new Label { Text = F("NumberTheory.Step", ++number), FontSize = 16, FontAttributes = FontAttributes.Bold };
-            title.SetDynamicResource(Label.TextColorProperty, "PrimaryColor");
+            title.SetDynamicResource(Label.TextColorProperty, "ContentAccentTextColor");
             var body = new Label { Text = text, FontSize = 18, LineBreakMode = LineBreakMode.CharacterWrap };
             body.SetDynamicResource(Label.TextColorProperty, "WallpaperTextPrimaryColor");
             var stack = new VerticalStackLayout { Spacing = 6, Padding = 12, Children = { title, body } };
@@ -216,7 +217,7 @@ public partial class NumberTheoryView : LocalizedSolverView
 
     private void OnInputsSizeChanged(object? sender, EventArgs e)
     {
-        bool narrow = InputsGrid.Width < 540;
+        bool narrow = ResponsiveLayoutPolicy.UseStackedLayout(InputsGrid.Width, 540d);
         InputsGrid.ColumnDefinitions[1].Width = narrow ? new GridLength(0) : GridLength.Star;
         Grid.SetColumn(SecondInput, narrow ? 0 : 1);
         Grid.SetRow(SecondInput, narrow ? 1 : 0);
@@ -224,7 +225,7 @@ public partial class NumberTheoryView : LocalizedSolverView
 
     private void OnMethodsSizeChanged(object? sender, EventArgs e)
     {
-        bool narrow = MethodsGrid.Width < 900;
+        bool narrow = ResponsiveLayoutPolicy.UseStackedLayout(MethodsGrid.Width, 900d);
         MethodsGrid.ColumnDefinitions[1].Width = narrow ? new GridLength(0) : GridLength.Star;
         Grid.SetColumn(EuclidMethodPanel, narrow ? 0 : 1);
         Grid.SetRow(EuclidMethodPanel, narrow ? 1 : 0);

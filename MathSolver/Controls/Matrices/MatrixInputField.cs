@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls.Shapes;
 using Microsoft.Maui.Graphics;
+using MathSolver.Services;
 
 namespace MathSolver.Controls;
 
@@ -12,6 +13,7 @@ internal static class MatrixInputField
             IsSpellCheckEnabled = false, IsTextPredictionEnabled = false, MaxLength = 5,
             BackgroundColor = Colors.Transparent };
         entry.SetDynamicResource(Entry.TextColorProperty, "WallpaperTextPrimaryColor");
+        DisplayDensityManager.BindControl(entry);
         entry.SetDynamicResource(Entry.PlaceholderColorProperty, "WallpaperTextSecondaryColor");
         return entry;
     }
@@ -28,6 +30,7 @@ internal static class MatrixInputField
             StrokeShape = new RoundRectangle { CornerRadius = new CornerRadius(12) }
         };
         host.SetDynamicResource(Border.BackgroundColorProperty, "WallpaperSurfaceAltColor");
+        host.SetDynamicResource(Border.PaddingProperty, "Density.InputPadding");
         host.SetDynamicResource(Border.StrokeProperty, "WallpaperBorderBrush");
         return host;
     }

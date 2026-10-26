@@ -34,6 +34,7 @@
         </VerticalStackLayout>
 
         <ScrollView Grid.Row="1"
+            controls:SolverWorkspace.IsEnabled="True"
             HorizontalOptions="Fill"
             VerticalOptions="Fill">
 
@@ -127,7 +128,7 @@
                                 x:Name="FindXUnknownLeftButton"
                                 Grid.Column="0"
                                 Text="x + a = b"
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 Padding="8,0"
                                 FontSize="19"
                                 FontAttributes="Bold"
@@ -141,7 +142,7 @@
                                 x:Name="FindXUnknownRightButton"
                                 Grid.Column="1"
                                 Text="a + x = b"
-                                MinimumHeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 Padding="8,0"
                                 FontSize="19"
                                 FontAttributes="Bold"
@@ -305,7 +306,7 @@
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
                                     LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
 
                             </VerticalStackLayout>
                         </Border>
@@ -354,14 +355,14 @@
                             Text="❌"
                             FontSize="22"
                             FontAttributes="Bold"
-                            TextColor="{DynamicResource DangerColor}" />
+                            TextColor="{DynamicResource ContentDangerTextColor}" />
 
                         <Label
                             x:Name="FindXErrorLabel"
                             Grid.Column="1"
                             FontSize="17"
                             LineHeight="1.2"
-                            TextColor="{DynamicResource DangerColor}" />
+                            TextColor="{DynamicResource ContentDangerTextColor}" />
 
                     </Grid>
                 </Border>
@@ -369,6 +370,7 @@
                 <!-- Kết quả và lời giải -->
                 <Border
                     x:Name="FindXResultBorder"
+                    controls:SolverWorkspace.StartsResult="True"
                     IsVisible="False"
                     Padding="16"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
@@ -393,7 +395,7 @@
                             FontAttributes="Bold"
                             HorizontalTextAlignment="Center"
                             LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource PrimaryColor}" />
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
 
                         <Border
                             Padding="14"
@@ -413,7 +415,7 @@
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource SuccessColor}" />
+                                    TextColor="{DynamicResource ContentSuccessTextColor}" />
 
                                 <Label
                                     x:Name="FindXAnswerLabel"
@@ -434,37 +436,36 @@
                             </VerticalStackLayout>
                         </Border>
 
-                        <Grid HeightRequest="48">
+                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
                             <controls:ResultCopyButton
                                 x:Name="FindXCopyResultButton"
                                 NormalTextKey="PowerRoot.CopyResult"
                                 Text=""
-                                HeightRequest="48"
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                 CornerRadius="12"
                                 FontSize="15"
                                 FontAttributes="Bold"
                                 BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Clicked="OnFindXCopyResultClicked" />
 
-                            <HorizontalStackLayout
+                            <Grid
                                 InputTransparent="True"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                Spacing="8">
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
 
                                 <controls:ThemedCopyIcon
                                     WidthRequest="20"
                                     HeightRequest="20" />
 
-                                <Label
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
                                     Text="{Binding DisplayText, Source={x:Reference FindXCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
                                     FontSize="15"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                     VerticalTextAlignment="Center" />
 
-                            </HorizontalStackLayout>
+                            </Grid>
 
                         </Grid>
 
@@ -539,7 +540,7 @@
                                     Text="Kiểm tra lại"
                                     FontSize="18"
                                     FontAttributes="Bold"
-                                    TextColor="{DynamicResource SuccessColor}" />
+                                    TextColor="{DynamicResource ContentSuccessTextColor}" />
 
                                 <Label
                                     x:Name="FindXVerificationLabel"
@@ -581,13 +582,13 @@
                                 Text="Ghi nhớ"
                                 FontSize="17"
                                 FontAttributes="Bold"
-                                TextColor="{DynamicResource WarningColor}" />
+                                TextColor="{DynamicResource ContentWarningTextColor}" />
 
                             <Label
                                 Text="Sau khi tìm được x, ứng dụng luôn thay x trở lại phép tính ban đầu để kiểm tra. Nếu phép chia có x ở mẫu số thì x phải khác 0."
                                 FontSize="16"
                                 LineHeight="1.25"
-                                TextColor="{DynamicResource WarningColor}" />
+                                TextColor="{DynamicResource ContentWarningTextColor}" />
 
                         </VerticalStackLayout>
                     </Grid>
