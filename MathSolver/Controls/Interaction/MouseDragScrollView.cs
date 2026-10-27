@@ -118,7 +118,7 @@ public sealed class MouseDragScrollView : ScrollView
             }
             if (!IsCurrent() || !children.SequenceEqual(tabs.Children)) return false;
             if (UseUniformSizedTabs) Array.Fill(widths, Math.Ceiling(widths.Max()));
-            double natural = widths.Sum() + tabs.ColumnSpacing * (widths.Length - 1);
+            double natural = widths.Sum() + tabs.ColumnSpacing * (widths.Length - 1) + tabs.Padding.HorizontalThickness;
             double extra = UseContentSizedTabs || UseUniformSizedTabs ? 0d : Math.Max(0d, available - natural) / widths.Length;
 
             if (tabs.RowDefinitions.Count != 1)

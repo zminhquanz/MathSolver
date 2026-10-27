@@ -81,6 +81,7 @@ public partial class CalculationPage
         CalculationSubTabScrollView.SizeChanged += QueueCalculationNavigation;
         AndroidCalculationSubTabScrollView.SizeChanged += QueueCalculationNavigation;
         CalculationSubTabGrid.SizeChanged += QueueCalculationNavigation;
+        CalculationTabStripHost.SizeChanged += (_, _) => UpdateCalculationViewportClip();
         Loaded += QueueCalculationNavigation;
         Unloaded += (_, _) => InvalidateCalculationNavigation();
         HandlerChanging += (_, _) => InvalidateCalculationNavigation();
@@ -127,7 +128,7 @@ public partial class CalculationPage
                 ? new Thickness(DisplayDensityManager.Metrics.HorizontalPadding, DisplayDensityManager.Metrics.VerticalPadding)
                 : Thickness.Zero;
             AllCalculationTypesButton.FontSize = stacked ? 14 : 18;
-            CalculationNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(6);
+            CalculationNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(8);
             CalculationNavigationFrame.StrokeThickness = stacked ? 0 : 1;
             RefreshCalculationNavigationCaption();
             if (!stacked && CalculationSubTabBar.IsVisible) CalculationSubTabScrollView.UpdateTabLayout(CalculationSubTabGrid);
@@ -150,6 +151,7 @@ public partial class CalculationPage
                 // its own reveal path. Otherwise retain the user's scroll offset.
                 if (revealSelected && CalculationTabStripHost.IsVisible)
                     await ScrollSubTabIntoViewAsync(GetSubTabButton(_selectedSubTab));
+                UpdateCalculationViewportClip();
                 RefreshCalculationOverflow();
             });
         })) _tabNavigationQueued = false;

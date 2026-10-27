@@ -23,11 +23,11 @@
               ColumnDefinitions="*" RowDefinitions="Auto"
               HorizontalOptions="Center" MaximumWidthRequest="1280"
               Margin="{OnPlatform Android='10,6,10,4', WinUI='20,12,20,8', Default='20,12,20,8'}">
-        <Border x:Name="CalculationNavigationFrame" Padding="6" StrokeThickness="1"
+        <Border x:Name="CalculationNavigationFrame" Padding="8" StrokeThickness="1"
                 BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                 Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
         <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
-        <Grid x:Name="CalculationNavigationContent" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+        <Grid x:Name="CalculationNavigationContent" ColumnDefinitions="*,Auto" ColumnSpacing="8">
         <Grid x:Name="CalculationTabStripHost">
         <!-- Android: Material-style scrolling tab row, không dùng pill/card desktop. -->
         <Grid
@@ -45,7 +45,7 @@
                 HorizontalOptions="Fill"
                 HorizontalScrollBarVisibility="Never">
 
-                <HorizontalStackLayout Spacing="0" Padding="6,0">
+                <HorizontalStackLayout Spacing="8" Padding="3,2">
                     <Grid MinimumWidthRequest="92" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidBasicTabButton"
@@ -206,7 +206,7 @@
                 x:Name="CalculationSubTabGrid"
                 ColumnDefinitions="*,*,*,*,*,*,*,*,*"
                 RowDefinitions="Auto"
-                ColumnSpacing="6" RowSpacing="6">
+                ColumnSpacing="8" RowSpacing="6" Padding="3,2">
 
                 <Button
                     x:Name="BasicTabButton" Grid.Column="0"
