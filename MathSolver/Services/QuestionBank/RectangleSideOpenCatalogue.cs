@@ -28,30 +28,38 @@ internal static class RectangleSideOpenCatalogue
         return new(q,d.Profile,d.Render(d.Context.Lead),d.Unit,d.Target+" "+d.Unit,schema,quantities,facts,d.Context.Question,steps,
             facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),[d.Context.Question],steps.ToDictionary(s=>s.Id,s=>new[]{s.Lead}));
     }
-    internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""
-        Viết bài toán ngắn, tự nhiên cho học sinh tiểu học. Ví dụ chỉ để tham khảo; được đổi cấu trúc và cách mở câu.
-        {v0} là cụm danh từ đầy đủ gọi đồ vật; {v1} là tên đầy đủ hình chữ nhật. Mỗi trường một câu, giữ từng biến đúng trường và đúng một lần.
-        Ba dữ kiện lần lượt nêu hình dạng, toàn bộ chu vi {f0} {v2}, và cạnh đã biết {f1} {v2}. Chu vi không phải nửa chu vi.
-        Giữ đúng chiều dài hoặc chiều rộng đã biết như quan hệ yêu cầu. Câu hỏi chỉ hỏi cạnh còn thiếu, theo {v2}; không hỏi lại cạnh đã biết.
-        Chiều dài lớn hơn chiều rộng; không thêm điều kiện so sánh, tỉ số, diện tích, hình vuông, ghép hình, cổng, lối đi hay đổi đơn vị.
-        Dữ kiện kết thúc bằng dấu chấm; câu hỏi dạng nghi vấn kết thúc bằng dấu hỏi. Không ghép lệnh Hãy tính với dấu hỏi.
-        Hai câu dẫn lời giải lần lượt gọi nửa chu vi và cạnh cần tìm của {v0}. Chỉ câu dẫn đầu được gọi nửa chu vi.
-        Được giữ một câu đơn giản và viết mới câu khác. Không thêm phủ định, giả thiết, sự kiện, phép tính, đáp án hoặc chỉ dẫn kỹ thuật. Chỉ trả JSON theo cấu trúc ví dụ.
-        """:"""
-        Write a short natural elementary word problem. The example is a reference; vary sentence openings and structures freely.
-        {v0} is a complete object noun phrase with its article; {v1} is the complete shape name rectangle. Preserve each placeholder once in its own field.
-        The three facts separately state the shape, the entire perimeter {f0} {v2}, and the known side {f1} {v2}. The perimeter is not a semiperimeter.
-        Keep the given length or width role specified in the relation. Ask only for the other, unknown side in {v2}.
-        The length exceeds the width. Add no comparison condition, ratio, area, square, joined shape, gate, path or unit conversion.
-        Use one grammatical sentence per field. Facts end with a period and the question is an interrogative ending with a question mark.
-        The two solution leads name half the perimeter and the requested side of {v0}, respectively. Half belongs only in the first solution lead.
-        A simple fact may stay unchanged while another is rephrased. Add no negation, hypothetical condition, event, calculation, answer or technical note. Return only JSON in the example schema.
-        """;
+    internal static string WritingInstructions(BasicQuestionContract c)
+    {
+        var context=RectangleSidePilot.Create(c.SceneId,c.Language,c.Tier,new(c.Story!.Seed)).Context;
+        return WritingInstructions(c.Language,context.KnownRole,context.TargetRole);
+    }
+    internal static string WritingInstructions(AppLanguage language)=>WritingInstructions(language,"length or width","specified unknown dimension");
+    private static string WritingInstructions(AppLanguage language,string known,string target)
+    {
+        bool vi=language==AppLanguage.Vietnamese;
+        if(vi)
+        {
+            known=known=="length"?"chiều dài":known=="width"?"chiều rộng":"chiều đã biết";
+            target=target=="length"?"chiều dài":target=="width"?"chiều rộng":"chiều cần tìm";
+        }
+        return vi?$$"""
+            Viết ngắn, tự nhiên; được đổi câu chữ. Giữ mỗi biến đúng trường, đúng một lần; chỉ trả JSON.
+            {v0} là đồ vật đầy đủ; {v1} đã là hình chữ nhật: không viết hình {v1}. Không thêm danh từ trước {v0}; không đặt {v0} sau đơn vị; không thêm người, địa điểm.
+            fact_0: hình dạng; fact_1: toàn bộ chu vi {f0} {v2}; fact_2: đã biết {{known}} {f1} {v2}; question và step_1: tìm {{target}} của {v0}, không gọi chung cạnh còn lại.
+            Dữ kiện kết thúc dấu chấm; câu hỏi theo {v2}, kết thúc dấu hỏi. Hai lời dẫn là cụm danh từ: step_0 nửa chu vi của {v0}; step_1 gọi đúng {{target}}.
+            Không thêm phủ định, giả thiết, điều kiện, sự kiện, phép tính, đáp án, diện tích hoặc đổi đơn vị.
+            """:$$"""
+            Write concise natural prose; vary wording. Keep each slot once in its own field; return only JSON.
+            {v0} includes its article: do not add an article before {v0}; do not append {v0} after the unit; do not add actors, locations. {v1} is the full shape name: do not write rectangle {v1}.
+            fact_0: shape; fact_1: entire perimeter {f0} {v2}; fact_2: known {{known}} {f1} {v2}; question and step_1: find {{target}} of {v0}. Name the dimension explicitly, never just the other side.
+            Facts end with periods; ask an interrogative in {v2} ending with a question mark. Leads are noun phrases: step_0 half the perimeter of {v0}; step_1 the {{target}} of {v0}.
+            Add no negation, conditions, events, calculations, answers, area or unit conversions.
+            """;
+    }
     internal static string PromptRelation(BasicQuestionContract c)
     {
         var d=RectangleSidePilot.Create(c.SceneId,c.Language,c.Tier,new(c.Story!.Seed));
-        return d.Context.Relation+"; f0=actual entire rectangle perimeter, never half; f1=known "+d.Context.KnownRole
-            +"; v0=object; v1=rectangle shape; v2=common length unit; target="+d.Context.TargetRole
-            +"; step_0=half perimeter; step_1="+d.Context.TargetRole+"; no extra conditions; C# computes perimeter divided by two, then subtracts the known side.";
+        return d.Context.Relation+"; f0=entire perimeter, never half; f1=known "+d.Context.KnownRole
+            +"; target="+d.Context.TargetRole+"; v2=linear unit; step_0=half perimeter; step_1="+d.Context.TargetRole+"; no extra conditions.";
     }
 }

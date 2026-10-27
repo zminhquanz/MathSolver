@@ -28,7 +28,8 @@ internal static class PercentageRatioOpenCatalogue
         {f0} là tổng số {v1} của {v0}; {f1} là số {v3} đã nằm trong chính tổng đó, không phải lượng thêm vào.
         {v2} gọi toàn bộ đồ vật; {v4} gọi loại đồ vật thuộc nhóm con. Câu hỏi tìm tỉ số phần trăm số {v4} so với tổng số {v2} của {v0}.
         Dùng từ phần trăm trong câu hỏi, không thêm số hoặc kí hiệu. Không hỏi số lượng, phần còn lại, tăng giảm hay số nhóm.
-        Câu dẫn chỉ gọi tên tỉ số phần trăm của nhóm đồ vật so với toàn bộ. Dữ kiện kể thực tế, không viết chỉ dẫn tính toán.
+        Câu hỏi dùng quan hệ chiếm phần trăm của toàn bộ thuộc {v0}; không đẩy chủ sở hữu ra đuôi câu bằng trong {v0}.
+        Câu dẫn là cụm danh từ gọi tỉ số phần trăm nhóm con so với toàn bộ, không bắt đầu bằng Tính, Tìm hoặc Hãy. Dữ kiện kể thực tế, không chỉ dẫn tính toán.
         Mỗi trường một câu ngắn. Giữ biến, role, step; không tự thêm tên, đơn vị, điều kiện, sự kiện hoặc đáp án. Chỉ trả JSON.
         """:"""
         Write a short natural word problem about a subset already included within a known whole.
@@ -36,7 +37,8 @@ internal static class PercentageRatioOpenCatalogue
         {f0} is the whole count owned by {v0}; {f1} counts the {v3} already within that SAME whole, never an additional collection.
         {v2} names all objects; {v4} names their subset. Ask what percentage of {v0}'s {v2} are {v4}; preserve the denominator as the original whole.
         Use percentage in the question, without adding numbers or symbols. Do not ask for a count, remainder, increase or number of groups.
-        The solution heading only names the subset percentage relative to the whole. Facts describe the inventory, not calculation instructions.
+        Ask what percentage of the owner's whole are the subset; avoid saying the whole objects consist of the subset objects.
+        The solution heading is a noun phrase naming the subset percentage relative to the whole; never start with Calculate, Find or Determine. Facts describe inventory, not instructions.
         Use one short sentence per field. Preserve role/step and variables; invent no names, units, events, conditions or answers. Return only JSON.
         """;
 }
