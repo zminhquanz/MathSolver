@@ -12,7 +12,7 @@ internal static partial class MotionBankTests
     public static async Task CheckPromptBudgetAsync(string path)
     {
         using var weights = await LLama.LLamaWeights.LoadFromFileAsync(new LLama.Common.ModelParams(path)
-            { GpuLayerCount = 0, UseMemorymap = true });
+            { GpuLayerCount = 0, LoadMode = LLama.Native.LLamaLoadMode.MemoryMap });
         int maximum = 0, count = 0;
         foreach (var c in Cases())
         {

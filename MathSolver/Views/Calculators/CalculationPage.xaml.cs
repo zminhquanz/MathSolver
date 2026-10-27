@@ -110,6 +110,7 @@ public partial class CalculationPage : ContentPage
     public CalculationPage()
     {
         InitializeComponent();
+        InitializeCalculationNavigation();
         OperationButtonsGrid.SizeChanged += (_, _) => UpdateArithmeticInputLayout(Width);
 
 #if ANDROID
@@ -166,6 +167,8 @@ public partial class CalculationPage : ContentPage
     {
         base.OnAppearing();
         _isPageActive = true;
+        DisplayDensityManager.Changed += QueueCalculationNavigation;
+        QueueCalculationNavigation(this, EventArgs.Empty);
         PowerRootSolverView?.SetTabActive(_selectedSubTab == CalculationSubTab.PowerRoot);
         MatrixSolverView?.SetTabActive(_selectedSubTab == CalculationSubTab.Matrix);
 
@@ -217,10 +220,10 @@ public partial class CalculationPage : ContentPage
             return;
         }
 
-        if (CalculationSubTabBar.IsVisible)
+        if (CalculationTabNavigation is not null)
         {
-            CalculationSubTabBar.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
-            OnCalculationSubTabGridSizeChanged(CalculationSubTabGrid, EventArgs.Empty);
+            CalculationTabNavigation.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+            QueueCalculationNavigation(this, EventArgs.Empty);
         }
 
         UpdateArithmeticInputLayout(width);
@@ -359,6 +362,9 @@ public partial class CalculationPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        CloseCalculationTypes(restoreFocus: false);
+        DisplayDensityManager.Changed -= QueueCalculationNavigation;
+        InvalidateCalculationNavigation();
         _isPageActive = false;
         MatrixSolverView?.SetTabActive(false);
         if (!SettingsMenuPage.IsTransparentOverlayActive)
@@ -3883,7 +3889,8 @@ public partial class CalculationPage : ContentPage
             return;
         }
 
-        Dispatcher.Dispatch(() => OnCalculationSubTabGridSizeChanged(this, EventArgs.Empty));
+        RefreshCalculationChoices();
+        QueueCalculationNavigation(this, EventArgs.Empty);
 
         if (!BasicArithmeticBorder.IsVisible)
         {
@@ -4205,6 +4212,8 @@ public partial class CalculationPage : ContentPage
     {
         _isPowerRootCalculationInteractionLocked =
             isLocked;
+        AllCalculationTypesButton.IsEnabled = !isLocked;
+        if (isLocked) CloseCalculationTypes(restoreFocus: false);
 
         Button[] desktopButtons =
         [
@@ -4258,33 +4267,31 @@ public partial class CalculationPage : ContentPage
 
     private void OnCalculationSubTabGridSizeChanged(object? sender, EventArgs e)
     {
-        if (!CalculationSubTabBar.IsVisible || !CalculationSubTabScrollView.CanUpdateTabLayout) return;
-        if (CalculationSubTabScrollView.UpdateTabLayout(CalculationSubTabGrid))
-            Dispatcher.Dispatch(async () =>
-            {
-                if (CalculationSubTabScrollView.CanUpdateTabLayout)
-                    await ScrollSubTabIntoViewAsync(GetSubTabButton(_selectedSubTab));
-            });
+        QueueCalculationNavigation(sender, e);
     }
 
     private async Task ScrollSubTabIntoViewAsync(Button selectedButton)
     {
-        if (WindowUiLifetime.IsClosing(Window)) return;
+        if (!CanUseTabNavigation || !CalculationTabStripHost.IsVisible || !selectedButton.IsLoaded || selectedButton.Handler?.MauiContext is null
+            || !ReferenceEquals(selectedButton, GetSubTabButton(_selectedSubTab))) return;
 #if !ANDROID
         if (!CalculationSubTabScrollView.CanUpdateTabLayout) return;
 #endif
         try
         {
 #if ANDROID
-            await AndroidCalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, true);
+            if (!AndroidCalculationSubTabScrollView.IsLoaded || AndroidCalculationSubTabScrollView.Handler?.MauiContext is null) return;
+            await AndroidCalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, false);
 #else
-            await CalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, true);
+            await CalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, false);
 #endif
         }
         catch (InvalidOperationException)
         {
             // The page may have detached while switching main tabs.
         }
+        catch (Exception error) when ((error is ObjectDisposedException or System.Runtime.InteropServices.COMException) && !CanUseTabNavigation)
+        { System.Diagnostics.Debug.WriteLine(error); }
     }
     private VisualElement GetSubTabContent(
         CalculationSubTab tab)
@@ -4471,6 +4478,7 @@ public partial class CalculationPage : ContentPage
             GeometryTabButton,
             MatrixTabButton);
 #endif
+        RefreshCalculationNavigationCaption();
     }
 
 #if ANDROID

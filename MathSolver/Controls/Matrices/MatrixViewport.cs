@@ -42,6 +42,16 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         if (CanUseInput && _state.TryGetDeleteRange(CanEdit?.Invoke() != false, out var range))
             DeleteRequested?.Invoke(range);
     }
+    /// <summary>Explicit toolbar clear; keyboard Delete still edits text inside an open editor.</summary>
+    public bool ClearSelection()
+    {
+        if (!CanUseInput || CanEdit?.Invoke() == false) return false;
+        CancelRangeSelection();
+        if (_state.IsEditing) CancelInlineEdit();
+        if (!_state.TryGetDeleteRange(true, out var range)) return false;
+        DeleteRequested?.Invoke(range);
+        return true;
+    }
     public int SelectedRow => _state.SelectedRow;
     public int SelectedColumn => _state.SelectedColumn;
     public int FirstRow => _state.FirstRow;
@@ -86,7 +96,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             SetParentPanLock(_state.MaxX > 0 || _state.MaxY > 0);
             _panStart = e.Touches[0]; _panX = _state.OffsetX; _panY = _state.OffsetY; _dragged = false;
             _panBlocked = false;
-            _extendSelectionGesture = IsRangeExtensionPressed();
+            // Explicit two-tap mode keeps dragging available for scrolling,
+            // even when a hardware keyboard happens to have Shift held down.
+            _extendSelectionGesture = !_state.IsRangeSelectionMode && IsRangeExtensionPressed();
             _scrollAxis = ScrollAxis.None;
             _resizeInteraction = StartResize(_panStart);
             _barInteraction = !_resizeInteraction && StartScrollBar(_panStart);
@@ -136,6 +148,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         _canvas.CancelInteraction += (_, _) =>
         {
             if (HasPointerCapture) return;
+            _dragged = true;
             _scrollAxis = ScrollAxis.None; _resizeAxis = MatrixResizeAxis.None; SetParentPanLock(false);
             if (CanUseInput) Refresh();
         };
@@ -148,10 +161,11 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         };
         Unloaded += (_, _) =>
         {
+            CancelRangeSelection();
             DisplayDensityManager.Changed -= OnDensityChanged;
             _focusGeneration++; SetParentPanLock(false); DetachNativeInput();
         };
-        HandlerChanging += (_, _) => { _focusGeneration++; DetachNativeInput(); };
+        HandlerChanging += (_, _) => { CancelRangeSelection(); _focusGeneration++; DetachNativeInput(); };
         HandlerChanged += (_, _) => { if (IsLoaded) AttachNativeInput(); };
     }
 
@@ -179,12 +193,13 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         _focusGeneration++;
         CancelPointerGesture();
         _state.SetSource(rows, columns); _readCell = readCell;
+        RangeSelectionModeChanged?.Invoke();
         Refresh(); ViewportChanged?.Invoke();
     }
     public bool Select(int row, int column)
     {
         if (!_state.Select(row, column, CommitEdit)) return RestoreInvalidEditor();
-        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        Scrolled(); PublishSelectionChanged();
         FocusSelection();
         return true;
     }
@@ -192,7 +207,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     {
         if (!CanUseInput) return false;
         if (!_state.SelectAll(CommitEdit)) return RestoreInvalidEditor();
-        Refresh(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        Refresh(); PublishSelectionChanged();
         FocusSelection();
         return true;
     }
@@ -207,7 +222,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     {
         if (!CanUseInput) return false;
         if (!_state.ExtendSelection(row, column, CommitEdit)) return RestoreInvalidEditor();
-        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn); FocusSelection();
+        Scrolled(); PublishSelectionChanged(); FocusSelection();
         return true;
     }
     public bool SelectRange(int row, int column, int rows, int columns)
@@ -217,13 +232,13 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         if (!_state.Select(row, column, CommitEdit)) return RestoreInvalidEditor();
         _state.ExtendSelection(row + rows - 1, column + columns - 1);
         _state.RevealSelection();
-        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn); FocusSelection();
+        Scrolled(); PublishSelectionChanged(); FocusSelection();
         return true;
     }
     internal bool Navigate(MatrixCellMove move)
     {
         if (!_state.Navigate(move, CommitEdit)) return RestoreInvalidEditor();
-        Scrolled(); CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        Scrolled(); PublishSelectionChanged();
         FocusSelection();
         return true;
     }
@@ -232,7 +247,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     {
         var action = _state.TapCell(row, column, CanEdit?.Invoke() != false, CommitEdit);
         if (action == MatrixCellAction.Rejected) { RestoreInvalidEditor(); return; }
-        if (action == MatrixCellAction.Selected) CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        if (action == MatrixCellAction.Selected) PublishSelectionChanged();
         Scrolled();
         if (action == MatrixCellAction.Editing) FocusEditor();
         else FocusSelection();
@@ -243,6 +258,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         bool wasAllSelected = _state.HasRangeSelection;
         if (!CanUseInput || !_state.BeginEdit(CanEdit?.Invoke() != false)) return;
         if (wasAllSelected) CellSelected?.Invoke(SelectedRow, SelectedColumn);
+        RangeSelectionModeChanged?.Invoke();
         Scrolled(); FocusEditor();
     }
 
@@ -264,7 +280,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         else
         {
             if (!_state.TryBeginTyping(text, true)) return false;
-            CellSelected?.Invoke(SelectedRow, SelectedColumn);
+            PublishSelectionChanged();
             Scrolled();
             // The draft remains unchanged until the existing commit callback runs.
             _editor.Text = text;

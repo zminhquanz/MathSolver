@@ -13,7 +13,7 @@ internal static partial class ProportionBankTests
     public static async Task CheckPromptBudgetAsync(string modelPath)
     {
         using var weights = await LLama.LLamaWeights.LoadFromFileAsync(new LLama.Common.ModelParams(modelPath)
-            { GpuLayerCount = 0, UseMemorymap = true });
+            { GpuLayerCount = 0, LoadMode = LLama.Native.LLamaLoadMode.MemoryMap });
         int count = 0, maximum = 0;
         foreach (var c in Cases())
         {

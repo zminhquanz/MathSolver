@@ -9,7 +9,7 @@ internal static partial class ReasoningStoryTests
         // Tokenize the exact Gemma chat framing, without allocating a KV cache or
         // running inference. Include retry instructions in the worst-case budget.
         using var weights = await LLama.LLamaWeights.LoadFromFileAsync(new LLama.Common.ModelParams(path)
-            { GpuLayerCount = 0, UseMemorymap = true });
+            { GpuLayerCount = 0, LoadMode = LLama.Native.LLamaLoadMode.MemoryMap });
         int maximum = 0, count = 0;
         foreach (var family in Enum.GetValues<BankQuestionFamily>().Where(ReasoningStoryCatalogue.Supports))
         foreach (var tier in Enum.GetValues<CurriculumTier>())

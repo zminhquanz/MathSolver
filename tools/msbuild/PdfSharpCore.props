@@ -10,7 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageDownload Include="PDFsharp" Version="[$(PdfSharpCoreVersion)]" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.13" />
     <Reference Include="PdfSharp">
       <HintPath>$(NuGetPackageRoot)pdfsharp/$(PdfSharpCoreVersion)/lib/net10.0/PdfSharp.dll</HintPath>
       <Private>true</Private>

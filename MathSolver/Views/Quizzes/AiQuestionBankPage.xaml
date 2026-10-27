@@ -90,7 +90,7 @@
     </Shell.TitleView>
     <Grid RowDefinitions="*,Auto">
         <controls:LiveWallpaperView x:Name="LiveWallpaper" />
-        <ScrollView x:Name="WorkflowScroll">
+        <ScrollView x:Name="WorkflowScroll" controls:SolverWorkspace.IsEnabled="True">
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
                 <Border Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="8">
@@ -101,14 +101,15 @@
                 </Border>
                 <Border x:Name="ModelCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="10">
+                        <Grid x:Name="ModelSummaryHeader" IsVisible="False" ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Label x:Name="ModelSummaryLabel" MaxLines="1" LineBreakMode="TailTruncation"
+                                   FontAttributes="Bold" VerticalTextAlignment="Center" />
+                            <Button x:Name="ModelDetailsToggleButton" Grid.Column="1" Style="{StaticResource SolverOutlinedActionStyle}"
+                                    Clicked="OnToggleModelDetailsClicked" />
+                        </Grid>
+                        <VerticalStackLayout x:Name="ModelDetailsPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ModelSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Label x:Name="ModelStatusLabel" LineBreakMode="WordWrap" />
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                            <ActivityIndicator x:Name="ModelBusyIndicator" IsVisible="False" IsRunning="False"
-                                               WidthRequest="24" HeightRequest="24" Color="{DynamicResource PrimaryColor}" VerticalOptions="Center" />
-                            <Label x:Name="ModelGenerationStatusLabel" Grid.Column="1" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                        </Grid>
-                        <Label x:Name="ModelTokenSpeedLabel" FontSize="13" TextColor="{DynamicResource ContentAccentTextColor}" IsVisible="False" />
                         <Button x:Name="ChooseModelButton" Text="{localization:Translate AiBank.ChooseModel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnChooseModelClicked" />
                         <Button x:Name="ModelToolsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleModelToolsClicked" />
                         <VerticalStackLayout x:Name="ModelToolsPanel" IsVisible="False" Spacing="8">
@@ -123,16 +124,21 @@
                         <Button x:Name="CancelModelButton" Text="{localization:Translate AiBank.CancelModelAction}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" IsVisible="False" />
                         <ProgressBar x:Name="DownloadProgressBar" IsVisible="False" />
                         <Label x:Name="DownloadStatusLabel" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
+                        <VerticalStackLayout x:Name="ModelLiveStatusPanel" Spacing="6" IsVisible="False">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
+                                <ActivityIndicator x:Name="ModelBusyIndicator" IsVisible="False" IsRunning="False"
+                                                   WidthRequest="24" HeightRequest="24" Color="{DynamicResource PrimaryColor}" VerticalOptions="Center" />
+                                <Label x:Name="ModelGenerationStatusLabel" Grid.Column="1" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                            </Grid>
+                            <Label x:Name="ModelTokenSpeedLabel" FontSize="13" TextColor="{DynamicResource ContentAccentTextColor}" IsVisible="False" />
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
                 <Button x:Name="ReviewButton" Text="{localization:Translate AiBank.Review.Open}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
                 <Border x:Name="ProblemCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout x:Name="ConfigurationPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
-                        <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                            <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
-                            <Switch x:Name="CreativeProseSwitch" Grid.Column="1" IsToggled="False" />
-                        </Grid>
                         <Label x:Name="MotionOpenHintLabel" Text="{localization:QuizTranslate Quiz.MotionOpenHint}" FontSize="13" IsVisible="False" />
                         <Label x:Name="MotionExtendedHintLabel" Text="{localization:QuizTranslate Quiz.MotionExtendedHint}" FontSize="13" IsVisible="False" />
                         <Label Text="{localization:Translate AiBank.ProblemType}" />
@@ -159,10 +165,6 @@
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="StarsPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnBankOperationChanged" />
                         </Border>
-                        <Label Text="{localization:Translate AiBank.Language}" />
-                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
-                            <Picker x:Name="LanguagePicker" Style="{StaticResource AiBankPickerStyle}" />
-                        </Border>
                         <Label Text="{localization:Translate AiBank.GenerationMode}" />
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                             <Border Style="{StaticResource AiBankPickerBorderStyle}">
@@ -172,13 +174,25 @@
                                 <Entry x:Name="CountEntry" Text="10" Keyboard="Numeric" Placeholder="{localization:Translate AiBank.Count}" IsEnabled="False" />
                             </Border>
                         </Grid>
-                        <Grid ColumnDefinitions="*,Auto">
-                            <Label Text="{localization:Translate AiBank.AutoInsert}" VerticalOptions="Center" />
-                            <Switch x:Name="AutoInsertSwitch" Grid.Column="1" IsToggled="True" />
-                        </Grid>
+                        <Button x:Name="OtherOptionsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleOtherOptionsClicked" />
+                        <Label x:Name="OtherOptionsSummaryLabel" FontSize="13" TextColor="{DynamicResource WallpaperTextSecondaryColor}" LineBreakMode="WordWrap" />
+                        <VerticalStackLayout x:Name="OtherOptionsPanel" IsVisible="False" Spacing="10">
+                            <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
+                                <Switch x:Name="CreativeProseSwitch" Grid.Column="1" IsToggled="False" />
+                            </Grid>
+                            <Label Text="{localization:Translate AiBank.Language}" />
+                            <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                                <Picker x:Name="LanguagePicker" Style="{StaticResource AiBankPickerStyle}" />
+                            </Border>
+                            <Grid ColumnDefinitions="*,Auto">
+                                <Label Text="{localization:Translate AiBank.AutoInsert}" VerticalOptions="Center" />
+                                <Switch x:Name="AutoInsertSwitch" Grid.Column="1" IsToggled="True" />
+                            </Grid>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
-                <Label Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
+                <Label controls:SolverWorkspace.StartsResult="True" Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
                        IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
                        FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                 <VerticalStackLayout Spacing="8">

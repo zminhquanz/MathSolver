@@ -117,6 +117,7 @@ public sealed partial class MatrixView
     private void SetBusyState()
     {
         if (_calculate is null) return;
+        if (_busy) { _viewport.CancelRangeSelection(); _cellValuePanel.IsVisible = false; }
         if (_editorCard is not null) _editorCard.IsVisible = HasInputs;
         foreach (var button in _lockDuringWork) button.IsEnabled = !_busy;
         _dimensions.IsEnabled = !_busy;
@@ -166,6 +167,8 @@ public sealed partial class MatrixView
         _selectedValue.Text = string.IsNullOrEmpty(_value.Text) ? T("EmptyCell") : _value.Text;
         ToolTipProperties.SetText(_selectedValue, _selectedValue.Text);
         SemanticProperties.SetDescription(_selectedValue, T("CellValue") + ": " + _selectedValue.Text);
+        _fullCellTitle.Text = F("Workspace.ValueTitle", "ABC"[_selected], _viewport.SelectedRow + 1, _viewport.SelectedColumn + 1);
+        _fullCellValue.Text = _selectedValue.Text;
     }
     private void RefreshRange()
     {

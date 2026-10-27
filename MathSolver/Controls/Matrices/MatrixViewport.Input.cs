@@ -132,7 +132,8 @@ public sealed partial class MatrixViewport
         else if (e.Key == global::Windows.System.VirtualKey.Escape)
         {
             e.Handled = true;
-            if (_state.HasRangeSelection) Select(SelectedRow, SelectedColumn);
+            if (_state.IsRangeSelectionMode) CancelRangeSelection();
+            else if (_state.HasRangeSelection) Select(SelectedRow, SelectedColumn);
             else CancelInlineEdit();
         }
     }

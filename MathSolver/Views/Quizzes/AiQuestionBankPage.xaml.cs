@@ -31,6 +31,7 @@ public partial class AiQuestionBankPage : ContentPage
     public AiQuestionBankPage()
     {
         InitializeComponent();
+        InitializeAiWorkspace();
         AiBankHeaderEmojiLabel.Text = "\U0001F916"; // Robot: AI authoring, rendered with the native emoji font.
         CountEntry.PropertyChanged += (_, e) =>
         {
@@ -54,6 +55,8 @@ public partial class AiQuestionBankPage : ContentPage
     {
         base.OnAppearing();
         _appeared = true;
+        DisplayDensityManager.Changed += QueueAiWorkspaceRefresh;
+        QueueAiWorkspaceRefresh(this, EventArgs.Empty);
         Shell.SetTabBarIsVisible(this, false);
         LiveWallpaper.Resume();
         AppThemeManager.ThemeChanged += OnConfigurationThemeChanged;
@@ -96,6 +99,8 @@ public partial class AiQuestionBankPage : ContentPage
     protected override void OnDisappearing()
     {
         _appeared = false;
+        DisplayDensityManager.Changed -= QueueAiWorkspaceRefresh;
+        InvalidateAiWorkspaceRefresh();
         AppThemeManager.ThemeChanged -= OnConfigurationThemeChanged;
         AppThemeManager.WallpaperVisualResourcesChanged -= OnConfigurationThemeChanged;
         ++_configurationThemeGeneration;
@@ -199,7 +204,7 @@ public partial class AiQuestionBankPage : ContentPage
         QuestionPicker.IsEnabled = snapshot.Items.Count > 0;
         _updating = false;
         RenderSelected();
-
+        RefreshAiWorkspace();
     }
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
@@ -221,6 +226,7 @@ public partial class AiQuestionBankPage : ContentPage
         CreativeProsePanel.Opacity = SupportsCreativeProse ? 1 : 0.5;
         MotionOpenHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant==(int)MotionQuizType.Basic;
         MotionExtendedHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant is (int)MotionQuizType.Meeting or (int)MotionQuizType.Chasing or (int)MotionQuizType.River;
+        RefreshOtherOptionsSummary();
     }
 
     private void RenderSelected()
@@ -457,6 +463,7 @@ public partial class AiQuestionBankPage : ContentPage
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }
             Render();
+            SolverWorkspace.RevealResult(PreviewCard);
         }
         catch (Exception error) { await ShowErrorAsync(error); }
     }

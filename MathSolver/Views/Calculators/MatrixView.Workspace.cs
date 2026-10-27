@@ -1,6 +1,5 @@
 using MathSolver.Controls;
 using MathSolver.Services;
-using Microsoft.Maui.Layouts;
 using System.Diagnostics;
 
 namespace MathSolver.Views;
@@ -12,6 +11,12 @@ public sealed partial class MatrixView
     private readonly VerticalStackLayout _coordinatePanel = new() { IsVisible = false, Spacing = 8 };
     private readonly VerticalStackLayout _moreTools = new() { IsVisible = false, Spacing = 8 };
     private readonly Label _setupSummary = TextLabel(), _statusDetails = TextLabel();
+    private readonly Label _rangeSelectionHint = TextLabel();
+    private readonly VerticalStackLayout _cellValuePanel = new() { IsVisible = false, Spacing = 6 };
+    private readonly Label _fullCellTitle = TextLabel(), _fullCellValue = TextLabel();
+    private EmojiActionButton _cellValueToggle = null!;
+    private Button _clearCells = null!;
+    private Button _rangeSelectionToggle = null!;
     private Button _setupToggle = null!, _moreToolsToggle = null!, _statusDetailsButton = null!;
     private EmojiActionButton _coordinateToggle = null!;
     private Grid _footerStatusRow = null!;
@@ -35,11 +40,11 @@ public sealed partial class MatrixView
         return Card(new VerticalStackLayout { Spacing = 8, Children = { heading, _setupPanel } });
     }
 
-    private FlexLayout BuildCellToolbar()
+    private Grid BuildCellToolbar()
     {
         _coordinateToggle = new EmojiActionButton
         {
-            Emoji = "↪", FontSize = 14, MaximumWidthRequest = 180,
+            Emoji = "↪", FontSize = 14, MaximumWidthRequest = 148,
             Style = GetStyle("SolverSecondaryActionStyle"), LineBreakMode = LineBreakMode.TailTruncation
         };
         DisplayDensityManager.BindControl(_coordinateToggle);
@@ -48,7 +53,7 @@ public sealed partial class MatrixView
         {
             _workspaceRevealVersion++;
             _coordinatePanel.IsVisible = !_coordinatePanel.IsVisible;
-            if (_coordinatePanel.IsVisible) _moreTools.IsVisible = false;
+            if (_coordinatePanel.IsVisible) _moreTools.IsVisible = _cellValuePanel.IsVisible = false;
             RefreshWorkspacePresentation();
         };
         _translations.Add(() =>
@@ -57,13 +62,39 @@ public sealed partial class MatrixView
             ToolTipProperties.SetText(_coordinateToggle, T("Go"));
             ToolTipProperties.SetText(_pasteCells, T("PasteCells"));
         });
-        _selectedValue.FontSize = 18;
-        _selectedValue.MaxLines = 2;
-        _selectedValue.LineBreakMode = LineBreakMode.TailTruncation;
-        _selectedValue.VerticalTextAlignment = TextAlignment.Center;
-        _selectedValue.Padding = new Thickness(8, 2);
+        _cellValueToggle = new EmojiActionButton
+        {
+            Emoji = "⤢", FontSize = 14, Style = GetStyle("SolverSecondaryActionStyle"),
+            LineBreakMode = LineBreakMode.TailTruncation, AutomationId = "MatrixViewCellValue"
+        };
+        DisplayDensityManager.BindControl(_cellValueToggle);
+        _cellValueToggle.SetBinding(EmojiActionButton.CaptionProperty, new Binding(nameof(Label.Text), source: _selectedValue));
+        _cellValueToggle.Clicked += (_, _) =>
+        {
+            if (!CanTouchUi || !_active || _busy || !HasInputs) return;
+            bool opening = !_cellValuePanel.IsVisible;
+            if (opening && !_viewport.FinishEdit()) return;
+            _workspaceRevealVersion++;
+            _cellValuePanel.IsVisible = opening;
+            if (opening) _coordinatePanel.IsVisible = _moreTools.IsVisible = false;
+            RefreshWorkspacePresentation();
+            if (opening) QueueWorkspaceReveal(_cellValuePanel);
+        };
+        _fullCellTitle.FontSize = 13;
+        _fullCellValue.FontSize = 18;
+        _fullCellValue.LineBreakMode = LineBreakMode.CharacterWrap;
+        var fullValueScroll = new ScrollView { Content = _fullCellValue, MaximumHeightRequest = 180 };
+        _cellValuePanel.Add(_fullCellTitle);
+        _cellValuePanel.Add(fullValueScroll);
+        _cellValuePanel.Add(ActionButton("Workspace.CloseValue", "", (_, _) =>
+        {
+            _workspaceRevealVersion++;
+            _cellValuePanel.IsVisible = false;
+            RefreshWorkspacePresentation();
+            if (CanTouchUi && _active) _cellValueToggle.Focus();
+        }, lockDuringWork: false));
         var cellInfo = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) }, AutomationId = "MatrixSelectedCell" };
-        cellInfo.Add(_coordinateToggle); cellInfo.Add(_selectedValue, 1, 0);
+        cellInfo.Add(_coordinateToggle); cellInfo.Add(_cellValueToggle, 1, 0);
 
         var navigation = FlowGrid(130, 3);
         navigation.AutomationId = "MatrixCoordinates";
@@ -74,33 +105,73 @@ public sealed partial class MatrixView
         navigation.Add(go);
         _coordinatePanel.Add(navigation);
 
-        var clipboard = FlowGrid(145, 4);
-        clipboard.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
-        var copy = ActionButton("Workspace.Copy", "📋", OnCopySelection);
-        _translations.Add(() => ToolTipProperties.SetText(copy, T("CopySelection")));
-        clipboard.Add(copy); clipboard.Add(_pasteCells);
+        var clipboard = FlowGrid(90, 3);
+        clipboard.AutomationId = "MatrixPrimaryTools";
+        var copy = ActionButton("Workspace.Copy", "", OnCopySelection);
+        _clearCells = ActionButton("Workspace.Clear", "", (_, _) =>
+        {
+            if (!CanTouchUi || !_active || _busy || !HasInputs || _selected == 2) return;
+            _viewport.ClearSelection();
+        });
+        _clearCells.AutomationId = "MatrixClearSelection";
+        _translations.Add(() =>
+        {
+            ToolTipProperties.SetText(copy, T("CopySelection"));
+            ToolTipProperties.SetText(_clearCells, T("Workspace.ClearSelection"));
+            SemanticProperties.SetDescription(_clearCells, T("Workspace.ClearSelection"));
+        });
+        foreach (var button in new[] { copy, _pasteCells, _clearCells })
+        {
+            button.FontSize = 14;
+            button.LineBreakMode = LineBreakMode.WordWrap;
+            // Keep the density-backed touch height; narrow tools need less
+            // horizontal padding so captions fit without adding another line.
+            button.RemoveDynamicResource(Button.PaddingProperty);
+            button.Padding = new Thickness(8, 6);
+            clipboard.Add(button);
+        }
+        var secondary = FlowGrid(136, 2);
+        _rangeSelectionToggle = ActionButton("RangeSelection.Start", "▧", (_, _) =>
+        {
+            if (_viewport.IsRangeSelectionMode) _viewport.CancelRangeSelection();
+            else if (_viewport.BeginRangeSelection())
+            {
+                _workspaceRevealVersion++;
+                _coordinatePanel.IsVisible = _moreTools.IsVisible = _cellValuePanel.IsVisible = false;
+                RefreshWorkspacePresentation();
+            }
+        });
+        _rangeSelectionToggle.AutomationId = "MatrixRangeSelection";
+        _rangeSelectionToggle.FontSize = 14;
+        _rangeSelectionToggle.RemoveDynamicResource(Button.PaddingProperty);
+        _rangeSelectionToggle.Padding = new Thickness(8, 6);
+        _rangeSelectionToggle.LineBreakMode = LineBreakMode.WordWrap;
+        _rangeSelectionHint.AutomationId = "MatrixRangeSelectionHint";
+        _rangeSelectionHint.FontSize = 13;
+        _rangeSelectionHint.IsVisible = false;
+        _rangeSelectionHint.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
+        _viewport.RangeSelectionModeChanged += () =>
+        { if (CanRefreshLocalization) RefreshRangeSelectionControls(); };
+        secondary.Add(_rangeSelectionToggle);
+        _moreTools.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
         _moreToolsToggle = ActionButton("Workspace.MoreTools", "⋯", (_, _) =>
         {
             _workspaceRevealVersion++;
             _moreTools.IsVisible = !_moreTools.IsVisible;
-            if (_moreTools.IsVisible) _coordinatePanel.IsVisible = false;
+            if (_moreTools.IsVisible) _coordinatePanel.IsVisible = _cellValuePanel.IsVisible = false;
             RefreshWorkspacePresentation();
         }, lockDuringWork: false);
-        clipboard.Add(_moreToolsToggle);
-        var toolbar = new FlexLayout
-        {
-            Direction = FlexDirection.Row, Wrap = FlexWrap.Wrap,
-            AlignItems = FlexAlignItems.Start, AlignContent = FlexAlignContent.Start,
-            AutomationId = "MatrixToolbar"
-        };
-        FlexLayout.SetBasis(cellInfo, new FlexBasis(240));
-        FlexLayout.SetGrow(cellInfo, 1);
-        FlexLayout.SetShrink(cellInfo, 1);
-        FlexLayout.SetBasis(clipboard, new FlexBasis(620));
-        FlexLayout.SetGrow(clipboard, 1);
-        FlexLayout.SetShrink(clipboard, 1);
-        cellInfo.Margin = new Thickness(0, 0, 8, 8);
-        toolbar.Children.Add(cellInfo); toolbar.Children.Add(clipboard);
+        _moreToolsToggle.FontSize = 14;
+        _moreToolsToggle.RemoveDynamicResource(Button.PaddingProperty);
+        _moreToolsToggle.Padding = new Thickness(8, 6);
+        _moreToolsToggle.LineBreakMode = LineBreakMode.WordWrap;
+        secondary.Add(_moreToolsToggle);
+        // One shared reflow policy for groups and their buttons. Horizontal item
+        // margins in FlexLayout consumed narrow touch widths and caused extra rows.
+        var toolbar = FlowGrid(286, 3);
+        toolbar.AutomationId = "MatrixToolbar";
+        toolbar.RowSpacing = 4;
+        toolbar.Add(cellInfo); toolbar.Add(clipboard); toolbar.Add(secondary);
         return toolbar;
     }
 
@@ -154,6 +225,29 @@ public sealed partial class MatrixView
             && (!_busy || _calculationStage is null || _errorKey is not null);
         _statusDetailsButton.IsVisible = _statusDetailsCard.IsVisible = _errorKey is not null;
         _footerStatusRow.IsVisible = _message.IsVisible || _statusDetailsButton.IsVisible;
+        _clearCells.IsEnabled = !_busy && _active && HasInputs && _selected != 2
+            && !ReferenceEquals(_failedReadDraft, CurrentDraft);
+        _cellValueToggle.IsEnabled = !_busy && _active && HasInputs;
+        _fullCellTitle.Text = HasInputs ? F("Workspace.ValueTitle", "ABC"[_selected], _viewport.SelectedRow + 1, _viewport.SelectedColumn + 1) : "";
+        _fullCellValue.Text = _selectedValue.Text;
+        ToolTipProperties.SetText(_cellValueToggle, T("CellValue"));
+        SemanticProperties.SetHint(_cellValueToggle, T("CellValue") + ". " + T(_cellValuePanel.IsVisible ? "HelpExpanded" : "HelpCollapsed"));
+        RefreshRangeSelectionControls();
+    }
+
+    private void RefreshRangeSelectionControls()
+    {
+        if (_rangeSelectionToggle is null) return;
+        bool selecting = _viewport.IsRangeSelectionMode;
+        ((EmojiActionButton)_rangeSelectionToggle).Caption = T(selecting ? "RangeSelection.Cancel" : "RangeSelection.Start");
+        SelectionButtonStyler.Apply(_rangeSelectionToggle, selecting);
+        _rangeSelectionToggle.IsEnabled = HasInputs && !_busy;
+        _rangeSelectionHint.IsVisible = selecting;
+        _rangeSelectionHint.Text = selecting && _viewport.IsAwaitingRangeEnd
+            ? F("RangeSelection.LastHint", "ABC"[_selected], _viewport.SelectedRow + 1, _viewport.SelectedColumn + 1)
+            : T("RangeSelection.FirstHint");
+        ToolTipProperties.SetText(_rangeSelectionToggle, selecting ? _rangeSelectionHint.Text : T("RangeSelection.FirstHint"));
+        SemanticProperties.SetHint(_rangeSelectionToggle, _rangeSelectionHint.Text);
     }
 
     private void CollapseSetupAfterCreation()

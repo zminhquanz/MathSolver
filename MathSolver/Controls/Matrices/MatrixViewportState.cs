@@ -22,6 +22,16 @@ internal sealed class MatrixViewportState
     public int SelectedRow { get; private set; }
     public int SelectedColumn { get; private set; }
     public bool IsEditing { get; private set; }
+    public bool IsRangeSelectionMode { get; private set; }
+    public bool IsAwaitingRangeEnd { get; private set; }
+    public bool BeginRangeSelection(Func<bool>? commit = null)
+    {
+        if (!EndEdit(commit)) return false;
+        IsRangeSelectionMode = true;
+        IsAwaitingRangeEnd = false;
+        return true;
+    }
+    public void CancelRangeSelection() => IsRangeSelectionMode = IsAwaitingRangeEnd = false;
     public bool AllSelected { get; private set; }
     private int _endRow, _endColumn;
     public int SelectionEndRow => _endRow;
@@ -79,6 +89,7 @@ internal sealed class MatrixViewportState
     {
         if (rows is < 1 or > MatrixLimits.MaximumDimension || columns is < 1 or > MatrixLimits.MaximumDimension) throw new ArgumentOutOfRangeException(nameof(rows));
         Rows = rows; Columns = columns;
+        CancelRangeSelection();
         IsEditing = false;
         _hasSelection = false;
         AllSelected = false;
@@ -158,6 +169,14 @@ internal sealed class MatrixViewportState
     public bool ScrollBy(double x, double y) => ScrollTo(OffsetX + x, OffsetY + y);
     public MatrixCellAction TapCell(int row, int column, bool canEdit, Func<bool>? commit = null)
     {
+        if (IsRangeSelectionMode)
+        {
+            if (IsAwaitingRangeEnd)
+                return ExtendSelection(row, column, commit) ? MatrixCellAction.Selected : MatrixCellAction.Rejected;
+            if (!Select(row, column, commit)) return MatrixCellAction.Rejected;
+            IsRangeSelectionMode = IsAwaitingRangeEnd = true;
+            return MatrixCellAction.Selected;
+        }
         if (!HasRangeSelection && _hasSelection && row == SelectedRow && column == SelectedColumn && canEdit)
         {
             BeginEdit(canEdit);
@@ -168,6 +187,7 @@ internal sealed class MatrixViewportState
     public bool BeginEdit(bool canEdit)
     {
         if (!canEdit) return false;
+        CancelRangeSelection();
         AllSelected = false;
         _endRow = SelectedRow; _endColumn = SelectedColumn;
         _hasSelection = true;
@@ -190,6 +210,7 @@ internal sealed class MatrixViewportState
     public bool SelectAll(Func<bool>? commit = null)
     {
         if (!EndEdit(commit)) return false;
+        CancelRangeSelection();
         _endRow = SelectedRow; _endColumn = SelectedColumn;
         _hasSelection = true;
         AllSelected = true;
@@ -198,6 +219,7 @@ internal sealed class MatrixViewportState
     public bool ExtendSelection(int row, int column, Func<bool>? commit = null)
     {
         if (!EndEdit(commit)) return false;
+        CancelRangeSelection();
         _hasSelection = true; AllSelected = false;
         _endRow = Math.Clamp(row, 0, Rows - 1);
         _endColumn = Math.Clamp(column, 0, Columns - 1);
@@ -208,6 +230,7 @@ internal sealed class MatrixViewportState
     {
         // Validate/commit the old editor before changing either selection or scroll.
         if (!EndEdit(commit)) return false;
+        CancelRangeSelection();
         AllSelected = false;
         _hasSelection = true;
         SelectedRow = Math.Clamp(row, 0, Rows - 1);

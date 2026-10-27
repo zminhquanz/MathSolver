@@ -15,13 +15,18 @@ public sealed partial class MatrixView
     {
         if (_active == active) return;
         _active = active;
-        if (!active) { _version++; _work?.Cancel(); if (_busy) _statusKey = "Cancelled"; }
+        if (!active)
+        {
+            _viewport.CancelRangeSelection();
+            if (CanTouchUi) { _cellValuePanel.IsVisible = false; RefreshWorkspacePresentation(); }
+            _version++; _work?.Cancel(); if (_busy) _statusKey = "Cancelled";
+        }
         else if (CanTouchUi) { SetBusyState(); if (_statusKey is not null) _message.Text = FormatStatus(_statusKey); }
     }
     protected override void OnSolverLoaded()
     {
         if (!CanTouchUi) return;
-        _active = true; SetBusyState();
+        _active = true; _cellValuePanel.IsVisible = false; SetBusyState();
         CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
         CalculationAccelerationManager.AccelerationChanged += OnExecutionSettingsChanged;
         CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;

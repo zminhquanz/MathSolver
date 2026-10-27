@@ -72,6 +72,7 @@ var tests = new (string Name, Action Run)[]
     ("Matrix paste memory preflight without exceptions", PuzzleTests.CheckMatrixPasteMemoryPreflight),
     ("Matrix clipboard single-value fill across selection", PuzzleTests.CheckMatrixPasteFillSelection),
     ("Matrix viewport Shift rectangle selection", PuzzleTests.CheckMatrixRangeSelection),
+    ("Matrix viewport touch two-tap range selection", PuzzleTests.CheckMatrixTouchRange),
     ("Matrix clipboard paste cells across drafts", PuzzleTests.CheckMatrixPasteCells),
     ("Matrix viewport select all and clipboard", PuzzleTests.CheckMatrixSelectAll),
     ("Matrix clipboard Excel rows and exact integers", PuzzleTests.CheckMatrixClipboard),

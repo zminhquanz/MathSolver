@@ -19,13 +19,23 @@
             Grid.RowSpan="2" />
 
         <!-- Thanh tab con -->
+        <Grid x:Name="CalculationTabNavigation" Grid.Row="0"
+              ColumnDefinitions="*" RowDefinitions="Auto"
+              HorizontalOptions="Center" MaximumWidthRequest="1280"
+              Margin="{OnPlatform Android='10,6,10,4', WinUI='20,12,20,8', Default='20,12,20,8'}">
+        <Border x:Name="CalculationNavigationFrame" Padding="6" StrokeThickness="1"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
+        <Border.StrokeShape><RoundRectangle CornerRadius="14" /></Border.StrokeShape>
+        <Grid x:Name="CalculationNavigationContent" ColumnDefinitions="*,Auto" ColumnSpacing="6">
+        <Grid x:Name="CalculationTabStripHost">
         <!-- Android: Material-style scrolling tab row, không dùng pill/card desktop. -->
         <Grid
             x:Name="AndroidCalculationSubTabBar"
             Grid.Row="0"
             IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
             RowDefinitions="Auto,1"
-            Margin="0,0,0,4"
+            Margin="0"
             BackgroundColor="{DynamicResource WallpaperSurfaceColor}">
 
             <ScrollView
@@ -178,21 +188,20 @@
 
         <Border
             x:Name="CalculationSubTabBar"
-            HorizontalOptions="Center"
+            HorizontalOptions="Fill"
             MaximumWidthRequest="1280"
             Grid.Row="0"
             IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-            Margin="{OnPlatform Android='10,8,10,6', WinUI='20,12,20,8', Default='20,12,20,8'}"
-            Padding="{OnPlatform Android=4, WinUI=6, Default=6}"
-            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-            StrokeThickness="1">
+            Margin="0"
+            Padding="0"
+            BackgroundColor="Transparent"
+            StrokeThickness="0">
 
             <Border.StrokeShape>
                 <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
             </Border.StrokeShape>
 
-            <controls:MouseDragScrollView x:Name="CalculationSubTabScrollView" IsTabLayoutEnabled="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnCalculationSubTabGridSizeChanged">
+            <controls:MouseDragScrollView x:Name="CalculationSubTabScrollView" IsTabLayoutEnabled="True" UseUniformSizedTabs="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnCalculationSubTabGridSizeChanged">
             <Grid
                 x:Name="CalculationSubTabGrid"
                 ColumnDefinitions="*,*,*,*,*,*,*,*,*"
@@ -264,6 +273,14 @@
 
             </controls:MouseDragScrollView>
         </Border>
+        </Grid>
+        <Button x:Name="AllCalculationTypesButton" Grid.Column="1"
+                Style="{StaticResource SolverSecondaryActionStyle}" FontSize="14"
+                LineBreakMode="WordWrap" HorizontalOptions="End" VerticalOptions="Center"
+                Clicked="OnAllCalculationTypesClicked" />
+        </Grid>
+        </Border>
+        </Grid>
 
         <Grid
             x:Name="CalculationSubTabContentHost"
@@ -1130,5 +1147,7 @@
 
             </Grid>
         </Grid>
+        <ContentView x:Name="AllCalculationTypesOverlay" Grid.RowSpan="2" ZIndex="100"
+                     IsVisible="False" />
     </Grid>
 </ContentPage>

@@ -120,7 +120,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
                     ContextSize = MaximumContextTokens, BatchSize = 256, UBatchSize = 128,
                     // Map CPU weights rather than copying/locking the entire GGUF.
                     // No vision/audio projector or embedding context is created.
-                    GpuLayerCount = 0, UseMemorymap = true, UseMemoryLock = false,
+                    GpuLayerCount = 0, LoadMode = LLamaLoadMode.MemoryMap,
                     Embeddings = false, SwaFull = false,
                     // Leave CPU capacity for navigation, rendering and the C# calculators.
                     Threads = GetInferenceThreadCount(Environment.ProcessorCount),

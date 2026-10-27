@@ -107,9 +107,11 @@ public sealed partial class MatrixView : LocalizedSolverView
         _inputStatus.FontSize = 12;
         _inputStatus.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(_inputStatus);
-        _pasteCells = ActionButton("Workspace.Paste", "📥", OnPasteCells);
+        _pasteCells = ActionButton("Workspace.Paste", "", OnPasteCells);
         ToolTipProperties.SetText(_pasteCells, T("PasteCells"));
         editor.Add(BuildCellToolbar());
+        editor.Add(_cellValuePanel);
+        editor.Add(_rangeSelectionHint);
         editor.Add(_coordinatePanel);
         editor.Add(_moreTools);
         var copyHelp = Caption("CopyHelp");

@@ -29,6 +29,12 @@ public sealed class MouseDragScrollView : ScrollView
     /// </summary>
     public bool IsTabLayoutEnabled { get; set; }
 
+    /// <summary>Opt in before loading to intrinsic tab widths, without the legacy floor/stretch.</summary>
+    public bool UseContentSizedTabs { get; set; }
+
+    /// <summary>Use one common measured width for every tab, without stretching on resize.</summary>
+    public bool UseUniformSizedTabs { get; set; }
+
     private bool _isUpdatingTabs;
     private bool _handlerChanging;
     private int _layoutVersion;
@@ -101,7 +107,7 @@ public sealed class MouseDragScrollView : ScrollView
         {
             double available = Math.Max(1d, Width - Padding.HorizontalThickness);
             bool changed = Math.Abs(_lastTabViewportWidth - available) >= 0.5d;
-            double minimum = 170d * MathSolver.Services.ResponsiveLayoutPolicy.TextScale;
+            double minimum = UseContentSizedTabs ? 0d : 170d * MathSolver.Services.ResponsiveLayoutPolicy.TextScale;
             double[] widths = new double[children.Length];
             for (int i = 0; i < children.Length; i++)
             {
@@ -111,8 +117,9 @@ public sealed class MouseDragScrollView : ScrollView
                     children[i].Measure(double.PositiveInfinity, double.PositiveInfinity).Width);
             }
             if (!IsCurrent() || !children.SequenceEqual(tabs.Children)) return false;
+            if (UseUniformSizedTabs) Array.Fill(widths, Math.Ceiling(widths.Max()));
             double natural = widths.Sum() + tabs.ColumnSpacing * (widths.Length - 1);
-            double extra = Math.Max(0d, available - natural) / widths.Length;
+            double extra = UseContentSizedTabs || UseUniformSizedTabs ? 0d : Math.Max(0d, available - natural) / widths.Length;
 
             if (tabs.RowDefinitions.Count != 1)
             {
