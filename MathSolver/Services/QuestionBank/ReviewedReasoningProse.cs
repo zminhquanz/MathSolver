@@ -42,7 +42,7 @@ internal static class ReviewedReasoningProse
     // as the same wording in SQLite as well as within a generation batch.
     internal static string CanonicalizeOpening(BasicQuestionContract c, string text)
     {
-        if (c.Family != BankQuestionFamily.MultiStep || MoneyChangeOpenCatalogue.IsProfile(c)) return text;
+        if (c.Family != BankQuestionFamily.MultiStep || MoneyChangeOpenCatalogue.IsProfile(c) || DiscountOpenCatalogue.IsProfile(c)) return text;
         var lesson = ReasoningStoryCatalogue.Lesson(c);
         string introId = "ElementaryQuizGenerator.MultiStep.CreateMultiStep." + (lesson.Context switch {
             "library" => "002", "craft" => "003", "community" => "004", "distribution" => "005",

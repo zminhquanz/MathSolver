@@ -13,6 +13,7 @@ internal static class DefaultBankSuite
         await HarnessInfrastructureTests.RunAsync();
         await OpenProseTests.RunAsync();
         await PracticalConsolidationTests.RunAsync();
+        await AppliedOpenTests.RunAsync();
         await DecimalOpenTests.RunAsync();
         await SameDayTimeTests.RunAsync();
         await OvernightTimeTests.RunAsync();

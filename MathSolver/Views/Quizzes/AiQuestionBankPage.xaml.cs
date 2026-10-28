@@ -210,7 +210,7 @@ public partial class AiQuestionBankPage : ContentPage
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
     private bool SupportsCreativeProse => _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
             || _family==BankQuestionFamily.Motion&&Enum.IsDefined((MotionQuizType)_storyVariant)
-            || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant || _storyVariant==TriangleAreaPilot.Variant)
+            || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant || _storyVariant==TriangleAreaPilot.Variant || QuadrilateralAreaPilot.IsVariant(_storyVariant))
             || _family==BankQuestionFamily.Proportion && _storyVariant is (int)ProportionQuizType.Direct or (int)ProportionQuizType.UnitaryGroupCount
             || _family==BankQuestionFamily.TwoNumbers && _storyVariant is (int)ElementaryQuizType.SumDifference or (int)ElementaryQuizType.SumRatio or (int)ElementaryQuizType.DifferenceRatio
             || _family==BankQuestionFamily.Average && _storyVariant is (int)AverageQuizType.Direct or (int)AverageQuizType.MissingValue

@@ -15,7 +15,7 @@ public static class OpenQuestionProse
         || c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         || c.Version == FindXQuestionCatalogue.Version
         || c.Version == AppliedQuestionCatalogue.Version && AppliedQuestionCatalogue.Reasoning(c) is null
-        || c.Version == ReasoningStoryCatalogue.Version && (PracticalOpenCatalogue.IsProfile(c)||MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||(UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||SumDifferenceOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
+        || c.Version == ReasoningStoryCatalogue.Version && (AppliedOpenCatalogue.IsProfile(c)||PracticalOpenCatalogue.IsProfile(c)||MotionExtendedCatalogue.IsProfile(c)||MotionOpenCatalogue.IsProfile(c)||(UnitaryGroupsOpenCatalogue.IsProfile(c)||UnitaryTotalOpenCatalogue.IsProfile(c))||SameMonthCalendarCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c)||SameDayBreakCatalogue.IsProfile(c)||RectangleAreaOpenCatalogue.IsProfile(c)||RectanglePerimeterOpenCatalogue.IsProfile(c)||DecimalOpenStoryCatalogue.IsProfile(c)||SameDayTimeCatalogue.IsProfile(c)||FractionPartOpenCatalogue.IsProfile(c)||FractionRemainingOpenCatalogue.IsProfile(c)||FractionWholeOpenCatalogue.IsProfile(c)||(DifferenceRatioOpenCatalogue.IsProfile(c)||SumRatioOpenCatalogue.IsProfile(c))||SumDifferenceOpenCatalogue.IsProfile(c)||AverageMissingOpenCatalogue.IsProfile(c)||AverageOpenCatalogue.IsProfile(c)||PercentagePartOpenCatalogue.IsProfile(c)||PercentageWholeOpenCatalogue.IsProfile(c)||PercentageRemainingOpenCatalogue.IsProfile(c))
         || c.Version == ReasoningStoryCatalogue.Version && c.Family == BankQuestionFamily.Measurement
             && (ElementaryQuizType)c.BankVariant is ElementaryQuizType.LengthConversion or ElementaryQuizType.MassConversion
                 or ElementaryQuizType.CapacityConversion or ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion);
@@ -100,6 +100,7 @@ public static class OpenQuestionProse
         if(PercentageRemainingOpenCatalogue.IsProfile(c))return PercentageRemainingOpenMeaning.Validate(c,syntax.Draft!);
         if(PercentagePartOpenCatalogue.IsProfile(c))return PercentagePartOpenMeaning.Validate(c,syntax.Draft!);
         if(DifferenceRatioOpenCatalogue.IsProfile(c))return DifferenceRatioOpenMeaning.Validate(c,syntax.Draft!);
+        if(AppliedOpenCatalogue.IsProfile(c))return AppliedOpenCatalogue.Validate(c,syntax.Draft!);
         if(PracticalOpenCatalogue.IsProfile(c))return PracticalOpenCatalogue.Validate(c,syntax.Draft!);
         if(MotionExtendedCatalogue.IsProfile(c))return MotionExtendedMeaning.Validate(c,syntax.Draft!);
         if(MotionOpenCatalogue.IsProfile(c))return MotionOpenMeaning.Validate(c,syntax.Draft!);
@@ -170,6 +171,7 @@ public static class OpenQuestionProse
         if (DifferenceRatioOpenCatalogue.IsProfile(c)) instruction = DifferenceRatioOpenCatalogue.WritingInstructions(c.Language);
         if (MotionOpenCatalogue.IsProfile(c)) instruction = MotionOpenCatalogue.Instructions(c);
         if (PracticalOpenCatalogue.IsProfile(c)) instruction = PracticalOpenCatalogue.Instructions(c);
+        if (AppliedOpenCatalogue.IsProfile(c)) instruction = AppliedOpenCatalogue.Instructions(c);
         if (MotionExtendedCatalogue.IsProfile(c)) instruction = MotionExtendedCatalogue.Instructions(c);
         if (UnitaryGroupsOpenCatalogue.IsProfile(c)) instruction = UnitaryGroupsOpenCatalogue.Instructions(c.Language);
         if (UnitaryTotalOpenCatalogue.IsProfile(c)) instruction = UnitaryTotalOpenCatalogue.WritingInstructions(c.Language);
@@ -182,7 +184,7 @@ public static class OpenQuestionProse
         if (PercentageWholeOpenCatalogue.IsProfile(c)) instruction = PercentageWholeOpenCatalogue.WritingInstructions(c.Language);
         if (PercentageRemainingOpenCatalogue.IsProfile(c)) instruction = PercentageRemainingOpenCatalogue.WritingInstructions(c.Language);
         if (PercentagePartOpenCatalogue.IsProfile(c)) instruction = PercentagePartOpenCatalogue.WritingInstructions(c.Language);
-        string relation = PracticalOpenCatalogue.IsProfile(c)?PracticalOpenCatalogue.Relation(c):MotionExtendedCatalogue.IsProfile(c)?MotionExtendedCatalogue.Relation(c):MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.Relation(c):SameMonthCalendarCatalogue.IsProfile(c)?SameMonthCalendarCatalogue.PromptRelation(c)
+        string relation = AppliedOpenCatalogue.IsProfile(c)?AppliedOpenCatalogue.Relation(c):PracticalOpenCatalogue.IsProfile(c)?PracticalOpenCatalogue.Relation(c):MotionExtendedCatalogue.IsProfile(c)?MotionExtendedCatalogue.Relation(c):MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.Relation(c):SameMonthCalendarCatalogue.IsProfile(c)?SameMonthCalendarCatalogue.PromptRelation(c)
             :OvernightTimeCatalogue.IsProfile(c)?OvernightTimeCatalogue.PromptRelation
             :SameDayBreakCatalogue.IsProfile(c)?SameDayBreakCatalogue.PromptRelation
             : RectangleAreaOpenCatalogue.IsProfile(c)?RectangleAreaOpenCatalogue.PromptRelation
@@ -243,7 +245,7 @@ public static class OpenQuestionProse
     public static string Grammar(BasicQuestionContract c)
     {
         if (!Supports(c)) throw new ArgumentException("Unsupported open prose profile.");
-        if(PracticalOpenCatalogue.IsProfile(c))return PracticalOpenGrammar.Build(c);
+        if(AppliedOpenCatalogue.IsProfile(c)||PracticalOpenCatalogue.IsProfile(c))return PracticalOpenGrammar.Build(c);
         if(MotionExtendedCatalogue.IsProfile(c))return MotionExtendedGrammar.Build(c);
         bool clockActivity=SameDayBreakCatalogue.IsProfile(c)||OvernightTimeCatalogue.IsProfile(c);
         bool calendar=SameMonthCalendarCatalogue.IsProfile(c);

@@ -9,18 +9,21 @@ internal static class PracticalWorkedRules
 {
     internal static bool Supports(ArithmeticQuizQuestion q) =>
         q.ElementaryProblem?.StoryContextId is { } id && (id.StartsWith(MoneyChangePilot.Prefix, StringComparison.Ordinal)
-            || id.StartsWith(RectangleSidePilot.Prefix, StringComparison.Ordinal))
+            || id.StartsWith(RectangleSidePilot.Prefix, StringComparison.Ordinal)
+            || id.StartsWith(MapScaleOpenPilot.Prefix,StringComparison.Ordinal)||id.StartsWith(DiscountOpenPilot.Prefix,StringComparison.Ordinal))
         || q.PercentageProblem?.StoryContextId?.StartsWith(PercentageRatioPilot.Prefix, StringComparison.Ordinal) == true
-        || q.GeometryProblem?.Reasoning?.ScenarioId == "triangle-area-direct";
+        || q.GeometryProblem?.Reasoning?.ScenarioId is "triangle-area-direct" or "parallelogram-area-direct" or "trapezoid-area-direct";
 
     internal static bool Validate(ArithmeticQuizQuestion q, string? equations)
     {
         if (!Supports(q)) return true;
         string[] facts, constants, expressions;
+        string[]? stepUnits=null;
         if (q.ElementaryProblem is { } e)
         {
             facts = [.. e.Facts]; constants = [.. e.Constants];
             expressions = e.Reasoning!.Steps.Select(s => s.Expression).ToArray();
+            stepUnits=e.Reasoning.Steps.Select(s=>s.Unit).ToArray();
         }
         else if (q.PercentageProblem is { } p)
         {
@@ -31,7 +34,16 @@ internal static class PracticalWorkedRules
         {
             var g = q.GeometryProblem!;
             facts = [g.Dimensions["a"].ToString(CultureInfo.InvariantCulture), g.Dimensions["h"].ToString(CultureInfo.InvariantCulture)];
-            constants = ["2"]; expressions = [$"{facts[0]}*{facts[1]}", $"{facts[0]}*{facts[1]}/2"];
+            if(g.ShapeId=="parallelogram")
+            {constants=[];expressions=[$"{facts[0]}*{facts[1]}"];}
+            else if(g.ShapeId=="trapezoid")
+            {
+                facts=[g.Dimensions["a"].ToString(CultureInfo.InvariantCulture),g.Dimensions["b"].ToString(CultureInfo.InvariantCulture),g.Dimensions["h"].ToString(CultureInfo.InvariantCulture)];
+                constants=["2"];expressions=[$"{facts[0]}+{facts[1]}",$"({facts[0]}+{facts[1]})*{facts[2]}",$"({facts[0]}+{facts[1]})*{facts[2]}/2"];
+            }
+            else {constants = ["2"]; expressions = [$"{facts[0]}*{facts[1]}", $"{facts[0]}*{facts[1]}/2"];}
+            stepUnits=Enumerable.Repeat(g.AnswerUnit,expressions.Length).ToArray();
+            if(g.ShapeId=="trapezoid")stepUnits[0]=g.LengthUnitSymbol;
         }
         var original = new StepDerivationTracker(facts, constants);
         var tracker = new StepDerivationTracker(facts, constants);
@@ -60,9 +72,11 @@ internal static class PracticalWorkedRules
             if (!matches.Any(x => x)) return false;
             // The only dimensionless intermediate is the subset/whole fraction, before scaling by 100.
             bool dimensionless = q.PercentageProblem is not null && matches[0] && !matches[^1];
-            bool unitOkay = unit.Length == 0 || !dimensionless && (q.ElementaryProblem is { } elementary
-                ? ElementaryEssayValidator.PracticalUnitMatches(q, unit, elementary.Answers[0].Unit)
-                : EssayAnswerValidator.IsExpectedUnitForFeedback(q, unit));
+            bool unitOkay = unit.Length == 0 || !dimensionless && (stepUnits is not null
+                ? Enumerable.Range(0,matches.Length).Any(index=>matches[index]&&(q.ElementaryProblem is not null
+                    ?ElementaryEssayValidator.PracticalUnitMatches(q,unit,stepUnits[index])
+                    :EssayAnswerValidator.IsExpectedUnitForFeedback(q with {WordProblem=q.WordProblem! with {AnswerUnit=stepUnits[index]}},unit)))
+                : EssayAnswerValidator.IsExpectedUnitForFeedback(q,unit));
             if (!unitOkay) return false;
             var proven = origins.Where(o => allowed.Where((_, i) => matches[i]).Any(a => a.Any(o.Equivalent))).ToArray();
             tracker.Remember(value, proven);

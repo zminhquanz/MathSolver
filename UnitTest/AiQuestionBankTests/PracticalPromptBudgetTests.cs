@@ -7,13 +7,13 @@ using System.Text.Json;
 
 internal static class PracticalPromptBudgetTests
 {
-    internal static void Run(string path,string output)
+    internal static void Run(string path,string output,IEnumerable<(string Name,BasicQuestionContract Contract)>? cases=null)
     {
         NativeLibraryConfig.All.WithLogCallback((_,_)=>{});
         var parameters=new ModelParams(path){ContextSize=2048,GpuLayerCount=0,LoadMode=LLamaLoadMode.MemoryMap,Embeddings=false,SwaFull=false};
         using var weights=LLamaWeights.LoadFromFile(parameters);
         var rows=new List<object>();
-        foreach(var (name,c) in PracticalOpenTests.NativeCases())
+        foreach(var (name,c) in cases??PracticalOpenTests.NativeCases())
         foreach(bool retry in new[]{false,true})
         {
             var original=OpenQuestionProse.Example(c);

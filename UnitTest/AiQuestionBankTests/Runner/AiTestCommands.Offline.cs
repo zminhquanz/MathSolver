@@ -10,6 +10,15 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--applied-open","--applied-open-model"],"--applied-open | --applied-open-model <gguf> <directory>",async args=>
+        {
+            if(args.Length==1)await AppliedOpenTests.RunAsync();
+            else await OpenProseTests.RunModelAsync(args[1],args[2],AppliedOpenTests.NativeCases());
+        },args=>args is ["--applied-open"] or ["--applied-open-model",_,_]),
+        new(["--applied-prompt-budget"],"--applied-prompt-budget <gguf> <output.json>",args=>{PracticalPromptBudgetTests.Run(args[1],args[2],AppliedOpenTests.NativeCases());return Task.CompletedTask;},args=>args is ["--applied-prompt-budget",_,_]),
+        new(["--map-scale-open"],"--map-scale-open",args=>MapScaleOpenTests.RunAsync(),args=>args is ["--map-scale-open"]),
+        new(["--quadrilateral-area-open"],"--quadrilateral-area-open",args=>QuadrilateralAreaOpenTests.RunAsync(),args=>args is ["--quadrilateral-area-open"]),
+        new(["--discount-open"],"--discount-open",args=>DiscountOpenTests.RunAsync(),args=>args is ["--discount-open"]),
         new(["--practical-consolidation"],"--practical-consolidation",args=>PracticalConsolidationTests.RunAsync(),args=>args is ["--practical-consolidation"]),
         new(["--practical-prompt-budget"],"--practical-prompt-budget <gguf> <output.json>",args=>{PracticalPromptBudgetTests.Run(args[1],args[2]);return Task.CompletedTask;},args=>args is ["--practical-prompt-budget",_,_]),
         new(["--practical-prior-storage"],"--practical-prior-storage <evidence-directory>",args=>PracticalPriorStorageTests.RunAsync(args[1]),args=>args is ["--practical-prior-storage",_]),

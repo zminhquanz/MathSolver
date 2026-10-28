@@ -7,13 +7,22 @@ internal sealed class ReasoningStoryCycle
     private readonly Dictionary<(BankQuestionFamily, int, CurriculumTier, AppLanguage), Queue<string>> _recent = [];
     private readonly Dictionary<(CurriculumTier,AppLanguage),int> _motionRotation = [];
     private readonly Dictionary<(CurriculumTier,AppLanguage),int> _sideRotation = [];
+    private readonly Dictionary<(CurriculumTier,AppLanguage),int> _retailRotation = [];
     private readonly Dictionary<(int,CurriculumTier,AppLanguage),int> _extendedMotionRotation = [];
 
     public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
         IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
     {
         var key = (family, variant, tier, language);
-        var practicalProfiles=creativeProse?PracticalOpenCatalogue.Profiles(family,variant,language).ToArray():[];
+        var practicalProfiles=creativeProse?PracticalOpenCatalogue.Profiles(family,variant,language)
+            .Concat(AppliedOpenCatalogue.Profiles(family,variant,language)).ToArray():[];
+        if(creativeProse&&family==BankQuestionFamily.MultiStep&&variant==MoneyChangePilot.Variant)
+        {
+            _retailRotation.TryGetValue((tier,language),out int cursor);
+            string prefix=cursor%2==0?MoneyChangePilot.Prefix:DiscountOpenPilot.Prefix;
+            _retailRotation[(tier,language)]=(cursor+1)%2;
+            practicalProfiles=practicalProfiles.Where(p=>p.StartsWith(prefix,StringComparison.Ordinal)).ToArray();
+        }
         if(practicalProfiles.Length>0&&family==BankQuestionFamily.Spatial&&variant==RectangleSidePilot.Variant)
         {
             _sideRotation.TryGetValue((tier,language),out int cursor);
