@@ -68,6 +68,7 @@ public partial class FormulaPage : ContentPage
     public FormulaPage()
     {
         InitializeComponent();
+        InitializeFormulaNavigation();
 
 #if ANDROID
         _androidSubTabSwipe = new AndroidSubTabSwipeNavigator(
@@ -113,6 +114,8 @@ public partial class FormulaPage : ContentPage
     protected override void OnAppearing()
     {
         base.OnAppearing();
+        _formulaNavigationActive = true;
+        QueueFormulaNavigation(this, EventArgs.Empty);
 
 #if ANDROID
         _androidSubTabSwipe.Attach();
@@ -147,6 +150,9 @@ public partial class FormulaPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        CloseFormulaTypes(restoreFocus: false);
+        _formulaNavigationActive = false;
+        InvalidateFormulaNavigation();
 #if ANDROID
         _androidSubTabSwipe.Detach();
 #endif
@@ -385,14 +391,8 @@ public partial class FormulaPage : ContentPage
                 continue;
             }
 
-            foreach (IView childView
-                     in cardGrid.Children)
-            {
-                if (childView is GraphicsView graphicsView)
-                {
-                    graphicsView.Invalidate();
-                }
-            }
+            foreach (var graphicsView in ReferenceGraphics(cardGrid))
+                graphicsView.Invalidate();
         }
     }
 
@@ -1076,6 +1076,7 @@ public partial class FormulaPage : ContentPage
 
     private void UpdateSubTabButtonStyles()
     {
+        RefreshFormulaChoices();
 #if ANDROID
         ApplyAndroidSubTabState(
             AndroidUnknownComponentTabButton,
@@ -1159,21 +1160,6 @@ public partial class FormulaPage : ContentPage
         indicator.IsVisible = isSelected;
     }
 
-    private Button GetAndroidFormulaSubTabButton(
-        FormulaSubTab tab)
-    {
-        return tab switch
-        {
-            FormulaSubTab.UnknownComponent => AndroidUnknownComponentTabButton,
-            FormulaSubTab.Proportion => AndroidProportionTabButton,
-            FormulaSubTab.Motion => AndroidMotionTabButton,
-            FormulaSubTab.Average => AndroidAverageTabButton,
-            FormulaSubTab.Measurement => AndroidMeasurementTabButton,
-            FormulaSubTab.Geometry => AndroidFormulaGeometryTabButton,
-            _ => AndroidUnknownComponentTabButton
-        };
-    }
-
     private async Task ScrollAndroidFormulaSubTabIntoViewAsync(
         FormulaSubTab tab)
     {
@@ -1182,7 +1168,7 @@ public partial class FormulaPage : ContentPage
             await AndroidFormulaSubTabScrollView.ScrollToAsync(
                 GetAndroidFormulaSubTabButton(tab),
                 ScrollToPosition.Center,
-                true);
+                false);
         }
         catch (InvalidOperationException)
         {
@@ -1205,20 +1191,11 @@ public partial class FormulaPage : ContentPage
         _lastSolidGeometryLayoutWidth = -1d;
     }
 
-    private void OnFormulaSubTabGridSizeChanged(object? sender, EventArgs e)
-    {
-        if (!FormulaSubTabBar.IsVisible || !FormulaSubTabScrollView.CanUpdateTabLayout) return;
-        if (FormulaSubTabScrollView.UpdateTabLayout(FormulaSubTabGrid))
-            Dispatcher.Dispatch(async () =>
-            {
-                if (FormulaSubTabScrollView.CanUpdateTabLayout)
-                    await ScrollFormulaSubTabIntoViewAsync(_selectedSubTab);
-            });
-    }
+    private void OnFormulaSubTabGridSizeChanged(object? sender, EventArgs e) => QueueFormulaNavigation(sender, e);
 
     private async Task ScrollFormulaSubTabIntoViewAsync(FormulaSubTab tab)
     {
-        if (WindowUiLifetime.IsClosing(Window)) return;
+        if (!CanUseTabNavigation || !FormulaTabStripHost.IsVisible) return;
 #if ANDROID
         await ScrollAndroidFormulaSubTabIntoViewAsync(tab);
 #else
@@ -1234,7 +1211,13 @@ public partial class FormulaPage : ContentPage
         };
         try
         {
-            await FormulaSubTabScrollView.ScrollToAsync(selected, ScrollToPosition.Center, true);
+            if (selected.X >= FormulaSubTabScrollView.ScrollX - .5
+                && selected.X + selected.Width <= FormulaSubTabScrollView.ScrollX + FormulaSubTabScrollView.Width + .5)
+                return;
+            // WinUI's animated scroll can stop a fraction of a pixel from the
+            // destination without completing its task. Revealing navigation must
+            // not hold the content transition lock after the new page is ready.
+            await FormulaSubTabScrollView.ScrollToAsync(selected, ScrollToPosition.Center, false);
         }
         catch (InvalidOperationException)
         {
@@ -1255,8 +1238,7 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
-        if (FormulaSubTabBar.IsVisible)
-            FormulaSubTabBar.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+        FormulaTabNavigation.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
 
         Dispatcher.Dispatch(
             () =>
@@ -1331,83 +1313,8 @@ public partial class FormulaPage : ContentPage
             });
     }
 
-    private void UpdateUnknownComponentFlexHeight(
-        int columnCount)
-    {
-        int childCount =
-            UnknownComponentFlexLayout.Children.Count;
-
-        if (childCount == 0 ||
-            columnCount <= 0)
-        {
-            return;
-        }
-
-        const double verticalMarginPerCard =
-            14d;
-
-        const double fallbackCardHeight =
-            360d;
-
-        double maximumCardHeight =
-            fallbackCardHeight;
-
-        foreach (IView childView
-                 in UnknownComponentFlexLayout.Children)
-        {
-            if (childView is not VisualElement card)
-            {
-                continue;
-            }
-
-            double measuredHeight =
-                card.Height;
-
-            if (!double.IsFinite(
-                    measuredHeight) ||
-                measuredHeight <= 0d)
-            {
-                measuredHeight =
-                    Math.Max(
-                        fallbackCardHeight,
-                        card.MinimumHeightRequest);
-            }
-
-            maximumCardHeight =
-                Math.Max(
-                    maximumCardHeight,
-                    measuredHeight);
-        }
-
-        int rowCount =
-            (int)Math.Ceiling(
-                childCount /
-                (double)columnCount);
-
-        double requestedHeight =
-            Math.Ceiling(
-                rowCount *
-                (maximumCardHeight +
-                 verticalMarginPerCard));
-
-        if (Math.Abs(
-                UnknownComponentFlexLayout.HeightRequest -
-                requestedHeight) < 1d)
-        {
-            return;
-        }
-
-        UnknownComponentFlexLayout.HeightRequest =
-            requestedHeight;
-
-        UnknownComponentFlexLayout.InvalidateMeasure();
-
-        if (UnknownComponentFlexLayout.Parent
-            is VisualElement parent)
-        {
-            parent.InvalidateMeasure();
-        }
-    }
+    private void UpdateUnknownComponentFlexHeight(int columnCount) =>
+        UpdateGeometryFlexHeight(UnknownComponentFlexLayout, columnCount);
 
     private void OnGeometryFlexLayoutSizeChanged(
         object? sender,
@@ -1502,102 +1409,22 @@ public partial class FormulaPage : ContentPage
     }
 
 
-    private static void UpdateGeometryFlexHeight(
-        FlexLayout layout,
-        int columnCount)
+    private static void UpdateGeometryFlexHeight(FlexLayout layout, int columnCount)
     {
-        int childCount =
-            layout.Children.Count;
-
-        if (childCount == 0 ||
-            columnCount <= 0)
-        {
+        if (columnCount <= 0 || layout.Children.Count == 0) return;
+        var cards = layout.Children.OfType<View>().ToArray();
+        if (cards.Any(card => !double.IsFinite(card.Height) || card.Height <= 0 || card.Width <= 0))
             return;
-        }
 
-        int rowCount =
-            (int)Math.Ceiling(
-                childCount /
-                (double)columnCount);
-
-        double[] rowHeights =
-            new double[rowCount];
-
-        bool hasUnmeasuredRow =
-            false;
-
-        for (int childIndex = 0;
-             childIndex < childCount;
-             childIndex++)
-        {
-            if (layout.Children[childIndex]
-                is not VisualElement card)
-            {
-                continue;
-            }
-
-            double measuredHeight =
-                card.Height;
-
-            if (!double.IsFinite(
-                    measuredHeight) ||
-                measuredHeight <= 0d)
-            {
-                hasUnmeasuredRow =
-                    true;
-
-                continue;
-            }
-
-            int rowIndex =
-                childIndex /
-                columnCount;
-
-            rowHeights[rowIndex] =
-                Math.Max(
-                    rowHeights[rowIndex],
-                    measuredHeight);
-        }
-
-        // Không đặt HeightRequest bằng một giá trị ước lượng khi card vẫn chưa
-        // được đo, vì điều đó có thể cắt nội dung trong frame đầu.
-        if (hasUnmeasuredRow ||
-            rowHeights.Any(
-                height => height <= 0d))
-        {
-            return;
-        }
-
-        // GeometryCardTemplate dùng Margin="5": mỗi hàng cần thêm 5 phía trên
-        // và 5 phía dưới ngoài chiều cao thực của card.
-        const double verticalMarginPerRow =
-            10d;
-
-        double requestedHeight =
-            Math.Ceiling(
-                rowHeights.Sum() +
-                rowCount *
-                verticalMarginPerRow);
-
-        if (Math.Abs(
-                layout.HeightRequest -
-                requestedHeight) < 1d)
-        {
-            return;
-        }
-
-        layout.HeightRequest =
-            requestedHeight;
-
+        // Use arranged positions rather than guessing wrapped row sizes.
+        // Include the trailing margin: MAUI/WinUI can arrange the native border
+        // inside its layout slot with a further margin offset.
+        double height = Math.Ceiling(cards.Max(card => card.Y + card.Height + card.Margin.Bottom)) + 1;
+        if (Math.Abs(layout.HeightRequest - height) < 1) return;
+        layout.HeightRequest = height;
         layout.InvalidateMeasure();
-
-        if (layout.Parent
-            is VisualElement parent)
-        {
-            parent.InvalidateMeasure();
-        }
+        (layout.Parent as VisualElement)?.InvalidateMeasure();
     }
-
 
     private static int GetGeometryColumnCount(
         double availableWidth)
@@ -1707,15 +1534,8 @@ public partial class FormulaPage : ContentPage
                     : new Thickness(
                         12d);
 
-            foreach (IView childView
-                     in cardGrid.Children)
-            {
-                if (childView is GraphicsView graphicsView)
-                {
-                    graphicsView.HeightRequest =
-                        graphHeight;
-                }
-            }
+            foreach (var graphicsView in ReferenceGraphics(cardGrid))
+                graphicsView.HeightRequest = graphHeight;
         }
     }
 
@@ -1759,6 +1579,7 @@ public partial class FormulaPage : ContentPage
                         force: true);
                 }
 
+                RefreshFormulaChoices();
                 AverageFormulaViewControl?.RefreshLocalization();
                 MeasurementFormulaViewControl?.RefreshLocalization();
 

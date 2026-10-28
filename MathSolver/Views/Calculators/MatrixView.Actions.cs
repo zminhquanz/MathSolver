@@ -161,6 +161,7 @@ public sealed partial class MatrixView
         RefreshSelectedValue();
         RefreshSolution();
         RefreshSizeControls();
+        RefreshMatrixLayout();
     }
     private void RefreshSelectedValue()
     {

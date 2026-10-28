@@ -13,7 +13,7 @@
     HorizontalOptions="Fill"
     VerticalOptions="Fill">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
@@ -42,430 +42,148 @@
         <ScrollView Grid.Row="1"
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
-            VerticalScrollBarVisibility="Default">
+            VerticalScrollBarVisibility="Default" controls:SolverWorkspace.IsEnabled="True" SizeChanged="OnGeometryViewportSizeChanged" x:Name="GeometryScrollView">
 
             <VerticalStackLayout
-                Style="{StaticResource SolverScrollableContentStyle}">
-
-                <!-- Tiêu đề -->
-
-                <!--
-                    Desktop/laptop/tablet lớn: bộ điều khiển nằm bên trái,
-                    công thức và hình minh họa nằm bên phải.
-                    Tablet nhỏ/điện thoại: tự chuyển thành một cột.
-                -->
-                <Grid
-                    x:Name="GeometryMainResponsiveGrid"
-                    RowDefinitions="Auto"
-                    ColumnDefinitions="5*,7*"
-                    RowSpacing="14"
-                    ColumnSpacing="14"
+                Style="{StaticResource SolverScrollableContentStyle}" x:Name="GeometryBody">
+                <VerticalStackLayout
+                    x:Name="GeometryControlColumn"
+                    Spacing="14"
                     HorizontalOptions="Fill"
-                    VerticalOptions="Start"
-                    SizeChanged="OnGeometryMainResponsiveGridSizeChanged">
-
-                    <VerticalStackLayout
-                        x:Name="GeometryControlColumn"
-                        SizeChanged="OnGeometryControlColumnSizeChanged"
-                        Grid.Row="0"
-                        Grid.Column="0"
-                        Spacing="14"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Start">
-
-                        <!-- 1. Phân loại hình học -->
-                        <Border
-                            Style="{StaticResource SolverCardStyle}">
-
-                            <VerticalStackLayout Spacing="12">
-
-                                <Label
-                                    Text="1. Chọn loại hình học"
-                                    Style="{StaticResource SolverSectionTitleStyle}"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
-
-                                    <Button
-                                        x:Name="PlaneGeometryButton"
-                                        Grid.Row="0"
-                                        Grid.Column="0"
-
-                                        HorizontalOptions="Fill"
-                                        Text="{localization:Translate Geometry.Plane}"
-                                        Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
-                                        Clicked="OnPlaneGeometryClicked" />
-
-                                    <Button
-                                        x:Name="SolidGeometryButton"
-                                        Grid.Row="0"
-                                        Grid.Column="1"
-
-                                        HorizontalOptions="Fill"
-                                        Text="{localization:Translate Geometry.Solid}"
-                                        Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
-                                        Clicked="OnSolidGeometryClicked" />
-
-                                </Grid>
-
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <!-- 2. Chọn hình -->
-                        <Border
-                            x:Name="ShapeSelectorBorder"
-                            Padding="16"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                            StrokeThickness="1">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="14" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="10">
-
-                                <Label
-                                    Text="2. Chọn hình"
-                                    FontSize="20"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Label
-                                    Text="Chọn một hình để xem công thức và nhập dữ liệu."
-                                    FontSize="16"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                <Border
-                                    Padding="0"
-                                    BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
-                                    Stroke="{DynamicResource WallpaperBorderBrush}"
-                                    StrokeThickness="1">
-
-                                    <Border.StrokeShape>
-                                        <RoundRectangle CornerRadius="10" />
-                                    </Border.StrokeShape>
-
-                                    <Grid>
-                                        <Picker
-                                            x:Name="GeometryShapePicker"
-                                            MinimumHeightRequest="{OnPlatform Android=56, WinUI=48, Default=48}"
-                                            Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
-                                            HorizontalOptions="Fill"
-                                            VerticalOptions="Fill"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            TitleColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            x:DataType="views:GeometryCalculatorView"
-                                            ItemsSource="{Binding GeometryItems}"
-                                            SelectedIndexChanged="OnGeometryShapeSelected">
-
-                                            <Picker.ItemDisplayBinding>
-                                                <Binding
-                                                    Path="Name"
-                                                    x:DataType="models:GeometryFormulaItem" />
-                                            </Picker.ItemDisplayBinding>
-                                        </Picker>
-
-                                        <Path
-                                            IsVisible="{OnPlatform Android=True, Default=False}"
-                                            Data="M4,7 L10,13 L16,7 Z"
-                                            Fill="{DynamicResource WallpaperTextPrimaryBrush}"
-                                            WidthRequest="14"
-                                            HeightRequest="14"
-                                            Margin="0,0,18,0"
-                                            HorizontalOptions="End"
-                                            VerticalOptions="Center"
-                                            InputTransparent="True" />
-                                    </Grid>
-                                </Border>
-                            </VerticalStackLayout>
-                        </Border>
-
-                        <!-- 3. Kiểu số -->
-                        <Border x:Name="NumberTypeBorder" Style="{StaticResource SolverCardStyle}">
-
-                            <VerticalStackLayout Spacing="12">
-
-                                <Label
-                                    Text="3. Chọn kiểu số"
-                                    Style="{StaticResource SolverSectionTitleStyle}"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
-
-                                    <Button
-                                        x:Name="IntegerNumberButton"
-                                        Grid.Column="0"
-                                        Text="{localization:Translate Numbers.Integer}"
-                                        Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
-                                        Clicked="OnIntegerNumberClicked" />
-
-                                    <Button
-                                        x:Name="DecimalNumberButton"
-                                        Grid.Column="1"
-                                        Text="{localization:Translate Numbers.Decimal}"
-                                        Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
-                                        Clicked="OnDecimalNumberClicked" />
-
-                                </Grid>
-
-                            </VerticalStackLayout>
-                        </Border>
-
-                    </VerticalStackLayout>
-
-                    <!-- Công thức kế thừa trực tiếp từ GeometryFormulaItem -->
+                    VerticalOptions="Start">
+                    <!-- 1. Phân loại hình học -->
                     <Border
-                        x:Name="FormulaPreviewBorder"
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Padding="12"
-                        HorizontalOptions="Fill"
-                        VerticalOptions="Fill"
+                        Style="{StaticResource SolverCardStyle}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label
+                                Text="1. Chọn loại hình học"
+                                Style="{StaticResource SolverSectionTitleStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="140">
+                                <Button
+                                    x:Name="PlaneGeometryButton"
+                                    Grid.Row="0"
+                                    Grid.Column="0"
+                                    HorizontalOptions="Fill"
+                                    Text="{localization:Translate Geometry.Plane}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                                    Clicked="OnPlaneGeometryClicked" />
+                                <Button
+                                    x:Name="SolidGeometryButton"
+                                    Grid.Row="0"
+                                    Grid.Column="1"
+                                    HorizontalOptions="Fill"
+                                    Text="{localization:Translate Geometry.Solid}"
+                                    Style="{StaticResource SolverChoiceButtonStyle}" LineBreakMode="WordWrap"
+                                    Clicked="OnSolidGeometryClicked" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                    <!-- 2. Chọn hình -->
+                    <Border
+                        x:Name="ShapeSelectorBorder"
+                        Padding="16"
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}"
                         StrokeThickness="1">
-
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
-
-                        <Grid
-                            RowDefinitions="Auto,*"
-                            RowSpacing="8">
-
+                        <VerticalStackLayout Spacing="10">
                             <Label
-                                Grid.Row="0"
-                                Text="Công thức và hình minh họa"
+                                Text="2. Chọn hình"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            <!--
-                                Bố cục này được đổi bằng code-behind:
-                                - Màn hình rộng: hình minh họa bên trái, công thức bên phải.
-                                - Màn hình hẹp: hai phần xếp dọc.
-                            -->
-                            <Grid
-                                x:Name="FormulaPreviewContentGrid" SizeChanged="OnFormulaPreviewContentGridSizeChanged"
-                                Grid.Row="1"
-                                RowDefinitions="*"
-                                ColumnDefinitions="5*,4*"
-                                RowSpacing="8"
-                                ColumnSpacing="10"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Fill">
-
-                                <Grid
-                                    x:Name="FormulaDiagramPanel"
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    RowDefinitions="Auto,*"
-                                    RowSpacing="6"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill">
-
-                                    <Label
-                                        Grid.Row="0"
-                                        x:DataType="views:GeometryCalculatorView"
-                                        Text="{Binding SelectedGeometry.Name}"
-                                        FontSize="21"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                    <GraphicsView
-                                        x:Name="GeometryDiagramView" x:DataType="views:GeometryCalculatorView" SemanticProperties.Description="{Binding SelectedGeometry.DiagramDescription}"
-                                        Grid.Row="1"
-                                        MinimumHeightRequest="170"
+                            <Label
+                                Text="Chọn một hình để xem công thức và nhập dữ liệu."
+                                FontSize="16"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Border
+                                Padding="0"
+                                BackgroundColor="{DynamicResource WallpaperInputBackgroundColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="10" />
+                                </Border.StrokeShape>
+                                <Grid>
+                                    <Picker
+                                        x:Name="GeometryShapePicker"
+                                        MinimumHeightRequest="{OnPlatform Android=56, WinUI=48, Default=48}"
+                                        Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Fill"
-                                        SizeChanged="OnGeometryDiagramViewSizeChanged"
-                                        BackgroundColor="Transparent" />
-
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        TitleColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                        x:DataType="views:GeometryCalculatorView"
+                                        ItemsSource="{Binding GeometryItems}"
+                                        SelectedIndexChanged="OnGeometryShapeSelected">
+                                        <Picker.ItemDisplayBinding>
+                                            <Binding
+                                                Path="Name"
+                                                x:DataType="models:GeometryFormulaItem" />
+                                        </Picker.ItemDisplayBinding>
+                                    </Picker>
+                                    <Path
+                                        IsVisible="{OnPlatform Android=True, Default=False}"
+                                        Data="M4,7 L10,13 L16,7 Z"
+                                        Fill="{DynamicResource WallpaperTextPrimaryBrush}"
+                                        WidthRequest="14"
+                                        HeightRequest="14"
+                                        Margin="0,0,18,0"
+                                        HorizontalOptions="End"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True" />
                                 </Grid>
-
-                                <Grid
-                                    x:Name="FormulaTextPanel"
-                                    Grid.Row="0"
-                                    Grid.Column="1"
-                                    RowDefinitions="*,Auto,*"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill">
-
-                                    <!--
-                                        Công thức và chú thích tạo thành một cụm duy nhất,
-                                        nằm giữa theo chiều dọc. Nội dung vẫn xếp lần lượt
-                                        từ trên xuống như card ở tab Công thức > Hình học.
-                                    -->
-                                    <VerticalStackLayout
-                                        Grid.Row="1"
-                                        Spacing="9"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Center">
-
-                                        <VerticalStackLayout
-                                            Spacing="7"
-                                            HorizontalOptions="Fill"
-                                            VerticalOptions="Start"
-                                            x:DataType="views:GeometryCalculatorView"
-                                            BindableLayout.ItemsSource="{Binding SelectedGeometry.Formulas}">
-
-                                            <BindableLayout.ItemTemplate>
-                                                <DataTemplate x:DataType="x:String">
-
-                                                    <Border
-                                                        Margin="0,2"
-                                                        Padding="10,6"
-                                                        HorizontalOptions="Fill"
-                                                        VerticalOptions="Start"
-                                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                                                        StrokeThickness="1">
-
-                                                        <Border.StrokeShape>
-                                                            <RoundRectangle CornerRadius="8" />
-                                                        </Border.StrokeShape>
-
-                                                        <Label
-                                                            Text="{Binding .}"
-                                                            FontSize="16"
-                                                            FontAttributes="Bold"
-                                                            LineHeight="1.05"
-                                                            LineBreakMode="WordWrap"
-                                                            HorizontalTextAlignment="Center"
-                                                            VerticalTextAlignment="Center"
-                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                                    </Border>
-
-                                                </DataTemplate>
-                                            </BindableLayout.ItemTemplate>
-
-                                        </VerticalStackLayout>
-
-                                        <Border
-                                            Padding="10,8"
-                                            HorizontalOptions="Fill"
-                                            VerticalOptions="Start"
-                                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                            StrokeThickness="1">
-
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="9" />
-                                            </Border.StrokeShape>
-
-                                            <VerticalStackLayout
-                                                Spacing="4"
-                                                HorizontalOptions="Fill"
-                                                VerticalOptions="Center"
-                                                x:DataType="views:GeometryCalculatorView"
-                                            BindableLayout.ItemsSource="{Binding SelectedGeometry.Symbols}">
-
-                                                <BindableLayout.ItemTemplate>
-                                                    <DataTemplate x:DataType="x:String">
-
-                                                        <Label
-                                                            Text="{Binding .}"
-                                                            FontSize="14"
-                                                            FontAttributes="Italic"
-                                                            LineHeight="1.05"
-                                                            LineBreakMode="WordWrap"
-                                                            HorizontalTextAlignment="Center"
-                                                            VerticalTextAlignment="Center"
-                                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                                    </DataTemplate>
-                                                </BindableLayout.ItemTemplate>
-
-                                            </VerticalStackLayout>
-
-                                        </Border>
-
-                                        <Border
-                                            Padding="11,9"
-                                            HorizontalOptions="Fill"
-                                            VerticalOptions="Start"
-                                            BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                            Stroke="{DynamicResource WallpaperBorderBrush}"
-                                            StrokeThickness="1">
-
-                                            <Border.StrokeShape>
-                                                <RoundRectangle CornerRadius="9" />
-                                            </Border.StrokeShape>
-
-                                            <VerticalStackLayout Spacing="6">
-
-                                                <Label
-                                                    Text="Tính chất chung"
-                                                    FontSize="16"
-                                                    FontAttributes="Bold"
-                                                    HorizontalTextAlignment="Center"
-                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                                <VerticalStackLayout
-                                                    Spacing="5"
-                                                    x:DataType="views:GeometryCalculatorView"
-                                            BindableLayout.ItemsSource="{Binding SelectedGeometry.Properties}">
-
-                                                    <BindableLayout.ItemTemplate>
-                                                        <DataTemplate x:DataType="x:String">
-
-                                                            <Label
-                                                                Text="{Binding ., StringFormat='• {0}'}"
-                                                                FontSize="14"
-                                                                LineHeight="1.15"
-                                                                LineBreakMode="WordWrap"
-                                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                                        </DataTemplate>
-                                                    </BindableLayout.ItemTemplate>
-
-                                                </VerticalStackLayout>
-
-                                            </VerticalStackLayout>
-
-                                        </Border>
-
-                                    </VerticalStackLayout>
-
-                                </Grid>
-
-                            </Grid>
-
-                        </Grid>
+                            </Border>
+                        </VerticalStackLayout>
                     </Border>
-
-                </Grid>
-
-                <!-- 4. Kích thước -->
+                    <!-- 3. Kiểu số -->
+                    <Border x:Name="NumberTypeBorder" Style="{StaticResource SolverCardStyle}">
+                        <VerticalStackLayout Spacing="12">
+                            <Label
+                                Text="3. Chọn kiểu số"
+                                Style="{StaticResource SolverSectionTitleStyle}"
+                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="140">
+                                <Button
+                                    x:Name="IntegerNumberButton"
+                                    Grid.Column="0"
+                                    Text="{localization:Translate Numbers.Integer}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
+                                    Clicked="OnIntegerNumberClicked" />
+                                <Button
+                                    x:Name="DecimalNumberButton"
+                                    Grid.Column="1"
+                                    Text="{localization:Translate Numbers.Decimal}"
+                                    Style="{StaticResource SolverNumberTypeButtonStyle}" LineBreakMode="WordWrap"
+                                    Clicked="OnDecimalNumberClicked" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+                </VerticalStackLayout>
                 <Border
                     x:Name="InputFieldsBorder"
                     Padding="14"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
                     StrokeThickness="1">
-
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="14" />
                     </Border.StrokeShape>
-
                     <VerticalStackLayout Spacing="12">
-
                         <Label
                             Text="4. Nhập kích thước"
                             FontSize="20"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                         <Label
                             Text="Tất cả kích thước phải lớn hơn 0."
                             FontSize="15"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                         <Grid
                             x:Name="GeometryInputGrid"
                             ColumnDefinitions="*"
@@ -477,10 +195,8 @@
                             SizeChanged="OnGeometryInputGridSizeChanged"
                             x:DataType="views:GeometryCalculatorView"
                             BindableLayout.ItemsSource="{Binding InputFields}">
-
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="views:GeometryInputField">
-
                                     <Border
                                         MinimumHeightRequest="116"
                                         Padding="12"
@@ -489,31 +205,25 @@
                                         StrokeThickness="1"
                                         HorizontalOptions="Fill"
                                         VerticalOptions="Start">
-
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="11" />
                                         </Border.StrokeShape>
-
                                         <VerticalStackLayout Spacing="7">
-
                                             <Label
                                                 Text="{Binding Label}"
                                                 FontSize="16"
                                                 FontAttributes="Bold"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                                             <Border
                                                 MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                                 Padding="10,0"
                                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                                 Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                                 StrokeThickness="1">
-
                                                 <Border.StrokeShape>
                                                     <RoundRectangle CornerRadius="9" />
                                                 </Border.StrokeShape>
-
                                                 <Entry
                                                     Text="{Binding Text, Mode=TwoWay}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" SemanticProperties.Description="{Binding Label}"
                                                     Placeholder="{Binding Placeholder}"
@@ -529,27 +239,357 @@
                                                     Focused="OnGeometryEntryFocused"
                                                     Unfocused="OnGeometryEntryUnfocused"
                                                     TextChanged="OnGeometryEntryTextChanged" />
-
                                             </Border>
-
                                         </VerticalStackLayout>
-
                                     </Border>
-
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-
                         </Grid>
-
+                    </VerticalStackLayout>
+                </Border>
+                <Border
+                    x:Name="ErrorBorder"
+                    IsVisible="False"
+                    Padding="12"
+                    BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
+                    Stroke="{DynamicResource DangerBorderBrush}"
+                    StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="11" />
+                    </Border.StrokeShape>
+                    <Grid
+                        ColumnDefinitions="Auto,*"
+                        ColumnSpacing="10">
+                        <Label
+                            Grid.Column="0"
+                            Text="❌"
+                            FontSize="20"
+                            TextColor="{DynamicResource ContentDangerTextColor}" />
+                        <VerticalStackLayout
+                            Grid.Column="1"
+                            Spacing="3">
+                            <Label
+                                Text="Dữ liệu không hợp lệ"
+                                FontSize="17"
+                                FontAttributes="Bold"
+                                TextColor="{DynamicResource ContentDangerTextColor}" />
+                            <Label
+                                x:Name="ErrorLabel"
+                                FontSize="16"
+                                LineHeight="1.3"
+                                LineBreakMode="WordWrap"
+                                TextColor="{DynamicResource ContentDangerTextColor}" />
+                        </VerticalStackLayout>
+                    </Grid>
+                </Border>
+                <Grid x:Name="GeometryOutputGrid" controls:SolverWorkspace.StartsResult="True"
+                    RowDefinitions="Auto,Auto" RowSpacing="14" SizeChanged="OnGeometryOutputSizeChanged">
+<Border
+                    x:Name="FormulaPreviewBorder" Grid.Row="0"
+                    Padding="12"
+                    HorizontalOptions="Fill"
+                    VerticalOptions="Start"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+                    <Grid
+                        RowDefinitions="Auto,Auto"
+                        RowSpacing="8">
+                        <Label
+                            Grid.Row="0"
+                            Text="Công thức và hình minh họa"
+                            FontSize="20"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <!--
-                            Hàng thao tác luôn chiếm toàn bộ bề rộng hữu dụng của
-                            khung nhập và chia đều 50:50, độc lập với số cột dữ kiện.
-                            Các hàng Auto phía trên tự lấy chiều cao đầy đủ của ô nhập nên
-                            hàng nút luôn được đẩy xuống ngay sau hàng dữ kiện cuối.
+                        Bố cục này được đổi bằng code-behind:
+                        - Màn hình rộng: hình minh họa bên trái, công thức bên phải.
+                        - Màn hình hẹp: hai phần xếp dọc.
                         -->
                         <Grid
-                            x:Name="GeometryActionGrid" controls:AdaptiveColumns.MinimumColumnWidth="220"
-                            Margin="0,16,0,0"
+                            x:Name="FormulaPreviewContentGrid" SizeChanged="OnFormulaPreviewContentGridSizeChanged"
+                            Grid.Row="1"
+                            RowDefinitions="Auto"
+                            ColumnDefinitions="5*,4*"
+                            RowSpacing="8"
+                            ColumnSpacing="10"
+                            HorizontalOptions="Fill"
+                            VerticalOptions="Fill">
+                            <Grid
+                                x:Name="FormulaDiagramPanel"
+                                Grid.Row="0"
+                                Grid.Column="0"
+                                RowDefinitions="Auto,Auto"
+                                RowSpacing="6"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill">
+                                <Label
+                                    Grid.Row="0"
+                                    x:DataType="views:GeometryCalculatorView"
+                                    Text="{Binding SelectedGeometry.Name}"
+                                    FontSize="21"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <GraphicsView
+                                    x:Name="GeometryDiagramView" x:DataType="views:GeometryCalculatorView" SemanticProperties.Description="{Binding SelectedGeometry.DiagramDescription}"
+                                    Grid.Row="1"
+                                    MinimumHeightRequest="170"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    SizeChanged="OnGeometryDiagramViewSizeChanged"
+                                    BackgroundColor="Transparent" />
+                            </Grid>
+                            <Grid
+                                x:Name="FormulaTextPanel"
+                                Grid.Row="0"
+                                Grid.Column="1"
+                                RowDefinitions="Auto"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Fill">
+                                <!--
+                                Công thức và chú thích tạo thành một cụm duy nhất,
+                                nằm giữa theo chiều dọc. Nội dung vẫn xếp lần lượt
+                                từ trên xuống như card ở tab Công thức > Hình học.
+                                -->
+                                <VerticalStackLayout
+                                    Grid.Row="0" Spacing="9"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Center">
+                                    <VerticalStackLayout
+                                        Spacing="7"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Start"
+                                        x:DataType="views:GeometryCalculatorView"
+                                        BindableLayout.ItemsSource="{Binding SelectedGeometry.Formulas}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Border
+                                                    Margin="0,2"
+                                                    Padding="10,6"
+                                                    HorizontalOptions="Fill"
+                                                    VerticalOptions="Start"
+                                                    BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                                    Stroke="{DynamicResource WallpaperBorderBrush}"
+                                                    StrokeThickness="1">
+                                                    <Border.StrokeShape>
+                                                        <RoundRectangle CornerRadius="8" />
+                                                    </Border.StrokeShape>
+                                                    <Label
+                                                        Text="{Binding .}"
+                                                        FontSize="16"
+                                                        FontAttributes="Bold"
+                                                        LineBreakMode="WordWrap"
+                                                        HorizontalTextAlignment="Center"
+                                                        VerticalTextAlignment="Center"
+                                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                    <controls:FormulaDetails x:Name="GeometryReferenceDetails" Title="{localization:Translate Geometry.ReferenceDetails}">
+                                        <VerticalStackLayout Spacing="8">
+                                            <Border
+                                                Padding="10,8"
+                                                HorizontalOptions="Fill"
+                                                VerticalOptions="Start"
+                                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                                StrokeThickness="1">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="9" />
+                                                </Border.StrokeShape>
+                                                <VerticalStackLayout
+                                                    Spacing="4"
+                                                    HorizontalOptions="Fill"
+                                                    VerticalOptions="Center"
+                                                    x:DataType="views:GeometryCalculatorView"
+                                                    BindableLayout.ItemsSource="{Binding SelectedGeometry.Symbols}">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="x:String">
+                                                            <Label
+                                                                Text="{Binding .}"
+                                                                FontSize="14"
+                                                                FontAttributes="Italic"
+                                                                LineBreakMode="WordWrap"
+                                                                HorizontalTextAlignment="Center"
+                                                                VerticalTextAlignment="Center"
+                                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </Border>
+                                            <Border
+                                                Padding="11,9"
+                                                HorizontalOptions="Fill"
+                                                VerticalOptions="Start"
+                                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                                StrokeThickness="1">
+                                                <Border.StrokeShape>
+                                                    <RoundRectangle CornerRadius="9" />
+                                                </Border.StrokeShape>
+                                                <VerticalStackLayout Spacing="6">
+                                                    <Label
+                                                        Text="Tính chất chung"
+                                                        FontSize="16"
+                                                        FontAttributes="Bold"
+                                                        HorizontalTextAlignment="Center"
+                                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                                    <VerticalStackLayout
+                                                        Spacing="5"
+                                                        x:DataType="views:GeometryCalculatorView"
+                                                        BindableLayout.ItemsSource="{Binding SelectedGeometry.Properties}">
+                                                        <BindableLayout.ItemTemplate>
+                                                            <DataTemplate x:DataType="x:String">
+                                                                <Label
+                                                                    Text="{Binding ., StringFormat='• {0}'}"
+                                                                    FontSize="14"
+                                                                    LineBreakMode="WordWrap"
+                                                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                                            </DataTemplate>
+                                                        </BindableLayout.ItemTemplate>
+                                                    </VerticalStackLayout>
+                                                </VerticalStackLayout>
+                                            </Border>
+                                        </VerticalStackLayout>
+                                    </controls:FormulaDetails>
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Border>
+<Border
+                    x:Name="ResultBorder" Grid.Row="1"
+                    IsVisible="False"
+                    Padding="14"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="Kết quả"
+                            FontSize="22"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
+                        <Label
+                            x:Name="ResultShapeLabel"
+                            FontSize="19"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                        <VerticalStackLayout
+                            Spacing="8"
+                            x:DataType="views:GeometryCalculatorView"
+                            BindableLayout.ItemsSource="{Binding Results}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="views:GeometryResultLine">
+                                    <Border
+                                        Padding="12"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="10" />
+                                        </Border.StrokeShape>
+                                        <Grid
+                                            RowDefinitions="Auto,Auto"
+                                            ColumnDefinitions="*,Auto"
+                                            RowSpacing="5"
+                                            ColumnSpacing="12">
+                                            <Label
+                                                Grid.Row="0"
+                                                Grid.Column="0"
+                                                Text="{Binding Title}"
+                                                FontSize="17"
+                                                FontAttributes="Bold"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                            <Label
+                                                Grid.Row="0"
+                                                Grid.Column="1"
+                                                Text="{Binding Value}"
+                                                FontSize="19"
+                                                FontAttributes="Bold"
+                                                HorizontalTextAlignment="End"
+                                                LineBreakMode="WordWrap"
+                                                TextColor="{DynamicResource ContentAccentTextColor}" />
+                                            <Label
+                                                Grid.Row="1"
+                                                Grid.Column="0"
+                                                Grid.ColumnSpan="2"
+                                                Text="{Binding Formula}"
+                                                FontSize="15"
+                                                LineBreakMode="WordWrap"
+                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+                            <controls:ResultCopyButton
+                                x:Name="GeometryCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnGeometryCopyResultClicked" />
+                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ColumnSpacing="8">
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference GeometryCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+                            </Grid>
+                        </Grid>
+                        <Border
+                            Padding="11"
+                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="10" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="4">
+                                <Label
+                                    Text="Cách tính"
+                                    FontSize="17"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
+                                <Label
+                                    x:Name="CalculationExplanationLabel"
+                                    FontSize="16"
+                                    LineHeight="1.35"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+                </Grid>
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
+            <Grid Style="{StaticResource SolverActionButtonsStyle}"
+                            x:Name="GeometryActionGrid"
                             ColumnDefinitions="*,*"
                             ColumnSpacing="10"
                             RowSpacing="10">
@@ -573,208 +613,6 @@
                                 Clicked="OnClearClicked" />
 
                         </Grid>
-
-                    </VerticalStackLayout>
-                </Border>
-
-                <!-- Lỗi -->
-                <Border
-                    x:Name="ErrorBorder"
-                    IsVisible="False"
-                    Padding="12"
-                    BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
-                    Stroke="{DynamicResource DangerBorderBrush}"
-                    StrokeThickness="1">
-
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="11" />
-                    </Border.StrokeShape>
-
-                    <Grid
-                        ColumnDefinitions="Auto,*"
-                        ColumnSpacing="10">
-
-                        <Label
-                            Grid.Column="0"
-                            Text="❌"
-                            FontSize="20"
-                            TextColor="{DynamicResource ContentDangerTextColor}" />
-
-                        <VerticalStackLayout
-                            Grid.Column="1"
-                            Spacing="3">
-
-                            <Label
-                                Text="Dữ liệu không hợp lệ"
-                                FontSize="17"
-                                FontAttributes="Bold"
-                                TextColor="{DynamicResource ContentDangerTextColor}" />
-
-                            <Label
-                                x:Name="ErrorLabel"
-                                FontSize="16"
-                                LineHeight="1.3"
-                                LineBreakMode="WordWrap"
-                                TextColor="{DynamicResource ContentDangerTextColor}" />
-
-                        </VerticalStackLayout>
-
-                    </Grid>
-                </Border>
-
-                <!-- Kết quả -->
-                <Border
-                    x:Name="ResultBorder"
-                    IsVisible="False"
-                    Padding="14"
-                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                    StrokeThickness="1">
-
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="14" />
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="12">
-
-                        <Label
-                            Text="Kết quả"
-                            FontSize="22"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource ContentAccentTextColor}" />
-
-                        <Label
-                            x:Name="ResultShapeLabel"
-                            FontSize="19"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                        <VerticalStackLayout
-                            Spacing="8"
-                            x:DataType="views:GeometryCalculatorView"
-                            BindableLayout.ItemsSource="{Binding Results}">
-
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="views:GeometryResultLine">
-
-                                    <Border
-                                        Padding="12"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperBorderBrush}"
-                                        StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="10" />
-                                        </Border.StrokeShape>
-
-                                        <Grid
-                                            RowDefinitions="Auto,Auto"
-                                            ColumnDefinitions="*,Auto"
-                                            RowSpacing="5"
-                                            ColumnSpacing="12">
-
-                                            <Label
-                                                Grid.Row="0"
-                                                Grid.Column="0"
-                                                Text="{Binding Title}"
-                                                FontSize="17"
-                                                FontAttributes="Bold"
-                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                            <Label
-                                                Grid.Row="0"
-                                                Grid.Column="1"
-                                                Text="{Binding Value}"
-                                                FontSize="19"
-                                                FontAttributes="Bold"
-                                                HorizontalTextAlignment="End"
-                                                LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource ContentAccentTextColor}" />
-
-                                            <Label
-                                                Grid.Row="1"
-                                                Grid.Column="0"
-                                                Grid.ColumnSpan="2"
-                                                Text="{Binding Formula}"
-                                                FontSize="15"
-                                                LineBreakMode="WordWrap"
-                                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                        </Grid>
-
-                                    </Border>
-
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-
-                        </VerticalStackLayout>
-
-                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
-
-                            <controls:ResultCopyButton
-                                x:Name="GeometryCopyResultButton"
-                                NormalTextKey="PowerRoot.CopyResult"
-                                Text=""
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnGeometryCopyResultClicked" />
-
-                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
-                                InputTransparent="True"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                ColumnSpacing="8">
-
-                                <controls:ThemedCopyIcon
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
-
-                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                    Text="{Binding DisplayText, Source={x:Reference GeometryCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    VerticalTextAlignment="Center" />
-
-                            </Grid>
-
-                        </Grid>
-
-                        <Border
-                            Padding="11"
-                            BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                            StrokeThickness="1">
-
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="10" />
-                            </Border.StrokeShape>
-
-                            <VerticalStackLayout Spacing="4">
-
-                                <Label
-                                    Text="Cách tính"
-                                    FontSize="17"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource ContentAccentTextColor}" />
-
-                                <Label
-                                    x:Name="CalculationExplanationLabel"
-                                    FontSize="16"
-                                    LineHeight="1.35"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            </VerticalStackLayout>
-
-                        </Border>
-
-                    </VerticalStackLayout>
-                </Border>
-    </VerticalStackLayout>
-        </ScrollView>
+        </Border>
     </Grid>
 </base:LocalizedSolverView>

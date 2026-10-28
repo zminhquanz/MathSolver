@@ -286,7 +286,7 @@
             x:Name="CalculationSubTabContentHost"
             Grid.Row="1"
             BackgroundColor="Transparent">
-            <Grid x:Name="BasicTabContent" RowDefinitions="Auto,*">
+            <Grid x:Name="BasicTabContent" RowDefinitions="Auto,*,Auto">
                 <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
                     <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
 
@@ -588,24 +588,7 @@
 
                                 </VerticalStackLayout>
 
-                                <Grid
-                                    Margin="0,8,0,0"
-                                    ColumnDefinitions="*,*"
-                                    ColumnSpacing="12">
 
-                                    <Button
-                                        Grid.Column="0"
-                                        Text="{localization:Translate Actions.Calculate}"
-                                        Style="{StaticResource SolverPrimaryActionStyle}"
-                                        Clicked="OnCalculateClicked" />
-
-                                    <Button
-                                        Grid.Column="1"
-                                        Text="{localization:Translate Actions.Clear}"
-                                        Style="{StaticResource SolverSecondaryActionStyle}"
-                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                        Clicked="OnClearClicked" />
-                                </Grid>
                             </VerticalStackLayout>
                         </Border>
 
@@ -1094,6 +1077,26 @@
                         </Border>
     </VerticalStackLayout>
                 </ScrollView>
+
+        <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
+                    <Grid Style="{StaticResource SolverActionButtonsStyle}"
+                                    ColumnDefinitions="*,*"
+                                    ColumnSpacing="12">
+
+                                    <Button
+                                        Grid.Column="0"
+                                        Text="{localization:Translate Actions.Calculate}"
+                                        Style="{StaticResource SolverPrimaryActionStyle}"
+                                        Clicked="OnCalculateClicked" />
+
+                                    <Button
+                                        Grid.Column="1"
+                                        Text="{localization:Translate Actions.Clear}"
+                                        Style="{StaticResource SolverSecondaryActionStyle}"
+                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                        Clicked="OnClearClicked" />
+                                </Grid>
+        </Border>
             </Grid>
             <Grid x:Name="NumberTheoryTabContent" IsVisible="False">
                 <controls:LazyContentView x:Name="NumberTheorySolverHost" ContentTemplate="{DataTemplate views:NumberTheoryView}" />

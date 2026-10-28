@@ -10,7 +10,7 @@
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
@@ -32,24 +32,19 @@
 
         <ScrollView Grid.Row="1"
             HorizontalOptions="Fill"
-            VerticalOptions="Fill">
+            VerticalOptions="Fill" x:Name="PowerRootScrollView" controls:SolverWorkspace.IsEnabled="True">
 
             <VerticalStackLayout
                 Style="{StaticResource SolverScrollableContentStyle}">
-
                 <Border
                     Style="{StaticResource SolverCardStyle}">
-
                     <VerticalStackLayout Spacing="14">
-
                         <Label
                             Text="{localization:Translate PowerRoot.ChooseMode}"
                             Style="{StaticResource SolverSectionTitleStyle}" />
-
                         <Grid
                             ColumnDefinitions="*,*"
                             ColumnSpacing="10">
-
                             <Button
                                 x:Name="PowerModeButton"
                                 Grid.Column="0"
@@ -58,7 +53,6 @@
                                 BackgroundColor="{DynamicResource PrimaryColor}"
                                 TextColor="{DynamicResource OnPrimaryColor}"
                                 Clicked="OnPowerModeClicked" />
-
                             <Button
                                 x:Name="RootModeButton"
                                 Grid.Column="1"
@@ -67,62 +61,48 @@
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 Clicked="OnRootModeClicked" />
-
                         </Grid>
-
                     </VerticalStackLayout>
-
                 </Border>
-
                 <VerticalStackLayout
                     x:Name="PowerContent"
                     Spacing="14">
-
                     <Border
                         Padding="{OnPlatform Android=12, WinUI=14, Default=14}"
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                         Stroke="{DynamicResource WallpaperBorderBrush}"
                         StrokeThickness="1">
-
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
-
                         <VerticalStackLayout Spacing="14">
-
                             <Label
                                 Text="{localization:Translate PowerRoot.InputTitle}"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                             <Grid
                                 ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
                                 RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
                                 ColumnSpacing="12"
                                 RowSpacing="10">
-
                                 <VerticalStackLayout
                                     Grid.Row="0"
                                     Grid.Column="0"
                                     Spacing="6">
-
                                     <Label
                                         Text="{localization:Translate PowerRoot.BaseLabel}"
                                         FontSize="16"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                                     <Border
                                         Padding="12,4"
                                         BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                         StrokeThickness="1">
-
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="12" />
                                         </Border.StrokeShape>
-
                                         <Entry
                                             x:Name="BaseEntry"
                                             Placeholder="Ví dụ : 1,000,000,000,000,000,000"
@@ -132,32 +112,25 @@
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                             TextChanged="OnInputTextChanged"
                                             Unfocused="OnIntegerEntryUnfocused" />
-
                                     </Border>
-
                                 </VerticalStackLayout>
-
                                 <VerticalStackLayout
                                     Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
                                     Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
                                     Spacing="6">
-
                                     <Label
                                         Text="{localization:Translate PowerRoot.ExponentLabel}"
                                         FontSize="16"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                                     <Border
                                         Padding="12,4"
                                         BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                                         StrokeThickness="1">
-
                                         <Border.StrokeShape>
                                             <RoundRectangle CornerRadius="12" />
                                         </Border.StrokeShape>
-
                                         <Entry
                                             x:Name="ExponentEntry"
                                             Placeholder="{localization:Translate PowerRoot.ExponentPlaceholder}"
@@ -167,13 +140,9 @@
                                             PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
                                             TextChanged="OnInputTextChanged"
                                             Unfocused="OnIntegerEntryUnfocused" />
-
                                     </Border>
-
                                 </VerticalStackLayout>
-
                             </Grid>
-
                             <Border
                                 x:Name="ErrorBorder"
                                 IsVisible="False"
@@ -181,141 +150,129 @@
                                 BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
                                 Stroke="{DynamicResource DangerBorderBrush}"
                                 StrokeThickness="1">
-
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-
                                 <Grid
                                     ColumnDefinitions="Auto,*"
                                     ColumnSpacing="10">
-
                                     <Label
                                         Text="❌"
                                         FontSize="22"
                                         TextColor="{DynamicResource ContentDangerTextColor}" />
-
                                     <Label
                                         x:Name="ErrorLabel"
                                         Grid.Column="1"
                                         FontSize="15"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource ContentDangerTextColor}" />
-
                                 </Grid>
-
                             </Border>
-
-                            <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
-
-                                <Button
-                                    x:Name="CalculateButton"
-                                    Grid.Column="0"
-                                    Text="{localization:Translate Actions.Calculate}"
-                                    Style="{StaticResource SolverPrimaryActionStyle}"
-                                    Clicked="OnCalculateClicked" />
-
-                                <Button
-                                    x:Name="ClearButton"
-                                    Grid.Column="1"
-                                    Text="{localization:Translate Actions.Clear}"
-                                    Style="{StaticResource SolverSecondaryActionStyle}"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    Clicked="OnClearClicked" />
-
-                            </Grid>
-
                         </VerticalStackLayout>
-
                     </Border>
-
-                    <Border
-                        x:Name="ProgressBorder"
-                        IsVisible="False"
-                        Padding="16"
-                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                        StrokeThickness="1">
-
-                        <Border.StrokeShape>
-                            <RoundRectangle CornerRadius="14" />
-                        </Border.StrokeShape>
-
-                        <VerticalStackLayout Spacing="12">
-
-                            <Grid
-                                ColumnDefinitions="Auto,*"
-                                ColumnSpacing="10">
-
-                                <ActivityIndicator
-                                    x:Name="CalculationActivityIndicator"
-                                    Grid.Column="0"
-                                    WidthRequest="24"
-                                    HeightRequest="24"
-                                    VerticalOptions="Center"
-                                    IsRunning="False"
-                                    IsVisible="False"
-                                    Color="{DynamicResource PrimaryColor}" />
-
-                                <Label
-                                    x:Name="ProgressTitleLabel"
-                                    Grid.Column="1"
-                                    VerticalTextAlignment="Center"
-                                    FontSize="18"
-                                    FontAttributes="Bold"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                            </Grid>
-
+                </VerticalStackLayout>
+                <VerticalStackLayout
+                    x:Name="RootContent"
+                    IsVisible="False"
+                    Spacing="14">
+                    <Border Style="{StaticResource SolverCardStyle}">
+                        <VerticalStackLayout Spacing="14">
                             <Label
-                                Text="{localization:Translate PowerRoot.Diagnostics.ProgressEstimate}"
-                                FontSize="13"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
+                                Text="{localization:Translate PowerRoot.RootInputTitle}"
+                                Style="{StaticResource SolverSectionTitleStyle}" />
                             <Grid
-                                ColumnDefinitions="*,Auto"
-                                ColumnSpacing="12">
-
-                                <ProgressBar
-                                    x:Name="CalculationProgressBar"
+                                ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
+                                RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
+                                ColumnSpacing="12"
+                                RowSpacing="10">
+                                <VerticalStackLayout
+                                    Grid.Row="0"
                                     Grid.Column="0"
-                                    HeightRequest="10"
-                                    Progress="0"
-                                    ProgressColor="{DynamicResource PrimaryColor}" />
-
-                                <Label
-                                    x:Name="ProgressPercentLabel"
-                                    Grid.Column="1"
-                                    Text="0%"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource ContentAccentTextColor}" />
-
+                                    Spacing="6">
+                                    <Label
+                                        Text="{localization:Translate PowerRoot.RadicandLabel}"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Border
+                                        Padding="12,4"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+                                        <Entry
+                                            x:Name="RootRadicandEntry"
+                                            Placeholder="{localization:Translate PowerRoot.RadicandPlaceholder}"
+                                            Keyboard="Numeric"
+                                            FontSize="18"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            Focused="OnRootRadicandFocused"
+                                            TextChanged="OnRootInputTextChanged"
+                                            Unfocused="OnRootRadicandUnfocused" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout
+                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
+                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
+                                    Spacing="6">
+                                    <Label
+                                        Text="{localization:Translate PowerRoot.DegreeLabel}"
+                                        FontSize="16"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Border
+                                        Padding="12,4"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="12" />
+                                        </Border.StrokeShape>
+                                        <Entry
+                                            x:Name="RootDegreeEntry"
+                                            Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
+                                            Keyboard="Text"
+                                            MaxLength="14"
+                                            FontSize="18"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
+                                            TextChanged="OnRootInputTextChanged"
+                                            Unfocused="OnRootDegreeUnfocused" />
+                                    </Border>
+                                </VerticalStackLayout>
                             </Grid>
-
-                            <Label
-                                x:Name="ProgressStepsLabel"
-                                FontSize="15"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                            <Button
-                                x:Name="StopButton"
-                                Text="{localization:Translate PowerRoot.Stop}"
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="16"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource DangerColor}"
-                                TextColor="White"
-                                Clicked="OnStopClicked" />
-
+                            <Border
+                                x:Name="RootErrorBorder"
+                                IsVisible="False"
+                                Padding="12,10"
+                                BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
+                                Stroke="{DynamicResource DangerBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <Grid
+                                    ColumnDefinitions="Auto,*"
+                                    ColumnSpacing="10">
+                                    <Label
+                                        Text="❌"
+                                        FontSize="22"
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
+                                    <Label
+                                        x:Name="RootErrorLabel"
+                                        Grid.Column="1"
+                                        FontSize="15"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource ContentDangerTextColor}" />
+                                </Grid>
+                            </Border>
                         </VerticalStackLayout>
-
                     </Border>
-
+                </VerticalStackLayout>
+                <VerticalStackLayout x:Name="PowerResults" IsVisible="False" controls:SolverWorkspace.StartsResult="True">
                     <Border
                         x:Name="ResultBorder"
                         IsVisible="False"
@@ -323,28 +280,22 @@
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
-
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
-
                         <VerticalStackLayout Spacing="14">
-
                             <Label
                                 Text="{localization:Translate PowerRoot.ResultTitle}"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                             <Border
                                 Padding="14"
                                 BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                 StrokeThickness="0">
-
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-
                                 <Label
                                     x:Name="ResultExpressionLabel"
                                     FontSize="32"
@@ -352,64 +303,10 @@
                                     LineBreakMode="WordWrap"
                                     HorizontalTextAlignment="Center"
                                     TextColor="{DynamicResource ContentAccentTextColor}" />
-
                             </Border>
-
-                            <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
-
-                                <Grid
-                                    x:Name="CopyResultButtonContainer"
-                                    Grid.Column="0"
-                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
-
-                                    <controls:ResultCopyButton
-                                        x:Name="CopyResultButton"
-                                        NormalTextKey="PowerRoot.CopyCompact"
-                                        Text=""
-                                        CornerRadius="12"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                        Clicked="OnCopyResultClicked" />
-
-                                    <Grid
-                                        InputTransparent="True"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-
-                                        <controls:ThemedCopyIcon
-                                            WidthRequest="20"
-                                            HeightRequest="20" />
-
-                                        <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                            Text="{Binding DisplayText, Source={x:Reference CopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            VerticalTextAlignment="Center" />
-
-                                    </Grid>
-
-                                </Grid>
-
-                                <Button
-                                    x:Name="ExportTextButton"
-                                    Grid.Column="1"
-                                    IsVisible="False"
-                                    Text="{localization:Translate PowerRoot.ExportTxt}"
-                                    MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                    CornerRadius="12"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    ImageSource="file_export.png"
-                                    Clicked="OnExportTextClicked" />
-
-                            </Grid>
-
+                            <Border x:Name="PowerSummaryBorder" IsVisible="False" Style="{StaticResource SolverCardStyle}">
+                                <VerticalStackLayout x:Name="PowerSummaryRows" Spacing="10" />
+                            </Border>
                             <Border
                                 x:Name="ExportStatusBorder"
                                 IsVisible="False"
@@ -417,17 +314,14 @@
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 Stroke="{DynamicResource WallpaperBorderBrush}"
                                 StrokeThickness="1">
-
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-
                                 <Grid
                                     RowDefinitions="Auto,Auto"
                                     ColumnDefinitions="Auto,*"
                                     RowSpacing="10"
                                     ColumnSpacing="10">
-
                                     <ActivityIndicator
                                         x:Name="ExportActivityIndicator"
                                         Grid.Row="0"
@@ -437,7 +331,6 @@
                                         IsRunning="False"
                                         IsVisible="False"
                                         Color="{DynamicResource PrimaryColor}" />
-
                                     <Label
                                         x:Name="ExportStatusLabel"
                                         Grid.Row="0"
@@ -446,7 +339,6 @@
                                         FontSize="14"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                                     <ProgressBar
                                         x:Name="ExportProgressBar"
                                         Grid.Row="1"
@@ -455,15 +347,8 @@
                                         HeightRequest="6"
                                         Progress="0"
                                         ProgressColor="{DynamicResource PrimaryColor}" />
-
                                 </Grid>
-
                             </Border>
-
-                            <Border x:Name="PowerSummaryBorder" IsVisible="False" Style="{StaticResource SolverCardStyle}">
-                                <VerticalStackLayout x:Name="PowerSummaryRows" Spacing="10" />
-                            </Border>
-
                             <Button
                                 x:Name="DiagnosticsToggleButton"
                                 IsVisible="False"
@@ -477,7 +362,6 @@
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                                 Clicked="OnDiagnosticsToggleClicked" />
-
                             <Border
                                 x:Name="LargeResultInfoBorder"
                                 IsVisible="False"
@@ -485,184 +369,26 @@
                                 BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                 Stroke="{DynamicResource WallpaperBorderBrush}"
                                 StrokeThickness="1">
-
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-
                                 <VerticalStackLayout x:Name="PowerDiagnosticsSections" Spacing="12" />
-
                             </Border>
-
                             <Label
                                 Text="{localization:Translate PowerRoot.SolutionTitle}"
                                 FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                             <Label
                                 x:Name="SolutionLabel"
                                 FontSize="16"
                                 LineHeight="1.3"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                         </VerticalStackLayout>
-
                     </Border>
-
                 </VerticalStackLayout>
-
-                <VerticalStackLayout
-                    x:Name="RootContent"
-                    IsVisible="False"
-                    Spacing="14">
-
-                    <Border Style="{StaticResource SolverCardStyle}">
-
-                        <VerticalStackLayout Spacing="14">
-
-                            <Label
-                                Text="{localization:Translate PowerRoot.RootInputTitle}"
-                                Style="{StaticResource SolverSectionTitleStyle}" />
-
-                            <Grid
-                                ColumnDefinitions="{OnPlatform Android='*', WinUI='*,*', Default='*,*'}"
-                                RowDefinitions="{OnPlatform Android='Auto,Auto', WinUI='Auto', Default='Auto'}"
-                                ColumnSpacing="12"
-                                RowSpacing="10">
-
-                                <VerticalStackLayout
-                                    Grid.Row="0"
-                                    Grid.Column="0"
-                                    Spacing="6">
-
-                                    <Label
-                                        Text="{localization:Translate PowerRoot.RadicandLabel}"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                    <Border
-                                        Padding="12,4"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                        StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="12" />
-                                        </Border.StrokeShape>
-
-                                        <Entry
-                                            x:Name="RootRadicandEntry"
-                                            Placeholder="{localization:Translate PowerRoot.RadicandPlaceholder}"
-                                            Keyboard="Numeric"
-                                            FontSize="18"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                            Focused="OnRootRadicandFocused"
-                                            TextChanged="OnRootInputTextChanged"
-                                            Unfocused="OnRootRadicandUnfocused" />
-
-                                    </Border>
-
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout
-                                    Grid.Row="{OnPlatform Android=1, WinUI=0, Default=0}"
-                                    Grid.Column="{OnPlatform Android=0, WinUI=1, Default=1}"
-                                    Spacing="6">
-
-                                    <Label
-                                        Text="{localization:Translate PowerRoot.DegreeLabel}"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
-                                    <Border
-                                        Padding="12,4"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                        StrokeThickness="1">
-
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="12" />
-                                        </Border.StrokeShape>
-
-                                        <Entry
-                                            x:Name="RootDegreeEntry"
-                                            Placeholder="{localization:Translate PowerRoot.DegreePlaceholder}"
-                                            Keyboard="Text"
-                                            MaxLength="14"
-                                            FontSize="18"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            PlaceholderColor="{DynamicResource WallpaperTextSecondaryColor}"
-                                            TextChanged="OnRootInputTextChanged"
-                                            Unfocused="OnRootDegreeUnfocused" />
-
-                                    </Border>
-
-                                </VerticalStackLayout>
-
-                            </Grid>
-
-                            <Border
-                                x:Name="RootErrorBorder"
-                                IsVisible="False"
-                                Padding="12,10"
-                                BackgroundColor="{DynamicResource WallpaperDangerSoftColor}"
-                                Stroke="{DynamicResource DangerBorderBrush}"
-                                StrokeThickness="1">
-
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-
-                                <Grid
-                                    ColumnDefinitions="Auto,*"
-                                    ColumnSpacing="10">
-
-                                    <Label
-                                        Text="❌"
-                                        FontSize="22"
-                                        TextColor="{DynamicResource ContentDangerTextColor}" />
-
-                                    <Label
-                                        x:Name="RootErrorLabel"
-                                        Grid.Column="1"
-                                        FontSize="15"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource ContentDangerTextColor}" />
-
-                                </Grid>
-
-                            </Border>
-
-                            <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
-
-                                <Button
-                                    x:Name="RootCalculateButton"
-                                    Grid.Column="0"
-                                    Text="{localization:Translate Actions.Calculate}"
-                                    Style="{StaticResource SolverPrimaryActionStyle}"
-                                    Clicked="OnRootCalculateClicked" />
-
-                                <Button
-                                    x:Name="RootClearButton"
-                                    Grid.Column="1"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    Text="{localization:Translate Actions.Clear}"
-                                    Style="{StaticResource SolverSecondaryActionStyle}"
-                                    Clicked="OnRootClearClicked" />
-
-                            </Grid>
-
-                        </VerticalStackLayout>
-
-                    </Border>
-
+                <VerticalStackLayout x:Name="RootResults" IsVisible="False">
                     <Border
                         x:Name="RootResultBorder"
                         IsVisible="False"
@@ -670,45 +396,36 @@
                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
                         StrokeThickness="1">
-
                         <Border.StrokeShape>
                             <RoundRectangle CornerRadius="14" />
                         </Border.StrokeShape>
-
                         <VerticalStackLayout Spacing="14">
-
                             <Label
                                 Text="{localization:Translate PowerRoot.RootResultTitle}"
                                 FontSize="20"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                             <Border
                                 Padding="14"
                                 BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                 StrokeThickness="0">
-
                                 <Border.StrokeShape>
                                     <RoundRectangle CornerRadius="12" />
                                 </Border.StrokeShape>
-
                                 <VerticalStackLayout Spacing="8">
-
                                     <!--
-                                        Trình bày dấu căn theo đúng quy ước sách giáo khoa:
-                                        căn bậc hai không có chỉ số; mọi bậc khác 2
-                                        (kể cả bậc âm) đặt chỉ số nhỏ ở góc trên bên trái.
-                                        Biểu thức, dấu bằng và kết quả nằm cùng dòng.
+                                    Trình bày dấu căn theo đúng quy ước sách giáo khoa:
+                                    căn bậc hai không có chỉ số; mọi bậc khác 2
+                                    (kể cả bậc âm) đặt chỉ số nhỏ ở góc trên bên trái.
+                                    Biểu thức, dấu bằng và kết quả nằm cùng dòng.
                                     -->
                                     <ScrollView
                                         Orientation="Horizontal"
                                         HorizontalScrollBarVisibility="Never"
                                         HorizontalOptions="Center">
-
                                         <HorizontalStackLayout
                                             Spacing="6"
                                             VerticalOptions="Center">
-
                                             <controls:TextbookRadicalExpressionView
                                                 x:Name="RootResultExpressionView"
                                                 FontSize="32"
@@ -717,14 +434,12 @@
                                                 LineColor="{DynamicResource PrimaryColor}"
                                                 TextColor="{DynamicResource ContentAccentTextColor}"
                                                 HorizontalOptions="Center" />
-
                                             <Label
                                                 Text="="
                                                 FontSize="32"
                                                 FontAttributes="Bold"
                                                 VerticalTextAlignment="Center"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
-
                                             <Label
                                                 x:Name="RootResultValueLabel"
                                                 FontSize="32"
@@ -732,70 +447,142 @@
                                                 VerticalTextAlignment="Center"
                                                 LineBreakMode="NoWrap"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
-
                                         </HorizontalStackLayout>
-
                                     </ScrollView>
-
                                     <Label
                                         x:Name="RootResultKindLabel"
                                         FontSize="13"
                                         FontAttributes="Italic"
                                         HorizontalTextAlignment="Center"
                                         TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
                                 </VerticalStackLayout>
-
                             </Border>
-
-                            <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
-
-                                <controls:ResultCopyButton
-                                    x:Name="RootCopyResultButton"
-                                    NormalTextKey="PowerRoot.RootCopyResult"
-                                    Text=""
-                                    Style="{StaticResource SolverSecondaryActionStyle}"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                    Clicked="OnRootCopyResultClicked" />
-
-                                <Grid
-                                    InputTransparent="True"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-
-                                    <controls:ThemedCopyIcon
-                                        WidthRequest="20"
-                                        HeightRequest="20" />
-
-                                    <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                        Text="{Binding DisplayText, Source={x:Reference RootCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                        VerticalTextAlignment="Center" />
-
-                                </Grid>
-
-                            </Grid>
-
                             <Label
                                 Text="{localization:Translate PowerRoot.SolutionTitle}"
                                 FontSize="18"
                                 FontAttributes="Bold"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-
                             <VerticalStackLayout
                                 x:Name="RootSolutionStack"
                                 Spacing="13" />
-
                         </VerticalStackLayout>
-
                     </Border>
-
                 </VerticalStackLayout>
-    </VerticalStackLayout>
+            </VerticalStackLayout>
 
         </ScrollView>
+
+        <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
+<VerticalStackLayout x:Name="PowerRootFooter" Spacing="6">
+                <Label x:Name="FooterStatusLabel" IsVisible="False" FontSize="13" MaxLines="2" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                <Border x:Name="ProgressBorder" IsVisible="False" Padding="0" BackgroundColor="Transparent" StrokeThickness="0">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="3">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6">
+                            <ActivityIndicator x:Name="CalculationActivityIndicator" WidthRequest="16" HeightRequest="16" IsRunning="False" IsVisible="False" Color="{DynamicResource PrimaryColor}" />
+                            <Label x:Name="ProgressTitleLabel" Grid.Column="1" FontSize="13" MaxLines="1" LineBreakMode="TailTruncation" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        </Grid>
+                        <Label x:Name="ProgressStepsLabel" Grid.Row="1" FontSize="14" FontAttributes="Bold" MaxLines="2" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                        <Label x:Name="ProgressPercentLabel" Grid.Row="2" Text="0%" FontSize="13" MaxLines="2" LineBreakMode="WordWrap" TextColor="{DynamicResource ContentAccentTextColor}" />
+                        <ProgressBar x:Name="CalculationProgressBar" Grid.Row="3" HeightRequest="5" Progress="0" ProgressColor="{DynamicResource PrimaryColor}" SemanticProperties.Hint="{localization:Translate PowerRoot.Diagnostics.ProgressEstimate}" />
+                        <Button x:Name="StopButton" Grid.Column="1" Grid.RowSpan="4" Text="{localization:Translate PowerRoot.Stop}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" Padding="16,8" CornerRadius="12" FontSize="16" FontAttributes="Bold" BackgroundColor="{DynamicResource DangerColor}" TextColor="White" VerticalOptions="Center" Clicked="OnStopClicked" />
+                    </Grid>
+                </Border>
+                <Grid>
+                    <Grid x:Name="PowerIdleActions" ColumnSpacing="10" RowSpacing="8" SizeChanged="OnFooterActionsSizeChanged">
+                        <Button
+                            x:Name="CalculateButton"
+                            Grid.Column="0"
+                            Text="{localization:Translate Actions.Calculate}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
+                            Clicked="OnCalculateClicked" />
+                        <Button
+                            x:Name="ClearButton"
+                            Grid.Column="1"
+                            Text="{localization:Translate Actions.Clear}"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
+                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                            Clicked="OnClearClicked" />
+                        <Grid
+                            x:Name="CopyResultButtonContainer"
+                            MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+                            <controls:ResultCopyButton
+                                x:Name="CopyResultButton"
+                                NormalTextKey="PowerRoot.CopyCompact"
+                                Text=""
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnCopyResultClicked" />
+                            <Grid
+                                InputTransparent="True"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference CopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+                            </Grid>
+                        </Grid>
+                        <Button
+                            x:Name="ExportTextButton"
+                            IsVisible="False"
+                            Text="{localization:Translate PowerRoot.ExportTxt}"
+                            MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                            CornerRadius="12"
+                            FontSize="15"
+                            FontAttributes="Bold"
+                            BackgroundColor="{DynamicResource PrimaryColor}"
+                            TextColor="{DynamicResource OnPrimaryColor}"
+                            ImageSource="file_export.png"
+                            Clicked="OnExportTextClicked" />
+                    </Grid>
+                    <Grid x:Name="RootIdleActions" IsVisible="False" ColumnSpacing="10" RowSpacing="8" SizeChanged="OnFooterActionsSizeChanged">
+                        <Button
+                            x:Name="RootCalculateButton"
+                            Grid.Column="0"
+                            Text="{localization:Translate Actions.Calculate}"
+                            Style="{StaticResource SolverPrimaryActionStyle}"
+                            Clicked="OnRootCalculateClicked" />
+                        <Button
+                            x:Name="RootClearButton"
+                            Grid.Column="1"
+                            BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                            Text="{localization:Translate Actions.Clear}"
+                            Style="{StaticResource SolverSecondaryActionStyle}"
+                            Clicked="OnRootClearClicked" />
+                        <Grid x:Name="RootCopyResultButtonContainer" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+                            <controls:ResultCopyButton
+                                x:Name="RootCopyResultButton"
+                                NormalTextKey="PowerRoot.RootCopyResult"
+                                Text=""
+                                Style="{StaticResource SolverSecondaryActionStyle}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnRootCopyResultClicked" />
+                            <Grid
+                                InputTransparent="True"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference RootCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+                            </Grid>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </VerticalStackLayout>
+</Border>
     </Grid>
 
 </base:LocalizedSolverView>

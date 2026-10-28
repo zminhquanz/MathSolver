@@ -273,7 +273,9 @@
                 </Border>
             </VerticalStackLayout>
         </ScrollView>
-        <Border x:Name="GenerationActionBar" Grid.Row="1" Style="{StaticResource SolverActionBarStyle}">
+        <Border x:Name="GenerationActionBar" Grid.Row="1" Style="{StaticResource SolverActionBarStyle}"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
             <VerticalStackLayout Spacing="6">
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
                     <Button x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />

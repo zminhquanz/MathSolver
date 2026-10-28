@@ -9,9 +9,11 @@ public partial class MeasurementFormulaView : ContentView
 
     private void OnFormulaContentSizeChanged(object? sender, EventArgs e)
     {
-        if (FormulaContent.Width <= 0d)
+        if (MeasurementInputCard.Width <= 0d)
             return;
-        bool stacked = ResponsiveLayoutPolicy.UseStackedLayout(FormulaContent.Width, 760d);
+        // Two unit fields need about 240 each plus the swap action/gaps.
+        // Measure the actual input column after the workspace has split.
+        bool stacked = ResponsiveLayoutPolicy.UseStackedLayout(MeasurementInputCard.Width - MeasurementInputCard.Padding.HorizontalThickness, 560d);
         if (_isStackedLayout == stacked)
             return;
         _isStackedLayout = stacked;

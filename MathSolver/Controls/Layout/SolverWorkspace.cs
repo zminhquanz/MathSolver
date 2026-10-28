@@ -25,12 +25,12 @@ public static class SolverWorkspace
         (scroll.GetValue(ControllerProperty) as Controller)?.DescriptionHost ?? scroll.Content as Layout;
 
     /// <summary>Call after successful publication only. Does not focus the result or change input focus.</summary>
-    public static void RevealResult(VisualElement result)
+    public static void RevealResult(VisualElement result, bool followFooterLayout = false)
     {
         for (Element? element = result; element is not null; element = element.Parent)
             if (element is ScrollView scroll && scroll.GetValue(ControllerProperty) is Controller controller)
             {
-                controller.Reveal(result);
+                controller.Reveal(result, followFooterLayout);
                 return;
             }
     }
@@ -54,6 +54,9 @@ public static class SolverWorkspace
         private int _lifetimeVersion;
         private int _generation;
         private int _requiredArrange;
+        private bool _followFooterLayout;
+        private int _revealAttempts;
+        private double _revealWidth, _revealWindowWidth, _revealWindowHeight;
         private readonly List<VisualElement> _resultChildren = [];
         private readonly List<VisualElement> _ancestors = [];
 
@@ -167,10 +170,19 @@ public static class SolverWorkspace
 
         private void OnViewportChanged(object? sender, EventArgs e)
         {
-            // A resize must never turn an earlier request into automatic scrolling.
-            _pendingResult = null;
+            // A footer may change the available height while an explicit reveal
+            // is settling. A real window/width resize still cancels that request.
+            bool keepRequest = ReferenceEquals(sender, _scroll) && _followFooterLayout && _pendingResult is not null
+                && Math.Abs(_scroll.Width - _revealWidth) < 1 && _scroll.Window is { } window
+                && window.Width.Equals(_revealWindowWidth) && window.Height.Equals(_revealWindowHeight);
+            if (!keepRequest) _pendingResult = null;
             _generation++;
             ScheduleUpdate();
+            if (keepRequest && _grid is not null)
+            {
+                _requiredArrange = _grid.ArrangeVersion + 1;
+                ((IView)_grid).InvalidateMeasure();
+            }
         }
         private void OnBodySizeChanged(object? sender, EventArgs e) => ScheduleUpdate();
         private void OnWorkspaceArranged(object? sender, EventArgs e)
@@ -220,11 +232,16 @@ public static class SolverWorkspace
             finally { _updating = false; }
         }
 
-        internal void Reveal(VisualElement result)
+        internal void Reveal(VisualElement result, bool followFooterLayout)
         {
             if (!CanUseUi || !ContainsResult(result)) return;
             UpdateLayout();
             _pendingResult = result;
+            _followFooterLayout = followFooterLayout;
+            _revealAttempts = 0;
+            _revealWidth = _scroll.Width;
+            _revealWindowWidth = _scroll.Window!.Width;
+            _revealWindowHeight = _scroll.Window.Height;
             _generation++;
             _requiredArrange = _grid!.ArrangeVersion + 1;
             // Even unchanged output needs one fresh arrangement before inspecting its position.
@@ -242,8 +259,6 @@ public static class SolverWorkspace
         private void TryReveal()
         {
             var result = _pendingResult;
-            // Consume this explicit request after its layout pass, including requests that
-            // became ineligible. A later edit, localization or tab activation cannot revive it.
             _pendingResult = null;
             if (!CanUseUi || result is null || result.Height <= 0
                 || !result.IsLoaded || result.Handler?.MauiContext is null
@@ -257,16 +272,28 @@ public static class SolverWorkspace
                 element = visual.Parent;
             }
             if (!ReferenceEquals(element, _scroll.Content) || !double.IsFinite(top)) return;
-            double leadingHeight = Math.Min(80 * ResponsiveLayoutPolicy.TextScale, result.Height);
-            if (top >= _scroll.ScrollY && top + leadingHeight <= _scroll.ScrollY + _scroll.Height) return;
-            _ = ScrollToResultAsync(top);
+            double leadingHeight = Math.Min(Math.Min(80 * ResponsiveLayoutPolicy.TextScale, result.Height), _scroll.Height);
+            if (top >= _scroll.ScrollY && top + leadingHeight <= _scroll.ScrollY + _scroll.Height + 1) return;
+            bool confirmAfterArrange = _followFooterLayout && _revealAttempts++ < 3;
+            if (confirmAfterArrange) _pendingResult = result;
+            _ = ScrollToResultAsync(top, confirmAfterArrange, _generation);
         }
 
-        private async Task ScrollToResultAsync(double top)
+        private async Task ScrollToResultAsync(double top, bool confirmAfterArrange, int generation)
         {
             if (!CanUseUi) return;
-            try { await _scroll.ScrollToAsync(0, Math.Max(0, top), false); }
-            catch (ObjectDisposedException) { /* A native handler can be disposed during window teardown. */ }
+            try
+            {
+                await _scroll.ScrollToAsync(0, Math.Max(0, top), false);
+                // Check a fresh arrangement: native anchoring/changed footer height
+                // can otherwise restore the old offset after ChangeView completes.
+                if (confirmAfterArrange && generation == _generation && CanUseUi && _pendingResult is not null)
+                {
+                    _requiredArrange = _grid!.ArrangeVersion + 1;
+                    ((IView)_grid).InvalidateMeasure();
+                }
+            }
+            catch (ObjectDisposedException) { }
             catch (InvalidOperationException) when (!CanUseUi) { }
         }
 
