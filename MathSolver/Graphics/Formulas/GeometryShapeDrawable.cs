@@ -31,15 +31,18 @@ public sealed class GeometryShapeDrawable : IDrawable
 
     public GeometryShapeType ShapeType { get; init; }
 
+    // Calculator-owned instances only; formula and quiz diagrams leave this null.
+    public string? HighlightedDimension { get; set; }
+
     // Null preserves the symbolic labels used by the formula pages. Quiz callers
     // supply only the dimensions stated in the question; absent labels stay blank.
     public IReadOnlyDictionary<string, string>? DimensionLabels { get; init; }
 
     private string Label(string key)
     {
+        if (ShapeType == GeometryShapeType.RectangularPrism && key == "c") key = "h";
         if (DimensionLabels is null) return key;
         key = key.Replace("₁", "1").Replace("₂", "2");
-        if (ShapeType == GeometryShapeType.RectangularPrism && key == "c") key = "h";
         return DimensionLabels.GetValueOrDefault(key, "");
     }
 
@@ -50,6 +53,18 @@ public sealed class GeometryShapeDrawable : IDrawable
         canvas.SaveState();
         try
         {
+            if (DimensionLabels is null && HighlightedDimension is not null &&
+                text.Replace("₁", "1").Replace("₂", "2") == HighlightedDimension)
+            {
+                canvas.FillColor = ThemeResource.GetColor("WallpaperPrimarySoftColor", "#EDE9FE");
+                canvas.FillRoundedRectangle(x - 2, y - 1, width + 4, height + 2, 5);
+                var accent = ThemeResource.GetColor("ContentAccentTextColor", "#6D28D9");
+                canvas.FontColor = accent;
+                canvas.StrokeColor = accent;
+                canvas.StrokeSize = 2;
+                canvas.DrawLine(x, y + height, x + width, y + height);
+                canvas.Font = Microsoft.Maui.Graphics.Font.DefaultBold;
+            }
             if (DimensionLabels is not null)
             {
                 float expanded = Math.Max(width, 75);
@@ -282,7 +297,8 @@ public sealed class GeometryShapeDrawable : IDrawable
 
         canvas.DrawPath(triangle);
 
-        if (DimensionLabels?.ContainsKey("b") == true)
+        if (DimensionLabels?.ContainsKey("b") == true ||
+            (DimensionLabels is null && HighlightedDimension is "b" or "c"))
         {
             DrawHorizontalLabel(canvas, "b", left - 30, (top + bottom) / 2 - 25, 90);
             DrawHorizontalLabel(canvas, "c", right - 60, (top + bottom) / 2 - 25, 90);
@@ -544,7 +560,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             topY - 25,
             topRight - topLeft);
 
-        if (DimensionLabels?.ContainsKey("c") == true)
+        if (DimensionLabels?.ContainsKey("c") == true ||
+            (DimensionLabels is null && HighlightedDimension is "c" or "d"))
         {
             DrawHorizontalLabel(canvas, "c", bottomLeft - 25, (topY + bottomY) / 2 - 20, 80);
             DrawHorizontalLabel(canvas, "d", bottomRight - 55, (topY + bottomY) / 2 - 20, 80);
@@ -842,6 +859,30 @@ public sealed class GeometryShapeDrawable : IDrawable
             24,
             HorizontalAlignment.Center,
             VerticalAlignment.Center);
+
+        if (DimensionLabels is null && HighlightedDimension == "h")
+        {
+            // Altitude from the top vertex to the lower-left side, rather than
+            // the vertical diagonal (which is not the height of this rhombus).
+            float sideLength = MathF.Sqrt(horizontalRadius * horizontalRadius + verticalRadius * verticalRadius);
+            float projection = (horizontalRadius * horizontalRadius - verticalRadius * verticalRadius)
+                / (sideLength * sideLength);
+            float footX = centerX - horizontalRadius + projection * horizontalRadius;
+            float footY = centerY + projection * verticalRadius;
+            float topY = centerY - verticalRadius;
+            DrawDashedLine(canvas, centerX, topY, footX, footY);
+
+            float height = MathF.Sqrt((centerX - footX) * (centerX - footX) + (topY - footY) * (topY - footY));
+            var alongSide = new PointF(horizontalRadius / sideLength * 8, verticalRadius / sideLength * 8);
+            var alongHeight = new PointF((centerX - footX) / height * 8, (topY - footY) / height * 8);
+            var marker = new PathF();
+            marker.MoveTo(footX + alongSide.X, footY + alongSide.Y);
+            marker.LineTo(footX + alongSide.X + alongHeight.X, footY + alongSide.Y + alongHeight.Y);
+            marker.LineTo(footX + alongHeight.X, footY + alongHeight.Y);
+            canvas.DrawPath(marker);
+            DrawDimensionLabel(canvas, Label("h"), (centerX + footX) / 2 - 30,
+                (topY + footY) / 2 - 12, 25, 24, HorizontalAlignment.Center, VerticalAlignment.Center);
+        }
     }
 
     private void DrawParallelogram(
@@ -1587,8 +1628,8 @@ public sealed class GeometryShapeDrawable : IDrawable
             VerticalAlignment.Bottom);
 
         // Đường sinh
-        canvas.DrawString(
-            "l",
+        DrawDimensionLabel(canvas,
+            Label("l"),
             centerX + baseWidth * 0.20f,
             apexY + coneHeight * 0.28f,
             25f,

@@ -1,4 +1,5 @@
 using MathSolver.Controls;
+using MathSolver.Graphics;
 using MathSolver.Models;
 using MathSolver.Numerics;
 using MathSolver.Services;
@@ -64,9 +65,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     private bool _isUpdatingEntryText;
     private readonly Dictionary<Entry, string> _pendingRestoredEntryTexts = [];
     private bool _isUpdatingInputGridLayout;
-    private bool _isUpdatingResponsiveLayout;
     private bool _isSynchronizingFormulaPreviewHeight;
-    private bool? _usesTwoMainColumns;
     private bool? _usesHorizontalPreview;
     private bool _isWallpaperVisualSyncSubscribed;
 
@@ -168,14 +167,12 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         Dispatcher.Dispatch(
             () =>
             {
-                UpdateMainResponsiveLayout();
                 UpdateInputGridLayout();
                 SynchronizeFormulaPreviewHeight();
 
                 Dispatcher.Dispatch(
                     () =>
                     {
-                        UpdateMainResponsiveLayout();
                         UpdateInputGridLayout();
                         SynchronizeFormulaPreviewHeight();
                     });
@@ -185,6 +182,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     protected override void OnSolverUnloaded()
     {
         UnsubscribeWallpaperVisualSync();
+        SetFocusedDimension(null);
     }
 
     private void SubscribeWallpaperVisualSync()
@@ -449,7 +447,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             selectedGeometry;
 
         GeometryDiagramView.Drawable =
-            selectedGeometry.Diagram;
+            new GeometryShapeDrawable { ShapeType = selectedGeometry.ShapeType };
 
         GeometryDiagramView.Invalidate();
 
@@ -1074,6 +1072,15 @@ public partial class GeometryCalculatorView : LocalizedSolverView
                 : GeometryInputValidationError.OutOfRange;
     }
 
+    private void SetFocusedDimension(string? key)
+    {
+        if (GeometryDiagramView.Drawable is GeometryShapeDrawable diagram)
+        {
+            diagram.HighlightedDimension = key;
+            GeometryDiagramView.Invalidate();
+        }
+    }
+
     private void OnGeometryEntryFocused(
         object? sender,
         FocusEventArgs e)
@@ -1084,6 +1091,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         {
             return;
         }
+
+        SetFocusedDimension(field.Key);
 
         string rawText =
             NormalizeRawInput(
@@ -1121,6 +1130,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         {
             return;
         }
+
+        SetFocusedDimension(null);
 
         string rawText =
             NormalizeRawInput(
@@ -1243,7 +1254,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         object? sender,
         EventArgs e)
     {
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder);
         HideError();
         ClearResultsOnly();
 
@@ -1274,6 +1284,8 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
         ResultBorder.IsVisible =
             true;
+
+        if (sender is Button) SolverWorkspace.RevealResult(ResultBorder);
     }
 
     public void RefreshNumberDisplay()
@@ -2712,14 +2724,24 @@ public partial class GeometryCalculatorView : LocalizedSolverView
     }
 
 
-    private void OnGeometryMainResponsiveGridSizeChanged(
-        object? sender,
-        EventArgs e)
+    private void OnGeometryViewportSizeChanged(object? sender, EventArgs e)
     {
-        UpdateMainResponsiveLayout();
+        UpdateGeometryOutputOrder();
+        SynchronizeFormulaPreviewHeight();
     }
 
-    private void OnGeometryControlColumnSizeChanged(object? sender, EventArgs e) => SynchronizeFormulaPreviewHeight();
+    private void OnGeometryOutputSizeChanged(object? sender, EventArgs e) => UpdateGeometryOutputOrder();
+
+    private void UpdateGeometryOutputOrder()
+    {
+        if (GeometryScrollView.Width <= 0 || GeometryBody.Width <= 0) return;
+        double width = Math.Min(GeometryScrollView.Width, GeometryBody.Width) - GeometryBody.Padding.HorizontalThickness;
+        bool split = ResponsiveLayoutPolicy.ForSolver(width, GeometryScrollView.Height, ResponsiveLayoutPolicy.TextScale).UseSideBySide;
+        // Desktop keeps the diagram beside the inputs. Narrow screens put the
+        // published answer first, before any reference the user would scroll past.
+        Grid.SetRow(FormulaPreviewBorder, split ? 0 : 1);
+        Grid.SetRow(ResultBorder, split ? 1 : 0);
+    }
 
     private void OnGeometryDiagramViewSizeChanged(
         object? sender,
@@ -2730,43 +2752,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         // chuyển giữa hai cột và một cột.
         SynchronizeFormulaPreviewHeight();
         GeometryDiagramView.Invalidate();
-    }
-
-    private void UpdateMainResponsiveLayout()
-    {
-        if (_isUpdatingResponsiveLayout || GeometryMainResponsiveGrid.Width <= 0d)
-            return;
-
-        _isUpdatingResponsiveLayout = true;
-        try
-        {
-            bool wide = !ResponsiveLayoutPolicy.UseStackedLayout(GeometryMainResponsiveGrid.Width, 1040d);
-            if (_usesTwoMainColumns != wide)
-            {
-                _usesTwoMainColumns = wide;
-                GeometryMainResponsiveGrid.ColumnDefinitions.Clear();
-                GeometryMainResponsiveGrid.RowDefinitions.Clear();
-                GeometryMainResponsiveGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-                GeometryMainResponsiveGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-                if (wide)
-                    GeometryMainResponsiveGrid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
-                else
-                    GeometryMainResponsiveGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-
-                Grid.SetRow(GeometryControlColumn, 0);
-                Grid.SetColumn(GeometryControlColumn, 0);
-                Grid.SetRow(FormulaPreviewBorder, wide ? 0 : 1);
-                Grid.SetColumn(FormulaPreviewBorder, wide ? 1 : 0);
-                GeometryMainResponsiveGrid.ColumnSpacing = wide ? 14d : 0d;
-                GeometryMainResponsiveGrid.RowSpacing = wide ? 0d : 14d;
-            }
-            UpdateFormulaPreviewContentLayout();
-        }
-        finally
-        {
-            _isUpdatingResponsiveLayout = false;
-        }
-        Dispatcher.Dispatch(SynchronizeFormulaPreviewHeight);
     }
 
     private void OnFormulaPreviewContentGridSizeChanged(object? sender, EventArgs e)
@@ -2805,23 +2790,17 @@ public partial class GeometryCalculatorView : LocalizedSolverView
 
     private void SynchronizeFormulaPreviewHeight()
     {
-        if (_isSynchronizingFormulaPreviewHeight || GeometryMainResponsiveGrid.Width <= 0d)
+        if (_isSynchronizingFormulaPreviewHeight || GeometryDiagramView.Width <= 0d)
             return;
 
         _isSynchronizingFormulaPreviewHeight = true;
         try
         {
-            // Align the two desktop panels without clipping longer formulas or large text.
-            double minimumHeight = _usesTwoMainColumns == true && GeometryControlColumn.Height > 0d
-                ? Math.Ceiling(GeometryControlColumn.Height)
-                : -1d;
-            if (Math.Abs(FormulaPreviewBorder.MinimumHeightRequest - minimumHeight) >= 1d)
-                FormulaPreviewBorder.MinimumHeightRequest = minimumHeight;
-
             double width = GeometryDiagramView.Width;
             if (width > 0d)
             {
-                double height = Math.Clamp(width * 0.75d, 180d, 320d);
+                double available = GeometryScrollView.Height > 0 ? GeometryScrollView.Height * 0.45d : 240d;
+                double height = Math.Clamp(Math.Min(width * 0.66d, available), 170d, 260d);
                 if (Math.Abs(GeometryDiagramView.HeightRequest - height) >= 1d)
                     GeometryDiagramView.HeightRequest = height;
             }

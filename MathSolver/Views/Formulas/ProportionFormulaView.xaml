@@ -38,7 +38,7 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
 
-        <ScrollView Grid.Row="1"
+        <ScrollView x:Name="FormulaTaskScrollView" controls:SolverWorkspace.IsEnabled="True" Grid.Row="1"
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
             VerticalScrollBarVisibility="Default">
@@ -48,121 +48,7 @@
                 HorizontalOptions="Center">
 
                 <!-- 1. Mối quan hệ -->
-                <Border
-                    Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                    StrokeThickness="1">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="14" />
-                    </Border.StrokeShape>
 
-                    <VerticalStackLayout Spacing="12">
-                        <Label
-                            Text="{localization:Translate Formula.Common.Relationship}"
-                            FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource ContentAccentTextColor}" />
-
-                        <Grid
-                            x:Name="RelationshipGrid"
-                            ColumnDefinitions="*,*"
-                            ColumnSpacing="12">
-
-                            <Border
-                                x:Name="DirectRelationshipCard"
-                                Grid.Column="0"
-                                Padding="14"
-                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="11" />
-                                </Border.StrokeShape>
-                                <VerticalStackLayout Spacing="7">
-                                    <Label
-                                        Text="{localization:Translate Formula.Proportion.Direct.Title}"
-                                        FontSize="19"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource ContentAccentTextColor}" />
-                                    <Label
-                                        Text="{localization:Translate Formula.Proportion.Direct.Relationship}"
-                                        FontSize="16"
-                                        LineHeight="1.25"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label
-                                        Text="y = k × x"
-                                        FontSize="20"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource ContentAccentTextColor}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border
-                                x:Name="InverseRelationshipCard"
-                                Grid.Column="1"
-                                Padding="14"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="11" />
-                                </Border.StrokeShape>
-                                <VerticalStackLayout Spacing="7">
-                                    <Label
-                                        Text="{localization:Translate Formula.Proportion.Inverse.Title}"
-                                        FontSize="19"
-                                        FontAttributes="Bold"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label
-                                        Text="{localization:Translate Formula.Proportion.Inverse.Relationship}"
-                                        FontSize="16"
-                                        LineHeight="1.25"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label
-                                        Text="y = k ÷ x"
-                                        FontSize="20"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource ContentAccentTextColor}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                        </Grid>
-
-                        <Border
-                            Padding="14"
-                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                            StrokeThickness="1">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="11" />
-                            </Border.StrokeShape>
-                            <VerticalStackLayout Spacing="7">
-                                <Label
-                                    Text="{localization:Translate Formula.Proportion.Compound.Title}"
-                                    FontSize="19"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource ContentAccentTextColor}" />
-                                <Label
-                                    Text="{localization:Translate Formula.Proportion.Compound.Relationship}"
-                                    FontSize="16"
-                                    LineHeight="1.25"
-                                    LineBreakMode="WordWrap"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                <Label
-                                    Text="D₂ = D₁ × (Q₂ ÷ Q₁) × (W₁ ÷ W₂) × (H₁ ÷ H₂)"
-                                    FontSize="20"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    TextColor="{DynamicResource ContentAccentTextColor}" />
-                            </VerticalStackLayout>
-                        </Border>
-                    </VerticalStackLayout>
-                </Border>
 
                 <!-- Minh họa tương tác -->
                 <Border
@@ -208,7 +94,7 @@
 
                         <Grid
                             x:Name="SingleInteractiveGrid"
-                            ColumnDefinitions="3*,7*"
+                            ColumnDefinitions="*"
                             ColumnSpacing="16">
 
                             <Border
@@ -239,16 +125,8 @@
                                         FontSize="17"
                                         FontAttributes="Bold"
                                         TextColor="{DynamicResource ContentAccentTextColor}" />
-                                    <Label
-                                        x:Name="GraphDirectValueLabel"
-                                        FontSize="16"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label
-                                        x:Name="GraphInverseValueLabel"
-                                        FontSize="16"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+
                                     <Label
                                         Text="{localization:Translate Formula.Proportion.Graph.SliderHint}"
                                         FontSize="14"
@@ -279,28 +157,13 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Border
-                                x:Name="InteractiveGraphPanel"
-                                Grid.Column="1"
-                                Padding="8"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-                                <GraphicsView
-                                    x:Name="ProportionGraphicsView"
-                                    MinimumHeightRequest="360"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill" />
-                            </Border>
+
                         </Grid>
 
                         <Grid
                             x:Name="CompoundInteractiveGrid"
                             IsVisible="False"
-                            ColumnDefinitions="3*,7*"
+                            ColumnDefinitions="*"
                             ColumnSpacing="16">
 
                             <Border
@@ -405,7 +268,49 @@
                                             ValueChanged="OnCompoundSliderValueChanged" />
                                     </Border>
 
-                                    <Border
+
+                                </VerticalStackLayout>
+                            </Border>
+
+
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="FormulaResultSection" controls:SolverWorkspace.StartsResult="True" Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{localization:Translate Formula.Workspace.Result}" Style="{StaticResource SolverSectionTitleStyle}" />
+                        <VerticalStackLayout x:Name="SingleResultPanel" Spacing="10">
+                            <Label
+                                        x:Name="GraphDirectValueLabel"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Label
+                                        x:Name="GraphInverseValueLabel"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <controls:FormulaDetails Title="{localization:Translate Formula.Workspace.Graph}">
+                                <Border
+                                x:Name="InteractiveGraphPanel"
+                                Grid.Column="1"
+                                Padding="8"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+                                <GraphicsView
+                                    x:Name="ProportionGraphicsView"
+                                    MinimumHeightRequest="360"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill" />
+                            </Border>
+                            </controls:FormulaDetails>
+                        </VerticalStackLayout>
+                        <VerticalStackLayout x:Name="CompoundResultPanel" Spacing="10" IsVisible="False">
+                            <Border
                                         Padding="12"
                                         BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                                         Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -428,10 +333,8 @@
                                                 TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                                         </VerticalStackLayout>
                                     </Border>
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border
+                            <controls:FormulaDetails Title="{localization:Translate Formula.Workspace.Graph}">
+                                <Border
                                 x:Name="CompoundGraphPanel"
                                 Grid.Column="1"
                                 Padding="8"
@@ -447,12 +350,128 @@
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill" />
                             </Border>
-                        </Grid>
+                            </controls:FormulaDetails>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Relationship}">
+                    <Border
+                    Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="{localization:Translate Formula.Common.Relationship}"
+                            FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
+
+                        <Grid
+                            x:Name="RelationshipGrid"
+                            ColumnDefinitions="*,*"
+                            ColumnSpacing="12" controls:AdaptiveColumns.MinimumColumnWidth="240" controls:AdaptiveColumns.MaximumColumns="2">
+
+                            <Border
+                                x:Name="DirectRelationshipCard"
+                                Grid.Column="0"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="11" />
+                                </Border.StrokeShape>
+                                <VerticalStackLayout Spacing="7">
+                                    <Label
+                                        Text="{localization:Translate Formula.Proportion.Direct.Title}"
+                                        FontSize="19"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
+                                    <Label
+                                        Text="{localization:Translate Formula.Proportion.Direct.Relationship}"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label
+                                        Text="y = k × x"
+                                        FontSize="20"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Border
+                                x:Name="InverseRelationshipCard"
+                                Grid.Column="1"
+                                Padding="14"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="11" />
+                                </Border.StrokeShape>
+                                <VerticalStackLayout Spacing="7">
+                                    <Label
+                                        Text="{localization:Translate Formula.Proportion.Inverse.Title}"
+                                        FontSize="19"
+                                        FontAttributes="Bold"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label
+                                        Text="{localization:Translate Formula.Proportion.Inverse.Relationship}"
+                                        FontSize="16"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label
+                                        Text="y = k ÷ x"
+                                        FontSize="20"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource ContentAccentTextColor}" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                        </Grid>
+
+                        <Border
+                            Padding="14"
+                            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                            StrokeThickness="1">
+                            <Border.StrokeShape>
+                                <RoundRectangle CornerRadius="11" />
+                            </Border.StrokeShape>
+                            <VerticalStackLayout Spacing="7">
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Compound.Title}"
+                                    FontSize="19"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
+                                <Label
+                                    Text="{localization:Translate Formula.Proportion.Compound.Relationship}"
+                                    FontSize="16"
+                                    LineBreakMode="WordWrap"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                <Label
+                                    Text="D₂ = D₁ × (Q₂ ÷ Q₁) × (W₁ ÷ W₂) × (H₁ ÷ H₂)"
+                                    FontSize="20"
+                                    FontAttributes="Bold"
+                                    HorizontalTextAlignment="Center"
+                                    TextColor="{DynamicResource ContentAccentTextColor}" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
+                </controls:FormulaDetails>
 
                 <!-- 2. Công thức -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Formulas}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -480,7 +499,6 @@
                                 Text="{localization:Translate Formula.Proportion.Direct.Formulas}"
                                 FontSize="17"
                                 FontAttributes="Bold"
-                                LineHeight="1.35"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
@@ -497,7 +515,6 @@
                                 Text="{localization:Translate Formula.Proportion.Inverse.Formulas}"
                                 FontSize="17"
                                 FontAttributes="Bold"
-                                LineHeight="1.35"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
@@ -514,7 +531,6 @@
                                 Text="{localization:Translate Formula.Proportion.Compound.Formulas}"
                                 FontSize="17"
                                 FontAttributes="Bold"
-                                LineHeight="1.35"
                                 LineBreakMode="WordWrap"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         </Border>
@@ -527,9 +543,11 @@
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
                 <!-- 3. Tính chất -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Properties}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -547,32 +565,30 @@
                         <Label
                             Text="{localization:Translate Formula.Proportion.Direct.Properties}"
                             FontSize="17"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.Inverse.Properties}"
                             FontSize="17"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.Compound.Properties}"
                             FontSize="17"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <Label
                             Text="{localization:Translate Formula.Proportion.GraphProperties}"
                             FontSize="17"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
                 <!-- 4. Cách giải -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.HowToSolve}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -590,14 +606,13 @@
                         <Label
                             Text="{localization:Translate Formula.Proportion.Steps}"
                             FontSize="17"
-                            LineHeight="1.35"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Grid
                             x:Name="ExamplesGrid"
                             ColumnDefinitions="*,*"
-                            ColumnSpacing="12">
+                            ColumnSpacing="12" controls:AdaptiveColumns.MinimumColumnWidth="240" controls:AdaptiveColumns.MaximumColumns="2">
                             <Border
                                 x:Name="DirectExampleCard"
                                 Grid.Column="0"
@@ -657,7 +672,7 @@
                                     </Border>
 
                                     <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Proportion.Direct.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Proportion.Direct.Example}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -697,7 +712,7 @@
                                     </Border>
 
                                     <Label Text="{localization:Translate Formula.Proportion.Summary.Solution}" FontSize="15" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Proportion.Inverse.Example}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Proportion.Inverse.Example}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
                         </Grid>
@@ -720,7 +735,6 @@
                                     Text="{localization:Translate Formula.Proportion.Compound.ExampleSummary}"
                                     FontSize="16"
                                     FontAttributes="Bold"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 <Border
@@ -735,20 +749,19 @@
                                         Text="{localization:Translate Formula.Proportion.Compound.Calculation}"
                                         FontSize="16"
                                         FontAttributes="Bold"
-                                        LineHeight="1.35"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </Border>
                                 <Label
                                     Text="{localization:Translate Formula.Proportion.Compound.Example}"
                                     FontSize="16"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </VerticalStackLayout>
                         </Border>
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
             </VerticalStackLayout>
         </ScrollView>

@@ -252,6 +252,7 @@ public partial class CalculationPage
     protected override bool OnBackButtonPressed()
     {
         if (AllCalculationTypesOverlay.IsVisible) { CloseCalculationTypes(); return true; }
+        if (MatrixSolverHost.IsVisible && MatrixSolverHost.Content is MatrixView matrix && matrix.TryCloseMatrixDetails()) return true;
         return base.OnBackButtonPressed();
     }
 }

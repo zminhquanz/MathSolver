@@ -32,12 +32,15 @@ public sealed partial class MatrixView
         {
             _workspaceRevealVersion++;
             _setupPanel.IsVisible = !_setupPanel.IsVisible;
+            if (_setupPanel.IsVisible) _tableExpanded = false;
             RefreshWorkspacePresentation();
         }, lockDuringWork: false);
         var heading = new Grid { ColumnSpacing = 10, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
         _setupSummary.VerticalTextAlignment = TextAlignment.Center;
         heading.Add(_setupSummary); heading.Add(_setupToggle, 1, 0);
-        return Card(new VerticalStackLayout { Spacing = 8, Children = { heading, _setupPanel } });
+        _setupScroll.Content = _setupPanel;
+        _setupScroll.SetBinding(IsVisibleProperty, new Binding(nameof(IsVisible), source: _setupPanel));
+        return Card(new VerticalStackLayout { Spacing = 8, Children = { heading, _setupScroll } });
     }
 
     private Grid BuildCellToolbar()
@@ -69,30 +72,12 @@ public sealed partial class MatrixView
         };
         DisplayDensityManager.BindControl(_cellValueToggle);
         _cellValueToggle.SetBinding(EmojiActionButton.CaptionProperty, new Binding(nameof(Label.Text), source: _selectedValue));
-        _cellValueToggle.Clicked += (_, _) =>
-        {
-            if (!CanTouchUi || !_active || _busy || !HasInputs) return;
-            bool opening = !_cellValuePanel.IsVisible;
-            if (opening && !_viewport.FinishEdit()) return;
-            _workspaceRevealVersion++;
-            _cellValuePanel.IsVisible = opening;
-            if (opening) _coordinatePanel.IsVisible = _moreTools.IsVisible = false;
-            RefreshWorkspacePresentation();
-            if (opening) QueueWorkspaceReveal(_cellValuePanel);
-        };
+        _cellValueToggle.Clicked += (_, _) => OpenMatrixCellDetails();
         _fullCellTitle.FontSize = 13;
         _fullCellValue.FontSize = 18;
         _fullCellValue.LineBreakMode = LineBreakMode.CharacterWrap;
-        var fullValueScroll = new ScrollView { Content = _fullCellValue, MaximumHeightRequest = 180 };
         _cellValuePanel.Add(_fullCellTitle);
-        _cellValuePanel.Add(fullValueScroll);
-        _cellValuePanel.Add(ActionButton("Workspace.CloseValue", "", (_, _) =>
-        {
-            _workspaceRevealVersion++;
-            _cellValuePanel.IsVisible = false;
-            RefreshWorkspacePresentation();
-            if (CanTouchUi && _active) _cellValueToggle.Focus();
-        }, lockDuringWork: false));
+        _cellValuePanel.Add(_fullCellValue);
         var cellInfo = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) }, AutomationId = "MatrixSelectedCell" };
         cellInfo.Add(_coordinateToggle); cellInfo.Add(_cellValueToggle, 1, 0);
 
@@ -130,7 +115,7 @@ public sealed partial class MatrixView
             button.Padding = new Thickness(8, 6);
             clipboard.Add(button);
         }
-        var secondary = FlowGrid(136, 2);
+        var secondary = _secondaryTools = FlowGrid(136, 2);
         _rangeSelectionToggle = ActionButton("RangeSelection.Start", "▧", (_, _) =>
         {
             if (_viewport.IsRangeSelectionMode) _viewport.CancelRangeSelection();
@@ -221,7 +206,7 @@ public sealed partial class MatrixView
         _setupToggle.IsVisible = HasInputs;
         _setupToggle.IsEnabled = !_busy;
         ((EmojiActionButton)_moreToolsToggle).Caption = T(_moreTools.IsVisible ? "Workspace.FewerTools" : "Workspace.MoreTools");
-        _message.IsVisible = !string.IsNullOrEmpty(_message.Text)
+        _message.IsVisible = !(_statusKey == "Completed" && _result is not null) && !string.IsNullOrEmpty(_message.Text)
             && (!_busy || _calculationStage is null || _errorKey is not null);
         _statusDetailsButton.IsVisible = _statusDetailsCard.IsVisible = _errorKey is not null;
         _footerStatusRow.IsVisible = _message.IsVisible || _statusDetailsButton.IsVisible;
@@ -233,6 +218,7 @@ public sealed partial class MatrixView
         ToolTipProperties.SetText(_cellValueToggle, T("CellValue"));
         SemanticProperties.SetHint(_cellValueToggle, T("CellValue") + ". " + T(_cellValuePanel.IsVisible ? "HelpExpanded" : "HelpCollapsed"));
         RefreshRangeSelectionControls();
+        RefreshMatrixLayout();
     }
 
     private void RefreshRangeSelectionControls()
@@ -242,6 +228,11 @@ public sealed partial class MatrixView
         ((EmojiActionButton)_rangeSelectionToggle).Caption = T(selecting ? "RangeSelection.Cancel" : "RangeSelection.Start");
         SelectionButtonStyler.Apply(_rangeSelectionToggle, selecting);
         _rangeSelectionToggle.IsEnabled = HasInputs && !_busy;
+        if (_rangeInMore is EmojiActionButton moreRange)
+        {
+            moreRange.Caption = T(selecting ? "RangeSelection.Cancel" : "RangeSelection.Start");
+            moreRange.IsEnabled = _rangeSelectionToggle.IsEnabled;
+        }
         _rangeSelectionHint.IsVisible = selecting;
         _rangeSelectionHint.Text = selecting && _viewport.IsAwaitingRangeEnd
             ? F("RangeSelection.LastHint", "ABC"[_selected], _viewport.SelectedRow + 1, _viewport.SelectedColumn + 1)
@@ -254,7 +245,7 @@ public sealed partial class MatrixView
     {
         _setupPanel.IsVisible = false;
         RefreshWorkspacePresentation();
-        QueueWorkspaceReveal(_editorCard);
+
     }
 
     private void QueueWorkspaceReveal(VisualElement target)

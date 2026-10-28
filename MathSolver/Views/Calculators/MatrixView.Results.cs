@@ -22,32 +22,30 @@ public sealed partial class MatrixView
 
     private Border BuildResultCard()
     {
-        var content = new VerticalStackLayout { Spacing = 12 };
-        content.Add(Caption("ResultTitle", "SolverSectionTitleStyle"));
         var metrics = FlowGrid(200, 2);
         metrics.Add(ResultMetric("ResultOperation", _resultOperation));
         metrics.Add(ResultMetric("ResultSize", _resultSize));
         metrics.Add(ResultMetric("ResultDuration", _resultDuration));
         metrics.Add(ResultMetric("ResultMode", _resultMode));
         metrics.Add(ResultMetric("ResultWorkers", _resultWorkers));
-        content.Add(metrics);
+        _technical.Add(metrics);
         var exact = Caption("ExactResult");
         exact.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
-        content.Add(exact);
+        _technical.Add(exact);
 
-        var toggle = new EmojiActionButton { Style = GetStyle("SolverSecondaryActionStyle"),
+        var toggle = _technicalDetailsToggle = new EmojiActionButton { Style = GetStyle("SolverSecondaryActionStyle"),
             MinimumHeightRequest = 46, FontSize = 15, Padding = new Thickness(10, 8) };
         toggle.AutomationId = "MatrixTechnicalDetails";
         DisplayDensityManager.BindControl(toggle);
         void RefreshToggle()
         {
-            toggle.Emoji = _technical.IsVisible ? "▾" : "▸";
+            toggle.Emoji = "ⓘ";
             toggle.Caption = T("TechnicalDetails");
-            SemanticProperties.SetDescription(toggle, T("TechnicalDetails") + ". " + T(_technical.IsVisible ? "Expanded" : "Collapsed"));
+            SemanticProperties.SetDescription(toggle, T("TechnicalDetails"));
         }
-        toggle.Clicked += (_, _) => { _technical.IsVisible = !_technical.IsVisible; RefreshToggle(); };
+        toggle.Clicked += (_, _) => OpenMatrixTechnicalDetails();
         _translations.Add(RefreshToggle);
-        content.Add(toggle);
+
         _technical.Add(_technicalBackend);
         _technical.Add(_technicalStorage);
         _technical.Add(_technicalLocation);
@@ -65,8 +63,10 @@ public sealed partial class MatrixView
         _technical.Add(_technicalScanWorkers);
         _technical.Add(_technicalScanComparisons);
         _technical.Add(Caption("BackendHelp"));
-        content.Add(_technical);
-        _resultCard = Card(content);
+        _resultSummary.FontSize = 13;
+        _resultSummary.MaxLines = 2;
+        _resultSummary.FontAttributes = FontAttributes.Bold;
+        _resultCard = new Border { Padding = 0, StrokeThickness = 0, BackgroundColor = Colors.Transparent, Content = _resultSummary };
         _resultCard.IsVisible = false;
         return _resultCard;
     }
@@ -105,6 +105,8 @@ public sealed partial class MatrixView
             _resultDuration.Text = elapsed < 0.001 ? T("UnderMillisecond")
                 : elapsed < 1 ? F("Milliseconds", (elapsed * 1000).ToString("0.##", CultureInfo.CurrentCulture))
                 : F("Seconds", elapsed.ToString("0.###", CultureInfo.CurrentCulture));
+            _resultSummary.Text = F("Workspace.ResultSummary", _resultOperation.Text, result.Rows, result.Columns, _resultDuration.Text);
+            ToolTipProperties.SetText(_resultSummary, _resultSummary.Text);
             _resultMode.Text = T(result.UsedUniformShortcut ? "UniformShortcutMode" : result.WorkerCount > 1
                 ? result.VectorBatches > 0 ? "ParallelSimdMode" : "ParallelScalarMode"
                 : result.VectorBatches > 0 ? "SimdMode" : "ScalarMode");
@@ -140,6 +142,7 @@ public sealed partial class MatrixView
             }
         }
         RefreshSolution();
+        RefreshMatrixLayout();
     }
 
     private static string MatrixBackendLabel(MatrixBackend backend) => backend switch

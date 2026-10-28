@@ -10,7 +10,7 @@
     BackgroundColor="Transparent"
     HorizontalOptions="Fill">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
             <VerticalStackLayout
                 Style="{StaticResource SolverHeroStyle}">
@@ -320,23 +320,7 @@
 
                         </Border>
 
-                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10" controls:AdaptiveColumns.MinimumColumnWidth="220">
 
-                            <Button
-                                x:Name="CalculateQuadraticButton"
-                                Grid.Column="0"
-                                Text="{localization:Translate Equation.Action}"
-                                Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
-                                Clicked="OnCalculateClicked" />
-
-                            <Button
-                                Grid.Column="1"
-                                Text="{localization:Translate Actions.Clear}"
-                                Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnClearClicked" />
-
-                        </Grid>
 
                     </VerticalStackLayout>
 
@@ -801,6 +785,26 @@
     </VerticalStackLayout>
 
         </ScrollView>
+
+        <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
+            <Grid Style="{StaticResource SolverActionButtonsStyle}" ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
+
+                            <Button
+                                x:Name="CalculateQuadraticButton"
+                                Grid.Column="0"
+                                Text="{localization:Translate Equation.Action}"
+                                Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
+                                Clicked="OnCalculateClicked" />
+
+                            <Button
+                                Grid.Column="1"
+                                Text="{localization:Translate Actions.Clear}"
+                                Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnClearClicked" />
+
+                        </Grid>
+        </Border>
     </Grid>
 
 </base:LocalizedSolverView>

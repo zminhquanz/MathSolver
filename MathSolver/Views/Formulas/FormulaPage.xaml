@@ -18,6 +18,15 @@
             x:Name="LiveWallpaper"
             Grid.RowSpan="2" />
 
+        <Grid x:Name="FormulaTabNavigation" Grid.Row="0" HorizontalOptions="Center" MaximumWidthRequest="1280"
+              Margin="{OnPlatform Android='10,6,10,4', WinUI='20,12,20,8', Default='20,12,20,8'}">
+        <Border x:Name="FormulaNavigationFrame" Padding="8" StrokeThickness="1"
+                BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
+        <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="14" />
+                </Border.StrokeShape>
+        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <Grid x:Name="FormulaTabStripHost">
         <!-- Thanh tab con: đồng bộ với CalculationPage -->
         <!-- Android: tab row phẳng kiểu Material/DevCheck, cuộn ngang khi cần. -->
         <Grid
@@ -25,7 +34,7 @@
             Grid.Row="0"
             IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
             RowDefinitions="Auto,1"
-            Margin="0,0,0,4"
+            Margin="0"
             BackgroundColor="{DynamicResource WallpaperSurfaceColor}">
 
             <ScrollView
@@ -35,7 +44,7 @@
                 HorizontalOptions="Fill"
                 HorizontalScrollBarVisibility="Never">
 
-                <HorizontalStackLayout Spacing="0" Padding="6,0">
+                <HorizontalStackLayout Spacing="8" Padding="3,2">
                     <Grid MinimumWidthRequest="158" RowDefinitions="Auto,3">
                         <Button
                             x:Name="AndroidUnknownComponentTabButton"
@@ -141,28 +150,16 @@
                 BackgroundColor="{DynamicResource WallpaperDividerColor}" />
         </Grid>
 
-        <Border
-            x:Name="FormulaSubTabBar"
-            HorizontalOptions="Center" MaximumWidthRequest="1280"
-            Grid.Row="0"
-            IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-            Margin="{OnPlatform Android='10,8,10,6', WinUI='20,12,20,8', Default='20,12,20,8'}"
-            Padding="{OnPlatform Android=4, WinUI=6, Default=6}"
-            BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-            Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-            StrokeThickness="1">
-
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="{OnPlatform Android=12, WinUI=14, Default=14}" />
-            </Border.StrokeShape>
-
-            <controls:MouseDragScrollView x:Name="FormulaSubTabScrollView" IsTabLayoutEnabled="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnFormulaSubTabGridSizeChanged">
+        <Border x:Name="FormulaSubTabBar" Grid.Row="0" Padding="0" Margin="0" StrokeThickness="0"
+                IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
+                BackgroundColor="Transparent">
+            <controls:MouseDragScrollView x:Name="FormulaSubTabScrollView" IsTabLayoutEnabled="True" UseUniformSizedTabs="True" Orientation="Horizontal" HorizontalScrollBarVisibility="Never" VerticalScrollBarVisibility="Never" SizeChanged="OnFormulaSubTabGridSizeChanged">
             <Grid
                 x:Name="FormulaSubTabGrid"
                 ColumnDefinitions="*,*,*,*,*,*"
                 RowDefinitions="Auto"
-                ColumnSpacing="6"
-                RowSpacing="6">
+                ColumnSpacing="8"
+                RowSpacing="6" Padding="3,2">
 
                 <Button
                     x:Name="UnknownComponentTabButton"
@@ -236,6 +233,14 @@
             </Grid>
             </controls:MouseDragScrollView>
         </Border>
+
+        </Grid>
+        <Button x:Name="AllFormulaTypesButton" Grid.Column="1"
+                Style="{StaticResource SolverSecondaryActionStyle}" FontSize="14" LineBreakMode="WordWrap"
+                HorizontalOptions="End" VerticalOptions="Center" Clicked="OnAllFormulaTypesClicked" />
+        </Grid>
+        </Border>
+        </Grid>
 
         <!-- Nội dung tab con -->
         <Grid
@@ -314,14 +319,14 @@
                                         <Border
                                             Margin="7"
                                             WidthRequest="280"
-                                            MinimumHeightRequest="360"
+                                            MinimumHeightRequest="-1"
                                             FlexLayout.Shrink="0"
                                             Padding="18"
                                             BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                                             Stroke="{DynamicResource WallpaperBorderBrush}"
                                             StrokeThickness="1"
                                             HorizontalOptions="Start"
-                                            VerticalOptions="Start">
+                                            VerticalOptions="Start" SizeChanged="OnReferenceCardSizeChanged">
 
                                             <Border.StrokeShape>
                                                 <RoundRectangle CornerRadius="14" />
@@ -419,14 +424,14 @@
                                                         Text="{Binding Rule}"
                                                         FontSize="17"
                                                         FontAttributes="Bold"
-                                                        LineHeight="1.1"
                                                         LineBreakMode="WordWrap"
                                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                                 </VerticalStackLayout>
 
                                                 <!-- Ví dụ -->
-                                                <Border
+                                                <controls:FormulaDetails Title="{localization:Translate Formula.Workspace.Example}">
+                                                    <Border
                                                     Padding="13"
                                                     BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -454,7 +459,6 @@
                                                             <Label
                                                                 Text="{Binding Example}"
                                                                 FontSize="17"
-                                                                LineHeight="1.4"
                                                                 LineBreakMode="WordWrap"
                                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -468,6 +472,7 @@
 
                                                     </Grid>
                                                 </Border>
+                                                </controls:FormulaDetails>
 
                                             </VerticalStackLayout>
                                         </Border>
@@ -503,7 +508,6 @@
                                         <Label
                                             Text="Khi tìm thành phần chưa biết, cần xác định đúng vai trò của x, dùng phép tính ngược phù hợp và luôn kiểm tra lại kết quả trong phép tính ban đầu."
                                             FontSize="17"
-                                            LineHeight="1.25"
                                             HorizontalTextAlignment="Center"
                                             LineBreakMode="WordWrap"
                                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
@@ -529,21 +533,18 @@
                                             <Label
                                                 Text="• Giao hoán: a + b = b + a. Đổi chỗ hai số hạng thì tổng không thay đổi."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Kết hợp: (a + b) + c = a + (b + c). Có thể nhóm các số hạng theo cách thuận tiện."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Phần tử trung hòa: a + 0 = 0 + a = a."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -551,7 +552,6 @@
                                                 Text="• Tìm số hạng chưa biết: x + b = c thì x = c − b."
                                                 FontSize="17"
                                                 FontAttributes="Bold"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -559,7 +559,6 @@
                                                 Text="Ví dụ: x + 18 = 45 ⇒ x = 45 − 18 = 27. Kiểm tra: 27 + 18 = 45."
                                                 FontSize="17"
                                                 FontAttributes="Italic"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
@@ -585,21 +584,18 @@
                                             <Label
                                                 Text="• Không giao hoán: a − b thường khác b − a. Vì vậy không được tự ý đổi chỗ số bị trừ và số trừ."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Không kết hợp: (a − b) − c thường khác a − (b − c). Cần thực hiện đúng thứ tự."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Tính chất cơ bản: a − 0 = a và a − a = 0."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -607,7 +603,6 @@
                                                 Text="• Tìm số bị trừ: x − b = c thì x = c + b. Tìm số trừ: a − x = c thì x = a − c."
                                                 FontSize="17"
                                                 FontAttributes="Bold"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -615,7 +610,6 @@
                                                 Text="Ví dụ: 52 − x = 19 ⇒ x = 52 − 19 = 33. Kiểm tra: 52 − 33 = 19."
                                                 FontSize="17"
                                                 FontAttributes="Italic"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
@@ -641,21 +635,18 @@
                                             <Label
                                                 Text="• Giao hoán: a × b = b × a. Đổi chỗ hai thừa số thì tích không thay đổi."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Kết hợp: (a × b) × c = a × (b × c). Có thể nhóm các thừa số theo cách thuận tiện."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Phần tử đơn vị và phần tử hấp thụ: a × 1 = a; a × 0 = 0."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -663,7 +654,6 @@
                                                 Text="• Tìm thừa số chưa biết: x × b = c thì x = c ÷ b, với b ≠ 0."
                                                 FontSize="17"
                                                 FontAttributes="Bold"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -671,7 +661,6 @@
                                                 Text="Ví dụ: x × 7 = 56 ⇒ x = 56 ÷ 7 = 8. Kiểm tra: 8 × 7 = 56."
                                                 FontSize="17"
                                                 FontAttributes="Italic"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
@@ -697,14 +686,12 @@
                                             <Label
                                                 Text="• Không giao hoán: a ÷ b thường khác b ÷ a. Phép chia cũng không có tính kết hợp."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                                             <Label
                                                 Text="• Tính chất cơ bản: a ÷ 1 = a; a ÷ a = 1 với a ≠ 0; 0 ÷ a = 0 với a ≠ 0."
                                                 FontSize="17"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -712,7 +699,6 @@
                                                 Text="• Không bao giờ được chia cho 0. Mọi giá trị làm số chia hoặc mẫu số bằng 0 đều không hợp lệ."
                                                 FontSize="17"
                                                 FontAttributes="Bold"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource ErrorColor}" />
 
@@ -720,7 +706,6 @@
                                                 Text="• Tìm số bị chia: x ÷ b = c thì x = c × b, với b ≠ 0. Tìm số chia trong dạng cơ bản a ÷ x = c thì x = a ÷ c, đồng thời x ≠ 0 và c ≠ 0."
                                                 FontSize="17"
                                                 FontAttributes="Bold"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -728,7 +713,6 @@
                                                 Text="Ví dụ: 72 ÷ x = 9 ⇒ x = 72 ÷ 9 = 8. Kiểm tra: 72 ÷ 8 = 9."
                                                 FontSize="17"
                                                 FontAttributes="Italic"
-                                                LineHeight="1.25"
                                                 LineBreakMode="WordWrap"
                                                 TextColor="{DynamicResource ContentAccentTextColor}" />
                                         </VerticalStackLayout>
@@ -747,7 +731,6 @@
                                             Text="Ghi nhớ: Phép cộng và phép trừ là hai phép tính ngược nhau; phép nhân và phép chia cũng là hai phép tính ngược nhau. Sau khi tìm được x, luôn thay x vào phép tính ban đầu để kiểm tra và loại mọi giá trị vi phạm điều kiện chia cho 0."
                                             FontSize="17"
                                             FontAttributes="Bold"
-                                            LineHeight="1.25"
                                             LineBreakMode="WordWrap"
                                             TextColor="{DynamicResource ContentAccentTextColor}" />
                                     </Border>
@@ -811,14 +794,14 @@
                             Stroke="{DynamicResource WallpaperBorderBrush}"
                             StrokeThickness="1"
                             HorizontalOptions="Start"
-                            VerticalOptions="Start">
+                            VerticalOptions="Start" SizeChanged="OnReferenceCardSizeChanged">
 
                             <Border.StrokeShape>
                                 <RoundRectangle CornerRadius="14" />
                             </Border.StrokeShape>
 
                             <Grid
-                                RowDefinitions="Auto,Auto,1,Auto,Auto,Auto"
+                                RowDefinitions="Auto,Auto,Auto"
                                 RowSpacing="9">
 
                                 <Label
@@ -830,22 +813,12 @@
                                     VerticalTextAlignment="Center"
                                     TextColor="{DynamicResource ContentAccentTextColor}" />
 
-                                <GraphicsView
-                                    Grid.Row="1"
-                                    Drawable="{Binding Diagram}"
-                                    SemanticProperties.Description="{Binding DiagramDescription}"
-                                    HeightRequest="170"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill"
-                                    BackgroundColor="Transparent" />
 
-                                <BoxView
-                                    Grid.Row="2"
-                                    HeightRequest="1"
-                                    BackgroundColor="{DynamicResource WallpaperDividerColor}" />
+
+
 
                                 <VerticalStackLayout
-                                    Grid.Row="3"
+                                    Grid.Row="1"
                                     BindableLayout.ItemsSource="{Binding Formulas}"
                                     Spacing="5"
                                     VerticalOptions="Start">
@@ -877,8 +850,20 @@
 
                                 </VerticalStackLayout>
 
-                                <Border
-                                    Grid.Row="4"
+
+
+
+
+                            <controls:FormulaDetails Grid.Row="2" Title="{localization:Translate Formula.Workspace.Explanation}">
+                                    <VerticalStackLayout Spacing="9">
+                                        <GraphicsView
+                                    Drawable="{Binding Diagram}"
+                                    SemanticProperties.Description="{Binding DiagramDescription}"
+                                    HeightRequest="170"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill"
+                                    BackgroundColor="Transparent" />
+                                        <Border
                                     Padding="10"
                                     BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -910,9 +895,7 @@
 
                                     </VerticalStackLayout>
                                 </Border>
-
-                                <Border
-                                    Grid.Row="5"
+                                        <Border
                                     Padding="10"
                                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -952,7 +935,8 @@
                                         </VerticalStackLayout>
                                     </VerticalStackLayout>
                                 </Border>
-
+                                    </VerticalStackLayout>
+                                </controls:FormulaDetails>
                             </Grid>
                         </Border>
 
@@ -1119,5 +1103,6 @@
                 </Grid>
             </Grid>
         </Grid>
+        <ContentView x:Name="AllFormulaTypesOverlay" Grid.RowSpan="2" ZIndex="100" IsVisible="False" />
     </Grid>
 </ContentPage>

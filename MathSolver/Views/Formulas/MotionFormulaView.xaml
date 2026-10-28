@@ -38,7 +38,7 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
 
-        <ScrollView Grid.Row="1"
+        <ScrollView x:Name="FormulaTaskScrollView" controls:SolverWorkspace.IsEnabled="True" Grid.Row="1"
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
             VerticalScrollBarVisibility="Default">
@@ -48,7 +48,152 @@
                 HorizontalOptions="Center">
 
                 <!-- 1. Mối quan hệ -->
+
+
+                <!-- 2. Minh họa tương tác -->
                 <Border
+                    Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
+                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                    StrokeThickness="1" x:Name="MotionInputCard">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="14" />
+                    </Border.StrokeShape>
+
+                    <VerticalStackLayout Spacing="12">
+                        <Label
+                            Text="{localization:Translate Formula.Motion.Graph.Title}"
+                            FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
+                            FontAttributes="Bold"
+                            TextColor="{DynamicResource ContentAccentTextColor}" />
+                        <Label
+                            Text="{localization:Translate Formula.Motion.Graph.Subtitle}"
+                            FontSize="16"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+
+                        <Grid
+                            x:Name="MotionInteractiveGrid"
+                            ColumnDefinitions="*"
+                            ColumnSpacing="16">
+
+                            <Border
+                                x:Name="MotionExplanationPanel"
+                                Grid.Column="0"
+                                Padding="16"
+                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <VerticalStackLayout
+                                    Spacing="12"
+                                    VerticalOptions="Center">
+                                    <Label
+                                        Text="v = d ÷ t"
+                                        FontSize="28"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+
+                                    <BoxView
+                                        HeightRequest="1"
+                                        Color="{DynamicResource WallpaperPrimaryBorderColor}" />
+
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0" Text="d" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                        <Label Grid.Column="1" x:Name="MotionDistanceValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
+                                        <Label Grid.Column="2" Text="m" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    </Grid>
+                                    <Border
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="999" />
+                                        </Border.StrokeShape>
+                                        <Slider
+                                            x:Name="MotionDistanceSlider"
+                                            Minimum="10"
+                                            Maximum="120"
+                                            Value="40"
+                                            HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
+                                            ValueChanged="OnMotionSliderValueChanged" />
+                                    </Border>
+
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
+                                        <Label Grid.Column="0" Text="t" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                        <Label Grid.Column="1" x:Name="MotionTimeValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
+                                        <Label Grid.Column="2" Text="s" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                    </Grid>
+                                    <Border
+                                        Padding="10,0"
+                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
+                                        StrokeThickness="1">
+                                        <Border.StrokeShape>
+                                            <RoundRectangle CornerRadius="999" />
+                                        </Border.StrokeShape>
+                                        <Slider
+                                            x:Name="MotionTimeSlider"
+                                            Minimum="1"
+                                            Maximum="6"
+                                            Value="1"
+                                            HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
+                                            ValueChanged="OnMotionSliderValueChanged" />
+                                    </Border>
+
+
+                                </VerticalStackLayout>
+                            </Border>
+
+
+
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
+                <Border x:Name="FormulaResultSection" controls:SolverWorkspace.StartsResult="True" Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{localization:Translate Formula.Workspace.Result}" Style="{StaticResource SolverSectionTitleStyle}" />
+                        <Label
+                                        x:Name="MotionAverageFormulaLabel"
+                                        FontSize="20"
+                                        FontAttributes="Bold"
+                                        HorizontalTextAlignment="Center"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        <Label
+                                        x:Name="MotionSpeedValueLabel"
+                                        FontSize="17"
+                                        FontAttributes="Bold"
+                                        LineBreakMode="WordWrap"
+                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                        <controls:FormulaDetails Title="{localization:Translate Formula.Workspace.Graph}">
+                            <Border
+                                x:Name="MotionGraphPanel"
+                                Grid.Column="1"
+                                Padding="12"
+                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                Stroke="{DynamicResource WallpaperBorderBrush}"
+                                StrokeThickness="1">
+                                <Border.StrokeShape>
+                                    <RoundRectangle CornerRadius="12" />
+                                </Border.StrokeShape>
+
+                                <GraphicsView
+                                    x:Name="MotionGraphicsView"
+                                    HeightRequest="390"
+                                    HorizontalOptions="Fill"
+                                    VerticalOptions="Fill" />
+                            </Border>
+                        </controls:FormulaDetails>
+                    </VerticalStackLayout>
+                </Border>
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Relationship}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -66,7 +211,6 @@
                         <Label
                             Text="{localization:Translate Formula.Motion.Relationship}"
                             FontSize="17"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -150,142 +294,11 @@
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Border>
-
-                <!-- 2. Minh họa tương tác -->
-                <Border
-                    Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                    BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
-                    Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                    StrokeThickness="1">
-                    <Border.StrokeShape>
-                        <RoundRectangle CornerRadius="14" />
-                    </Border.StrokeShape>
-
-                    <VerticalStackLayout Spacing="12">
-                        <Label
-                            Text="{localization:Translate Formula.Motion.Graph.Title}"
-                            FontSize="{OnPlatform Android=19, WinUI=22, Default=22}"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource ContentAccentTextColor}" />
-                        <Label
-                            Text="{localization:Translate Formula.Motion.Graph.Subtitle}"
-                            FontSize="16"
-                            LineBreakMode="WordWrap"
-                            TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-
-                        <Grid
-                            x:Name="MotionInteractiveGrid"
-                            ColumnDefinitions="3*,7*"
-                            ColumnSpacing="16">
-
-                            <Border
-                                x:Name="MotionExplanationPanel"
-                                Grid.Column="0"
-                                Padding="16"
-                                BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                                Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-
-                                <VerticalStackLayout
-                                    Spacing="12"
-                                    VerticalOptions="Center">
-                                    <Label
-                                        Text="v = d ÷ t"
-                                        FontSize="28"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label
-                                        x:Name="MotionAverageFormulaLabel"
-                                        FontSize="20"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                                    <BoxView
-                                        HeightRequest="1"
-                                        Color="{DynamicResource WallpaperPrimaryBorderColor}" />
-
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
-                                        <Label Grid.Column="0" Text="d" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                        <Label Grid.Column="1" x:Name="MotionDistanceValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
-                                        <Label Grid.Column="2" Text="m" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                                    </Grid>
-                                    <Border
-                                        Padding="10,0"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                        StrokeThickness="1">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="999" />
-                                        </Border.StrokeShape>
-                                        <Slider
-                                            x:Name="MotionDistanceSlider"
-                                            Minimum="10"
-                                            Maximum="120"
-                                            Value="40"
-                                            HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
-                                            ValueChanged="OnMotionSliderValueChanged" />
-                                    </Border>
-
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="10">
-                                        <Label Grid.Column="0" Text="t" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                        <Label Grid.Column="1" x:Name="MotionTimeValueLabel" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
-                                        <Label Grid.Column="2" Text="s" FontSize="18" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                                    </Grid>
-                                    <Border
-                                        Padding="10,0"
-                                        BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                                        StrokeThickness="1">
-                                        <Border.StrokeShape>
-                                            <RoundRectangle CornerRadius="999" />
-                                        </Border.StrokeShape>
-                                        <Slider
-                                            x:Name="MotionTimeSlider"
-                                            Minimum="1"
-                                            Maximum="6"
-                                            Value="1"
-                                            HeightRequest="{OnPlatform Android=48, WinUI=36, Default=36}"
-                                            ValueChanged="OnMotionSliderValueChanged" />
-                                    </Border>
-
-                                    <Label
-                                        x:Name="MotionSpeedValueLabel"
-                                        FontSize="17"
-                                        FontAttributes="Bold"
-                                        LineBreakMode="WordWrap"
-                                        TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                </VerticalStackLayout>
-                            </Border>
-
-                            <Border
-                                x:Name="MotionGraphPanel"
-                                Grid.Column="1"
-                                Padding="12"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
-                                Stroke="{DynamicResource WallpaperBorderBrush}"
-                                StrokeThickness="1">
-                                <Border.StrokeShape>
-                                    <RoundRectangle CornerRadius="12" />
-                                </Border.StrokeShape>
-
-                                <GraphicsView
-                                    x:Name="MotionGraphicsView"
-                                    HeightRequest="390"
-                                    HorizontalOptions="Fill"
-                                    VerticalOptions="Fill" />
-                            </Border>
-
-                        </Grid>
-                    </VerticalStackLayout>
-                </Border>
+                </controls:FormulaDetails>
 
                 <!-- 3. Các dạng chuyển động -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Motion.Types.Title}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -324,7 +337,7 @@
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
                                     <Label Text="{localization:Translate Formula.Motion.Types.Basic.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource ContentAccentTextColor}" />
-                                    <Label Text="{localization:Translate Formula.Motion.Types.Basic.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.Basic.Body}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -340,7 +353,7 @@
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
                                     <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.Chasing.Body}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -356,7 +369,7 @@
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
                                     <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.Meeting.Body}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -372,7 +385,7 @@
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
                                     <Label Text="{localization:Translate Formula.Motion.Types.River.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Motion.Types.River.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.River.Body}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
 
@@ -389,15 +402,17 @@
                                 </Border.StrokeShape>
                                 <VerticalStackLayout Spacing="6">
                                     <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Title}" FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
-                                    <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Body}" FontSize="16" LineHeight="1.3" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    <Label Text="{localization:Translate Formula.Motion.Types.Advanced.Body}" FontSize="16" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
                             </Border>
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
                 <!-- 4. Công thức -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Formulas}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -433,7 +448,6 @@
                                     Text="{localization:Translate Formula.Motion.MeetingFormula}"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </Border>
@@ -452,7 +466,6 @@
                                     Text="{localization:Translate Formula.Motion.ChasingFormula}"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </Border>
@@ -471,7 +484,6 @@
                                     Text="{localization:Translate Formula.Motion.AverageFormula}"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </Border>
@@ -490,7 +502,6 @@
                                     Text="{localization:Translate Formula.Motion.UnitConversion}"
                                     FontSize="17"
                                     FontAttributes="Bold"
-                                    LineHeight="1.3"
                                     LineBreakMode="WordWrap"
                                     TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             </Border>
@@ -498,9 +509,11 @@
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
                 <!-- 5. Tính chất -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.Properties}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -518,7 +531,6 @@
                         <Label
                             Text="{localization:Translate Formula.Motion.Properties}"
                             FontSize="17"
-                            LineHeight="1.35"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <Border
@@ -538,9 +550,11 @@
                         </Border>
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
                 <!-- 6. Cách giải -->
-                <Border
+                <controls:FormulaDetails Title="{localization:Translate Formula.Common.HowToSolve}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
@@ -558,7 +572,6 @@
                         <Label
                             Text="{localization:Translate Formula.Motion.Steps}"
                             FontSize="17"
-                            LineHeight="1.35"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
@@ -583,7 +596,6 @@
                                     <Label
                                         Text="{localization:Translate Formula.Motion.MeetingExample}"
                                         FontSize="16"
-                                        LineHeight="1.3"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
@@ -607,7 +619,6 @@
                                     <Label
                                         Text="{localization:Translate Formula.Motion.ChasingExample}"
                                         FontSize="16"
-                                        LineHeight="1.3"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                                 </VerticalStackLayout>
@@ -615,6 +626,7 @@
                         </Grid>
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
             </VerticalStackLayout>
         </ScrollView>

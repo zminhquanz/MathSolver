@@ -58,7 +58,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         }};
         _heroSymbol.Style = GetStyle("SolverHeroSymbolStyle");
         var fixedHeader = new VerticalStackLayout { Style = GetStyle("SolverFixedHeaderStyle"), Children = { hero } };
-        var body = new VerticalStackLayout { Style = GetStyle("SolverScrollableContentStyle"), Spacing = 14 };
+
 
         var setup = _setupPanel;
         setup.Add(Caption("Operation", "SolverSectionTitleStyle"));
@@ -82,7 +82,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         setup.Add(create);
         _creationNotice.IsVisible = false;
         setup.Add(_creationNotice);
-        body.Add(BuildSetupCard());
+        var setupCard = BuildSetupCard();
 
         var editor = new VerticalStackLayout { Spacing = 10 };
         var matrixTabs = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Star), new(GridLength.Star) } };
@@ -103,17 +103,17 @@ public sealed partial class MatrixView : LocalizedSolverView
                 SemanticProperties.SetDescription(_matrices[i], T("Matrix" + "ABC"[i]));
             }
         });
-        editor.Add(matrixTabs);
+
         _inputStatus.FontSize = 12;
         _inputStatus.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(_inputStatus);
         _pasteCells = ActionButton("Workspace.Paste", "", OnPasteCells);
         ToolTipProperties.SetText(_pasteCells, T("PasteCells"));
         editor.Add(BuildCellToolbar());
-        editor.Add(_cellValuePanel);
+
         editor.Add(_rangeSelectionHint);
-        editor.Add(_coordinatePanel);
-        editor.Add(_moreTools);
+
+
         var copyHelp = Caption("CopyHelp");
         copyHelp.FontSize = 13;
         copyHelp.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
@@ -125,7 +125,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         _viewport.DeleteRequested += OnDeleteSelection;
         _viewport.SetInlineEditor(_value);
         _viewport.CommitEdit = CommitPendingCell;
-        _viewport.CanInteract = () => _active && HasInputs;
+        _viewport.CanInteract = () => _active && HasInputs && !_phoneDetailsOpen;
         _viewport.CanEdit = () => !_busy && HasInputs && _selected != 2 && !ReferenceEquals(_failedReadDraft, CurrentDraft);
         _viewport.EditCancelled += () =>
         {
@@ -134,7 +134,7 @@ public sealed partial class MatrixView : LocalizedSolverView
             if (_errorKey == "InvalidCell")
             { _errorKey = null; _message.Text = ""; RefreshWorkspacePresentation(); }
         };
-        editor.Add(_viewport);
+
         _range.FontSize = 12;
         _range.SetDynamicResource(Label.TextColorProperty, "WallpaperTextSecondaryColor");
         editor.Add(_range);
@@ -181,17 +181,12 @@ public sealed partial class MatrixView : LocalizedSolverView
         _moreTools.Add(transfers);
         _export = ActionButton("Export", "💾", OnExport);
         _moreTools.Add(_export);
-        _editorCard = Card(editor);
-        body.Add(_editorCard);
-        body.Add(BuildStatusDetails());
         _calculate = ActionButton("Calculate", "🧮", OnCalculate, primary: true);
         _stop = ActionButton("Stop", "■", OnStop, primary: true, lockDuringWork: false);
-        body.Add(BuildResultCard());
-        body.Add(BuildSolutionCard());
+        editor.Add(BuildResultCard());
         var root = new Grid { RowDefinitions = { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) } };
         root.Add(fixedHeader);
-        _workspaceScroll.Content = body;
-        root.Add(_workspaceScroll, 0, 1);
+        BuildFocusedWorkspace(root, fixedHeader, setupCard, editor, matrixTabs);
         root.Add(BuildWorkspaceActions(), 0, 2);
         Content = root;
         _viewport.CellSelected += (_, _) => RefreshCell();

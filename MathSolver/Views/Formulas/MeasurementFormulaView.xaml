@@ -4,6 +4,7 @@
     x:Class="MathSolver.Views.MeasurementFormulaView"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:localization="clr-namespace:MathSolver.MarkupExtensions"
     xmlns:controls="clr-namespace:MathSolver.Controls"
     BackgroundColor="Transparent"
     HorizontalOptions="Fill"
@@ -34,7 +35,7 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
 
-        <ScrollView Grid.Row="1"
+        <ScrollView x:Name="FormulaTaskScrollView" controls:SolverWorkspace.IsEnabled="True" Grid.Row="1"
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
             VerticalScrollBarVisibility="Default">
@@ -47,7 +48,7 @@
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperPrimaryBorderBrush}"
-                    StrokeThickness="1">
+                    StrokeThickness="1" x:Name="MeasurementInputCard" SizeChanged="OnFormulaContentSizeChanged">
                     <Border.StrokeShape>
                         <RoundRectangle CornerRadius="14" />
                     </Border.StrokeShape>
@@ -202,7 +203,13 @@
                             </Border>
                         </Grid>
 
-                        <Border
+
+
+
+                    </VerticalStackLayout>
+                </Border>
+                <VerticalStackLayout x:Name="FormulaResultSection" controls:SolverWorkspace.StartsResult="True" Spacing="10">
+                    <Border
                             x:Name="ResultBorder"
                             Padding="16,14"
                             BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
@@ -237,17 +244,16 @@
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                             </VerticalStackLayout>
                         </Border>
-
-                        <Label
+                    <Label
                             x:Name="ErrorLabel"
                             IsVisible="False"
                             FontSize="14"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource ContentDangerTextColor}" />
-                    </VerticalStackLayout>
-                </Border>
+                </VerticalStackLayout>
 
-                <Border
+                <controls:FormulaDetails Title="{Binding Source={x:Reference ReferenceTitleLabel}, Path=Text}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -267,20 +273,20 @@
                             x:Name="ReferenceTextLabel"
                             FontSize="17"
                             FontAttributes="Bold"
-                            LineHeight="1.35"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
                         <Label
                             x:Name="ReferenceHintLabel"
                             FontSize="15"
-                            LineHeight="1.3"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
 
-                <Border
+                <controls:FormulaDetails Title="{Binding Source={x:Reference TipsTitleLabel}, Path=Text}">
+                    <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
                     Stroke="{DynamicResource WallpaperBorderBrush}"
@@ -299,11 +305,11 @@
                         <Label
                             x:Name="TipsTextLabel"
                             FontSize="16"
-                            LineHeight="1.35"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
                     </VerticalStackLayout>
                 </Border>
+                </controls:FormulaDetails>
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

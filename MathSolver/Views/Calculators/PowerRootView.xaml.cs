@@ -115,6 +115,7 @@ public partial class PowerRootView : LocalizedSolverView
     public PowerRootView()
     {
         InitializeComponent();
+        InitializePowerRootWorkspace();
 
         InitializeLocalization();
         AppMemoryPolicy.Register(this);
@@ -134,6 +135,8 @@ public partial class PowerRootView : LocalizedSolverView
     protected override void OnSolverLoaded()
     {
         base.OnSolverLoaded();
+        _workspaceSuspended = false;
+        RefreshPowerRootWorkspace();
 
         DeveloperModeManager.DeveloperModeChanged +=
             OnDeveloperModeChanged;
@@ -151,6 +154,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+        _workspaceSuspended = true;
         DeveloperModeManager.DeveloperModeChanged -=
             OnDeveloperModeChanged;
 
@@ -201,6 +205,8 @@ public partial class PowerRootView : LocalizedSolverView
 
         RootContent.IsVisible =
             !powerMode;
+
+        RefreshPowerRootWorkspace();
     }
 
     private void RefreshModeButtonTheme()
@@ -443,7 +449,7 @@ public partial class PowerRootView : LocalizedSolverView
         object? sender,
         FocusEventArgs e)
     {
-        if (sender is not Entry entry ||
+        if (sender is not Entry entry || entry.Handler?.PlatformView is null ||
             string.IsNullOrWhiteSpace(
                 entry.Text))
         {
@@ -478,7 +484,6 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        using var autoScroll = CalculationAutoScroll.Begin(sender, ResultBorder);
         HideError();
         HideResult();
 
@@ -500,8 +505,9 @@ public partial class PowerRootView : LocalizedSolverView
         Task calculation = CalculatePowerAsync(
             baseValue,
             exponent);
-        autoScroll?.Reveal(ProgressBorder);
         await calculation;
+        if (sender is Button && !_isCalculating && ResultBorder.IsVisible && _isPowerMode)
+            SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
     }
 
     private async Task<bool> ConfirmVeryLargePowerAsync(
@@ -943,7 +949,6 @@ public partial class PowerRootView : LocalizedSolverView
             return;
         }
 
-        using var autoScroll = CalculationAutoScroll.Begin(sender, RootResultBorder);
         HideRootError();
         HideRootResult();
 
@@ -995,6 +1000,7 @@ public partial class PowerRootView : LocalizedSolverView
 
             ShowRootResult(
                 _rootCalculationState);
+            if (sender is Button) SolverWorkspace.RevealResult(RootResultBorder, followFooterLayout: true);
         }
         catch (Exception exception)
         {
@@ -2116,6 +2122,7 @@ public partial class PowerRootView : LocalizedSolverView
         _calculationCompletionSource =
             calculationCompletionSource;
 
+        _calculationWasStopped = false;
         _isCalculating = true;
         UpdateWindowsCloseGuard();
 
@@ -2524,6 +2531,7 @@ public partial class PowerRootView : LocalizedSolverView
                     Translate(
                         "PowerRoot.ProgressStopped");
 
+                _calculationWasStopped = true;
                 StopButton.IsVisible = false;
                 ResultBorder.IsVisible = false;
             }
@@ -2656,7 +2664,7 @@ public partial class PowerRootView : LocalizedSolverView
         CalculationProgressBar.Progress =
             progress;
 
-        ProgressPercentLabel.Text = $"{progress:P0}";
+        ProgressPercentLabel.Text = $"{progress:P0} · {Translate("PowerRoot.Workspace.EstimatedProgress")}";
 
         ProgressTitleLabel.Text =
             Format(
@@ -3385,14 +3393,8 @@ public partial class PowerRootView : LocalizedSolverView
         ExportTextButton.IsVisible =
             canExport;
 
-        Grid.SetColumnSpan(
-            CopyResultButtonContainer,
-            canExport
-                ? 1
-                : 2);
-
-        PowerSummaryBorder.IsVisible = canExport;
-        if (canExport) UpdatePowerSummary(state);
+        PowerSummaryBorder.IsVisible = true;
+        UpdatePowerSummary(state);
 
         SolutionLabel.Text =
             CreateSolution(
@@ -5386,6 +5388,7 @@ public partial class PowerRootView : LocalizedSolverView
                     : Translate(
                         "PowerRoot.ExportStop");
         }
+        RefreshPowerRootWorkspace();
     }
 
     private bool TryGetCurrentInputValues(
@@ -5447,6 +5450,7 @@ public partial class PowerRootView : LocalizedSolverView
         RootCopyResultButton.IsEnabled = enabled;
         PowerModeButton.IsEnabled = enabled;
         RootModeButton.IsEnabled = enabled;
+        RefreshPowerRootWorkspace();
     }
 
     private void ShowError(
@@ -5470,6 +5474,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     private void HideResult()
     {
+        _calculationWasStopped = false;
         ReleaseStoredResult();
         ResetPowerDiagnostics();
 
@@ -5497,6 +5502,7 @@ public partial class PowerRootView : LocalizedSolverView
             ExportActivityIndicator.IsRunning =
                 false;
         }
+        RefreshPowerRootWorkspace();
     }
 
     private static string RemoveGroupSeparators(

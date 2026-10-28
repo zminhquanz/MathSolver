@@ -34,9 +34,9 @@
 
     <Style x:Key="SolverActionBarStyle" TargetType="Border">
         <Setter Property="Padding" Value="{DynamicResource Density.ActionPadding}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
-        <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="MaximumWidthRequest" Value="1320" />
         <Setter Property="WidthRequest" Value="{Binding Source={RelativeSource AncestorType={x:Type Grid}}, Path=Width, x:DataType='Grid'}" />

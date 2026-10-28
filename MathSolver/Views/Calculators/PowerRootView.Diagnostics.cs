@@ -39,19 +39,23 @@ public partial class PowerRootView
         var metrics = new Grid { ColumnSpacing = 20, RowSpacing = 12 };
         AddMetric("CalculationTime", Duration(state.Elapsed));
         AddMetric("Digits", state.DigitCount.ToString("N0", CultureInfo.CurrentCulture));
-        AddMetric("Method", D(state.Strategy switch
+        bool detailedSummary = state.DigitCount >= ExportDigitThreshold;
+        if (detailedSummary)
         {
-            PowerComputationStrategy.ParallelNttPower when state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true => "MethodSegmented",
-            PowerComputationStrategy.ParallelNttPower => "MethodNtt",
-            PowerComputationStrategy.BitShift => "MethodShift",
-            PowerComputationStrategy.FactorizedPowerOfTen => "MethodTen",
-            _ => "MethodSequential"
-        }));
-        AddMetric("Workers", state.ActiveWorkerCount.ToString(CultureInfo.CurrentCulture));
-        AddMetric("TxtSize", FormatByteSize(EstimateTxtFileSizeBytes(state)));
-        AdaptiveColumns.SetMinimumColumnWidth(metrics, 260);
+            AddMetric("Method", D(state.Strategy switch
+            {
+                PowerComputationStrategy.ParallelNttPower when state.ParallelDiagnostics?.UsedMemoryBoundedLargePower == true => "MethodSegmented",
+                PowerComputationStrategy.ParallelNttPower => "MethodNtt",
+                PowerComputationStrategy.BitShift => "MethodShift",
+                PowerComputationStrategy.FactorizedPowerOfTen => "MethodTen",
+                _ => "MethodSequential"
+            }));
+            AddMetric("Workers", state.ActiveWorkerCount.ToString(CultureInfo.CurrentCulture));
+            AddMetric("TxtSize", FormatByteSize(EstimateTxtFileSizeBytes(state)));
+        }
+        AdaptiveColumns.SetMinimumColumnWidth(metrics, detailedSummary ? 260 : 140);
         PowerSummaryRows.Add(metrics);
-        PowerSummaryRows.Add(DiagnosticText(D("TimeNote"), secondary: true));
+        if (detailedSummary) PowerSummaryRows.Add(DiagnosticText(D("TimeNote"), secondary: true));
 
         void AddMetric(string key, string value) => metrics.Add(new VerticalStackLayout
         {

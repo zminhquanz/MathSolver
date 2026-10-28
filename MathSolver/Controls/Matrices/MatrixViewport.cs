@@ -27,6 +27,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public event EventHandler? PasteRequested;
     public event Action<MatrixCellRange>? DeleteRequested;
     public bool AllSelected => _state.AllSelected;
+    public bool IsEditing => _state.IsEditing;
     public bool HasRangeSelection => _state.HasRangeSelection;
     public MatrixCellRange Selection => _state.Selection;
     private void RequestCopy()
@@ -70,6 +71,15 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public Color Paper { get => (Color)GetValue(PaperProperty); set => SetValue(PaperProperty, value); }
     public Color Line { get => (Color)GetValue(LineProperty); set => SetValue(LineProperty, value); }
     public Color Accent { get => (Color)GetValue(AccentProperty); set => SetValue(AccentProperty, value); }
+    public static readonly BindableProperty ViewportHeightLimitProperty = BindableProperty.Create(
+        nameof(ViewportHeightLimit), typeof(double), typeof(MatrixViewport), 340d,
+        propertyChanged: (view, _, _) => ((MatrixViewport)view).Refresh());
+    /// <summary>Available table height supplied by the workspace; small tables remain natural-sized.</summary>
+    public double ViewportHeightLimit
+    {
+        get => (double)GetValue(ViewportHeightLimitProperty);
+        set => SetValue(ViewportHeightLimitProperty, value);
+    }
     private static BindableProperty PaintProperty(string name, Color fallback) => BindableProperty.Create(
         name, typeof(Color), typeof(MatrixViewport), fallback,
         propertyChanged: (view, _, _) => ((MatrixViewport)view).Refresh());
@@ -349,7 +359,8 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             Math.Max(MatrixViewportState.MinColumnWidth, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
         _state.Arrange(width, height, cellWidth, density.MatrixRowHeight * scale, ScrollBarThickness);
         // Small matrices occupy only the space they need; larger ones keep a bounded viewport.
-        double desiredHeight = Math.Min(340, _state.CellHeight + _state.ContentHeight
+        double limit = double.IsFinite(ViewportHeightLimit) ? Math.Max(1, ViewportHeightLimit) : 340;
+        double desiredHeight = Math.Min(limit, _state.CellHeight + _state.ContentHeight
             + (_state.ShowHorizontalScrollBar ? ScrollBarThickness : 0));
         if (Math.Abs(_surface.HeightRequest - desiredHeight) > 0.01) _surface.HeightRequest = desiredHeight;
         PositionEditor(); _canvas.Invalidate();
