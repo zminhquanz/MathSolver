@@ -28,20 +28,18 @@ internal static class TriangleAreaOpenCatalogue
     }
     internal static string PromptRelation(BasicQuestionContract c)=>TriangleAreaPilot.Relation+"; f0=base; f1=perpendicular height corresponding to that supplied base; v0=one object; v1=triangle; v2=length unit; v3=area unit; target=entire triangle area; direct given dimensions only";
     internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""
-        Viết đề toán ngắn, tự nhiên cho học sinh tiểu học. Có thể thay cấu trúc câu; ví dụ chỉ để tham khảo.
-        Giữ mỗi biến đúng trường và đúng một lần. {v0} là cụm danh từ đầy đủ; {v1} đã là tên hình đầy đủ, không thêm chữ hình trước biến.
-        Câu đầu nêu {v0} có dạng {v1}. Câu đáy cho trực tiếp độ dài đáy {f0} {v2} của {v0}.
-        Câu chiều cao cho trực tiếp {f1} {v2} của {v0}, nói rõ chiều cao vuông góc với chính đáy đó. Phải nhắc đáy đó; không thay chiều cao bằng cạnh bên hoặc chiều cao của đáy khác.
-        Câu hỏi chỉ hỏi diện tích toàn bộ {v0} theo {v3}. {v2} là đơn vị độ dài, {v3} đã là đơn vị diện tích; không thêm ký hiệu bình phương.
-        Mỗi trường là một câu; dữ kiện kết thúc bằng dấu chấm, câu hỏi kết thúc bằng dấu hỏi. Câu dẫn lời giải chỉ gọi diện tích {v0}.
-        Không thêm cắt ghép, lát gạch, lối đi, chi phí, suy ra cạnh, đổi đơn vị, điều kiện hoặc phủ định. Không điền số, tên, đơn vị thật, phép tính hoặc đáp án. Chỉ trả JSON theo cấu trúc mẫu.
+        Viết đề toán tiểu học ngắn, tự nhiên. Được đổi cấu trúc câu; ví dụ chỉ tham khảo.
+        Mỗi biến đúng trường, đúng một lần. {v0} là cụm danh từ đầy đủ; không thêm tên hay từ chỉ đồ vật. {v1} là tên hình đầy đủ: không thêm chữ hình trước biến.
+        Ba dữ kiện riêng: {v0} có dạng {v1}; đáy của {v0} dài {f0} {v2}; chiều cao của {v0} dài {f1} {v2}, đo vuông góc với chính đáy đó. Nêu rõ đáy đó, không dùng cạnh bên hay đáy khác.
+        Chỉ hỏi diện tích toàn bộ {v0} theo {v3}. {v2} là đơn vị độ dài; {v3} đã là đơn vị diện tích, không thêm bình phương.
+        step_0 là cụm danh từ gọi diện tích {v0}; không dùng động từ mệnh lệnh như Tính, Tìm, Hãy.
+        Mỗi trường một câu; dữ kiện cuối dấu chấm, câu hỏi cuối dấu hỏi. Không thêm sự kiện, cắt ghép, điều kiện, phủ định, tên, số, đơn vị thật, phép tính hay đáp án. Chỉ trả JSON cùng cấu trúc.
         """:"""
-        Write a short natural elementary word problem. The example is a reference; vary clear sentence constructions.
-        Preserve every placeholder once in its own field. {v0} is the complete object noun phrase with its article; {v1} already contains the complete shape name.
-        State that {v0} is a {v1}. The base fact supplies the base of {v0} directly as {f0} {v2}.
-        The height fact supplies {f1} {v2} for {v0}, explicitly describing the perpendicular height corresponding to that base. Say that base to connect it to the supplied base. A side or a height to another base is not interchangeable.
-        Ask only for the entire area of {v0} in {v3}. {v2} is the length unit; {v3} already is the area unit. Add no square symbol or literal unit words.
-        Use one grammatical sentence per field. Facts end with a period; the question is an interrogative ending with a question mark. The solution lead only names the area of {v0}.
-        Add no cutting, joined shapes, paths, tiling, costs, inferred sides, conversions, conditions or negation. Fill no actual names, numbers, units, calculations or answers. Return only JSON with the reference schema.
+        Write a short natural elementary problem; vary sentence structure. The example is a reference.
+        Keep each placeholder once in its field. {v0} is the complete object noun phrase: add no article, object name or actor before it. {v1} already contains the complete shape name; add no extra shape word.
+        Three separate facts state {v0}'s shape {v1}, its supplied base {f0} {v2}, and its perpendicular height {f1} {v2} corresponding to that base. Explicitly connect the height to that supplied base, never another base or a side length.
+        Ask only for the entire area of {v0} in {v3}. {v2} is a length unit; {v3} already is an area unit, so add no square symbol or literal units.
+        step_0 is a noun phrase naming the area of {v0}, without an imperative such as Calculate, Find or Determine.
+        One sentence per field: facts end with periods, the question with a question mark. Add no events, conditions, negation, names, numbers, calculations or answers. Return only JSON in the reference schema.
         """;
 }

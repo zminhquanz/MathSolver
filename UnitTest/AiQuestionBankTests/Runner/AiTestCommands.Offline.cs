@@ -10,6 +10,14 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--practical-consolidation"],"--practical-consolidation",args=>PracticalConsolidationTests.RunAsync(),args=>args is ["--practical-consolidation"]),
+        new(["--practical-prompt-budget"],"--practical-prompt-budget <gguf> <output.json>",args=>{PracticalPromptBudgetTests.Run(args[1],args[2]);return Task.CompletedTask;},args=>args is ["--practical-prompt-budget",_,_]),
+        new(["--practical-prior-storage"],"--practical-prior-storage <evidence-directory>",args=>PracticalPriorStorageTests.RunAsync(args[1]),args=>args is ["--practical-prior-storage",_]),
+        new(["--percentage-consolidation"],"--percentage-consolidation",args=>{PracticalConsolidationTests.CheckRatios();return Task.CompletedTask;},args=>args is ["--percentage-consolidation"]),
+        new(["--practical-shared-consolidation"],"--practical-shared-consolidation",args=>{PracticalConsolidationTests.SharedChecks();return Task.CompletedTask;},args=>args is ["--practical-shared-consolidation"]),
+        new(["--money-consolidation"],"--money-consolidation",args=>MoneyChangeConsolidationTests.RunAsync(),args=>args is ["--money-consolidation"]),
+        new(["--triangle-consolidation"],"--triangle-consolidation",args=>TriangleAreaConsolidationTests.RunAsync(),args=>args is ["--triangle-consolidation"]),
+        new(["--rectangle-consolidation"],"--rectangle-consolidation",args=>RectangleSideConsolidationTests.RunAsync(),args=>args is ["--rectangle-consolidation"]),
         new(["--practical-open","--practical-open-model"],"--practical-open | --practical-open-model <gguf> [directory]",async args=>
         {
             if(args.Length==1)await PracticalOpenTests.RunAsync();

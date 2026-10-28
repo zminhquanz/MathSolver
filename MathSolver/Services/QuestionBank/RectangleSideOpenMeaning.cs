@@ -8,21 +8,28 @@ internal static class RectangleSideOpenMeaning
     private static string Role(string role,bool vi)=>vi?(role=="length"?"chiều dài":"chiều rộng"):role;
     private static bool Perimeter(string text,bool vi)=>vi
         ?Match(text,@"\{v0\} có chu vi (?:(?:là|bằng) )?\{f0\} \{v2\}")
-            ||Match(text,@"chu vi (?:của )?\{v0\} (?:là|bằng|đo được) \{f0\} \{v2\}")
+            ||Match(text,@"(?:toàn bộ )?chu vi (?:của )?\{v0\} (?:là|bằng|đo được) \{f0\} \{v2\}")
         :Match(text,@"\{v0\} has a perimeter of \{f0\} \{v2\}")
-            ||Match(text,@"the perimeter of \{v0\} (?:is|measures|equals) \{f0\} \{v2\}")
+            ||Match(text,@"the (?:full )?perimeter of \{v0\} (?:is|measures|equals) \{f0\} \{v2\}")
             ||Match(text,@"\{v0\}['’]s perimeter (?:is|measures|equals) \{f0\} \{v2\}");
     private static bool Target(string text,string role,bool vi)=>vi
-        ?Match(text,@"(?:hỏi )?"+Role(role,true)+@" (?:của )?\{v0\} (?:là|bằng) bao nhiêu \{v2\}")
+        ?Match(text,@"(?:hỏi |vậy )?"+Role(role,true)+@" (?:của )?\{v0\} (?:là|bằng) bao nhiêu \{v2\}")
             ||Match(text,Role(role,true)+@" (?:của )?\{v0\} tính theo \{v2\} (?:là|bằng) bao nhiêu")
-        :Match(text,@"what is the "+role+@" of \{v0\} in \{v2\}")
+        :Match(text,@"what is the (?:unknown )?"+role+@" of \{v0\} in \{v2\}")
             ||Match(text,@"what is \{v0\}['’]s "+role+@" in \{v2\}")
             ||Match(text,@"in \{v2\}, what is (?:the "+role+@" of \{v0\}|\{v0\}['’]s "+role+@")")
             ||Match(text,@"what is the "+role+@" of \{v0\}, measured in \{v2\}")
             ||Match(text,@"how "+(role=="length"?"long":"wide")+@" is \{v0\} in \{v2\}");
     private static bool Lead(string text,string role,bool vi)=>vi
-        ?Match(text,Role(role,true)+@" (?:của )?\{v0\}(?: là)?")
-        :Match(text,@"(?:the )?"+role+@" of \{v0\}")||Match(text,@"\{v0\}['’]s "+role);
+        ?Match(text,Role(role,true)+@" (?:cần tìm )?(?:của )?\{v0\}(?: là)?")
+        :Match(text,@"(?:the )?(?:unknown )?"+role+@" of \{v0\}")||Match(text,@"\{v0\}['’]s "+role);
+    private static bool NamedDimension(string text,string role,string amount,AppLanguage language)
+    {
+        bool vi=language==AppLanguage.Vietnamese;
+        return Dimension(text,vi?(role=="length"?"dài":"rộng"):role,amount,language)
+            ||(vi?Match(text,@"\{v0\} có "+Role(role,true)+@" đo được "+amount+@" \{v2\}")
+                :Match(text,@"the known "+role+@" of \{v0\} is "+amount+@" \{v2\}"));
+    }
     private static bool HalfLead(string text,bool vi)=>vi
         ?Match(text,@"nửa chu vi (?:của )?\{v0\}(?: là)?")
             ||Match(text,@"tổng chiều dài và chiều rộng (?:của )?\{v0\}(?: là)?")
@@ -42,7 +49,7 @@ internal static class RectangleSideOpenMeaning
     {
         bool vi=language==AppLanguage.Vietnamese;
         return Shape(context.ShapeFact,language)&&Perimeter(context.PerimeterFact,vi)
-            &&Dimension(context.KnownFact,vi?(context.KnownRole=="length"?"dài":"rộng"):context.KnownRole,@"\{f1\}",language)
+            &&NamedDimension(context.KnownFact,context.KnownRole,@"\{f1\}",language)
             &&Target(context.Question,context.TargetRole,vi)&&HalfLead(context.HalfLead,vi)&&Lead(context.Lead,context.TargetRole,vi)
             &&new[]{context.ShapeFact,context.PerimeterFact,context.KnownFact}.All(x=>x.TrimEnd().EndsWith('.'))
             &&context.Question.TrimEnd().EndsWith('?');
@@ -65,16 +72,16 @@ internal static class RectangleSideOpenMeaning
             // not prove a named length/width role. Reject role contradictions
             // only when the complete clause establishes the opposite role;
             // all unproved wording still follows the review path below.
-            ||Dimension(known,vi?(context.TargetRole=="length"?"dài":"rộng"):context.TargetRole,@"\{f1\}",c.Language)
+            ||NamedDimension(known,context.TargetRole,@"\{f1\}",c.Language)
             ||Target(question,context.KnownRole,vi)||Lead(lead,context.KnownRole,vi)
             ||PerimeterTarget(question,vi)||PerimeterLead(lead,vi)||HalfLead(lead,vi)
-            ||Dimension(perimeter,vi?"dài":"length",@"\{f0\}",c.Language)
-            ||Dimension(perimeter,vi?"rộng":"width",@"\{f0\}",c.Language))
-            return new(null,"ChangedRelationOrTarget",ErrorDetails:"Give the actual total rectangle perimeter and the specified known side, then ask only the other side without extra conditions.");
+            ||NamedDimension(perimeter,"length",@"\{f0\}",c.Language)
+            ||NamedDimension(perimeter,"width",@"\{f0\}",c.Language))
+            return new(null,"ChangedRelationOrTarget",ErrorDetails:$"Give the actual total rectangle perimeter and known {context.KnownRole}; ask explicitly for the unknown {context.TargetRole} without extra conditions.");
         if(OpenQuestionProse.Fields(draft).Any(f=>Has(f.Text.Trim(),@"[.!?:;].+")))
             return new(null,"InvalidText",ErrorDetails:"Use one sentence per field without an added event or technical note.");
         bool shapeProved=Shape(shape,c.Language),perimeterProved=Perimeter(perimeter,vi),
-            knownProved=Dimension(known,vi?(context.KnownRole=="length"?"dài":"rộng"):context.KnownRole,@"\{f1\}",c.Language),
+            knownProved=NamedDimension(known,context.KnownRole,@"\{f1\}",c.Language),
             targetProved=Target(question,context.TargetRole,vi),halfProved=HalfLead(half,vi),leadProved=Lead(lead,context.TargetRole,vi),
             punctuation=draft.Facts.All(x=>x.Text.TrimEnd().EndsWith('.'))&&question.TrimEnd().EndsWith('?');
         if(shapeProved&&perimeterProved&&knownProved&&targetProved&&halfProved&&leadProved&&punctuation)return new(draft,null,c);

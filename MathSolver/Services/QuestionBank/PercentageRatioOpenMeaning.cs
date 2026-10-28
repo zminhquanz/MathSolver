@@ -11,14 +11,14 @@ internal static class PercentageRatioOpenMeaning
     {
         bool vi=c.Language==AppLanguage.Vietnamese;
         string[] patterns=vi?[
-            @"\{v0\} (?:có|sở hữu|đang có) (?:tổng cộng |tất cả )?\{f0\} \{v1\}|trong kho của \{v0\} có \{f0\} \{v1\}",
-            @"trong số \{v2\} đó có \{f1\} \{v3\}|trong tổng số \{v2\} đó, \{f1\} là \{v3\}",
-            @"số \{v4\} chiếm bao nhiêu phần trăm tổng số \{v2\} của \{v0\}|hỏi số \{v4\} chiếm bao nhiêu phần trăm tổng số \{v2\} của \{v0\}",
-            @"tỉ số phần trăm \{v4\} so với tổng số \{v2\}|tỉ lệ phần trăm \{v4\} trong tổng số \{v2\}"]:[
-            @"\{v0\} (?:has|owns|holds) (?:a total of )?\{f0\} \{v1\}|\{f0\} \{v1\} belong to \{v0\}",
-            @"of those \{v2\}, \{f1\} are \{v3\}|among those \{v2\}, \{f1\} are \{v3\}",
-            @"what percentage of \{v0\}['’]s \{v2\} are \{v4\}|what percentage of the \{v2\} owned by \{v0\} are \{v4\}",
-            @"percentage of \{v4\} among all \{v2\}|percentage of \{v4\} relative to all \{v2\}"];
+            @"\{v0\} (?:có|sở hữu|đang có|chứa) (?:tổng cộng |tất cả )?\{f0\} \{v1\}|trong kho của \{v0\} có \{f0\} \{v1\}",
+            @"trong (?:số|toàn bộ) \{v2\} đó có \{f1\} \{v3\}|trong tổng số \{v2\} đó, \{f1\} là \{v3\}",
+            @"(?:hỏi )?số \{v4\} chiếm bao nhiêu phần trăm tổng số \{v2\} của \{v0\}|trong tổng số \{v2\} của \{v0\}, số \{v4\} chiếm tỉ lệ bao nhiêu phần trăm",
+            @"tỉ (?:số|lệ) phần trăm \{v4\} so với tổng số \{v2\}|tỉ lệ phần trăm \{v4\} trong tổng số \{v2\}"]:[
+            @"\{v0\} (?:has|owns|holds) (?:a total of )?\{f0\} \{v1\}|\{f0\} \{v1\} belong to \{v0\}|\{v0\} owns a collection of \{f0\} \{v1\}",
+            @"(?:of|among) those \{v2\}, \{f1\} are \{v3\}|among the \{v2\} owned, \{f1\} are \{v3\}",
+            @"what percentage of \{v0\}['’]s \{v2\} are \{v4\}|what percentage of the \{v2\} owned by \{v0\} are \{v4\}|of the \{v2\} owned by \{v0\}, what percentage are \{v4\}",
+            @"percentage of \{v4\} (?:among|within) all \{v2\}|percentage of \{v4\} relative to all \{v2\}"];
         var fields=new[]{d.Facts![0].Text,d.Facts[1].Text,d.Question,d.SolutionLeads![0].Text};
         bool Proves(int i,string t)=>Match(t,patterns[i]);
         BasicDraftValidation Wrong(string why)=>new(null,"ChangedRelationOrTarget",ErrorDetails:why);
