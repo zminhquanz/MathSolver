@@ -29,6 +29,13 @@ public sealed class AiQuestionReviewPage : ContentPage
     private readonly ActivityIndicator _activity = new() { WidthRequest = 24, HeightRequest = 24, IsVisible = false };
     private readonly Button _retry = new();
     private readonly Button _back = new() { AutomationId = "AiReviewBack" };
+    private readonly Label _selectionCount = Text(size: 14, bold: true);
+    private readonly EmojiActionButton _selectAll = BatchButton("SelectAll", "☑️", "SolverOutlinedActionStyle", "AiReviewSelectAll");
+    private readonly EmojiActionButton _clearSelection = BatchButton("ClearSelection", "↩️", "SolverOutlinedActionStyle", "AiReviewClearSelection");
+    private readonly EmojiActionButton _approveSelected = BatchButton("ApproveSelected", "✅", "SolverPrimaryActionStyle", "AiReviewApproveSelected");
+    private readonly EmojiActionButton _rejectSelected = BatchButton("RejectSelected", "🗑️", "SolverOutlinedActionStyle", "AiReviewRejectSelected");
+    private readonly EmojiActionButton _approveAll = BatchButton("ApproveAll", "✅", "SolverPrimaryActionStyle", "AiReviewApproveAll");
+    private readonly EmojiActionButton _rejectAll = BatchButton("RejectAll", "🗑️", "SolverOutlinedActionStyle", "AiReviewRejectAll");
     private readonly Label _headerTitle = new()
     {
         FontSize = 20, FontAttributes = FontAttributes.Bold,
@@ -43,15 +50,54 @@ public sealed class AiQuestionReviewPage : ContentPage
     private readonly Command<Card> _rejectCommand;
     private bool _busy;
     private bool _goingBack;
+    private bool _changingSelection;
     private bool _visible;
     private int _headerRefreshGeneration;
     private static string T(string key) => LocalizationService.TranslateKey("AiBank.Review." + key);
-    private sealed record Card(PendingQuestionReview Pending, string Candidate, string Reference, string Calculation, string Heading);
+    // Selection belongs to the stable item, never to a recycled native cell.
+    private sealed class Card(PendingQuestionReview pending, string candidate, string reference,
+        string calculation, string heading, Action selectionChanged) : BindableObject
+    {
+        public PendingQuestionReview Pending { get; } = pending;
+        public string Candidate { get; } = candidate;
+        public string Reference { get; } = reference;
+        public string Calculation { get; } = calculation;
+        public string Heading { get; } = heading;
+        public string SelectionDescription => string.Format(CultureInfo.CurrentCulture, T("SelectQuestion"), Heading, Candidate);
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                if (_isSelected == value || !CanInteract) return;
+                _isSelected = value;
+                OnPropertyChanged();
+                selectionChanged();
+            }
+        }
+        private bool _canInteract = true;
+        public bool CanInteract
+        {
+            get => _canInteract;
+            set
+            {
+                if (_canInteract == value) return;
+                _canInteract = value;
+                OnPropertyChanged();
+            }
+        }
+    }
 
     public AiQuestionReviewPage(QuestionBankStore store, Action<string, bool>? onResolved = null)
     {
         _store = store;
         _onResolved = onResolved;
+        // These controls format localized keys themselves as selection changes.
+        // Keep legacy source-text translation from replacing their live counts.
+        foreach (Element control in new Element[] { _selectionCount, _selectAll, _clearSelection,
+            _approveSelected, _rejectSelected, _approveAll, _rejectAll, _feedback })
+            LocalizationService.ExcludeSubtreeFromLegacyTracking(control);
         Title = T("Title");
         Shell.SetNavBarIsVisible(this, true);
         Shell.SetTabBarIsVisible(this, false);
@@ -70,6 +116,15 @@ public sealed class AiQuestionReviewPage : ContentPage
         _retry.HorizontalOptions = LayoutOptions.Start;
         _retry.SetDynamicResource(StyleProperty, "SolverOutlinedActionStyle");
         _retry.Clicked += async (_, _) => await RefreshAsync();
+        _selectAll.Clicked += (_, _) => SelectAll(true);
+        _clearSelection.Clicked += (_, _) => SelectAll(false);
+        _approveSelected.Clicked += async (_, _) => await ResolveAsync(SelectedIds(), true, true);
+        _rejectSelected.Clicked += async (_, _) => await ResolveAsync(SelectedIds(), false, true);
+        _approveAll.Clicked += async (_, _) => await ResolveAsync(_cards.Select(card => card.Pending.Id).ToArray(), true, true);
+        _rejectAll.Clicked += async (_, _) => await ResolveAsync(_cards.Select(card => card.Pending.Id).ToArray(), false, true);
+        _selectionCount.AutomationId = "AiReviewSelectionCount";
+        _selectionCount.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
+        _feedback.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
 
         bool android = OperatingSystem.IsAndroid();
         _headerTitle.TranslationY = android ? 1 : 0;
@@ -140,7 +195,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         {
             Spacing = 12, Margin = new Thickness(0, 16, 0, 16),
             HorizontalOptions = LayoutOptions.Center,
-            Children = { count, hint, progress, _empty, _retry }
+            Children = { count, hint, ActionGrid(_approveAll, _rejectAll), _empty, _retry }
         };
         // Constrain the reading column, never the scrolling viewport. This keeps
         // the native scrollbar (including Windows arrow buttons) at the page edge.
@@ -149,10 +204,30 @@ public sealed class AiQuestionReviewPage : ContentPage
         _items.Footer = new BoxView { HeightRequest = 24, InputTransparent = true, Color = Colors.Transparent };
         _items.ItemsSource = _cards;
         _items.ItemTemplate = new DataTemplate(CreateCard);
-        var root = new Grid();
+        // A separate Auto row keeps selected actions reachable while the virtualized
+        // list scrolls. Adaptive columns keep long localized captions usable on phones.
+        var selectionContent = new VerticalStackLayout
+        {
+            Spacing = 8,
+            Children = { _selectionCount, ActionGrid(_selectAll, _clearSelection, 140),
+                ActionGrid(_approveSelected, _rejectSelected), progress }
+        };
+        var selectionBar = new Border
+        {
+            Padding = new Thickness(12), StrokeThickness = 1,
+            StrokeShape = new RoundRectangle { CornerRadius = 12 }, Content = selectionContent,
+            HorizontalOptions = LayoutOptions.Center, Margin = new Thickness(0, 4, 0, 8)
+        };
+        selectionBar.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");
+        selectionBar.SetDynamicResource(Border.StrokeProperty, "BorderColor");
+        ConstrainWidth(selectionBar);
+        var root = new Grid { RowDefinitions = [new(GridLength.Star), new(GridLength.Auto)] };
         root.Add(_wallpaper);
+        Grid.SetRowSpan(_wallpaper, 2);
         root.Add(_items);
+        root.Add(selectionBar, 0, 1);
         Content = root;
+        UpdateCount();
     }
 
     private View CreateCard()
@@ -161,6 +236,21 @@ public sealed class AiQuestionReviewPage : ContentPage
         heading.SetBinding(Label.TextProperty, nameof(Card.Heading));
         heading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
         SemanticProperties.SetHeadingLevel(heading, SemanticHeadingLevel.Level2);
+        var selector = new CheckBox
+        {
+            AutomationId = "AiReviewSelectQuestion", VerticalOptions = LayoutOptions.Start,
+            MinimumHeightRequest = 48, MinimumWidthRequest = 48
+        };
+        selector.SetDynamicResource(CheckBox.ColorProperty, "PrimaryColor");
+        selector.SetBinding(CheckBox.IsCheckedProperty, new Binding(nameof(Card.IsSelected), BindingMode.TwoWay));
+        selector.SetBinding(IsEnabledProperty, nameof(Card.CanInteract));
+        selector.SetBinding(SemanticProperties.DescriptionProperty, nameof(Card.SelectionDescription));
+        var headingRow = new Grid
+        {
+            ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 8
+        };
+        headingRow.Add(selector);
+        headingRow.Add(heading, 1);
         var comparison = new Grid { ColumnSpacing = 16, RowSpacing = 12 };
         comparison.Add(Section("Candidate", nameof(Card.Candidate), highlighted: true));
         comparison.Add(Section("Reference", nameof(Card.Reference)));
@@ -173,14 +263,26 @@ public sealed class AiQuestionReviewPage : ContentPage
         actions.Add(reject);
         AdaptiveColumns.SetMinimumColumnWidth(actions, 240);
         var content = new VerticalStackLayout { Spacing = 16 };
-        content.Add(heading);
+        content.Add(headingRow);
         content.Add(comparison);
         content.Add(Section("Calculation", nameof(Card.Calculation)));
         content.Add(actions);
         actions.SetBinding(WidthRequestProperty, new Binding(nameof(Width), source: content,
             converter: new ReadingWidthConverter(600, 0)));
 
-        var card = new Border { Content = content, HorizontalOptions = LayoutOptions.Center };
+        var selectedSurface = new Border
+        {
+            StrokeThickness = 0, InputTransparent = true,
+            StrokeShape = new RoundRectangle { CornerRadius = 12 }, Margin = new Thickness(-12)
+        };
+        selectedSurface.SetDynamicResource(BackgroundColorProperty, "PrimarySoftColor");
+        selectedSurface.SetBinding(IsVisibleProperty, nameof(Card.IsSelected));
+        AutomationProperties.SetIsInAccessibleTree(selectedSurface, false);
+        var card = new Border
+        {
+            Content = new Grid { Children = { selectedSurface, content } },
+            HorizontalOptions = LayoutOptions.Center
+        };
         card.SetDynamicResource(StyleProperty, "SolverCardStyle");
         card.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");
         card.Padding = new Thickness(16);
@@ -226,16 +328,29 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     private static Button ActionButton(string key, string icon, string style, Command<Card> command, string automationId)
     {
-        var button = new Button { Text = icon + " " + T(key), Command = command, AutomationId = automationId };
-        SemanticProperties.SetDescription(button, T(key));
+        var button = BatchButton(key, icon, style, automationId);
+        button.Command = command;
+        button.SetBinding(Button.CommandParameterProperty, ".");
+        return button;
+    }
+
+    private static EmojiActionButton BatchButton(string key, string icon, string style, string automationId)
+    {
+        var button = new EmojiActionButton { Caption = T(key), Emoji = icon, AutomationId = automationId };
         button.SetDynamicResource(StyleProperty, style);
         button.MinimumHeightRequest = 48;
         button.Padding = new Thickness(16, 12);
         DisplayDensityManager.BindControl(button);
         button.FontSize = 14;
         button.LineBreakMode = LineBreakMode.WordWrap;
-        button.SetBinding(Button.CommandParameterProperty, ".");
         return button;
+    }
+
+    private static Grid ActionGrid(View first, View second, double minimumColumnWidth = 240)
+    {
+        var grid = new Grid { ColumnSpacing = 12, RowSpacing = 8, Children = { first, second } };
+        AdaptiveColumns.SetMinimumColumnWidth(grid, minimumColumnWidth);
+        return grid;
     }
 
     private void ConstrainWidth(View view)
@@ -294,6 +409,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         }
         ApplyColor(_headerTitle, "TextPrimaryColor");
         ApplyColor(_headerSubtitle, "TextSecondaryColor");
+        UpdateSelectionControls();
     }
 
     private void OnHeaderResourcesChanged(object? sender, EventArgs e)
@@ -320,7 +436,7 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     private async Task GoBackAsync()
     {
-        if (_goingBack) return;
+        if (_goingBack || _busy) return;
         _goingBack = true;
         _back.IsEnabled = false;
         try
@@ -333,7 +449,7 @@ public sealed class AiQuestionReviewPage : ContentPage
             System.Diagnostics.Debug.WriteLine(error);
             await DisplayAlertAsync(T("Title"), T("Error"), LocalizationService.TranslateKey("AiBank.Ok"));
         }
-        finally { _goingBack = false; _back.IsEnabled = true; }
+        finally { _goingBack = false; _back.IsEnabled = !_busy; }
     }
 
     private void SetBusy(bool busy)
@@ -342,19 +458,54 @@ public sealed class AiQuestionReviewPage : ContentPage
         _activity.IsRunning = busy;
         _activity.IsVisible = busy;
         _retry.IsEnabled = !busy;
+        _back.IsEnabled = !busy && !_goingBack;
+        foreach (var card in _cards) card.CanInteract = !busy;
         _approveCommand.ChangeCanExecute();
         _rejectCommand.ChangeCanExecute();
+        UpdateSelectionControls();
     }
 
     private void UpdateCount()
     {
         _status.Text = string.Format(CultureInfo.CurrentCulture, T("Count"), _cards.Count);
         _empty.IsVisible = _cards.Count == 0;
+        UpdateSelectionControls();
+    }
+
+    private string[] SelectedIds() => _cards.Where(card => card.IsSelected).Select(card => card.Pending.Id).ToArray();
+
+    private void SelectAll(bool selected)
+    {
+        if (_busy || _goingBack) return;
+        _changingSelection = true;
+        try { foreach (var card in _cards) card.IsSelected = selected; }
+        finally { _changingSelection = false; UpdateSelectionControls(); }
+    }
+
+    private void UpdateSelectionControls()
+    {
+        if (_changingSelection) return;
+        int selected = _cards.Count(card => card.IsSelected);
+        _selectionCount.Text = string.Format(CultureInfo.CurrentCulture, T("SelectedCount"), selected, _cards.Count);
+        _selectAll.Caption = T("SelectAll");
+        _clearSelection.Caption = T("ClearSelection");
+        _approveSelected.Caption = string.Format(CultureInfo.CurrentCulture, T("ApproveSelected"), selected);
+        _rejectSelected.Caption = string.Format(CultureInfo.CurrentCulture, T("RejectSelected"), selected);
+        _approveAll.Caption = string.Format(CultureInfo.CurrentCulture, T("ApproveAll"), _cards.Count);
+        _rejectAll.Caption = string.Format(CultureInfo.CurrentCulture, T("RejectAll"), _cards.Count);
+        bool canAct = !_busy && !_goingBack;
+        _selectAll.IsEnabled = canAct && selected < _cards.Count;
+        _clearSelection.IsEnabled = _approveSelected.IsEnabled = _rejectSelected.IsEnabled = canAct && selected > 0;
+        _approveAll.IsEnabled = _rejectAll.IsEnabled = canAct && _cards.Count > 0;
+        // The Windows primary style can retain its saturated fill when disabled.
+        // Make unavailable approval actions visibly distinct as well as inaccessible.
+        _approveSelected.Opacity = _approveSelected.IsEnabled ? 1 : 0.45;
+        _approveAll.Opacity = _approveAll.IsEnabled ? 1 : 0.45;
     }
 
     private async Task RefreshAsync()
     {
-        if (_busy) return;
+        if (_busy || _goingBack) return;
         SetBusy(true);
         _retry.IsVisible = false;
         _feedback.IsVisible = false;
@@ -366,7 +517,8 @@ public sealed class AiQuestionReviewPage : ContentPage
             foreach (var pending in rows)
                 _cards.Add(new(pending, pending.Draft.ToWordProblem(pending.Contract).ProblemText,
                     OpenQuestionProse.Example(pending.Contract).ToWordProblem(pending.Contract).ProblemText,
-                    pending.Contract.Solution, QuestionAuthoringChoices.FamilyLabel(pending.Contract.Family, AppLanguageManager.CurrentLanguage)));
+                    pending.Contract.Solution, QuestionAuthoringChoices.FamilyLabel(pending.Contract.Family, AppLanguageManager.CurrentLanguage),
+                    UpdateSelectionControls) { CanInteract = false });
             UpdateCount();
         }
         catch (Exception e)
@@ -381,34 +533,68 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     private async Task ActAsync(Card card, bool approve)
     {
-        if (_busy || card is null) return;
+        if (_busy || _goingBack || card is null || !_cards.Contains(card)) return;
+        await ResolveAsync([card.Pending.Id], approve, approve);
+    }
+
+    private async Task ResolveAsync(IReadOnlyList<string> requestedIds, bool approve, bool confirm)
+    {
+        if (_busy || _goingBack) return;
+        // Freeze explicit IDs before the confirmation await. New queue arrivals
+        // can never become part of an already-confirmed action.
+        string[] ids = requestedIds.Distinct(StringComparer.Ordinal).ToArray();
+        if (ids.Length == 0) return;
         SetBusy(true);
         try
         {
-            bool saved = false;
-            if (approve)
+            if (confirm)
             {
-                if (!await DisplayAlertAsync(T("Title"), T("Confirm"), T("ApproveAction"), LocalizationService.TranslateKey("AiBank.Cancel"))) return;
-                saved = await _store.ApproveReviewAsync(card.Pending.Id);
+                string message = string.Format(CultureInfo.CurrentCulture, T(approve ? "Confirm" : "ConfirmReject"), ids.Length);
+                if (!await DisplayAlertAsync(T("Title"), message, T(approve ? "ApproveAction" : "RejectAction"),
+                    LocalizationService.TranslateKey("AiBank.Cancel"))) return;
             }
-            else await _store.RejectReviewAsync(card.Pending.Id);
-            saved |= await _store.ContainsProseAsync(new(card.Pending.Contract, card.Pending.Draft,
-                card.Pending.RawJson, card.Pending.ModelName, card.Pending.CreatedUtc));
-            if (approve && !saved) throw new InvalidOperationException("ReviewApprovalNotSaved");
-            // Keep the remaining collection intact so resolving a card deep in
-            // the queue does not reload the list or jump back to its beginning.
-            _cards.Remove(card);
+            var result = await _store.ResolveReviewsAsync(ids, approve);
+            var removed = new HashSet<string>(result.ApprovedIds, StringComparer.Ordinal);
+            removed.UnionWith(result.RejectedIds);
+            removed.UnionWith(result.MissingIds);
+            // Do not clear/reload the collection: preserve virtualization, the
+            // remaining selections and the viewport of a review deep in the queue.
+            for (int index = _cards.Count - 1; index >= 0; index--)
+                if (removed.Contains(_cards[index].Pending.Id)) _cards.RemoveAt(index);
             UpdateCount();
-            _feedback.Text = T(saved ? "Approved" : "Discarded");
-            _feedback.IsVisible = true;
-            SemanticScreenReader.Default.Announce(_feedback.Text);
-            _onResolved?.Invoke(card.Pending.Id, saved);
+            string feedback = string.Format(CultureInfo.CurrentCulture, T("BatchResult"), result.ApprovedIds.Count, result.RejectedIds.Count);
+            if (result.MissingIds.Count > 0)
+                feedback += " " + string.Format(CultureInfo.CurrentCulture, T("MissingResult"), result.MissingIds.Count);
+            ShowFeedback(feedback);
+            // Notifications describe only rows this committed operation resolved.
+            // A caller's presentation failure cannot turn a saved batch into a retry.
+            foreach (string id in result.ApprovedIds) NotifyResolved(id, true);
+            foreach (string id in result.RejectedIds) NotifyResolved(id, false);
+        }
+        catch (OperationCanceledException)
+        {
+            ShowFeedback(T("Cancelled"));
         }
         catch (Exception e)
         {
             System.Diagnostics.Debug.WriteLine(e);
+            ShowFeedback(T("Error"));
             await DisplayAlertAsync(T("Title"), T("Error"), LocalizationService.TranslateKey("AiBank.Ok"));
         }
         finally { SetBusy(false); }
+    }
+
+    private void ShowFeedback(string message)
+    {
+        _feedback.Text = message;
+        _feedback.IsVisible = true;
+        try { SemanticScreenReader.Default.Announce(message); }
+        catch (Exception error) { System.Diagnostics.Debug.WriteLine(error); }
+    }
+
+    private void NotifyResolved(string id, bool approved)
+    {
+        try { _onResolved?.Invoke(id, approved); }
+        catch (Exception error) { System.Diagnostics.Debug.WriteLine(error); }
     }
 }

@@ -10,6 +10,7 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--review-batch"],"--review-batch",args=>QuestionReviewBatchTests.RunAsync(),args=>args is ["--review-batch"]),
         new(["--ai-acceleration"],"--ai-acceleration",args=>{AiAccelerationPolicyTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration"]),
         new(["--ai-acceleration-runtime"],"--ai-acceleration-runtime",args=>{AiAccelerationRuntimeTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration-runtime"]),
         new(["--ai-model-load"],"--ai-model-load",args=>AiModelLoadCoordinatorTests.RunAsync(),args=>args is ["--ai-model-load"]),
