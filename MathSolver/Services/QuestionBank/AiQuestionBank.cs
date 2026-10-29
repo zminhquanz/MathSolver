@@ -25,6 +25,25 @@ public sealed class AiQuestionBank
         Practice = new(Store);
     }
 
+    public async Task SetAccelerationModeAsync(AiComputeMode mode)
+    {
+        lock (_managementLock)
+        {
+            if(IsManaging||Generation.IsRunning)throw new InvalidOperationException("JobAlreadyRunning");
+            IsManaging=true;
+        }
+        Changed?.Invoke(this,EventArgs.Empty);
+        try
+        {
+            // A mode change applies only between jobs; keep the selected GGUF
+            // path while releasing its old device allocations first.
+            await Runtime.ReleaseAsync().ConfigureAwait(false);
+            AiAccelerationManager.SetMode(mode);
+            Runtime.ClearAccelerationFallback();
+        }
+        finally {IsManaging=false;Changed?.Invoke(this,EventArgs.Empty);}
+    }
+
     public async Task ManageAsync(string status, Func<CancellationToken, Task> action)
     {
         lock (_managementLock)

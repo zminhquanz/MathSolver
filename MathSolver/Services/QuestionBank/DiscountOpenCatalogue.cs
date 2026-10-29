@@ -35,20 +35,24 @@ internal static class DiscountOpenCatalogue
     internal static string WritingInstructions(BasicQuestionContract c)=>WritingInstructions(c.Language);
     internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""
         Viết bài toán ngắn, tự nhiên về giá phải trả cho một món hàng sau một lần giảm giá.
-        fact_0 nêu giá gốc của {v0} là {f0} {v1}; fact_1 nêu giá của {v0} giảm {f1} so với giá gốc.
-        Hỏi số tiền phải trả cho {v0} sau giảm giá, bằng {v1}, không hỏi số tiền được giảm hay giá gốc.
-        step_0 là cụm danh từ gọi số tiền giảm giá của {v0}; step_1 gọi số tiền phải trả cho {v0}. Không viết chỉ dẫn tính toán.
-        Đổi cấu trúc câu và cách hỏi tự nhiên. Giữ mỗi biến đúng một lần trong trường gốc, giữ role và step.
-        {v0} chứa đủ tên một món hàng và từ đếm; {v1} chứa đơn vị tiền; {f1} đã chứa dấu phần trăm. Không lặp các từ ấy quanh biến.
+        fact_0 xác định giá gốc trước giảm của {v0}: {f0} là số tiền, {v1} là đơn vị. fact_1 xác định phần giảm {f1} của chính giá gốc ấy.
+        Câu hỏi chỉ tìm số tiền cần thanh toán cho {v0} sau giảm giá, với đơn vị {v1}.
+        Hai câu dẫn là cụm danh từ rõ nghĩa: step_0 gọi số tiền được giảm trong giá của {v0}; step_1 gọi số tiền phải trả cho {v0}.
+        Gọi rõ đại lượng tiền ở step_0, chẳng hạn "Số tiền được giảm của {v0}"; fact_1 luôn nói rõ {f1} là phần giảm so với giá gốc.
+        Đổi cách mở đầu, cấu trúc dữ kiện và cách hỏi tự nhiên. Giữ mỗi biến đúng một lần trong trường gốc, giữ role và step.
+        {v0} là cả cụm danh từ chỉ một sản phẩm, đã có từ đếm như "một quyển vở"; đặt nguyên cụm vào vai trò sản phẩm, dùng nguyên biến ấy làm chủ thể hoặc sau từ "của", "cho".
+        {f0} luôn là giá tiền, {f1} luôn là tỉ lệ giảm đã có dấu phần trăm, {v1} luôn là đơn vị tiền. Viết số và đơn vị chỉ bằng các biến tương ứng.
         Không điền tên, số, đơn vị hay đáp án. Không thêm người, món hàng, số lượng mua, điều kiện, phí, thuế, quà tặng, tiền đưa hay tiền thừa.
         Mỗi trường một câu ngắn; dữ kiện kết thúc bằng dấu chấm, câu hỏi kết thúc bằng dấu hỏi. Chỉ trả JSON theo cấu trúc mẫu.
         """:"""
         Write a short natural primary-school problem about the payable price of one product after one discount.
-        fact_0 gives {v0}'s original price as {f0} {v1}; fact_1 states a discount of {f1} of {v0}'s ORIGINAL price.
-        Ask only how much must be paid for {v0} after the discount in {v1}, not the discount amount or original price.
-        step_0 names the discount amount on {v0}; step_1 names the payable price of {v0}. Use noun phrases, without calculation instructions.
-        Vary sentence openings, structure and questions naturally. Preserve each placeholder once in its original field, and preserve roles and steps.
-        {v0} includes a complete single product with its article; {v1} contains the money unit; {f1} already includes the percent sign. Do not duplicate them.
+        fact_0 identifies the original price of {v0} before the discount: {f0} is the money amount and {v1} its unit. fact_1 states a reduction of {f1} of that original price.
+        Ask only for the final payment due for {v0} after this reduction, in {v1}.
+        Both solution leads are clear noun phrases: step_0 names the MONEY saved from the price of {v0}; step_1 names the final payable amount for {v0}.
+        In step_0 use a monetary heading such as "Discount amount on {v0}"; this amount is money saved from the original price. In step_1 use a heading such as "Final payment due for {v0}".
+        Vary sentence openings, fact structure and questions naturally. Preserve each placeholder once in its original field, and preserve roles and steps.
+        {v0} is a complete product noun phrase including its article, such as "a notebook". Use the whole phrase as the product, directly as a subject or after "of" or "for"; {f0} identifies its price amount.
+        {f0} always names money, {f1} always names the percentage already including its sign, and {v1} always names the money unit. Express amounts and units only through their slots.
         Fill no names, numbers, units or answers. Add no actor, purchase count, product, condition, tax, fee, gift, cash tendered or change.
         Use one short sentence per field. End facts with periods and the question with a question mark. Return only JSON with the reference schema.
         """;

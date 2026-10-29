@@ -33,24 +33,32 @@ internal static class MapScaleOpenMeaning
         bool scaleProved=vi
             ?Match(scale,@"(?:tỉ|tỷ) lệ (?:của )?\{v0\} (?:là|bằng) một trên \{f0\}")
                 ||Match(scale,@"\{v0\} (?:có|được vẽ theo) (?:tỉ|tỷ) lệ một trên \{f0\}")
-            :Match(scale,@"\{v0\} (?:has|uses|is drawn at) (?:a )?scale of one to \{f0\}")
-                ||Match(scale,@"the scale (?:used for|of) \{v0\} is one to \{f0\}");
+                ||Match(scale,@"trên \{v0\},? (?:tỉ|tỷ) lệ được ghi là một trên \{f0\}")
+            :Match(scale,@"\{v0\} (?:has|uses|shows|is drawn at) (?:a )?scale of one to \{f0\}")
+                ||Match(scale,@"the scale (?:used for|of|shown on) \{v0\} is one to \{f0\}");
         bool lengthProved=vi
             ?Match(length,@"(?:trên \{v0\},? \{v1\}|\{v1\} trên \{v0\}) (?:dài|đo được|có độ dài(?: là)?) \{f1\} \{v2\}")
+                ||Match(length,@"độ dài của \{v1\} được đo trên \{v0\} là \{f1\} \{v2\}")
+                ||Match(length,@"\{v1\} đo trên \{v0\} có độ dài \{f1\} \{v2\}")
             :Match(length,@"(?:on \{v0\},? \{v1\}|\{v1\} on \{v0\}) (?:is|measures|has a length of) \{f1\} \{v2\}(?: long)?")
-                ||Match(length,@"the (?:length|measurement) of \{v1\} on \{v0\} is \{f1\} \{v2\}");
+                ||Match(length,@"\{v1\} measures \{f1\} \{v2\} on \{v0\}")
+                ||Match(length,@"the (?:length|measurement) of \{v1\} (?:drawn )?on \{v0\} is \{f1\} \{v2\}");
         bool targetProved=vi
             ?Match(d.Question,@"(?:hỏi )?độ dài thực tế (?:của )?\{v1\} (?:là|bằng) bao nhiêu \{v3\}")
                 ||Match(d.Question,@"độ dài thực tế (?:của )?\{v1\} tính theo \{v3\} (?:là|bằng) bao nhiêu")
+                ||Match(d.Question,@"(?:hỏi )?\{v1\} có độ dài thực tế (?:là )?bao nhiêu \{v3\}")
             :Match(d.Question,@"what is the (?:actual|real-world) length of \{v1\} (?:expressed )?in \{v3\}")
                 ||Match(d.Question,@"in \{v3\}, what is the (?:actual|real-world) length of \{v1\}")
-                ||Match(d.Question,@"how long is \{v1\} in reality,? (?:measured )?in \{v3\}");
+                ||Match(d.Question,@"how long is \{v1\} in reality,? (?:measured )?in \{v3\}")
+                ||Match(d.Question,@"how long is the actual distance represented by \{v1\} in \{v3\}")
+                ||Match(d.Question,@"what distance does \{v1\} represent in reality,? measured in \{v3\}");
         bool first=Lead(d.SolutionLeads[0].Text,vi),last=Lead(d.SolutionLeads[1].Text,vi);
         bool punctuation=d.Facts.All(f=>f.Text.TrimEnd().EndsWith('.'))&&d.Question.TrimEnd().EndsWith('?');
         if(scaleProved&&lengthProved&&targetProved&&first&&last&&punctuation)return new(d,null,c);
         return Review(d,c,"Could not prove the one-to-denominator scale, map centimetres, actual metres or distance leads.");
     }
-    private static bool Lead(string text,bool vi)=>vi?Match(text,@"độ dài thực tế (?:của )?\{v1\}(?: là)?")
-        :Match(text,@"(?:the )?(?:actual|real-world) length of \{v1\}");
+    private static bool Lead(string text,bool vi)=>vi?Match(text,@"(?:độ|chiều) dài (?:ngoài )?thực tế (?:của )?\{v1\}(?: là)?")
+        :Match(text,@"(?:the )?(?:actual|real-world) length of \{v1\}")
+            ||Match(text,@"(?:the )?actual distance represented by \{v1\}");
     private static BasicDraftValidation Review(BasicQuestionDraft d,BasicQuestionContract? c,string detail)=>new(d,"SemanticReviewRequired",c,detail);
 }

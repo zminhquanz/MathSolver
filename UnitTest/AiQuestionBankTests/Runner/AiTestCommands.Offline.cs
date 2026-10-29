@@ -10,6 +10,13 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--ai-acceleration"],"--ai-acceleration",args=>{AiAccelerationPolicyTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration"]),
+        new(["--ai-acceleration-runtime"],"--ai-acceleration-runtime",args=>{AiAccelerationRuntimeTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration-runtime"]),
+        new(["--ai-model-load"],"--ai-model-load",args=>AiModelLoadCoordinatorTests.RunAsync(),args=>args is ["--ai-model-load"]),
+        new(["--ai-gpu-benchmark"],"--ai-gpu-benchmark <gguf> <directory>",args=>AiGpuAccelerationBenchmark.RunAsync(args[1],args[2]),args=>args is ["--ai-gpu-benchmark",_,_]),
+        new(["--ai-vulkan-smoke"],"--ai-vulkan-smoke <gguf> <directory>",args=>AiVulkanSmokeTests.RunAsync(args[1],args[2]),args=>args is ["--ai-vulkan-smoke",_,_]),
+        new(["--map-consolidation"],"--map-consolidation",args=>MapScaleConsolidationTests.RunAsync(),args=>args is ["--map-consolidation"]),
+        new(["--discount-consolidation"],"--discount-consolidation",args=>DiscountConsolidationTests.RunAsync(),args=>args is ["--discount-consolidation"]),
         new(["--applied-open","--applied-open-model"],"--applied-open | --applied-open-model <gguf> <directory>",async args=>
         {
             if(args.Length==1)await AppliedOpenTests.RunAsync();

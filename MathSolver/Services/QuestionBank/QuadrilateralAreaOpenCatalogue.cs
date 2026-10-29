@@ -37,22 +37,22 @@ internal static class QuadrilateralAreaOpenCatalogue
     {
         bool trap=c.BankVariant==QuadrilateralAreaPilot.TrapezoidVariant;
         string dimensions=c.Language==AppLanguage.Vietnamese
-            ?trap?"Dữ kiện đáy: {v0} có hai đáy song song, đáy lớn dài {f0} {v2}, đáy nhỏ dài {f1} {v2}. Chiều cao vuông góc giữa hai đáy đó của {v0} dài {f2} {v2}.":"Đáy của {v0} dài {f0} {v2}. Chiều cao vuông góc với chính đáy đó của {v0} dài {f1} {v2}."
-            :trap?"The base fact explicitly states two parallel bases of {v0}, the longer base {f0} {v2} and the shorter base {f1} {v2}. Its perpendicular height between those bases is {f2} {v2}.":"The supplied base of {v0} is {f0} {v2}. Its perpendicular height corresponding to that base is {f1} {v2}.";
+            ?trap?"{v0} có hai đáy song song, đáy lớn dài {f0} {v2} và đáy nhỏ dài {f1} {v2}. Chiều cao vuông góc giữa hai đáy đó của {v0} dài {f2} {v2}.":"Đáy của {v0} dài {f0} {v2}. Chiều cao vuông góc với chính đáy đó của {v0} dài {f1} {v2}."
+            :trap?"{v0} has two parallel bases, the longer measuring {f0} {v2} and the shorter measuring {f1} {v2}. The perpendicular height of {v0} between those bases is {f2} {v2}.":"The supplied base of {v0} is {f0} {v2}. The perpendicular height of {v0} corresponding to that base is {f1} {v2}.";
         return c.Language==AppLanguage.Vietnamese?"""
             Viết đề toán tiểu học ngắn, tự nhiên; được đổi cấu trúc câu. Ví dụ chỉ để tham khảo.
             Giữ đúng các biến và số lần xuất hiện trong từng trường của ví dụ; đơn vị độ dài lặp lại bên mỗi đáy được cho. {v0} là cụm danh từ đầy đủ, không thêm tên đồ vật; {v1} là tên hình đầy đủ, không thêm chữ hình trước biến.
-            Ba dữ kiện riêng: hình dạng {v0} là {v1}; các đáy đã cho; chiều cao vuông góc tương ứng. Không thay chiều cao bằng cạnh bên hoặc đường chéo.
-            """+dimensions+"""
-            Chỉ hỏi diện tích toàn bộ {v0} theo {v3}; {v2} là đơn vị độ dài, {v3} đã là đơn vị diện tích, không thêm bình phương.
+            Ba dữ kiện riêng: {v0} có dạng {v1}; các đáy đã cho; chiều cao vuông góc tương ứng với chính đáy đã cho, hoặc đo vuông góc giữa đúng hai đáy song song đã cho.
+            """+"\n"+dimensions+"\n"+"""
+            Viết câu hỏi đầy đủ có là bao nhiêu, chỉ hỏi diện tích toàn bộ {v0} theo {v3}; {v2} là đơn vị độ dài, {v3} đã là đơn vị diện tích, không thêm bình phương.
             step_0 là cụm danh từ gọi diện tích {v0}; không dùng động từ mệnh lệnh như Tính, Tìm, Hãy.
             Mỗi trường một câu; dữ kiện cuối dấu chấm, câu hỏi cuối dấu hỏi. Không thêm sự kiện, cắt ghép, điều kiện, phủ định, tên, số, đơn vị thật, phép tính hoặc đáp án. Chỉ trả JSON cùng cấu trúc.
             """:"""
             Write a short natural elementary problem; vary sentence structure. The example is a reference.
-            Keep the reference placeholders and their occurrence counts in each field; repeat the length unit beside each supplied base. {v0} is the complete object noun phrase: add no article or object name. {v1} is the complete shape name; add no extra shape word.
-            Keep three separate facts: {v0} has shape {v1}; its supplied bases; its corresponding perpendicular height. Never substitute a sloping side or diagonal for height.
-            """+dimensions+"""
-            Ask only for the entire area of {v0} in {v3}. {v2} is a length unit; {v3} already is an area unit, so add no square symbol or literal units.
+            Keep the reference placeholders and their occurrence counts in each field; repeat the length unit beside each supplied base. {v0} is the complete object noun phrase: add no article or object name. {v1} is the complete shape name; use a natural clause such as {v0} is a {v1}.
+            Keep three separate facts: the object's shape; its supplied bases; its corresponding perpendicular height. The height is measured perpendicularly to that supplied base, or perpendicularly between those two supplied parallel bases.
+            """+"\n"+dimensions+"\n"+"""
+            Write a complete question beginning What is, asking only for the entire area of {v0} in {v3}. {v2} is a length unit; {v3} already is an area unit, so add no square symbol or literal units.
             step_0 is a noun phrase naming the area of {v0}, without an imperative such as Calculate, Find or Determine.
             One sentence per field: facts end with periods, the question with a question mark. Add no events, conditions, negation, names, numbers, calculations or answers. Return only JSON in the reference schema.
             """;

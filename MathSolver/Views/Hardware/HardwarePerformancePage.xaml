@@ -198,6 +198,68 @@
                     </VerticalStackLayout>
                 </Border>
 
+                <Border
+                    x:Name="AiAccelerationSection"
+                    IsVisible="{OnPlatform WinUI=True, Default=False}"
+                    Style="{StaticResource HardwareSectionStyle}">
+                    <VerticalStackLayout Spacing="10">
+                        <Label
+                            x:Name="AiAccelerationTitleLabel"
+                            Style="{StaticResource HardwareSectionTitleStyle}" />
+
+                        <Label
+                            x:Name="AiAccelerationDescriptionLabel"
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+
+                        <BoxView Style="{StaticResource HardwareDividerStyle}" />
+
+                        <Label
+                            x:Name="AiAdapterLabel"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                            <controls:EmojiActionButton
+                                x:Name="AiCpuModeButton"
+                                Style="{StaticResource AppButtonBaseStyle}"
+                                MinimumHeightRequest="46"
+                                CornerRadius="10"
+                                FontAttributes="Bold"
+                                Clicked="OnAiCpuModeClicked" />
+                            <controls:EmojiActionButton
+                                x:Name="AiGpuModeButton"
+                                Style="{StaticResource AppButtonBaseStyle}"
+                                Grid.Column="1"
+                                MinimumHeightRequest="46"
+                                CornerRadius="10"
+                                FontAttributes="Bold"
+                                Clicked="OnAiGpuModeClicked" />
+                        </Grid>
+
+                        <Label
+                            x:Name="AiPreferredBackendLabel"
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+
+                        <Label
+                            x:Name="AiRuntimeStatusLabel"
+                            FontAttributes="Bold"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="AiFallbackStatusLabel"
+                            IsVisible="False"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextSecondaryColor}" />
+
+                        <Label
+                            x:Name="AiModeBusyLabel"
+                            IsVisible="False"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource PrimaryColor}" />
+                    </VerticalStackLayout>
+                </Border>
+
                 <VerticalStackLayout
                     x:Name="RawPerformanceContent"
                     Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">

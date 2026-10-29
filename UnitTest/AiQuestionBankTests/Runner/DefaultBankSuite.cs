@@ -11,6 +11,8 @@ internal static class DefaultBankSuite
     internal static async Task RunAsync()
     {
         await HarnessInfrastructureTests.RunAsync();
+        AiAccelerationPolicyTests.Run();
+        await AiModelLoadCoordinatorTests.RunAsync();
         await OpenProseTests.RunAsync();
         await PracticalConsolidationTests.RunAsync();
         await AppliedOpenTests.RunAsync();

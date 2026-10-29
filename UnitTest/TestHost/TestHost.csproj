@@ -32,6 +32,6 @@
     <Compile Include="../../MathSolver/Services/Formatting/AccessibleMathText.cs" Link="Services/Formatting/AccessibleMathText.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/MatrixSolutionPresentation.cs" Link="Services/Formatting/MatrixSolutionPresentation.cs" />
     <Compile Include="../../MathSolver/Services/Formatting/MatrixClipboardWriter.cs" Link="Services/Formatting/MatrixClipboardWriter.cs" />
-    <Compile Include="../../MathSolver/Services/QuestionBank/*.cs" Exclude="../../MathSolver/Services/QuestionBank/AiQuestionBank.cs;../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.cs" Link="QuestionBank/%(Filename)%(Extension)" />
+    <Compile Include="../../MathSolver/Services/QuestionBank/*.cs" Exclude="../../MathSolver/Services/QuestionBank/AiQuestionBank.cs;../../MathSolver/Services/QuestionBank/GgufQuestionRuntime*.cs" Link="QuestionBank/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

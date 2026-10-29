@@ -9,7 +9,7 @@ using System.Text;
 namespace MathSolver.Services.QuestionBank;
 
 /// <summary>One loaded model and one native context at a time on Windows/Android.</summary>
-public sealed class GgufQuestionRuntime : IQuestionTextRuntime
+public sealed partial class GgufQuestionRuntime : IQuestionTextRuntime
 {
     private const string JsonGrammar = """
         root ::= "{" ws "\"given_a\"" ws ":" ws string-a ws "," ws "\"given_b\"" ws ":" ws string-b ws "," ws "\"question\"" ws ":" ws string-q ws "," ws "\"solution_lead\"" ws ":" ws string ws "," ws "\"unit_id\"" ws ":" ws unit ws "}" ws
@@ -25,7 +25,6 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     private readonly SemaphoreSlim _gate = new(1, 1);
     private LLamaWeights? _weights;
     private ModelParams? _parameters;
-    private static int _nativeConfigured;
     private QuestionSamplingSettings _sampling = new();
     public QuestionSamplingSettings Sampling { get => _sampling; set { ArgumentNullException.ThrowIfNull(value); value.Validate(); _sampling = value; } }
     public bool IsLoaded => _weights is not null;
@@ -71,7 +70,7 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
     }
 
     public Task PrepareAsync(CancellationToken cancellationToken)
-        => IsLoaded ? Task.CompletedTask : LoadAsync(ModelPath, cancellationToken);
+        => IsLoaded && _loadedMode == AiAccelerationManager.Mode ? Task.CompletedTask : LoadAsync(ModelPath, cancellationToken);
 
     public Task ReleaseAsync() => ReleaseWeightsAsync(clearSelection: false);
 
@@ -80,6 +79,9 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
         var weights = _weights;
         _weights = null;
         _parameters = null;
+        ActiveBackend = AiGpuBackend.Cpu;
+        GpuLayerCount = 0;
+        ActiveDeviceName = "";
         weights?.Dispose();
     }
 
@@ -100,42 +102,12 @@ public sealed class GgufQuestionRuntime : IQuestionTextRuntime
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 ValidateModelPath(path);
-                if (Interlocked.Exchange(ref _nativeConfigured, 1) == 0)
-                {
-                    NativeLibraryConfig.All.WithLogCallback((_, _) => { });
-#if ANDROID
-                    // Android packages .so files outside the managed working
-                    // directory. Resolve the installed native folder explicitly
-                    // and load the CPU backend before llama initialises its registry.
-                    string nativeDirectory = Android.App.Application.Context.ApplicationInfo!.NativeLibraryDir!;
-                    foreach (string dependency in new[] { "libggml-base.so", "libggml-cpu.so", "libggml.so" })
-                        System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(nativeDirectory, dependency));
-                    NativeLibraryConfig.LLama.WithLibrary(Path.Combine(nativeDirectory, "libllama.so"));
-                    NativeLibraryConfig.Mtmd.WithLibrary(Path.Combine(nativeDirectory, "libmtmd.so"));
-                    NativeLibraryConfig.All.WithCuda(false).WithVulkan(false);
-#endif
-                }
-                var parameters = new ModelParams(path)
-                {
-                    ContextSize = MaximumContextTokens, BatchSize = 256, UBatchSize = 128,
-                    // Map CPU weights rather than copying/locking the entire GGUF.
-                    // No vision/audio projector or embedding context is created.
-                    GpuLayerCount = 0, LoadMode = LLamaLoadMode.MemoryMap,
-                    Embeddings = false, SwaFull = false,
-                    // Leave CPU capacity for navigation, rendering and the C# calculators.
-                    Threads = GetInferenceThreadCount(Environment.ProcessorCount),
-                    BatchThreads = GetInferenceThreadCount(Environment.ProcessorCount)
-                };
+                ConfigureNativeAcceleration();
                 // Eject first: switching models must not double peak resident weights.
                 DisposeWeights();
                 ModelName = Path.GetFileName(path);
                 ModelPath = Path.GetFullPath(path);
-                var weights = await LLamaWeights.LoadFromFileAsync(parameters, cancellationToken).ConfigureAwait(false);
-                if (cancellationToken.IsCancellationRequested) { weights.Dispose(); cancellationToken.ThrowIfCancellationRequested(); }
-                _parameters = parameters;
-                ModelName = Path.GetFileName(path);
-                ModelPath = Path.GetFullPath(path);
-                _weights = weights;
+                await LoadForComputeModeAsync(path,cancellationToken).ConfigureAwait(false);
             }, cancellationToken).ConfigureAwait(false);
         }
         finally { _gate.Release(); }

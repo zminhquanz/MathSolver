@@ -9,8 +9,11 @@
   <ItemGroup>
     <ProjectReference Include="../TestSupport/TestSupport.csproj" />
     <PackageReference Include="LLamaSharp" Version="0.30.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.30.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
+    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.30.0" />
     <ProjectReference Include="../TestHost/TestHost.csproj" />
     <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.cs" Link="QuestionBank/GgufQuestionRuntime.cs" />
+    <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.Acceleration.cs" Link="QuestionBank/GgufQuestionRuntime.Acceleration.cs" />
   </ItemGroup>
 </Project>

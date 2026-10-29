@@ -136,6 +136,7 @@ public partial class HardwarePerformancePage : ContentPage
     public HardwarePerformancePage()
     {
         InitializeComponent();
+        InitializeAiAccelerationUi();
 
 
 #if ANDROID
@@ -152,6 +153,7 @@ public partial class HardwarePerformancePage : ContentPage
         LocalizationService.Attach(
             this);
 
+        RefreshAiAccelerationUi();
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();
@@ -175,6 +177,7 @@ public partial class HardwarePerformancePage : ContentPage
         LocalizationService.Attach(
             this);
 
+        SubscribeAiAccelerationUi();
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();
@@ -198,6 +201,7 @@ public partial class HardwarePerformancePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        UnsubscribeAiAccelerationUi();
         _isPageDisappearing =
             true;
 
@@ -356,6 +360,7 @@ public partial class HardwarePerformancePage : ContentPage
         EventArgs e)
     {
         LocalizationService.RefreshAll();
+        RefreshAiAccelerationUi();
         LoadHardwareInformation();
         RenderBenchmarkResult();
         RefreshExtendedBenchmarkUi();

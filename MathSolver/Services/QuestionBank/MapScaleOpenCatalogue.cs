@@ -27,21 +27,23 @@ internal static class MapScaleOpenCatalogue
     }
     internal static string PromptRelation(BasicQuestionContract c)=>"relation="+MapScaleOpenPilot.Relation+
         "; {f0}=positive scale denominator; scale is one to {f0}, never reversed. {f1}=length of a single {v1} on {v0} in {v2}; target=actual length of {v1} in {v3}. "+
-        "{v0}=complete map noun phrase; {v1}=complete single segment noun phrase; {v2}=map centimetres; {v3}=actual metres. step_0=actual length in centimetres; step_1=actual length in metres.";
+        "{v0}=complete map noun phrase; {v1}=complete single segment noun phrase; {v2}=map-length unit slot; {v3}=actual-length unit slot. Both solution_leads name the actual length of {v1}; C# owns the conversion and step units.";
     internal static string WritingInstructions(BasicQuestionContract c)=>WritingInstructions(c.Language);
     internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""
         Viết bài toán tiểu học ngắn, tự nhiên về một đoạn thẳng trên bản đồ và độ dài thực tế của chính đoạn đó.
-        Hai dữ kiện riêng: tỉ lệ của {v0} là một trên {f0}; {v1} trên {v0} dài {f1} {v2}. Viết chữ một, không viết chữ số hay kí hiệu tỉ lệ.
-        Chỉ hỏi độ dài thực tế của {v1} theo {v3}. Không hỏi ngược độ dài trên bản đồ, không ghép đoạn hay đổi sang đơn vị khác.
-        step_0 và step_1 là cụm danh từ gọi độ dài thực tế của {v1}; không nêu phép tính hay mệnh lệnh.
-        Được đổi cấu trúc câu; ví dụ chỉ tham khảo. Giữ mỗi biến đúng số lần và đúng trường. {v0} và {v1} chứa đủ tên đồ vật, không thêm tên hay từ đếm quanh biến.
-        Mỗi trường một câu; dữ kiện cuối dấu chấm, câu hỏi cuối dấu hỏi. Không điền số, tên, đơn vị, phép tính, đáp án; không thêm điều kiện, phủ định hay sự kiện. Chỉ trả JSON theo cấu trúc mẫu.
+        Hai dữ kiện riêng: tỉ lệ của {v0} là một trên {f0}; độ dài của {v1} đo trên {v0} là {f1} {v2}. Viết chữ một trong tỉ lệ.
+        Câu hỏi hoàn chỉnh tìm độ dài thực tế của chính {v1}, biểu thị bằng {v3}.
+        Hai câu dẫn step_0 và step_1 chỉ là cụm danh từ gọi tên đại lượng, ví dụ “Chiều dài thực tế của {v1}”. Đơn vị và phép tính đã thuộc từng bước lời giải; câu dẫn kết thúc ở tên đoạn đường.
+        Viết khác ví dụ bằng cách đổi cấu trúc câu hoặc vị trí cụm chỉ bản đồ, thay vì thêm lời bình. {v0} và {v1} là tên đầy đủ; dùng nguyên biến, mỗi biến đúng số lần trong đúng trường.
+        Đơn vị trong dữ kiện và câu hỏi dùng đúng các biến {v2}, {v3}; câu dẫn chỉ dùng biến tên đoạn đường như mẫu. Các trường là nội dung cho học sinh, không nhắc đến JSON, biến, bước hay chỉ dẫn viết bài.
+        Mỗi trường một câu ngắn; dữ kiện cuối dấu chấm, câu hỏi cuối dấu hỏi. Giữ nguyên một đoạn, tỉ lệ và hướng tìm độ dài thực tế; không thêm sự kiện, điều kiện hoặc đáp án. Trả JSON theo cấu trúc mẫu.
         """:"""
         Write a short natural elementary problem about one segment on a map and its actual length.
-        Two separate facts: {v0} has a scale of one to {f0}; {v1} on {v0} measures {f1} {v2}. Spell out one; use no digit or ratio symbol.
-        Ask only for the actual length of {v1} in {v3}. Preserve the direction from map length to actual length and a single segment.
-        step_0 and step_1 are noun phrases naming the actual length of {v1}; do not mention calculations or use imperatives.
-        Vary sentence structure naturally; the example is a reference. Keep every placeholder in its field with the same count. {v0} and {v1} are complete noun phrases; add no article or object name around them.
-        One sentence per field; facts end in periods, question in a question mark. Add no names, numbers, literal units, calculations, answers, conditions, negation or events. Return only JSON in the reference structure.
+        Two separate facts: the scale of {v0} is one to {f0}; the length of {v1} measured on {v0} is {f1} {v2}. Spell out one in the scale.
+        Write a complete question asking the actual length of that same {v1}, expressed in {v3}.
+        Both solution_leads are short noun phrases naming the quantity, for example “The actual distance represented by {v1}”. Step units and calculations belong to the solution, so each heading ends with the segment's name.
+        Write differently from the example by changing sentence structure or placing the map phrase differently, rather than adding commentary. {v0} and {v1} are complete noun phrases; use the placeholders directly, in the same fields and counts.
+        Unit words in facts and question use their slots {v2} and {v3}; headings use only the segment-name slot as in the reference. Every field is student-facing content, without JSON, placeholder, step or writing instructions.
+        One short sentence per field; facts end in periods, question in a question mark. Preserve a single segment, its scale and the map-to-actual direction; add no events, conditions or answers. Return JSON in the reference structure.
         """;
 }

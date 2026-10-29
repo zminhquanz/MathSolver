@@ -38,9 +38,9 @@ internal static class DiscountOpenMeaning
             ||Has(discount,vi?@"\b(?:giá còn lại|giá mới|giá đã giảm|giá sau giảm|giá phải trả|số tiền phải trả)\b"
                 :@"\b(?:remaining|new|reduced|discounted|payable|sale|final) price\b")
             ||Has(price,vi?@"\b(?:giá sau giảm|giá đã giảm|giá phải trả|số tiền được giảm)\b"
-                :@"\b(?:sale|payable|reduced|discounted|final) price\b")
+                :@"\b(?:(?:sale|payable|reduced|discounted|final) (?:price|cost)|final (?:payment|amount due))\b")
             ||Has(d.Question,vi?@"\b(?:giá gốc|giá ban đầu|tiền giảm giá|tiền được giảm|giảm được|tiết kiệm|bao nhiêu món|bao nhiêu phần trăm)\b"
-                :@"\b(?:original price|initial price|before the discount|discount amount|amount (?:of|saved)|how much (?:is|was) (?:the )?discount|how (?:many|much).*saved|how many|what percentage)\b"))
+                :@"\b(?:(?:original|initial|starting) (?:price|cost)|before the discount|discount amount|(?:the )?value of the price reduction|amount (?:of|saved)|how much (?:is|was) (?:the )?discount|how (?:many|much).*saved|how many|what percentage)\b"))
             return new(null,"ChangedRelationOrTarget",ErrorDetails:"Keep one unconditional reduction of the original product price; ask only the final payable price.");
         if(Has(all,@"[$€£%²³^]|\b(?:dollars?|cents?|euros?|pounds?|usd|vnd|thousand|nghìn|ngàn|triệu|kilograms?|kilôgam)\b"))
             return new(null,"ChangedUnits",ErrorDetails:"Use the supplied money and percentage slots without conversions or extra units.");
@@ -50,7 +50,7 @@ internal static class DiscountOpenMeaning
             ?Match(price,@"giá (?:gốc|ban đầu) của \{v0\} (?:là|bằng) \{f0\} \{v1\}")
                 ||Match(price,@"\{v0\} có giá (?:gốc|ban đầu) (?:là )?\{f0\} \{v1\}")
                 ||Match(price,@"trước khi giảm giá, \{v0\} có giá \{f0\} \{v1\}")
-            :Match(price,@"the (?:original|initial) price of \{v0\} is \{f0\} \{v1\}")
+            :Match(price,@"the (?:original|initial|starting) (?:price|cost) (?:of|for) \{v0\} is (?:recorded as )?\{f0\} \{v1\}")
                 ||Match(price,@"\{v0\} (?:has an original price of|originally costs|originally cost|is originally priced at) \{f0\} \{v1\}")
                 ||Match(price,@"before the discount, \{v0\} (?:costs|cost|is priced at) \{f0\} \{v1\}");
         bool discountProved=vi
@@ -60,19 +60,22 @@ internal static class DiscountOpenMeaning
             :Match(discount,@"the price of \{v0\} is reduced by \{f1\} of (?:its|the) (?:original|initial) price")
                 ||Match(discount,@"the (?:original|initial) price of \{v0\} is (?:discounted|reduced) by \{f1\}")
                 ||Match(discount,@"\{v0\} (?:has|receives|gets) a discount of \{f1\} (?:on|off) (?:its|the) (?:original|initial) price")
-                ||Match(discount,@"a discount of \{f1\} (?:of|on) (?:the|its) (?:original|initial) price (?:is applied to|applies to) \{v0\}");
+                ||Match(discount,@"a discount of \{f1\} (?:of|on) (?:the|its) (?:original|initial) price (?:is applied to|applies to) \{v0\}")
+                ||Match(discount,@"a reduction of \{f1\} applies to the (?:original|initial|starting) price of \{v0\}");
         bool questionProved=vi
             ?Match(d.Question,@"(?:hỏi )?(?:số tiền|giá) phải trả (?:cho|để mua) \{v0\} sau (?:khi )?giảm giá (?:là|bằng) bao nhiêu \{v1\}")
                 ||Match(d.Question,@"sau (?:khi )?giảm giá, (?:cần|phải) trả bao nhiêu \{v1\} (?:cho|để mua) \{v0\}")
                 ||Match(d.Question,@"(?:hỏi )?\{v0\} có giá bao nhiêu \{v1\} sau (?:khi )?giảm giá")
             :Match(d.Question,@"(?:after the discount, )?how much (?:must|needs to) be paid for \{v0\}(?: after the discount)? in \{v1\}")
                 ||Match(d.Question,@"what is the (?:price payable|payable price|final price|discounted price) (?:for|of) \{v0\} after the discount in \{v1\}")
+                ||Match(d.Question,@"how much money must be given for \{v0\} after applying the reduction in \{v1\}")
+                ||Match(d.Question,@"what is the final (?:payment due|amount due) for \{v0\} (?:after the discount|following the price reduction) in \{v1\}")
                 ||Match(d.Question,@"how much does \{v0\} cost after the discount in \{v1\}")
                 ||Match(d.Question,@"in \{v1\}, how much must be paid for \{v0\} after the discount");
         bool discountLead=vi?Match(d.SolutionLeads[0].Text,@"(?:số )?tiền (?:giảm giá|được giảm) (?:của|cho) \{v0\}(?: là)?")
-            :Match(d.SolutionLeads[0].Text,@"(?:the )?(?:discount|discount amount|amount discounted) (?:on|for|of) \{v0\}");
+            :Match(d.SolutionLeads[0].Text,@"(?:the )?(?:discount|discount amount|amount discounted|value of the price reduction) (?:on|for|of) \{v0\}");
         bool payableLead=vi?Match(d.SolutionLeads[1].Text,@"(?:số tiền|giá) phải trả (?:cho|để mua) \{v0\}(?: là)?")
-            :Match(d.SolutionLeads[1].Text,@"(?:the )?(?:payable price|price payable|final price|amount payable) (?:for|of) \{v0\}");
+            :Match(d.SolutionLeads[1].Text,@"(?:the )?(?:payable price|price payable|final price|amount payable|final payment due) (?:for|of) \{v0\}");
         bool punctuation=d.Facts.All(f=>f.Text.TrimEnd().EndsWith('.'))&&d.Question.TrimEnd().EndsWith('?');
         if(priceProved&&discountProved&&questionProved&&discountLead&&payableLead&&punctuation)return new(d,null,c);
         return new(d,"SemanticReviewRequired",c,"Could not prove the original product price, its single discount percentage, payable-price target, money headings or sentence punctuation.");
