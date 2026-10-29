@@ -25,7 +25,7 @@ public sealed class FormulaDetails : ContentView
     {
         _toggle = new Button
         {
-            Style = (Style)Application.Current!.Resources["SolverSecondaryActionStyle"],
+            Style = (Style)Application.Current!.Resources["SolverOutlinedActionStyle"],
             LineBreakMode = LineBreakMode.WordWrap, AutomationId = "FormulaDetailsToggle"
         };
         LocalizationService.ExcludeSubtreeFromLegacyTracking(_toggle);

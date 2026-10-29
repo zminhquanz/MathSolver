@@ -18,7 +18,7 @@ public sealed partial class MatrixView
         if (!active)
         {
             _viewport.CancelRangeSelection();
-            if (CanTouchUi) { _detailsRequested = _technicalRequested = false; _cellValuePanel.IsVisible = false; RefreshWorkspacePresentation(); }
+            if (CanTouchUi) { _detailsRequested = _technicalRequested = false; CloseMatrixTools(); _cellValuePanel.IsVisible = false; RefreshWorkspacePresentation(); }
             _version++; _work?.Cancel(); if (_busy) _statusKey = "Cancelled";
         }
         else if (CanTouchUi) { SetBusyState(); if (_statusKey is not null) _message.Text = FormatStatus(_statusKey); }
@@ -39,7 +39,7 @@ public sealed partial class MatrixView
     }
     protected override void OnSolverUnloaded()
     {
-        _detailsRequested = _technicalRequested = false;
+        _detailsRequested = _technicalRequested = false; CloseMatrixTools();
         DetachMatrixDetailsKeys();
         _active = false; _version++; _work?.Cancel();
         if (_busy) _statusKey = "Cancelled";

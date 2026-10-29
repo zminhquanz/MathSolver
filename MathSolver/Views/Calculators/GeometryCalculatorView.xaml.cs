@@ -1285,7 +1285,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         ResultBorder.IsVisible =
             true;
 
-        if (sender is Button) SolverWorkspace.RevealResult(ResultBorder);
+        if (sender is Button) SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
     }
 
     public void RefreshNumberDisplay()

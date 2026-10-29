@@ -670,38 +670,7 @@
                                 HorizontalTextAlignment="Center"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
 
-                                <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
-                                    <controls:ResultCopyButton
-                                        x:Name="BasicCopyResultButton"
-                                        NormalTextKey="PowerRoot.CopyResult"
-                                        Text=""
-                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                        CornerRadius="12"
-                                        FontSize="15"
-                                        FontAttributes="Bold"
-                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                        Clicked="OnBasicCopyResultClicked" />
-
-                                    <Grid
-                                        InputTransparent="True"
-                                        HorizontalOptions="Fill"
-                                        VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-
-                                        <controls:ThemedCopyIcon
-                                            WidthRequest="20"
-                                            HeightRequest="20" />
-
-                                        <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                            Text="{Binding DisplayText, Source={x:Reference BasicCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                            VerticalTextAlignment="Center" />
-
-                                    </Grid>
-
-                                </Grid>
 
                                 <!-- Chi tiết phép chia -->
                                 <Border
@@ -1079,7 +1048,7 @@
                 </ScrollView>
 
         <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
-                    <Grid Style="{StaticResource SolverActionButtonsStyle}"
+                    <Grid Style="{StaticResource SolverFooterActionButtonsStyle}"
                                     ColumnDefinitions="*,*"
                                     ColumnSpacing="12">
 
@@ -1095,7 +1064,40 @@
                                         Style="{StaticResource SolverSecondaryActionStyle}"
                                         BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                         Clicked="OnClearClicked" />
+
+                <Grid x:Name="BasicCopyResultButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+
+                                    <controls:ResultCopyButton
+                                        x:Name="BasicCopyResultButton"
+                                        NormalTextKey="PowerRoot.CopyResult"
+                                        Text=""
+                                        MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                        CornerRadius="12"
+                                        FontSize="15"
+                                        FontAttributes="Bold"
+                                        BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                        Clicked="OnBasicCopyResultClicked" />
+
+                                    <Grid
+                                        InputTransparent="True"
+                                        HorizontalOptions="Fill"
+                                        VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
+
+                                        <controls:ThemedCopyIcon
+                                            WidthRequest="20"
+                                            HeightRequest="20" />
+
+                                        <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                            Text="{Binding DisplayText, Source={x:Reference BasicCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                            FontSize="15"
+                                            FontAttributes="Bold"
+                                            TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                            VerticalTextAlignment="Center" />
+
+                                    </Grid>
+
                                 </Grid>
+            </Grid>
         </Border>
             </Grid>
             <Grid x:Name="NumberTheoryTabContent" IsVisible="False">

@@ -202,7 +202,7 @@ public partial class AverageView : LocalizedSolverView
         CalculateAverage();
         if (ResultBorder.IsVisible)
         {
-            SolverWorkspace.RevealResult(ResultBorder);
+            SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
         }
     }
 

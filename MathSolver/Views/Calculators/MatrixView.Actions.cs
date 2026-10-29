@@ -123,6 +123,10 @@ public sealed partial class MatrixView
         _dimensions.IsEnabled = !_busy;
         _calculate.IsEnabled = !_busy && HasInputs;
         _calculate.IsVisible = !_busy;
+        _clearAll.IsVisible = !_busy;
+        _clearAll.IsEnabled = !_busy && HasInputs;
+        _copySelection.IsVisible = HasInputs;
+        _copySelection.IsEnabled = !_busy && HasInputs;
         _stop.IsVisible = _busy;
         _value.IsEnabled = !_busy;
         _value.IsReadOnly = _selected == 2;
@@ -231,7 +235,8 @@ public sealed partial class MatrixView
         }
         else
         {
-            _coordinatePanel.IsVisible = false;
+            _coordinatePanel.IsVisible = false; _toolsRequested = false;
+            RefreshWorkspacePresentation();
             if (_errorKey == "InvalidCoordinate")
             {
                 _errorKey = null; _message.Text = "";
@@ -491,6 +496,7 @@ public sealed partial class MatrixView
             _result = result; _elapsed = timer.Elapsed.TotalSeconds; _selected = 2;
             try
             {
+                _setupPanel.IsVisible = false; CloseMatrixTools();
                 RefreshSource(); RefreshExecution();
                 if (ReferenceEquals(_failedReadResult, result))
                     throw new IOException("The new matrix result could not be read during publication.");

@@ -1831,6 +1831,17 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key":"Quiz.CheckAnswer","source":"Kiểm tra","mode":"exact"},
+    {"key":"Quiz.RegenerateQuestionCompact","source":"Tạo lại câu","mode":"exact"},
+    {"key":"Quiz.ProportionUnitaryGroupCount","source":"Rút về đơn vị · tìm số nhóm","mode":"exact"},
+    {"key":"Quiz.UnitaryGroupsEssayHint","source":"Ghi lời giải, hai bước tính hoặc phép tính gộp dùng đủ dữ kiện. Bước đầu là số đồ vật mỗi nhóm, bước cuối và đáp số là số nhóm. Ví dụ đơn vị: cây bút/hộp rồi hộp.","mode":"exact"},
+    {"key":"Quiz.UnitaryGroupsEquationPlaceholder","source":"24 ÷ 4 = 6 cây bút/hộp\n42 ÷ 6 = 7 hộp","mode":"exact"},
+    {"key":"Quiz.StartPractice","source":"Bắt đầu luyện","mode":"exact"},
+    {"key":"Quiz.MoreActions","source":"Thao tác khác","mode":"exact"},
+    {"key":"Matrix.CellInputOutOfRange","source":"Ô {0}[{1}, {2}] chỉ nhận số nguyên từ −9223372036854775808 đến 9223372036854775807. Phần nhập vượt giới hạn đã được bỏ.","mode":"exact"},
+    {"key":"Matrix.ClearAll","source":"Xóa","mode":"exact"},
+    {"key":"Matrix.ClearAllHelp","source":"Xóa toàn bộ nội dung A, B và kết quả C; giữ kích thước ma trận.","mode":"exact"},
+    {"key":"Matrix.ClearedAll","source":"Đã xóa toàn bộ nội dung A, B và kết quả C.","mode":"exact"},
     {"key":"Matrix.Workspace.ExpandTable","source":"Mở rộng bảng","mode":"exact"},
     {"key":"Matrix.Workspace.RestoreTable","source":"Thu gọn bảng","mode":"exact"},
     {"key":"Matrix.Workspace.CloseDetails","source":"Về bảng","mode":"exact"},

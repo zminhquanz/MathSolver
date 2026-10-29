@@ -6,6 +6,8 @@ namespace MathSolver.Views;
 
 public sealed partial class MatrixView
 {
+    private Button _copySelection = null!;
+
     private readonly ScrollView _workspaceScroll = new();
     private readonly VerticalStackLayout _setupPanel = new() { Spacing = 12 };
     private readonly VerticalStackLayout _coordinatePanel = new() { IsVisible = false, Spacing = 8 };
@@ -38,6 +40,9 @@ public sealed partial class MatrixView
         var heading = new Grid { ColumnSpacing = 10, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
         _setupSummary.VerticalTextAlignment = TextAlignment.Center;
         heading.Add(_setupSummary); heading.Add(_setupToggle, 1, 0);
+        // Native vertical scrollbars can overlay the content. Keep the form
+        // borders and buttons clear of the full scrollbar track, including hover.
+        _setupPanel.Padding = new Thickness(0, 4, 24, 4);
         _setupScroll.Content = _setupPanel;
         _setupScroll.SetBinding(IsVisibleProperty, new Binding(nameof(IsVisible), source: _setupPanel));
         return Card(new VerticalStackLayout { Spacing = 8, Children = { heading, _setupScroll } });
@@ -56,7 +61,8 @@ public sealed partial class MatrixView
         {
             _workspaceRevealVersion++;
             _coordinatePanel.IsVisible = !_coordinatePanel.IsVisible;
-            if (_coordinatePanel.IsVisible) _moreTools.IsVisible = _cellValuePanel.IsVisible = false;
+            if (_coordinatePanel.IsVisible) { _moreTools.IsVisible = false; OpenMatrixTools(); }
+            else _toolsRequested = false;
             RefreshWorkspacePresentation();
         };
         _translations.Add(() =>
@@ -90,9 +96,10 @@ public sealed partial class MatrixView
         navigation.Add(go);
         _coordinatePanel.Add(navigation);
 
-        var clipboard = FlowGrid(90, 3);
+        var clipboard = FlowGrid(90, 2);
         clipboard.AutomationId = "MatrixPrimaryTools";
-        var copy = ActionButton("Workspace.Copy", "", OnCopySelection);
+        var copy = _copySelection = ActionButton("Workspace.Copy", "📋", OnCopySelection);
+        _copySelection.AutomationId = "MatrixCopySelection";
         _clearCells = ActionButton("Workspace.Clear", "", (_, _) =>
         {
             if (!CanTouchUi || !_active || _busy || !HasInputs || _selected == 2) return;
@@ -105,7 +112,7 @@ public sealed partial class MatrixView
             ToolTipProperties.SetText(_clearCells, T("Workspace.ClearSelection"));
             SemanticProperties.SetDescription(_clearCells, T("Workspace.ClearSelection"));
         });
-        foreach (var button in new[] { copy, _pasteCells, _clearCells })
+        foreach (var button in new[] { _pasteCells, _clearCells })
         {
             button.FontSize = 14;
             button.LineBreakMode = LineBreakMode.WordWrap;
@@ -122,7 +129,7 @@ public sealed partial class MatrixView
             else if (_viewport.BeginRangeSelection())
             {
                 _workspaceRevealVersion++;
-                _coordinatePanel.IsVisible = _moreTools.IsVisible = _cellValuePanel.IsVisible = false;
+                CloseMatrixTools();
                 RefreshWorkspacePresentation();
             }
         });
@@ -143,7 +150,8 @@ public sealed partial class MatrixView
         {
             _workspaceRevealVersion++;
             _moreTools.IsVisible = !_moreTools.IsVisible;
-            if (_moreTools.IsVisible) _coordinatePanel.IsVisible = _cellValuePanel.IsVisible = false;
+            if (_moreTools.IsVisible) { _coordinatePanel.IsVisible = false; OpenMatrixTools(); }
+            else _toolsRequested = false;
             RefreshWorkspacePresentation();
         }, lockDuringWork: false);
         _moreToolsToggle.FontSize = 14;
@@ -153,10 +161,10 @@ public sealed partial class MatrixView
         secondary.Add(_moreToolsToggle);
         // One shared reflow policy for groups and their buttons. Horizontal item
         // margins in FlexLayout consumed narrow touch widths and caused extra rows.
-        var toolbar = FlowGrid(286, 3);
+        var toolbar = FlowGrid(286, 2);
         toolbar.AutomationId = "MatrixToolbar";
         toolbar.RowSpacing = 4;
-        toolbar.Add(cellInfo); toolbar.Add(clipboard); toolbar.Add(secondary);
+        toolbar.Add(cellInfo); toolbar.Add(clipboard);
         return toolbar;
     }
 
@@ -176,7 +184,8 @@ public sealed partial class MatrixView
         _message.MaxLines = 2;
         _message.LineBreakMode = LineBreakMode.TailTruncation;
         _message.SetBinding(ToolTipProperties.TextProperty, new Binding(nameof(Label.Text), source: _message));
-        _statusDetailsButton = ActionButton("Workspace.Details", "ⓘ", (_, _) => QueueWorkspaceReveal(_statusDetailsCard), lockDuringWork: false);
+        _statusDetailsButton = ActionButton("Workspace.Details", "ⓘ", (_, _) =>
+        { OpenMatrixTools(); _moreTools.IsVisible = _coordinatePanel.IsVisible = false; RefreshWorkspacePresentation(); }, lockDuringWork: false);
         _footerStatusRow = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
         _footerStatusRow.Add(_message); _footerStatusRow.Add(_statusDetailsButton, 1, 0);
         _activity.SetDynamicResource(ActivityIndicator.ColorProperty, "PrimaryColor");
@@ -186,10 +195,13 @@ public sealed partial class MatrixView
         var progressing = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) } };
         progressing.Add(_activity); progressing.Add(_progressText, 1, 0);
         progressing.SetBinding(IsVisibleProperty, new Binding(nameof(Label.IsVisible), source: _progressText));
+        var idle = new Grid { Style = GetStyle("SolverFooterActionButtonsStyle") };
+        idle.Add(_calculate); idle.Add(_clearAll); idle.Add(_copySelection);
+        idle.SetBinding(IsVisibleProperty, new Binding(nameof(Button.IsVisible), source: _calculate));
         var run = new Grid();
         _calculate.AutomationId = "MatrixCalculate";
         _stop.AutomationId = "MatrixStop";
-        run.Add(_calculate); run.Add(_stop);
+        run.Add(idle); run.Add(_stop);
         var content = new VerticalStackLayout { Spacing = 6, Children = { _footerStatusRow, progressing, _progress, run } };
         return new Border { Style = GetStyle("SolverActionBarStyle"), Content = content, AutomationId = "MatrixActionBar" };
     }

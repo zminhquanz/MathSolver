@@ -34,7 +34,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     private readonly List<Action> _translations = [];
     private readonly List<Button> _lockDuringWork = [];
     private readonly Button[] _operations = new Button[3], _matrices = new Button[3];
-    private readonly Button _apply, _fill, _paste, _pasteCells, _import, _export, _calculate, _stop;
+    private readonly Button _apply, _fill, _paste, _pasteCells, _import, _export, _calculate, _stop, _clearAll;
     private readonly Grid _dimensions = new() { ColumnSpacing = 12, RowSpacing = 12 };
     private string? _statusKey;
     private double? _elapsed;
@@ -131,7 +131,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         {
             if (!CanTouchUi || _busy) return;
             RefreshCell();
-            if (_errorKey == "InvalidCell")
+            if (_errorKey is "InvalidCell" or "CellInputOutOfRange")
             { _errorKey = null; _message.Text = ""; RefreshWorkspacePresentation(); }
         };
 
@@ -161,11 +161,7 @@ public sealed partial class MatrixView : LocalizedSolverView
 #endif
         };
         _value.Unfocused += (_, _) => { if (CanTouchUi && !_updatingEditor && !_busy) CommitPendingCell(); };
-        _value.TextChanged += (_, _) =>
-        {
-            RefreshSelectedValue();
-            if (!_updatingEditor && !_busy && _selected != 2) InvalidateResult();
-        };
+        _value.TextChanged += OnCellValueTextChanged;
         SemanticProperties.SetDescription(_value, T("CellValue"));
         var cellActions = FlowGrid(140, 3);
         _apply = ActionButton("Apply", "✓", (_, _) => ApplyCell(advance: true));
@@ -183,6 +179,9 @@ public sealed partial class MatrixView : LocalizedSolverView
         _moreTools.Add(_export);
         _calculate = ActionButton("Calculate", "🧮", OnCalculate, primary: true);
         _stop = ActionButton("Stop", "■", OnStop, primary: true, lockDuringWork: false);
+        _clearAll = ActionButton("ClearAll", "🗑", OnClearAll);
+        _clearAll.AutomationId = "MatrixClearAll";
+        _translations.Add(() => { ToolTipProperties.SetText(_clearAll, T("ClearAllHelp")); SemanticProperties.SetDescription(_clearAll, T("ClearAllHelp")); });
         editor.Add(BuildResultCard());
         var root = new Grid { RowDefinitions = { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) } };
         root.Add(fixedHeader);

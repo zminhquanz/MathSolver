@@ -2,6 +2,7 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Matrix cell typing Int64 boundaries and transient signs", PuzzleTests.CheckMatrixCellTypingLimits),
     ("Readable content contrast and user accents", PuzzleTests.CheckReadableColors),
     ("Display density capabilities preferences and matrix sizes", PuzzleTests.CheckDisplayDensity),
     ("Matrix file-backed streaming import and cleanup", PuzzleTests.CheckMatrixFileStreamingImport),

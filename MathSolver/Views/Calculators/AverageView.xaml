@@ -184,38 +184,7 @@
 
                         </Border>
 
-                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
-                            <controls:ResultCopyButton
-                                x:Name="AverageCopyResultButton"
-                                NormalTextKey="PowerRoot.CopyResult"
-                                Text=""
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnAverageCopyResultClicked" />
-
-                            <Grid
-                                InputTransparent="True"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-
-                                <controls:ThemedCopyIcon
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
-
-                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                    Text="{Binding DisplayText, Source={x:Reference AverageCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    VerticalTextAlignment="Center" />
-
-                            </Grid>
-
-                        </Grid>
 
                         <Grid
                             ColumnDefinitions="*,*"
@@ -324,7 +293,7 @@
 
         </ScrollView>
         <Border Grid.Row="2" Style="{StaticResource SolverActionBarStyle}">
-            <Grid Style="{StaticResource SolverActionButtonsStyle}"
+            <Grid Style="{StaticResource SolverFooterActionButtonsStyle}"
                 ColumnDefinitions="*,*"
                 ColumnSpacing="10">
 
@@ -341,6 +310,39 @@
                     BackgroundColor="{DynamicResource WallpaperDividerColor}"
                     Clicked="OnClearClicked" />
 
+
+                <Grid x:Name="AverageCopyResultButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+
+                            <controls:ResultCopyButton
+                                x:Name="AverageCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnAverageCopyResultClicked" />
+
+                            <Grid
+                                InputTransparent="True"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
+
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference AverageCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+
+                            </Grid>
+
+                        </Grid>
             </Grid>
         </Border>
     </Grid>

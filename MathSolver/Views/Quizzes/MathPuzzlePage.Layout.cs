@@ -8,7 +8,7 @@ public partial class MathPuzzlePage
 {
     private bool _practiceSettingsExpanded = true;
     private bool? _compactSettings;
-    private (bool Inline, bool StackActions)? _summaryLayout;
+    private bool? _summaryOverflow;
     private int _practiceScrollVersion;
     private bool _practicePageVisible;
     private bool _practiceLayoutLoaded;
@@ -21,8 +21,6 @@ public partial class MathPuzzlePage
         && Handler?.MauiContext is not null && _practiceLayoutWindow.Handler?.MauiContext is not null
         && PracticeSummaryGrid.Handler?.MauiContext is not null
         && ChangePracticeSettingsButton.Handler?.MauiContext is not null
-        && OpenAiQuestionBankButton.Handler?.MauiContext is not null
-        && ExportQuizPdfButton.Handler?.MauiContext is not null
         && PracticeSummaryLabel.Handler?.MauiContext is not null;
 
     private void OnPracticePageLoaded(object? sender, EventArgs e)
@@ -34,7 +32,7 @@ public partial class MathPuzzlePage
         if (_practiceLayoutWindow is null) return;
         _practiceLayoutWindow.Destroying += OnPracticeWindowDestroying;
         _practiceLayoutLoaded = true;
-        _summaryLayout = null;
+        _summaryOverflow = null;
         QueuePracticeSummaryLayout();
     }
 
@@ -46,7 +44,12 @@ public partial class MathPuzzlePage
         DetachPracticeLayoutWindow();
     }
 
-    private void OnPracticeWindowDestroying(object? sender, EventArgs e) => OnPracticePageUnloaded(sender, e);
+    private void OnPracticeWindowDestroying(object? sender, EventArgs e)
+    {
+        _practicePageVisible = false;
+        _questionGenerationVersion++;
+        OnPracticePageUnloaded(sender, e);
+    }
 
     private void DetachPracticeLayoutWindow()
     {
@@ -132,6 +135,13 @@ public partial class MathPuzzlePage
         string settingsDescription = TranslateQuiz(_practiceSettingsExpanded ? "Quiz.HideSettings" : "Quiz.ChangeSettings");
         SemanticProperties.SetDescription(ChangePracticeSettingsButton, settingsDescription);
         ToolTipProperties.SetText(ChangePracticeSettingsButton, settingsDescription);
+        PracticeCompactSettingsIcon.Source = PracticeSettingsIcon.Source;
+        SemanticProperties.SetDescription(CompactPracticeSettingsButton, settingsDescription);
+        ToolTipProperties.SetText(CompactPracticeSettingsButton, settingsDescription);
+        SemanticProperties.SetDescription(PracticeSummaryLabel, PracticeSummaryLabel.Text);
+        ToolTipProperties.SetText(PracticeSummaryLabel, PracticeSummaryLabel.Text);
+        StartPracticeButton.IsEnabled = _currentQuestion is not null;
+        UpdatePracticeHeader();
         QueuePracticeSummaryLayout();
     }
 
@@ -209,53 +219,28 @@ public partial class MathPuzzlePage
         if (!CanUpdatePracticeLayout) return;
         double width = PracticeSummaryGrid.Width;
         if (width <= 0) return;
-        // Measure the actual localized labels, including system font scaling.
-        double actionsWidth, summaryWidth;
+        UpdatePracticeHeader();
+        // Measure the full controls, not the hidden parent toolbar. This also
+        // accounts for translated labels and font changes while using overflow.
+        double actionsWidth;
         try
         {
             actionsWidth = ((IView)ChangePracticeSettingsButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
                 + ((IView)OpenAiQuestionBankButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
                 + ((IView)ExportQuizPdfButton).Measure(double.PositiveInfinity, double.PositiveInfinity).Width
                 + PracticeSummaryActionsGrid.ColumnSpacing * 2;
-            summaryWidth = ((IView)PracticeSummaryLabel).Measure(double.PositiveInfinity, double.PositiveInfinity).Width;
         }
         catch (ObjectDisposedException)
         {
-            // Window services may already be disposed before Unloaded is raised.
-            // Skip this cosmetic pass; Loaded/Appearing will request fresh layout.
             _practiceLayoutVersion++;
             _practiceLayoutLoaded = false;
             return;
         }
-        bool inline = width >= actionsWidth + PracticeSummaryGrid.ColumnSpacing + Math.Min(summaryWidth, 320 * CurrentTextScale);
-        bool stackActions = width < actionsWidth;
-        if (_summaryLayout == (inline, stackActions)) return;
-        _summaryLayout = (inline, stackActions);
-
-        Grid.SetColumnSpan(PracticeSummaryLabel, inline ? 1 : 2);
-        Grid.SetRow(PracticeSummaryActionsGrid, inline ? 0 : 1);
-        Grid.SetColumn(PracticeSummaryActionsGrid, inline ? 1 : 0);
-        Grid.SetColumnSpan(PracticeSummaryActionsGrid, inline ? 1 : 2);
-        PracticeSummaryActionsGrid.Margin = inline ? Thickness.Zero : new Thickness(0, 6, 0, 0);
-        PracticeSummaryActionsGrid.ColumnDefinitions.Clear();
-        PracticeSummaryActionsGrid.RowDefinitions.Clear();
-        PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
-        if (!stackActions)
-        {
-            PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
-            PracticeSummaryActionsGrid.ColumnDefinitions.Add(new ColumnDefinition(inline ? GridLength.Auto : GridLength.Star));
-        }
-        PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        if (stackActions)
-        {
-            PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            PracticeSummaryActionsGrid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-        }
-        Grid.SetRow(OpenAiQuestionBankHost, stackActions ? 1 : 0);
-        Grid.SetColumn(OpenAiQuestionBankHost, stackActions ? 0 : 1);
-        Grid.SetRow(ExportQuizPdfButton, stackActions ? 2 : 0);
-        Grid.SetColumn(ExportQuizPdfButton, stackActions ? 0 : 2);
-        Grid.SetRow(AiQuestionBankProgressLabel, inline ? 1 : 2);
+        bool overflow = QuizResponsiveLayout.UseOverflowPracticeActions(width, CurrentTextScale, actionsWidth);
+        if (_summaryOverflow == overflow) return;
+        _summaryOverflow = overflow;
+        PracticeSummaryActionsGrid.IsVisible = !overflow;
+        PracticeCompactActionsGrid.IsVisible = overflow;
     }
 
     private void UpdateDifficultyLayout(bool compact)

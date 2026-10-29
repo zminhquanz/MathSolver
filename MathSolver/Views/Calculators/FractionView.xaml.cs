@@ -213,7 +213,7 @@ public partial class FractionView : LocalizedSolverView
         CalculateFractions();
         if (ResultBorder.IsVisible)
         {
-            SolverWorkspace.RevealResult(ResultBorder);
+            SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
         }
     }
 

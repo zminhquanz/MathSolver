@@ -55,6 +55,7 @@ public partial class MathPuzzlePage : ContentPage
     private int _mainTabAnimationVersion;
     private int _questionGenerationVersion;
     private bool _openingAiQuestionBank;
+    private bool _quizCultureRefreshPending;
 
     private Picker[] IllustratedSubtypePickers =>
     [
@@ -82,8 +83,9 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+        SubmitEssayAnswerButton.Emoji = "\u2705";
+        RegenerateQuestionButton.Emoji = "\U0001F504";
         OpenAiQuestionBankEmojiLabel.Text = "\U0001F916"; // Match the AI authoring header's robot emoji.
-        // The hero remains visible when the settings card is collapsed.
         // Native emoji fonts provide colour glyphs independently of the app's text font.
         PracticeHeroEmojiLabel.Text = "\U0001F9E0 \U0001F9E9"; // Brain + puzzle: mathematical reasoning.
         Loaded += OnPracticePageLoaded;
@@ -134,6 +136,7 @@ public partial class MathPuzzlePage : ContentPage
         Shell.SetTabBarIsVisible(this, true);
         AiQuestionBank.Current.Generation.Changed += OnAiQuestionBankProgress;
         UpdateAiQuestionBankProgress();
+        RefreshPendingQuizCulture();
         RefreshStatefulButtonTheme();
         BeginMainTabTransitionIfPending();
 
@@ -142,6 +145,7 @@ public partial class MathPuzzlePage : ContentPage
         else
         {
             RenderCurrentQuestion(resetAnswerControls: false);
+            RestoreQuestionActionState();
             UpdateScoreLabels();
         }
         // Shell can show an already loaded page without raising Loaded again.
@@ -151,6 +155,8 @@ public partial class MathPuzzlePage : ContentPage
     protected override void OnDisappearing()
     {
         _practicePageVisible = false;
+        // Cancel publication from the old view visit, not the quiz session.
+        _questionGenerationVersion++;
         _practiceLayoutVersion++;
         _practiceScrollVersion++;
         _diagramScrollVersion++;
@@ -165,9 +171,7 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        ResetQuizSessionState();
         _mainTabAnimationVersion++;
-        SetPracticeSettingsExpanded(true);
         MathPuzzlePageContentRoot.CancelAnimations();
         ResetMainTabRoot();
         base.OnDisappearing();
@@ -191,6 +195,7 @@ public partial class MathPuzzlePage : ContentPage
         UpdateCurriculumTierStyles();
         UpdateProblemOperationPanel();
         RefreshTrueFalseAnswerButtonTheme();
+        RefreshPendingAnswerSelection();
         RefreshQuestionActionButtonTheme();
     }
 
@@ -237,16 +242,22 @@ public partial class MathPuzzlePage : ContentPage
 
     private void OnCultureChanged(object? sender, EventArgs e)
     {
-        Dispatcher.Dispatch(() =>
-        {
-            UpdateTrueFalseAnswerLabels();
-            ResetQuizSessionState();
-            RefreshLearningPickers();
-            UpdateOperationPickerItems();
-            UpdateCurriculumTierStyles();
-            UpdateScoreLabels();
-            GenerateAlgorithmQuestion();
-        });
+        _quizCultureRefreshPending = true;
+        Dispatcher.Dispatch(RefreshPendingQuizCulture);
+    }
+
+    private void RefreshPendingQuizCulture()
+    {
+        // A language change is a UI refresh, not a new practice session. Defer
+        // hidden-page work until return and retain the question and answer draft.
+        if (!_quizCultureRefreshPending || !_practicePageVisible) return;
+        _quizCultureRefreshPending = false;
+        UpdateTrueFalseAnswerLabels();
+        RefreshLearningPickers();
+        UpdateOperationPickerItems();
+        UpdateCurriculumTierStyles();
+        if (_currentQuestion is not null) RenderCurrentQuestion(resetAnswerControls: false);
+        UpdateScoreLabels();
     }
 
     private void UpdateQuestionModeLayout()
@@ -1172,8 +1183,8 @@ public partial class MathPuzzlePage : ContentPage
             return;
         }
 
-        // Đổi dạng bài toán bắt đầu một phiên luyện tập mới, giống hệt đổi
-        // kiểu câu hỏi hoặc đổi tab chính. Không giữ lại số câu/đúng/sai của
+        // Đổi dạng bài toán bắt đầu một phiên mới như đổi kiểu câu hỏi.
+        // Chuyển tab để tra cứu vẫn giữ phiên. Không giữ số câu/đúng/sai của
         // dạng trước vì chúng không còn cùng một cấu hình luyện tập.
 
         ResetQuizSessionState();
@@ -1647,9 +1658,8 @@ public partial class MathPuzzlePage : ContentPage
         int? questionNumberOnSuccess = null)
     {
         int version = ++_questionGenerationVersion;
+        _activeQuestionGeneration = version;
         SetAnswerControlsEnabled(false);
-        _questionAnswered = false;
-        _lastAnswerWasCorrect = null;
         NextQuestionButton.IsEnabled = false;
 
         try
@@ -1665,8 +1675,6 @@ public partial class MathPuzzlePage : ContentPage
                 problemRequest = problemRequest with { ArithmeticOperation = allowed[Random.Shared.Next(allowed.Length)] };
             }
 
-            _activeProblemRequest = problemRequest;
-
             QuizCurriculumContext curriculumContext =
                 GetCurriculumContext();
 
@@ -1675,41 +1683,68 @@ public partial class MathPuzzlePage : ContentPage
                 problemRequest, _selectedMode, curriculumContext, AppLanguageManager.CurrentLanguage,
                 problemRequest.Kind == QuizProblemKind.Arithmetic ? learning : CurrentLearningProfile, GetPracticeFormat(problemRequest.Kind),
                 _fractionWordProblems && GetSelectedFixedProblemRequest()?.Kind == QuizProblemKind.Fraction);
-            if (version != _questionGenerationVersion) return;
-            _currentQuestion = generatedQuestion;
-            CommitGeneratedQuestionNumber(
-                questionNumberOnSuccess);
-            RenderCurrentQuestion(
-                resetAnswerControls: true);
-            UpdateScoreLabels();
+            TryPublishGeneratedQuestion(version, generatedQuestion, problemRequest, questionNumberOnSuccess);
         }
         catch (InvalidOperationException)
         {
-            if (version != _questionGenerationVersion) return;
-            _currentQuestion = null;
-            SetQuestionContent(
-                Translate("Quiz.GenerationError"),
-                20,
-                "DangerColor",
-                useFractionFormatting: false);
+            HandleQuestionGenerationFailure(version);
         }
         finally
         {
-            // Câu vừa được tạo mới hoặc tạo lại nên trạng thái đã trả lời đã
-            // được xóa. Bật lại nút Tạo đề lại; nếu không, trạng thái Disabled
-            // của câu trước sẽ còn giữ nguyên sau khi bấm Câu tiếp theo.
-            if (version == _questionGenerationVersion)
+            if (version == _questionGenerationVersion && _practicePageVisible)
             {
-                UpdateRegenerateQuestionButtonState();
+                _activeQuestionGeneration = null;
+                RestoreQuestionActionState();
                 UpdatePracticeSummary();
                 if (_currentQuestion is null) SetPracticeSettingsExpanded(true);
             }
         }
     }
 
+    private void HandleQuestionGenerationFailure(int version)
+    {
+        if (version != _questionGenerationVersion || !_practicePageVisible) return;
+        if (_currentQuestion is null)
+        {
+            SetQuestionContent(Translate("Quiz.GenerationError"), 20, "DangerColor",
+                useFractionFormatting: false);
+        }
+        else
+        {
+            // Keep the previous question, draft, feedback and scores so a failed
+            // Next/regenerate attempt remains recoverable without a new session.
+            QuestionPromptLabel.Text = Translate("Quiz.GenerationError");
+        }
+        RestoreQuestionActionState();
+    }
+
+    private void RestoreQuestionActionState()
+    {
+        SetAnswerControlsEnabled(_currentQuestion is not null && !_questionAnswered);
+        NextQuestionButton.IsEnabled = _currentQuestion is not null && _questionAnswered;
+        UpdateRegenerateQuestionButtonState();
+    }
+
+    private bool TryPublishGeneratedQuestion(int version, ArithmeticQuizQuestion question,
+        QuizProblemRequest request, int? questionNumber)
+    {
+        if (version != _questionGenerationVersion || !_practicePageVisible) return false;
+        // Commit the new question atomically after acceptance. A canceled visit
+        // retains the previous question, its request, grading state and draft.
+        _currentQuestion = question;
+        _activeProblemRequest = request;
+        _questionAnswered = false;
+        _lastAnswerWasCorrect = null;
+        CommitGeneratedQuestionNumber(questionNumber);
+        RenderCurrentQuestion(resetAnswerControls: true);
+        UpdateScoreLabels();
+        if (!_practiceSettingsExpanded) _ = ScrollToPracticeElementAsync(PracticeQuestionStart, ScrollToPosition.Start);
+        return true;
+    }
+
     private void OnRegenerateQuestionClicked(object? sender, EventArgs e)
     {
-        if (_questionAnswered) return;
+        if (_questionAnswered || IsGeneratingQuestion) return;
         // Replace the current question without changing its number or score.
         GenerateAlgorithmQuestion();
     }
@@ -1733,17 +1768,20 @@ public partial class MathPuzzlePage : ContentPage
 
     private void UpdateRegenerateQuestionButtonState()
     {
-        RegenerateQuestionButton.IsEnabled = !_questionAnswered;
+        UpdatePracticeActionState();
         RefreshQuestionActionButtonTheme();
     }
 
     private void RefreshQuestionActionButtonTheme()
     {
-        foreach (Button button in new[] { RegenerateQuestionButton, NextQuestionButton, SubmitEssayAnswerButton })
+        foreach (Button button in new[] { NextQuestionButton, SubmitEssayAnswerButton })
         {
             button.SetDynamicResource(Button.BackgroundColorProperty, "PrimaryColor");
             button.SetDynamicResource(Button.TextColorProperty, "OnPrimaryColor");
         }
+        RegenerateQuestionButton.SetDynamicResource(Button.BackgroundColorProperty, "PrimarySoftColor");
+        RegenerateQuestionButton.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+        RegenerateQuestionButton.SetDynamicResource(Button.BorderColorProperty, "PrimaryBorderColor");
     }
 
     private void ClearMultipleChoiceAnswers()
@@ -1800,6 +1838,7 @@ public partial class MathPuzzlePage : ContentPage
     private void SetAnswerControlsEnabled(
         bool isEnabled)
     {
+        _answerInputsEnabled = isEnabled;
         TrueAnswerButton.IsEnabled = isEnabled;
         FalseAnswerButton.IsEnabled = isEnabled;
         EssayWorkEditor.IsEnabled = isEnabled;
@@ -1809,6 +1848,7 @@ public partial class MathPuzzlePage : ContentPage
         {
             button.IsEnabled = isEnabled;
         }
+        UpdatePracticeActionState();
     }
 
     private void RenderCurrentQuestion(
@@ -2197,10 +2237,12 @@ public partial class MathPuzzlePage : ContentPage
         }
         UpdateElementaryChoiceLayout(elementary);
         UpdateChoiceDescriptions();
+        RefreshPendingAnswerSelection();
     }
 
     private void ResetAnswerControls()
     {
+        _pendingAnswerButton = null;
         _choiceStatuses.Clear();
         SetAnswerControlsEnabled(true);
 
@@ -2266,7 +2308,7 @@ public partial class MathPuzzlePage : ContentPage
         PresentedAnswerLabel.IsVisible = true;
     }
 
-    private void OnTrueFalseAnswerClicked(
+    private void GradeTrueFalseAnswer(
         object? sender,
         EventArgs e)
     {
@@ -2286,7 +2328,7 @@ public partial class MathPuzzlePage : ContentPage
             selectedButton: null);
     }
 
-    private void OnChoiceAnswerClicked(
+    private void GradeChoiceAnswer(
         object? sender,
         EventArgs e)
     {
@@ -2364,7 +2406,7 @@ public partial class MathPuzzlePage : ContentPage
         Button? selectedButton,
         string? feedbackOverride = null)
     {
-        if (_currentQuestion is null)
+        if (_currentQuestion is null || _questionAnswered)
         {
             return;
         }
@@ -2719,7 +2761,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private void OnNextQuestionClicked(object? sender, EventArgs e)
     {
-        if (!_questionAnswered) return;
+        if (!_questionAnswered || IsGeneratingQuestion) return;
         GenerateAlgorithmQuestion(questionNumberOnSuccess: checked(_questionCount + 1));
     }
 
@@ -2749,6 +2791,7 @@ public partial class MathPuzzlePage : ContentPage
     private void ResetCurrentQuestionState()
     {
         _currentQuestion = null;
+        _pendingAnswerButton = null;
         _activeProblemRequest =
             GetSelectedFixedProblemRequest();
         _questionAnswered = false;

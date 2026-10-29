@@ -11,7 +11,7 @@
     <ContentPage.Resources>
         <Style x:Key="PracticeToolbarButtonStyle" TargetType="Button"
                BasedOn="{StaticResource SolverOutlinedActionStyle}">
-            <Setter Property="MinimumHeightRequest" Value="{OnPlatform Android=48, Default=40}" />
+            <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
             <Setter Property="MinimumWidthRequest" Value="48" />
             <Setter Property="Padding" Value="10,4" />
             <Setter Property="FontSize" Value="13" />
@@ -24,11 +24,11 @@
 
     <Grid
         x:Name="MathPuzzlePageContentRoot"
-        RowDefinitions="Auto,*">
+        RowDefinitions="Auto,*,Auto" SizeChanged="OnPracticeLayoutSizeChanged">
 
         <controls:LiveWallpaperView
             x:Name="LiveWallpaper"
-            Grid.RowSpan="2" />
+            Grid.RowSpan="3" />
 
                 <!-- Keep the status, actions and title outside the scrolling content. -->
                 <VerticalStackLayout
@@ -41,10 +41,10 @@
                     HorizontalOptions="Center">
 
                     <Border Style="{StaticResource SolverCardStyle}" Padding="12,6">
-                        <Grid x:Name="PracticeSummaryGrid" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto"
+                        <Grid x:Name="PracticeSummaryGrid" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto"
                               ColumnSpacing="10" RowSpacing="0" SizeChanged="OnPracticeLayoutSizeChanged">
                             <Label x:Name="PracticeSummaryLabel" FontSize="13" FontAttributes="Bold"
-                                   VerticalOptions="Center" LineBreakMode="WordWrap"
+                                   VerticalOptions="Center" LineBreakMode="TailTruncation" MaxLines="1"
                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Grid x:Name="PracticeSummaryActionsGrid" Grid.Column="1" ColumnDefinitions="Auto,Auto,Auto"
                                   RowDefinitions="Auto" ColumnSpacing="6" RowSpacing="6">
@@ -85,6 +85,28 @@
                                         Style="{StaticResource PracticeToolbarButtonStyle}"
                                         Clicked="OnExportQuizPdfClicked" />
                             </Grid>
+                            <Grid x:Name="PracticeCompactActionsGrid" Grid.Column="1" IsVisible="False"
+                                  ColumnDefinitions="Auto,Auto" ColumnSpacing="6">
+                                <Grid>
+                                    <Button x:Name="CompactPracticeSettingsButton" Text="" Padding="0"
+                                            WidthRequest="{DynamicResource Density.ControlWidth}"
+                                            MinimumWidthRequest="{DynamicResource Density.ControlWidth}"
+                                            Style="{StaticResource PracticeToolbarButtonStyle}"
+                                            Clicked="OnChangePracticeSettingsClicked" />
+                                    <controls:ThemedImageIcon x:Name="PracticeCompactSettingsIcon" Source="quiz_collapse.png"
+                                            FollowWallpaperContrast="True" WidthRequest="16" HeightRequest="16"
+                                            HorizontalOptions="Center" VerticalOptions="Center" InputTransparent="True"
+                                            AutomationProperties.IsInAccessibleTree="False" />
+                                </Grid>
+                                <Button x:Name="MorePracticeActionsButton" Grid.Column="1" Text="⋯"
+                                        FontSize="22" FontAutoScalingEnabled="False" Padding="0"
+                                        WidthRequest="{DynamicResource Density.ControlWidth}"
+                                        MinimumWidthRequest="{DynamicResource Density.ControlWidth}"
+                                        SemanticProperties.Description="{localization:QuizTranslate Quiz.MoreActions}"
+                                        ToolTipProperties.Text="{localization:QuizTranslate Quiz.MoreActions}"
+                                        Style="{StaticResource PracticeToolbarButtonStyle}"
+                                        Clicked="OnMorePracticeActionsClicked" />
+                            </Grid>
                             <Label x:Name="AiQuestionBankProgressLabel" Grid.Row="1" Grid.ColumnSpan="2" Margin="0,6,0,0"
                                    IsVisible="False" FontSize="12" LineBreakMode="WordWrap"
                                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
@@ -101,10 +123,12 @@
                             Style="{StaticResource SolverHeroSymbolStyle}" />
 
                         <Label
+                            x:Name="PracticeHeroTitle"
                             Text="{localization:Translate Quiz.PracticeTitle}"
                             Style="{StaticResource SolverHeroTitleStyle}" />
 
                         <Label
+                            x:Name="PracticeHeroSubtitle"
                             Text="{localization:QuizTranslate Quiz.PracticeSubtitleAlgorithmOnly}"
                             Style="{StaticResource SolverHeroSubtitleStyle}" />
 
@@ -501,7 +525,6 @@
 
                             </VerticalStackLayout>
 
-
                             <VerticalStackLayout
                                 x:Name="MotionTypePanel"
                                 IsVisible="False"
@@ -783,9 +806,12 @@
                         </VerticalStackLayout>
                     </Border>
 
+                        <Button x:Name="StartPracticeButton" Text="{localization:QuizTranslate Quiz.StartPractice}"
+                                IsEnabled="False" Style="{StaticResource SolverPrimaryActionStyle}"
+                                Clicked="OnStartPracticeClicked" />
                     </VerticalStackLayout>
 
-                    <Border
+                    <Border x:Name="PracticeQuestionStart"
                         Padding="14"
                         BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
                         Stroke="{DynamicResource PrimarySoftBrush}"
@@ -1110,6 +1136,7 @@
                                         <Editor
                                             x:Name="EssayWorkEditor"
                                             Focused="OnEssayWorkFocused"
+                                            TextChanged="OnEssayWorkTextChanged"
                                             MinimumHeightRequest="180"
                                             AutoSize="TextChanges"
                                             FontSize="16"
@@ -1129,16 +1156,6 @@
                                     LineHeight="1.2"
                                     TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
 
-                                <Button
-                                    x:Name="SubmitEssayAnswerButton"
-                                    Text="{localization:QuizTranslate Quiz.SubmitEssayAnswer}"
-                                    MinimumHeightRequest="50"
-                                    CornerRadius="12"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    Clicked="OnSubmitEssayAnswerClicked" />
 
                             </VerticalStackLayout>
 
@@ -1217,36 +1234,6 @@
                                 </VerticalStackLayout>
                             </Border>
 
-                            <Grid
-                                ColumnDefinitions="*,*"
-                                ColumnSpacing="10">
-
-                                <Button
-                                    x:Name="RegenerateQuestionButton"
-                                    Grid.Column="0"
-                                    Text="{localization:QuizTranslate Quiz.RegenerateQuestion}"
-                                    MinimumHeightRequest="50"
-                                    CornerRadius="12"
-                                    FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    Clicked="OnRegenerateQuestionClicked" />
-
-                                <Button
-                                    x:Name="NextQuestionButton"
-                                    Grid.Column="1"
-                                    IsEnabled="False"
-                                    Text="{localization:Translate Quiz.NextQuestion}"
-                                    MinimumHeightRequest="50"
-                                    CornerRadius="12"
-                                    FontSize="{OnPlatform Android=14, WinUI=16, Default=16}"
-                                    FontAttributes="Bold"
-                                    BackgroundColor="{DynamicResource PrimaryColor}"
-                                    TextColor="{DynamicResource OnPrimaryColor}"
-                                    Clicked="OnNextQuestionClicked" />
-
-                            </Grid>
 
                         </VerticalStackLayout>
                     </Border>
@@ -1259,5 +1246,23 @@
 
                 </VerticalStackLayout>
         </ScrollView>
+        <Border x:Name="PracticeActionBar" Grid.Row="2" Style="{StaticResource SolverActionBarStyle}">
+            <Grid x:Name="PracticeActionButtons" ColumnDefinitions="*,*" ColumnSpacing="10">
+                <controls:EmojiActionButton x:Name="SubmitEssayAnswerButton" Grid.Column="0"
+                        Caption="{localization:QuizTranslate Quiz.CheckAnswer}"
+                        Style="{StaticResource SolverPrimaryActionStyle}" FontSize="14" LineBreakMode="WordWrap"
+                        IsEnabled="False" Clicked="OnCheckAnswerClicked" />
+                <Button x:Name="NextQuestionButton" Grid.Column="0" Grid.ColumnSpan="2"
+                        Text="{localization:Translate Quiz.NextQuestion}"
+                        Style="{StaticResource SolverPrimaryActionStyle}" FontSize="14" LineBreakMode="WordWrap"
+                        IsVisible="False" IsEnabled="False" Clicked="OnNextQuestionClicked" />
+                <controls:EmojiActionButton x:Name="RegenerateQuestionButton" Grid.Column="1"
+                        Caption="{localization:QuizTranslate Quiz.RegenerateQuestionCompact}"
+                        SemanticProperties.Description="{localization:QuizTranslate Quiz.RegenerateQuestion}"
+                        ToolTipProperties.Text="{localization:QuizTranslate Quiz.RegenerateQuestion}"
+                        Style="{StaticResource SolverOutlinedActionStyle}" FontSize="14" LineBreakMode="WordWrap"
+                        Clicked="OnRegenerateQuestionClicked" />
+            </Grid>
+        </Border>
     </Grid>
 </ContentPage>

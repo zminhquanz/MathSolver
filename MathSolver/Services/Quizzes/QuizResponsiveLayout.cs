@@ -3,6 +3,10 @@ namespace MathSolver.Services;
 /// <summary>Layout decisions use logical content width, including split-screen and enlarged text.</summary>
 internal static class QuizResponsiveLayout
 {
+    internal static bool UseOverflowPracticeActions(double width, double textScale, double actionsWidth) =>
+        ResponsiveLayoutPolicy.UseStackedLayout(width, 760, textScale) ||
+        width < actionsWidth + 220 * Math.Max(1, textScale) + 10;
+
     internal static bool UseCompactSettings(double width, double textScale) =>
         width < 600 * Math.Max(1, textScale);
 

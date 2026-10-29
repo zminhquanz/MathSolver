@@ -1073,7 +1073,7 @@ public partial class QuadraticEquationView : LocalizedSolverView
         // Localization/number-display refreshes also call this handler with the
         // view as sender; only an explicit calculation requests result reveal.
         if (sender is Button && ResultBorder.IsVisible)
-            SolverWorkspace.RevealResult(ResultBorder);
+            SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
     }
 
     private void CalculateLinearEquation()

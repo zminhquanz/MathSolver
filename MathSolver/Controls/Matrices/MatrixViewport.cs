@@ -284,7 +284,8 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             {
                 _editor.Text = inserted;
                 _editor.SelectionLength = 0;
-                _editor.CursorPosition = caret;
+                // Immediate input validation may have restored shorter text.
+                _editor.CursorPosition = Math.Clamp(caret, 0, _editor.Text?.Length ?? 0);
             }
         }
         else
@@ -386,7 +387,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
 
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
-        canvas.FillColor = Paper; canvas.FillRectangle(dirtyRect);
+        // Cells paint their own surface. Leave unused space on the page backdrop.
         if (_readCell is null) return;
         _drawFontSize = (float)(14 * Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6));
         canvas.Font = Microsoft.Maui.Graphics.Font.Default;

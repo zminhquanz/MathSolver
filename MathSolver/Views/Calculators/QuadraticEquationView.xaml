@@ -444,39 +444,7 @@
 
                         </Border>
 
-                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
-                            <controls:ResultCopyButton
-                                x:Name="QuadraticCopyResultButton"
-                                NormalTextKey="PowerRoot.CopyResult"
-                                Text=""
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnQuadraticCopyResultClicked" />
-
-                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
-                                InputTransparent="True"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                ColumnSpacing="8">
-
-                                <controls:ThemedCopyIcon
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
-
-                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                    Text="{Binding DisplayText, Source={x:Reference QuadraticCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    VerticalTextAlignment="Center" />
-
-                            </Grid>
-
-                        </Grid>
 
                     </VerticalStackLayout>
 
@@ -787,7 +755,7 @@
         </ScrollView>
 
         <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
-            <Grid Style="{StaticResource SolverActionButtonsStyle}" ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
+            <Grid Style="{StaticResource SolverFooterActionButtonsStyle}" ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
 
                             <Button
                                 x:Name="CalculateQuadraticButton"
@@ -803,7 +771,41 @@
                                 BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Clicked="OnClearClicked" />
 
+
+                <Grid x:Name="QuadraticCopyResultButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+
+                            <controls:ResultCopyButton
+                                x:Name="QuadraticCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnQuadraticCopyResultClicked" />
+
+                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ColumnSpacing="8">
+
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference QuadraticCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+
+                            </Grid>
+
                         </Grid>
+            </Grid>
         </Border>
     </Grid>
 

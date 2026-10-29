@@ -430,38 +430,7 @@
                             MathColor="{DynamicResource WallpaperTextPrimaryColor}"
                             HorizontalOptions="Center" />
 
-                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
 
-                            <controls:ResultCopyButton
-                                x:Name="FractionCopyResultButton"
-                                NormalTextKey="PowerRoot.CopyResult"
-                                Text=""
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnFractionCopyResultClicked" />
-
-                            <Grid
-                                InputTransparent="True"
-                                HorizontalOptions="Fill"
-                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-
-                                <controls:ThemedCopyIcon
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
-
-                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                    Text="{Binding DisplayText, Source={x:Reference FractionCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    VerticalTextAlignment="Center" />
-
-                            </Grid>
-
-                        </Grid>
 
                         <!-- Lời giải chi tiết -->
                         <Border
@@ -558,7 +527,7 @@
     </VerticalStackLayout>
         </ScrollView>
         <Border Grid.Row="2" Style="{StaticResource SolverActionBarStyle}">
-            <Grid Style="{StaticResource SolverActionButtonsStyle}"
+            <Grid Style="{StaticResource SolverFooterActionButtonsStyle}"
                 x:Name="ActionButtonsGrid"
                 ColumnDefinitions="*,*"
                 RowDefinitions="Auto"
@@ -583,6 +552,39 @@
                     TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                     Clicked="OnClearClicked" />
 
+
+                <Grid x:Name="FractionCopyResultButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+
+                            <controls:ResultCopyButton
+                                x:Name="FractionCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnFractionCopyResultClicked" />
+
+                            <Grid
+                                InputTransparent="True"
+                                HorizontalOptions="Fill"
+                                VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
+
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference FractionCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+
+                            </Grid>
+
+                        </Grid>
             </Grid>
         </Border>
     </Grid>

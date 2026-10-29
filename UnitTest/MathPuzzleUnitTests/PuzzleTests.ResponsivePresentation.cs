@@ -104,6 +104,17 @@ internal static partial class PuzzleTests
         Require(QuizResponsiveLayout.UseCompactSettings(720, 1.5) &&
             !QuizResponsiveLayout.UseCompactSettings(1024, 1), "Settings must adapt to logical width and text scale.");
 
+        Require(QuizResponsiveLayout.UseOverflowPracticeActions(360, 1, 300),
+            "Phone practice actions must share the summary row through overflow.");
+        Require(!QuizResponsiveLayout.UseOverflowPracticeActions(1024, 1, 300),
+            "A roomy desktop toolbar should keep AI/PDF directly available.");
+        Require(QuizResponsiveLayout.UseOverflowPracticeActions(1024, 1.5, 300),
+            "Enlarged text must trigger overflow even at tablet/desktop widths.");
+        Require(QuizResponsiveLayout.UseOverflowPracticeActions(900, 1, 760),
+            "Long translated actions must leave readable space for the configuration summary.");
+        Require(!QuizResponsiveLayout.UseOverflowPracticeActions(1280, 1, 850),
+            "Growing the viewport must restore direct actions when all labels fit.");
+
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
             string fraction = AccessibleMathText.Format("2 3/4 m² = ?", language);

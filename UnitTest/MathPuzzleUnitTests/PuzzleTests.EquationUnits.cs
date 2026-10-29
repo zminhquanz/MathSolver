@@ -162,6 +162,8 @@ internal static partial class PuzzleTests
         if (question.ProportionProblem is ProportionQuizContract proportion)
         {
             string answer = proportion.CorrectAnswer.ToString();
+            if (proportion.Type == ProportionQuizType.UnitaryGroupCount)
+                return $"{proportion.C} ÷ ({proportion.B} ÷ {proportion.A}) = {answer}";
             if (proportion.IsDirect)
                 return $"{proportion.B} ÷ {proportion.A} × {proportion.C} = {answer}";
             return proportion.AsksForAdditionalPeople

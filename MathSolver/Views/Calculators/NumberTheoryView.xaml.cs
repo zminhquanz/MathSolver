@@ -86,7 +86,7 @@ public partial class NumberTheoryView : LocalizedSolverView
         _calculation = NumberTheoryEngine.Calculate(a, b);
         _primeLesson = a.IsZero || b.IsZero ? null : NumberTheoryEngine.ExplainByPrimeFactors(a, b);
         RenderResult();
-        SolverWorkspace.RevealResult(ResultBorder);
+        SolverWorkspace.RevealResult(ResultBorder, followFooterLayout: true);
     }
 
     private void ShowError(string key)

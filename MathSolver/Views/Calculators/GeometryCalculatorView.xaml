@@ -532,33 +532,7 @@
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>
-                        <Grid MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
-                            <controls:ResultCopyButton
-                                x:Name="GeometryCopyResultButton"
-                                NormalTextKey="PowerRoot.CopyResult"
-                                Text=""
-                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
-                                CornerRadius="12"
-                                FontSize="15"
-                                FontAttributes="Bold"
-                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                                Clicked="OnGeometryCopyResultClicked" />
-                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
-                                InputTransparent="True"
-                                HorizontalOptions="Center"
-                                VerticalOptions="Center"
-                                ColumnSpacing="8">
-                                <controls:ThemedCopyIcon
-                                    WidthRequest="20"
-                                    HeightRequest="20" />
-                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
-                                    Text="{Binding DisplayText, Source={x:Reference GeometryCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
-                                    FontSize="15"
-                                    FontAttributes="Bold"
-                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
-                                    VerticalTextAlignment="Center" />
-                            </Grid>
-                        </Grid>
+
                         <Border
                             Padding="11"
                             BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
@@ -588,7 +562,7 @@
         </ScrollView>
 
         <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
-            <Grid Style="{StaticResource SolverActionButtonsStyle}"
+            <Grid Style="{StaticResource SolverFooterActionButtonsStyle}"
                             x:Name="GeometryActionGrid"
                             ColumnDefinitions="*,*"
                             ColumnSpacing="10"
@@ -612,7 +586,35 @@
                                 BorderWidth="1"
                                 Clicked="OnClearClicked" />
 
+
+                <Grid x:Name="GeometryCopyResultButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
+                            <controls:ResultCopyButton
+                                x:Name="GeometryCopyResultButton"
+                                NormalTextKey="PowerRoot.CopyResult"
+                                Text=""
+                                MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
+                                CornerRadius="12"
+                                FontSize="15"
+                                FontAttributes="Bold"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
+                                Clicked="OnGeometryCopyResultClicked" />
+                            <Grid ColumnDefinitions="Auto,*" Padding="12,8"
+                                InputTransparent="True"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center"
+                                ColumnSpacing="8">
+                                <controls:ThemedCopyIcon
+                                    WidthRequest="20"
+                                    HeightRequest="20" />
+                                <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
+                                    Text="{Binding DisplayText, Source={x:Reference GeometryCopyResultButton}, x:DataType='controls:ResultCopyButton'}"
+                                    FontSize="15"
+                                    FontAttributes="Bold"
+                                    TextColor="{DynamicResource WallpaperTextPrimaryColor}"
+                                    VerticalTextAlignment="Center" />
+                            </Grid>
                         </Grid>
+            </Grid>
         </Border>
     </Grid>
 </base:LocalizedSolverView>
