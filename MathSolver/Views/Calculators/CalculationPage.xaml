@@ -51,6 +51,7 @@
                             x:Name="AndroidBasicTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.Basic}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.Basic"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             TextColor="{DynamicResource ContentAccentTextColor}"
                             Clicked="OnBasicTabClicked" />
@@ -66,6 +67,7 @@
                     <Grid MinimumWidthRequest="92" RowDefinitions="Auto,3">
                         <Button x:Name="AndroidNumberTheoryTabButton" Grid.Row="0"
                                 Text="{localization:Translate Calculation.Tabs.NumberTheory}"
+                                controls:MathNavigationIcon.Key="Calculation.Tabs.NumberTheory"
                                 Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                                 Clicked="OnNumberTheoryTabClicked" />
                         <BoxView x:Name="AndroidNumberTheoryTabIndicator" Grid.Row="1"
@@ -78,6 +80,7 @@
                             x:Name="AndroidAverageTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.Average}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.Average"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnAverageTabClicked" />
                         <BoxView
@@ -94,6 +97,7 @@
                             x:Name="AndroidPowerRootTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.PowerRoot}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.PowerRoot"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnPowerRootTabClicked" />
                         <BoxView
@@ -110,6 +114,7 @@
                             x:Name="AndroidFractionTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.Fraction}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.Fraction"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnFractionTabClicked" />
                         <BoxView
@@ -126,6 +131,7 @@
                             x:Name="AndroidFindXTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.FindX}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.FindX"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnFindXTabClicked" />
                         <BoxView
@@ -142,6 +148,7 @@
                             x:Name="AndroidQuadraticTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.Quadratic}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.Quadratic"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnQuadraticTabClicked" />
                         <BoxView
@@ -158,6 +165,7 @@
                             x:Name="AndroidGeometryTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Calculation.Tabs.Geometry}"
+                            controls:MathNavigationIcon.Key="Calculation.Tabs.Geometry"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnGeometryTabClicked" />
                         <BoxView
@@ -171,6 +179,7 @@
                     <Grid MinimumWidthRequest="106" RowDefinitions="Auto,3">
                         <Button x:Name="AndroidMatrixTabButton" Grid.Row="0"
                                 Text="{localization:Translate Calculation.Tabs.Matrix}"
+                                controls:MathNavigationIcon.Key="Calculation.Tabs.Matrix"
                                 Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                                 Clicked="OnMatrixTabClicked" />
                         <BoxView x:Name="AndroidMatrixTabIndicator" Grid.Row="1"
@@ -211,6 +220,7 @@
                 <Button
                     x:Name="BasicTabButton" Grid.Column="0"
                     Text="{localization:Translate Calculation.Tabs.Basic}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.Basic"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -218,6 +228,7 @@
 
                 <Button x:Name="NumberTheoryTabButton" Grid.Column="1"
                         Text="{localization:Translate Calculation.Tabs.NumberTheory}"
+                        controls:MathNavigationIcon.Key="Calculation.Tabs.NumberTheory"
                         Style="{StaticResource SolverSubTabButtonStyle}"
                         TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                         Clicked="OnNumberTheoryTabClicked" />
@@ -225,6 +236,7 @@
                 <Button
                     x:Name="AverageTabButton" Grid.Column="2"
                     Text="{localization:Translate Calculation.Tabs.Average}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.Average"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnAverageTabClicked" />
@@ -232,6 +244,7 @@
                 <Button
                     x:Name="PowerRootTabButton" Grid.Column="3"
                     Text="{localization:Translate Calculation.Tabs.PowerRoot}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.PowerRoot"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnPowerRootTabClicked" />
@@ -239,6 +252,7 @@
                 <Button
                     x:Name="FractionTabButton" Grid.Column="4"
                     Text="{localization:Translate Calculation.Tabs.Fraction}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.Fraction"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFractionTabClicked" />
@@ -246,6 +260,7 @@
                 <Button
                     x:Name="FindXTabButton" Grid.Column="5"
                     Text="{localization:Translate Calculation.Tabs.FindX}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.FindX"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnFindXTabClicked" />
@@ -253,6 +268,7 @@
                 <Button
                     x:Name="QuadraticTabButton" Grid.Column="6"
                     Text="{localization:Translate Calculation.Tabs.Quadratic}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.Quadratic"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnQuadraticTabClicked" />
@@ -260,12 +276,14 @@
                 <Button
                     x:Name="GeometryTabButton" Grid.Column="7"
                     Text="{localization:Translate Calculation.Tabs.Geometry}"
+                    controls:MathNavigationIcon.Key="Calculation.Tabs.Geometry"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                     Clicked="OnGeometryTabClicked" />
 
                 <Button x:Name="MatrixTabButton" Grid.Column="8"
                         Text="{localization:Translate Calculation.Tabs.Matrix}"
+                        controls:MathNavigationIcon.Key="Calculation.Tabs.Matrix"
                         Style="{StaticResource SolverSubTabButtonStyle}"
                         TextColor="{DynamicResource WallpaperTextSecondaryColor}"
                         Clicked="OnMatrixTabClicked" />

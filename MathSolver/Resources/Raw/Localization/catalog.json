@@ -2613,27 +2613,27 @@
     },
     {
       "key": "Formula.Tabs.UnknownComponent",
-      "source": "𝑥  Tìm thành phần chưa biết",
+      "source": "Tìm thành phần chưa biết",
       "mode": "exact"
     },
     {
       "key": "Formula.Tabs.Proportion",
-      "source": "↗↘⤢  Tỉ lệ thuận – nghịch – kép",
+      "source": "Tỉ lệ thuận – nghịch – kép",
       "mode": "exact"
     },
     {
       "key": "Formula.Tabs.Motion",
-      "source": "➜  Chuyển động",
+      "source": "Chuyển động",
       "mode": "exact"
     },
     {
       "key": "Formula.Tabs.Average",
-      "source": "x̄  Trung bình cộng",
+      "source": "Trung bình cộng",
       "mode": "exact"
     },
     {
       "key": "Formula.Tabs.Geometry",
-      "source": "△  Hình học",
+      "source": "Hình học",
       "mode": "exact"
     },
     {
@@ -3338,37 +3338,37 @@
     },
     {
       "key": "Calculation.Tabs.Basic",
-      "source": "🧮 Phép tính",
+      "source": "Phép tính",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.Average",
-      "source": "📊 Trung bình cộng",
+      "source": "Trung bình cộng",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.PowerRoot",
-      "source": "⚡ Lũy thừa - Căn bậc",
+      "source": "Lũy thừa - Căn bậc",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.Fraction",
-      "source": "½ Phân số",
+      "source": "Phân số",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.FindX",
-      "source": "🔎 Tìm x",
+      "source": "Tìm x",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.Quadratic",
-      "source": "📈 Phương trình",
+      "source": "Phương trình",
       "mode": "exact"
     },
     {
       "key": "Calculation.Tabs.Geometry",
-      "source": "📐 Hình học",
+      "source": "Hình học",
       "mode": "exact"
     },
     {
@@ -8528,7 +8528,7 @@
     },
     {
       "key": "Formula.Tabs.Measurement",
-      "source": "↔  Đơn vị",
+      "source": "Đơn vị",
       "mode": "exact"
     },
     {

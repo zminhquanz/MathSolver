@@ -18,11 +18,28 @@ public partial class HardwarePerformancePage
     {
         // This section owns its VI/EN text, including dynamic runtime status.
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AiAccelerationSection);
-        AiCpuModeButton.Emoji = "\u2699\uFE0F"; // Gear: CPU processing.
-        AiGpuModeButton.Emoji = "\U0001F5A5\uFE0F"; // Monitor: GPU graphics.
+        // Native button images use PNG names generated from our SVG resources.
+        // Follow TextColor so selection, theme and accent changes keep their contrast.
+        AiCpuModeButton.SetBinding(Button.ImageSourceProperty, new Binding(
+            nameof(Button.TextColor), BindingMode.OneWay,
+            converter: new AiProcessorIconConverter("ai_cpu"), source: AiCpuModeButton));
+        AiGpuModeButton.SetBinding(Button.ImageSourceProperty, new Binding(
+            nameof(Button.TextColor), BindingMode.OneWay,
+            converter: new AiProcessorIconConverter("ai_gpu"), source: AiGpuModeButton));
 #if !WINDOWS
         AiAccelerationSection.IsVisible = false;
 #endif
+    }
+
+    private sealed class AiProcessorIconConverter(string resource) : IValueConverter
+    {
+        public object Convert(object? value, Type targetType, object? parameter,
+            System.Globalization.CultureInfo culture) =>
+            ImageSource.FromFile(resource + (value is Color color && color.GetLuminosity() > 0.5f
+                ? "_light.png" : ".png"));
+
+        public object ConvertBack(object? value, Type targetType, object? parameter,
+            System.Globalization.CultureInfo culture) => throw new NotSupportedException();
     }
 
     private void SubscribeAiAccelerationUi()

@@ -187,7 +187,9 @@ public static class SolverHeader
                 System.Diagnostics.Debug.WriteLine($"SolverHeader: compact={compact}");
                 _header.Padding = compact
                     ? new Thickness(_fullPadding.Left, 8, _fullPadding.Right, 8) : _fullPadding;
-                foreach (var (view, visible) in _symbols) view.IsVisible = compact ? false : visible;
+                // Symbols identify the current topic even in a short viewport.
+                // Compact the title/description without hiding the mathematical row.
+                foreach (var (view, visible) in _symbols) view.IsVisible = visible;
                 foreach (var (original, visible, title, _) in _titles)
                 {
                     original.IsVisible = compact ? false : visible;

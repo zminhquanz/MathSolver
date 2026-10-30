@@ -806,9 +806,6 @@
                         </VerticalStackLayout>
                     </Border>
 
-                        <Button x:Name="StartPracticeButton" Text="{localization:QuizTranslate Quiz.StartPractice}"
-                                IsEnabled="False" Style="{StaticResource SolverPrimaryActionStyle}"
-                                Clicked="OnStartPracticeClicked" />
                     </VerticalStackLayout>
 
                     <Border x:Name="PracticeQuestionStart"

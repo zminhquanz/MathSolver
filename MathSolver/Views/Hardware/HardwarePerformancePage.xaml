@@ -221,6 +221,7 @@
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
                             <controls:EmojiActionButton
                                 x:Name="AiCpuModeButton"
+                                ContentLayout="Left,8"
                                 Style="{StaticResource AppButtonBaseStyle}"
                                 MinimumHeightRequest="46"
                                 CornerRadius="10"
@@ -228,6 +229,7 @@
                                 Clicked="OnAiCpuModeClicked" />
                             <controls:EmojiActionButton
                                 x:Name="AiGpuModeButton"
+                                ContentLayout="Left,8"
                                 Style="{StaticResource AppButtonBaseStyle}"
                                 Grid.Column="1"
                                 MinimumHeightRequest="46"

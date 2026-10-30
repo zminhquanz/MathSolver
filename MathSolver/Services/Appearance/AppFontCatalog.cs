@@ -115,6 +115,9 @@ public static class AppFontCatalog
     {
         ArgumentNullException.ThrowIfNull(fonts);
 
+        // UI glyphs are not selectable text fonts in Settings.
+        fonts.AddFont("MathNavigationIcons.ttf", MathNavigationCatalog.FontAlias);
+
         foreach (AppFontOption option
                  in Options)
         {

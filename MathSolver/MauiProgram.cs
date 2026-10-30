@@ -58,6 +58,11 @@ namespace MathSolver
                 AppFontCatalog.RegisterFonts(fonts);
             });
 
+#if WINDOWS
+            builder.ConfigureImageSources(sources => sources.AddService<NavigationFontImageSource,
+                MathSolver.Platforms.Windows.NavigationFontImageSourceService>());
+#endif
+
 #if ANDROID
             ConfigureAndroidMaterial3Phase3(builder);
 #endif

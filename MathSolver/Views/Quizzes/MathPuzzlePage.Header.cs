@@ -20,13 +20,6 @@ public partial class MathPuzzlePage
         else PracticeHeroTitle.ClearValue(Label.FontSizeProperty);
     }
 
-    private async void OnStartPracticeClicked(object? sender, EventArgs e)
-    {
-        if (!CanUpdatePracticeLayout || _currentQuestion is null) return;
-        SetPracticeSettingsExpanded(false);
-        await ScrollToPracticeElementAsync(PracticeQuestionStart, ScrollToPosition.Start);
-    }
-
     private async void OnMorePracticeActionsClicked(object? sender, EventArgs e)
     {
         if (_openingPracticeActions || !CanUpdatePracticeLayout) return;

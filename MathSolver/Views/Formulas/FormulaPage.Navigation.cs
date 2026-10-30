@@ -52,6 +52,8 @@ public partial class FormulaPage
 
     private void InitializeFormulaNavigation()
     {
+        // Keep legacy source-text matching from replacing stable-key bindings.
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(FormulaTabStripHost);
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllFormulaTypesOverlay);
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllFormulaTypesButton);
         DisplayDensityManager.BindControl(AllFormulaTypesButton);
@@ -63,6 +65,7 @@ public partial class FormulaPage
             var button = new Button { Style = (Style)Application.Current!.Resources["SolverSecondaryActionStyle"],
                 FontSize = 15, LineBreakMode = LineBreakMode.WordWrap, Padding = new Thickness(12, 10),
                 AutomationId = "FormulaType" + FormulaTypeKeys[i] };
+            MathNavigationIcon.SetKey(button, "Formula.Tabs." + FormulaTypeKeys[i]);
             DisplayDensityManager.BindControl(button);
             button.Clicked += async (_, _) =>
             {
@@ -214,7 +217,7 @@ public partial class FormulaPage
         SemanticProperties.SetDescription(_formulaTypeClose, close);
         ToolTipProperties.SetText(_formulaTypeClose, close);
         var options = FormulaTypeKeys.Select((key, index) => new QuizChoiceOption(index, key,
-            LocalizationService.TranslateKey("Formula.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
+            MathNavigationCatalog.TranslateLabel("Formula.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
         var matches = QuizChoiceCatalog.Filter(options, _formulaTypeSearch.Text ?? "").Select(option => option.Index).ToHashSet();
         foreach (var option in options)
         {
@@ -230,7 +233,9 @@ public partial class FormulaPage
     {
         if (AllFormulaTypesButton is null) return;
         string all = LocalizationService.TranslateKey("Formula.Navigation.All").TrimStart('☷', ' ');
-        string current = LocalizationService.TranslateKey("Formula.Tabs." + FormulaTypeKeys[(int)_selectedSubTab]);
+        string current = MathNavigationCatalog.TranslateLabel("Formula.Tabs." + FormulaTypeKeys[(int)_selectedSubTab]);
+        MathNavigationIcon.SetKey(AllFormulaTypesButton, _tabNavigationStacked
+            ? "Formula.Tabs." + FormulaTypeKeys[(int)_selectedSubTab] : null);
         AllFormulaTypesButton.Text = _tabNavigationStacked
             ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LocalizationService.TranslateKey("Formula.Navigation.Current"), current)

@@ -115,7 +115,9 @@
                     <Image
                         Grid.Row="0"
                         Grid.Column="0"
-                        Source="splashicon.png"
+                        x:Name="AboutBrandLogo"
+                        AutomationId="AboutBrandLogo"
+                        Source="{AppThemeBinding Light=mathsolver_logo.png, Dark=mathsolver_logo_light.png}"
                         WidthRequest="{OnPlatform Android=72, WinUI=96, Default=96}"
                         HeightRequest="{OnPlatform Android=72, WinUI=96, Default=96}"
                         Aspect="AspectFit"

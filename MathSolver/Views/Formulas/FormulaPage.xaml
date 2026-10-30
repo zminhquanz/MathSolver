@@ -50,6 +50,8 @@
                             x:Name="AndroidUnknownComponentTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.UnknownComponent}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.UnknownComponent"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             TextColor="{DynamicResource ContentAccentTextColor}"
                             Clicked="OnUnknownComponentTabClicked" />
@@ -67,6 +69,8 @@
                             x:Name="AndroidProportionTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.Proportion}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.Proportion"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnProportionTabClicked" />
                         <BoxView
@@ -83,6 +87,8 @@
                             x:Name="AndroidMotionTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.Motion}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.Motion"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnMotionTabClicked" />
                         <BoxView
@@ -99,6 +105,8 @@
                             x:Name="AndroidAverageTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.Average}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.Average"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnAverageTabClicked" />
                         <BoxView
@@ -115,6 +123,8 @@
                             x:Name="AndroidMeasurementTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.Measurement}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.Measurement"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnMeasurementTabClicked" />
                         <BoxView
@@ -131,6 +141,8 @@
                             x:Name="AndroidFormulaGeometryTabButton"
                             Grid.Row="0"
                             Text="{localization:Translate Formula.Tabs.Geometry}"
+
+                            controls:MathNavigationIcon.Key="Formula.Tabs.Geometry"
                             Style="{StaticResource AndroidNativeSubTabButtonStyle}"
                             Clicked="OnGeometryTabClicked" />
                         <BoxView
@@ -165,6 +177,8 @@
                     x:Name="UnknownComponentTabButton"
                     Grid.Column="0"
                     Text="{localization:Translate Formula.Tabs.UnknownComponent}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.UnknownComponent"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource PrimaryColor}"
                     TextColor="{DynamicResource OnPrimaryColor}"
@@ -175,6 +189,8 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{localization:Translate Formula.Tabs.Proportion}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.Proportion"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
@@ -187,6 +203,8 @@
                     Grid.Row="0"
                     Grid.Column="2"
                     Text="{localization:Translate Formula.Tabs.Motion}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.Motion"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
@@ -199,6 +217,8 @@
                     Grid.Row="0"
                     Grid.Column="3"
                     Text="{localization:Translate Formula.Tabs.Average}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.Average"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
@@ -211,6 +231,8 @@
                     Grid.Row="0"
                     Grid.Column="4"
                     Text="{localization:Translate Formula.Tabs.Measurement}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.Measurement"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"
@@ -223,6 +245,8 @@
                     Grid.Row="0"
                     Grid.Column="5"
                     Text="{localization:Translate Formula.Tabs.Geometry}"
+
+                    controls:MathNavigationIcon.Key="Formula.Tabs.Geometry"
                     Style="{StaticResource SolverSubTabButtonStyle}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
                     BorderColor="{DynamicResource WallpaperBorderColor}"

@@ -45,7 +45,9 @@
                 VerticalOptions="Center">
 
                 <Image
-                    Source="splashicon.png"
+                    x:Name="AppBrandLogo"
+                    AutomationId="AppBrandLogo"
+                    Source="{AppThemeBinding Light=mathsolver_logo_small.png, Dark=mathsolver_logo_small_light.png}"
                     WidthRequest="{OnPlatform Android=22, WinUI=26, Default=26}"
                     HeightRequest="{OnPlatform Android=22, WinUI=26, Default=26}"
                     Aspect="AspectFit"

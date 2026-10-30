@@ -140,7 +140,6 @@ public partial class MathPuzzlePage
         ToolTipProperties.SetText(CompactPracticeSettingsButton, settingsDescription);
         SemanticProperties.SetDescription(PracticeSummaryLabel, PracticeSummaryLabel.Text);
         ToolTipProperties.SetText(PracticeSummaryLabel, PracticeSummaryLabel.Text);
-        StartPracticeButton.IsEnabled = _currentQuestion is not null;
         UpdatePracticeHeader();
         QueuePracticeSummaryLayout();
     }

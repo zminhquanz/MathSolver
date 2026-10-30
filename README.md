@@ -1,7 +1,7 @@
 # Math Solver
 
 <p align="center">
-  <img src="MathSolver/Resources/AppIcon/appicon.png"
+  <img src="MathSolver/Resources/Images/mathsolver_logo.svg"
        alt="Math Solver App Icon"
        width="150">
 </p>

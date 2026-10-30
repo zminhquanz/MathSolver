@@ -110,7 +110,7 @@ public sealed class TranslateExtension :
         }
 
         public string Value =>
-            LocalizationService.TranslateKey(
+            MathNavigationCatalog.TranslateLabel(
                 _key);
 
         public event PropertyChangedEventHandler?

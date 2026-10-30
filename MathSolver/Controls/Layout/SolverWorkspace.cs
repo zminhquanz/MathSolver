@@ -19,8 +19,8 @@ public static class SolverWorkspace
     public static bool GetStartsResult(BindableObject target) => (bool)target.GetValue(StartsResultProperty);
     public static void SetStartsResult(BindableObject target, bool value) => target.SetValue(StartsResultProperty, value);
 
-    // Header compaction must put its description into the input column regardless
-    // of which controller finishes initialization first.
+    // A compact header's description spans the whole scrolling body, above both
+    // columns, regardless of which controller finishes initialization first.
     internal static Layout? GetDescriptionHost(ScrollView scroll) =>
         (scroll.GetValue(ControllerProperty) as Controller)?.DescriptionHost ?? scroll.Content as Layout;
 
@@ -70,7 +70,7 @@ public static class SolverWorkspace
             if (scroll.IsLoaded) ScheduleUpdate();
         }
 
-        internal Layout? DescriptionHost => _inputs;
+        internal Layout? DescriptionHost => _body;
 
         private bool CanUseUi => _active && _scroll.IsLoaded && _scroll.Handler?.MauiContext is not null
             && _scroll.Window is { Handler.MauiContext: not null } window && !WindowUiLifetime.IsClosing(window)
@@ -139,6 +139,14 @@ public static class SolverWorkspace
             body.Children.Clear();
             for (int index = 0; index < children.Length; index++)
             {
+                // The header may have moved its description here before this
+                // controller initialized. Do not absorb it into the input column.
+                if (children[index] is BindableObject description
+                    && SolverHeader.GetRole(description) == SolverHeaderRole.Description)
+                {
+                    body.Children.Add(children[index]);
+                    continue;
+                }
                 (index < firstResult ? _inputs : _results).Children.Add(children[index]);
                 if (index >= firstResult && children[index] is VisualElement visual) _resultChildren.Add(visual);
             }

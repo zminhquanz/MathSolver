@@ -23,6 +23,9 @@ public partial class CalculationPage
 
     private void InitializeCalculationNavigation()
     {
+        // Explicit key bindings own these labels; identical text may have
+        // different translations elsewhere (e.g. Average vs Arithmetic mean).
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(CalculationTabStripHost);
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllCalculationTypesOverlay);
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllCalculationTypesButton);
         DisplayDensityManager.BindControl(AllCalculationTypesButton);
@@ -34,6 +37,7 @@ public partial class CalculationPage
             var button = new Button { Style = (Style)Application.Current!.Resources["SolverSecondaryActionStyle"],
                 FontSize = 15, LineBreakMode = LineBreakMode.WordWrap, Padding = new Thickness(12, 10),
                 AutomationId = "CalculationType" + CalculationTypeKeys[i] };
+            MathNavigationIcon.SetKey(button, "Calculation.Tabs." + CalculationTypeKeys[i]);
             DisplayDensityManager.BindControl(button);
             button.Clicked += async (_, _) =>
             {
@@ -168,7 +172,7 @@ public partial class CalculationPage
         SemanticProperties.SetDescription(_calculationTypeClose, close);
         ToolTipProperties.SetText(_calculationTypeClose, close);
         var options = CalculationTypeKeys.Select((key, index) => new QuizChoiceOption(index, key,
-            LocalizationService.TranslateKey("Calculation.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
+            MathNavigationCatalog.TranslateLabel("Calculation.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
         var matches = QuizChoiceCatalog.Filter(options, _calculationTypeSearch.Text ?? "").Select(option => option.Index).ToHashSet();
         foreach (var option in options)
         {
@@ -184,7 +188,9 @@ public partial class CalculationPage
     {
         if (AllCalculationTypesButton is null) return;
         string all = LocalizationService.TranslateKey("Calculation.Navigation.All").TrimStart('☷', ' ');
-        string current = LocalizationService.TranslateKey("Calculation.Tabs." + CalculationTypeKeys[(int)_selectedSubTab]);
+        string current = MathNavigationCatalog.TranslateLabel("Calculation.Tabs." + CalculationTypeKeys[(int)_selectedSubTab]);
+        MathNavigationIcon.SetKey(AllCalculationTypesButton, _tabNavigationStacked
+            ? "Calculation.Tabs." + CalculationTypeKeys[(int)_selectedSubTab] : null);
         AllCalculationTypesButton.Text = _tabNavigationStacked
             ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LocalizationService.TranslateKey("Calculation.Navigation.Current"), current)

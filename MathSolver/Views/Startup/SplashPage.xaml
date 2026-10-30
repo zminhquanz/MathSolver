@@ -6,9 +6,11 @@
     Shell.NavBarIsVisible="False"
     Shell.BackgroundColor="{DynamicResource ShellBackgroundColor}">
 
-    <Grid>
+    <Grid BackgroundColor="#2563EB">
         <Image
-            Source="splashicon.png"
+            x:Name="SplashBrandLogo"
+            AutomationId="SplashBrandLogo"
+            Source="mathsolver_logo_light.png"
             WidthRequest="256"
             HeightRequest="256"
             Aspect="AspectFit"
