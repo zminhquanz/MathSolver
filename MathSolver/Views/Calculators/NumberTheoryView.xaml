@@ -86,7 +86,7 @@
         <Border Grid.Row="2" Style="{StaticResource SolverActionBarStyle}">
             <Grid Style="{StaticResource SolverFooterActionButtonsStyle}" ColumnDefinitions="*,*" ColumnSpacing="10">
                 <Button Text="{localization:Translate Actions.Calculate}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnCalculateClicked" />
-                <Button Grid.Column="1" Text="{localization:Translate Actions.Clear}" Style="{StaticResource SolverSecondaryActionStyle}" Clicked="OnClearClicked" />
+                <Button Grid.Column="1" Text="{localization:Translate Actions.Clear}" Style="{StaticResource SolverSecondaryActionStyle}" BackgroundColor="{DynamicResource WallpaperDividerColor}" Clicked="OnClearClicked" />
 
                 <Grid x:Name="CopyButtonFooter" AutomationId="SolverFooterCopy" IsVisible="{Binding Source={x:Reference ResultBorder}, Path=IsVisible, x:DataType='Border'}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
                             <controls:ResultCopyButton x:Name="CopyButton" Clicked="OnCopyClicked" CornerRadius="12"

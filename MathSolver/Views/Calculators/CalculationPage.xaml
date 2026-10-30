@@ -934,6 +934,7 @@
 
                                                             <RadioButton
                                                             x:Name="ElementaryDivisionModeRadioButton"
+                                                            Style="{StaticResource SolverAccentRadioStyle}"
                                                             Grid.Column="0"
                                                             GroupName="LongDivisionDisplayMode"
                                                             IsChecked="True"
@@ -981,6 +982,7 @@
 
                                                             <RadioButton
                                                             x:Name="DecimalDivisionModeRadioButton"
+                                                            Style="{StaticResource SolverAccentRadioStyle}"
                                                             Grid.Column="0"
                                                             GroupName="LongDivisionDisplayMode"
                                                             CheckedChanged="OnLongDivisionDisplayModeChanged"

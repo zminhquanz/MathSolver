@@ -131,10 +131,6 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         // transition gate, and the bindings propagate safely from there.
 
         ClearGeometryButton.SetDynamicResource(
-            Button.BackgroundColorProperty,
-            "WallpaperSurfaceAltColor");
-
-        ClearGeometryButton.SetDynamicResource(
             Button.TextColorProperty,
             "WallpaperTextPrimaryColor");
 

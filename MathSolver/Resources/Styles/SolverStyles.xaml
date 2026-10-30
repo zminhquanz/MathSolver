@@ -138,6 +138,53 @@
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
     </Style>
 
+    <!-- Like the Times Tables selector: app accent, never the Windows accent.
+         Checked state changes opacity only so live theme colors stay bound. -->
+    <ControlTemplate x:Key="SolverAccentRadioTemplate">
+        <Grid WidthRequest="48" HeightRequest="48"
+              BackgroundColor="Transparent"
+              IsEnabled="{Binding IsEnabled, Source={RelativeSource TemplatedParent}, x:DataType='RadioButton'}">
+            <VisualStateManager.VisualStateGroups>
+                <VisualStateGroupList>
+                    <VisualStateGroup x:Name="CheckedStates">
+                        <VisualState x:Name="Checked">
+                            <VisualState.Setters>
+                                <Setter TargetName="CheckedVisual" Property="Opacity" Value="1" />
+                            </VisualState.Setters>
+                        </VisualState>
+                        <VisualState x:Name="Unchecked">
+                            <VisualState.Setters>
+                                <Setter TargetName="CheckedVisual" Property="Opacity" Value="0" />
+                            </VisualState.Setters>
+                        </VisualState>
+                    </VisualStateGroup>
+                </VisualStateGroupList>
+            </VisualStateManager.VisualStateGroups>
+            <Ellipse WidthRequest="20" HeightRequest="20"
+                     HorizontalOptions="Center" VerticalOptions="Center"
+                     Fill="{DynamicResource WallpaperSurfaceColor}"
+                     Stroke="{DynamicResource WallpaperBorderColor}"
+                     StrokeThickness="2" InputTransparent="True" />
+            <Grid x:Name="CheckedVisual" Opacity="0" InputTransparent="True">
+                <Ellipse WidthRequest="20" HeightRequest="20"
+                         HorizontalOptions="Center" VerticalOptions="Center"
+                         Fill="Transparent" Stroke="{DynamicResource PrimaryColor}" StrokeThickness="2" />
+                <Ellipse WidthRequest="10" HeightRequest="10"
+                         HorizontalOptions="Center" VerticalOptions="Center"
+                         Fill="{DynamicResource PrimaryColor}" />
+            </Grid>
+        </Grid>
+    </ControlTemplate>
+
+    <Style x:Key="SolverAccentRadioStyle" TargetType="RadioButton">
+        <Setter Property="ControlTemplate" Value="{StaticResource SolverAccentRadioTemplate}" />
+        <Setter Property="WidthRequest" Value="48" />
+        <Setter Property="HeightRequest" Value="48" />
+        <Setter Property="MinimumWidthRequest" Value="48" />
+        <Setter Property="MinimumHeightRequest" Value="48" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+    </Style>
+
     <Style x:Key="SolverInputBorderStyle" TargetType="Border">
         <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="{DynamicResource Density.InputPadding}" />

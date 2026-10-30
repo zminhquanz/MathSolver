@@ -580,7 +580,7 @@
                                 Grid.Column="1"
                                 Text="{localization:Translate Actions.Clear}"
                                 Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
-                                BackgroundColor="{DynamicResource WallpaperSurfaceAltColor}"
+                                BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
                                 BorderColor="{DynamicResource WallpaperBorderColor}"
                                 BorderWidth="1"

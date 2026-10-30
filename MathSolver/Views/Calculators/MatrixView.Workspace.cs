@@ -99,6 +99,7 @@ public sealed partial class MatrixView
         var clipboard = FlowGrid(90, 2);
         clipboard.AutomationId = "MatrixPrimaryTools";
         var copy = _copySelection = ActionButton("Workspace.Copy", "📋", OnCopySelection);
+        _copySelection.SetDynamicResource(BackgroundColorProperty, "WallpaperDividerColor");
         _copySelection.AutomationId = "MatrixCopySelection";
         _clearCells = ActionButton("Workspace.Clear", "", (_, _) =>
         {

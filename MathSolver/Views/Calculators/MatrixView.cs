@@ -180,6 +180,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         _calculate = ActionButton("Calculate", "🧮", OnCalculate, primary: true);
         _stop = ActionButton("Stop", "■", OnStop, primary: true, lockDuringWork: false);
         _clearAll = ActionButton("ClearAll", "🗑", OnClearAll);
+        _clearAll.SetDynamicResource(BackgroundColorProperty, "WallpaperDividerColor");
         _clearAll.AutomationId = "MatrixClearAll";
         _translations.Add(() => { ToolTipProperties.SetText(_clearAll, T("ClearAllHelp")); SemanticProperties.SetDescription(_clearAll, T("ClearAllHelp")); });
         editor.Add(BuildResultCard());
