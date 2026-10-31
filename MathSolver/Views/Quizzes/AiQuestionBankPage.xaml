@@ -92,11 +92,46 @@
         <controls:LiveWallpaperView x:Name="LiveWallpaper" />
         <ScrollView x:Name="WorkflowScroll" controls:SolverWorkspace.IsEnabled="True">
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
-                <Border Style="{StaticResource SolverCardStyle}">
-                    <VerticalStackLayout Spacing="8">
-                        <Label Text="{localization:Translate AiBank.Workflow.Sequence}" FontSize="13" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                        <Label x:Name="WorkflowStatusLabel" Style="{StaticResource SolverSectionTitleStyle}" SemanticProperties.HeadingLevel="Level2" />
-                        <Button x:Name="WorkflowNextButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnWorkflowNextClicked" />
+                <!-- A page introduction stays above both workspace columns, including on resize. -->
+                <Border x:Name="GuidanceCard" controls:SolverHeader.Role="Description"
+                        Style="{StaticResource SolverCardStyle}" Padding="18"
+                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
+                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}" StrokeThickness="1.5">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="{localization:Translate AiBank.Workflow.Guide}" FontSize="20" FontAttributes="Bold"
+                               TextColor="{DynamicResource ContentAccentTextColor}" LineBreakMode="WordWrap"
+                               SemanticProperties.HeadingLevel="Level2" />
+                        <Label Text="{localization:Translate AiBank.Description}" FontSize="13" LineBreakMode="WordWrap" />
+                        <Grid x:Name="GuidanceSteps" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto"
+                              ColumnSpacing="20" RowSpacing="14" SizeChanged="OnGuidanceStepsSizeChanged">
+                            <VerticalStackLayout Spacing="5">
+                                <Label Text="{localization:Translate AiBank.Workflow.StepModel}" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                <Label Text="{localization:Translate AiBank.Workflow.StepModelHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="5">
+                                <Label Text="{localization:Translate AiBank.Workflow.StepConfigure}" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                <Label Text="{localization:Translate AiBank.Workflow.StepConfigureHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="2" Spacing="5">
+                                <Label Text="{localization:Translate AiBank.Workflow.StepGenerate}" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                <Label Text="{localization:Translate AiBank.Workflow.StepGenerateHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="3" Spacing="5">
+                                <Label Text="{localization:Translate AiBank.Workflow.StepReview}" FontAttributes="Bold" LineBreakMode="WordWrap" />
+                                <Label Text="{localization:Translate AiBank.Workflow.StepReviewHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Grid>
+                        <Label x:Name="WorkflowStatusLabel" FontSize="13" FontAttributes="Bold"
+                               TextColor="{DynamicResource ContentAccentTextColor}" LineBreakMode="WordWrap" />
+                        <Button x:Name="GuidanceToggleButton" Style="{StaticResource SolverOutlinedActionStyle}"
+                                HorizontalOptions="Start" FontSize="13" Padding="12,6" MinimumHeightRequest="36"
+                                Clicked="OnToggleGuidanceClicked" />
+                        <VerticalStackLayout x:Name="GuidancePanel" IsVisible="False" Spacing="10">
+                            <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            <Label Text="{localization:Translate Learning.Hint}" FontSize="13" LineBreakMode="WordWrap" />
+                            <Label Text="{localization:Translate AiBank.InsertHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" LineBreakMode="WordWrap" />
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
                 <Border x:Name="ModelCard" Style="{StaticResource SolverCardStyle}">
@@ -229,18 +264,6 @@
                                         Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
                                         Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
                             </Grid>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
-                <Border Style="{StaticResource SolverCardStyle}">
-                    <VerticalStackLayout Spacing="8">
-                        <Button x:Name="GuidanceToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleGuidanceClicked" />
-                        <VerticalStackLayout x:Name="GuidancePanel" IsVisible="False" Spacing="10">
-                            <Label Text="{localization:Translate AiBank.Description}" FontSize="13" />
-                            <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" />
-                            <Label Text="{localization:Translate Learning.Hint}" FontSize="13" />
-                            <Label Text="{localization:Translate AiBank.InsertHint}" FontSize="13" />
-                            <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
