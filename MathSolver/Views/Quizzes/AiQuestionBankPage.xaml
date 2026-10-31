@@ -192,15 +192,20 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
-                <Label controls:SolverWorkspace.StartsResult="True" Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
-                       IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
-                       FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
-                <VerticalStackLayout Spacing="8">
-                    <Label Text="{localization:Translate AiBank.ProcessedQuestions}" FontAttributes="Bold" />
-                    <Border Style="{StaticResource AiBankPickerBorderStyle}">
-                        <Picker x:Name="QuestionPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
-                    </Border>
-                </VerticalStackLayout>
+                <!-- Keep the result boundary and its padding stable when status/selection text changes. -->
+                <Border x:Name="ProcessedQuestionsCard" controls:SolverWorkspace.StartsResult="True"
+                        Style="{StaticResource SolverCardStyle}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="{localization:Translate AiBank.ProcessedQuestions}"
+                               Style="{StaticResource SolverSectionTitleStyle}" LineBreakMode="WordWrap" />
+                        <Label Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
+                               IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
+                               FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                            <Picker x:Name="QuestionPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
+                        </Border>
+                    </VerticalStackLayout>
+                </Border>
                 <Border x:Name="PreviewCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout Spacing="12">
                         <Label Text="{localization:Translate AiBank.Preview}" Style="{StaticResource SolverSectionTitleStyle}" HorizontalTextAlignment="Center" />
