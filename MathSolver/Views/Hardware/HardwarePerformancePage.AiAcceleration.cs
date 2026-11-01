@@ -18,12 +18,14 @@ public partial class HardwarePerformancePage
     {
         // This section owns its VI/EN text, including dynamic runtime status.
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AiAccelerationSection);
-        // Native button images use PNG names generated from our SVG resources.
+        // Reserve a 24x24 image slot before asynchronous bitmap loading begins.
+        // Native Button.ImageSource can briefly measure at the decoded bitmap's
+        // size on entry; a bounded overlay keeps both layout and hit target stable.
         // Follow TextColor so selection, theme and accent changes keep their contrast.
-        AiCpuModeButton.SetBinding(Button.ImageSourceProperty, new Binding(
+        AiCpuModeIcon.SetBinding(Image.SourceProperty, new Binding(
             nameof(Button.TextColor), BindingMode.OneWay,
             converter: new AiProcessorIconConverter("ai_cpu"), source: AiCpuModeButton));
-        AiGpuModeButton.SetBinding(Button.ImageSourceProperty, new Binding(
+        AiGpuModeIcon.SetBinding(Image.SourceProperty, new Binding(
             nameof(Button.TextColor), BindingMode.OneWay,
             converter: new AiProcessorIconConverter("ai_gpu"), source: AiGpuModeButton));
 #if !WINDOWS
@@ -92,8 +94,10 @@ public partial class HardwarePerformancePage
             : AiText("Không phát hiện GPU Windows được hỗ trợ. AI sử dụng CPU.",
                 "No supported Windows GPU detected. AI uses the CPU.");
 
-        AiCpuModeButton.Caption = gpuSelected ? "CPU" : "CPU ✓";
-        AiGpuModeButton.Caption = gpuSelected ? "GPU ✓" : "GPU";
+        AiCpuModeCaption.Text = gpuSelected ? "CPU" : "CPU ✓";
+        AiGpuModeCaption.Text = gpuSelected ? "GPU ✓" : "GPU";
+        SemanticProperties.SetDescription(AiCpuModeButton, AiCpuModeCaption.Text);
+        SemanticProperties.SetDescription(AiGpuModeButton, AiGpuModeCaption.Text);
         SetAiModeButtonTheme(AiCpuModeButton, !gpuSelected);
         SetAiModeButtonTheme(AiGpuModeButton, gpuSelected);
         AiCpuModeButton.IsEnabled = !busy;

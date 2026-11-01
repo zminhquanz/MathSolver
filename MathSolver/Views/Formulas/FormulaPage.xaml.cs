@@ -1078,35 +1078,7 @@ public partial class FormulaPage : ContentPage
     {
         RefreshFormulaChoices();
 #if ANDROID
-        ApplyAndroidSubTabState(
-            AndroidUnknownComponentTabButton,
-            AndroidUnknownComponentTabIndicator,
-            _selectedSubTab == FormulaSubTab.UnknownComponent);
-
-        ApplyAndroidSubTabState(
-            AndroidProportionTabButton,
-            AndroidProportionTabIndicator,
-            _selectedSubTab == FormulaSubTab.Proportion);
-
-        ApplyAndroidSubTabState(
-            AndroidMotionTabButton,
-            AndroidMotionTabIndicator,
-            _selectedSubTab == FormulaSubTab.Motion);
-
-        ApplyAndroidSubTabState(
-            AndroidAverageTabButton,
-            AndroidAverageTabIndicator,
-            _selectedSubTab == FormulaSubTab.Average);
-
-        ApplyAndroidSubTabState(
-            AndroidMeasurementTabButton,
-            AndroidMeasurementTabIndicator,
-            _selectedSubTab == FormulaSubTab.Measurement);
-
-        ApplyAndroidSubTabState(
-            AndroidFormulaGeometryTabButton,
-            AndroidFormulaGeometryTabIndicator,
-            _selectedSubTab == FormulaSubTab.Geometry);
+        AndroidFormulaSubTabBar.SetSelection((int)_selectedSubTab);
 #else
         Button selectedButton =
             _selectedSubTab switch
@@ -1131,51 +1103,6 @@ public partial class FormulaPage : ContentPage
 #endif
     }
 
-#if ANDROID
-    private static void ApplyAndroidSubTabState(
-        Button button,
-        BoxView indicator,
-        bool isSelected)
-    {
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            isSelected
-                ? "PrimaryColor"
-                : "WallpaperTextSecondaryColor");
-
-        button.BackgroundColor =
-            Microsoft.Maui.Graphics.Colors.Transparent;
-
-        // Android Material/DevCheck state must be deterministic.  Keep the
-        // indicator permanently bound to the accent color and only toggle
-        // visibility.  This avoids the Transparent -> DynamicResource +
-        // opacity animation race that could leave later tabs with no line.
-        indicator.SetDynamicResource(
-            BoxView.BackgroundColorProperty,
-            "PrimaryColor");
-
-        indicator.CancelAnimations();
-        indicator.Opacity = 1d;
-        indicator.Scale = 1d;
-        indicator.IsVisible = isSelected;
-    }
-
-    private async Task ScrollAndroidFormulaSubTabIntoViewAsync(
-        FormulaSubTab tab)
-    {
-        try
-        {
-            await AndroidFormulaSubTabScrollView.ScrollToAsync(
-                GetAndroidFormulaSubTabButton(tab),
-                ScrollToPosition.Center,
-                false);
-        }
-        catch (InvalidOperationException)
-        {
-            // Trang có thể vừa rời visual tree khi đổi tab chính.
-        }
-    }
-#endif
 
 
     private double _layoutTextScale = 1d;
@@ -1197,7 +1124,9 @@ public partial class FormulaPage : ContentPage
     {
         if (!CanUseTabNavigation || !FormulaTabStripHost.IsVisible) return;
 #if ANDROID
-        await ScrollAndroidFormulaSubTabIntoViewAsync(tab);
+        AndroidFormulaSubTabBar.SetSelection((int)tab);
+        AndroidFormulaSubTabBar.RevealSelected();
+        await Task.CompletedTask;
 #else
         if (!FormulaSubTabScrollView.CanUpdateTabLayout) return;
         Button selected = tab switch
@@ -1238,7 +1167,9 @@ public partial class FormulaPage : ContentPage
             return;
         }
 
+#if !ANDROID
         FormulaTabNavigation.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+#endif
 
         Dispatcher.Dispatch(
             () =>

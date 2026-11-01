@@ -71,7 +71,7 @@ public sealed partial class EssayAnswerValidator
         if (question.ElementaryProblem is not null)
         {
             var elementary = ElementaryEssayValidator.Validate(question, solutionText, equationText, answerText);
-            return elementary.EquationIsCorrect && !PracticalWorkedRules.Validate(question, equationText)
+            return elementary.EquationIsCorrect && (!PracticalWorkedRules.Validate(question, equationText) || !ValidateRemainderGroupsWork(question, equationText))
                 ? elementary with { EquationIsCorrect = false, EquationError = EssayAnswerError.WrongOperandsOrOperation }
                 : elementary;
         }
@@ -87,9 +87,10 @@ public sealed partial class EssayAnswerValidator
         IReadOnlyList<EssayStepValidationResult> steps = [];
         bool indirect = question.AverageProblem?.Type == AverageQuizType.IndirectData;
         bool geometryWork = question.GeometryProblem?.Reasoning is not null;
-        bool unitaryWork = IsUnitaryTotal(question)||IsUnitaryGroups(question);
+        bool unitaryWork = IsUnitaryTotal(question)||IsUnitaryGroups(question)||IsInverseWork(question);
         (bool equationIsCorrect, EssayAnswerError equationError) = unitaryWork
-            ? IsUnitaryGroups(question)?ValidateUnitaryGroupsCalculations(question,equationText,out steps)
+            ? IsInverseWork(question)?ValidateInverseWorkCalculations(question,equationText,out steps)
+                :IsUnitaryGroups(question)?ValidateUnitaryGroupsCalculations(question,equationText,out steps)
                 :ValidateUnitaryTotalCalculations(question,equationText,out steps) : question.WordProblem?.ConversionStep is not null
             || question.WordProblem?.PracticeDetails?.Steps.Count > 1
             ? ValidateDimensionCalculations(question, equationText, out steps) : indirect
@@ -145,6 +146,7 @@ public sealed partial class EssayAnswerValidator
             preserveAllCalculations: question.WordProblem?.ConversionStep is not null
                 || IsUnitaryTotal(question)
                 || IsUnitaryGroups(question)
+                || IsInverseWork(question)
                 || question.WordProblem?.PracticeDetails?.Steps.Count > 1
                 || question.GeometryProblem?.Reasoning is not null || question.ElementaryProblem is not null
                 || question.AverageProblem?.Type == AverageQuizType.IndirectData,

@@ -43,6 +43,12 @@ public partial class AiQuestionBankPage : ContentPage
         IllustratedQuizPicker.Attach(LearningGroupPicker, "Choice.SelectGroup");
         IllustratedQuizPicker.Attach(StarsPicker, "Choice.SelectDifficulty");
         IllustratedQuizPicker.Attach(LanguagePicker, "Choice.SelectLanguage");
+#if ANDROID
+        // These stock pickers also sit inside our own outlined input frames.
+        AndroidPickerVisualHelper.Attach(BatchModePicker);
+        AndroidPickerVisualHelper.Attach(QuestionPicker);
+        AndroidPickerVisualHelper.Attach(DownloadModelPicker);
+#endif
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         RefreshPickerLabels();
@@ -208,7 +214,7 @@ public partial class AiQuestionBankPage : ContentPage
     }
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
-    private bool SupportsCreativeProse => _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
+    private bool SupportsCreativeProse => FiniteOpenCatalogue.Supports(_family, _storyVariant) || _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
             || _family==BankQuestionFamily.Motion&&Enum.IsDefined((MotionQuizType)_storyVariant)
             || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant || _storyVariant==TriangleAreaPilot.Variant || QuadrilateralAreaPilot.IsVariant(_storyVariant))
             || _family==BankQuestionFamily.Proportion && _storyVariant is (int)ProportionQuizType.Direct or (int)ProportionQuizType.UnitaryGroupCount

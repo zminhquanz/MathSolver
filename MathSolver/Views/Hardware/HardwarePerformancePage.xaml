@@ -219,23 +219,52 @@
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
-                            <controls:EmojiActionButton
+                            <Grid>
+                            <Button
                                 x:Name="AiCpuModeButton"
-                                ContentLayout="Left,8"
+                                AutomationId="AiCpuModeButton"
                                 Style="{StaticResource AppButtonBaseStyle}"
                                 MinimumHeightRequest="46"
                                 CornerRadius="10"
                                 FontAttributes="Bold"
                                 Clicked="OnAiCpuModeClicked" />
-                            <controls:EmojiActionButton
+                            <HorizontalStackLayout Spacing="8" InputTransparent="True"
+                                                   HorizontalOptions="Center" VerticalOptions="Center"
+                                                   AutomationProperties.IsInAccessibleTree="False">
+                                <Image x:Name="AiCpuModeIcon" WidthRequest="24" HeightRequest="24"
+                                       MinimumWidthRequest="24" MinimumHeightRequest="24"
+                                       Aspect="AspectFit" VerticalOptions="Center"
+                                       AutomationProperties.IsInAccessibleTree="False" />
+                                <Label x:Name="AiCpuModeCaption" FontAttributes="Bold" VerticalOptions="Center"
+                                       FontSize="{Binding FontSize, Source={x:Reference AiCpuModeButton}, x:DataType='Button'}"
+                                       TextColor="{Binding TextColor, Source={x:Reference AiCpuModeButton}, x:DataType='Button'}"
+                                       FontFamily="{Binding FontFamily, Source={x:Reference AiCpuModeButton}, x:DataType='Button'}"
+                                       AutomationProperties.IsInAccessibleTree="False" />
+                            </HorizontalStackLayout>
+                            </Grid>
+                            <Grid Grid.Column="1">
+                            <Button
                                 x:Name="AiGpuModeButton"
-                                ContentLayout="Left,8"
+                                AutomationId="AiGpuModeButton"
                                 Style="{StaticResource AppButtonBaseStyle}"
-                                Grid.Column="1"
                                 MinimumHeightRequest="46"
                                 CornerRadius="10"
                                 FontAttributes="Bold"
                                 Clicked="OnAiGpuModeClicked" />
+                            <HorizontalStackLayout Spacing="8" InputTransparent="True"
+                                                   HorizontalOptions="Center" VerticalOptions="Center"
+                                                   AutomationProperties.IsInAccessibleTree="False">
+                                <Image x:Name="AiGpuModeIcon" WidthRequest="24" HeightRequest="24"
+                                       MinimumWidthRequest="24" MinimumHeightRequest="24"
+                                       Aspect="AspectFit" VerticalOptions="Center"
+                                       AutomationProperties.IsInAccessibleTree="False" />
+                                <Label x:Name="AiGpuModeCaption" FontAttributes="Bold" VerticalOptions="Center"
+                                       FontSize="{Binding FontSize, Source={x:Reference AiGpuModeButton}, x:DataType='Button'}"
+                                       TextColor="{Binding TextColor, Source={x:Reference AiGpuModeButton}, x:DataType='Button'}"
+                                       FontFamily="{Binding FontFamily, Source={x:Reference AiGpuModeButton}, x:DataType='Button'}"
+                                       AutomationProperties.IsInAccessibleTree="False" />
+                            </HorizontalStackLayout>
+                            </Grid>
                         </Grid>
 
                         <Label

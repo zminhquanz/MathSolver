@@ -15,7 +15,8 @@ internal sealed class ReasoningStoryCycle
     {
         var key = (family, variant, tier, language);
         var practicalProfiles=creativeProse?PracticalOpenCatalogue.Profiles(family,variant,language)
-            .Concat(AppliedOpenCatalogue.Profiles(family,variant,language)).ToArray():[];
+            .Concat(AppliedOpenCatalogue.Profiles(family,variant,language))
+            .Concat(FiniteOpenCatalogue.Profiles(family,variant,language)).ToArray():[];
         if(creativeProse&&family==BankQuestionFamily.MultiStep&&variant==MoneyChangePilot.Variant)
         {
             _retailRotation.TryGetValue((tier,language),out int cursor);

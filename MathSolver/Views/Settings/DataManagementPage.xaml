@@ -21,6 +21,18 @@
             <Setter Property="Margin" Value="0,0,6,4" />
             <Setter Property="MinimumHeightRequest" Value="48" />
         </Style>
+        <Style x:Key="DataToolbarActionStyle" TargetType="Button" BasedOn="{StaticResource DataGridActionStyle}">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="VerticalOptions" Value="Fill" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
+        <Style x:Key="DataToolbarSaveStyle" TargetType="Button" BasedOn="{StaticResource DataGridSaveStyle}">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="HorizontalOptions" Value="Fill" />
+            <Setter Property="VerticalOptions" Value="Fill" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+        </Style>
         <Style x:Key="DataDeleteAllStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
             <Setter Property="Padding" Value="12,10" />
             <Setter Property="LineBreakMode" Value="WordWrap" />
@@ -178,20 +190,28 @@
             </Border>
             <Border Style="{StaticResource HardwareSectionStyle}">
                 <VerticalStackLayout Spacing="8">
-                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
-                        <Label Text="{localization:Translate DataManagement.SavedQuestions}" Style="{StaticResource HardwareSectionTitleStyle}" FlexLayout.Grow="1" />
-                        <controls:EmojiActionButton x:Name="OpenSqlTableButton" Caption="{localization:Translate AiBank.GridLoadEditable}"
-                                Style="{StaticResource DataGridActionStyle}" Clicked="OnLoadEditableSqlClicked" />
-                        <controls:EmojiActionButton x:Name="InquiryToggleButton" Caption="{localization:Translate DataManagement.ShowSql}"
-                                Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleInquiryClicked" />
-                    </FlexLayout>
+                    <Grid ColumnDefinitions="*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="10" Padding="0,2"
+                          controls:AdaptiveColumns.MinimumColumnWidth="320" controls:AdaptiveColumns.MaximumColumns="2">
+                        <Label Text="{localization:Translate DataManagement.SavedQuestions}" Style="{StaticResource HardwareSectionTitleStyle}"
+                               SemanticProperties.HeadingLevel="Level2" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="8" VerticalOptions="Center">
+                            <controls:EmojiActionButton x:Name="OpenSqlTableButton" Caption="{localization:Translate AiBank.GridLoadEditable}"
+                                    Style="{StaticResource DataGridActionStyle}" Clicked="OnLoadEditableSqlClicked"
+                                    Margin="0" HorizontalOptions="Fill" VerticalOptions="Fill" LineBreakMode="WordWrap" />
+                            <controls:EmojiActionButton x:Name="InquiryToggleButton" Grid.Column="1" Caption="{localization:Translate DataManagement.ShowSql}"
+                                    Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleInquiryClicked"
+                                    Margin="0" HorizontalOptions="Fill" VerticalOptions="Fill" LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Grid>
                     <VerticalStackLayout x:Name="InquiryPanel" Spacing="8" IsVisible="False">
-                            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                            <Grid ColumnDefinitions="*" RowDefinitions="Auto,Auto" ColumnSpacing="16" RowSpacing="8" Padding="0,2"
+                                  controls:AdaptiveColumns.MinimumColumnWidth="320" controls:AdaptiveColumns.MaximumColumns="2">
                                 <Label Text="{localization:Translate AiBank.SqlQueryTitle}" FontAttributes="Bold"
-                                       SemanticProperties.HeadingLevel="Level2" FlexLayout.Grow="1" Margin="0,0,12,4" />
-                                <controls:EmojiActionButton x:Name="SqlHelpToggleButton" Caption="{localization:Translate AiBank.SqlHelpShow}"
-                                        Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleSqlHelpClicked" />
-                            </FlexLayout>
+                                       SemanticProperties.HeadingLevel="Level2" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                                <controls:EmojiActionButton x:Name="SqlHelpToggleButton" Grid.Row="1" Caption="{localization:Translate AiBank.SqlHelpShow}"
+                                        Style="{StaticResource DataGridActionStyle}" Clicked="OnToggleSqlHelpClicked"
+                                        Margin="0" HorizontalOptions="Fill" VerticalOptions="Fill" LineBreakMode="WordWrap" />
+                            </Grid>
                             <Label Text="{localization:Translate AiBank.InquiryHint}" LineBreakMode="WordWrap" FontSize="13"
                                    TextColor="{DynamicResource TextSecondaryColor}" />
                             <Border Style="{StaticResource DataDiagnosticCardStyle}">
@@ -225,17 +245,18 @@
                                     <Label x:Name="QueryResultMessageLabel" LineBreakMode="WordWrap" IsVisible="False" />
                                     <Label x:Name="QueryEditHintLabel" LineBreakMode="WordWrap" FontSize="13" FontAttributes="None"
                                            TextColor="{DynamicResource TextSecondaryColor}" />
-                                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
-                                        <controls:EmojiActionButton x:Name="AddSqlRowButton" Caption="{localization:Translate AiBank.GridAddRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnAddSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="EditSqlRowButton" Caption="{localization:Translate AiBank.GridEditRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnEditSqlRowClicked" IsVisible="False" IsEnabled="False" />
-                                        <controls:EmojiActionButton x:Name="SaveNewSqlRowButton" Caption="{localization:Translate AiBank.GridInsertRow}" Style="{StaticResource DataGridSaveStyle}" Clicked="OnSaveNewSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="CancelNewSqlRowButton" Caption="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCancelNewSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="SaveSqlRowButton" Caption="{localization:Translate AiBank.GridSaveRow}" Style="{StaticResource DataGridSaveStyle}" Clicked="OnSaveSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="CancelSqlRowButton" Caption="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataGridActionStyle}" Clicked="OnCancelSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="DeleteSqlRowButton" Caption="{localization:Translate AiBank.GridDeleteRow}" Style="{StaticResource DataGridActionStyle}" Clicked="OnDeleteSqlRowClicked" IsVisible="False" />
-                                        <controls:EmojiActionButton x:Name="ReloadSqlGridButton" Caption="{localization:Translate AiBank.GridReload}" Style="{StaticResource DataGridActionStyle}" Clicked="OnReloadSqlGridClicked" />
-                                        <controls:EmojiActionButton x:Name="LoadEditableSqlButton" Caption="{localization:Translate AiBank.GridLoadEditable}" Style="{StaticResource DataGridActionStyle}" Clicked="OnLoadEditableSqlClicked" IsVisible="False" />
-                                    </FlexLayout>
+                                    <Grid x:Name="SqlGridActions" ColumnDefinitions="*,*,*" RowDefinitions="Auto"
+                                          ColumnSpacing="8" RowSpacing="8" Margin="0,4,0,10" SizeChanged="OnSqlGridActionsSizeChanged">
+                                        <controls:EmojiActionButton x:Name="AddSqlRowButton" Caption="{localization:Translate AiBank.GridAddRow}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnAddSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="EditSqlRowButton" Grid.Column="1" Caption="{localization:Translate AiBank.GridEditRow}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnEditSqlRowClicked" IsVisible="False" IsEnabled="False" />
+                                        <controls:EmojiActionButton x:Name="SaveNewSqlRowButton" Caption="{localization:Translate AiBank.GridInsertRow}" Style="{StaticResource DataToolbarSaveStyle}" Clicked="OnSaveNewSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="CancelNewSqlRowButton" Caption="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnCancelNewSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="SaveSqlRowButton" Caption="{localization:Translate AiBank.GridSaveRow}" Style="{StaticResource DataToolbarSaveStyle}" Clicked="OnSaveSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="CancelSqlRowButton" Caption="{localization:Translate AiBank.GridCancelEdit}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnCancelSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="DeleteSqlRowButton" Caption="{localization:Translate AiBank.GridDeleteRow}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnDeleteSqlRowClicked" IsVisible="False" />
+                                        <controls:EmojiActionButton x:Name="ReloadSqlGridButton" Grid.Column="2" Caption="{localization:Translate AiBank.GridReload}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnReloadSqlGridClicked" />
+                                        <controls:EmojiActionButton x:Name="LoadEditableSqlButton" Caption="{localization:Translate AiBank.GridLoadEditable}" Style="{StaticResource DataToolbarActionStyle}" Clicked="OnLoadEditableSqlClicked" IsVisible="False" />
+                                    </Grid>
                                     <controls:SqlResultTableView x:Name="QueryResultsTable" CellSelected="OnSqlCellSelected" EditChanged="OnSqlRowDraftChanged" IsVisible="False" />
                                     <Label x:Name="QueryGridHintLabel" Text="{localization:Translate AiBank.SqlGridHint}" FontSize="13" IsVisible="False"
                                            LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />

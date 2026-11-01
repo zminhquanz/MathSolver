@@ -23,6 +23,16 @@ public partial class CalculationPage
 
     private void InitializeCalculationNavigation()
     {
+#if ANDROID
+        CalculationTabNavigation.MaximumWidthRequest = double.PositiveInfinity;
+#endif
+        AndroidCalculationSubTabBar.TabKeys = CalculationTypeKeys.Select(key => "Calculation.Tabs." + key).ToArray();
+        AndroidCalculationSubTabBar.SelectionRequested += async (_, index) =>
+        {
+            if (!CanUseTabNavigation) return;
+            try { await SwitchSubTabAsync((CalculationSubTab)index); }
+            finally { AndroidCalculationSubTabBar.SetSelection((int)_selectedSubTab); }
+        };
         // Explicit key bindings own these labels; identical text may have
         // different translations elsewhere (e.g. Average vs Arithmetic mean).
         LocalizationService.ExcludeSubtreeFromLegacyTracking(CalculationTabStripHost);
@@ -83,7 +93,7 @@ public partial class CalculationPage
         AllCalculationTypesOverlay.Content = overlay;
         CalculationTabNavigation.SizeChanged += QueueCalculationNavigation;
         CalculationSubTabScrollView.SizeChanged += QueueCalculationNavigation;
-        AndroidCalculationSubTabScrollView.SizeChanged += QueueCalculationNavigation;
+        AndroidCalculationSubTabBar.SizeChanged += QueueCalculationNavigation;
         CalculationSubTabGrid.SizeChanged += QueueCalculationNavigation;
         CalculationTabStripHost.SizeChanged += (_, _) => UpdateCalculationViewportClip();
         Loaded += QueueCalculationNavigation;
@@ -113,7 +123,13 @@ public partial class CalculationPage
             if (generation != _tabNavigationGeneration) return;
             _tabNavigationQueued = false;
             if (!CanUseTabNavigation) return;
+            // Android keeps the swipeable tab strip beside the fixed chooser,
+            // including phone widths. Desktop retains its compact fallback.
+#if ANDROID
+            bool stacked = false;
+#else
             bool stacked = ResponsiveLayoutPolicy.UseStackedLayout(CalculationTabNavigation.Width, 760);
+#endif
             bool modeChanged = stacked != _tabNavigationStacked;
             if (stacked != _tabNavigationStacked)
             {
@@ -132,17 +148,30 @@ public partial class CalculationPage
                 ? new Thickness(DisplayDensityManager.Metrics.HorizontalPadding, DisplayDensityManager.Metrics.VerticalPadding)
                 : Thickness.Zero;
             AllCalculationTypesButton.FontSize = stacked ? 14 : 18;
+#if ANDROID
+            controlSize = Math.Max(48, controlSize);
+            AllCalculationTypesButton.WidthRequest = AllCalculationTypesButton.HeightRequest = controlSize;
+            AllCalculationTypesButton.MinimumWidthRequest = controlSize;
+            CalculationNavigationFrame.Padding = Thickness.Zero;
+            CalculationNavigationFrame.StrokeThickness = 0;
+            CalculationNavigationFrame.SetDynamicResource(Border.BackgroundColorProperty, "SurfaceColor");
+            AllCalculationTypesButton.BackgroundColor = Colors.Transparent;
+            AllCalculationTypesButton.BorderWidth = 0;
+            AllCalculationTypesButton.CornerRadius = (int)(controlSize / 2);
+            AllCalculationTypesButton.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+#else
             CalculationNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(8);
             CalculationNavigationFrame.StrokeThickness = stacked ? 0 : 1;
+#endif
             RefreshCalculationNavigationCaption();
             if (!stacked && CalculationSubTabBar.IsVisible) CalculationSubTabScrollView.UpdateTabLayout(CalculationSubTabGrid);
-            if (!stacked && AndroidCalculationSubTabBar.IsVisible) UpdateAndroidCalculationTabSizing();
-            var tabScroll = AndroidCalculationSubTabBar.IsVisible
-                ? (ScrollView)AndroidCalculationSubTabScrollView : CalculationSubTabScrollView;
+            AndroidCalculationSubTabBar.RefreshLayout();
+            double viewportWidth = AndroidCalculationSubTabBar.IsVisible
+                ? AndroidCalculationSubTabBar.Width : CalculationSubTabScrollView.Width;
             double textScale = ResponsiveLayoutPolicy.TextScale;
-            bool revealSelected = modeChanged || Math.Abs(tabScroll.Width - _lastTabViewportWidth) > .5
+            bool revealSelected = modeChanged || Math.Abs(viewportWidth - _lastTabViewportWidth) > .5
                 || Math.Abs(textScale - _lastTabTextScale) > .001 || controlSize != _lastTabDensitySize;
-            _lastTabViewportWidth = tabScroll.Width;
+            _lastTabViewportWidth = viewportWidth;
             _lastTabTextScale = textScale;
             _lastTabDensitySize = controlSize;
             if (AllCalculationTypesOverlay.IsVisible) ResizeCalculationChooser();

@@ -8,8 +8,8 @@ public partial class FormulaPage
 {
     private bool _formulaNavigationActive;
 
-    private Button GetFormulaNavigationButton(FormulaSubTab tab) => AndroidFormulaSubTabBar.IsVisible
-        ? GetAndroidFormulaSubTabButton(tab)
+    private VisualElement GetFormulaNavigationButton(FormulaSubTab tab) => AndroidFormulaSubTabBar.IsVisible
+        ? AndroidFormulaSubTabBar
         : tab switch
     {
         FormulaSubTab.UnknownComponent => UnknownComponentTabButton,
@@ -19,21 +19,6 @@ public partial class FormulaPage
         FormulaSubTab.Measurement => MeasurementTabButton,
         _ => GeometryTabButton
     };
-
-    private Button GetAndroidFormulaSubTabButton(
-        FormulaSubTab tab)
-    {
-        return tab switch
-        {
-            FormulaSubTab.UnknownComponent => AndroidUnknownComponentTabButton,
-            FormulaSubTab.Proportion => AndroidProportionTabButton,
-            FormulaSubTab.Motion => AndroidMotionTabButton,
-            FormulaSubTab.Average => AndroidAverageTabButton,
-            FormulaSubTab.Measurement => AndroidMeasurementTabButton,
-            FormulaSubTab.Geometry => AndroidFormulaGeometryTabButton,
-            _ => AndroidUnknownComponentTabButton
-        };
-    }
 
     private static readonly string[] FormulaTypeKeys =
         ["UnknownComponent", "Proportion", "Motion", "Average", "Measurement", "Geometry"];
@@ -52,6 +37,16 @@ public partial class FormulaPage
 
     private void InitializeFormulaNavigation()
     {
+#if ANDROID
+        FormulaTabNavigation.MaximumWidthRequest = double.PositiveInfinity;
+#endif
+        AndroidFormulaSubTabBar.TabKeys = FormulaTypeKeys.Select(key => "Formula.Tabs." + key).ToArray();
+        AndroidFormulaSubTabBar.SelectionRequested += async (_, index) =>
+        {
+            if (!CanUseTabNavigation) return;
+            try { await SwitchFormulaSubTabAsync((FormulaSubTab)index); }
+            finally { AndroidFormulaSubTabBar.SetSelection((int)_selectedSubTab); }
+        };
         // Keep legacy source-text matching from replacing stable-key bindings.
         LocalizationService.ExcludeSubtreeFromLegacyTracking(FormulaTabStripHost);
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllFormulaTypesOverlay);
@@ -111,7 +106,7 @@ public partial class FormulaPage
         AllFormulaTypesOverlay.Content = overlay;
         FormulaTabNavigation.SizeChanged += QueueFormulaNavigation;
         FormulaSubTabScrollView.SizeChanged += QueueFormulaNavigation;
-        AndroidFormulaSubTabScrollView.SizeChanged += QueueFormulaNavigation;
+        AndroidFormulaSubTabBar.SizeChanged += QueueFormulaNavigation;
         FormulaSubTabGrid.SizeChanged += QueueFormulaNavigation;
         FormulaTabStripHost.SizeChanged += (_, _) => UpdateFormulaViewportClip();
         Loaded += QueueFormulaNavigation;
@@ -158,7 +153,13 @@ public partial class FormulaPage
             if (generation != _tabNavigationGeneration) return;
             _tabNavigationQueued = false;
             if (!CanUseTabNavigation) return;
+            // Android keeps the swipeable tab strip beside the fixed chooser,
+            // including phone widths. Desktop retains its compact fallback.
+#if ANDROID
+            bool stacked = false;
+#else
             bool stacked = ResponsiveLayoutPolicy.UseStackedLayout(FormulaTabNavigation.Width, 760);
+#endif
             bool modeChanged = stacked != _tabNavigationStacked;
             if (stacked != _tabNavigationStacked)
             {
@@ -177,17 +178,30 @@ public partial class FormulaPage
                 ? new Thickness(DisplayDensityManager.Metrics.HorizontalPadding, DisplayDensityManager.Metrics.VerticalPadding)
                 : Thickness.Zero;
             AllFormulaTypesButton.FontSize = stacked ? 14 : 18;
+#if ANDROID
+            controlSize = Math.Max(48, controlSize);
+            AllFormulaTypesButton.WidthRequest = AllFormulaTypesButton.HeightRequest = controlSize;
+            AllFormulaTypesButton.MinimumWidthRequest = controlSize;
+            FormulaNavigationFrame.Padding = Thickness.Zero;
+            FormulaNavigationFrame.StrokeThickness = 0;
+            FormulaNavigationFrame.SetDynamicResource(Border.BackgroundColorProperty, "SurfaceColor");
+            AllFormulaTypesButton.BackgroundColor = Colors.Transparent;
+            AllFormulaTypesButton.BorderWidth = 0;
+            AllFormulaTypesButton.CornerRadius = (int)(controlSize / 2);
+            AllFormulaTypesButton.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+#else
             FormulaNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(8);
             FormulaNavigationFrame.StrokeThickness = stacked ? 0 : 1;
+#endif
             RefreshFormulaNavigationCaption();
             if (!stacked && FormulaSubTabBar.IsVisible) FormulaSubTabScrollView.UpdateTabLayout(FormulaSubTabGrid);
-            if (!stacked && AndroidFormulaSubTabBar.IsVisible) UpdateAndroidFormulaTabSizing();
-            var tabScroll = AndroidFormulaSubTabBar.IsVisible
-                ? (ScrollView)AndroidFormulaSubTabScrollView : FormulaSubTabScrollView;
+            AndroidFormulaSubTabBar.RefreshLayout();
+            double viewportWidth = AndroidFormulaSubTabBar.IsVisible
+                ? AndroidFormulaSubTabBar.Width : FormulaSubTabScrollView.Width;
             double textScale = ResponsiveLayoutPolicy.TextScale;
-            bool revealSelected = modeChanged || Math.Abs(tabScroll.Width - _lastTabViewportWidth) > .5
+            bool revealSelected = modeChanged || Math.Abs(viewportWidth - _lastTabViewportWidth) > .5
                 || Math.Abs(textScale - _lastTabTextScale) > .001 || controlSize != _lastTabDensitySize;
-            _lastTabViewportWidth = tabScroll.Width;
+            _lastTabViewportWidth = viewportWidth;
             _lastTabTextScale = textScale;
             _lastTabDensitySize = controlSize;
             if (AllFormulaTypesOverlay.IsVisible) ResizeFormulaChooser();

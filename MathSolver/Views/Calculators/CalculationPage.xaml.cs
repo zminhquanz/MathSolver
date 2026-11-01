@@ -222,7 +222,9 @@ public partial class CalculationPage : ContentPage
 
         if (CalculationTabNavigation is not null)
         {
+#if !ANDROID
             CalculationTabNavigation.WidthRequest = ResponsiveLayoutPolicy.SubTabWidth(width);
+#endif
             QueueCalculationNavigation(this, EventArgs.Empty);
         }
 
@@ -4096,7 +4098,7 @@ public partial class CalculationPage : ContentPage
             return;
         }
 
-        Button selectedButton =
+        VisualElement selectedButton =
             GetSubTabButton(
                 selectedTab);
 
@@ -4228,18 +4230,7 @@ public partial class CalculationPage : ContentPage
             MatrixTabButton
         ];
 
-        Button[] androidButtons =
-        [
-            AndroidBasicTabButton,
-            AndroidNumberTheoryTabButton,
-            AndroidAverageTabButton,
-            AndroidPowerRootTabButton,
-            AndroidFractionTabButton,
-            AndroidFindXTabButton,
-            AndroidQuadraticTabButton,
-            AndroidGeometryTabButton,
-            AndroidMatrixTabButton
-        ];
+        AndroidCalculationSubTabBar.IsEnabled = !isLocked;
 
         foreach (Button button in desktopButtons)
         {
@@ -4247,11 +4238,6 @@ public partial class CalculationPage : ContentPage
                 !isLocked;
         }
 
-        foreach (Button button in androidButtons)
-        {
-            button.IsEnabled =
-                !isLocked;
-        }
 
         if (!isLocked)
         {
@@ -4270,7 +4256,7 @@ public partial class CalculationPage : ContentPage
         QueueCalculationNavigation(sender, e);
     }
 
-    private async Task ScrollSubTabIntoViewAsync(Button selectedButton)
+    private async Task ScrollSubTabIntoViewAsync(VisualElement selectedButton)
     {
         if (!CanUseTabNavigation || !CalculationTabStripHost.IsVisible || !selectedButton.IsLoaded || selectedButton.Handler?.MauiContext is null
             || !ReferenceEquals(selectedButton, GetSubTabButton(_selectedSubTab))) return;
@@ -4280,8 +4266,9 @@ public partial class CalculationPage : ContentPage
         try
         {
 #if ANDROID
-            if (!AndroidCalculationSubTabScrollView.IsLoaded || AndroidCalculationSubTabScrollView.Handler?.MauiContext is null) return;
-            await AndroidCalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, false);
+            AndroidCalculationSubTabBar.SetSelection((int)_selectedSubTab);
+            AndroidCalculationSubTabBar.RevealSelected();
+            await Task.CompletedTask;
 #else
             await CalculationSubTabScrollView.ScrollToAsync(selectedButton, ScrollToPosition.Center, false);
 #endif
@@ -4311,23 +4298,11 @@ public partial class CalculationPage : ContentPage
         };
     }
 
-    private Button GetSubTabButton(
+    private VisualElement GetSubTabButton(
         CalculationSubTab tab)
     {
 #if ANDROID
-        return tab switch
-        {
-            CalculationSubTab.Basic => AndroidBasicTabButton,
-            CalculationSubTab.NumberTheory => AndroidNumberTheoryTabButton,
-            CalculationSubTab.Matrix => AndroidMatrixTabButton,
-            CalculationSubTab.Average => AndroidAverageTabButton,
-            CalculationSubTab.PowerRoot => AndroidPowerRootTabButton,
-            CalculationSubTab.Fraction => AndroidFractionTabButton,
-            CalculationSubTab.FindX => AndroidFindXTabButton,
-            CalculationSubTab.Quadratic => AndroidQuadraticTabButton,
-            CalculationSubTab.Geometry => AndroidGeometryTabButton,
-            _ => AndroidBasicTabButton
-        };
+        return AndroidCalculationSubTabBar;
 #else
         return tab switch
         {
@@ -4408,48 +4383,7 @@ public partial class CalculationPage : ContentPage
         // Matrix panning owns horizontal gestures throughout this subtab.
         if (_selectedSubTab == CalculationSubTab.Matrix) _androidSubTabSwipe.Detach();
         else if (_isPageActive) _androidSubTabSwipe.Attach();
-        ApplyAndroidSubTabState(
-            AndroidBasicTabButton,
-            AndroidBasicTabIndicator,
-            _selectedSubTab == CalculationSubTab.Basic);
-
-        ApplyAndroidSubTabState(
-            AndroidNumberTheoryTabButton,
-            AndroidNumberTheoryTabIndicator,
-            _selectedSubTab == CalculationSubTab.NumberTheory);
-
-        ApplyAndroidSubTabState(AndroidMatrixTabButton, AndroidMatrixTabIndicator,
-            _selectedSubTab == CalculationSubTab.Matrix);
-
-        ApplyAndroidSubTabState(
-            AndroidAverageTabButton,
-            AndroidAverageTabIndicator,
-            _selectedSubTab == CalculationSubTab.Average);
-
-        ApplyAndroidSubTabState(
-            AndroidPowerRootTabButton,
-            AndroidPowerRootTabIndicator,
-            _selectedSubTab == CalculationSubTab.PowerRoot);
-
-        ApplyAndroidSubTabState(
-            AndroidFractionTabButton,
-            AndroidFractionTabIndicator,
-            _selectedSubTab == CalculationSubTab.Fraction);
-
-        ApplyAndroidSubTabState(
-            AndroidFindXTabButton,
-            AndroidFindXTabIndicator,
-            _selectedSubTab == CalculationSubTab.FindX);
-
-        ApplyAndroidSubTabState(
-            AndroidQuadraticTabButton,
-            AndroidQuadraticTabIndicator,
-            _selectedSubTab == CalculationSubTab.Quadratic);
-
-        ApplyAndroidSubTabState(
-            AndroidGeometryTabButton,
-            AndroidGeometryTabIndicator,
-            _selectedSubTab == CalculationSubTab.Geometry);
+        AndroidCalculationSubTabBar.SetSelection((int)_selectedSubTab);
 #else
         Button selectedButton =
             _selectedSubTab switch
@@ -4481,35 +4415,6 @@ public partial class CalculationPage : ContentPage
         RefreshCalculationNavigationCaption();
     }
 
-#if ANDROID
-    private static void ApplyAndroidSubTabState(
-        Button button,
-        BoxView indicator,
-        bool isSelected)
-    {
-        button.SetDynamicResource(
-            Button.TextColorProperty,
-            isSelected
-                ? "PrimaryColor"
-                : "WallpaperTextSecondaryColor");
-
-        button.BackgroundColor =
-            Microsoft.Maui.Graphics.Colors.Transparent;
-
-        // Android Material/DevCheck state must be deterministic.  Keep the
-        // indicator permanently bound to the accent color and only toggle
-        // visibility.  This avoids the Transparent -> DynamicResource +
-        // opacity animation race that could leave later tabs with no line.
-        indicator.SetDynamicResource(
-            BoxView.BackgroundColorProperty,
-            "PrimaryColor");
-
-        indicator.CancelAnimations();
-        indicator.Opacity = 1d;
-        indicator.Scale = 1d;
-        indicator.IsVisible = isSelected;
-    }
-#endif
 
     private static string CreateDecimalDivisionExplanation(
     decimal dividend,

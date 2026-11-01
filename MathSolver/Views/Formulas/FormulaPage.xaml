@@ -18,149 +18,20 @@
             x:Name="LiveWallpaper"
             Grid.RowSpan="2" />
 
-        <Grid x:Name="FormulaTabNavigation" Grid.Row="0" HorizontalOptions="Center" MaximumWidthRequest="1280"
-              Margin="{OnPlatform Android='10,6,10,4', WinUI='20,12,20,8', Default='20,12,20,8'}">
-        <Border x:Name="FormulaNavigationFrame" Padding="8" StrokeThickness="1"
+        <Grid x:Name="FormulaTabNavigation" Grid.Row="0" HorizontalOptions="{OnPlatform Android=Fill, Default=Center}" MaximumWidthRequest="1280"
+              Margin="{OnPlatform Android='0', WinUI='20,12,20,8', Default='20,12,20,8'}">
+        <Border x:Name="FormulaNavigationFrame" Padding="{OnPlatform Android=0, Default=8}" StrokeThickness="{OnPlatform Android=0, Default=1}"
                 BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
         <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="14" />
+                    <RoundRectangle CornerRadius="{OnPlatform Android=0, Default=14}" />
                 </Border.StrokeShape>
-        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-        <Grid x:Name="FormulaTabStripHost">
+        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="{OnPlatform Android=0, Default=8}">
+        <Grid x:Name="FormulaTabStripHost" IsClippedToBounds="{OnPlatform Android=True, Default=False}">
         <!-- Thanh tab con: đồng bộ với CalculationPage -->
-        <!-- Android: tab row phẳng kiểu Material/DevCheck, cuộn ngang khi cần. -->
-        <Grid
-            x:Name="AndroidFormulaSubTabBar"
-            Grid.Row="0"
-            IsVisible="{OnPlatform Android=True, WinUI=False, Default=False}"
-            RowDefinitions="Auto,1"
-            Margin="0"
-            BackgroundColor="{DynamicResource WallpaperSurfaceColor}">
-
-            <ScrollView
-                x:Name="AndroidFormulaSubTabScrollView"
-                Grid.Row="0"
-                Orientation="Horizontal"
-                HorizontalOptions="Fill"
-                HorizontalScrollBarVisibility="Never">
-
-                <HorizontalStackLayout Spacing="8" Padding="3,2">
-                    <Grid MinimumWidthRequest="158" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidUnknownComponentTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.UnknownComponent}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.UnknownComponent"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            TextColor="{DynamicResource ContentAccentTextColor}"
-                            Clicked="OnUnknownComponentTabClicked" />
-                        <BoxView
-                            x:Name="AndroidUnknownComponentTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="True"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-
-                    <Grid MinimumWidthRequest="112" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidProportionTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.Proportion}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.Proportion"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            Clicked="OnProportionTabClicked" />
-                        <BoxView
-                            x:Name="AndroidProportionTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="False"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-
-                    <Grid MinimumWidthRequest="112" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidMotionTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.Motion}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.Motion"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            Clicked="OnMotionTabClicked" />
-                        <BoxView
-                            x:Name="AndroidMotionTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="False"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-
-                    <Grid MinimumWidthRequest="138" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidAverageTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.Average}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.Average"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            Clicked="OnAverageTabClicked" />
-                        <BoxView
-                            x:Name="AndroidAverageTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="False"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-
-                    <Grid MinimumWidthRequest="105" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidMeasurementTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.Measurement}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.Measurement"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            Clicked="OnMeasurementTabClicked" />
-                        <BoxView
-                            x:Name="AndroidMeasurementTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="False"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-
-                    <Grid MinimumWidthRequest="102" RowDefinitions="Auto,3">
-                        <Button
-                            x:Name="AndroidFormulaGeometryTabButton"
-                            Grid.Row="0"
-                            Text="{localization:Translate Formula.Tabs.Geometry}"
-
-                            controls:MathNavigationIcon.Key="Formula.Tabs.Geometry"
-                            Style="{StaticResource AndroidNativeSubTabButtonStyle}"
-                            Clicked="OnGeometryTabClicked" />
-                        <BoxView
-                            x:Name="AndroidFormulaGeometryTabIndicator"
-                            Grid.Row="1"
-                            HeightRequest="3"
-                            Margin="10,0"
-                            IsVisible="False"
-                            BackgroundColor="{DynamicResource PrimaryColor}" />
-                    </Grid>
-                </HorizontalStackLayout>
-            </ScrollView>
-
-            <BoxView
-                Grid.Row="1"
-                HeightRequest="1"
-                BackgroundColor="{DynamicResource WallpaperDividerColor}" />
-        </Grid>
+        <!-- Native Material tabs lay out their own inline icon and label. -->
+        <controls:MaterialSubTabStrip x:Name="AndroidFormulaSubTabBar"
+            IsVisible="{OnPlatform Android=True, Default=False}"
+            HorizontalOptions="Fill" />
 
         <Border x:Name="FormulaSubTabBar" Grid.Row="0" Padding="0" Margin="0" StrokeThickness="0"
                 IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
@@ -262,6 +133,9 @@
         <Button x:Name="AllFormulaTypesButton" Grid.Column="1"
                 Style="{StaticResource SolverSecondaryActionStyle}" FontSize="14" LineBreakMode="WordWrap"
                 HorizontalOptions="End" VerticalOptions="Center" Clicked="OnAllFormulaTypesClicked" />
+        <BoxView Grid.Row="1" Grid.ColumnSpan="2" HeightRequest="1"
+                 IsVisible="{OnPlatform Android=True, Default=False}"
+                 BackgroundColor="{DynamicResource DividerColor}" />
         </Grid>
         </Border>
         </Grid>

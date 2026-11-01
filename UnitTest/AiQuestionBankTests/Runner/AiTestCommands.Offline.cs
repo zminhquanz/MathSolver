@@ -10,6 +10,11 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--six-finite-open"],"--six-finite-open",args=>SixFiniteOpenTests.RunAsync(),args=>args is ["--six-finite-open"]),
+        new(["--six-finite-open-gpu"],"--six-finite-open-gpu <gguf> <directory>",args=>SixFiniteOpenTests.RunGpuAsync(args[1],args[2]),args=>args is ["--six-finite-open-gpu",_,_]),
+        new(["--average-relations-open"],"--average-relations-open",args=>AverageRelationsOpenTests.RunAsync(),args=>args is ["--average-relations-open"]),
+        new(["--remainder-groups-open"],"--remainder-groups-open",args=>RemainderGroupsOpenTests.RunAsync(),args=>args is ["--remainder-groups-open"]),
+        new(["--inverse-work-open"],"--inverse-work-open",args=>InverseWorkOpenTests.RunAsync(),args=>args is ["--inverse-work-open"]),
         new(["--review-batch"],"--review-batch",args=>QuestionReviewBatchTests.RunAsync(),args=>args is ["--review-batch"]),
         new(["--ai-acceleration"],"--ai-acceleration",args=>{AiAccelerationPolicyTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration"]),
         new(["--ai-acceleration-runtime"],"--ai-acceleration-runtime",args=>{AiAccelerationRuntimeTests.Run();return Task.CompletedTask;},args=>args is ["--ai-acceleration-runtime"]),

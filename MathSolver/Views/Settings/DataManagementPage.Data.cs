@@ -56,6 +56,7 @@ public partial class DataManagementPage
         QueryCellEditor.IsEnabled = idle;
         InquiryToggleButton.Caption = LocalizationService.TranslateKey(InquiryPanel.IsVisible ? "DataManagement.HideSql" : "DataManagement.ShowSql");
         UpdateSqlEditHint();
+        QueueSqlGridActionsLayout();
     }
 
     private void UpdateSqlEditHint()

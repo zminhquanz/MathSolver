@@ -92,6 +92,7 @@ namespace MathSolver
         {
             builder.ConfigureMauiHandlers(handlers =>
             {
+                handlers.AddHandler<MathSolver.Controls.MaterialSubTabStrip, MaterialSubTabStripHandler>();
                 handlers.AddHandler<Microsoft.Maui.Controls.Label, LabelHandler>();
                 handlers.AddHandler<Microsoft.Maui.Controls.Entry, EntryHandler>();
                 handlers.AddHandler<Microsoft.Maui.Controls.Editor, EditorHandler>();

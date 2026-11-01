@@ -29,6 +29,16 @@
         <item name="haloRadius">14dp</item>
     </style>
 
+    <!-- These are secondary tabs under Shell's main navigation. Resolve the
+         Material widget explicitly instead of inheriting primary-tab metrics. -->
+    <style name="MathSolver.ThemeOverlay.Material3.SubTabs" parent="">
+        <item name="tabStyle">@style/MathSolver.Widget.Material3.SubTabs</item>
+    </style>
+    <style name="MathSolver.Widget.Material3.SubTabs" parent="Widget.Material3.TabLayout.Secondary">
+        <item name="tabTextAppearance">@style/TextAppearance.Material3.TitleSmall</item>
+        <item name="tabSelectedTextAppearance">@style/TextAppearance.Material3.TitleSmall</item>
+    </style>
+
     <!-- Preserve MAUI's native splash implementation. MainActivity switches
          to MathSolver.MainTheme in OnCreate before MAUI inflates controls.
          Do not declare postSplashScreenTheme here: it is not available in the

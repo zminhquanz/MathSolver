@@ -9,9 +9,11 @@ internal static class PracticalModelValidator
         if(q.ElementaryProblem is { } p&&(p.StoryContextId?.StartsWith(MoneyChangePilot.Prefix,StringComparison.Ordinal)==true
             ||p.StoryContextId?.StartsWith(RectangleSidePilot.Prefix,StringComparison.Ordinal)==true
             ||p.StoryContextId?.StartsWith(MapScaleOpenPilot.Prefix,StringComparison.Ordinal)==true
+            ||p.StoryContextId?.StartsWith(RemainderGroupsPilot.Prefix,StringComparison.Ordinal)==true
             ||p.StoryContextId?.StartsWith(DiscountOpenPilot.Prefix,StringComparison.Ordinal)==true))
         {
             bool model=p.StoryContextId.StartsWith(MoneyChangePilot.Prefix,StringComparison.Ordinal)?MoneyChangePilot.IsValidModel(p)
+                :p.StoryContextId.StartsWith(RemainderGroupsPilot.Prefix,StringComparison.Ordinal)?RemainderGroupsPilot.IsValidModel(p)
                 :p.StoryContextId.StartsWith(MapScaleOpenPilot.Prefix,StringComparison.Ordinal)?MapScaleOpenPilot.IsValidModel(p)
                 :p.StoryContextId.StartsWith(DiscountOpenPilot.Prefix,StringComparison.Ordinal)?DiscountOpenPilot.IsValidModel(p):RectangleSidePilot.IsValidModel(p);
             if(!model||!Enum.IsDefined(q.Mode)||q.Expression.LeftOperand!=0||q.Expression.RightOperand!=0||q.Expression.Operation!=ArithmeticOperation.Add
