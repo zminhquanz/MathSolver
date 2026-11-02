@@ -49,13 +49,16 @@
     <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
     <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <AndroidSigningKeyStore>MathSolver.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
 
   <!-- Material 3 / Material You is enabled only for Android.
        Windows remains on the existing WinUI rendering and styles. -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <UseMaterial3>true</UseMaterial3>
+    <!-- Local Debug/Release device builds use the SDK development key.
+         Supply AndroidKeyStore=true and signing properties for distribution. -->
+    <AndroidKeyStore Condition="'$(AndroidKeyStore)' == ''">false</AndroidKeyStore>
+    <AndroidApkSignerAdditionalArguments>--v2-signing-enabled true</AndroidApkSignerAdditionalArguments>
   </PropertyGroup>
 
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
@@ -76,22 +79,6 @@
 
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(RuntimeIdentifierOverride)' != ''">
     <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net10.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
-    <AndroidSigningKeyAlias>mathsolver</AndroidSigningKeyAlias>
-    <AndroidSigningStorePass>edwardbilly</AndroidSigningStorePass>
-    <AndroidSigningKeyPass>root123</AndroidSigningKeyPass>
-    <AndroidApkSignerAdditionalArguments>--v2-signing-enabled true</AndroidApkSignerAdditionalArguments>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net10.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
-    <AndroidSigningKeyAlias>mathsolver</AndroidSigningKeyAlias>
-    <AndroidSigningStorePass>edwardbilly</AndroidSigningStorePass>
-    <AndroidSigningKeyPass>root123</AndroidSigningKeyPass>
-    <AndroidApkSignerAdditionalArguments>--v2-signing-enabled true</AndroidApkSignerAdditionalArguments>
   </PropertyGroup>
 
   <ItemGroup>

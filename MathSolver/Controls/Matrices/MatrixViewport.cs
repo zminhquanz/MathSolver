@@ -28,6 +28,8 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
     public event Action<MatrixCellRange>? DeleteRequested;
     public bool AllSelected => _state.AllSelected;
     public bool IsEditing => _state.IsEditing;
+    internal bool FitSmallCells { get; set; }
+    internal void EditSelectedCell() => BeginInlineEdit();
     public bool HasRangeSelection => _state.HasRangeSelection;
     public MatrixCellRange Selection => _state.Selection;
     private void RequestCopy()
@@ -356,11 +358,18 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         // Keep a complete editable cell available on narrow, text-scaled screens.
         double width = Math.Max(1, _canvas.Width), height = Math.Max(1, _canvas.Height);
         var density = DisplayDensityManager.Metrics;
+        double limit = double.IsFinite(ViewportHeightLimit) ? Math.Max(1, ViewportHeightLimit) : 340;
         double cellWidth = Math.Min(density.MatrixColumnWidth * scale,
             Math.Max(MatrixViewportState.MinColumnWidth, width - MatrixViewportState.HeaderWidth - ScrollBarThickness));
-        _state.Arrange(width, height, cellWidth, density.MatrixRowHeight * scale, ScrollBarThickness);
+        double cellHeight = density.MatrixRowHeight * scale;
+        if (FitSmallCells)
+            (cellWidth, cellHeight) = MatrixCellLayout.FitSmall(width, limit, _state.Rows, _state.Columns,
+                cellWidth, cellHeight, scale, ScrollBarThickness);
+        _state.Arrange(width, height, cellWidth, cellHeight, ScrollBarThickness);
+        // IME/rotation can shrink the viewport after the Entry received focus.
+        // Keep that cell visible within the table rather than hiding its editor.
+        if (_state.IsEditing) _state.RevealSelection();
         // Small matrices occupy only the space they need; larger ones keep a bounded viewport.
-        double limit = double.IsFinite(ViewportHeightLimit) ? Math.Max(1, ViewportHeightLimit) : 340;
         double desiredHeight = Math.Min(limit, _state.CellHeight + _state.ContentHeight
             + (_state.ShowHorizontalScrollBar ? ScrollBarThickness : 0));
         if (Math.Abs(_surface.HeightRequest - desiredHeight) > 0.01) _surface.HeightRequest = desiredHeight;

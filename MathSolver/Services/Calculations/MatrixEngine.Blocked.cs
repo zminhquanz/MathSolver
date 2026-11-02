@@ -144,7 +144,7 @@ public static partial class MatrixEngine
         MatrixProgressReporter progress)
     {
         Array.Clear(workspace.Accumulators, 0, height * width);
-        int lanes = backend == MatrixBackend.Sse2 ? 2 : backend == MatrixBackend.Avx2 ? 4 : 8;
+        int lanes = Lanes(backend);
         long batches = 0;
         for (int k = 0; k < a.Columns; k += size)
         {
@@ -168,6 +168,8 @@ public static partial class MatrixEngine
             for (int d = d0; d < Math.Min(depth, d0 + 8); d++)
             for (int j = j0; j < Math.Min(width, j0 + 8); j++)
                 workspace.Right[j * depth + d] = workspace.SourceRight[d * width + j];
+            bool boundedNeon = backend == MatrixBackend.Neon && CanAccumulateNeonInInt64(
+                workspace.Left, height * depth, workspace.Right, width * depth, depth);
             workspace.PackingTicks += Stopwatch.GetTimestamp() - start;
             workspace.PackedA += (long)height * depth;
             workspace.PackedB += (long)width * depth;
@@ -189,6 +191,7 @@ public static partial class MatrixEngine
                     int b0 = j * depth, b1 = b0 + depth;
                     int processed = backend switch
                     {
+                        MatrixBackend.Neon => DotNeonPair(workspace.Left, startA, workspace.Right, b0, b1, depth, boundedNeon, ref p0, ref p1),
                         MatrixBackend.Sse2 => DotPair128(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1),
                         MatrixBackend.Avx2 => DotPair256(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1),
                         _ => DotPair512(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1)
@@ -210,6 +213,9 @@ public static partial class MatrixEngine
                     int processed = backend switch
                     {
                         MatrixBackend.Sse2 => Dot128(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
+                        MatrixBackend.Neon => boundedNeon
+                            ? DotNeonBounded(workspace.Left, startA, workspace.Right, startB, depth, ref partial)
+                            : DotNeon(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
                         MatrixBackend.Avx2 => Dot256(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
                         MatrixBackend.Avx512 => Dot512(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
                         _ => 0
@@ -238,12 +244,13 @@ public static partial class MatrixEngine
         int count = height * width;
         int processed = backend switch
         {
+            MatrixBackend.Neon => ElementwiseNeon(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             MatrixBackend.Sse2 => Elementwise128(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             MatrixBackend.Avx2 => Elementwise256(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             MatrixBackend.Avx512 => Elementwise512(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             _ => 0
         };
-        int lanes = backend == MatrixBackend.Sse2 ? 2 : backend == MatrixBackend.Avx2 ? 4 : 8;
+        int lanes = Lanes(backend);
         long batches = backend == MatrixBackend.Scalar ? 0 : processed / lanes;
         for (; processed < count; processed++)
             workspace.Wide[processed] = subtract ? (Int128)workspace.Left[processed] - workspace.Right[processed]

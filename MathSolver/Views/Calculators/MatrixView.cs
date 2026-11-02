@@ -185,6 +185,7 @@ public sealed partial class MatrixView : LocalizedSolverView
         _translations.Add(() => { ToolTipProperties.SetText(_clearAll, T("ClearAllHelp")); SemanticProperties.SetDescription(_clearAll, T("ClearAllHelp")); });
         editor.Add(BuildResultCard());
         var root = new Grid { RowDefinitions = { new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) } };
+        _keyboardRoot = root;
         root.Add(fixedHeader);
         BuildFocusedWorkspace(root, fixedHeader, setupCard, editor, matrixTabs);
         root.Add(BuildWorkspaceActions(), 0, 2);

@@ -736,6 +736,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         string matrixBackendStatus = CalculationAccelerationManager.EffectiveMatrixBackend switch
         {
+            MatrixBackend.Neon => MatrixEngine.NeonBackendName,
             MatrixBackend.Avx512 => "AVX-512F (512-bit)",
             MatrixBackend.Avx2 => "AVX2 (256-bit)",
             MatrixBackend.Sse2 => "SSE2 (128-bit)",

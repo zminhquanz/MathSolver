@@ -300,15 +300,26 @@ On Windows, build the Windows target with:
 dotnet build MathSolver/MathSolver.csproj -f net10.0-windows10.0.19041.0
 ```
 
-You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application. Release APK builds target Android ARM64 and require a signing setup.
+You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application. Android Debug and Release device builds use the SDK's development signing key by default; no `MathSolver.keystore` file is required. Release APK builds target Android ARM64.
 
-To package a signed Release ARM64 APK on Windows with the project's signing configuration:
+To build a development-signed Release ARM64 APK for testing on a device:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/package-android.ps1
+dotnet build MathSolver/MathSolver.csproj -f net10.0-android -c Release -r android-arm64 -t:SignAndroidPackage
 ```
 
-The script preserves trimming and profiled AOT, isolates Android build intermediates from Visual Studio, and stages satellite resources locally so Android SDK packaging tasks do not write into the NuGet cache. The APK is copied to `artifacts/apk/MathSolver-Release-arm64.apk`, and its SHA256 is printed. `-Configuration Debug -RuntimeIdentifier android-x64` can be used for an x64 emulator build.
+For distribution, explicitly select your existing release keystore in Visual Studio's signing settings or supply the signing properties below. Set the two password environment variables locally first; keep passwords and private keys out of the repository.
+
+```powershell
+dotnet publish MathSolver/MathSolver.csproj -f net10.0-android -c Release -r android-arm64 `
+  -p:AndroidKeyStore=true `
+  -p:AndroidSigningKeyStore="C:/private/MathSolver.keystore" `
+  -p:AndroidSigningKeyAlias=mathsolver `
+  -p:AndroidSigningStorePass=env:MATHSOLVER_STORE_PASSWORD `
+  -p:AndroidSigningKeyPass=env:MATHSOLVER_KEY_PASSWORD
+```
+
+Use the same release key when updating an already distributed app. Development-signed APKs are for local testing, not store distribution. See Microsoft's [Android signing properties](https://learn.microsoft.com/en-us/dotnet/android/building-apps/build-properties#androidkeystore).
 
 ## Translating Math Solver
 

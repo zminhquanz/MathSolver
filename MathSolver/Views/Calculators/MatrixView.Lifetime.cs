@@ -17,17 +17,19 @@ public sealed partial class MatrixView
         _active = active;
         if (!active)
         {
+            DetachMatrixKeyboard();
             _viewport.CancelRangeSelection();
             if (CanTouchUi) { _detailsRequested = _technicalRequested = false; CloseMatrixTools(); _cellValuePanel.IsVisible = false; RefreshWorkspacePresentation(); }
             _version++; _work?.Cancel(); if (_busy) _statusKey = "Cancelled";
         }
-        else if (CanTouchUi) { SetBusyState(); if (_statusKey is not null) _message.Text = FormatStatus(_statusKey); }
+        else if (CanTouchUi) { AttachMatrixKeyboard(); SetBusyState(); if (_statusKey is not null) _message.Text = FormatStatus(_statusKey); }
     }
     protected override void OnSolverLoaded()
     {
         if (!CanTouchUi) return;
         AttachMatrixDetailsKeys();
         _active = true; _cellValuePanel.IsVisible = false; SetBusyState();
+        AttachMatrixKeyboard();
         CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
         CalculationAccelerationManager.AccelerationChanged += OnExecutionSettingsChanged;
         CalculationThreadingManager.ThreadingChanged -= OnExecutionSettingsChanged;
@@ -41,6 +43,7 @@ public sealed partial class MatrixView
     {
         _detailsRequested = _technicalRequested = false; CloseMatrixTools();
         DetachMatrixDetailsKeys();
+        DetachMatrixKeyboard();
         _active = false; _version++; _work?.Cancel();
         if (_busy) _statusKey = "Cancelled";
         CalculationAccelerationManager.AccelerationChanged -= OnExecutionSettingsChanged;
@@ -51,6 +54,7 @@ public sealed partial class MatrixView
     private void OnWindowClosing(object? sender, EventArgs e)
     {
         _closing = true; _active = false; _version++; _work?.Cancel();
+        DetachMatrixKeyboard();
         _viewport.DetachSourceReader();
         _viewportResult = null;
         _failedReadDraft = null;

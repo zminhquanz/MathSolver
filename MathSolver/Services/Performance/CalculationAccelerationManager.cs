@@ -215,6 +215,7 @@ public static class CalculationAccelerationManager
             if (!UseSimd) return MatrixBackend.Scalar;
             return EffectiveSimdMode switch
             {
+                CalculationSimdMode.ArmNeon when MatrixEngine.IsNeonSupported => MatrixBackend.Neon,
                 CalculationSimdMode.Avx512 when IsAvx512Available => MatrixBackend.Avx512,
                 CalculationSimdMode.AvxAvx2 when IsAvxAvx2Available => MatrixBackend.Avx2,
                 CalculationSimdMode.Sse or CalculationSimdMode.Portable when IsSseAvailable => MatrixBackend.Sse2,

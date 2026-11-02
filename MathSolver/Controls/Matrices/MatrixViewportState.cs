@@ -2,6 +2,21 @@ using MathSolver.Services.Core;
 
 namespace MathSolver.Controls;
 
+internal static class MatrixCellLayout
+{
+    internal static (double Width, double Height) FitSmall(double width, double height, int rows, int columns,
+        double defaultWidth, double defaultHeight, double scale, double rail)
+    {
+        double cellWidth = columns <= 4
+            ? Math.Min(defaultWidth, Math.Max(MatrixViewportState.MinColumnWidth, (width - MatrixViewportState.HeaderWidth - rail) / columns))
+            : defaultWidth;
+        double cellHeight = rows <= 4
+            ? Math.Max(defaultHeight, Math.Min(64 * scale, Math.Max(0, height - rail) / (rows + 1)))
+            : defaultHeight;
+        return (cellWidth, cellHeight);
+    }
+}
+
 internal enum MatrixCellMove { Left, Right, Up, Down, Next, Previous }
 internal enum MatrixCellAction { Selected, Editing, Rejected }
 internal enum MatrixResizeAxis { None, Column, Row }

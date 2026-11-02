@@ -3,7 +3,7 @@ using System.Numerics;
 namespace MathSolver.Services.Core;
 
 public enum MatrixOperation { Add, Subtract, Multiply }
-public enum MatrixBackend { Auto, Scalar, Sse2, Avx2, Avx512 }
+public enum MatrixBackend { Auto, Scalar, Sse2, Avx2, Avx512, Neon }
 
 public sealed class IntegerMatrix : IDisposable
 {

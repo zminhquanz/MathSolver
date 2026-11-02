@@ -44,10 +44,7 @@ public static partial class MatrixEngine
         if (maximumWorkers < 1) throw new ArgumentOutOfRangeException(nameof(maximumWorkers));
         if (!Enum.IsDefined(maximumBackend)) throw new ArgumentOutOfRangeException(nameof(maximumBackend));
         if (token.IsCancellationRequested) return null;
-        MatrixBackend backend = maximumBackend == MatrixBackend.Scalar ? MatrixBackend.Scalar
-            : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512) && Avx512F.IsSupported ? MatrixBackend.Avx512
-            : (maximumBackend is MatrixBackend.Auto or MatrixBackend.Avx512 or MatrixBackend.Avx2) && Avx2.IsSupported ? MatrixBackend.Avx2
-            : Sse2.IsSupported ? MatrixBackend.Sse2 : MatrixBackend.Scalar;
+        MatrixBackend backend = ResolveBackend(maximumBackend);
         const int chunkSize = 65536;
         int chunks = (length + chunkSize - 1) / chunkSize;
         int workers = length >= MatrixLimits.ParallelThresholdCells
@@ -118,7 +115,19 @@ public static partial class MatrixEngine
     {
         int i = start;
         int lanes = backend == MatrixBackend.Avx512 ? 8 : backend == MatrixBackend.Avx2 ? 4 : 2;
-        if (backend == MatrixBackend.Avx512)
+        if (backend == MatrixBackend.Neon)
+        {
+            var expected = Vector128.Create(value);
+            for (; i <= end - 2; i += 2)
+            {
+                if (!Vector128.EqualsAll(Vector128.LoadUnsafe(ref values[i]), expected))
+                {
+                    batches += (i - start) / 2 + 1; cells += i - start + 2;
+                    return false;
+                }
+            }
+        }
+        else if (backend == MatrixBackend.Avx512)
         {
             var expected = Vector512.Create(value);
             for (; i <= end - 8; i += 8)

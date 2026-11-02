@@ -8,6 +8,7 @@ public sealed partial class MatrixView
     private readonly Grid _tableSlot = new(), _editorWorkArea = new() { ColumnSpacing = 12 };
     private readonly Grid _matrixMain = new() { RowSpacing = 8, RowDefinitions = { new(GridLength.Auto), new(GridLength.Star) } };
     private readonly ScrollView _setupScroll = new(), _inspectorScroll = new();
+    private readonly ScrollView _workspaceChrome = new() { VerticalScrollBarVisibility = ScrollBarVisibility.Default };
     private readonly Label _inspectorTitle = TextLabel(), _resultSummary = TextLabel();
     private Grid _secondaryTools = null!, _inspectorHeading = null!;
     private readonly RowDefinition _inspectorContentRow = new(GridLength.Star);
@@ -44,6 +45,7 @@ public sealed partial class MatrixView
         // Reserve all three action slots so publishing C cannot resize the A/B/C tabs.
         var heading = new Grid { ColumnSpacing = 6, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto) } };
         heading.Add(matrixTabs); heading.Add(_expandTable, 1); heading.Add(_moreToolsToggle, 2); heading.Add(_technicalDetailsToggle, 3);
+        BuildPhoneWorkspace(root, setupCard, heading);
         header.Children.Insert(0, heading);
         header.Spacing = 6;
 
@@ -77,14 +79,15 @@ public sealed partial class MatrixView
         _inspectorCard = Card(inspector); _inspectorCard.IsVisible = false; _inspectorCard.ZIndex = 1;
         _inspectorCard.AutomationId = "MatrixInspector";
         _editorWorkArea.Add(_editorCard); _editorWorkArea.Add(_inspectorCard);
-        // The common toolbar spans the whole workspace; table and inspector start on the same row.
-        var workspace = new Grid { RowSpacing = 8, RowDefinitions = { new(GridLength.Auto), new(GridLength.Star) } };
-        workspace.Add(header); workspace.Add(_editorWorkArea, 0, 1);
-        _matrixMain.Add(setupCard); _matrixMain.Add(workspace, 0, 1);
+        // Auto-sized configuration/tool rows can consume the entire star row on
+        // phones. Bound only this chrome; the table keeps its own pixel scrolling.
+        _workspaceChrome.AutomationId = "MatrixWorkspaceChrome";
+        _workspaceChrome.Content = new VerticalStackLayout { Spacing = 8, Children = { setupCard, header } };
+        _matrixMain.Add(_workspaceChrome); _matrixMain.Add(_editorWorkArea, 0, 1);
         root.Add(_matrixMain, 0, 1);
         _matrixMain.SizeChanged += (_, _) => RefreshMatrixLayout();
         _editorWorkArea.SizeChanged += (_, _) => RefreshMatrixLayout();
-        HandlerChanging += (_, _) => DetachMatrixDetailsKeys();
+        HandlerChanging += (_, _) => { DetachMatrixDetailsKeys(); DetachMatrixKeyboard(); };
     }
 
     private void CloseMatrixTools()
@@ -109,12 +112,24 @@ public sealed partial class MatrixView
         {
             if (!HasInputs) _tableExpanded = false;
             bool shortWindow = Height > 0 && Height < 480 * ResponsiveLayoutPolicy.TextScale;
+            bool phone = HasInputs && !_setupPanel.IsVisible && ResponsiveLayoutPolicy.UseStackedLayout(Width, 600);
             bool minimalChrome = _tableExpanded || shortWindow;
             // Expanding the table must not change the page header.
-            _matrixHero.IsVisible = !shortWindow;
+            _matrixHero.IsVisible = !shortWindow && !phone;
             bool side = ResponsiveLayoutPolicy.ForSolver(_editorWorkArea.Width, Height, ResponsiveLayoutPolicy.TextScale).UseSideBySide;
             double available = Math.Max(1, _matrixMain.Height);
-            _setupScroll.MaximumHeightRequest = Math.Max(72, Math.Min(260, available * .30));
+            double usable = Math.Max(1, available - _matrixMain.Padding.VerticalThickness - _matrixMain.RowSpacing);
+            double rowHeight = DisplayDensityManager.Metrics.MatrixRowHeight * Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6);
+            // Reserve a header plus at least one row before measuring optional
+            // chrome. When the keyboard leaves very little room, keep the table.
+            double reserved = Math.Min(usable, Math.Clamp(usable / 2, rowHeight * 2, rowHeight * 3));
+            double chromeLimit = usable - reserved;
+            // While editing dimensions, the form owns the space (including with
+            // the IME open). Collapse it after Create before reserving the table.
+            _workspaceChrome.IsVisible = _setupPanel.IsVisible || chromeLimit >= DisplayDensityManager.Metrics.ControlHeight;
+            _workspaceChrome.MaximumHeightRequest = Math.Max(1, _setupPanel.IsVisible ? usable : chromeLimit);
+            _setupScroll.MaximumHeightRequest = _setupPanel.IsVisible
+                ? double.PositiveInfinity : Math.Max(72, Math.Min(260, available * .30));
             _inputStatus.IsVisible = _range.IsVisible = !minimalChrome;
             _secondaryTools.IsVisible = false;
             _rangeInMore.IsVisible = true;
@@ -126,6 +141,7 @@ public sealed partial class MatrixView
             SetMatrixToolPresentation(_technicalDetailsToggle, "TechnicalDetails", "ⓘ");
             _technicalDetailsToggle.IsVisible = true;
             _technicalDetailsToggle.IsEnabled = !_busy && _result is not null;
+            RefreshPhoneWorkspace(phone);
 
             if (_detailMatrix != _selected)
             {

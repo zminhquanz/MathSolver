@@ -3,6 +3,9 @@ using System.Runtime.CompilerServices;
 using System.Runtime.Intrinsics.X86;
 using System.Buffers.Binary;
 using System.Diagnostics;
+using System.Runtime.Intrinsics;
+using System.Runtime.Intrinsics.Arm;
+using System.Runtime.InteropServices;
 
 namespace MathSolver.Services.Core;
 
@@ -84,10 +87,27 @@ public static partial class MatrixEngine
     {
         if (cap == MatrixBackend.Scalar || a.Rows < 16 || a.Columns < 16 || b.Rows < 16 || b.Columns < 16)
             return MatrixBackend.Scalar;
-        if ((cap == MatrixBackend.Auto || cap >= MatrixBackend.Avx512) && Avx512F.IsSupported) return MatrixBackend.Avx512;
-        if ((cap == MatrixBackend.Auto || cap >= MatrixBackend.Avx2) && Avx2.IsSupported) return MatrixBackend.Avx2;
+        return ResolveBackend(cap);
+    }
+
+    public static bool IsNeonSupported => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
+        && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated);
+
+    public static string NeonBackendName => AdvSimd.Arm64.IsSupported
+        ? "NEON (AdvSIMD, 128-bit)" : "NEON (Vector128 hybrid, 128-bit)";
+
+    internal static MatrixBackend ResolveBackend(MatrixBackend cap)
+    {
+        if (cap == MatrixBackend.Scalar) return MatrixBackend.Scalar;
+        if ((cap is MatrixBackend.Auto or MatrixBackend.Neon) && IsNeonSupported) return MatrixBackend.Neon;
+        if (cap == MatrixBackend.Neon) return MatrixBackend.Scalar;
+        if ((cap is MatrixBackend.Auto or MatrixBackend.Avx512) && Avx512F.IsSupported) return MatrixBackend.Avx512;
+        if ((cap is MatrixBackend.Auto or MatrixBackend.Avx512 or MatrixBackend.Avx2) && Avx2.IsSupported) return MatrixBackend.Avx2;
         return Sse2.IsSupported ? MatrixBackend.Sse2 : MatrixBackend.Scalar;
     }
+
+    private static int Lanes(MatrixBackend backend) => backend switch
+    { MatrixBackend.Avx512 => 8, MatrixBackend.Avx2 => 4, _ => 2 };
 
     private static MatrixCalculation? AddOrSubtract(IntegerMatrix a, IntegerMatrix b, MatrixOperation operation,
         MatrixBackend backend, int workers, CancellationToken cancellationToken, IProgress<double>? progress)
@@ -97,7 +117,7 @@ public static partial class MatrixEngine
         var right = b.DenseData!;
         var values = GC.AllocateUninitializedArray<Int128>(left.Length);
         bool subtract = operation == MatrixOperation.Subtract;
-        int lanes = backend == MatrixBackend.Sse2 ? 2 : backend == MatrixBackend.Avx2 ? 4 : 8;
+        int lanes = Lanes(backend);
         long kernelTicks = 0;
         var execution = ExecuteRows(a.Rows, workers, row =>
         {
@@ -107,6 +127,7 @@ public static partial class MatrixEngine
             int index = start;
             switch (backend)
             {
+                case MatrixBackend.Neon: index = ElementwiseNeon(left, right, values, start, end, subtract); break;
                 case MatrixBackend.Sse2: index = Elementwise128(left, right, values, start, end, subtract); break;
                 case MatrixBackend.Avx2: index = Elementwise256(left, right, values, start, end, subtract); break;
                 case MatrixBackend.Avx512: index = Elementwise512(left, right, values, start, end, subtract); break;

@@ -7,6 +7,7 @@ namespace MathSolver.Views;
 public sealed partial class MatrixView
 {
     private Button _copySelection = null!;
+    private Grid _clipboardTools = null!, _cellInfo = null!;
 
     private readonly ScrollView _workspaceScroll = new();
     private readonly VerticalStackLayout _setupPanel = new() { Spacing = 12 };
@@ -78,13 +79,17 @@ public sealed partial class MatrixView
         };
         DisplayDensityManager.BindControl(_cellValueToggle);
         _cellValueToggle.SetBinding(EmojiActionButton.CaptionProperty, new Binding(nameof(Label.Text), source: _selectedValue));
-        _cellValueToggle.Clicked += (_, _) => OpenMatrixCellDetails();
+        _cellValueToggle.Clicked += (_, _) =>
+        {
+            if (_phoneEntryWorkspace && _selected != 2) _viewport.EditSelectedCell();
+            else OpenMatrixCellDetails();
+        };
         _fullCellTitle.FontSize = 13;
         _fullCellValue.FontSize = 18;
         _fullCellValue.LineBreakMode = LineBreakMode.CharacterWrap;
         _cellValuePanel.Add(_fullCellTitle);
         _cellValuePanel.Add(_fullCellValue);
-        var cellInfo = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) }, AutomationId = "MatrixSelectedCell" };
+        var cellInfo = _cellInfo = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Auto), new(GridLength.Star) }, AutomationId = "MatrixSelectedCell" };
         cellInfo.Add(_coordinateToggle); cellInfo.Add(_cellValueToggle, 1, 0);
 
         var navigation = FlowGrid(130, 3);
@@ -96,7 +101,7 @@ public sealed partial class MatrixView
         navigation.Add(go);
         _coordinatePanel.Add(navigation);
 
-        var clipboard = FlowGrid(90, 2);
+        var clipboard = _clipboardTools = FlowGrid(90, 2);
         clipboard.AutomationId = "MatrixPrimaryTools";
         var copy = _copySelection = ActionButton("Workspace.Copy", "📋", OnCopySelection);
         _copySelection.SetDynamicResource(BackgroundColorProperty, "WallpaperDividerColor");
@@ -126,6 +131,7 @@ public sealed partial class MatrixView
         var secondary = _secondaryTools = FlowGrid(136, 2);
         _rangeSelectionToggle = ActionButton("RangeSelection.Start", "▧", (_, _) =>
         {
+            TryCloseMatrixDetails();
             if (_viewport.IsRangeSelectionMode) _viewport.CancelRangeSelection();
             else if (_viewport.BeginRangeSelection())
             {
@@ -146,7 +152,8 @@ public sealed partial class MatrixView
         _viewport.RangeSelectionModeChanged += () =>
         { if (CanRefreshLocalization) RefreshRangeSelectionControls(); };
         secondary.Add(_rangeSelectionToggle);
-        _moreTools.Add(ActionButton("SelectAll", "▦", (_, _) => _viewport.SelectAll()));
+        _moreTools.Add(ActionButton("SelectAll", "▦", (_, _) =>
+        { TryCloseMatrixDetails(); _viewport.SelectAll(); }));
         _moreToolsToggle = ActionButton("Workspace.MoreTools", "⋯", (_, _) =>
         {
             _workspaceRevealVersion++;
