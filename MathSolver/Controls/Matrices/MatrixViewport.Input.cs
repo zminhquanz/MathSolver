@@ -37,6 +37,9 @@ public sealed partial class MatrixViewport
     }
     private void AttachNativeInput()
     {
+#if ANDROID
+        AttachAndroidContextMenu();
+#endif
 #if WINDOWS
         DetachNativeInput();
         if (!CanUseInput || Handler?.PlatformView is not Microsoft.UI.Xaml.UIElement surface) return;
@@ -48,6 +51,9 @@ public sealed partial class MatrixViewport
     }
     private void DetachNativeInput()
     {
+#if ANDROID
+        DetachAndroidContextMenu();
+#endif
         CancelPointerGesture();
         DetachPointerInput();
 #if WINDOWS
