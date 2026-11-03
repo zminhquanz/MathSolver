@@ -31,7 +31,7 @@ public sealed class EmojiActionButton : Button
         if (emoji.Length > 0 && caption.StartsWith(emoji, StringComparison.Ordinal))
             caption = caption[emoji.Length..].TrimStart();
 
-        Text = emoji.Length == 0 ? caption : $"{emoji}  {caption}";
+        Text = emoji.Length == 0 ? caption : caption.Length == 0 ? emoji : $"{emoji}  {caption}";
         // Screen readers announce the action rather than the emoji's Unicode name.
         SemanticProperties.SetDescription(this, caption);
     }

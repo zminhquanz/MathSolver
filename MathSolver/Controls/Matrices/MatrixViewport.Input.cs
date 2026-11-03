@@ -48,6 +48,7 @@ public sealed partial class MatrixViewport
     }
     private void DetachNativeInput()
     {
+        CloseSelectionMenu();
         CancelPointerGesture();
         DetachPointerInput();
 #if WINDOWS
