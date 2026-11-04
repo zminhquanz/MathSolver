@@ -168,6 +168,9 @@ public sealed partial class GgufQuestionRuntime : IQuestionTextRuntime
             var settings=Sampling;
             return await Task.Run(async () =>
             {
+                long preparationStarted=Stopwatch.GetTimestamp();
+                PreparationStageObserver?.Invoke("prompt");
+                LastPreparation=null;
                 string input = FormatChatPrompt(_weights, contract, prompt);
                 // Count the exact chat framing without allocating a KV cache first.
                 int tokens = _weights.Tokenize(input, true, true, _parameters.Encoding).Length;
@@ -187,7 +190,12 @@ public sealed partial class GgufQuestionRuntime : IQuestionTextRuntime
                     // vocabulary when it violates the grammar. Grammar remains enforced.
                     GrammarOptimization = DefaultSamplingPipeline.GrammarOptimizationMode.Basic,
                     Grammar = new Grammar(BuildNovelGrammar(contract, excludedProse), "root") };
+                if(InferenceSeed is uint seed) sampling.Seed=seed;
+                PreparationStageObserver?.Invoke("context");
+                long constructorStarted=Stopwatch.GetTimestamp();
                 var executor = new StatelessExecutor(_weights, parameters) { ApplyTemplate = false };
+                double constructorMs=Stopwatch.GetElapsedTime(constructorStarted).TotalMilliseconds;
+                PreparationStageObserver?.Invoke("legacy-preparation");
                 var result = new StringBuilder();
                 int generatedTokens = 0;
                 long generationStarted = 0;
@@ -205,14 +213,21 @@ public sealed partial class GgufQuestionRuntime : IQuestionTextRuntime
                         // when the UTF-8 decoder has not yet produced any text.
                         // https://github.com/SciSharp/LLamaSharp/blob/v0.27.0/LLama/LLamaStatelessExecutor.cs
                         if (generatedTokens++ == 0) generationStarted = Stopwatch.GetTimestamp();
-                        onMetrics?.Invoke(new(generatedTokens, Stopwatch.GetElapsedTime(generationStarted)));
+                        if(generatedTokens==1)
+                        {
+                            LastPreparation=new(tokens,parameters.UBatchSize,false,0,0,0,0,
+                                Stopwatch.GetElapsedTime(preparationStarted).TotalMilliseconds,false,constructorMs)
+                                {NativeCpuVariant=NativeCpuVariant,OffloadedGpuLayers=GpuLayerCount};
+                            PreparationStageObserver?.Invoke("decode");
+                        }
+                        onMetrics?.Invoke(new(generatedTokens, Stopwatch.GetElapsedTime(generationStarted)){Preparation=LastPreparation});
                         result.Append(text);
                         if (result.Length > 12_000) throw new InvalidDataException("ModelOutputTooLong");
                         onText?.Invoke(text);
                     }
                     return result.ToString();
                 }
-                finally { executor.Context?.Dispose(); }
+                finally { executor.Context?.Dispose(); PreparationStageObserver?.Invoke("idle"); }
             }, cancellationToken).ConfigureAwait(false);
         }
         finally { _gate.Release(); }

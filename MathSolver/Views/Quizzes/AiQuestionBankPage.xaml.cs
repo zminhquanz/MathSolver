@@ -314,6 +314,20 @@ public partial class AiQuestionBankPage : ContentPage
                     : item.State == AiItemState.Validating ? AiJobState.Validating : AiJobState.Generating)))}"
             + (a.ErrorDetails is null ? "" : " · " + a.ErrorDetails)))
             + "\n" + T("Item." + item.State) + (item.Error is null ? "" : "\n" + ErrorText(item.Error));
+        if(item?.Attempts.LastOrDefault()?.Metrics?.Preparation is { } placement)
+#if ANDROID
+            ValidationLogEditor.Text += "\n" + placement.NativeCpuVariant;
+#else
+            ValidationLogEditor.Text += "\n" + string.Format(CultureInfo.CurrentCulture,T("NativePlacement"),
+                placement.NativeCpuVariant,placement.OffloadedGpuLayers);
+#endif
+        if(item?.Attempts.LastOrDefault()?.Metrics?.Preparation is {Separated:true} preparation)
+            ValidationLogEditor.Text += "\n" + string.Format(CultureInfo.CurrentCulture,T("PreparationTiming"),
+                preparation.MicroBatchSize,preparation.PromptTokens,
+                preparation.ContextCreateMilliseconds,preparation.ContextResetMilliseconds,
+                preparation.PrefillMilliseconds,preparation.FirstSampleMilliseconds,
+                preparation.FirstTokenMilliseconds,
+                T(preparation.ContextReused ? "ContextReused" : "ContextFresh"));
     }
 
     private static string ErrorText(string error)

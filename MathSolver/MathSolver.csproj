@@ -5,7 +5,6 @@
     <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
     <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
-    <PackageReference Include="LLamaSharp.Backend.Cpu.Android" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'" />
     <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
     <PackageReference Include="CommunityToolkit.Maui" Version="15.0.1" />
     <PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="10.0.0" />
@@ -14,10 +13,13 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.14" />
   </ItemGroup>
 
-  <!-- The backend package also declares its .so files as Content. Android
-       packages these through AndroidNativeLibrary; Content produces XA0101. -->
+  <!-- Rebuilt from LLamaSharp 0.30.0's exact llama.cpp revision with 16 KiB
+       ELF/RELRO alignment. Upstream Android package binaries are 4 KiB-only.
+       Keep both CPU ABIs and the optional KleidiAI variant synchronized. -->
   <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
-    <Content Remove="$(NuGetPackageRoot)llamasharp.backend.cpu.android\0.30.0\LLamaSharpRuntimes\**\*" />
+    <AndroidNativeLibrary Include="Platforms\Android\Native\llama\arm64-v8a\*.so" Abi="arm64-v8a" Condition="'$(RuntimeIdentifier)' != 'android-x64'" />
+    <AndroidNativeLibrary Include="Platforms\Android\Native\llama\x86_64\*.so" Abi="x86_64" Condition="'$(RuntimeIdentifier)' != 'android-arm64'" />
+    <MauiAsset Include="Platforms\Android\Native\llama\arm64-v8a\LICENSE*.txt" LogicalName="ThirdParty/AndroidCpu/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <PropertyGroup>

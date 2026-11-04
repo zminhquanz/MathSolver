@@ -15,6 +15,7 @@ public sealed partial class GgufQuestionRuntime
     private static readonly object NativeConfigurationLock=new();
     private static bool _nativeConfigured;
     private static long _nativeLogSequence;
+    internal static Action<string>? NativeDiagnosticObserver {get;set;}
     private static readonly ConcurrentQueue<(long Sequence,string Text)> NativeMessages=new();
     private AiComputeMode _loadedMode;
     public AiGpuBackend ActiveBackend {get;private set;}=AiGpuBackend.Cpu;
@@ -23,6 +24,12 @@ public sealed partial class GgufQuestionRuntime
     public string AccelerationFallbackReason {get;private set;}="";
     public IReadOnlyList<string> NativeLoadDiagnostics {get;private set;}=[];
     public IReadOnlyList<AiNativeGpuDevice> BackendDevices {get;private set;}=[];
+    public string NativeCpuVariant =>
+#if ANDROID
+        AndroidAiCpuBackend.Description;
+#else
+        "Packaged CPU";
+#endif
 
     public void ClearAccelerationFallback()=>AccelerationFallbackReason="";
 
@@ -38,13 +45,15 @@ public sealed partial class GgufQuestionRuntime
                 NativeLibraryConfig.All.WithLogCallback((level,text)=>
                 {
                     NativeMessages.Enqueue((Interlocked.Increment(ref _nativeLogSequence),text));
+                    try {NativeDiagnosticObserver?.Invoke(text);} catch { }
                     while(NativeMessages.Count>4096)NativeMessages.TryDequeue(out _);
                     Debug.WriteLine("[LLama] "+text);
                 });
 #if ANDROID
                 string directory=Android.App.Application.Context.ApplicationInfo!.NativeLibraryDir!;
-                foreach(string dependency in new[]{"libggml-base.so","libggml-cpu.so","libggml.so"})
-                    System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,dependency));
+                System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,"libggml-base.so"));
+                AndroidAiCpuBackend.Load(directory);
+                System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,"libggml.so"));
                 NativeLibraryConfig.LLama.WithLibrary(Path.Combine(directory,"libllama.so"));
                 NativeLibraryConfig.Mtmd.WithLibrary(Path.Combine(directory,"libmtmd.so"));
                 NativeLibraryConfig.All.WithCuda(false).WithVulkan(false);
@@ -74,9 +83,9 @@ public sealed partial class GgufQuestionRuntime
         }
     }
 
-    internal static ModelParams CreateModelParameters(string path,AiComputeMode mode,string? device)
+    internal static ModelParams CreateModelParameters(string path,AiComputeMode mode,string? device,bool? android=null)
     {
-        bool gpu=mode==AiComputeMode.Gpu&&!string.IsNullOrWhiteSpace(device)
+        bool gpu=!(android??OperatingSystem.IsAndroid())&&mode==AiComputeMode.Gpu&&!string.IsNullOrWhiteSpace(device)
             &&(device.StartsWith("CUDA",StringComparison.OrdinalIgnoreCase)||device.StartsWith("Vulkan",StringComparison.OrdinalIgnoreCase));
         return new(path)
         {
@@ -166,7 +175,12 @@ public sealed partial class GgufQuestionRuntime
         {
             var device=NativeApi.ggml_backend_dev_get((nuint)index);
             string? name=System.Runtime.InteropServices.Marshal.PtrToStringUTF8(NativeApi.ggml_backend_dev_name(device));
-            if(!string.IsNullOrWhiteSpace(name))devices.Add(WindowsAiNativeDeviceInspector.Describe(name,device));
+            if(!string.IsNullOrWhiteSpace(name))devices.Add(
+#if ANDROID
+                new(name,"CPU",0));
+#else
+                WindowsAiNativeDeviceInspector.Describe(name,device));
+#endif
         }
         return devices.ToArray();
     }

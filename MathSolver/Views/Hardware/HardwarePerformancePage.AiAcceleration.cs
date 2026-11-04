@@ -7,10 +7,12 @@ namespace MathSolver.Views;
 
 public partial class HardwarePerformancePage
 {
-#if WINDOWS
+#if WINDOWS || ANDROID
     private bool _aiAccelerationSubscribed;
+#if WINDOWS
     private bool _aiModeChangeInProgress;
     private bool _aiModeChangeFailed;
+#endif
     private int _aiAccelerationRefreshQueued;
 #endif
 
@@ -28,7 +30,7 @@ public partial class HardwarePerformancePage
         AiGpuModeIcon.SetBinding(Image.SourceProperty, new Binding(
             nameof(Button.TextColor), BindingMode.OneWay,
             converter: new AiProcessorIconConverter("ai_gpu"), source: AiGpuModeButton));
-#if !WINDOWS
+#if !WINDOWS && !ANDROID
         AiAccelerationSection.IsVisible = false;
 #endif
     }
@@ -46,7 +48,7 @@ public partial class HardwarePerformancePage
 
     private void SubscribeAiAccelerationUi()
     {
-#if WINDOWS
+#if WINDOWS || ANDROID
         if (!_aiAccelerationSubscribed)
         {
             _aiAccelerationSubscribed = true;
@@ -61,7 +63,7 @@ public partial class HardwarePerformancePage
 
     private void UnsubscribeAiAccelerationUi()
     {
-#if WINDOWS
+#if WINDOWS || ANDROID
         _aiAccelerationSubscribed = false;
         AiAccelerationManager.Changed -= QueueAiAccelerationRefresh;
         AiQuestionBank.Current.Changed -= QueueAiAccelerationRefresh;
@@ -72,7 +74,7 @@ public partial class HardwarePerformancePage
 
     private void RefreshAiAccelerationUi()
     {
-#if WINDOWS
+#if WINDOWS || ANDROID
         if (Dispatcher.IsDispatchRequired)
         {
             QueueAiAccelerationRefresh(this, EventArgs.Empty);
@@ -81,6 +83,21 @@ public partial class HardwarePerformancePage
 
         var bank = AiQuestionBank.Current;
         var runtime = bank.Runtime;
+#if ANDROID
+        AiAccelerationTitleLabel.Text = AiText("Bộ xử lý AI", "AI processor");
+        AiAccelerationDescriptionLabel.Text = AiText(
+            "AI trên Android sử dụng CPU. KleidiAI được tự động sử dụng khi CPU hỗ trợ. Thiết lập này độc lập với SIMD bên dưới.",
+            "AI on Android uses the CPU. KleidiAI is used automatically on supported CPUs. This is independent of SIMD below.");
+        AiComputeModeSelector.IsVisible = false;
+        AiAdapterLabel.IsVisible = false;
+        AiPreferredBackendLabel.IsVisible = false;
+        AiFallbackStatusLabel.IsVisible = false;
+        AiModeBusyLabel.IsVisible = false;
+        AiRuntimeStatusLabel.Text = runtime.IsLoaded
+            ? AiText("Đang dùng: ", "Currently using: ") + runtime.NativeCpuVariant
+            : AiText("Mô hình chưa được nạp. CPU được chọn tự động khi tạo đề.",
+                "The model is not loaded. CPU is selected automatically when generating questions.");
+#else
         bool gpuSelected = AiAccelerationManager.Mode == AiComputeMode.Gpu;
         bool busy = _aiModeChangeInProgress || bank.IsManaging || bank.Generation.IsRunning;
         string preferredBackend = AiBackendName(AiAccelerationManager.PreferredBackend);
@@ -91,8 +108,8 @@ public partial class HardwarePerformancePage
             "Choose CPU or GPU for the AI model on Windows. NVIDIA GPUs use CUDA; AMD/Intel GPUs use Vulkan. This setting is separate from SIMD and benchmark threading below.");
         AiAdapterLabel.Text = AiAccelerationManager.IsSupported
             ? AiText("GPU được phát hiện: ", "Detected GPU: ") + AiAccelerationManager.AdapterName
-            : AiText("Không phát hiện GPU Windows được hỗ trợ. AI sử dụng CPU.",
-                "No supported Windows GPU detected. AI uses the CPU.");
+            : AiText("Không phát hiện GPU được hỗ trợ. AI sử dụng CPU.",
+                "No supported GPU detected. AI uses the CPU.");
 
         AiCpuModeCaption.Text = gpuSelected ? "CPU" : "CPU ✓";
         AiGpuModeCaption.Text = gpuSelected ? "GPU ✓" : "GPU";
@@ -144,6 +161,7 @@ public partial class HardwarePerformancePage
                             "The AI processor could not be changed. Please retry when AI is ready.")
                         : "";
 #endif
+#endif
     }
 
     private void OnAiCpuModeClicked(object? sender, EventArgs e)
@@ -160,7 +178,7 @@ public partial class HardwarePerformancePage
 #endif
     }
 
-#if WINDOWS
+#if WINDOWS || ANDROID
     private void QueueAiAccelerationRefresh(object? sender, EventArgs e)
     {
         if (!_aiAccelerationSubscribed || Interlocked.Exchange(ref _aiAccelerationRefreshQueued, 1) != 0)
@@ -173,6 +191,7 @@ public partial class HardwarePerformancePage
         })) Interlocked.Exchange(ref _aiAccelerationRefreshQueued, 0);
     }
 
+#if WINDOWS
     private async Task ChangeAiComputeModeAsync(AiComputeMode mode)
     {
         var bank = AiQuestionBank.Current;
@@ -203,10 +222,6 @@ public partial class HardwarePerformancePage
         }
     }
 
-    private static string AiText(string vietnamese, string english) =>
-        LocalizationManager.Instance.CurrentCulture.StartsWith("vi", StringComparison.OrdinalIgnoreCase)
-            ? vietnamese : english;
-
     private static string AiBackendName(AiGpuBackend backend) => backend switch
     {
         AiGpuBackend.Cuda => "CUDA",
@@ -221,5 +236,9 @@ public partial class HardwarePerformancePage
         button.SetDynamicResource(Button.BorderColorProperty, selected ? "PrimaryColor" : "PrimaryBorderColor");
         button.BorderWidth = 1.5;
     }
+#endif
+    private static string AiText(string vietnamese, string english) =>
+        LocalizationManager.Instance.CurrentCulture.StartsWith("vi", StringComparison.OrdinalIgnoreCase)
+            ? vietnamese : english;
 #endif
 }

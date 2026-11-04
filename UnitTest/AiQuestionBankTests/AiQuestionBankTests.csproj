@@ -15,5 +15,6 @@
     <ProjectReference Include="../TestHost/TestHost.csproj" />
     <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.cs" Link="QuestionBank/GgufQuestionRuntime.cs" />
     <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.Acceleration.cs" Link="QuestionBank/GgufQuestionRuntime.Acceleration.cs" />
+    <Compile Include="../../MathSolver/Services/QuestionBank/GgufQuestionRuntime.Diagnostics.cs" Link="QuestionBank/GgufQuestionRuntime.Diagnostics.cs" />
   </ItemGroup>
 </Project>

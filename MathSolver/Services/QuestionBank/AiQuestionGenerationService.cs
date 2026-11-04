@@ -24,9 +24,19 @@ public interface IQuestionTextRuntime
 
 public sealed record AiGenerationMetrics(int GeneratedTokens, TimeSpan GenerationElapsed)
 {
+    public AiInferencePreparation? Preparation { get; init; }
     // The first token marks the end of prompt processing; subsequent tokens are timed.
     public double? TokensPerSecond => GeneratedTokens > 1 && GenerationElapsed.TotalSeconds > 0
         ? (GeneratedTokens - 1) / GenerationElapsed.TotalSeconds : null;
+}
+
+public sealed record AiInferencePreparation(int PromptTokens, uint MicroBatchSize, bool ContextReused,
+    double ContextCreateMilliseconds, double ContextResetMilliseconds, double PrefillMilliseconds,
+    double FirstSampleMilliseconds, double? FirstTokenMilliseconds, bool Separated = true,
+    double LegacyConstructorMilliseconds = 0)
+{
+    public string NativeCpuVariant { get; init; } = "";
+    public int OffloadedGpuLayers { get; init; }
 }
 
 public enum AiJobState { Idle, Generating, Validating, Completed, Stopped, Failed }
