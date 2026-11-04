@@ -279,6 +279,18 @@
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
+                            x:Name="AiCpuRuntimeLabel"
+                            AutomationId="AiCpuRuntimeLabel"
+                            FontAttributes="Bold"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+                        <Label
+                            x:Name="AiCpuRuntimeDetailsLabel"
+                            AutomationId="AiCpuRuntimeDetailsLabel"
+                            LineBreakMode="WordWrap"
+                            Style="{StaticResource HardwareDescriptionStyle}" />
+
+                        <Label
                             x:Name="AiFallbackStatusLabel"
                             IsVisible="False"
                             LineBreakMode="WordWrap"

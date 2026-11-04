@@ -17,6 +17,9 @@ public sealed partial class GgufQuestionRuntime
     private static long _nativeLogSequence;
     internal static Action<string>? NativeDiagnosticObserver {get;set;}
     private static readonly ConcurrentQueue<(long Sequence,string Text)> NativeMessages=new();
+    // KleidiAI selects these once per process; model logs can evict them from
+    // the general bounded queue before a subsequent model load.
+    private static readonly ConcurrentQueue<string> NativeCpuKernelMessages=new();
     private AiComputeMode _loadedMode;
     public AiGpuBackend ActiveBackend {get;private set;}=AiGpuBackend.Cpu;
     public int GpuLayerCount {get;private set;}
@@ -24,6 +27,7 @@ public sealed partial class GgufQuestionRuntime
     public string AccelerationFallbackReason {get;private set;}="";
     public IReadOnlyList<string> NativeLoadDiagnostics {get;private set;}=[];
     public IReadOnlyList<AiNativeGpuDevice> BackendDevices {get;private set;}=[];
+    public AiCpuRuntimeReport? CpuRuntimeReport {get;private set;}
     public string NativeCpuVariant =>
 #if ANDROID
         AndroidAiCpuBackend.Description;
@@ -45,6 +49,11 @@ public sealed partial class GgufQuestionRuntime
                 NativeLibraryConfig.All.WithLogCallback((level,text)=>
                 {
                     NativeMessages.Enqueue((Interlocked.Increment(ref _nativeLogSequence),text));
+                    if(text.StartsWith("kleidiai: primary ",StringComparison.Ordinal))
+                    {
+                        NativeCpuKernelMessages.Enqueue(text);
+                        while(NativeCpuKernelMessages.Count>16)NativeCpuKernelMessages.TryDequeue(out _);
+                    }
                     try {NativeDiagnosticObserver?.Invoke(text);} catch { }
                     while(NativeMessages.Count>4096)NativeMessages.TryDequeue(out _);
                     Debug.WriteLine("[LLama] "+text);
@@ -161,9 +170,28 @@ public sealed partial class GgufQuestionRuntime
             }
             if(GpuLayerCount==0){ActiveBackend=AiGpuBackend.Cpu;ActiveDeviceName="CPU";}
             NativeLoadDiagnostics=NativeMessages.Where(x=>x.Sequence>start).Select(x=>x.Text).ToArray();
+            CaptureCpuRuntimeReport();
             _loadedMode=requested;_parameters=parameters;_weights=weights;weights=null;
         }
         finally {weights?.Dispose();}
+    }
+
+    private void CaptureCpuRuntimeReport()
+    {
+        try
+        {
+            string info;
+            // Native returns a shared string. Copy on the inference worker;
+            // hardware-page rendering must never initialize or call native code.
+            lock(NativeConfigurationLock)
+                info=System.Runtime.InteropServices.Marshal.PtrToStringUTF8(NativeApi.llama_print_system_info())??"";
+            CpuRuntimeReport=AiCpuRuntimeReport.Create(info,NativeCpuKernelMessages.Concat(NativeLoadDiagnostics));
+        }
+        catch(Exception error) when(error is EntryPointNotFoundException or DllNotFoundException or RegexMatchTimeoutException)
+        {
+            CpuRuntimeReport=null;
+            Debug.WriteLine("[AI CPU runtime] Feature information unavailable: "+error.Message);
+        }
     }
 
     private static AiNativeGpuDevice[] RegisteredDevices()

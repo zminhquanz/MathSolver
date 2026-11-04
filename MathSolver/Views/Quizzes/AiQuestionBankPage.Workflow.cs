@@ -48,11 +48,17 @@ public partial class AiQuestionBankPage
 
     private void RefreshWorkflowDisclosures()
     {
+#if WINDOWS
+        GuidanceOverview.IsVisible = GuidanceSteps.IsVisible = GuidancePanel.IsVisible;
+        string guidanceKey = "Desktop.Guidance";
+#else
+        string guidanceKey = "Workflow.Details";
+#endif
         ModelToolsToggleButton.Text = (ModelToolsPanel.IsVisible ? "▾ " : "▸ ") + T("Workflow.ModelTools");
-        GuidanceToggleButton.Text = (GuidancePanel.IsVisible ? "▾ " : "▸ ") + T("Workflow.Details");
+        GuidanceToggleButton.Text = (GuidancePanel.IsVisible ? "▾ " : "▸ ") + T(guidanceKey);
         SemanticProperties.SetDescription(ModelToolsToggleButton,
             T("Workflow.ModelTools") + ". " + T(ModelToolsPanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
         SemanticProperties.SetDescription(GuidanceToggleButton,
-            T("Workflow.Details") + ". " + T(GuidancePanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
+            T(guidanceKey) + ". " + T(GuidancePanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
     }
 }

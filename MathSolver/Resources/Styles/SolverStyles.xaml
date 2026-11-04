@@ -87,7 +87,7 @@
 
     <Style x:Key="SolverHeroSubtitleStyle" TargetType="Label">
         <Setter Property="controls:SolverHeader.Role" Value="Description" />
-        <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=17, Default=17}" />
+        <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=14, Default=17}" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
@@ -208,12 +208,14 @@
     </Style>
 
     <Style x:Key="SolverSecondaryActionStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+        <Setter Property="FontAttributes" Value="{OnPlatform WinUI=None, Default=Bold}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
     </Style>
 
     <!-- Tinted actions remain distinguishable from pale wallpaper and cards. -->
     <Style x:Key="SolverOutlinedActionStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+        <Setter Property="FontAttributes" Value="{OnPlatform WinUI=None, Default=Bold}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
         <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
         <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />

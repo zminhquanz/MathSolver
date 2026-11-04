@@ -161,6 +161,10 @@ public partial class HardwarePerformancePage
                             "The AI processor could not be changed. Please retry when AI is ready.")
                         : "";
 #endif
+        var cpuDisplay=AiCpuRuntimePresentation.Format(runtime.CpuRuntimeReport,runtime.IsLoaded,
+            LocalizationManager.Instance.CurrentCulture.StartsWith("vi",StringComparison.OrdinalIgnoreCase));
+        AiCpuRuntimeLabel.Text=cpuDisplay.Title;
+        AiCpuRuntimeDetailsLabel.Text=cpuDisplay.Details;
 #endif
     }
 
