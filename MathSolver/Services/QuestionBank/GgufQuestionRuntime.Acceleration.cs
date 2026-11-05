@@ -15,7 +15,11 @@ public sealed partial class GgufQuestionRuntime
     private static readonly object NativeConfigurationLock=new();
     private static bool _nativeConfigured;
     private static long _nativeLogSequence;
+    internal static Action<string>? NativeDiagnosticObserver {get;set;}
     private static readonly ConcurrentQueue<(long Sequence,string Text)> NativeMessages=new();
+    // KleidiAI selects these once per process; model logs can evict them from
+    // the general bounded queue before a subsequent model load.
+    private static readonly ConcurrentQueue<string> NativeCpuKernelMessages=new();
     private AiComputeMode _loadedMode;
     public AiGpuBackend ActiveBackend {get;private set;}=AiGpuBackend.Cpu;
     public int GpuLayerCount {get;private set;}
@@ -23,6 +27,13 @@ public sealed partial class GgufQuestionRuntime
     public string AccelerationFallbackReason {get;private set;}="";
     public IReadOnlyList<string> NativeLoadDiagnostics {get;private set;}=[];
     public IReadOnlyList<AiNativeGpuDevice> BackendDevices {get;private set;}=[];
+    public AiCpuRuntimeReport? CpuRuntimeReport {get;private set;}
+    public string NativeCpuVariant =>
+#if ANDROID
+        AndroidAiCpuBackend.Description;
+#else
+        "Packaged CPU";
+#endif
 
     public void ClearAccelerationFallback()=>AccelerationFallbackReason="";
 
@@ -38,13 +49,20 @@ public sealed partial class GgufQuestionRuntime
                 NativeLibraryConfig.All.WithLogCallback((level,text)=>
                 {
                     NativeMessages.Enqueue((Interlocked.Increment(ref _nativeLogSequence),text));
+                    if(text.StartsWith("kleidiai: primary ",StringComparison.Ordinal))
+                    {
+                        NativeCpuKernelMessages.Enqueue(text);
+                        while(NativeCpuKernelMessages.Count>16)NativeCpuKernelMessages.TryDequeue(out _);
+                    }
+                    try {NativeDiagnosticObserver?.Invoke(text);} catch { }
                     while(NativeMessages.Count>4096)NativeMessages.TryDequeue(out _);
                     Debug.WriteLine("[LLama] "+text);
                 });
 #if ANDROID
                 string directory=Android.App.Application.Context.ApplicationInfo!.NativeLibraryDir!;
-                foreach(string dependency in new[]{"libggml-base.so","libggml-cpu.so","libggml.so"})
-                    System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,dependency));
+                System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,"libggml-base.so"));
+                AndroidAiCpuBackend.Load(directory);
+                System.Runtime.InteropServices.NativeLibrary.Load(Path.Combine(directory,"libggml.so"));
                 NativeLibraryConfig.LLama.WithLibrary(Path.Combine(directory,"libllama.so"));
                 NativeLibraryConfig.Mtmd.WithLibrary(Path.Combine(directory,"libmtmd.so"));
                 NativeLibraryConfig.All.WithCuda(false).WithVulkan(false);
@@ -74,9 +92,9 @@ public sealed partial class GgufQuestionRuntime
         }
     }
 
-    internal static ModelParams CreateModelParameters(string path,AiComputeMode mode,string? device)
+    internal static ModelParams CreateModelParameters(string path,AiComputeMode mode,string? device,bool? android=null)
     {
-        bool gpu=mode==AiComputeMode.Gpu&&!string.IsNullOrWhiteSpace(device)
+        bool gpu=!(android??OperatingSystem.IsAndroid())&&mode==AiComputeMode.Gpu&&!string.IsNullOrWhiteSpace(device)
             &&(device.StartsWith("CUDA",StringComparison.OrdinalIgnoreCase)||device.StartsWith("Vulkan",StringComparison.OrdinalIgnoreCase));
         return new(path)
         {
@@ -152,9 +170,28 @@ public sealed partial class GgufQuestionRuntime
             }
             if(GpuLayerCount==0){ActiveBackend=AiGpuBackend.Cpu;ActiveDeviceName="CPU";}
             NativeLoadDiagnostics=NativeMessages.Where(x=>x.Sequence>start).Select(x=>x.Text).ToArray();
+            CaptureCpuRuntimeReport();
             _loadedMode=requested;_parameters=parameters;_weights=weights;weights=null;
         }
         finally {weights?.Dispose();}
+    }
+
+    private void CaptureCpuRuntimeReport()
+    {
+        try
+        {
+            string info;
+            // Native returns a shared string. Copy on the inference worker;
+            // hardware-page rendering must never initialize or call native code.
+            lock(NativeConfigurationLock)
+                info=System.Runtime.InteropServices.Marshal.PtrToStringUTF8(NativeApi.llama_print_system_info())??"";
+            CpuRuntimeReport=AiCpuRuntimeReport.Create(info,NativeCpuKernelMessages.Concat(NativeLoadDiagnostics));
+        }
+        catch(Exception error) when(error is EntryPointNotFoundException or DllNotFoundException or RegexMatchTimeoutException)
+        {
+            CpuRuntimeReport=null;
+            Debug.WriteLine("[AI CPU runtime] Feature information unavailable: "+error.Message);
+        }
     }
 
     private static AiNativeGpuDevice[] RegisteredDevices()
@@ -166,7 +203,12 @@ public sealed partial class GgufQuestionRuntime
         {
             var device=NativeApi.ggml_backend_dev_get((nuint)index);
             string? name=System.Runtime.InteropServices.Marshal.PtrToStringUTF8(NativeApi.ggml_backend_dev_name(device));
-            if(!string.IsNullOrWhiteSpace(name))devices.Add(WindowsAiNativeDeviceInspector.Describe(name,device));
+            if(!string.IsNullOrWhiteSpace(name))devices.Add(
+#if ANDROID
+                new(name,"CPU",0));
+#else
+                WindowsAiNativeDeviceInspector.Describe(name,device));
+#endif
         }
         return devices.ToArray();
     }

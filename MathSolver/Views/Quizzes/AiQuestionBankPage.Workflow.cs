@@ -1,18 +1,16 @@
+using MathSolver.Services.Appearance;
+
 namespace MathSolver.Views;
 
 public partial class AiQuestionBankPage
 {
-    private void RenderWorkflow(bool running, int pending)
+    private void RenderWorkflow(bool running, AiPresentation presentation)
     {
-        WorkflowStatusLabel.Text = T(_bank.IsManaging ? "Workflow.Managing"
-            : running ? "Workflow.Generating"
-            : pending > 0 ? "Workflow.Review"
-            : _bank.Runtime.CanGenerate ? "Workflow.Ready" : "Workflow.NeedModel");
+        WorkflowStatusLabel.Text = T(presentation.WorkflowKey);
         CancelModelButton.IsVisible = _bank.IsManaging;
         StopButton.IsVisible = running;
         Grid.SetColumnSpan(GenerateButton, running ? 1 : 2);
-        JobStatusLabel.IsVisible = running || _bank.Generation.Snapshot.Items.Count > 0
-            || _bank.Generation.Snapshot.Error is not null;
+        JobStatusLabel.IsVisible = presentation.ShowJobStatus;
         RefreshWorkflowDisclosures();
     }
 
@@ -48,11 +46,17 @@ public partial class AiQuestionBankPage
 
     private void RefreshWorkflowDisclosures()
     {
+#if WINDOWS
+        GuidanceOverview.IsVisible = GuidanceSteps.IsVisible = GuidancePanel.IsVisible;
+        string guidanceKey = "Desktop.Guidance";
+#else
+        string guidanceKey = "Workflow.Details";
+#endif
         ModelToolsToggleButton.Text = (ModelToolsPanel.IsVisible ? "▾ " : "▸ ") + T("Workflow.ModelTools");
-        GuidanceToggleButton.Text = (GuidancePanel.IsVisible ? "▾ " : "▸ ") + T("Workflow.Details");
+        GuidanceToggleButton.Text = (GuidancePanel.IsVisible ? "▾ " : "▸ ") + T(guidanceKey);
         SemanticProperties.SetDescription(ModelToolsToggleButton,
             T("Workflow.ModelTools") + ". " + T(ModelToolsPanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
         SemanticProperties.SetDescription(GuidanceToggleButton,
-            T("Workflow.Details") + ". " + T(GuidancePanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
+            T(guidanceKey) + ". " + T(GuidancePanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
     }
 }

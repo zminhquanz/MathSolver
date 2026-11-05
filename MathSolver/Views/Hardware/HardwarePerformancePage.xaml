@@ -200,7 +200,7 @@
 
                 <Border
                     x:Name="AiAccelerationSection"
-                    IsVisible="{OnPlatform WinUI=True, Default=False}"
+                    IsVisible="{OnPlatform Android=True, WinUI=True, Default=False}"
                     Style="{StaticResource HardwareSectionStyle}">
                     <VerticalStackLayout Spacing="10">
                         <Label
@@ -218,7 +218,8 @@
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                        <Grid x:Name="AiComputeModeSelector" ColumnDefinitions="*,*" ColumnSpacing="10"
+                              IsVisible="{OnPlatform Android=False, Default=True}">
                             <Grid>
                             <Button
                                 x:Name="AiCpuModeButton"
@@ -276,6 +277,18 @@
                             FontAttributes="Bold"
                             LineBreakMode="WordWrap"
                             TextColor="{DynamicResource TextPrimaryColor}" />
+
+                        <Label
+                            x:Name="AiCpuRuntimeLabel"
+                            AutomationId="AiCpuRuntimeLabel"
+                            FontAttributes="Bold"
+                            LineBreakMode="WordWrap"
+                            TextColor="{DynamicResource TextPrimaryColor}" />
+                        <Label
+                            x:Name="AiCpuRuntimeDetailsLabel"
+                            AutomationId="AiCpuRuntimeDetailsLabel"
+                            LineBreakMode="WordWrap"
+                            Style="{StaticResource HardwareDescriptionStyle}" />
 
                         <Label
                             x:Name="AiFallbackStatusLabel"

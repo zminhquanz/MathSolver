@@ -79,7 +79,7 @@
       {"Key":"Quiz.ProblemProportion","IllustrationId":"proportion","DescriptionKey":"Choice.Description.proportion"},
       {"Key":"Quiz.ProportionDirect","IllustrationId":"proportion-direct","DescriptionKey":"Choice.Skill.Quiz.ProportionDirect"},
       {"Key":"Quiz.ProportionInverse","IllustrationId":"proportion-inverse","DescriptionKey":"Choice.Skill.Quiz.ProportionInverse"},
-      {"Key":"Quiz.ProportionUnitaryGroupCount","IllustrationId":"proportion-direct","DescriptionKey":"Choice.Skill.Quiz.ProportionUnitaryGroupCount"},
+      {"Key":"Quiz.ProportionUnitaryGroupCount","IllustrationId":"proportion-unitary-groups","DescriptionKey":"Choice.Skill.Quiz.ProportionUnitaryGroupCount"},
       {"Key":"Quiz.ProblemDecimal","IllustrationId":"decimal","DescriptionKey":"Choice.Description.decimal"},
       {"Key":"Quiz.ProblemPercentage","IllustrationId":"percentage","DescriptionKey":"Choice.Description.percentage"},
       {"Key":"Quiz.ProblemVisualGeometry","IllustrationId":"visual-angle","DescriptionKey":"Choice.Description.visual-angle"},
@@ -5716,6 +5716,17 @@
         "Scope":  "Extension",
         "Coverage":  "Partial",
         "Constraints":  "Grades describe the skill only; star variants may exceed the grade number range or reasoning depth.",
+        "SourcePages":  "21-46"
+    },
+    {
+        "Id":  "Proportion.UnitaryGroupCount",
+        "Kind":  "Proportion",
+        "Subtype":  "UnitaryGroupCount",
+        "Grades":  [4, 5],
+        "RequirementId":  "Curriculum.Requirement.Proportion.UnitaryGroupCount",
+        "Scope":  "Core",
+        "Coverage":  "Partial",
+        "Constraints":  "Whole-number groups and items per group; grade references follow the existing unitary/direct-proportion range, not every star's numeric difficulty.",
         "SourcePages":  "21-46"
     },
     {

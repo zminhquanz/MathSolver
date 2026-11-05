@@ -92,10 +92,18 @@ internal static partial class PuzzleTests
                 ProportionQuizContract proportion = question.ProportionProblem!;
                 Require(proportion.Type == (ProportionQuizType)subtype,
                     $"{label}: wrong proportion type.");
-                BigInteger expectedProportion = proportion.Type == ProportionQuizType.Direct
-                    ? (BigInteger)proportion.B * proportion.C / proportion.A
-                    : (BigInteger)proportion.A * proportion.B / proportion.C
-                      - (proportion.AsksForAdditionalPeople ? proportion.A : 0);
+                BigInteger expectedProportion = proportion.Type switch
+                {
+                    ProportionQuizType.Direct => (BigInteger)proportion.B * proportion.C / proportion.A,
+                    ProportionQuizType.Inverse => (BigInteger)proportion.A * proportion.B / proportion.C
+                        - (proportion.AsksForAdditionalPeople ? proportion.A : 0),
+                    ProportionQuizType.UnitaryGroupCount => (BigInteger)proportion.A * proportion.C / proportion.B,
+                    _ => throw new ArgumentOutOfRangeException(nameof(subtype))
+                };
+                if (proportion.Type == ProportionQuizType.UnitaryGroupCount)
+                    Require(proportion.B % proportion.A == 0 && proportion.C % (proportion.B / proportion.A) == 0
+                        && proportion.GroupCountUnits is { } units && proportion.AnswerUnit == units.Groups,
+                        $"{label}: group-count facts must have an exact item rate and group-count unit.");
                 Require(proportion.CorrectAnswer == expectedProportion &&
                         question.CorrectAnswer == expectedProportion,
                     $"{label}: incorrect proportion answer.");

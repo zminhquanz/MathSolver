@@ -35,14 +35,13 @@ public sealed partial class EssayAnswerValidator
             bool first=lines.Length==2&&i==0;
             var (calculation,unit)=SplitEquationResult(q,lines[i]);
             int equals=calculation.IndexOf('=');
-            string enteredStructure=equals>0?NormalizeProportionEquation(calculation[..equals]):"";
-            var forms=first?new[]{$"{p.B} ÷ {p.A} = {rate}"}:new[]{
-                $"{p.C} ÷ ({p.B} ÷ {p.A}) = {answer}",$"{p.C} × {p.A} ÷ {p.B} = {answer}",$"{p.A} × {p.C} ÷ {p.B} = {answer}",
-                $"{p.C} ÷ {p.B} × {p.A} = {answer}",$"{p.A} ÷ {p.B} × {p.C} = {answer}",$"{p.A} ÷ ({p.B} ÷ {p.C}) = {answer}"};
-            bool shape=forms.Any(f=>NormalizeProportionEquation(f[..f.IndexOf('=')])==enteredStructure)
-                ||!first&&lines.Length==2&&enteredStructure==NormalizeProportionEquation($"{p.C} ÷ {rate}");
-            var result=shape?ValidateCalculatedEquation(first?q with {CorrectAnswer=rate}:q,calculation)
-                :(false,EssayAnswerError.WrongOperandsOrOperation);
+            var forms=first?new[]{$"{p.B} ÷ {p.A}"}:new[]{
+                $"{p.C} ÷ ({p.B} ÷ {p.A})",$"{p.C} × {p.A} ÷ {p.B}",$"{p.A} × {p.C} ÷ {p.B}",
+                $"{p.C} ÷ {p.B} × {p.A}",$"{p.A} ÷ {p.B} × {p.C}",$"{p.A} ÷ ({p.B} ÷ {p.C})"};
+            bool shape=equals>0&&(MatchesUnitaryGroupCalculation(calculation[..equals],forms)
+                ||!first&&lines.Length==2&&MatchesUnitaryGroupCalculation(calculation[..equals],[$"{p.C} ÷ {rate}"]));
+            var result=ValidateCalculatedEquation(first?q with {CorrectAnswer=rate}:q,calculation);
+            if(result.IsCorrect&&!shape)result=(false,EssayAnswerError.WrongOperandsOrOperation);
             bool unitOk=first?IsGroupRateUnit(unit,p.GroupCountUnits!):GroupCountUnitMatches(unit,p.GroupCountUnits!.Groups);
             if(result.Item1&&!unitOk)result=(false,EssayAnswerError.WrongEquationUnit);
             EssayCalculationEvaluator.Value value=default;
@@ -59,5 +58,21 @@ public sealed partial class EssayAnswerValidator
         }
         steps=checkedSteps;var failed=checkedSteps.FirstOrDefault(s=>!s.IsCorrect);
         return failed is null?(true,EssayAnswerError.None):(false,failed.Error);
+    }
+
+    private static bool MatchesUnitaryGroupCalculation(string expression,IEnumerable<string> forms)
+    {
+        // Match parsed operations, retaining parentheses and the original facts.
+        // Harmless outer identities must not turn an answer-only calculation or
+        // an unproved unit rate into a source-based solution.
+        if(!EssayCalculationEvaluator.TryGetStructure(expression,out string entered,fractionLiterals:false))return false;
+        foreach(string form in forms)
+        {
+            if(!EssayCalculationEvaluator.TryGetStructure(form,out string expected,fractionLiterals:false))continue;
+            if(entered==expected||entered==$"+({expected},n(0))"||entered==$"+(n(0),{expected})"
+                ||entered==$"-({expected},n(0))"||entered==$"*({expected},n(1))"
+                ||entered==$"*(n(1),{expected})"||entered==$"/({expected},n(1))")return true;
+        }
+        return false;
     }
 }

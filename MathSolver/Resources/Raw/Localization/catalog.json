@@ -1217,6 +1217,20 @@
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     },
+    "AiBank.PreparationTiming": {
+      "context": "AI developer diagnostics: allocation/reset, GPU-synchronized prefill and time to first token",
+      "translatorNote": "Preserve placeholders {0} through {7}, numeric formats, UBatch and ms. Time to first token includes all preparation; do not sum it with the child phases."
+    },
+    "AiBank.NativePlacement": {
+      "context": "AI developer diagnostics: CPU native variant selected and actual model layer offload",
+      "translatorNote": "Preserve {0} (backend name) and {1} (actual layer count). This describes model placement, not simultaneous execution or per-kernel counters."
+    },
+    "AiBank.ContextReused": {
+      "context": "AI developer diagnostics: context allocation reused within a multi-question generation batch"
+    },
+    "AiBank.ContextFresh": {
+      "context": "AI developer diagnostics: a new context allocation"
+    },
     "AiBank.ShowDiagnostics": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."

@@ -11,6 +11,13 @@ public sealed record AiNativeGpuDevice(string Name, string Description, ulong Me
 /// <summary>Hardware preference only; native backend/driver availability is checked by the runtime.</summary>
 public static class AiAccelerationPolicy
 {
+    public static bool CanUseAndroidKleidiAI(bool arm64,ulong hwcap,ulong hwcap2)
+    {
+        // ARMv8.2-a + fp16 + dotprod + i8mm: CRC32, atomics, scalar/vector
+        // FP16, RDM, dot product and I8MM. Check the entire compiled ISA floor.
+        const ulong required=(1UL<<7)|(1UL<<8)|(1UL<<9)|(1UL<<10)|(1UL<<12)|(1UL<<20);
+        return arm64&&(hwcap&required)==required&&(hwcap2&(1UL<<13))!=0;
+    }
     public static AiNativeGpuDevice? SelectNativeDevice(IEnumerable<AiNativeGpuDevice> devices,
         AiGpuBackend backend, string preferredAdapterName)
     {

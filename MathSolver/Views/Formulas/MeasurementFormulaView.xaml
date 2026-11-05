@@ -252,7 +252,7 @@
                             TextColor="{DynamicResource ContentDangerTextColor}" />
                 </VerticalStackLayout>
 
-                <controls:FormulaDetails Title="{Binding Source={x:Reference ReferenceTitleLabel}, Path=Text}">
+                <controls:FormulaDetails Title="{Binding Source={x:Reference ReferenceTitleLabel}, Path=Text, x:DataType=Label}">
                     <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
@@ -285,7 +285,7 @@
                 </Border>
                 </controls:FormulaDetails>
 
-                <controls:FormulaDetails Title="{Binding Source={x:Reference TipsTitleLabel}, Path=Text}">
+                <controls:FormulaDetails Title="{Binding Source={x:Reference TipsTitleLabel}, Path=Text, x:DataType=Label}">
                     <Border
                     Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
                     BackgroundColor="{DynamicResource WallpaperSurfaceColor}"

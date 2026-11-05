@@ -95,6 +95,10 @@ public partial class CalculationPage : ContentPage
 
     private PowerRootView? PowerRootSolverView => PowerRootSolverHost.Content as PowerRootView;
     private MatrixView? MatrixSolverView => MatrixSolverHost.Content as MatrixView;
+#if ANDROID
+    internal bool KeepMatrixNavigationCompact => _isPageActive && _selectedSubTab == CalculationSubTab.Matrix
+        && MatrixSolverView?.IsPhoneNavigationCompact == true;
+#endif
 
 #if ANDROID
     private readonly AndroidSubTabSwipeNavigator _androidSubTabSwipe;
@@ -190,7 +194,11 @@ public partial class CalculationPage : ContentPage
         // re-assert này sửa chrome ngay trong lifecycle của trang chính.
         Shell.SetTabBarIsVisible(
             this,
+#if ANDROID
+            !KeepMatrixNavigationCompact);
+#else
             true);
+#endif
 
         OnCalculationSubTabGridSizeChanged(
             CalculationSubTabGrid,

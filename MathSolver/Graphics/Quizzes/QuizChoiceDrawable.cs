@@ -160,6 +160,15 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
                 case "proportion":
                 case "proportion-direct": canvas.DrawLine(18, 80, 84, 20);
                     canvas.DrawLine(18, 80, 18, 16); canvas.DrawLine(18, 80, 89, 80); break;
+                case "proportion-unitary-groups":
+                    for (int box = 0; box < 2; box++)
+                    {
+                        float left = 16 + box * 38;
+                        canvas.DrawRectangle(left, 15, 30, 30);
+                        for (int item = 0; item < 3; item++)
+                            canvas.FillCircle(left + 7 + item * 8, 30, 2);
+                    }
+                    canvas.FontSize = 17; Label("9 ÷ 3 = ?", 57); break;
                 case "proportion-inverse":
                     canvas.DrawLine(18, 80, 18, 16); canvas.DrawLine(18, 80, 89, 80);
                     var inverseCurve = new PathF();

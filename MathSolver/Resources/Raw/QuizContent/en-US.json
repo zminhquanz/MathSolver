@@ -9150,6 +9150,11 @@
         "Variables": []
     },
     {
+        "Id":  "Curriculum.Requirement.Proportion.UnitaryGroupCount",
+        "Text":  "Find a new group count by first finding the amount in one group.",
+        "Variables": []
+    },
+    {
         "Id":  "Curriculum.Requirement.Proportion.Inverse",
         "Text":  "Solve inverse-dependence problems.",
         "Variables": []

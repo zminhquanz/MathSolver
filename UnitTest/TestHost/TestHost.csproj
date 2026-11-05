@@ -23,6 +23,10 @@
     <Compile Include="../../MathSolver/Services/Performance/CalculationThreadingManager.cs" Link="Services/Performance/CalculationThreadingManager.cs" />
     <Compile Include="../../MathSolver/Services/Performance/MatrixCalculationRunner.cs" Link="Services/Performance/MatrixCalculationRunner.cs" />
     <Compile Include="../../MathSolver/Services/Appearance/ResponsiveLayoutPolicy.cs" Link="Services/Appearance/ResponsiveLayoutPolicy.cs" />
+    <Compile Include="../../MathSolver/Services/Appearance/WorkspaceLayoutMetrics.cs" Link="Services/Appearance/WorkspaceLayoutMetrics.cs" />
+    <Compile Include="../../MathSolver/Services/Appearance/MatrixPresentationPolicy.cs" Link="Services/Appearance/MatrixPresentationPolicy.cs" />
+    <Compile Include="../../MathSolver/Services/Appearance/AiPresentationPolicy.cs" Link="Services/Appearance/AiPresentationPolicy.cs" />
+    <Compile Include="../../MathSolver/Controls/Navigation/TopicNavigationPolicy.cs" Link="Controls/Navigation/TopicNavigationPolicy.cs" />
     <Compile Include="../../MathSolver/Services/Appearance/ReadableColorPolicy.cs" Link="Services/Appearance/ReadableColorPolicy.cs" />
     <Compile Include="../../MathSolver/Services/Appearance/DisplayDensityPolicy.cs" Link="Services/Appearance/DisplayDensityPolicy.cs" />
     <Compile Include="../../MathSolver/Services/Quizzes/*.cs" Link="Services/Quizzes/%(Filename)%(Extension)" />

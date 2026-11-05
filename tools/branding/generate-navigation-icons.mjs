@@ -71,6 +71,37 @@ icon('units',()=>{
   line(3,17,21,17);stroke([[7,13],[3,17],[7,21]]);
 });
 
+// Windows utility actions. Append only: existing navigation glyph IDs stay fixed.
+icon('action_copy',()=>{
+  stroke([[8,7],[20,7],[20,21],[8,21]],1.75,true);stroke([[16,3],[4,3],[4,17]]);
+});
+icon('action_paste',()=>{
+  stroke([[8,5],[4,5],[4,21],[20,21],[20,5],[16,5]]);
+  stroke([[8,3],[16,3],[16,7],[8,7]],1.75,true);line(8,12,16,12);line(8,16,14,16);
+});
+icon('action_clear',()=>{
+  line(4,6,20,6);stroke([[7,6],[8,21],[16,21],[17,6]]);stroke([[9,6],[9,3],[15,3],[15,6]]);line(10,10,10,17);line(14,10,14,17);
+});
+icon('action_expand',()=>{
+  stroke([[3,9],[3,3],[9,3]]);stroke([[15,3],[21,3],[21,9]]);
+  stroke([[3,15],[3,21],[9,21]]);stroke([[15,21],[21,21],[21,15]]);
+});
+icon('action_restore',()=>{
+  stroke([[3,9],[9,9],[9,3]]);stroke([[15,3],[15,9],[21,9]]);
+  stroke([[3,15],[9,15],[9,21]]);stroke([[15,21],[15,15],[21,15]]);
+});
+icon('action_more',()=>{for(const x of [5,12,19])disc(x,12,1.5);});
+icon('action_info',()=>{ring(12,12,9);disc(12,7,1);line(12,11,12,17);});
+icon('action_folder',()=>{stroke([[3,5],[9,5],[12,8],[21,8],[21,20],[3,20]],1.75,true);});
+icon('action_save',()=>{stroke([[3,3],[18,3],[21,6],[21,21],[3,21]],1.75,true);stroke([[7,3],[7,9],[16,9],[16,3]]);stroke([[7,21],[7,14],[17,14],[17,21]]);});
+icon('action_target',()=>{ring(12,12,7);disc(12,12,2);line(12,2,12,5);line(12,19,12,22);line(2,12,5,12);line(19,12,22,12);});
+icon('action_back',()=>{stroke([[10,5],[3,12],[10,19]]);line(3,12,21,12);});
+icon('action_forward',()=>{stroke([[14,5],[21,12],[14,19]]);line(3,12,21,12);});
+icon('action_settings',()=>{
+  polygon(Array.from({length:48},(_,i)=>{const a=i*Math.PI/24,r=[10,10,8,8,10,10][i%6];return[12+r*Math.cos(a),12+r*Math.sin(a)];}));
+  disc(12,12,6.25,true);ring(12,12,3.2,1.75);
+});
+
 // Minimal, deterministic TrueType writer. The font is only a transport for our
 // SVG outlines: native FontImageSource can tint every glyph to exact TextColor.
 const u16 = n => {const b=Buffer.alloc(2);b.writeUInt16BE(n&65535);return b;};

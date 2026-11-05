@@ -36,8 +36,15 @@ public static class AiAccelerationManager
 
         internal Settings()
         {
+#if ANDROID
+            // Remove a preference saved by older GPU-enabled Android versions.
+            Preferences.Default.Remove(UseGpuPreferenceKey);
+            Adapter = null;
+            Backend = AiGpuBackend.Cpu;
+#else
             Adapter = AiAccelerationPolicy.SelectAdapter(WindowsAiGpuDetector.GetAdapters(), OperatingSystem.IsWindows());
             Backend = AiAccelerationPolicy.SelectBackend(Adapter is null ? [] : [Adapter], OperatingSystem.IsWindows());
+#endif
             bool supported = Backend != AiGpuBackend.Cpu;
             Mode = supported && Preferences.Default.Get(UseGpuPreferenceKey, true) ? AiComputeMode.Gpu : AiComputeMode.Cpu;
         }

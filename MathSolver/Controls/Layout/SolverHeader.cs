@@ -48,6 +48,10 @@ public static class SolverHeader
         private bool _active, _updating, _compact, _hasFullPadding, _queued, _initializing, _disposed;
         private int _generation;
         private string? _appliedCompactTitle;
+#if WINDOWS
+        private HorizontalStackLayout? _inlineHeader;
+        private readonly Dictionary<View, bool> _descriptionVisibility = [];
+#endif
 
         internal Controller(VerticalStackLayout header)
         {
@@ -100,8 +104,12 @@ public static class SolverHeader
                 if (_symbols.Count == 0 && _descriptions.Count == 0 && _titles.Count == 0)
                 {
                     Discover(_header);
+#if WINDOWS
+                    BuildInlineHeader();
+#else
                     foreach (var (original, _, compact, parent) in _titles)
                         parent.Children.Insert(parent.Children.IndexOf(original) + 1, compact);
+#endif
                 }
                 _active = true;
                 _root.SizeChanged += OnSizeChanged;
@@ -120,7 +128,17 @@ public static class SolverHeader
                 switch (GetRole(view))
                 {
                     case SolverHeaderRole.Symbol: _symbols.Add((view, view.IsVisible)); break;
-                    case SolverHeaderRole.Description: _descriptions.Add((view, layout, index)); break;
+                    case SolverHeaderRole.Description:
+                        _descriptions.Add((view, layout, index));
+#if WINDOWS
+                        if (view is Label description)
+                        {
+                            description.FontSize = 14;
+                            description.FontAttributes = FontAttributes.None;
+                        }
+                        _descriptionVisibility[view] = view.IsVisible;
+#endif
+                        break;
                     case SolverHeaderRole.Title when view is Label title:
                         var compact = new Label
                         {
@@ -144,6 +162,36 @@ public static class SolverHeader
         }
 
         private void OnSizeChanged(object? sender, EventArgs e) => ScheduleUpdate();
+
+#if WINDOWS
+        private void BuildInlineHeader()
+        {
+            _inlineHeader = new HorizontalStackLayout
+            {
+                IsVisible = false, Spacing = 12, HorizontalOptions = LayoutOptions.Center,
+                VerticalOptions = LayoutOptions.Center, AutomationId = "WindowsCompactHeader"
+            };
+            LocalizationService.ExcludeSubtreeFromLegacyTracking(_inlineHeader);
+            foreach (var (view, visible) in _symbols)
+            {
+                if (view is not Label symbol || !visible) continue;
+                var copy = new Label { FontSize = 20, MaxLines = 1, LineBreakMode = LineBreakMode.TailTruncation,
+                    MaximumWidthRequest = 160, VerticalOptions = LayoutOptions.Center };
+                copy.SetBinding(Label.TextProperty, new Binding(nameof(Label.Text), source: symbol));
+                copy.SetBinding(Label.FontFamilyProperty, new Binding(nameof(Label.FontFamily), source: symbol));
+                copy.SetBinding(Label.TextColorProperty, new Binding(nameof(Label.TextColor), source: symbol));
+                copy.SetBinding(Label.FontAutoScalingEnabledProperty, new Binding(nameof(Label.FontAutoScalingEnabled), source: symbol));
+                AutomationProperties.SetIsInAccessibleTree(copy, false);
+                _inlineHeader.Add(copy);
+            }
+            foreach (var (_, _, compact, _) in _titles)
+            {
+                compact.VerticalOptions = LayoutOptions.Center;
+                _inlineHeader.Add(compact);
+            }
+            _header.Insert(0, _inlineHeader);
+        }
+#endif
 
         private void UpdateCompactTitles()
         {
@@ -175,7 +223,17 @@ public static class SolverHeader
                 _fullPadding = padding;
                 paddingChanged = true;
             }
-            bool compact = ResponsiveLayoutPolicy.ForSolver(width, _root.Height, ResponsiveLayoutPolicy.TextScale).CompactHeader;
+            double footerHeight = _root is Grid rootGrid ? WorkspaceLayoutCapture.FixedFooterHeight(rootGrid) : 0d;
+#if WINDOWS
+            if (_inlineHeader is not null)
+            {
+                _inlineHeader.MaximumWidthRequest = width;
+                foreach (var (_, _, title, _) in _titles) title.MaximumWidthRequest = Math.Max(1, width - 180);
+            }
+#endif
+            var space = WorkspaceLayoutMetrics.FromAvailable(width, _root.Height, ResponsiveLayoutPolicy.TextScale,
+                verticalChrome: footerHeight);
+            bool compact = ResponsiveLayoutPolicy.ForSolver(space).CompactHeader;
             bool modeChanged = compact != _compact;
             if (!modeChanged && !paddingChanged) return;
             _updating = true;
@@ -187,14 +245,27 @@ public static class SolverHeader
                 System.Diagnostics.Debug.WriteLine($"SolverHeader: compact={compact}");
                 _header.Padding = compact
                     ? new Thickness(_fullPadding.Left, 8, _fullPadding.Right, 8) : _fullPadding;
+#if WINDOWS
+                foreach (var (view, visible) in _symbols) view.IsVisible = !compact && visible;
+                if (_inlineHeader is not null) _inlineHeader.IsVisible = compact;
+#else
                 // Symbols identify the current topic even in a short viewport.
                 // Compact the title/description without hiding the mathematical row.
                 foreach (var (view, visible) in _symbols) view.IsVisible = visible;
+#endif
                 foreach (var (original, visible, title, _) in _titles)
                 {
                     original.IsVisible = compact ? false : visible;
                     title.IsVisible = compact && visible;
                 }
+#if WINDOWS
+                // A focused workspace (Matrix) has no scrolling body to host
+                // its description. Do not leave that extra row ahead of the
+                // compact title, consuming the table's remaining height.
+                if (_body is null)
+                    foreach (var (view, _, _) in _descriptions)
+                        view.IsVisible = !compact && _descriptionVisibility.GetValueOrDefault(view, true);
+#endif
                 if (_body is null || !modeChanged) return;
                 if (compact)
                 {
@@ -247,8 +318,14 @@ public static class SolverHeader
             foreach (var (original, visible, compact, parent) in _titles)
             {
                 original.IsVisible = visible;
+#if !WINDOWS
                 parent.Children.Remove(compact);
+#endif
             }
+#if WINDOWS
+            if (_inlineHeader is not null) _header.Remove(_inlineHeader);
+            foreach (var (view, visible) in _descriptionVisibility) view.IsVisible = visible;
+#endif
             RestoreDescriptions();
         }
     }

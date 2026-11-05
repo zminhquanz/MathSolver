@@ -15,7 +15,7 @@ internal static class AiAccelerationPolicyTests
         CheckBackend("Cpu", true, ("Software NVIDIA", 0x10deu, true));
         CheckBackend("Vulkan", true, ("Software NVIDIA", 0x10deu, true), ("Intel", 0x8086u, false));
         CheckBackend("Cpu", true);
-        // This increment must not turn on an Android or other non-Windows GPU path.
+        // Windows vendor selection stays off on other platforms; Android is CPU-only.
         CheckBackend("Cpu", false, ("NVIDIA", 0x10deu, false));
 
         // Native backend order can differ from DXGI, including Intel/AMD Vulkan.

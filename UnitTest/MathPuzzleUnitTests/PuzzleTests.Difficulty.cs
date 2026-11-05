@@ -55,7 +55,7 @@ internal static partial class PuzzleTests
                     Require(level > 2 || proportion.C % proportion.A == 0, "Easy proportion should use a whole-number scale factor.");
                 }
                 if (level <= 2) Require(!proportion.AsksForAdditionalPeople, "Easy inverse proportion must not ask for an extra subtraction.");
-                if (level == 5 && !proportion.IsDirect)
+                if (level == 5 && proportion.Type == ProportionQuizType.Inverse)
                     Require(proportion.AsksForAdditionalPeople || proportion.InverseChangesSecondQuantity,
                         "Advanced inverse proportion should require an additional quantity or solving the changed deadline.");
             }

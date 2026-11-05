@@ -21,13 +21,14 @@ internal static class ResponsiveLayoutPolicy
 
     internal static SolverLayoutState ForSolver(double width, double height, double textScale = 1d)
     {
-        double scale = NormalizeScale(textScale);
-        double availableWidth = NormalizeDimension(width) / scale;
-        double availableHeight = NormalizeDimension(height) / scale;
-        bool split = availableWidth >= 1040d && availableHeight >= 360d;
-        return new(availableWidth < 760d || availableHeight < 640d, split);
+        return ForSolver(WorkspaceLayoutMetrics.FromAvailable(width, height, textScale));
     }
 
+    internal static SolverLayoutState ForSolver(WorkspaceLayoutMetrics space)
+    {
+        bool split = space.EffectiveWidth >= 1040d && space.EffectiveHeight >= 360d;
+        return new(space.EffectiveWidth < 760d || space.EffectiveHeight < 640d, split);
+    }
     internal static int Columns(double width, double minimumColumnWidth, int maximumColumns, double spacing = 12d) =>
         Columns(width, minimumColumnWidth, maximumColumns, spacing, TextScale);
 
@@ -50,6 +51,6 @@ internal static class ResponsiveLayoutPolicy
     internal static double SubTabWidth(double pageWidth) =>
         Math.Max(1d, Math.Min(pageWidth, 1320d) - 40d);
 
-    private static double NormalizeDimension(double value) => double.IsFinite(value) ? Math.Max(0d, value) : 0d;
-    private static double NormalizeScale(double value) => double.IsFinite(value) ? Math.Max(1d, value) : 1d;
+    private static double NormalizeDimension(double value) => WorkspaceLayoutMetrics.NormalizeDimension(value);
+    private static double NormalizeScale(double value) => WorkspaceLayoutMetrics.NormalizeScale(value);
 }

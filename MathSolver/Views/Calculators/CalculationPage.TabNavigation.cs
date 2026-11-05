@@ -1,6 +1,6 @@
 using MathSolver.Controls;
 using MathSolver.Services;
-using Microsoft.Maui.Controls.Shapes;
+using MathSolver.Controls.Navigation;
 
 namespace MathSolver.Views;
 
@@ -11,11 +11,12 @@ public partial class CalculationPage
     private readonly Button[] _calculationTypeChoices = new Button[9];
     private readonly SearchBar _calculationTypeSearch = new();
     private readonly Label _calculationTypeHeading = new(), _calculationTypeEmpty = new();
-    private readonly Button _calculationTypeClose = new() { Text = "×", FontSize = 24, Padding = 0 };
+    private readonly Button _calculationTypeClose = new() { Text = "\u00d7", FontSize = 24, Padding = 0 };
     private Border _calculationTypeCard = null!;
     private ScrollView _calculationTypeList = null!;
-    private bool _tabNavigationQueued, _tabNavigationStacked, _calculationChooserNeedsFocus;
-    private int _tabNavigationGeneration, _calculationChooserFocusGeneration;
+    private bool _tabNavigationQueued, _tabNavigationStacked;
+    private TopicChooser _topicChooser = null!;
+    private int _tabNavigationGeneration;
     private double _lastTabViewportWidth = -1, _lastTabTextScale = -1, _lastTabDensitySize = -1;
 
     private bool CanUseTabNavigation => _isPageActive && IsLoaded && Handler?.MauiContext is not null
@@ -40,57 +41,19 @@ public partial class CalculationPage
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllCalculationTypesButton);
         DisplayDensityManager.BindControl(AllCalculationTypesButton);
         InitializeCalculationOverflow();
-        var choices = new VerticalStackLayout { Spacing = 8 };
-        for (int i = 0; i < _calculationTypeChoices.Length; i++)
-        {
-            int index = i;
-            var button = new Button { Style = (Style)Application.Current!.Resources["SolverSecondaryActionStyle"],
-                FontSize = 15, LineBreakMode = LineBreakMode.WordWrap, Padding = new Thickness(12, 10),
-                AutomationId = "CalculationType" + CalculationTypeKeys[i] };
-            MathNavigationIcon.SetKey(button, "Calculation.Tabs." + CalculationTypeKeys[i]);
-            DisplayDensityManager.BindControl(button);
-            button.Clicked += async (_, _) =>
+        _topicChooser = new TopicChooser(AllCalculationTypesOverlay, _calculationTypeChoices,
+            _calculationTypeSearch, _calculationTypeHeading, _calculationTypeEmpty, _calculationTypeClose,
+            CalculationTypeKeys, "Calculation.Tabs.", "CalculationType", () => CanUseTabNavigation,
+            () => CloseCalculationTypes(), async index =>
             {
                 if (!CanUseTabNavigation || !AllCalculationTypesOverlay.IsVisible || _isPowerRootCalculationInteractionLocked || _isSubTabTransitioning) return;
                 CloseCalculationTypes(restoreFocus: false);
                 await SwitchSubTabAsync((CalculationSubTab)index);
                 if (CanUseTabNavigation)
                     (CalculationTabStripHost.IsVisible ? GetSubTabButton(_selectedSubTab) : AllCalculationTypesButton).Focus();
-            };
-            _calculationTypeChoices[i] = button;
-            choices.Add(button);
-        }
-        _calculationTypeEmpty.FontSize = 14;
-        _calculationTypeEmpty.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
-        choices.Add(_calculationTypeEmpty);
-        _calculationTypeList = new ScrollView { Content = choices, VerticalScrollBarVisibility = ScrollBarVisibility.Default };
-        _calculationTypeHeading.FontSize = 20;
-        _calculationTypeHeading.FontAttributes = FontAttributes.Bold;
-        _calculationTypeHeading.LineBreakMode = LineBreakMode.WordWrap;
-        _calculationTypeHeading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
-        SemanticProperties.SetHeadingLevel(_calculationTypeHeading, SemanticHeadingLevel.Level2);
-        _calculationTypeSearch.SetDynamicResource(SearchBar.TextColorProperty, "TextPrimaryColor");
-        _calculationTypeSearch.SetDynamicResource(SearchBar.PlaceholderColorProperty, "TextSecondaryColor");
-        _calculationTypeSearch.TextChanged += (_, _) => RefreshCalculationChoices();
-        DisplayDensityManager.BindControl(_calculationTypeClose, square: true);
-        _calculationTypeClose.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
-        _calculationTypeClose.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
-        _calculationTypeClose.Clicked += (_, _) => CloseCalculationTypes();
-        _calculationTypeClose.Loaded += (_, _) => QueueCalculationChooserFocus();
-        var search = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
-        search.Add(_calculationTypeSearch); search.Add(_calculationTypeClose, 1, 0);
-        var body = new Grid { RowSpacing = 8, RowDefinitions = { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) } };
-        body.Add(_calculationTypeHeading); body.Add(search, 0, 1); body.Add(_calculationTypeList, 0, 2);
-        _calculationTypeCard = new Border { Content = body, Padding = 16, StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = 16 }, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
-        _calculationTypeCard.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");
-        _calculationTypeCard.SetDynamicResource(Border.StrokeProperty, "BorderBrush");
-        var shade = new BoxView { Color = Colors.Black.WithAlpha(0.35f) };
-        var dismiss = new TapGestureRecognizer(); dismiss.Tapped += (_, _) => CloseCalculationTypes();
-        shade.GestureRecognizers.Add(dismiss);
-        AutomationProperties.SetIsInAccessibleTree(shade, false);
-        var overlay = new Grid(); overlay.Add(shade); overlay.Add(_calculationTypeCard);
-        AllCalculationTypesOverlay.Content = overlay;
+            }, RefreshCalculationChoices);
+        _calculationTypeCard = _topicChooser.Card;
+        _calculationTypeList = _topicChooser.List;
         CalculationTabNavigation.SizeChanged += QueueCalculationNavigation;
         CalculationSubTabScrollView.SizeChanged += QueueCalculationNavigation;
         AndroidCalculationSubTabBar.SizeChanged += QueueCalculationNavigation;
@@ -102,7 +65,7 @@ public partial class CalculationPage
         AllCalculationTypesOverlay.SizeChanged += QueueCalculationNavigation;
         AllCalculationTypesOverlay.Loaded += (_, _) =>
         { AttachCalculationChooserKeyboard(); QueueCalculationChooserFocus(); };
-        AllCalculationTypesOverlay.Unloaded += (_, _) => DetachCalculationChooserKeyboard();
+        AllCalculationTypesOverlay.Unloaded += (_, _) => _topicChooser.Invalidate();
         RefreshCalculationChoices();
     }
 
@@ -110,7 +73,7 @@ public partial class CalculationPage
     {
         _tabNavigationGeneration++; _tabNavigationQueued = false;
         _lastTabViewportWidth = -1;
-        DetachCalculationChooserKeyboard();
+        _topicChooser.Invalidate();
     }
 
     private void QueueCalculationNavigation(object? sender, EventArgs e)
@@ -200,30 +163,20 @@ public partial class CalculationPage
         string close = LocalizationService.TranslateKey("Calculation.Navigation.Close");
         SemanticProperties.SetDescription(_calculationTypeClose, close);
         ToolTipProperties.SetText(_calculationTypeClose, close);
-        var options = CalculationTypeKeys.Select((key, index) => new QuizChoiceOption(index, key,
-            MathNavigationCatalog.TranslateLabel("Calculation.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
-        var matches = QuizChoiceCatalog.Filter(options, _calculationTypeSearch.Text ?? "").Select(option => option.Index).ToHashSet();
-        foreach (var option in options)
-        {
-            var button = _calculationTypeChoices[option.Index];
-            button.Text = (option.IsSelected ? "✓ " : "") + option.Title;
-            button.IsVisible = matches.Contains(option.Index);
-            SelectionButtonStyler.Apply(button, option.IsSelected);
-        }
-        _calculationTypeEmpty.IsVisible = matches.Count == 0;
+        _topicChooser.Refresh(CalculationTypeKeys, "Calculation.Tabs.", (int)_selectedSubTab);
     }
 
     private void RefreshCalculationNavigationCaption()
     {
         if (AllCalculationTypesButton is null) return;
-        string all = LocalizationService.TranslateKey("Calculation.Navigation.All").TrimStart('☷', ' ');
+        string all = LocalizationService.TranslateKey("Calculation.Navigation.All").TrimStart('\u2637', ' ');
         string current = MathNavigationCatalog.TranslateLabel("Calculation.Tabs." + CalculationTypeKeys[(int)_selectedSubTab]);
         MathNavigationIcon.SetKey(AllCalculationTypesButton, _tabNavigationStacked
             ? "Calculation.Tabs." + CalculationTypeKeys[(int)_selectedSubTab] : null);
         AllCalculationTypesButton.Text = _tabNavigationStacked
             ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LocalizationService.TranslateKey("Calculation.Navigation.Current"), current)
-            : "▾";
+            : "\u25be";
         SemanticProperties.SetDescription(AllCalculationTypesButton, _tabNavigationStacked
             ? AllCalculationTypesButton.Text + ". " + all : all);
         ToolTipProperties.SetText(AllCalculationTypesButton, all);
@@ -240,42 +193,21 @@ public partial class CalculationPage
         AutomationProperties.SetExcludedWithChildren(CalculationTabNavigation, true);
         ResizeCalculationChooser();
         AttachCalculationChooserKeyboard();
-        _calculationChooserNeedsFocus = true;
-        _calculationChooserFocusGeneration++;
-        QueueCalculationChooserFocus();
+        _topicChooser.RequestFocus();
     }
 
-    private void QueueCalculationChooserFocus()
-    {
-        if (!_calculationChooserNeedsFocus) return;
-        int generation = _calculationChooserFocusGeneration;
-        Dispatcher.Dispatch(() =>
-        {
-            if (generation != _calculationChooserFocusGeneration || !_calculationChooserNeedsFocus || !CanUseTabNavigation
-                || !AllCalculationTypesOverlay.IsVisible || !_calculationTypeClose.IsLoaded
-                || _calculationTypeClose.Handler?.MauiContext is null) return;
-            bool focused = _calculationTypeClose.Focus();
-#if WINDOWS
-            if (_calculationTypeClose.Handler.PlatformView is Microsoft.UI.Xaml.Controls.Control control)
-                focused = control.Focus(Microsoft.UI.Xaml.FocusState.Programmatic) || focused;
-#endif
-            if (focused) _calculationChooserNeedsFocus = false;
-        });
-    }
+    private void QueueCalculationChooserFocus() => _topicChooser.QueueFocus();
 
     private void ResizeCalculationChooser()
     {
         double width = AllCalculationTypesOverlay.Width > 0 ? AllCalculationTypesOverlay.Width : CalculationPageContentRoot.Width;
         double height = AllCalculationTypesOverlay.Height > 0 ? AllCalculationTypesOverlay.Height : CalculationPageContentRoot.Height;
-        _calculationTypeCard.WidthRequest = Math.Max(1, Math.Min(720, width - 24));
-        _calculationTypeCard.HeightRequest = Math.Max(1, Math.Min(720, height - 24));
-        _calculationTypeHeading.IsVisible = !ResponsiveLayoutPolicy.UseStackedLayout(height, 320);
+        _topicChooser.Resize(width, height);
     }
 
     private void CloseCalculationTypes(bool restoreFocus = true)
     {
-        _calculationChooserNeedsFocus = false;
-        _calculationChooserFocusGeneration++;
+        _topicChooser.Invalidate();
         AllCalculationTypesOverlay.IsVisible = false;
         CalculationSubTabContentHost.InputTransparent = CalculationTabNavigation.InputTransparent = false;
         AutomationProperties.SetExcludedWithChildren(CalculationSubTabContentHost, false);
@@ -288,6 +220,9 @@ public partial class CalculationPage
     {
         if (AllCalculationTypesOverlay.IsVisible) { CloseCalculationTypes(); return true; }
         if (MatrixSolverHost.IsVisible && MatrixSolverHost.Content is MatrixView matrix && matrix.TryCloseMatrixDetails()) return true;
+#if ANDROID
+        if (MatrixSolverHost.IsVisible && MatrixSolverHost.Content is MatrixView focusedMatrix && focusedMatrix.TryRestorePhoneNavigation()) return true;
+#endif
         return base.OnBackButtonPressed();
     }
 }

@@ -1851,6 +1851,15 @@ public partial class AppShell : Shell
         {
             return;
         }
+#if ANDROID
+        // The focused landscape matrix owns this presentation while active.
+        // Do not let delayed main-page restoration pulses overwrite its policy.
+        if (currentPage is CalculationPage { KeepMatrixNavigationCompact: true })
+        {
+            Shell.SetTabBarIsVisible(currentPage, false);
+            return;
+        }
+#endif
 
         // Native Shell chrome có state riêng. Nếu attached property của main
         // page vốn đã là true thì gán true lần nữa có thể không phát

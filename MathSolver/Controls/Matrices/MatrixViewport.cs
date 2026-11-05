@@ -104,6 +104,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         };
         _canvas.StartInteraction += (_, e) =>
         {
+            CloseSelectionMenu();
             if (!CanUseInput || HasPointerCapture || e.Touches.Length == 0) return;
             SetParentPanLock(_state.MaxX > 0 || _state.MaxY > 0);
             _panStart = e.Touches[0]; _panX = _state.OffsetX; _panY = _state.OffsetY; _dragged = false;
@@ -115,11 +116,15 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
             _resizeInteraction = StartResize(_panStart);
             _barInteraction = !_resizeInteraction && StartScrollBar(_panStart);
             if (_barInteraction || _resizeInteraction) _dragged = true;
+            else if (e.Touches.Length == 1) BeginSelectionHold(_panStart);
         };
         _canvas.DragInteraction += (_, e) =>
         {
             if (!CanUseInput || HasPointerCapture || e.Touches.Length == 0) return;
             var point = e.Touches[0];
+            if (SelectionHoldOpened) return;
+            if (e.Touches.Length != 1 || Math.Abs(point.X - _panStart.X) + Math.Abs(point.Y - _panStart.Y) >= 6)
+                CancelSelectionHold();
             if (_resizeInteraction) { DragResize(point); return; }
             if (_barInteraction) { DragScrollBar(point); return; }
             if (_panBlocked) return;
@@ -138,6 +143,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         };
         _canvas.EndInteraction += (_, e) =>
         {
+            CancelSelectionHold();
             // Captured Windows scrollbar drags are completed by the native
             // release/capture-lost events, including releases outside the canvas.
             if (HasPointerCapture) return;
@@ -159,6 +165,7 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         };
         _canvas.CancelInteraction += (_, _) =>
         {
+            CloseSelectionMenu();
             if (HasPointerCapture) return;
             _dragged = true;
             _scrollAxis = ScrollAxis.None; _resizeAxis = MatrixResizeAxis.None; SetParentPanLock(false);
@@ -186,6 +193,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         if (_editor is not null) throw new InvalidOperationException("The matrix already has an editor.");
         _editor = editor;
         editor.MinimumHeightRequest = 0;
+#if ANDROID
+        editor.Loaded += (_, _) => ConfigureInlineKeyboard();
+#endif
         _editorHost = MatrixInputField.Wrap(editor);
         _editorHost.Padding = new Thickness(4, 0);
         _editorHost.StrokeThickness = 2;
@@ -196,12 +206,23 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         editor.Focused += (_, _) => FocusEditor(selectAll: _selectAllOnEditorFocus);
     }
     public void SetAccessibility(string table) => SemanticProperties.SetDescription(_canvas, table);
+#if ANDROID
+    private void ConfigureInlineKeyboard()
+    {
+        // MAUI reapplies ReturnType when attaching its native Entry. Apply after
+        // attachment and before focus, so landscape input never replaces the grid.
+        if (_editor?.Handler?.PlatformView is Android.Widget.EditText nativeEditor)
+            nativeEditor.ImeOptions |= (Android.Views.InputMethods.ImeAction)(
+                Android.Views.InputMethods.ImeFlags.NoExtractUi | Android.Views.InputMethods.ImeFlags.NoFullscreen);
+    }
+#endif
     // Closing a window may already have disposed native handlers. Dropping a reader
     // must also work without refreshing controls or raising layout callbacks.
     internal void DetachSourceReader() => _readCell = null;
 
     public void SetSource(int rows, int columns, Func<int, int, string> readCell)
     {
+        CloseSelectionMenu();
         _focusGeneration++;
         CancelPointerGesture();
         _state.SetSource(rows, columns); _readCell = readCell;
@@ -331,6 +352,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         {
             if (generation != _focusGeneration || !CanUseInput || _editorHost?.IsVisible != true || !_editor.IsEnabled) return;
             int caret = _editor.CursorPosition, selectionLength = _editor.SelectionLength;
+#if ANDROID
+            ConfigureInlineKeyboard();
+#endif
             _editor.Focus();
             if (selectAll) { _editor.CursorPosition = 0; _editor.SelectionLength = _editor.Text?.Length ?? 0; }
             else

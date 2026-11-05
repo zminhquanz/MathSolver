@@ -3,6 +3,11 @@ namespace MathSolver.Controls;
 /// <summary>A regular button with a decorative emoji and a separately localized caption.</summary>
 public sealed class EmojiActionButton : Button
 {
+    public static readonly BindableProperty VectorIconKeyProperty = BindableProperty.Create(
+        nameof(VectorIconKey), typeof(string), typeof(EmojiActionButton), null,
+        propertyChanged: static (button, _, _) => ((EmojiActionButton)button).UpdateVectorIcon());
+    public string? VectorIconKey { get => (string?)GetValue(VectorIconKeyProperty); set => SetValue(VectorIconKeyProperty, value); }
+
     public static readonly BindableProperty CaptionProperty = BindableProperty.Create(
         nameof(Caption), typeof(string), typeof(EmojiActionButton), string.Empty,
         propertyChanged: static (button, _, _) => ((EmojiActionButton)button).UpdateCaption());
@@ -31,8 +36,30 @@ public sealed class EmojiActionButton : Button
         if (emoji.Length > 0 && caption.StartsWith(emoji, StringComparison.Ordinal))
             caption = caption[emoji.Length..].TrimStart();
 
-        Text = emoji.Length == 0 ? caption : $"{emoji}  {caption}";
+#if WINDOWS
+        if (DesktopActionIcons.GlyphFor(VectorIconKey) is not null) emoji = string.Empty;
+#endif
+
+        Text = emoji.Length == 0 ? caption : caption.Length == 0 ? emoji : $"{emoji}  {caption}";
         // Screen readers announce the action rather than the emoji's Unicode name.
         SemanticProperties.SetDescription(this, caption);
+    }
+
+    private void UpdateVectorIcon()
+    {
+#if WINDOWS
+        if (DesktopActionIcons.GlyphFor(VectorIconKey) is { } glyph)
+        {
+            ContentLayout = new ButtonContentLayout(ButtonContentLayout.ImagePosition.Left, 8);
+            SetBinding(ImageSourceProperty, new Binding(nameof(TextColor), source: this,
+                converter: new DesktopActionIcons.ImageConverter(glyph)));
+        }
+        else
+        {
+            RemoveBinding(ImageSourceProperty);
+            ImageSource = null;
+        }
+#endif
+        UpdateCaption();
     }
 }
