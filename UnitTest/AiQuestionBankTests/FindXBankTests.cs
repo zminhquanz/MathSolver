@@ -139,9 +139,9 @@ internal static class FindXBankTests
         rejectedJob.Start(new(ArithmeticOperation.Divide, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, 2, true,
             new(QuestionKnowledgeGroup.Measurement), BankQuestionFamily.FindX, FindXUnknownRole.Divisor));
         await rejectedJob.Completion;
-        Check(rejectedJob.Snapshot.State == AiJobState.Failed && rejectedJob.Snapshot.Items.Count == 1
-            && rejectedJob.Snapshot.Items[0].Attempts.Count == 3 && rejectedJob.Snapshot.Items[0].State == AiItemState.Rejected,
-            "Invalid Find-X generation did not stop after three attempts.");
+        Check(rejectedJob.Snapshot.State == AiJobState.CompletedWithSkips && rejectedJob.Snapshot.Items.Count == 2
+            && rejectedJob.Snapshot.Items.All(i => i.Attempts.Count == 3 && i.State == AiItemState.Rejected),
+            "Invalid Find-X generation did not continue with a three-attempt limit per item.");
         Check(await rejectedStore.TakeFindXAsync(ArithmeticOperation.Divide, CurriculumTier.ThreeStars,
             AppLanguage.Vietnamese, new(QuestionKnowledgeGroup.Measurement)) is null, "Rejected AI prose reached practice.");
         var generator = new FindXQuizGenerator(new FindXEngine(), new Random(410));

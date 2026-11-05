@@ -98,14 +98,11 @@
                 <Label x:Name="AiBankHeaderTitleLabel"
                        Text="{localization:Translate AiBank.Title}"
                        TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
-                       FontSize="20" FontAttributes="Bold"
-                       LineBreakMode="TailTruncation" MaxLines="1"
-                       TextColor="{DynamicResource TextPrimaryColor}"
+                       Style="{StaticResource AppPageHeaderTitleStyle}"
                        SemanticProperties.HeadingLevel="Level1" />
                 <Label x:Name="AiBankHeaderSubtitleLabel"
                        Text="{localization:Translate AiBank.HeaderSubtitle}"
-                       FontSize="11" LineBreakMode="TailTruncation" MaxLines="1"
-                       TextColor="{DynamicResource TextSecondaryColor}" />
+                       Style="{StaticResource AppPageHeaderSubtitleStyle}" />
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>
@@ -265,7 +262,9 @@
                         <Label Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
                                IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
                                Style="{StaticResource AiBankMutedStatusStyle}" />
-                        <Border Style="{StaticResource AiBankPickerBorderStyle}">
+                        <Label x:Name="ProcessedQuestionsEmptyLabel" Text="{localization:Translate AiBank.ProcessedQuestionsEmpty}"
+                               Style="{StaticResource AiBankMutedStatusStyle}" />
+                        <Border x:Name="ProcessedQuestionPickerFrame" IsVisible="False" Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="QuestionPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
                         </Border>
                     </VerticalStackLayout>

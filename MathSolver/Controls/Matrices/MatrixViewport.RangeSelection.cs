@@ -18,6 +18,9 @@ public sealed partial class MatrixViewport
 
     public void CancelRangeSelection()
     {
+        // Cached tabs can become inactive without unloading the native view.
+        // End a floating long-press menu even when range-selection mode is off.
+        CloseSelectionMenu();
         if (!_state.IsRangeSelectionMode) return;
         _state.CancelRangeSelection();
         RangeSelectionModeChanged?.Invoke();

@@ -210,6 +210,8 @@ public partial class AiQuestionBankPage : ContentPage
                 ? previous : snapshot.Items.Count - 1;
         }
         QuestionPicker.IsEnabled = snapshot.Items.Count > 0;
+        ProcessedQuestionPickerFrame.IsVisible = snapshot.Items.Count > 0;
+        ProcessedQuestionsEmptyLabel.IsVisible = snapshot.Items.Count == 0;
         _updating = false;
         RenderSelected();
         RefreshAiWorkspace();

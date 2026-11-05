@@ -26,7 +26,9 @@ internal static class WorkerLifecycleTests
         service = new(invalid, memoryStore);
         service.Start(new(ArithmeticOperation.Subtract, CurriculumTier.OneStar, AppLanguage.Vietnamese, 10, true));
         await service.Completion;
-        Check(invalid.Calls == 3 && service.Snapshot.State == AiJobState.Failed && memoryStore.Saved == 3, "Retry bound/save isolation failed.");
+        Check(invalid.Calls == 30 && service.Snapshot.State == AiJobState.CompletedWithSkips
+            && service.Snapshot.Items.Count == 10 && service.Snapshot.Items.All(i => i.State == AiItemState.Rejected && i.Attempts.Count == 3)
+            && memoryStore.Saved == 3, "Per-item retry bound, batch continuation or save isolation failed.");
         var blocking = new BlockingRuntime();
         service = new(blocking, memoryStore);
         service.Start(new(ArithmeticOperation.Divide, CurriculumTier.OneStar, AppLanguage.Vietnamese, 10, true));

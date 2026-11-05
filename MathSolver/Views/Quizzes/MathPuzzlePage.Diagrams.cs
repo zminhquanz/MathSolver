@@ -108,7 +108,7 @@ public partial class MathPuzzlePage
     private void UpdateQuestionDiagramLayout()
     {
         bool wide = QuizDiagramPanel.IsVisible &&
-            QuizResponsiveLayout.PlaceDiagramBesideQuestion(QuestionDiagramGrid.Width, CurrentTextScale);
+            QuizResponsiveLayout.PlaceDiagramBesideQuestion(QuestionDiagramGrid.Width, ResponsiveLayoutPolicy.TextScale);
         if (_wideDiagramLayout == wide) return;
         _wideDiagramLayout = wide;
         QuestionDiagramGrid.ColumnDefinitions.Clear();

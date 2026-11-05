@@ -74,8 +74,9 @@ internal static partial class MemoryLifecycleTests
             await service.Completion;
             Check(runtime.Releases == 1 && !runtime.IsLoaded, $"{mode} skipped cleanup.");
             Check(service.Snapshot.State == (mode == "cancel-release" ? AiJobState.Completed
-                : mode.StartsWith("cancel-") ? AiJobState.Stopped : AiJobState.Failed), $"{mode} reported wrong terminal state.");
-            if (mode == "invalid") Check(runtime.Calls == 3 && store.Saved == 0, "Retry policy changed.");
+                : mode.StartsWith("cancel-") ? AiJobState.Stopped : mode == "invalid" ? AiJobState.CompletedWithSkips : AiJobState.Failed), $"{mode} reported wrong terminal state.");
+            if (mode == "invalid") Check(runtime.Calls == options.Count * 3 && store.Saved == 0
+                && service.Snapshot.Items.All(i => i.State == AiItemState.Rejected && i.Attempts.Count == 3), "Per-item retry/cleanup policy changed.");
             if (mode is "load-failure" or "cancel-load") Check(runtime.Calls == 0, "Generation ran after failed/cancelled loading.");
         }
         Console.WriteLine("PASS bounded context, batch load/reload and disposal on success, retries, errors and cancellation; cleanup cannot race a new job.");

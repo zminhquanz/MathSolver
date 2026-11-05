@@ -68,10 +68,9 @@ Generators read language-specific wording and context lists from the bundled
 their generated problems and independent answers after content changes. The bank
 harness also provides `--quiz-content` and author-file validation commands.
 
-The practice page uses the C# algorithm on Windows and Android. The previous
-AI implementation, model management, prompts, response validation, hardware AI
-benchmark, live-model harness and captured model fixtures have been removed.
-The new optional question-bank enrichment has its own
+The practice page uses the C# algorithm on Windows and Android. Optional AI
+generation, model management, validation and hardware acceleration are isolated
+from this math harness. Question-bank enrichment has its own
 [checks and model smoke test](../AiQuestionBankTests/README.md); this project
 continues to check C# practice and grading.
 

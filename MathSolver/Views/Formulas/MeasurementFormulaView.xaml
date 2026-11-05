@@ -12,26 +12,15 @@
 
     <Grid RowDefinitions="Auto,*">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
-            <VerticalStackLayout Spacing="3">
-                <Label controls:SolverHeader.Role="Symbol"
-                    Text="↔  ⚖  ◷  □  ▣"
-                    FontSize="{OnPlatform Android=26, WinUI=36, Default=34}"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource ContentAccentTextColor}" />
+            <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
+                <Label controls:SolverHeader.Role="Symbol" Style="{StaticResource SolverHeroSymbolStyle}"
+                    Text="↔  ⚖  ◷  □  ▣" />
 
-                <Label controls:SolverHeader.Role="Title"
-                    x:Name="PageTitleLabel"
-                    FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                <Label controls:SolverHeader.Role="Title" Style="{StaticResource SolverHeroTitleStyle}"
+                    x:Name="PageTitleLabel" />
 
-                <Label controls:SolverHeader.Role="Description"
-                    x:Name="PageSubtitleLabel"
-                    FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
-                    HorizontalTextAlignment="Center"
-                    LineBreakMode="WordWrap"
-                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                <Label controls:SolverHeader.Role="Description" Style="{StaticResource SolverHeroSubtitleStyle}"
+                    x:Name="PageSubtitleLabel" />
             </VerticalStackLayout>
         </VerticalStackLayout>
 

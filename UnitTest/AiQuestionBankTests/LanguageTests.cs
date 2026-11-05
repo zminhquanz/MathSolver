@@ -116,7 +116,7 @@ internal static class LanguageTests
         var service = new AiQuestionGenerationService(runtime, retryStore);
         service.Start(new(ArithmeticOperation.Add, CurriculumTier.ThreeStars, AppLanguage.Vietnamese, 1, true));
         await service.Completion;
-        Check(runtime.Calls == 3 && service.Snapshot.State == AiJobState.Failed
+        Check(runtime.Calls == 3 && service.Snapshot.State == AiJobState.CompletedWithSkips
             && service.Snapshot.Items.Single().Attempts.All(a => a.ErrorCode == "WrongLanguage")
             && await retryStore.TakeAsync(ArithmeticOperation.Add, CurriculumTier.ThreeStars, AppLanguage.Vietnamese) is null,
             "Foreign generated prose did not fail after three retries without saving.");

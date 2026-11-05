@@ -10,6 +10,7 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--ui-reading-columns"], "--ui-reading-columns", args => { ReadingColumnTests.Run(); return Task.CompletedTask; }, args => args is ["--ui-reading-columns"]),
         new(["--six-finite-open"],"--six-finite-open",args=>SixFiniteOpenTests.RunAsync(),args=>args is ["--six-finite-open"]),
         new(["--six-finite-open-gpu"],"--six-finite-open-gpu <gguf> <directory>",args=>SixFiniteOpenTests.RunGpuAsync(args[1],args[2]),args=>args is ["--six-finite-open-gpu",_,_]),
         new(["--average-relations-open"],"--average-relations-open",args=>AverageRelationsOpenTests.RunAsync(),args=>args is ["--average-relations-open"]),
@@ -380,6 +381,9 @@ internal static partial class AiTestCommands
             await SqlMutationTests.RunAsync(workspace.DirectoryPath, sample);
             await DeleteAllTests.RunAsync(workspace.DirectoryPath);
         }, args => args is ["--bank-data"]),
+        new(["--prose-exhaustion"], "--prose-exhaustion", args => ProseExhaustionTests.RunAsync(), args => args is ["--prose-exhaustion"]),
+        new(["--generation-continuation"], "--generation-continuation", args => GenerationContinuationTests.RunAsync(), args => args is ["--generation-continuation"]),
+        new(["--generation-continuation-model"], "--generation-continuation-model <gguf> <directory>", args => GenerationContinuationTests.RunModelAsync(args[1], args[2]), args => args is ["--generation-continuation-model", _, _]),
         new(["--prose-deduplication"], "--prose-deduplication", async args =>
         {
             using var workspace = TestWorkspace.Temporary("prose-deduplication");

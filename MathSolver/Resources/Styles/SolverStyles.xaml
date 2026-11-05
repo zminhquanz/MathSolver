@@ -65,20 +65,20 @@
     </Style>
 
     <Style x:Key="SolverHeroStyle" TargetType="VerticalStackLayout">
-        <Setter Property="Margin" Value="{OnPlatform Android='0,2,0,2', WinUI='0,4,0,4', Default='0,4,0,4'}" />
-        <Setter Property="Spacing" Value="{OnPlatform Android=2, WinUI=3, Default=3}" />
+        <Setter Property="Margin" Value="0,4" />
+        <Setter Property="Spacing" Value="4" />
     </Style>
 
     <Style x:Key="SolverHeroSymbolStyle" TargetType="Label">
         <Setter Property="controls:SolverHeader.Role" Value="Symbol" />
-        <Setter Property="FontSize" Value="{OnPlatform Android=25, WinUI=30, Default=30}" />
+        <Setter Property="FontSize" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="TextColor" Value="{DynamicResource ContentAccentTextColor}" />
     </Style>
 
     <Style x:Key="SolverHeroTitleStyle" TargetType="Label">
         <Setter Property="controls:SolverHeader.Role" Value="Title" />
-        <Setter Property="FontSize" Value="{OnPlatform Android=24, WinUI=30, Default=30}" />
+        <Setter Property="FontSize" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
@@ -103,11 +103,12 @@
                 <RoundRectangle CornerRadius="{OnPlatform Android=14, WinUI=16, Default=16}" />
             </Setter.Value>
         </Setter>
-        <Setter Property="Shadow">
-            <Setter.Value>
-                <Shadow Brush="#33000000" Offset="0,2" Radius="8" Opacity="{OnPlatform Android=0.10, WinUI=0.08, Default=0.08}" />
-            </Setter.Value>
-        </Setter>
+    </Style>
+
+    <Style x:Key="SolverSupportingTextStyle" TargetType="Label">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
     </Style>
 
     <Style x:Key="SolverSectionTitleStyle" TargetType="Label">
@@ -116,7 +117,7 @@
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
     </Style>
 
-    <Style x:Key="SolverChoiceButtonStyle" TargetType="Button">
+    <Style x:Key="SolverChoiceButtonStyle" TargetType="Button" BasedOn="{StaticResource AppButtonBaseStyle}">
         <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="Padding" Value="{DynamicResource Density.ButtonPadding}" />
         <Setter Property="CornerRadius" Value="{OnPlatform Android=20, WinUI=12, Default=12}" />
@@ -198,7 +199,7 @@
         </Setter>
     </Style>
 
-    <Style x:Key="SolverPrimaryActionStyle" TargetType="Button">
+    <Style x:Key="SolverPrimaryActionStyle" TargetType="Button" BasedOn="{StaticResource AppButtonBaseStyle}">
         <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
@@ -211,23 +212,20 @@
         <Setter Property="FontAttributes" Value="{OnPlatform WinUI=None, Default=Bold}" />
         <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
         <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
+        <Setter Property="BorderColor" Value="{DynamicResource WallpaperBorderColor}" />
+        <Setter Property="BorderWidth" Value="1" />
     </Style>
 
-    <!-- Tinted actions remain distinguishable from pale wallpaper and cards. -->
-    <Style x:Key="SolverOutlinedActionStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
-        <Setter Property="FontAttributes" Value="{OnPlatform WinUI=None, Default=Bold}" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
-        <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
-        <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />
-        <Setter Property="BorderWidth" Value="1" />
+    <!-- Utility actions retain a visible neutral surface; accent marks intent/selection. -->
+    <Style x:Key="SolverOutlinedActionStyle" TargetType="Button" BasedOn="{StaticResource SolverSecondaryActionStyle}">
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
                     <VisualState x:Name="Normal">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
-                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
-                            <Setter Property="BorderColor" Value="{DynamicResource PrimaryBorderColor}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
+                            <Setter Property="BorderColor" Value="{DynamicResource WallpaperBorderColor}" />
                         </VisualState.Setters>
                     </VisualState>
                     <!-- Native color feedback animates the current palette without
@@ -235,8 +233,8 @@
                     <VisualState x:Name="PointerOver" />
                     <VisualState x:Name="Focused">
                         <VisualState.Setters>
-                            <Setter Property="BackgroundColor" Value="{DynamicResource PrimarySoftColor}" />
-                            <Setter Property="TextColor" Value="{DynamicResource TextPrimaryColor}" />
+                            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceAltColor}" />
+                            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
                             <Setter Property="BorderColor" Value="{DynamicResource PrimaryColor}" />
                         </VisualState.Setters>
                     </VisualState>
@@ -250,6 +248,12 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <Style x:Key="SolverDisclosureActionStyle" TargetType="Button" BasedOn="{StaticResource SolverOutlinedActionStyle}">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontAttributes" Value="None" />
+        <Setter Property="CornerRadius" Value="8" />
     </Style>
 
     <Style x:Key="SolverSubTabButtonStyle" TargetType="Button">
@@ -266,16 +270,4 @@
         <Setter Property="BorderWidth" Value="1" />
     </Style>
 
-    <!-- Android-only visual style for Material/DevCheck-like sub tabs. -->
-    <Style x:Key="AndroidNativeSubTabButtonStyle" TargetType="Button">
-        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
-        <Setter Property="Padding" Value="16,8" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="BorderWidth" Value="0" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0.1" />
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
-    </Style>
 </ResourceDictionary>

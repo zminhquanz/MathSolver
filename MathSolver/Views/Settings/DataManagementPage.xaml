@@ -10,16 +10,16 @@
     <ContentPage.Resources>
         <Style TargetType="controls:EmojiActionButton" BasedOn="{StaticResource AppButtonBaseStyle}" />
         <Style x:Key="DataGridActionStyle" TargetType="Button" BasedOn="{StaticResource SolverOutlinedActionStyle}">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="0,0,6,4" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         </Style>
         <Style x:Key="DataGridSaveStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
-            <Setter Property="FontSize" Value="13" />
-            <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Margin" Value="0,0,6,4" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
+            <Setter Property="FontSize" Value="14" />
+            <Setter Property="Padding" Value="12,8" />
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
         </Style>
         <Style x:Key="DataToolbarActionStyle" TargetType="Button" BasedOn="{StaticResource DataGridActionStyle}">
             <Setter Property="Margin" Value="0" />
@@ -64,7 +64,7 @@
         <Style x:Key="DataDiagnosticCardStyle" TargetType="Border">
             <Setter Property="Padding" Value="12" />
             <Setter Property="BackgroundColor" Value="{DynamicResource SurfaceAltColor}" />
-            <Setter Property="Stroke" Value="{DynamicResource PrimaryBorderBrush}" />
+            <Setter Property="Stroke" Value="{DynamicResource BorderBrush}" />
             <Setter Property="StrokeThickness" Value="1" />
             <Setter Property="StrokeShape">
                 <Setter.Value>
@@ -125,18 +125,12 @@
                 <Label
                     Text="{localization:Translate DataManagement.Title}"
                     TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
-                    FontAttributes="Bold"
-                    LineBreakMode="TailTruncation"
-                    MaxLines="1"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource AppPageHeaderTitleStyle}" />
 
                 <Label
                     Text="{localization:Translate DataManagement.Subtitle}"
                     IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                    FontSize="11"
-                    LineBreakMode="TailTruncation"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource AppPageHeaderSubtitleStyle}" />
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>

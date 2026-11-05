@@ -66,19 +66,13 @@
                     x:Name="AboutTitleLabel"
                     Text="{localization:Translate About.HeaderTitle}"
                     TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
-                    FontAttributes="Bold"
-                    LineBreakMode="TailTruncation"
-                    MaxLines="1"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource AppPageHeaderTitleStyle}" />
 
                 <Label
                     x:Name="AboutSubtitleLabel"
                     Text="{localization:Translate About.Subtitle}"
                     IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                    FontSize="11"
-                    LineBreakMode="TailTruncation"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource AppPageHeaderSubtitleStyle}" />
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>
@@ -86,24 +80,16 @@
     <Grid x:Name="AboutPageContentRoot">
         <ScrollView>
             <VerticalStackLayout
-            Padding="{OnPlatform Android='12,12,12,20', WinUI='20,22,20,30', Default='20,22,20,30'}"
-            Spacing="16"
+            Padding="{DynamicResource Density.PagePadding}"
+            Spacing="{DynamicResource Density.Spacing}"
             MaximumWidthRequest="760"
             HorizontalOptions="Center">
 
             <!-- App identity -->
-            <Border
-                Padding="{OnPlatform Android=16, WinUI=22, Default=22}"
-                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
-
-                <Border.Shadow>
-                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
-                </Border.Shadow>
-
+            <Border Style="{StaticResource ThemeCardStyle}"
+                Padding="{OnPlatform Android=16, WinUI=24, Default=24}">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="{OnPlatform Android=28, WinUI=22, Default=22}" />
+                    <RoundRectangle CornerRadius="24" />
                 </Border.StrokeShape>
 
                 <Grid
@@ -160,21 +146,8 @@
             </Border>
 
             <!-- Application information -->
-            <Border
-                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
-
-                <Border.Shadow>
-                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
-                </Border.Shadow>
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=18, Default=18}" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="14">
+            <Border Style="{StaticResource ThemeCardStyle}">
+                <VerticalStackLayout Spacing="12">
                     <Label
                         x:Name="InformationTitleLabel"
                         Text="{localization:Translate About.InformationTitle}"
@@ -249,20 +222,7 @@
             </Border>
 
             <!-- Project links -->
-            <Border
-                Padding="{OnPlatform Android=14, WinUI=18, Default=18}"
-                BackgroundColor="{DynamicResource SurfaceContainerLowColor}"
-                Stroke="{DynamicResource BorderBrush}"
-                StrokeThickness="{OnPlatform Android=0, WinUI=1, Default=1}">
-
-                <Border.Shadow>
-                    <Shadow Brush="#33000000" Offset="0,2" Radius="6" Opacity="{OnPlatform Android=0.12, WinUI=0, Default=0}" />
-                </Border.Shadow>
-
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="{OnPlatform Android=16, WinUI=18, Default=18}" />
-                </Border.StrokeShape>
-
+            <Border Style="{StaticResource ThemeCardStyle}">
                 <VerticalStackLayout Spacing="12">
                     <!-- Canh trái giống tiêu đề Thông tin ứng dụng. -->
                     <Label

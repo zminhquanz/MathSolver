@@ -39,7 +39,7 @@ public sealed record AiInferencePreparation(int PromptTokens, uint MicroBatchSiz
     public int OffloadedGpuLayers { get; init; }
 }
 
-public enum AiJobState { Idle, Generating, Validating, Completed, Stopped, Failed }
+public enum AiJobState { Idle, Generating, Validating, Completed, Stopped, Failed, CompletedWithSkips }
 public enum AiItemState { Generating, Validating, Ready, Saved, Duplicate, Rejected, Stopped, SaveFailed, PendingReview }
 public sealed record AiQuestionAttempt(int Number, string Prompt, string RawJson, string? ErrorCode,
     bool IsComplete = true, AiGenerationMetrics? Metrics = null, string? ErrorDetails = null);
@@ -172,11 +172,20 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
         }
         catch (Exception error)
         {
-            finalError = error is RegexMatchTimeoutException ? "TextProcessingTimeout" : error.GetType().Name + ": " + error.Message;
+            // Finite prompt/grammar pools can be exhausted without an inference
+            // failure. Keep the stable code translatable instead of wrapping it
+            // in an exception type that becomes an unknown localization key.
+            finalError = error switch
+            {
+                RegexMatchTimeoutException => "TextProcessingTimeout",
+                InvalidOperationException { Message: "DuplicateProseRetriesExhausted" } => "ProsePoolExhausted",
+                _ => error.GetType().Name + ": " + error.Message
+            };
             lock (_sync)
                 _snapshot = _snapshot with {
                     Items = _snapshot.Items.Select(i => i.Question is null && i.State is AiItemState.Generating or AiItemState.Validating
-                        ? i with { State = AiItemState.Rejected, Error = finalError } : i).ToArray() };
+                        ? i with { State = finalError == "ProsePoolExhausted" ? AiItemState.Duplicate : AiItemState.Rejected,
+                            Error = finalError } : i).ToArray() };
         }
         finally
         {
@@ -185,7 +194,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             if (finalState == AiJobState.Stopped)
                 lock (_sync)
                     _snapshot = _snapshot with {
-                        Items = _snapshot.Items.Select(i => i.Question is null && i.State is not (AiItemState.Rejected or AiItemState.PendingReview)
+                        Items = _snapshot.Items.Select(i => i.Question is null && i.State is not (AiItemState.Rejected or AiItemState.Duplicate or AiItemState.PendingReview)
                             ? i with { State = AiItemState.Stopped } : i).ToArray() };
             // Release once per single/batch job, including load failure and cancellation.
             // Keep the job running until cleanup finishes so model management/new jobs
@@ -212,9 +221,9 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
             var contract = options.Family == BankQuestionFamily.Arithmetic
                 && ExpandedArithmeticCatalogue.Supports(options.Profile?.Group ?? QuestionKnowledgeGroup.Objects, options.Tier)
-                ? _expandedArithmeticCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse, options.CreativeProse)
+                ? _expandedArithmeticCycle.TryNext(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language, excludedProse, options.CreativeProse)
                 : ReasoningStoryCatalogue.Supports(options.Family)
-                ? _storyCycle.Next(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse, options.CreativeProse)
+                ? _storyCycle.TryNext(options.Family, options.StoryVariant, options.Tier, options.Language, excludedProse, options.CreativeProse)
                 : options.Family == BankQuestionFamily.Fraction
                 ? _fractionCycle.Next(options.Profile ?? new(QuestionKnowledgeGroup.Objects), options.Operation, options.Tier, options.Language)
                 : options.Family == BankQuestionFamily.FindX
@@ -224,6 +233,9 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                 : options.Operation == ArithmeticOperation.Add
                 ? _additionCycle.Next(options.Tier, options.Language)
                 : _arithmeticCycle.Next(options.Operation, options.Tier, options.Language);
+            // No template is available to give the model. Retain earlier batch
+            // items and report exhaustion without creating a phantom question.
+            if (contract is null) return (AiJobState.Failed, "ProsePoolExhausted");
             contract = contract with { OpenProse = options.CreativeProse && OpenQuestionProse.Supports(contract) };
             Append(new(number, contract, AiItemState.Generating, []));
             string? correction = null;
@@ -234,7 +246,15 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
             {
                 if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
                 SetState(AiJobState.Generating);
-                string prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse, errorDetails);
+                string prompt;
+                try { prompt = BasicQuestionPrompt.Build(contract, correction, duplicateProse, excludedProse, errorDetails); }
+                catch (InvalidOperationException error) when (error.Message == "DuplicateProseRetriesExhausted")
+                {
+                    // This context is used up; the next item may still have a
+                    // different compatible context with unused wording.
+                    correction = "ProseContextExhausted";
+                    break;
+                }
                 UpdateItem(number, i => i with { State = AiItemState.Generating,
                     Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -288,6 +308,12 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     UpdateItem(number, i => i with { Error = correction });
                     continue;
                 }
+                catch (InvalidOperationException error) when (error.Message == "DuplicateProseRetriesExhausted")
+                {
+                    correction = "ProseContextExhausted";
+                    UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), ErrorCode = correction, IsComplete = true, Metrics = metrics });
+                    break;
+                }
                 catch
                 {
                     UpdateAttempt(number, attempt, a => a with { RawJson = partial.ToString(), Metrics = metrics });
@@ -313,15 +339,18 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     if (validation.NeedsReview)
                     {
                         var candidate=PendingQuestionReview.Create(contract,validation.Draft!,raw,runtime.ModelName,validation.ErrorDetails??"SemanticReviewRequired");
-                        if(!excludedProse.Add(candidate.Id))
+                        if(!excludedProse.Add(candidate.Id)
+                            || !await store.QueueReviewAsync(candidate, cancellationToken).ConfigureAwait(false))
                         {
                             correction="DuplicateProse";duplicateProse.Add(validation.Draft!.ProblemText);
+                            errorDetails = null;
                             UpdateAttempt(number,attempt,a=>a with {ErrorCode=correction});
+                            UpdateItem(number,i=>i with {State=AiItemState.Duplicate,Error=correction});
                         }
                         else
                         {
-                            // Complete facts with inconclusive meaning go to review
-                            // after this attempt; only invalid/duplicate output retries.
+                            // Queue once at the attempt boundary. An insert-time
+                            // duplicate retries within this item's existing limit.
                             pendingReview=candidate;
                             break;
                         }
@@ -365,31 +394,29 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     UpdateItem(number, i => i with { State = AiItemState.Duplicate, Question = null, Error = correction });
                 }
             }
+            if (pendingReview is not null)
+            {
+                // A completed queue write remains visible even if Stop races
+                // its completion. Quarantined drafts never enter Ready/Saved.
+                UpdateItem(number,i=>i with { State=AiItemState.PendingReview,Review=pendingReview,Error="SemanticReviewRequired" });
+                batchProse.Add(pendingReview.Id);
+                excludedProse.Add(pendingReview.Id);
+                continue;
+            }
             if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
             var result = Snapshot.Items.Single(i => i.Number == number);
             if (result.Question is null)
             {
-                if (pendingReview is not null)
-                {
-                    // Quarantined drafts live in a separate table and never enter
-                    // the Ready/Saved path, even when automatic saving is enabled.
-                    bool queued = await store.QueueReviewAsync(pendingReview,cancellationToken).ConfigureAwait(false);
-                    if (!queued)
-                    {
-                        if (cancellationToken.IsCancellationRequested) return (AiJobState.Stopped, null);
-                        UpdateItem(number,i=>i with {State=AiItemState.Duplicate,Error="DuplicateProse"});
-                        return (AiJobState.Failed,"DuplicateProseRetriesExhausted");
-                    }
-                    UpdateItem(number,i=>i with { State=AiItemState.PendingReview,Review=pendingReview,Error="SemanticReviewRequired" });
-                    batchProse.Add(pendingReview.Id);
-                    excludedProse.Add(pendingReview.Id);
-                    continue;
-                }
-                UpdateItem(number, i => i with { State = correction == "DuplicateProse" ? AiItemState.Duplicate : AiItemState.Rejected, Error = correction });
-                return (AiJobState.Failed, correction == "DuplicateProse" ? "DuplicateProseRetriesExhausted" : "RetriesExhausted");
+                UpdateItem(number, i => i with { State = correction is "DuplicateProse" or "ProseContextExhausted"
+                    ? AiItemState.Duplicate : AiItemState.Rejected, Error = correction });
+                // A bad/duplicate item consumes only its requested slot, never
+                // the remainder of the batch. Keep its diagnostics for review.
+                continue;
             }
         }
-        return (cancellationToken.IsCancellationRequested ? AiJobState.Stopped : AiJobState.Completed, null);
+        return (cancellationToken.IsCancellationRequested ? AiJobState.Stopped
+            : Snapshot.Items.Any(i => i.State is AiItemState.Rejected or AiItemState.Duplicate)
+                ? AiJobState.CompletedWithSkips : AiJobState.Completed, null);
     }
 
     private void Append(AiQuestionItem item)

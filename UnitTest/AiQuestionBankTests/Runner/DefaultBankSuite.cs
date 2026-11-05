@@ -11,6 +11,7 @@ internal static class DefaultBankSuite
     internal static async Task RunAsync()
     {
         await HarnessInfrastructureTests.RunAsync();
+        ReadingColumnTests.Run();
         AiAccelerationPolicyTests.Run();
         await AiModelLoadCoordinatorTests.RunAsync();
         await QuestionReviewBatchTests.RunAsync();
@@ -128,6 +129,8 @@ internal static class DefaultBankSuite
         }
         Console.WriteLine("PASS SQLite persistence, deduplication, selection and invalid-insert protection");
         await ProseDeduplicationTests.RunAsync(directory);
+        await ProseExhaustionTests.RunAsync();
+        await GenerationContinuationTests.RunAsync();
         await DeleteAllTests.RunAsync(directory);
         await PracticeProviderTests.RunAsync(directory, validated, Draft);
         await BackgroundPracticeTests.RunAsync(directory);

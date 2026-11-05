@@ -49,9 +49,10 @@ internal static class RegexTimeoutRegressionTests
         var failing=new TimeoutRuntime(0);
         var failedStore=new QuestionBankStore(workspace.FilePath("exhausted.db3"));
         var failed=new AiQuestionGenerationService(failing,failedStore);failed.Start(Options());await failed.Completion;
-        Check(failed.Snapshot.State==AiJobState.Failed&&failed.Snapshot.Error=="RetriesExhausted"
-            &&failed.Snapshot.Items.Count==1&&failed.Snapshot.Items[0].Attempts.Count==3
-            &&failed.Snapshot.Items[0].Error=="TextProcessingTimeout"&&(await failedStore.GetProseHashesAsync()).Count==0
+        Check(failed.Snapshot.State==AiJobState.CompletedWithSkips&&failed.Snapshot.Error is null
+            &&failed.Snapshot.Items.Count==10&&failing.Calls==30
+            &&failed.Snapshot.Items.All(i=>i.State==AiItemState.Rejected&&i.Attempts.Count==3&&i.Error=="TextProcessingTimeout")
+            &&(await failedStore.GetProseHashesAsync()).Count==0
             &&failing.Releases==1&&!failing.IsLoaded,"Repeated timeouts bypassed retry limits, inserted partial output or retained weights.");
         Console.WriteLine("PASS 800 concurrent bilingual seconds/minutes profiles; unit-role guards, large inputs, timeout recovery after partial output/saved items, retry limits and model cleanup.");
     }

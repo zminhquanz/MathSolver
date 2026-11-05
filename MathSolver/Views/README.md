@@ -53,6 +53,11 @@ Giao diện đề toán và bài tập.
 
 ## Settings
 
+Các tiêu đề trang phụ dùng chung `AppPageHeaderTitleStyle` và `AppPageHeaderSubtitleStyle`.
+Các cột đọc PDF/duyệt đề dùng `ReadingColumnWidthConverter`; giữ riêng thứ tự cap/inset
+của từng màn. Nút disclosure dùng `SolverDisclosureActionStyle`, tác vụ phụ dùng
+`SolverOutlinedActionStyle`; màu chọn và hành động chính vẫn theo accent hiện tại.
+
 Cài đặt, menu cài đặt và giới thiệu ứng dụng.
 
 Các trang Quản lý dữ liệu, Thông tin phần cứng, Giới thiệu và Cài đặt đặt icon giữa nút lùi và tiêu đề; dùng chung SVG path với menu qua `SettingsDestinationIconPaths` và tự đổi màu theo theme. Trang xuất PDF và Đề chờ duyệt dùng `EmojiLabel` với Unicode gán trong C# (📄 và 🔎), cùng vị trí như icon 🤖 của trang thêm đề AI.

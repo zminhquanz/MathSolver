@@ -10,7 +10,7 @@ public partial class MathPuzzlePage
     private void UpdatePracticeHeader()
     {
         bool compact = ResponsiveLayoutPolicy.ForSolver(
-            MathPuzzlePageContentRoot.Width, MathPuzzlePageContentRoot.Height, CurrentTextScale).CompactHeader;
+            MathPuzzlePageContentRoot.Width, MathPuzzlePageContentRoot.Height, ResponsiveLayoutPolicy.TextScale).CompactHeader;
         if (_practiceHeroLayout == (_practiceSettingsExpanded, compact)) return;
         _practiceHeroLayout = (_practiceSettingsExpanded, compact);
         PracticeHero.IsVisible = _practiceSettingsExpanded;

@@ -12,6 +12,11 @@ internal sealed class ReasoningStoryCycle
 
     public BasicQuestionContract Next(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
         IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
+        => TryNext(family, variant, tier, language, excludedProse, creativeProse)
+            ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+
+    public BasicQuestionContract? TryNext(BankQuestionFamily family, int variant, CurriculumTier tier, AppLanguage language,
+        IReadOnlySet<string>? excludedProse = null, bool creativeProse = false)
     {
         var key = (family, variant, tier, language);
         var practicalProfiles=creativeProse?PracticalOpenCatalogue.Profiles(family,variant,language)
@@ -136,8 +141,8 @@ internal sealed class ReasoningStoryCycle
             best = narrativeIds
                 .Select(id => ReasoningStoryCatalogue.Create(family, variant, tier, language, narrativeId: id))
                 .Where(c => ReviewedReasoningProse.NovelDrafts(c, excludedProse).Any())
-                .OrderBy(c => history.Count(s => s == c.SceneId + "/" + c.Unit)).FirstOrDefault()
-                ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+                .OrderBy(c => history.Count(s => s == c.SceneId + "/" + c.Unit)).FirstOrDefault();
+            if (best is null) return null;
         }
         if (ReasoningStoryCatalogue.UsesReviewedPhrasings(family) && excludedProse is not null
             && !(creativeProse && OpenQuestionProse.Supports(best!))
@@ -146,8 +151,8 @@ internal sealed class ReasoningStoryCycle
             // Resampling is bounded and never calls inference. A used-up scene
             // should not stop generation while other compatible scenes remain.
             best = Enumerable.Range(0, 256).Select(_ => ReasoningStoryCatalogue.Create(family, variant, tier, language))
-                .FirstOrDefault(c => ReviewedReasoningProse.NovelDrafts(c, excludedProse).Any())
-                ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+                .FirstOrDefault(c => ReviewedReasoningProse.NovelDrafts(c, excludedProse).Any());
+            if (best is null) return null;
         }
         history.Enqueue(best!.SceneId + "/" + best.Unit);
         if (history.Count > 4) history.Dequeue();

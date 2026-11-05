@@ -33,6 +33,10 @@
     "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
+    "AiBank.ProcessedQuestionsEmpty": {
+      "context": "Math puzzles > Add questions with AI > Processed questions",
+      "translatorNote": "Empty state shown instead of a blank disabled selector before the first generation."
+    },
     "Formula.Measurement.OutputUnit.Hour.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese uses giờ/phút/giây/mili giây; English uses h/min/s/ms. Abbreviations do not change for the Other form."},
     "Formula.Measurement.OutputUnit.Minute.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese: phút. English: min, including plural quantities."},
     "Formula.Measurement.OutputUnit.Second.One": {"context":"Formula > Units: displayed time quantity","translatorNote":"Vietnamese: giây. English: s, including plural quantities."},
@@ -1347,6 +1351,10 @@
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     },
+    "AiBank.Job.CompletedWithSkips": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "The requested generation batch finished; some items were skipped after bounded retries. Successful items are retained."
+    },
     "AiBank.Job.Stopped": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
@@ -1438,6 +1446,14 @@
     "AiBank.Error.RetriesExhausted": {
       "context": "Math puzzles > Add questions with AI",
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
+    },
+    "AiBank.Error.ProsePoolExhausted": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "No inference retry occurred when the finite wording pool was exhausted. Previously generated or saved questions are retained."
+    },
+    "AiBank.Error.ProseContextExhausted": {
+      "context": "Math puzzles > Add questions with AI",
+      "translatorNote": "Only this context is exhausted; generation automatically advances to the next requested item. Do not ask the user to restart the batch."
     },
     "AiBank.Error.DatabaseSaveFailed": {
       "context": "Math puzzles > Add questions with AI",
@@ -1845,6 +1861,11 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {
+      "key": "AiBank.ProcessedQuestionsEmpty",
+      "source": "Chưa có đề đã xử lý. Chọn model và dạng toán để bắt đầu tạo đề.",
+      "mode": "exact"
+    },
     {"key":"Quiz.CheckAnswer","source":"Kiểm tra","mode":"exact"},
     {"key":"Quiz.RegenerateQuestionCompact","source":"Tạo lại câu","mode":"exact"},
     {"key":"Quiz.ProportionUnitaryGroupCount","source":"Rút về đơn vị · tìm số nhóm","mode":"exact"},
@@ -2339,7 +2360,7 @@
     {"key": "Quiz.MixedTimeInputHint", "source": "Nhập kết quả kèm đơn vị, ví dụ 2 giờ 30 phút, 2h30 hoặc 1 giờ 5 phút 20 giây. Chấp nhận kết quả tương đương như 150 phút. Không bắt buộc ghi lời giải, phép tính hay Đáp số.", "mode": "exact"},
     {"key": "Quiz.MixedTimeInputPlaceholder", "source": "Ví dụ: 2 giờ 30 phút hoặc 2h30", "mode": "exact"},
 
-    {"key": "AiBank.Error.TextProcessingTimeout", "source": "Quá thời gian xử lý đề. Hãy thử lại; các đề đã lưu vẫn được giữ.", "mode": "exact"},
+    {"key": "AiBank.Error.TextProcessingTimeout", "source": "Quá thời gian xử lý đề; các đề đã lưu vẫn được giữ.", "mode": "exact"},
     {"key": "Quiz.Elementary.SpatialFront", "source": "Vị trí phía trước", "mode": "exact"},
     {"key": "Curriculum.Requirement.VisualGeometry.SpatialFront", "source": "Vị trí phía trước.", "mode": "exact"},
     {"key": "Quiz.Elementary.SpatialBehind", "source": "Vị trí phía sau", "mode": "exact"},
@@ -9626,12 +9647,12 @@
     },
     {
       "key": "AiBank.InsertHint",
-      "source": "Nếu tắt, đề hợp lệ chỉ được lưu khi bạn bấm Lưu vào ngân hàng đề. Mỗi đề lỗi được thử tối đa 3 lần; nếu vẫn lỗi, tác vụ dừng để bạn bấm tạo lại. Tạo lượt mới sẽ thay bản xem của lượt cũ; hãy lưu hoặc xuất đề muốn giữ trước.",
+      "source": "Nếu tắt, đề hợp lệ chỉ được lưu khi bạn bấm Lưu vào ngân hàng đề. Đề đủ dữ kiện nhưng chưa xác minh rõ ý nghĩa được chuyển ngay vào Đề chờ duyệt. Đề sai hoặc trùng được thử tối đa 3 lần, sau đó bỏ qua và tự chuyển sang lượt tiếp theo. Lượt tạo mới thay bản xem cũ; hãy lưu hoặc xuất đề muốn giữ trước.",
       "mode": "exact"
     },
     {
       "key": "AiBank.Generate",
-      "source": "✨ Tạo đề bằng AI",
+      "source": "Tạo đề bằng AI",
       "mode": "exact"
     },
     {
@@ -9815,6 +9836,11 @@
       "mode": "exact"
     },
     {
+      "key": "AiBank.Job.CompletedWithSkips",
+      "source": "Đã hoàn tất, có đề bị bỏ qua",
+      "mode": "exact"
+    },
+    {
       "key": "AiBank.Job.Stopped",
       "source": "Đã dừng",
       "mode": "exact"
@@ -9846,7 +9872,7 @@
     },
     {
       "key": "AiBank.Item.Duplicate",
-      "source": "Đề trùng · Đã có trong SQLite",
+      "source": "Trùng hoặc hết mẫu · Không lưu",
       "mode": "exact"
     },
     {
@@ -9916,12 +9942,22 @@
     },
     {
       "key": "AiBank.Error.GenerationTimeout",
-      "source": "Quá thời gian sinh một đề; thử lại.",
+      "source": "Quá thời gian sinh đề này.",
       "mode": "exact"
     },
     {
       "key": "AiBank.Error.RetriesExhausted",
-      "source": "Đề vẫn không hợp lệ sau 3 lần thử. Bấm Tạo đề bằng AI để chạy lại; các đề đã lưu vẫn được giữ.",
+      "source": "Đề vẫn không hợp lệ sau 3 lần thử nên được bỏ qua. Ứng dụng chuyển sang lượt tiếp theo nếu còn; các đề đã lưu vẫn được giữ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ProsePoolExhausted",
+      "source": "Không còn mẫu lời văn chưa trùng cho lựa chọn hiện tại. Các đề đã tạo hoặc lưu vẫn được giữ. Hãy chọn nhóm/dạng khác, hoặc bật Diễn đạt đa dạng nếu dạng bài hỗ trợ.",
+      "mode": "exact"
+    },
+    {
+      "key": "AiBank.Error.ProseContextExhausted",
+      "source": "Không còn mẫu lời văn chưa trùng cho bối cảnh này. Đề được bỏ qua; ứng dụng chuyển sang lượt tiếp theo nếu còn.",
       "mode": "exact"
     },
     {

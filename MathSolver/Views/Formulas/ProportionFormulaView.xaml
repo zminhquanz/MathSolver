@@ -12,28 +12,16 @@
 
     <Grid RowDefinitions="Auto,*">
         <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
-            <VerticalStackLayout
-                Margin="{OnPlatform Android='0,2,0,3', WinUI='0,4,0,6', Default='0,4,0,6'}"
-                Spacing="2">
+            <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
 
-                <Label controls:SolverHeader.Role="Symbol"
-                    Text="↗  ↘  ⤢"
-                    FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource ContentAccentTextColor}" />
+                <Label controls:SolverHeader.Role="Symbol" Style="{StaticResource SolverHeroSymbolStyle}"
+                    Text="↗  ↘  ⤢" />
 
-                <Label controls:SolverHeader.Role="Title"
-                    Text="{localization:Translate Formula.Proportion.Title}"
-                    FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
-                    FontAttributes="Bold"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                <Label controls:SolverHeader.Role="Title" Style="{StaticResource SolverHeroTitleStyle}"
+                    Text="{localization:Translate Formula.Proportion.Title}" />
 
-                <Label controls:SolverHeader.Role="Description"
-                    Text="{localization:Translate Formula.Proportion.Subtitle}"
-                    FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
-                    HorizontalTextAlignment="Center"
-                    TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                <Label controls:SolverHeader.Role="Description" Style="{StaticResource SolverHeroSubtitleStyle}"
+                    Text="{localization:Translate Formula.Proportion.Subtitle}" />
 
             </VerticalStackLayout>
         </VerticalStackLayout>

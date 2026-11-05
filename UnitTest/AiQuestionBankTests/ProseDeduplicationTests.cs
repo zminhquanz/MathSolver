@@ -116,9 +116,10 @@ internal static class ProseDeduplicationTests
         var exhausted = new AiQuestionGenerationService(exhaustedRuntime, exhaustedStore);
         exhausted.Start(new(ArithmeticOperation.Add, CurriculumTier.OneStar, AppLanguage.Vietnamese, 5, true));
         await exhausted.Completion;
-        Check(exhaustedRuntime.Prompts.Count == 3 && exhaustedStore.Saves == 0
-            && exhausted.Snapshot.Error == "DuplicateProseRetriesExhausted"
-            && exhausted.Snapshot.Items.Single() is { State: AiItemState.Duplicate, Question: null },
+        Check(exhaustedRuntime.Prompts.Count == 15 && exhaustedStore.Saves == 0
+            && exhausted.Snapshot.State == AiJobState.CompletedWithSkips && exhausted.Snapshot.Error is null
+            && exhausted.Snapshot.Items.Count == 5
+            && exhausted.Snapshot.Items.All(i => i is { State: AiItemState.Duplicate, Question: null } && i.Attempts.Count == 3),
             "Persistent duplicates were saved or the retry bound was exceeded.");
 
         var raceRuntime = new Runtime();
@@ -140,7 +141,8 @@ internal static class ProseDeduplicationTests
         batch.Start(new(ArithmeticOperation.Multiply, CurriculumTier.OneStar, AppLanguage.Vietnamese, scenes + 1, false, profile));
         await batch.Completion;
         var accepted = batch.Snapshot.Items.Where(i => i.State == AiItemState.Ready).ToArray();
-        Check(batch.Snapshot.Error == "DuplicateProseRetriesExhausted" && pendingStore.Saves == 0
+        Check(batch.Snapshot.State == AiJobState.CompletedWithSkips && batch.Snapshot.Error is null && pendingStore.Saves == 0
+            && batch.Snapshot.Items.Count == scenes + 1
             && accepted.Length > 0 && accepted.Select(i => QuestionProseIdentity.Hash(i.Question!.Contract, i.Question.Draft)).Distinct().Count() == accepted.Length
             && batch.Snapshot.Items.Last().Attempts.Count == 3,
             "Manual batch offered duplicate wording before SQLite insertion.");

@@ -36,15 +36,8 @@ public sealed class AiQuestionReviewPage : ContentPage
     private readonly EmojiActionButton _rejectSelected = BatchButton("RejectSelected", "🗑️", "SolverOutlinedActionStyle", "AiReviewRejectSelected");
     private readonly EmojiActionButton _approveAll = BatchButton("ApproveAll", "✅", "SolverPrimaryActionStyle", "AiReviewApproveAll");
     private readonly EmojiActionButton _rejectAll = BatchButton("RejectAll", "🗑️", "SolverOutlinedActionStyle", "AiReviewRejectAll");
-    private readonly Label _headerTitle = new()
-    {
-        FontSize = 20, FontAttributes = FontAttributes.Bold,
-        LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
-    };
-    private readonly Label _headerSubtitle = new()
-    {
-        FontSize = 11, LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
-    };
+    private readonly Label _headerTitle = new();
+    private readonly Label _headerSubtitle = new();
     private readonly LiveWallpaperView _wallpaper = new();
     private readonly Command<Card> _approveCommand;
     private readonly Command<Card> _rejectCommand;
@@ -129,6 +122,8 @@ public sealed class AiQuestionReviewPage : ContentPage
         bool android = OperatingSystem.IsAndroid();
         _headerTitle.TranslationY = android ? 1 : 0;
         _headerTitle.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
+        _headerTitle.SetDynamicResource(StyleProperty, "AppPageHeaderTitleStyle");
+        _headerSubtitle.SetDynamicResource(StyleProperty, "AppPageHeaderSubtitleStyle");
         _headerSubtitle.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
         SemanticProperties.SetHeadingLevel(_headerTitle, SemanticHeadingLevel.Level1);
         _back.SetDynamicResource(StyleProperty, "PlatformBackButtonStyle");
@@ -268,7 +263,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         content.Add(Section("Calculation", nameof(Card.Calculation)));
         content.Add(actions);
         actions.SetBinding(WidthRequestProperty, new Binding(nameof(Width), source: content,
-            converter: new ReadingWidthConverter(600, 0)));
+            converter: new ReadingColumnWidthConverter(600, 0)));
 
         var selectedSurface = new Border
         {
@@ -355,19 +350,8 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     private void ConstrainWidth(View view)
     {
-        var binding = new Binding(nameof(Width), source: _items, converter: new ReadingWidthConverter(1160, 48));
+        var binding = new Binding(nameof(Width), source: _items, converter: new ReadingColumnWidthConverter(1160, 48));
         view.SetBinding(WidthRequestProperty, binding);
-    }
-
-    private sealed class ReadingWidthConverter(double maximum, double inset) : IValueConverter
-    {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            double width = value is double w && double.IsFinite(w) && w > 0 ? w : 320;
-            return Math.Max(1, Math.Min(maximum, width - inset));
-        }
-
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
     }
 
     protected override async void OnAppearing()

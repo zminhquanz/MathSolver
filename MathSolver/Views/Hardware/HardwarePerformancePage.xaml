@@ -61,18 +61,12 @@
                 <Label
                     Text="Thông tin phần cứng"
                     TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
-                    FontAttributes="Bold"
-                    LineBreakMode="TailTruncation"
-                    MaxLines="1"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource AppPageHeaderTitleStyle}" />
 
                 <Label
                     Text="Đo hiệu năng Int32, Int64, Float và Double"
                     IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                    FontSize="11"
-                    LineBreakMode="TailTruncation"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource AppPageHeaderSubtitleStyle}" />
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>

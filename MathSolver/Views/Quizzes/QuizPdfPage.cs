@@ -27,15 +27,8 @@ internal sealed class QuizPdfPage : ContentPage
     private readonly Button _create = new(), _stop = new(), _save = new(), _saveAnswers = new(), _share = new(), _shareAnswers = new(), _open = new();
     private readonly Button _change = new();
     private readonly Button _back = new() { AutomationId = "QuizPdfBack" };
-    private readonly Label _headerTitle = new()
-    {
-        FontSize = 20, FontAttributes = FontAttributes.Bold,
-        LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
-    };
-    private readonly Label _headerSubtitle = new()
-    {
-        FontSize = 11, LineBreakMode = LineBreakMode.TailTruncation, MaxLines = 1
-    };
+    private readonly Label _headerTitle = new();
+    private readonly Label _headerSubtitle = new();
     private readonly Label _empty = new();
     private readonly Switch _answers = new() { IsToggled = true };
     private readonly CollectionView _preview = new();
@@ -203,6 +196,8 @@ internal sealed class QuizPdfPage : ContentPage
         }, 1);
         _headerTitle.TranslationY = android ? 1 : 0;
         _headerTitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextPrimaryColor");
+        _headerTitle.SetDynamicResource(StyleProperty, "AppPageHeaderTitleStyle");
+        _headerSubtitle.SetDynamicResource(StyleProperty, "AppPageHeaderSubtitleStyle");
         _headerSubtitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextSecondaryColor");
         SemanticProperties.SetHeadingLevel(_headerTitle, SemanticHeadingLevel.Level1);
         var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
@@ -274,21 +269,9 @@ internal sealed class QuizPdfPage : ContentPage
         }
     }
     private string CleanTitle() => string.IsNullOrWhiteSpace(_title.Text) ? T("DefaultTitle") : _title.Text.Trim();
-    private sealed class PreviewWidthConverter(double inset) : IValueConverter
-    {
-        public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
-        {
-            // A native CollectionView can initially measure a cell with unlimited
-            // width. Constrain it from the viewport, including the card's margins,
-            // before measuring prose or a wrapping math expression.
-            double viewport = value is double width && double.IsFinite(width) && width > 0 ? width : 320;
-            return Math.Max(1, Math.Min(1320, viewport) - 32 - inset);
-        }
-        public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
-    }
     private void ConstrainPreviewWidth(View view, double inset = 0)
     {
-        var converter = new PreviewWidthConverter(inset);
+        var converter = new ReadingColumnWidthConverter(1320, 32 + inset, capBeforeInset: true);
         view.SetBinding(WidthRequestProperty, new Binding(nameof(Width), source: _preview, converter: converter));
         view.SetBinding(MaximumWidthRequestProperty, new Binding(nameof(Width), source: _preview, converter: converter));
     }

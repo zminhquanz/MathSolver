@@ -158,30 +158,18 @@
                 -->
                 <Grid RowDefinitions="Auto,*">
                     <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
-                        <VerticalStackLayout
-                            Margin="0,4,0,6"
-                            Spacing="2">
+                        <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
 
-                            <Label controls:SolverHeader.Role="Symbol"
-                                Text="𝑥  + − × ÷"
-                                FontSize="{OnPlatform Android=28, WinUI=40, Default=40}"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource ContentAccentTextColor}" />
+                            <Label controls:SolverHeader.Role="Symbol" Style="{StaticResource SolverHeroSymbolStyle}"
+                                Text="𝑥  + − × ÷" />
 
-                            <Label controls:SolverHeader.Role="Title"
+                            <Label controls:SolverHeader.Role="Title" Style="{StaticResource SolverHeroTitleStyle}"
                                 x:Name="UnknownPageTitle"
-                                Text="TÌM THÀNH PHẦN CHƯA BIẾT"
-                                FontSize="{OnPlatform Android=23, WinUI=27, Default=27}"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                Text="TÌM THÀNH PHẦN CHƯA BIẾT" />
 
-                            <Label controls:SolverHeader.Role="Description"
+                            <Label controls:SolverHeader.Role="Description" Style="{StaticResource SolverHeroSubtitleStyle}"
                                 x:Name="UnknownPageSubtitle"
-                                Text="Dạng tổng quát • Quy tắc • Ví dụ minh họa"
-                                FontSize="{OnPlatform Android=14, WinUI=17, Default=17}"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                Text="Dạng tổng quát • Quy tắc • Ví dụ minh họa" />
 
                         </VerticalStackLayout>
                     </VerticalStackLayout>
@@ -843,30 +831,18 @@
 
                 <Grid RowDefinitions="Auto,*">
                     <VerticalStackLayout Style="{StaticResource SolverFixedHeaderStyle}">
-                        <VerticalStackLayout
-                            Margin="0,4,0,6"
-                            Spacing="2">
+                        <VerticalStackLayout Style="{StaticResource SolverHeroStyle}">
 
-                            <Label controls:SolverHeader.Role="Symbol"
-                                Text="□  △  ○"
-                                FontSize="40"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource ContentAccentTextColor}" />
+                            <Label controls:SolverHeader.Role="Symbol" Style="{StaticResource SolverHeroSymbolStyle}"
+                                Text="□  △  ○" />
 
-                            <Label controls:SolverHeader.Role="Title"
+                            <Label controls:SolverHeader.Role="Title" Style="{StaticResource SolverHeroTitleStyle}"
                                 x:Name="GeometryPageTitle"
-                                Text="CHU VI, DIỆN TÍCH VÀ THỂ TÍCH"
-                                FontSize="27"
-                                FontAttributes="Bold"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                Text="CHU VI, DIỆN TÍCH VÀ THỂ TÍCH" />
 
-                            <Label controls:SolverHeader.Role="Description"
+                            <Label controls:SolverHeader.Role="Description" Style="{StaticResource SolverHeroSubtitleStyle}"
                                 x:Name="GeometryPageSubtitle"
-                                Text="Hình học mặt phẳng • Hình học không gian • Công thức thường dùng"
-                                FontSize="17"
-                                HorizontalTextAlignment="Center"
-                                TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                                Text="Hình học mặt phẳng • Hình học không gian • Công thức thường dùng" />
 
                         </VerticalStackLayout>
                     </VerticalStackLayout>

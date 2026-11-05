@@ -77,10 +77,10 @@ internal static class StreamingTests
         service.Start(new(ArithmeticOperation.Multiply, CurriculumTier.OneStar, AppLanguage.Vietnamese, 2, true));
         await service.Completion;
         var failed = service.Snapshot;
-        Check(failed.State == AiJobState.Failed && !failed.IsRunning && failed.Error == "RetriesExhausted"
-            && failed.Items.Count == 1 && failed.Items[0].Error == "InvalidFields" && store.Saved == 0
-            && failed.Items[0].Attempts.Count == 3
-            && failed.Items[0].Attempts.All(a => a.IsComplete && a.RawJson == "{}" && a.ErrorCode == "InvalidFields"),
+        Check(failed.State == AiJobState.CompletedWithSkips && !failed.IsRunning && failed.Error is null
+            && failed.Items.Count == 2 && store.Saved == 0
+            && failed.Items.All(i => i.State == AiItemState.Rejected && i.Error == "InvalidFields" && i.Attempts.Count == 3
+                && i.Attempts.All(a => a.IsComplete && a.RawJson == "{}" && a.ErrorCode == "InvalidFields")),
             "Rejected streaming output lost its concrete error, exceeded three attempts, or was saved.");
         runtime = new(prose, finishNormallyOnStop: true);
         store = new();

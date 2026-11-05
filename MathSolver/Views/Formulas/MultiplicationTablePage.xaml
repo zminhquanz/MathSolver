@@ -10,31 +10,8 @@
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
     <ContentPage.Resources>
-        <Style x:Key="SectionBorderStyle" TargetType="Border">
-            <Setter Property="StrokeShape" Value="RoundRectangle 16" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
-            <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=16, Default=16}" />
-                    <Setter Property="Shadow">
-                <Setter.Value>
-                    <Shadow Brush="#33000000" Offset="0,2" Radius="8" Opacity="{OnPlatform Android=0.10, WinUI=0.08, Default=0.08}" />
-                </Setter.Value>
-            </Setter>
-</Style>
-
-        <Style x:Key="CardBorderStyle" TargetType="Border">
-            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
-            <Setter Property="StrokeThickness" Value="1" />
-            <Setter Property="Stroke" Value="{DynamicResource WallpaperBorderBrush}" />
-            <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperSurfaceColor}" />
-            <Setter Property="Padding" Value="{OnPlatform Android=12, WinUI=14, Default=14}" />
-                    <Setter Property="Shadow">
-                <Setter.Value>
-                    <Shadow Brush="#33000000" Offset="0,2" Radius="8" Opacity="{OnPlatform Android=0.10, WinUI=0.08, Default=0.08}" />
-                </Setter.Value>
-            </Setter>
-</Style>
+        <Style x:Key="SectionBorderStyle" TargetType="Border" BasedOn="{StaticResource SolverCardStyle}" />
+        <Style x:Key="CardBorderStyle" TargetType="Border" BasedOn="{StaticResource SolverCardStyle}" />
 
         <Style x:Key="TableLineBorderStyle" TargetType="Border">
             <Setter Property="StrokeShape" Value="RoundRectangle 10" />
@@ -44,16 +21,8 @@
             <Setter Property="Padding" Value="{OnPlatform Android='8,7', WinUI='10,8', Default='10,8'}" />
         </Style>
 
-        <Style x:Key="TitleLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{OnPlatform Android=16, WinUI=17, Default=17}" />
-            <Setter Property="FontAttributes" Value="Bold" />
-            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextPrimaryColor}" />
-        </Style>
-
-        <Style x:Key="SubLabelStyle" TargetType="Label">
-            <Setter Property="FontSize" Value="{OnPlatform Android=14, WinUI=15, Default=15}" />
-            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
-        </Style>
+        <Style x:Key="TitleLabelStyle" TargetType="Label" BasedOn="{StaticResource SolverSectionTitleStyle}" />
+        <Style x:Key="SubLabelStyle" TargetType="Label" BasedOn="{StaticResource SolverSupportingTextStyle}" />
 
         <Style x:Key="TableLineStyle" TargetType="Label">
             <Setter Property="HorizontalTextAlignment" Value="Center" />

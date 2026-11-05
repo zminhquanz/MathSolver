@@ -87,7 +87,7 @@ public partial class MathPuzzlePage : ContentPage
         RegenerateQuestionButton.Emoji = "\U0001F504";
         OpenAiQuestionBankEmojiLabel.Text = "\U0001F916"; // Match the AI authoring header's robot emoji.
         // Native emoji fonts provide colour glyphs independently of the app's text font.
-        PracticeHeroEmojiLabel.Text = "\U0001F9E0 \U0001F9E9"; // Brain + puzzle: mathematical reasoning.
+        PracticeHeroEmojiLabel.Text = "?  + − × ÷";
         Loaded += OnPracticePageLoaded;
         Unloaded += OnPracticePageUnloaded;
 
@@ -2271,7 +2271,7 @@ public partial class MathPuzzlePage : ContentPage
         if (width <= 0) width = Math.Max(0, QuizContent.Width - QuizContent.Padding.HorizontalThickness - 36);
         int longestChoice = ChoiceButtons.Select((button, index) => ChoiceFractionViews[index].IsVisible
             ? ChoiceFractionViews[index].Expression.Length : button.Text?.Length ?? 0).Max();
-        bool singleColumn = QuizResponsiveLayout.UseSingleColumnChoices(width, CurrentTextScale,
+        bool singleColumn = QuizResponsiveLayout.UseSingleColumnChoices(width, ResponsiveLayoutPolicy.TextScale,
             longestChoice, contract?.Answers.Count > 1);
         if (_singleColumnChoices == singleColumn) return;
         _singleColumnChoices = singleColumn;

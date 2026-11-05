@@ -71,20 +71,6 @@ public partial class MathPuzzlePage
         });
     }
 
-    private static double CurrentTextScale
-    {
-        get
-        {
-#if ANDROID
-            return Math.Max(1, Android.App.Application.Context.Resources?.Configuration?.FontScale ?? 1);
-#elif WINDOWS
-            return Math.Max(1, new global::Windows.UI.ViewManagement.UISettings().TextScaleFactor);
-#else
-            return 1;
-#endif
-        }
-    }
-
     private void UpdatePracticeSummary()
     {
         string mode = Translate(_selectedMode switch
@@ -203,7 +189,7 @@ public partial class MathPuzzlePage
         if (width <= 0) return;
         UpdatePracticeSummaryLayout();
         if (!CanUpdatePracticeLayout) return;
-        bool compact = QuizResponsiveLayout.UseCompactSettings(width, CurrentTextScale);
+        bool compact = QuizResponsiveLayout.UseCompactSettings(width, ResponsiveLayoutPolicy.TextScale);
         if (_compactSettings != compact)
         {
             _compactSettings = compact;
@@ -235,7 +221,7 @@ public partial class MathPuzzlePage
             _practiceLayoutLoaded = false;
             return;
         }
-        bool overflow = QuizResponsiveLayout.UseOverflowPracticeActions(width, CurrentTextScale, actionsWidth);
+        bool overflow = QuizResponsiveLayout.UseOverflowPracticeActions(width, ResponsiveLayoutPolicy.TextScale, actionsWidth);
         if (_summaryOverflow == overflow) return;
         _summaryOverflow = overflow;
         PracticeSummaryActionsGrid.IsVisible = !overflow;

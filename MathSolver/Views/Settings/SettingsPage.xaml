@@ -64,19 +64,13 @@
                     x:Name="SettingsPageTitleLabel"
                     Text="Cài đặt"
                     TranslationY="{OnPlatform Android=1, WinUI=0, Default=0}"
-                    FontSize="{OnPlatform Android=20, WinUI=20, Default=20}"
-                    FontAttributes="Bold"
-                    LineBreakMode="TailTruncation"
-                    MaxLines="1"
-                    TextColor="{DynamicResource TextPrimaryColor}" />
+                    Style="{StaticResource AppPageHeaderTitleStyle}" />
 
                 <Label
                     x:Name="SettingsPageSubtitleLabel"
                     Text="Giao diện, kết quả hiển thị và công cụ nhà phát triển"
                     IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
-                    FontSize="11"
-                    LineBreakMode="TailTruncation"
-                    TextColor="{DynamicResource TextSecondaryColor}" />
+                    Style="{StaticResource AppPageHeaderSubtitleStyle}" />
             </VerticalStackLayout>
         </Grid>
     </Shell.TitleView>
@@ -110,7 +104,7 @@
                 </Border>
 
                 <Border Style="{StaticResource ThemeCardStyle}">
-                    <VerticalStackLayout Spacing="13">
+                    <VerticalStackLayout Spacing="12">
                         <Label
                         Text="Phong cách hiển thị"
                         FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"

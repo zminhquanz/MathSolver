@@ -8,6 +8,11 @@ internal sealed class ExpandedArithmeticCycle
     private readonly Dictionary<(QuestionKnowledgeGroup, ArithmeticOperation, CurriculumTier, AppLanguage, string), int> _uses = [];
     public BasicQuestionContract Next(QuestionLearningProfile profile, ArithmeticOperation operation, CurriculumTier tier,
         AppLanguage language, IReadOnlySet<string> excluded, bool creativeProse = false)
+        => TryNext(profile, operation, tier, language, excluded, creativeProse)
+            ?? throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+
+    public BasicQuestionContract? TryNext(QuestionLearningProfile profile, ArithmeticOperation operation, CurriculumTier tier,
+        AppLanguage language, IReadOnlySet<string> excluded, bool creativeProse = false)
     {
         var specialized = profile.Group == QuestionKnowledgeGroup.Packaging && operation == ArithmeticOperation.Divide
             ? AppliedQuestionCatalogue.Available(profile, operation, tier).Where(s => s.Id is "packing-minimum" or "packing-remainder")
@@ -27,6 +32,6 @@ internal sealed class ExpandedArithmeticCycle
                 return c;
             }
         }
-        throw new InvalidOperationException("DuplicateProseRetriesExhausted");
+        return null;
     }
 }
