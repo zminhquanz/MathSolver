@@ -175,29 +175,31 @@ public partial class AiQuestionBankPage : ContentPage
     private void Render()
     {
         var snapshot = _bank.Generation.Snapshot;
-        bool running = snapshot.IsRunning, busy = running || _bank.IsManaging || _bank.Generation.IsDeletingAll;
+        int pending = snapshot.Items.Count(i => i.State == AiItemState.PendingReview);
+        var presentation = ResolvePresentation(snapshot, pending);
+        bool running = snapshot.IsRunning, busy = presentation.Busy;
         ConfigurationPanel.IsEnabled = !busy;
         RefreshConfigurationTheme();
         ChooseModelButton.IsEnabled = DownloadButton.IsEnabled = !busy;
         DownloadModelPicker.IsEnabled = !busy;
         EjectModelButton.IsEnabled = !busy && _bank.Runtime.CanGenerate;
         CancelModelButton.IsEnabled = _bank.IsManaging;
-        GenerateButton.IsEnabled = !busy && !_saving && _bank.Runtime.CanGenerate;
-        StopButton.IsEnabled = running && !_confirmingStop;
-        ModelStatusLabel.Text = _bank.Runtime.IsLoaded ? T("Loaded") + ": " + _bank.Runtime.ModelName
-            : _bank.Runtime.CanGenerate ? T("SelectedModel") + ": " + _bank.Runtime.ModelName : T("NoModel");
+        GenerateButton.IsEnabled = presentation.CanGenerate;
+        StopButton.IsEnabled = presentation.CanStop;
+        ModelStatusLabel.Text = T(presentation.ModelStatusKey)
+            + (presentation.ModelStatusKey == "NoModel" ? "" : ": " + _bank.Runtime.ModelName);
         DownloadProgressBar.IsVisible = _bank.IsManaging && _bank.DownloadProgress is not null;
         DownloadProgressBar.Progress = _bank.DownloadProgress is { Total: > 0 } p ? (double)p.Received / p.Total.Value : 0;
-        DownloadStatusLabel.Text = _bank.ManagementError is not null ? T("ModelActionFailed") + ": " + _bank.ManagementError
-            : _bank.IsManaging ? T(_bank.ManagementStatus) + (_bank.DownloadProgress is { } progress
+        DownloadStatusLabel.Text = _bank.ManagementError is not null ? T(presentation.ManagementStatusKey!) + ": " + _bank.ManagementError
+            : presentation.ManagementStatusKey is not null ? T(presentation.ManagementStatusKey) + (_bank.DownloadProgress is { } progress
                 ? $" · {progress.Received / 1048576d:N0} / {(progress.Total.HasValue ? (progress.Total.Value / 1048576d).ToString("N0") : "?")} MiB" : "") : "";
         int valid = snapshot.Items.Count(i => i.Question is not null), saved = snapshot.Items.Count(i => i.State == AiItemState.Saved);
         JobStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("Progress"), T("Job." + snapshot.State), valid,
             snapshot.Options?.Count ?? 0, saved) + (snapshot.Error is null ? "" : "\n" + ErrorText(snapshot.Error));
-        int pending=snapshot.Items.Count(i=>i.State==AiItemState.PendingReview);
+
         if(pending>0) JobStatusLabel.Text += " · " + string.Format(CultureInfo.CurrentCulture,T("Review.Count"),pending);
-        RenderGenerationStatus(snapshot, busy);
-        RenderWorkflow(running, pending);
+        RenderGenerationStatus(snapshot, presentation);
+        RenderWorkflow(running, presentation);
         int previous = QuestionPicker.SelectedIndex;
         _updating = true;
         string[] labels = snapshot.Items.Select(i => $"{T("Question")} {i.Number} · {T("Item." + i.State)}").ToArray();

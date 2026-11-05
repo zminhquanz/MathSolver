@@ -2,6 +2,10 @@ using MathSolver.Tests;
 
 var tests = new (string Name, Action Run)[]
 {
+    ("Shared workspace metrics", MathSolver.Testing.WorkspaceLayoutMetricsTests.Run),
+    ("Shared topic navigation", MathPuzzleUnitTests.TopicNavigationPolicyTests.Run),
+    ("Matrix presentation policy", MathSolver.Tests.MatrixPresentationPolicyTests.Run),
+    ("AI presentation policy", MathPuzzleUnitTests.AiPresentationPolicyTests.Run),
     ("Matrix phone cell fitting and touch bounds", PuzzleTests.CheckMatrixPhoneCellLayout),
     ("Matrix NEON exact arithmetic dispatch and panel bounds", MatrixNeonChecks.Run),
     ("Matrix cell typing Int64 boundaries and transient signs", PuzzleTests.CheckMatrixCellTypingLimits),
@@ -157,6 +161,7 @@ var tests = new (string Name, Action Run)[]
     ("Direct elapsed time conversion and calendar input", PuzzleTests.CheckTimeResultInput),
     ("Indirect average solution steps", PuzzleTests.CheckAverageIndirectSteps),
     ("Word problem solutions and formatting", PuzzleTests.CheckWordProblemFormatting),
+    ("Unitary group-count source-based equivalent calculations", PuzzleTests.CheckUnitaryGroupCalculations),
     ("Flexible essay calculations", PuzzleTests.CheckFlexibleEssayCalculations),
     ("Motion realism", PuzzleTests.CheckMotionRealism),
     ("Structural difficulty across five stars", PuzzleTests.CheckStructuralDifficulty)

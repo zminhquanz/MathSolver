@@ -128,9 +128,32 @@ public sealed partial class MatrixView
         _updatingMatrixLayout = true;
         try
         {
-            if (!HasInputs) _tableExpanded = false;
-            bool shortWindow = Height > 0 && Height < 480 * ResponsiveLayoutPolicy.TextScale;
-            bool phone = HasInputs && !_setupPanel.IsVisible && ResponsiveLayoutPolicy.UseStackedLayout(Width, 600);
+            var space = WorkspaceLayoutCapture.Capture(this);
+            bool shortWindow = space.AvailableHeight > 0 && space.EffectiveHeight < 480;
+            bool phone = HasInputs && !_setupPanel.IsVisible && space.EffectiveWidth < 600;
+            bool side = ResponsiveLayoutPolicy.ForSolver(WorkspaceLayoutCapture.Capture(_editorWorkArea)).UseSideBySide;
+            var state = MatrixPresentationPolicy.Resolve(new MatrixPresentationInput
+            {
+                HasInputs = HasInputs, HasResult = _result is not null, SelectedMatrix = _selected,
+                SideBySide = side, Busy = _busy, SetupRequested = _setupPanel.IsVisible,
+#if WINDOWS
+                IsWindows = true,
+#endif
+                DetailsRequested = _detailsRequested, TechnicalRequested = _technicalRequested,
+                ToolsRequested = _toolsRequested, DetailsDismissed = _detailsDismissed,
+                TableExpanded = _tableExpanded, StatusDetailsAvailable = _statusDetailsCard.IsVisible,
+                MoreToolsVisible = _moreTools.IsVisible, CoordinateVisible = _coordinatePanel.IsVisible,
+                SelectionChanged = _detailMatrix != _selected,
+                CellChanged = _detailRow != _viewport.SelectedRow || _detailColumn != _viewport.SelectedColumn
+            });
+            _detailsRequested = state.DetailsRequested; _technicalRequested = state.TechnicalRequested;
+            _detailsDismissed = state.DetailsDismissed; _tableExpanded = state.TableExpanded;
+            if (!state.ToolsRequested) CloseMatrixTools();
+            _detailMatrix = _selected; _detailRow = _viewport.SelectedRow; _detailColumn = _viewport.SelectedColumn;
+#if ANDROID
+            // Rotating a phone does not turn its touch workspace into desktop.
+            phone |= HasInputs && !_setupPanel.IsVisible && DeviceInfo.Current.Idiom == DeviceIdiom.Phone;
+#endif
 #if WINDOWS
             phone = false; // Narrow desktop uses the same inspector, preserving its fixed toolbar.
 #endif
@@ -161,9 +184,10 @@ public sealed partial class MatrixView
 #else
             _matrixHero.IsVisible = !shortWindow && !phone;
 #endif
-            bool side = ResponsiveLayoutPolicy.ForSolver(_editorWorkArea.Width, Height, ResponsiveLayoutPolicy.TextScale).UseSideBySide;
             double available = Math.Max(1, _matrixMain.Height);
-            double usable = Math.Max(1, available - _matrixMain.Padding.VerticalThickness - _matrixMain.RowSpacing);
+            var tableSpace = WorkspaceLayoutCapture.Capture(_matrixMain,
+                _matrixMain.Padding.HorizontalThickness, _matrixMain.Padding.VerticalThickness + _matrixMain.RowSpacing);
+            double usable = Math.Max(1, tableSpace.AvailableHeight);
             double rowHeight = DisplayDensityManager.Metrics.MatrixRowHeight * Math.Clamp(ResponsiveLayoutPolicy.TextScale, 1, 1.6);
             // Reserve a header plus at least one row before measuring optional
             // chrome. When the keyboard leaves very little room, keep the table.
@@ -197,52 +221,28 @@ public sealed partial class MatrixView
             _range.IsVisible = _viewport.HasRangeSelection;
 #endif
 
-            if (_detailMatrix != _selected)
-            {
-                _detailsRequested = _technicalRequested = _detailsDismissed = false;
-                CloseMatrixTools(); _detailMatrix = _selected;
-            }
-            if (_detailRow != _viewport.SelectedRow || _detailColumn != _viewport.SelectedColumn)
-            {
-                _detailsDismissed = false; _detailRow = _viewport.SelectedRow; _detailColumn = _viewport.SelectedColumn;
-            }
-            // Read-only status details remain usable after failed recreation,
-            // when no input drafts exist. They do not depend on a selected cell.
-            bool statusDetails = _toolsRequested && _statusDetailsCard.IsVisible
-                && !_moreTools.IsVisible && !_coordinatePanel.IsVisible;
-            if (_busy || !HasInputs)
-            {
-                _detailsRequested = _technicalRequested = false;
-                if (!statusDetails) CloseMatrixTools();
-            }
-            if (_technicalRequested && _result is null) _detailsRequested = _technicalRequested = false;
-            bool show = statusDetails || (!_busy && HasInputs && (_toolsRequested || _detailsRequested || (side && _selected == 2 && _result is not null && !_detailsDismissed)));
-#if WINDOWS
-            bool setup = _setupPanel.IsVisible;
-            show |= setup;
-#endif
-            _phoneDetailsOpen = show && !side;
-            _editorCard.IsEnabled = !_phoneDetailsOpen;
+            // A single projection owns inspector visibility; view flags cannot
+            // independently expose overlapping content.
+            bool show = state.IsOpen;
+            _phoneDetailsOpen = !state.EditorEnabled;
+            _editorCard.IsEnabled = state.EditorEnabled;
             _inspectorCard.IsVisible = show;
-            _inspectorTitle.Text = statusDetails ? T("Workspace.Details") : _toolsRequested ? T(_coordinatePanel.IsVisible ? "Go" : "Workspace.MoreTools")
-                : _technicalRequested ? T("TechnicalDetails") : _selection.Text;
-#if WINDOWS
-            if (setup) _inspectorTitle.Text = T("Workspace.SetupTitle");
-            _workspaceScroll.IsVisible = !setup && show && _toolsRequested;
-            _inspectorScroll.IsVisible = !setup && show && !_toolsRequested;
-#else
-            _workspaceScroll.IsVisible = show && _toolsRequested;
-            _inspectorScroll.IsVisible = show && !_toolsRequested;
-#endif
-            _technical.IsVisible = show && !_toolsRequested && _technicalRequested;
-            _cellValuePanel.IsVisible = show && !_toolsRequested && !_technicalRequested;
-            _solutionCard.IsVisible = show && !_toolsRequested && !_technicalRequested && _selected == 2 && _result is not null;
-            // A/B contain one Int64 value: hug its content instead of filling the
-            // entire table height. Keep a bounded scroller for enlarged text.
-            bool valueOnly = show && !_toolsRequested && !_technicalRequested && _selected != 2;
-#if WINDOWS
-            valueOnly &= !setup;
-#endif
+            _inspectorTitle.Text = state.Panel switch
+            {
+                MatrixPanel.Setup => T("Workspace.SetupTitle"),
+                MatrixPanel.Status => T("Workspace.Details"),
+                MatrixPanel.Coordinates => T("Go"),
+                MatrixPanel.Tools => T("Workspace.MoreTools"),
+                MatrixPanel.Technical => T("TechnicalDetails"),
+                _ => _selection.Text
+            };
+            _workspaceScroll.IsVisible = state.UsesTools;
+            _inspectorScroll.IsVisible = state.Panel is MatrixPanel.Cell or MatrixPanel.Technical;
+            _technical.IsVisible = state.ShowTechnical;
+            _cellValuePanel.IsVisible = state.Panel == MatrixPanel.Cell;
+            _solutionCard.IsVisible = state.ShowSolution;
+            // A/B contain one Int64 value: hug its content, with a bounded scroller.
+            bool valueOnly = state.ValueOnly;
             _inspectorCard.VerticalOptions = valueOnly ? LayoutOptions.Start : LayoutOptions.Fill;
             _inspectorContentRow.Height = valueOnly ? GridLength.Auto : GridLength.Star;
             _inspectorScroll.MaximumHeightRequest = valueOnly

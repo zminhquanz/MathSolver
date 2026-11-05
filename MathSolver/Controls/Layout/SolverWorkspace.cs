@@ -219,8 +219,12 @@ public static class SolverWorkspace
             {
                 _inputs.Spacing = _results.Spacing = _body.Spacing;
                 _grid.ColumnSpacing = _grid.RowSpacing = _body.Spacing;
-                double width = Math.Min(_scroll.Width, _body.Width) - _body.Padding.HorizontalThickness;
-                bool split = ResponsiveLayoutPolicy.ForSolver(width, _scroll.Height, ResponsiveLayoutPolicy.TextScale).UseSideBySide;
+                // The arranged viewport already excludes header, fixed actions and IME.
+                // Only this workspace's body padding remains to be reserved here.
+                var space = WorkspaceLayoutMetrics.FromAvailable(Math.Min(_scroll.Width, _body.Width),
+                    _scroll.Height, ResponsiveLayoutPolicy.TextScale,
+                    _body.Padding.HorizontalThickness, _body.Padding.VerticalThickness);
+                bool split = ResponsiveLayoutPolicy.ForSolver(space).UseSideBySide;
                 bool hasResults = _resultChildren.Any(child => child.IsVisible);
                 // Reserve the destination before publication so entering a result
                 // does not resize/reflow the user's input column on desktop.

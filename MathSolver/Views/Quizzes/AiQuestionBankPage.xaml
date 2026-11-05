@@ -42,6 +42,27 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style x:Key="AiBankDiagnosticEditorStyle" TargetType="Editor">
+            <Setter Property="IsReadOnly" Value="True" />
+            <Setter Property="AutoSize" Value="Disabled" />
+            <Setter Property="HeightRequest" Value="220" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+        </Style>
+        <Style x:Key="AiBankPreviewPrimaryActionStyle" TargetType="Button" BasedOn="{StaticResource SolverPrimaryActionStyle}">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+        <Style x:Key="AiBankPreviewOutlinedActionStyle" TargetType="Button" BasedOn="{StaticResource SolverOutlinedActionStyle}">
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="MinimumHeightRequest" Value="48" />
+        </Style>
+        <Style x:Key="AiBankMutedStatusStyle" TargetType="Label">
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="LineBreakMode" Value="WordWrap" />
+            <Setter Property="TextColor" Value="{DynamicResource WallpaperTextSecondaryColor}" />
+        </Style>
     </ContentPage.Resources>
     <Shell.BackButtonBehavior>
         <BackButtonBehavior IsVisible="False" IsEnabled="False" />
@@ -218,7 +239,7 @@
                             </Border>
                         </Grid>
                         <Button x:Name="OtherOptionsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleOtherOptionsClicked" />
-                        <Label x:Name="OtherOptionsSummaryLabel" FontSize="13" TextColor="{DynamicResource WallpaperTextSecondaryColor}" LineBreakMode="WordWrap" />
+                        <Label x:Name="OtherOptionsSummaryLabel" Style="{StaticResource AiBankMutedStatusStyle}" />
                         <VerticalStackLayout x:Name="OtherOptionsPanel" IsVisible="False" Spacing="10">
                             <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
                                 <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
@@ -243,7 +264,7 @@
                                Style="{StaticResource SolverSectionTitleStyle}" LineBreakMode="WordWrap" />
                         <Label Text="{Binding Text, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
                                IsVisible="{Binding IsVisible, Source={x:Reference JobStatusLabel}, x:DataType='Label'}"
-                               FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                               Style="{StaticResource AiBankMutedStatusStyle}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="QuestionPicker" Style="{StaticResource AiBankPickerStyle}" SelectedIndexChanged="OnQuestionSelected" IsEnabled="False" />
                         </Border>
@@ -266,11 +287,9 @@
                             <Grid x:Name="PreviewActions" ColumnDefinitions="*" RowDefinitions="Auto,Auto"
                                   ColumnSpacing="8" RowSpacing="8" SizeChanged="OnPreviewActionsSizeChanged">
                                 <Button x:Name="InsertButton" Text="{localization:Translate AiBank.Insert}"
-                                        Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
-                                        Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
+                                        Style="{StaticResource AiBankPreviewPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
                                 <Button x:Name="ShareButton" Grid.Row="1"
-                                        Padding="12,10" LineBreakMode="WordWrap" MinimumHeightRequest="48"
-                                        Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
+                                        Style="{StaticResource AiBankPreviewOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
                             </Grid>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
@@ -283,25 +302,25 @@
                             <Border x:Name="ContractDiagnosticCard" Style="{StaticResource AiBankDiagnosticCardStyle}">
                                 <Grid RowDefinitions="Auto,*" RowSpacing="8">
                                     <Label Text="{localization:Translate AiBank.Contract}" FontAttributes="Bold" />
-                                    <Editor x:Name="ContractEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                    <Editor x:Name="ContractEditor" Grid.Row="1" Style="{StaticResource AiBankDiagnosticEditorStyle}" />
                                 </Grid>
                             </Border>
                             <Border x:Name="RawJsonDiagnosticCard" Grid.Row="1" Style="{StaticResource AiBankDiagnosticCardStyle}">
                                 <Grid RowDefinitions="Auto,*" RowSpacing="8">
                                     <Label Text="{localization:Translate AiBank.RawJson}" FontAttributes="Bold" />
-                                    <Editor x:Name="RawJsonEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                    <Editor x:Name="RawJsonEditor" Grid.Row="1" Style="{StaticResource AiBankDiagnosticEditorStyle}" />
                                 </Grid>
                             </Border>
                             <Border x:Name="ValidationDiagnosticCard" Grid.Row="2" Style="{StaticResource AiBankDiagnosticCardStyle}">
                                 <Grid RowDefinitions="Auto,*" RowSpacing="8">
                                     <Label Text="{localization:Translate AiBank.ValidationLog}" FontAttributes="Bold" />
-                                    <Editor x:Name="ValidationLogEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                    <Editor x:Name="ValidationLogEditor" Grid.Row="1" Style="{StaticResource AiBankDiagnosticEditorStyle}" />
                                 </Grid>
                             </Border>
                             <Border x:Name="PromptDiagnosticCard" Grid.Row="3" Style="{StaticResource AiBankDiagnosticCardStyle}">
                                 <Grid RowDefinitions="Auto,*" RowSpacing="8">
                                     <Label Text="{localization:Translate AiBank.Prompt}" FontAttributes="Bold" />
-                                    <Editor x:Name="PromptEditor" Grid.Row="1" IsReadOnly="True" AutoSize="Disabled" HeightRequest="220" BackgroundColor="Transparent" />
+                                    <Editor x:Name="PromptEditor" Grid.Row="1" Style="{StaticResource AiBankDiagnosticEditorStyle}" />
                                 </Grid>
                             </Border>
                         </Grid>

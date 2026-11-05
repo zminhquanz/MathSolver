@@ -193,6 +193,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         if (_editor is not null) throw new InvalidOperationException("The matrix already has an editor.");
         _editor = editor;
         editor.MinimumHeightRequest = 0;
+#if ANDROID
+        editor.Loaded += (_, _) => ConfigureInlineKeyboard();
+#endif
         _editorHost = MatrixInputField.Wrap(editor);
         _editorHost.Padding = new Thickness(4, 0);
         _editorHost.StrokeThickness = 2;
@@ -203,6 +206,16 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         editor.Focused += (_, _) => FocusEditor(selectAll: _selectAllOnEditorFocus);
     }
     public void SetAccessibility(string table) => SemanticProperties.SetDescription(_canvas, table);
+#if ANDROID
+    private void ConfigureInlineKeyboard()
+    {
+        // MAUI reapplies ReturnType when attaching its native Entry. Apply after
+        // attachment and before focus, so landscape input never replaces the grid.
+        if (_editor?.Handler?.PlatformView is Android.Widget.EditText nativeEditor)
+            nativeEditor.ImeOptions |= (Android.Views.InputMethods.ImeAction)(
+                Android.Views.InputMethods.ImeFlags.NoExtractUi | Android.Views.InputMethods.ImeFlags.NoFullscreen);
+    }
+#endif
     // Closing a window may already have disposed native handlers. Dropping a reader
     // must also work without refreshing controls or raising layout callbacks.
     internal void DetachSourceReader() => _readCell = null;
@@ -339,6 +352,9 @@ public sealed partial class MatrixViewport : ContentView, IDrawable
         {
             if (generation != _focusGeneration || !CanUseInput || _editorHost?.IsVisible != true || !_editor.IsEnabled) return;
             int caret = _editor.CursorPosition, selectionLength = _editor.SelectionLength;
+#if ANDROID
+            ConfigureInlineKeyboard();
+#endif
             _editor.Focus();
             if (selectAll) { _editor.CursorPosition = 0; _editor.SelectionLength = _editor.Text?.Length ?? 0; }
             else

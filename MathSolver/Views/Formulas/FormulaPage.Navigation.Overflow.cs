@@ -1,4 +1,4 @@
-using MathSolver.Services;
+using MathSolver.Controls.Navigation;
 
 namespace MathSolver.Views;
 
@@ -12,16 +12,7 @@ public partial class FormulaPage
     private void RefreshFormulaOverflow()
     {
         if (!CanUseTabNavigation) return;
-        if (AndroidFormulaSubTabBar.IsVisible)
-        {
-            SemanticProperties.SetHint(AndroidFormulaSubTabBar,
-                LocalizationService.TranslateKey("Formula.Navigation.ScrollHint"));
-            return;
-        }
-        var scroll = FormulaSubTabScrollView;
-        double remaining = Math.Max(0, scroll.ContentSize.Width - scroll.Width);
-        bool available = !_tabNavigationStacked && FormulaTabStripHost.IsVisible && scroll.Width > 0 && remaining > 1;
-        SemanticProperties.SetHint(scroll, available
-            ? LocalizationService.TranslateKey("Formula.Navigation.ScrollHint") : "");
+        TopicNavigationOverflow.Refresh(AndroidFormulaSubTabBar, FormulaSubTabScrollView,
+            _tabNavigationStacked, FormulaTabStripHost.IsVisible, "Formula.Navigation.ScrollHint");
     }
 }

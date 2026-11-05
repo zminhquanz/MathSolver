@@ -1,6 +1,6 @@
 using MathSolver.Controls;
 using MathSolver.Services;
-using Microsoft.Maui.Controls.Shapes;
+using MathSolver.Controls.Navigation;
 
 namespace MathSolver.Views;
 
@@ -25,11 +25,12 @@ public partial class FormulaPage
     private readonly Button[] _formulaTypeChoices = new Button[6];
     private readonly SearchBar _formulaTypeSearch = new();
     private readonly Label _formulaTypeHeading = new(), _formulaTypeEmpty = new();
-    private readonly Button _formulaTypeClose = new() { Text = "×", FontSize = 24, Padding = 0 };
+    private readonly Button _formulaTypeClose = new() { Text = "\u00d7", FontSize = 24, Padding = 0 };
     private Border _formulaTypeCard = null!;
     private ScrollView _formulaTypeList = null!;
-    private bool _tabNavigationQueued, _tabNavigationStacked, _formulaChooserNeedsFocus;
-    private int _tabNavigationGeneration, _formulaChooserFocusGeneration;
+    private bool _tabNavigationQueued, _tabNavigationStacked;
+    private TopicChooser _topicChooser = null!;
+    private int _tabNavigationGeneration;
     private double _lastTabViewportWidth = -1, _lastTabTextScale = -1, _lastTabDensitySize = -1;
 
     private bool CanUseTabNavigation => _formulaNavigationActive && IsLoaded && Handler?.MauiContext is not null
@@ -53,57 +54,19 @@ public partial class FormulaPage
         LocalizationService.ExcludeSubtreeFromLegacyTracking(AllFormulaTypesButton);
         DisplayDensityManager.BindControl(AllFormulaTypesButton);
         InitializeFormulaOverflow();
-        var choices = new VerticalStackLayout { Spacing = 8 };
-        for (int i = 0; i < _formulaTypeChoices.Length; i++)
-        {
-            int index = i;
-            var button = new Button { Style = (Style)Application.Current!.Resources["SolverSecondaryActionStyle"],
-                FontSize = 15, LineBreakMode = LineBreakMode.WordWrap, Padding = new Thickness(12, 10),
-                AutomationId = "FormulaType" + FormulaTypeKeys[i] };
-            MathNavigationIcon.SetKey(button, "Formula.Tabs." + FormulaTypeKeys[i]);
-            DisplayDensityManager.BindControl(button);
-            button.Clicked += async (_, _) =>
+        _topicChooser = new TopicChooser(AllFormulaTypesOverlay, _formulaTypeChoices,
+            _formulaTypeSearch, _formulaTypeHeading, _formulaTypeEmpty, _formulaTypeClose,
+            FormulaTypeKeys, "Formula.Tabs.", "FormulaType", () => CanUseTabNavigation,
+            () => CloseFormulaTypes(), async index =>
             {
                 if (!CanUseTabNavigation || !AllFormulaTypesOverlay.IsVisible || _isSubTabTransitioning || _isMainTabTransitioning) return;
                 CloseFormulaTypes(restoreFocus: false);
                 await SwitchFormulaSubTabAsync((FormulaSubTab)index);
                 if (CanUseTabNavigation)
                     (FormulaTabStripHost.IsVisible ? GetFormulaNavigationButton(_selectedSubTab) : AllFormulaTypesButton).Focus();
-            };
-            _formulaTypeChoices[i] = button;
-            choices.Add(button);
-        }
-        _formulaTypeEmpty.FontSize = 14;
-        _formulaTypeEmpty.SetDynamicResource(Label.TextColorProperty, "TextSecondaryColor");
-        choices.Add(_formulaTypeEmpty);
-        _formulaTypeList = new ScrollView { Content = choices, VerticalScrollBarVisibility = ScrollBarVisibility.Default };
-        _formulaTypeHeading.FontSize = 20;
-        _formulaTypeHeading.FontAttributes = FontAttributes.Bold;
-        _formulaTypeHeading.LineBreakMode = LineBreakMode.WordWrap;
-        _formulaTypeHeading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
-        SemanticProperties.SetHeadingLevel(_formulaTypeHeading, SemanticHeadingLevel.Level2);
-        _formulaTypeSearch.SetDynamicResource(SearchBar.TextColorProperty, "TextPrimaryColor");
-        _formulaTypeSearch.SetDynamicResource(SearchBar.PlaceholderColorProperty, "TextSecondaryColor");
-        _formulaTypeSearch.TextChanged += (_, _) => RefreshFormulaChoices();
-        DisplayDensityManager.BindControl(_formulaTypeClose, square: true);
-        _formulaTypeClose.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
-        _formulaTypeClose.SetDynamicResource(Button.BackgroundColorProperty, "SurfaceAltColor");
-        _formulaTypeClose.Clicked += (_, _) => CloseFormulaTypes();
-        _formulaTypeClose.Loaded += (_, _) => QueueFormulaChooserFocus();
-        var search = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
-        search.Add(_formulaTypeSearch); search.Add(_formulaTypeClose, 1, 0);
-        var body = new Grid { RowSpacing = 8, RowDefinitions = { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) } };
-        body.Add(_formulaTypeHeading); body.Add(search, 0, 1); body.Add(_formulaTypeList, 0, 2);
-        _formulaTypeCard = new Border { Content = body, Padding = 16, StrokeThickness = 1,
-            StrokeShape = new RoundRectangle { CornerRadius = 16 }, HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center };
-        _formulaTypeCard.SetDynamicResource(BackgroundColorProperty, "SurfaceColor");
-        _formulaTypeCard.SetDynamicResource(Border.StrokeProperty, "BorderBrush");
-        var shade = new BoxView { Color = Colors.Black.WithAlpha(0.35f) };
-        var dismiss = new TapGestureRecognizer(); dismiss.Tapped += (_, _) => CloseFormulaTypes();
-        shade.GestureRecognizers.Add(dismiss);
-        AutomationProperties.SetIsInAccessibleTree(shade, false);
-        var overlay = new Grid(); overlay.Add(shade); overlay.Add(_formulaTypeCard);
-        AllFormulaTypesOverlay.Content = overlay;
+            }, RefreshFormulaChoices);
+        _formulaTypeCard = _topicChooser.Card;
+        _formulaTypeList = _topicChooser.List;
         FormulaTabNavigation.SizeChanged += QueueFormulaNavigation;
         FormulaSubTabScrollView.SizeChanged += QueueFormulaNavigation;
         AndroidFormulaSubTabBar.SizeChanged += QueueFormulaNavigation;
@@ -122,7 +85,7 @@ public partial class FormulaPage
         AllFormulaTypesOverlay.SizeChanged += QueueFormulaNavigation;
         AllFormulaTypesOverlay.Loaded += (_, _) =>
         { AttachFormulaChooserKeyboard(); QueueFormulaChooserFocus(); };
-        AllFormulaTypesOverlay.Unloaded += (_, _) => DetachFormulaChooserKeyboard();
+        AllFormulaTypesOverlay.Unloaded += (_, _) => _topicChooser.Invalidate();
         RefreshFormulaChoices();
     }
 
@@ -140,7 +103,7 @@ public partial class FormulaPage
     {
         _tabNavigationGeneration++; _tabNavigationQueued = false;
         _lastTabViewportWidth = -1;
-        DetachFormulaChooserKeyboard();
+        _topicChooser.Invalidate();
     }
 
     private void QueueFormulaNavigation(object? sender, EventArgs e)
@@ -230,30 +193,20 @@ public partial class FormulaPage
         string close = LocalizationService.TranslateKey("Formula.Navigation.Close");
         SemanticProperties.SetDescription(_formulaTypeClose, close);
         ToolTipProperties.SetText(_formulaTypeClose, close);
-        var options = FormulaTypeKeys.Select((key, index) => new QuizChoiceOption(index, key,
-            MathNavigationCatalog.TranslateLabel("Formula.Tabs." + key), "", "", index == (int)_selectedSubTab)).ToArray();
-        var matches = QuizChoiceCatalog.Filter(options, _formulaTypeSearch.Text ?? "").Select(option => option.Index).ToHashSet();
-        foreach (var option in options)
-        {
-            var button = _formulaTypeChoices[option.Index];
-            button.Text = (option.IsSelected ? "✓ " : "") + option.Title;
-            button.IsVisible = matches.Contains(option.Index);
-            SelectionButtonStyler.Apply(button, option.IsSelected);
-        }
-        _formulaTypeEmpty.IsVisible = matches.Count == 0;
+        _topicChooser.Refresh(FormulaTypeKeys, "Formula.Tabs.", (int)_selectedSubTab);
     }
 
     private void RefreshFormulaNavigationCaption()
     {
         if (AllFormulaTypesButton is null) return;
-        string all = LocalizationService.TranslateKey("Formula.Navigation.All").TrimStart('☷', ' ');
+        string all = LocalizationService.TranslateKey("Formula.Navigation.All").TrimStart('\u2637', ' ');
         string current = MathNavigationCatalog.TranslateLabel("Formula.Tabs." + FormulaTypeKeys[(int)_selectedSubTab]);
         MathNavigationIcon.SetKey(AllFormulaTypesButton, _tabNavigationStacked
             ? "Formula.Tabs." + FormulaTypeKeys[(int)_selectedSubTab] : null);
         AllFormulaTypesButton.Text = _tabNavigationStacked
             ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
                 LocalizationService.TranslateKey("Formula.Navigation.Current"), current)
-            : "▾";
+            : "\u25be";
         SemanticProperties.SetDescription(AllFormulaTypesButton, _tabNavigationStacked
             ? AllFormulaTypesButton.Text + ". " + all : all);
         ToolTipProperties.SetText(AllFormulaTypesButton, all);
@@ -270,42 +223,21 @@ public partial class FormulaPage
         AutomationProperties.SetExcludedWithChildren(FormulaTabNavigation, true);
         ResizeFormulaChooser();
         AttachFormulaChooserKeyboard();
-        _formulaChooserNeedsFocus = true;
-        _formulaChooserFocusGeneration++;
-        QueueFormulaChooserFocus();
+        _topicChooser.RequestFocus();
     }
 
-    private void QueueFormulaChooserFocus()
-    {
-        if (!_formulaChooserNeedsFocus) return;
-        int generation = _formulaChooserFocusGeneration;
-        Dispatcher.Dispatch(() =>
-        {
-            if (generation != _formulaChooserFocusGeneration || !_formulaChooserNeedsFocus || !CanUseTabNavigation
-                || !AllFormulaTypesOverlay.IsVisible || !_formulaTypeClose.IsLoaded
-                || _formulaTypeClose.Handler?.MauiContext is null) return;
-            bool focused = _formulaTypeClose.Focus();
-#if WINDOWS
-            if (_formulaTypeClose.Handler.PlatformView is Microsoft.UI.Xaml.Controls.Control control)
-                focused = control.Focus(Microsoft.UI.Xaml.FocusState.Programmatic) || focused;
-#endif
-            if (focused) _formulaChooserNeedsFocus = false;
-        });
-    }
+    private void QueueFormulaChooserFocus() => _topicChooser.QueueFocus();
 
     private void ResizeFormulaChooser()
     {
         double width = AllFormulaTypesOverlay.Width > 0 ? AllFormulaTypesOverlay.Width : FormulaPageContentRoot.Width;
         double height = AllFormulaTypesOverlay.Height > 0 ? AllFormulaTypesOverlay.Height : FormulaPageContentRoot.Height;
-        _formulaTypeCard.WidthRequest = Math.Max(1, Math.Min(720, width - 24));
-        _formulaTypeCard.HeightRequest = Math.Max(1, Math.Min(720, height - 24));
-        _formulaTypeHeading.IsVisible = !ResponsiveLayoutPolicy.UseStackedLayout(height, 320);
+        _topicChooser.Resize(width, height);
     }
 
     private void CloseFormulaTypes(bool restoreFocus = true)
     {
-        _formulaChooserNeedsFocus = false;
-        _formulaChooserFocusGeneration++;
+        _topicChooser.Invalidate();
         AllFormulaTypesOverlay.IsVisible = false;
         FormulaSubTabContentHost.InputTransparent = FormulaTabNavigation.InputTransparent = false;
         AutomationProperties.SetExcludedWithChildren(FormulaSubTabContentHost, false);

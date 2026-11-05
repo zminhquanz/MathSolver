@@ -1,18 +1,16 @@
+using MathSolver.Services.Appearance;
+
 namespace MathSolver.Views;
 
 public partial class AiQuestionBankPage
 {
-    private void RenderWorkflow(bool running, int pending)
+    private void RenderWorkflow(bool running, AiPresentation presentation)
     {
-        WorkflowStatusLabel.Text = T(_bank.IsManaging ? "Workflow.Managing"
-            : running ? "Workflow.Generating"
-            : pending > 0 ? "Workflow.Review"
-            : _bank.Runtime.CanGenerate ? "Workflow.Ready" : "Workflow.NeedModel");
+        WorkflowStatusLabel.Text = T(presentation.WorkflowKey);
         CancelModelButton.IsVisible = _bank.IsManaging;
         StopButton.IsVisible = running;
         Grid.SetColumnSpan(GenerateButton, running ? 1 : 2);
-        JobStatusLabel.IsVisible = running || _bank.Generation.Snapshot.Items.Count > 0
-            || _bank.Generation.Snapshot.Error is not null;
+        JobStatusLabel.IsVisible = presentation.ShowJobStatus;
         RefreshWorkflowDisclosures();
     }
 

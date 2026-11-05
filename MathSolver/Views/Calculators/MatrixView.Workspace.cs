@@ -229,13 +229,21 @@ public sealed partial class MatrixView
         _stop.AutomationId = "MatrixStop";
         run.Add(idle); run.Add(_stop);
         var content = new VerticalStackLayout { Spacing = 6, Children = { _footerStatusRow, progressing, _progress, run } };
-        return new Border { Style = GetStyle("SolverActionBarStyle"), Content = content, AutomationId = "MatrixActionBar" };
+        var actionBar = new Border { Style = GetStyle("SolverActionBarStyle"), Content = content, AutomationId = "MatrixActionBar" };
+#if ANDROID
+        BuildPhoneInputActions(actionBar, content, run);
+#endif
+        return actionBar;
     }
 
     private void RefreshWorkspacePresentation()
     {
         if (_setupToggle is null || _moreToolsToggle is null || _footerStatusRow is null) return;
-        if (!HasInputs) _setupPanel.IsVisible = true;
+        // With no drafts, setup is the default, but an explicitly opened error
+        // inspector must remain readable instead of being replaced by setup.
+        bool showingFailure = _toolsRequested && _errorKey is not null
+            && !_moreTools.IsVisible && !_coordinatePanel.IsVisible;
+        if (!HasInputs && !showingFailure) _setupPanel.IsVisible = true;
         _setupSummary.Text = _a is { } a && _b is { } b
             ? F("Workspace.SetupSummary", T(new[] { "Add", "Subtract", "Multiply" }[(int)_operation]), a.Rows, a.Columns, b.Rows, b.Columns)
             : T("Workspace.SetupTitle");
@@ -277,6 +285,9 @@ public sealed partial class MatrixView
             : T("RangeSelection.FirstHint");
         ToolTipProperties.SetText(_rangeSelectionToggle, selecting ? _rangeSelectionHint.Text : T("RangeSelection.FirstHint"));
         SemanticProperties.SetHint(_rangeSelectionToggle, _rangeSelectionHint.Text);
+#if ANDROID
+        RefreshPhoneRangeAction();
+#endif
     }
 
     private void CollapseSetupAfterCreation()

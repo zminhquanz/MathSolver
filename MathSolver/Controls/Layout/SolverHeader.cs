@@ -223,22 +223,17 @@ public static class SolverHeader
                 _fullPadding = padding;
                 paddingChanged = true;
             }
-            double availableHeight = _root.Height;
+            double footerHeight = _root is Grid rootGrid ? WorkspaceLayoutCapture.FixedFooterHeight(rootGrid) : 0d;
 #if WINDOWS
-            // The calculator root already excludes Shell and sub-navigation.
-            // Reserve its fixed footer too, without basing the decision on the
-            // changing header/body height (which would cause resize oscillation).
-            if (_root is Grid rootGrid && rootGrid.RowDefinitions.Count > 2)
-                availableHeight -= rootGrid.Children.OfType<VisualElement>()
-                    .Where(view => view.IsVisible && Grid.GetRow(view) == rootGrid.RowDefinitions.Count - 1)
-                    .Sum(view => Math.Max(0, view.Height));
             if (_inlineHeader is not null)
             {
                 _inlineHeader.MaximumWidthRequest = width;
                 foreach (var (_, _, title, _) in _titles) title.MaximumWidthRequest = Math.Max(1, width - 180);
             }
 #endif
-            bool compact = ResponsiveLayoutPolicy.ForSolver(width, availableHeight, ResponsiveLayoutPolicy.TextScale).CompactHeader;
+            var space = WorkspaceLayoutMetrics.FromAvailable(width, _root.Height, ResponsiveLayoutPolicy.TextScale,
+                verticalChrome: footerHeight);
+            bool compact = ResponsiveLayoutPolicy.ForSolver(space).CompactHeader;
             bool modeChanged = compact != _compact;
             if (!modeChanged && !paddingChanged) return;
             _updating = true;

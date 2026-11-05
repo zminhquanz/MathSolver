@@ -9179,6 +9179,11 @@
         "Variables": []
     },
     {
+        "Id":  "Curriculum.Requirement.Proportion.UnitaryGroupCount",
+        "Text":  "Tìm số nhóm từ tổng lượng mới bằng cách rút về lượng của một nhóm.",
+        "Variables": []
+    },
+    {
         "Id":  "Curriculum.Requirement.Proportion.Inverse",
         "Text":  "Giải bài toán quan hệ ngược giữa hai đại lượng.",
         "Variables": []

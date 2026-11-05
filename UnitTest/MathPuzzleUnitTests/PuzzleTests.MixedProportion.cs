@@ -14,7 +14,7 @@ internal static partial class PuzzleTests
         int proportionIndex = catalog.Options.ToList().FindIndex(option =>
             option.FixedRequest?.Kind == QuizProblemKind.Proportion);
         foreach (ProportionQuizType? selection in new ProportionQuizType?[]
-                 { null, ProportionQuizType.Direct, ProportionQuizType.Inverse })
+                 { null, ProportionQuizType.Direct, ProportionQuizType.Inverse, ProportionQuizType.UnitaryGroupCount })
         {
             QuizProblemRequest request = catalog.Resolve(proportionIndex, null, null, selection,
                 null, null, null, null, null, CurriculumTier.OneStar);
@@ -43,22 +43,30 @@ internal static partial class PuzzleTests
                     : generator.GenerateAlgorithm(mode, request.ProportionType, language, curriculum);
                 ProportionQuizContract contract = question.ProportionProblem!;
                 string label = $"Mixed proportion/{tier}/{language}/{mode}/{contextual}/{sample}";
-                Require(contract.Type is ProportionQuizType.Direct or ProportionQuizType.Inverse,
+                Require(contract.Type is ProportionQuizType.Direct or ProportionQuizType.Inverse or ProportionQuizType.UnitaryGroupCount,
                     $"{label}: the generated contract must contain a concrete relationship.");
                 seen.Add(contract.Type);
-                BigInteger expected = contract.IsDirect ? (BigInteger)contract.B * contract.C / contract.A :
-                    (BigInteger)contract.A * contract.B / contract.C;
-                if (contract.AsksForAdditionalPeople) expected -= contract.A;
+                BigInteger expected = contract.Type switch
+                {
+                    ProportionQuizType.Direct => (BigInteger)contract.B * contract.C / contract.A,
+                    ProportionQuizType.Inverse => (BigInteger)contract.A * contract.B / contract.C
+                        - (contract.AsksForAdditionalPeople ? contract.A : 0),
+                    ProportionQuizType.UnitaryGroupCount => (BigInteger)contract.A * contract.C / contract.B,
+                    _ => throw new ArgumentOutOfRangeException()
+                };
                 Require(question.CorrectAnswer == expected && contract.CorrectAnswer == expected,
                     $"{label}: the answer used the wrong relationship.");
                 CheckIntegerAnswerMode(question, label);
-                string[] solution = ProportionQuizSolutionFormatter.Format(contract, language,
-                    CultureInfo.InvariantCulture).Split(Environment.NewLine);
-                Require(solution.Length == 3, $"{label}: expected one solution, calculation and answer.");
+                string worked = ProportionQuizSolutionFormatter.Format(contract, language, CultureInfo.InvariantCulture);
+                string[] solution = worked.Replace("\r\n", "\n").Split('\n', StringSplitOptions.RemoveEmptyEntries);
+                Require(solution.Length == (contract.Type == ProportionQuizType.UnitaryGroupCount ? 5 : 3),
+                    $"{label}: worked solution must include the required calculation steps and answer.");
                 if (mode == ArithmeticQuizMode.Essay)
-                    Require(essayValidator.Validate(question, solution[0], solution[1],
-                            $"{contract.CorrectAnswer} {contract.AnswerUnit}").IsCorrect,
+                {
+                    var submission = EssayCombinedInputParser.Parse(worked, true, preserveAllCalculations: true);
+                    Require(essayValidator.Validate(question, submission.Solution, submission.Equation, submission.Answer).IsCorrect,
                         $"{label}: correct essay rejected for the sampled relationship.");
+                }
                 count++;
             }
             Require(seen.SetEquals(tier == CurriculumTier.OneStar ? new[] { ProportionQuizType.Direct } : tier == CurriculumTier.FiveStars ? new[] { ProportionQuizType.Inverse } : Enum.GetValues<ProportionQuizType>()),

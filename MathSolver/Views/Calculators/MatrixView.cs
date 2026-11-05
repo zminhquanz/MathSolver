@@ -250,6 +250,9 @@ public sealed partial class MatrixView : LocalizedSolverView
         button.VectorIconKey = key;
         string captionKey = key switch { "ClearAll" => "Desktop.ClearAll", "Workspace.Clear" => "Desktop.ClearRange", _ => key };
         _translations.Add(() => button.Caption = T(captionKey));
+#elif ANDROID
+        string captionKey = key switch { "ClearAll" => "Workspace.ClearAllCaption", "Workspace.Clear" => "Workspace.ClearRangeCaption", _ => key };
+        _translations.Add(() => button.Caption = T(captionKey));
 #else
         _translations.Add(() => button.Caption = T(key));
 #endif
