@@ -28,6 +28,9 @@ dotnet run --project UnitTest/QuizPdfTests -c Release
 
 Không có tham số: chạy suite đầy đủ offline. `--list`/`--help` hiển thị các lệnh.
 MathPuzzle vẫn nhận bộ lọc tên nhóm, ví dụ `"Numeric measurement"`.
+Các nhóm đo thời gian ma trận chỉ chạy khi truyền bộ lọc tường minh, ví dụ
+`"Matrix parallel performance samples"` hoặc `"Matrix uniform scan performance"`.
+Lượt chạy mặc định vẫn giữ các kiểm tra kết quả chính xác, SIMD, đa luồng và hủy tác vụ.
 AI vẫn giữ các tên lệnh và alias cũ; nhập sai lệnh hoặc thiếu tham số trả mã 2,
 không tự chạy toàn bộ suite. Test lỗi trả mã 1; thành công trả mã 0.
 
@@ -59,8 +62,13 @@ helper chỉ dọn thư mục mới do chính lượt chạy tạo, không dọn
 
 - Dùng `TestAssert.That`, `Throws`/`ThrowsAsync`. Assertion có kiểu lỗi riêng,
   để một `catch (InvalidOperationException)` không nuốt lỗi kiểm tra.
+  Hai suite AI/PDF đã có alias `Check` dùng chung; không tạo lại helper ở mỗi file.
+  Dùng `LastChoiceRandom` cho fixture cần chọn ứng viên cuối để đi vào nguồn đề đã lưu;
+  các fake có quy tắc chọn khác vẫn giữ riêng.
 - Runner chỉ phân phối lệnh; đưa dữ liệu mẫu/fake vào `Fixtures` và test model
   vào `Model`. Các fake có hành vi khác nhau nên có tên riêng.
+  Các lệnh PDF tập trung ở `QuizPdfTests/PdfTestCommands.cs`; thêm mục vào bảng này
+  để `--help` và phân phối lệnh dùng cùng một danh sách.
 - Giữ công thức kiểm chứng độc lập với thuật toán đang được test. Có thể dùng
   `PracticeGrading` để gom bước parse/chấm, nhưng vẫn giữ các mẫu sai đáp án,
   sai đơn vị, sai quan hệ và lỗi đã gặp ở từng dạng.

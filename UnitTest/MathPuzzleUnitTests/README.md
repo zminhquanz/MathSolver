@@ -1,5 +1,17 @@
 # Math puzzle checks
 
+No arguments run all correctness groups. Timing benchmarks are opt-in through
+the existing name filters; they do not determine correctness from elapsed time.
+For example:
+
+```powershell
+dotnet run --project UnitTest/MathPuzzleUnitTests -c Release -- "Matrix parallel performance samples"
+dotnet run --project UnitTest/MathPuzzleUnitTests -c Release -- "Matrix uniform scan performance"
+```
+
+`--list` marks all opt-in groups. Broad name filters such as `"Matrix"` also match
+the benchmark names, so use a specific correctness group when tuning is unwanted.
+
 Filter `"Matrix input"`, `"Matrix paged"` and `"Matrix streaming import"` checks
 constant region compression, bitmap occupancy, copy-on-write snapshots, bounded
 input file/cache storage, streamed strict CSV parsing, exact arithmetic with paged

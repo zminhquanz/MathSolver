@@ -104,5 +104,4 @@ internal static class SameMonthCalendarMeaningTests
         Console.WriteLine($"PASS prior clear English calendar: {clear} clear, {review} negated/qualified review, {wrong} changed-rule rejects.");
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }

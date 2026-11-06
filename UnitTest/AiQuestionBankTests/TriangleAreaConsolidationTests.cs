@@ -137,5 +137,4 @@ internal static class TriangleAreaConsolidationTests
         Check(!extra.IsValid&&!extra.NeedsReview,"An explicit extra-piece joining event must remain rejected.");
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft draft)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft),c);
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }

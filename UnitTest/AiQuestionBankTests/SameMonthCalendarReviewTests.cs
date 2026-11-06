@@ -106,5 +106,4 @@ internal static class SameMonthCalendarReviewTests
     private static string Lower(string s)=>char.ToLowerInvariant(s[0])+s[1..];
     private static BasicQuestionDraft Rule(BasicQuestionDraft d,string text)=>d with {Facts=[d.Facts![0],d.Facts[1],new("fact_2",text)]};
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

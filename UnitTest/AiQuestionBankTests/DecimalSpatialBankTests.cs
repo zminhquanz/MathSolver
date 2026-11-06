@@ -31,7 +31,7 @@ internal static class DecimalSpatialBankTests
         }
         using var workspace = TestWorkspace.Temporary("DecimalSpatial");
         var store = new QuestionBankStore(workspace.FilePath("bank.db3"));
-        var provider = new BasicPracticeQuestionProvider(store, new AlwaysBank());
+        var provider = new BasicPracticeQuestionProvider(store, new LastChoiceRandom());
         foreach (var type in Types)
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
@@ -100,7 +100,6 @@ internal static class DecimalSpatialBankTests
         }
         Console.WriteLine("PASS twenty real-model evidence records revalidated with the current generators and fresh facts.");
     }
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     private sealed class ReviewedRuntime:IQuestionTextRuntime
     {
         public bool IsLoaded {get;private set;} public bool CanGenerate=>true; public string ModelName=>"reviewed-decimal-spatial";

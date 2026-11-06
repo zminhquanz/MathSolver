@@ -89,5 +89,4 @@ internal static class OvernightTimeMeaningTests
         Console.WriteLine($"PASS overnight continuity strengthening: {clearCount} clear drafts, {reviewCount} review-only contrasts, {wrongCount} definite wrong-role/day/target mutations.");
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

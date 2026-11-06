@@ -79,5 +79,4 @@ internal static class PracticalConsolidationTests
         Console.WriteLine($"PASS {clear} percentage consolidation profiles and {contrasts} hostile/target contrasts.");
     }
     internal static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool okay,string message)=>TestAssert.That(okay,message);
 }

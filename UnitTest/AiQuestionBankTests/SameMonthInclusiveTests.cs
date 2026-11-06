@@ -157,5 +157,4 @@ internal static class SameMonthInclusiveTests
             return Task.FromResult(QuestionBankStore.SerializeDraft(d));
         }
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

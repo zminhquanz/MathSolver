@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class OvernightTimeWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -27,7 +26,7 @@ internal static class OvernightTimeWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf","review")),"Cannot queue pending break.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending break entered PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-fixture",DateTime.UtcNow)),"Cannot save verified break.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Time,ElementaryType:OvernightTimePilot.Type),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -62,5 +61,4 @@ internal static class OvernightTimeWorksheetTests
         }
         Console.WriteLine($"PASS {cases} overnight factory/mode cases; exactly the following day, elapsed-minute answers, review isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

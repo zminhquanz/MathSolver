@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class AverageMissingWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -30,7 +29,7 @@ internal static class AverageMissingWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"synthetic-pdf-fixture","review")),"Cannot queue average.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending average entered active bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-pdf-fixture",DateTime.UtcNow)),"Cannot insert average.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Average,AverageType:AverageQuizType.MissingValue),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -60,5 +59,4 @@ internal static class AverageMissingWorksheetTests
         }
         Console.WriteLine($"PASS {cases} average-missing-open factory/mode cases; missing observations, review isolation, bilingual frozen worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

@@ -87,8 +87,4 @@ internal static class MixedTimeWorksheetTests
         Console.WriteLine($"PASS {selections} mixed time PDF selections; bilingual frozen 20-question sets, A4 pages, embedded text and mixed-unit solutions.");
     }
 
-    private static void Check(bool condition, string message)
-    {
-        if (!condition) throw new InvalidOperationException(message);
-    }
 }

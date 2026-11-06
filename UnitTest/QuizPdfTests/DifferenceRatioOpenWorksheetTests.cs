@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class DifferenceRatioOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -29,7 +28,7 @@ internal static class DifferenceRatioOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"pdf-fixture","review")),"Cannot queue draft.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending draft leaked into PDF.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-pdf-fixture",DateTime.UtcNow)),"Cannot insert verified draft.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.TwoNumbers,ElementaryType:ElementaryQuizType.DifferenceRatio),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -65,5 +64,4 @@ internal static class DifferenceRatioOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} difference/ratio factory/mode cases; owner-bound sums/ratios, diagrams, pending isolation, bilingual frozen PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

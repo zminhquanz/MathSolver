@@ -63,5 +63,4 @@ internal static class MapScaleConsolidationTests
         return Task.CompletedTask;
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }

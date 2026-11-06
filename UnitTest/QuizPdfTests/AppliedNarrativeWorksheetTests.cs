@@ -20,7 +20,7 @@ internal static class AppliedNarrativeWorksheetTests
                 var draft=ReviewedReasoningProse.NovelDrafts(c,new HashSet<string>()).Last();
                 Check(await store.InsertAsync(new(c,draft,QuestionBankStore.SerializeDraft(draft),"reviewed-pdf",DateTime.UtcNow)),"Failed PDF bank insertion.");
             }
-            var factory=new PracticeQuestionFactory(new BasicPracticeQuestionProvider(store,new AlwaysBank()));
+            var factory=new PracticeQuestionFactory(new BasicPracticeQuestionProvider(store,new LastChoiceRandom()));
             int next=0;
             var sheet=await QuizWorksheetBuilder.CreateAsync(18,language==AppLanguage.Vietnamese?"Đo lường, hình học và thời gian":"Measurement, geometry and time",
                 language==AppLanguage.Vietnamese?"Đề luyện tập có lời văn":"Contextual practice",language,CurriculumTier.ThreeStars,ArithmeticQuizMode.Essay,token=>
@@ -65,5 +65,4 @@ internal static class AppliedNarrativeWorksheetTests
     {ElementaryQuizType.AreaConversion or ElementaryQuizType.VolumeConversion or ElementaryQuizType.MixedLength=>QuizProblemKind.Measurement,
      ElementaryQuizType.CompositeArea or ElementaryQuizType.RectangleSide=>QuizProblemKind.VisualGeometry,
      ElementaryQuizType.Calendar or ElementaryQuizType.ReadClock=>QuizProblemKind.Time,_=>QuizProblemKind.Decimal};
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
 }

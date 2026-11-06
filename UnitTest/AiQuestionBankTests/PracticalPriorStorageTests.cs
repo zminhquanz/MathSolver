@@ -119,5 +119,4 @@ internal static class PracticalPriorStorageTests
             throw new InvalidOperationException("Unexpected retry after prior-native clear draft: "+sample.Name);
         }
     }
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }

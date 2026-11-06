@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 
 internal static class PracticalOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     private sealed record Target(BankQuestionFamily Family,int Variant,QuizProblemRequest Request);
     private sealed record Expected(string Profile,string Target,BigInteger Answer,string Unit,string Actor,string[] Equations);
     private static readonly Target[] Targets=[
@@ -39,7 +38,7 @@ internal static class PracticalOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,pending,"practical-pdf","review")),"Cannot queue practical PDF review.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending practical draft entered the active PDF bank.");
                 Check(await store.InsertAsync(new(c,draft,raw,"practical-pdf",DateTime.UtcNow)),"Cannot save practical PDF reference.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(target.Request,mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -161,5 +160,4 @@ internal static class PracticalOpenWorksheetTests
             .Replace("−","-",StringComparison.Ordinal).Replace("*","×",StringComparison.Ordinal)
             .Replace("÷",string.Empty,StringComparison.Ordinal).Replace(":",string.Empty,StringComparison.Ordinal).Replace("/",string.Empty,StringComparison.Ordinal);
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

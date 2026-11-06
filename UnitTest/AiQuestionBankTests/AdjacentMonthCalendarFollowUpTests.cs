@@ -108,5 +108,4 @@ internal static class AdjacentMonthCalendarFollowUpTests
     private static string Lower(string s)=>char.ToLowerInvariant(s[0])+s[1..];
     private static BasicQuestionDraft Rule(BasicQuestionDraft d,string text)=>d with {Facts=d.Facts!.Select((f,i)=>i==3?new NarrativeClause(f.Role,text):f).ToArray()};
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

@@ -196,5 +196,4 @@ internal static class FebruaryLeapCalendarTests
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
     private static bool IsLeapYear(int year)=>year%4==0&&(year%100!=0||year%400==0);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

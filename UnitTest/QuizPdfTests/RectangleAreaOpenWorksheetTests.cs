@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class RectangleAreaOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random { public override int Next(int maxValue)=>maxValue-1; }
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -32,7 +31,7 @@ internal static class RectangleAreaOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf","review")),"Cannot queue area review.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending area entered PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-pdf",DateTime.UtcNow)),"Cannot insert area.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Geometry,GeometryShape:GeometryQuizShape.Rectangle,GeometryMeasurement:GeometryMeasurement.Area),
@@ -65,5 +64,4 @@ internal static class RectangleAreaOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} rectangle-area factory/mode cases; direct sides, separate squared answer units, review isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

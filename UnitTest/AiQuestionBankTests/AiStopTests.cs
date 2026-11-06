@@ -116,5 +116,4 @@ internal static class AiStopTests
         await stopped.Task;
     }
 
-    private static void Check(bool condition, string message) => MathSolver.Testing.TestAssert.That(condition, message);
 }

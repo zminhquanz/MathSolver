@@ -125,5 +125,4 @@ internal static class AiAccelerationPolicyTests
         return (bool)store.GetType().GetMethod("Get")!.Invoke(store, ["AiUseGpu", true])!;
     }
 
-    private static void Check(bool condition, string message) => MathSolver.Testing.TestAssert.That(condition, message);
 }

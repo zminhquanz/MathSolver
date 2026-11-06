@@ -79,5 +79,4 @@ internal static class SqlWriteConfirmationTests
         Console.WriteLine("SQL confirmation: rejected/accepted INSERT, UPDATE, DELETE, CTE, RETURNING, pending response and cancellation verified.");
     }
 
-    private static void Check(bool condition, string message) => MathSolver.Testing.TestAssert.That(condition, message);
 }

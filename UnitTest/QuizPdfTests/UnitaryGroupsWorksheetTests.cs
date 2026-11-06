@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class UnitaryGroupsWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         var choice=QuizWorksheetChoices.Subtypes(QuizProblemKind.Proportion).Single(x=>x.Request.ProportionType==ProportionQuizType.UnitaryGroupCount);
@@ -30,7 +29,7 @@ internal static class UnitaryGroupsWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"pdf-fixture","review")),"Cannot queue pending prose.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending group prose reached PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"pdf-fixture",DateTime.UtcNow)),"Cannot save valid PDF fixture.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Proportion,ProportionType:ProportionQuizType.UnitaryGroupCount),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -58,5 +57,4 @@ internal static class UnitaryGroupsWorksheetTests
         }
         Console.WriteLine($"PASS {count} group-count factory/mode/PDF cases; item/group rate then group answer, pending isolation and bilingual PDFs.");
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

@@ -137,5 +137,4 @@ internal static class SameMonthCalendarTests
         }
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

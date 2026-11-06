@@ -8,7 +8,6 @@ using System.Text.Json;
 
 internal static class RectanglePerimeterOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random { public override int Next(int maxValue)=>maxValue-1; }
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -33,7 +32,7 @@ internal static class RectanglePerimeterOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf","review")),"Cannot queue rectangle.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending geometry entered PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-pdf",DateTime.UtcNow)),"Cannot insert geometry.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Geometry,GeometryShape:GeometryQuizShape.Rectangle,GeometryMeasurement:GeometryMeasurement.Perimeter),
@@ -64,5 +63,4 @@ internal static class RectanglePerimeterOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} rectangle-perimeter factory/mode cases; direct dimensions, length units, review isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

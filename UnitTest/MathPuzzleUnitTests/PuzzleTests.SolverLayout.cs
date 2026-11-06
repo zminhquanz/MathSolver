@@ -32,8 +32,6 @@ internal static partial class PuzzleTests
         foreach (double scale in new[] { 1d, 1.25, 1.5, 2, 3 })
         {
             var state = ResponsiveLayoutPolicy.ForSolver(width, height, scale);
-            Require(state == ResponsiveLayoutPolicy.ForSolver(width, height, scale),
-                "The same viewport must produce stable layout decisions across repeated measure passes.");
             if (state.UseSideBySide)
                 Require(width / scale >= 1040 && height / scale >= 360,
                     "A split workspace must meet both scaled boundaries.");

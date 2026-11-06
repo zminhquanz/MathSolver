@@ -9,7 +9,6 @@ using System.Text.RegularExpressions;
 
 internal static class MotionExtendedWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int count=0;
@@ -28,7 +27,7 @@ internal static class MotionExtendedWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"fixture","review")),"Cannot queue extended motion PDF draft.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending extended motion draft reached PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"fixture",DateTime.UtcNow)),"Cannot save extended motion PDF reference.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var direct=new MotionQuizGenerator(new(713)).GenerateNarrative(mode,language,data.Relation.Type,new(tier,false),profile);
@@ -90,5 +89,4 @@ internal static class MotionExtendedWorksheetTests
         "downstream"=>$"{f[0]} + {f[1]} = {answer}","upstream"=>$"{f[0]} - {f[1]} = {answer}",
         "boat"=>$"({f[0]} + {f[1]}) ÷ 2 = {answer}",_=>$"({f[0]} - {f[1]}) ÷ 2 = {answer}"};
     private static string Compact(string text)=>Regex.Replace(text,@"\s+",string.Empty);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

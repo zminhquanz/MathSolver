@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class PercentageWholeOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -28,7 +27,7 @@ internal static class PercentageWholeOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf-fixture","review")),"Cannot queue percentage.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending percentage entered PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-pdf-fixture",DateTime.UtcNow)),"Cannot insert verified percentage.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Percentage,PercentageType:PercentageQuizType.FindWholeFromPercentageValue),mode,
@@ -60,5 +59,4 @@ internal static class PercentageWholeOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} percentage-whole factory/mode cases; exact integer original whole, review isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

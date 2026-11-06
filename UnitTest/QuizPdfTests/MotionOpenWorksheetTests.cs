@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class MotionOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         // Small text/math mixture reproduces font-state problems without
@@ -32,7 +31,7 @@ internal static class MotionOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"fixture","review")),"Cannot queue motion PDF draft.");
                 Check(await store.TakeReasoningAsync(c.Family,0,tier,language) is null,"Pending motion draft reached PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"fixture",DateTime.UtcNow)),"Cannot save motion PDF reference.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Motion,MotionType:MotionQuizType.Basic),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -59,5 +58,4 @@ internal static class MotionOpenWorksheetTests
         }
         Console.WriteLine($"PASS {count} motion factory/mode/PDF cases; four targets, included-rest arithmetic, pending isolation, bilingual frozen worksheets/answers.");
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

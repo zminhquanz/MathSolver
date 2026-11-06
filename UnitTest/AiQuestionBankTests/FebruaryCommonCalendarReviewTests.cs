@@ -89,5 +89,4 @@ internal static class FebruaryCommonCalendarReviewTests
     }
     private static BasicQuestionDraft Rule(BasicQuestionDraft d,string text,string profile)=>d with {Facts=d.Facts!.Select((f,i)=>i==(SameMonthCalendarPilot.IsAdjacent(profile)?3:2)?new NarrativeClause(f.Role,text):f).ToArray()};
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

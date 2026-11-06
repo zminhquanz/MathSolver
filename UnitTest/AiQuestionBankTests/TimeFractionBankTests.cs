@@ -39,7 +39,7 @@ internal static class TimeFractionBankTests
         }
         using var workspace = TestWorkspace.Temporary("TimeFractionBank");
         var store = new QuestionBankStore(workspace.FilePath("bank.db3"));
-        var provider = new BasicPracticeQuestionProvider(store, new AlwaysBank());
+        var provider = new BasicPracticeQuestionProvider(store, new LastChoiceRandom());
         foreach (var type in Types)
         foreach (var language in Enum.GetValues<AppLanguage>())
         {
@@ -126,7 +126,6 @@ internal static class TimeFractionBankTests
         }
         Console.WriteLine($"PASS {count} native extension profiles. Evidence: {workspace.DirectoryPath}");
     }
-    private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue - 1; }
     private sealed class ReviewedRuntime : IQuestionTextRuntime
     {
         public bool IsLoaded { get; private set; }

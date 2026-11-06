@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class FractionWholeOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -29,7 +28,7 @@ internal static class FractionWholeOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"synthetic-pdf","review")),"Cannot queue whole draft.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending whole leaked into PDF bank.");
                 Check(await store.InsertAsync(new(c,draft,QuestionBankStore.SerializeDraft(draft),"synthetic-verified",DateTime.UtcNow)),"Cannot insert verified whole.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.FractionSkills,ElementaryType:ElementaryQuizType.WholeFromFraction),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -68,5 +67,4 @@ internal static class FractionWholeOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} fraction-whole factory/mode cases; inverse arithmetic, review isolation, unknown-whole diagrams, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

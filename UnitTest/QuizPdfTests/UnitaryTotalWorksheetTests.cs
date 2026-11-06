@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class UnitaryTotalWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int count=0;
@@ -26,7 +25,7 @@ internal static class UnitaryTotalWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"pdf-fixture","review")),"Cannot queue PDF prose.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending prose leaked into PDF.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"pdf-fixture",DateTime.UtcNow)),"Cannot store verified PDF fixture.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Proportion,ProportionType:ProportionQuizType.Direct),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -53,5 +52,4 @@ internal static class UnitaryTotalWorksheetTests
         }
         Console.WriteLine($"PASS {count} unitary-total factory/mode/PDF cases, two C# steps, unchanged data, bilingual PDFs, pending isolation.");
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

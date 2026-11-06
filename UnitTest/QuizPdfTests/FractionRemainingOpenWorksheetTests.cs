@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class FractionRemainingOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -29,7 +28,7 @@ internal static class FractionRemainingOpenWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,raw,"synthetic-pdf-fixture","review")),"Cannot queue fraction.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending fraction leaked into PDF.");
                 Check(await store.InsertAsync(new(c,draft,QuestionBankStore.SerializeDraft(draft),"verified-pdf-fixture",DateTime.UtcNow)),"Cannot insert fraction.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.FractionSkills,ElementaryType:ElementaryQuizType.FractionRemaining),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -66,5 +65,4 @@ internal static class FractionRemainingOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} fraction-remaining factory/mode cases; five tiers, review isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool b,string message)=>TestAssert.That(b,message);
 }

@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class SameDayTimeWorksheetTests
 {
-    private sealed class AlwaysBank:Random{public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -37,7 +36,7 @@ internal static class SameDayTimeWorksheetTests
                     Check(await store.ApproveReviewAsync(pending.Id),"Explicit time PDF approval failed.");
                 }
                 else Check(await store.InsertAsync(new(c,draft,QuestionBankStore.SerializeDraft(draft),"verified-fixture",DateTime.UtcNow)),"Cannot insert time PDF fixture.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Time,ElementaryType:relation.Type),mode,new(c.Tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -64,5 +63,4 @@ internal static class SameDayTimeWorksheetTests
         }
         Console.WriteLine($"PASS {cases} same-day time factory/mode cases; three targets, review isolation, fresh facts and frozen bilingual PDF worksheets/answers.");
     }
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }

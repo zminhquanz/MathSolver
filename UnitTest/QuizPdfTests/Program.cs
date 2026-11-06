@@ -8,39 +8,15 @@ using PdfSharp.Pdf.IO;
 using System.Text.Json;
 if (args is ["--help"] or ["--list"])
 {
-    Console.WriteLine("Practical open-prose PDF suite: --practical-open output-root");
-    Console.WriteLine("Extended motion PDF suite: --motion-extended-open output-root");
-    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | --unitary-groups-open output-root | --unitary-total-open output-root | --difference-ratio-open output-root | --sum-ratio-open output-root | --sum-difference-open output-root | --average-missing-open output-root | --average-open output-root | --percentage-part-open output-root | --fraction-remaining-open output-root | --fraction-whole-open output-root | --percentage-remaining-open output-root | --percentage-whole-open output-root | --rectangle-perimeter-open output-root | --rectangle-area-open output-root | --time-break-open output-root | --overnight-open output-root | --calendar-open output-root | --calendar-inclusive-open output-root | --calendar-adjacent-open output-root | --calendar-adjacent-inclusive-open output-root | --calendar-february-common-open output-root | --calendar-february-leap-open output-root]. Default: isolated temporary files, cleaned after tests.");
+    Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | <focused-command> output-root]");
+    Console.WriteLine("Default: complete offline suite with isolated temporary files, cleaned after tests.");
+    foreach (string name in PdfTestCommands.All.Keys.Order()) Console.WriteLine(name + " output-root");
     return 0;
 }
-bool appliedOpenOnly=args is ["--applied-open",_];
-bool practicalOpenOnly=args is ["--practical-open",_];
-bool februaryLeapOnly=args is ["--calendar-february-leap-open",_];
-bool februaryCommonOnly=args is ["--calendar-february-common-open",_];
-bool adjacentInclusiveOnly=args is ["--calendar-adjacent-inclusive-open",_];
-bool adjacentCalendarOnly=args is ["--calendar-adjacent-open",_];
-bool calendarOnly=args is ["--calendar-open",_];
-bool inclusiveCalendarOnly=args is ["--calendar-inclusive-open",_];
-bool overnightOnly=args is ["--overnight-open",_];
-bool timeBreakOnly=args is ["--time-break-open",_];
-bool rectangleAreaOnly=args is ["--rectangle-area-open",_];
-bool rectanglePerimeterOnly=args is ["--rectangle-perimeter-open",_];
-bool percentageWholeOnly=args is ["--percentage-whole-open",_];
-bool percentageRemainingOnly=args is ["--percentage-remaining-open",_];
-bool wholeOnly=args is ["--fraction-whole-open",_];
-bool remainingOnly=args is ["--fraction-remaining-open",_];
-bool unitaryOnly=args is ["--unitary-total-open",_];
-bool motionOpenOnly=args is ["--motion-open",_];
-bool motionExtendedOnly=args is ["--motion-extended-open",_];
-bool unitaryGroupsOnly=args is ["--unitary-groups-open",_];
-bool differenceRatioOnly=args is ["--difference-ratio-open",_];
-bool sumRatioOnly=args is ["--sum-ratio-open",_];
-bool sumDifferenceOnly=args is ["--sum-difference-open",_];
-bool averageMissingOnly=args is ["--average-missing-open",_];
-bool averageOnly=args is ["--average-open",_];
-bool percentageOnly=args is ["--percentage-part-open",_];
-if(appliedOpenOnly||practicalOpenOnly||februaryLeapOnly||februaryCommonOnly||adjacentInclusiveOnly||adjacentCalendarOnly||inclusiveCalendarOnly||calendarOnly||overnightOnly||timeBreakOnly||rectangleAreaOnly||rectanglePerimeterOnly||percentageWholeOnly||unitaryOnly||motionOpenOnly||motionExtendedOnly||unitaryGroupsOnly||differenceRatioOnly||sumRatioOnly||sumDifferenceOnly||averageMissingOnly||averageOnly||percentageOnly||remainingOnly||wholeOnly||percentageRemainingOnly)args=["--artifacts",args[1]];
-if (!(args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] || (args.Length == 1 && !args[0].StartsWith("--"))))
+PdfTestCommand? focused = null;
+bool focusedOnly = args.Length == 2 && PdfTestCommands.All.TryGetValue(args[0], out focused);
+if (!(focusedOnly || args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] ||
+    (args.Length == 1 && !args[0].StartsWith("--"))))
 {
     Console.Error.WriteLine("Invalid PDF test arguments. Use --help.");
     return 2;
@@ -48,134 +24,14 @@ if (!(args.Length == 0 || args is ["--artifacts"] or ["--artifacts", _] || (args
 try
 {
     using var workspace = args.Length == 0 ? TestWorkspace.Temporary("Pdf")
-        : TestWorkspace.Artifacts("quiz-pdf", args[0] == "--artifacts" ? (args.Length == 2 ? args[1] : "artifacts/verification") : args[0]);
+        : TestWorkspace.Artifacts("quiz-pdf", focusedOnly ? args[1]
+            : args[0] == "--artifacts" ? (args.Length == 2 ? args[1] : "artifacts/verification") : args[0]);
     string directory = workspace.DirectoryPath;
     await HarnessInfrastructureTests.RunAsync();
-    if(appliedOpenOnly)
+    if (focusedOnly)
     {
-        await AppliedOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Applied open-prose PDF output: "+directory);
-        return 0;
-    }
-    if(practicalOpenOnly)
-    {
-        await PracticalOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Practical open-prose PDF output: "+directory);
-        return 0;
-    }
-    if(februaryLeapOnly||februaryCommonOnly||adjacentInclusiveOnly||adjacentCalendarOnly||calendarOnly||inclusiveCalendarOnly)
-    {
-        await SameMonthCalendarWorksheetTests.Run(directory,inclusiveCalendarOnly||adjacentInclusiveOnly||februaryCommonOnly||februaryLeapOnly,adjacentCalendarOnly||adjacentInclusiveOnly||februaryCommonOnly||februaryLeapOnly,februaryCommonOnly,februaryLeapOnly);
-        Console.WriteLine("Calendar PDF output: "+directory);
-        return 0;
-    }
-    if(overnightOnly)
-    {
-        await OvernightTimeWorksheetTests.Run(directory);
-        Console.WriteLine("Overnight PDF output: "+directory);
-        return 0;
-    }
-    if(timeBreakOnly)
-    {
-        await SameDayBreakWorksheetTests.Run(directory);
-        Console.WriteLine("One-break PDF output: "+directory);
-        return 0;
-    }
-    if(rectangleAreaOnly)
-    {
-        await RectangleAreaOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Rectangle area PDF output: "+directory);
-        return 0;
-    }
-    if(rectanglePerimeterOnly)
-    {
-        await RectanglePerimeterOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Rectangle perimeter PDF output: "+directory);
-        return 0;
-    }
-    if(percentageWholeOnly)
-    {
-        await PercentageWholeOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Percentage whole PDF output: "+directory);
-        return 0;
-    }
-    if(percentageRemainingOnly)
-    {
-        await PercentageRemainingOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Percentage remaining PDF output: "+directory);
-        return 0;
-    }
-    if(wholeOnly)
-    {
-        await FractionWholeOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Fraction whole PDF output: "+directory);
-        return 0;
-    }
-    if(remainingOnly)
-    {
-        await FractionRemainingOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Fraction remainder PDF output: "+directory);
-        return 0;
-    }
-    if(percentageOnly)
-    {
-        await PercentagePartOpenWorksheetTests.Run(directory);
-    await PercentageRemainingOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Percentage PDF output: "+directory);
-        return 0;
-    }
-    if(unitaryOnly)
-    {
-        await UnitaryTotalWorksheetTests.Run(directory);
-        Console.WriteLine("Unitary-total PDF output: "+directory);
-        return 0;
-    }
-    if(motionExtendedOnly)
-    {
-        await MotionExtendedWorksheetTests.Run(directory);
-        Console.WriteLine("Extended motion PDF output: "+directory);
-        return 0;
-    }
-    if(motionOpenOnly)
-    {
-        await MotionOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Motion PDF output: "+directory);
-        return 0;
-    }
-    if(unitaryGroupsOnly)
-    {
-        await UnitaryGroupsWorksheetTests.Run(directory);
-        Console.WriteLine("Unitary-groups PDF output: "+directory);
-        return 0;
-    }
-    if(differenceRatioOnly)
-    {
-        await DifferenceRatioOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Difference-ratio PDF output: "+directory);
-        return 0;
-    }
-    if(sumRatioOnly)
-    {
-        await SumRatioOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Sum-ratio PDF output: "+directory);
-        return 0;
-    }
-    if(sumDifferenceOnly)
-    {
-        await SumDifferenceOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Sum/difference PDF output: "+directory);
-        return 0;
-    }
-    if(averageMissingOnly)
-    {
-        await AverageMissingWorksheetTests.Run(directory);
-        Console.WriteLine("Average missing-value PDF output: "+directory);
-        return 0;
-    }
-    if(averageOnly)
-    {
-        await AverageOpenWorksheetTests.Run(directory);
-        Console.WriteLine("Average PDF output: "+directory);
+        await focused!.Run(directory);
+        Console.WriteLine(focused.OutputLabel + " PDF output: " + directory);
         return 0;
     }
 

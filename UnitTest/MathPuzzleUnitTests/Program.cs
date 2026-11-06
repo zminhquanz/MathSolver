@@ -58,7 +58,6 @@ var tests = new (string Name, Action Run)[]
     ("Matrix uniform scan exact kernels and tails", PuzzleTests.CheckMatrixUniformScanExact),
     ("Matrix uniform scan parallel cancellation", PuzzleTests.CheckMatrixUniformScanParallel),
     ("Matrix uniform scan integration telemetry", PuzzleTests.CheckMatrixUniformScanIntegration),
-    ("Matrix uniform scan performance", PuzzleTests.CheckMatrixUniformScanBenchmark),
     ("Matrix blocked exact products and elementwise edges", PuzzleTests.CheckMatrixBlockedExact),
     ("Matrix blocked workspace budget and worker limits", PuzzleTests.CheckMatrixBlockedBudget),
     ("Matrix blocked uniform exact compact values", PuzzleTests.CheckMatrixBlockedUniform),
@@ -75,7 +74,6 @@ var tests = new (string Name, Action Run)[]
     ("Matrix memory calculation preflight without exceptions", PuzzleTests.CheckMatrixCalculationMemoryPreflight),
     ("Matrix parallel exact kernels and cancellation", PuzzleTests.CheckMatrixParallel),
     ("Matrix maximum-length SIMD dot products", PuzzleTests.CheckMatrixLongDot),
-    ("Matrix parallel performance samples", PuzzleTests.CheckMatrixParallelBenchmark),
     ("Matrix paste memory preflight without exceptions", PuzzleTests.CheckMatrixPasteMemoryPreflight),
     ("Matrix clipboard single-value fill across selection", PuzzleTests.CheckMatrixPasteFillSelection),
     ("Matrix viewport Shift rectangle selection", PuzzleTests.CheckMatrixRangeSelection),
@@ -167,10 +165,12 @@ var tests = new (string Name, Action Run)[]
     ("Structural difficulty across five stars", PuzzleTests.CheckStructuralDifficulty)
 };
 
-// Longer tuning sweeps are explicit so routine correctness runs stay practical
-// on scalar-only machines. Existing test groups keep their default behavior.
+// Timing measurements are explicit so correctness runs stay practical on
+// scalar-only machines. Exactness, threading and cancellation stay above.
 (string Name, Action Run)[] tuningBenchmarks =
 [
+    ("Matrix uniform scan performance", PuzzleTests.CheckMatrixUniformScanBenchmark),
+    ("Matrix parallel performance samples", PuzzleTests.CheckMatrixParallelBenchmark),
     ("Matrix actual maximum creation", PuzzleTests.CheckMatrixMaximumCreation),
     ("Matrix actual maximum recreation", PuzzleTests.CheckMatrixMaximumRecreation),
     ("Matrix actual maximum file calculation", PuzzleTests.CheckMatrixMaximumFileCalculation),

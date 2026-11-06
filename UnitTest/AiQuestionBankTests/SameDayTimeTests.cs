@@ -234,5 +234,4 @@ internal static class SameDayTimeTests
         }
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message){if(!value)throw new InvalidOperationException(message);}
 }

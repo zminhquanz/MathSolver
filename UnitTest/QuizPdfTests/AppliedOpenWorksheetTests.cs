@@ -9,7 +9,6 @@ using System.Text.Json;
 
 internal static class AppliedOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     private sealed record Target(BankQuestionFamily Family,int Variant,QuizProblemRequest Request);
     private static readonly Target[] Targets=[
         new(BankQuestionFamily.Measurement,MapScaleOpenPilot.Variant,new(QuizProblemKind.Measurement,ElementaryType:ElementaryQuizType.MapScale)),
@@ -37,7 +36,7 @@ internal static class AppliedOpenWorksheetTests
                 await store.QueueReviewAsync(PendingQuestionReview.Create(c,unknown,pending,"pdf","review"));
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Review entered PDF active bank.");
                 Check(await store.InsertAsync(new(c,d,raw,"pdf",DateTime.UtcNow)),"Cannot persist applied PDF reference.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(target.Request,mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -104,5 +103,4 @@ internal static class AppliedOpenWorksheetTests
         return (result,g.AnswerUnit);
     }
     private static string Compact(string s)=>string.Concat(s.Where(c=>!char.IsWhiteSpace(c))).Replace(".","").Replace(",","");
-    private static void Check(bool okay,string message){if(!okay)throw new InvalidOperationException(message);}
 }

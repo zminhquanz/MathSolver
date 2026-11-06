@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class SameMonthCalendarWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory,bool inclusive=false,bool adjacent=false,bool february=false,bool leap=false)
     {
         int cases=0;
@@ -32,7 +31,7 @@ internal static class SameMonthCalendarWorksheetTests
                 Check(await store.QueueReviewAsync(PendingQuestionReview.Create(c,pending,raw,"synthetic-pdf","review")),"Cannot queue unproved calendar.");
                 Check(await store.TakeReasoningAsync(c.Family,c.BankVariant,tier,language) is null,"Pending calendar entered PDF bank.");
                 Check(await store.InsertAsync(new(c,d,QuestionBankStore.SerializeDraft(d),"verified-fixture",DateTime.UtcNow)),"Cannot save verified calendar.");
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 foreach(var mode in Enum.GetValues<ArithmeticQuizMode>())
                 {
                     var q=await factory.CreateAsync(new(QuizProblemKind.Time,ElementaryType:type),mode,new(tier,false),language,null,PracticeQuestionFormat.WordProblem,false);
@@ -107,5 +106,4 @@ internal static class SameMonthCalendarWorksheetTests
         }
         Console.WriteLine($"PASS {cases} calendar {(leap?"February leap-year":february?"February common-year":adjacent?"adjacent-month":inclusive?"inclusive":"same-month elapsed")} factory/mode cases; count rule, DateTime oracle, pending isolation, frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

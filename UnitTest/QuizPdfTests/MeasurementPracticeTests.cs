@@ -9,7 +9,7 @@ internal static class MeasurementPracticeTests
     {
         string path = Path.Combine(directory, "numeric-conversions-unopened.db3");
         Check(!File.Exists(path), "Use a fresh output directory for the no-SQLite check.");
-        var provider = new BasicPracticeQuestionProvider(new QuestionBankStore(path), new AlwaysBank());
+        var provider = new BasicPracticeQuestionProvider(new QuestionBankStore(path), new LastChoiceRandom());
         var factory = new PracticeQuestionFactory(provider);
         var catalog = new QuizProblemTypeCatalog();
         int index = catalog.Options.ToList().FindIndex(o => o.FixedRequest?.Kind == QuizProblemKind.Measurement);
@@ -46,5 +46,4 @@ internal static class MeasurementPracticeTests
         Console.WriteLine($"PASS {count} numeric conversion factory/PDF cases; no SQLite access even with bank selection forced.");
     }
 
-    private sealed class AlwaysBank : Random { public override int Next(int maxValue) => maxValue - 1; }
 }

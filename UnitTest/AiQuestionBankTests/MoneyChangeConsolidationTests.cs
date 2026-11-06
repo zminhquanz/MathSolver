@@ -136,5 +136,4 @@ internal static class MoneyChangeConsolidationTests
         Check(!wrong.IsValid&&!wrong.NeedsReview,"Returning the counted items must remain a known purchase-direction contradiction.");
     }
     private static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(d),c);
-    private static void Check(bool value,string message)=>TestAssert.That(value,message);
 }

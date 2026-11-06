@@ -223,5 +223,4 @@ internal static partial class OpenProseTests
         }
     }
 
-    private static void Check(bool value,string message) { if(!value)throw new InvalidOperationException(message); }
 }

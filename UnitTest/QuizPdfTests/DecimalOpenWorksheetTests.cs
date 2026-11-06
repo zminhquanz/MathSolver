@@ -7,7 +7,6 @@ using System.Text.Json;
 
 internal static class DecimalOpenWorksheetTests
 {
-    private sealed class AlwaysBank:Random {public override int Next(int maxValue)=>maxValue-1;}
     internal static async Task Run(string directory)
     {
         int cases=0;
@@ -24,7 +23,7 @@ internal static class DecimalOpenWorksheetTests
                 var c=ReasoningStoryCatalogue.Create(BankQuestionFamily.Decimal,(int)r.Type,CurriculumTier.ThreeStars,language,new(713),profile) with {OpenProse=true};
                 var draft=ReasoningStoryCatalogue.Draft(c);
                 var store=new QuestionBankStore(Path.Combine(directory,$"decimal-open-{language}-{relation}.db3"));
-                var factory=new PracticeQuestionFactory(new(store,new AlwaysBank()));
+                var factory=new PracticeQuestionFactory(new(store,new LastChoiceRandom()));
                 if(relation=="combine")
                 {
                     string opening=language==AppLanguage.Vietnamese?"Trong buổi chuẩn bị mới, ":"In the new preparation session, ";
@@ -65,5 +64,4 @@ internal static class DecimalOpenWorksheetTests
         }
         Console.WriteLine($"PASS {cases} decimal pilot factory/mode cases: seven relations, pending isolation, explicit approval, numeric isolation and frozen bilingual worksheet/answer PDFs.");
     }
-    private static void Check(bool condition,string message)=>TestAssert.That(condition,message);
 }
