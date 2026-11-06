@@ -32,7 +32,6 @@ public partial class AiQuestionBankPage : ContentPage
     {
         InitializeComponent();
         InitializeAiWorkspace();
-        AiBankHeaderEmojiLabel.Text = "\U0001F916"; // Robot: AI authoring, rendered with the native emoji font.
         CountEntry.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(Entry.IsEnabled)) RefreshConfigurationTheme();
@@ -120,7 +119,7 @@ public partial class AiQuestionBankPage : ContentPage
         base.OnDisappearing();
     }
 
-    private static string T(string key) => LocalizationService.TranslateKey("AiBank." + key);
+    private static string T(string key) => ActionIconCatalog.LabelFor("AiBank." + key, LocalizationService.TranslateKey("AiBank." + key));
     private async void OnReviewClicked(object? sender,EventArgs e)
     {
         if(_openingReview)return;_openingReview=true;

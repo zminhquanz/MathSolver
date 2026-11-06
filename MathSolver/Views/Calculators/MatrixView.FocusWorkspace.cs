@@ -261,8 +261,8 @@ public sealed partial class MatrixView
 
     private static void SetMatrixToolPresentation(EmojiActionButton button, string key, string icon)
     {
-#if WINDOWS
         button.VectorIconKey = key;
+#if WINDOWS
         button.Padding = Thickness.Zero;
 #endif
         button.Caption = ""; button.Emoji = icon;

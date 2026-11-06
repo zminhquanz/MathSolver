@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "icons": {
+    "pack": "fluent-systems-regular",
+    "sizes": [
+      20,
+      24
+    ],
+    "color": "currentColor",
+    "items": {
+      "calculate": {
+        "id": "Bs0MQIFN7Ro0",
+        "commonName": "calculator"
+      },
+      "stop": {
+        "id": "rYiUtoW8bKp2",
+        "commonName": "stop"
+      },
+      "clear": {
+        "id": "nerFBdXcYDve",
+        "commonName": "trash"
+      },
+      "copy": {
+        "id": "pNYOTp5DinZ3",
+        "commonName": "copy"
+      },
+      "paste": {
+        "id": "rUCpLPrTzIyY",
+        "commonName": "paste"
+      },
+      "ai": {
+        "id": "NpWB6GLVTcND",
+        "commonName": "bot"
+      },
+      "pdf": {
+        "id": "WGWKtEyDpPjb",
+        "commonName": "export-pdf"
+      },
+      "review": {
+        "id": "wsaHlAV3lO8O",
+        "commonName": "check-document"
+      },
+      "back": {
+        "id": "20i9yZTsnnmg",
+        "commonName": "left"
+      },
+      "expand": {
+        "id": "oKzxXpO0YWfO",
+        "commonName": "resize-diagonal"
+      },
+      "collapse": {
+        "id": "2Td09ZjK3z6T",
+        "commonName": "collapse"
+      },
+      "more": {
+        "id": "8XYjGcdYhTGt",
+        "commonName": "more"
+      },
+      "info": {
+        "id": "lzICmAiUWSkI",
+        "commonName": "info"
+      },
+      "import": {
+        "id": "st0dqOVQN8E6",
+        "commonName": "import"
+      },
+      "export": {
+        "id": "jKKnbderVfrn",
+        "commonName": "export"
+      },
+      "edit": {
+        "id": "sKp0dy2A108d",
+        "commonName": "edit"
+      },
+      "next": {
+        "id": "b8rKT75QG14x",
+        "commonName": "right"
+      },
+      "select_all": {
+        "id": "m2yVnzMLnzC0",
+        "commonName": "select-all"
+      }
+    }
+  },
+  "implementation": {
+    "status": "awaiting-svg-mcp-entitlement",
+    "scope": "Action icons; preserve the approved app logo and mathematical symbols.",
+    "note": "Searched and previewed on 2026-11-06. No Icons8 artwork is integrated into the application yet. User chose to retain SVG and will provide MCP/SVG access."
+  }
+}

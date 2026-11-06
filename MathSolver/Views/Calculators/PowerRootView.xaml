@@ -484,21 +484,21 @@
                         <Label x:Name="ProgressStepsLabel" Grid.Row="1" FontSize="14" FontAttributes="Bold" MaxLines="2" LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
                         <Label x:Name="ProgressPercentLabel" Grid.Row="2" Text="0%" FontSize="13" MaxLines="2" LineBreakMode="WordWrap" TextColor="{DynamicResource ContentAccentTextColor}" />
                         <ProgressBar x:Name="CalculationProgressBar" Grid.Row="3" HeightRequest="5" Progress="0" ProgressColor="{DynamicResource PrimaryColor}" SemanticProperties.Hint="{localization:Translate PowerRoot.Diagnostics.ProgressEstimate}" />
-                        <Button x:Name="StopButton" Grid.Column="1" Grid.RowSpan="4" Text="{localization:Translate PowerRoot.Stop}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" Padding="16,8" CornerRadius="12" FontSize="16" FontAttributes="Bold" BackgroundColor="{DynamicResource DangerColor}" TextColor="White" VerticalOptions="Center" Clicked="OnStopClicked" />
+                        <Button controls:ActionIcon.Key="PowerRoot.Stop" x:Name="StopButton" Grid.Column="1" Grid.RowSpan="4" Text="{localization:Translate PowerRoot.Stop, ActionIcons=True}" MinimumHeightRequest="{DynamicResource Density.ControlHeight}" Padding="16,8" CornerRadius="12" FontSize="16" FontAttributes="Bold" BackgroundColor="{DynamicResource DangerColor}" TextColor="White" VerticalOptions="Center" Clicked="OnStopClicked" />
                     </Grid>
                 </Border>
                 <Grid>
                     <Grid x:Name="PowerIdleActions" ColumnSpacing="10" RowSpacing="8" SizeChanged="OnFooterActionsSizeChanged">
-                        <Button
+                        <Button controls:ActionIcon.Key="Actions.Calculate"
                             x:Name="CalculateButton"
                             Grid.Column="0"
-                            Text="{localization:Translate Actions.Calculate}"
+                            Text="{localization:Translate Actions.Calculate, ActionIcons=True}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnCalculateClicked" />
-                        <Button
+                        <Button controls:ActionIcon.Key="Actions.Clear"
                             x:Name="ClearButton"
                             Grid.Column="1"
-                            Text="{localization:Translate Actions.Clear}"
+                            Text="{localization:Translate Actions.Clear, ActionIcons=True}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
                             Clicked="OnClearClicked" />
@@ -518,7 +518,7 @@
                                 InputTransparent="True"
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-                                <controls:ThemedCopyIcon
+                                <controls:ActionIconView Key="Copy" IconSize="20" Color="{DynamicResource WallpaperTextPrimaryColor}"
                                     WidthRequest="20"
                                     HeightRequest="20" />
                                 <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
@@ -529,10 +529,10 @@
                                     VerticalTextAlignment="Center" />
                             </Grid>
                         </Grid>
-                        <Button
+                        <Button controls:ActionIcon.Key="PowerRoot.ExportTxt"
                             x:Name="ExportTextButton"
                             IsVisible="False"
-                            Text="{localization:Translate PowerRoot.ExportTxt}"
+                            Text="{localization:Translate PowerRoot.ExportTxt, ActionIcons=True}"
                             MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                             CornerRadius="12"
                             FontSize="15"
@@ -543,17 +543,17 @@
                             Clicked="OnExportTextClicked" />
                     </Grid>
                     <Grid x:Name="RootIdleActions" IsVisible="False" ColumnSpacing="10" RowSpacing="8" SizeChanged="OnFooterActionsSizeChanged">
-                        <Button
+                        <Button controls:ActionIcon.Key="Actions.Calculate"
                             x:Name="RootCalculateButton"
                             Grid.Column="0"
-                            Text="{localization:Translate Actions.Calculate}"
+                            Text="{localization:Translate Actions.Calculate, ActionIcons=True}"
                             Style="{StaticResource SolverPrimaryActionStyle}"
                             Clicked="OnRootCalculateClicked" />
-                        <Button
+                        <Button controls:ActionIcon.Key="Actions.Clear"
                             x:Name="RootClearButton"
                             Grid.Column="1"
                             BackgroundColor="{DynamicResource WallpaperDividerColor}"
-                            Text="{localization:Translate Actions.Clear}"
+                            Text="{localization:Translate Actions.Clear, ActionIcons=True}"
                             Style="{StaticResource SolverSecondaryActionStyle}"
                             Clicked="OnRootClearClicked" />
                         <Grid x:Name="RootCopyResultButtonContainer" MinimumHeightRequest="{DynamicResource Density.ControlHeight}">
@@ -568,7 +568,7 @@
                                 InputTransparent="True"
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
-                                <controls:ThemedCopyIcon
+                                <controls:ActionIconView Key="Copy" IconSize="20" Color="{DynamicResource WallpaperTextPrimaryColor}"
                                     WidthRequest="20"
                                     HeightRequest="20" />
                                 <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"

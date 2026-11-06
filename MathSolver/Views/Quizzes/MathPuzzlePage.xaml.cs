@@ -85,7 +85,6 @@ public partial class MathPuzzlePage : ContentPage
         InitializeComponent();
         SubmitEssayAnswerButton.Emoji = "\u2705";
         RegenerateQuestionButton.Emoji = "\U0001F504";
-        OpenAiQuestionBankEmojiLabel.Text = "\U0001F916"; // Match the AI authoring header's robot emoji.
         // Native emoji fonts provide colour glyphs independently of the app's text font.
         PracticeHeroEmojiLabel.Text = "?  + − × ÷";
         Loaded += OnPracticePageLoaded;

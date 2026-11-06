@@ -110,6 +110,7 @@ public sealed partial class MatrixView
         _phoneRangeToggle.IsVisible = phone;
         if (phone && IsPhoneLandscape) _cellInfo.IsVisible = false;
         string expandKey = _tableExpanded ? "Workspace.RestoreTable" : "Workspace.ExpandTable";
+        _phoneExpandToggle.VectorIconKey = expandKey;
         _phoneExpandToggle.Caption = T(expandKey);
         SemanticProperties.SetDescription(_phoneExpandToggle, T(expandKey));
         RefreshPhoneRangeAction();

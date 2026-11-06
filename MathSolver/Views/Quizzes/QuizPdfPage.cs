@@ -56,19 +56,18 @@ internal sealed class QuizPdfPage : ContentPage
     private Button Action(Button button, string key, bool primary = false)
     {
         string text = T(key);
-        string icon = key switch
+        string? iconKey = key switch
         {
-            "ChangeSelection" => "⚙️",
-            "Generate" => "📝",
-            "Cancel" => "⏹️",
-            "SaveQuestions" or "SaveAnswers" => "💾",
-            "ShareQuestions" or "ShareAnswers" => "📤",
-            "OpenQuestions" => "🖨️",
-            "Replace" => "🔄",
-            _ => ""
+            "ChangeSelection" => "Workspace.EditSetup",
+            "Generate" => "Pdf",
+            "Cancel" => "Stop",
+            "SaveQuestions" or "SaveAnswers" => "Export",
+            "ShareQuestions" or "ShareAnswers" or "OpenQuestions" => "Pdf",
+            "Replace" => "Workspace.EditSetup",
+            _ => null
         };
-        // Native button text renders emoji without font-image or SVG resources.
-        button.Text = string.IsNullOrEmpty(icon) ? text : $"{icon} {text}";
+        ActionIcon.SetKey(button, iconKey);
+        button.Text = text;
         SemanticProperties.SetDescription(button, text);
         button.SetDynamicResource(StyleProperty, primary ? "SolverPrimaryActionStyle" : "SolverOutlinedActionStyle");
         DisplayDensityManager.BindControl(button); button.LineBreakMode = LineBreakMode.WordWrap; return button;
@@ -187,13 +186,7 @@ internal sealed class QuizPdfPage : ContentPage
             HorizontalOptions = LayoutOptions.Center, VerticalOptions = LayoutOptions.Center
         };
         backHost.Add(_back); backHost.Add(backIcon); heading.Add(backHost, 0);
-        heading.Add(new EmojiLabel
-        {
-            Text = "\U0001F4C4", // Page: PDF worksheet export.
-            FontSize = 24, WidthRequest = 32,
-            HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center,
-            VerticalOptions = LayoutOptions.Center
-        }, 1);
+        heading.Add(new ActionIconView { Key = "Pdf", IconSize = 24, VerticalOptions = LayoutOptions.Center }, 1);
         _headerTitle.TranslationY = android ? 1 : 0;
         _headerTitle.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "TextPrimaryColor");
         _headerTitle.SetDynamicResource(StyleProperty, "AppPageHeaderTitleStyle");

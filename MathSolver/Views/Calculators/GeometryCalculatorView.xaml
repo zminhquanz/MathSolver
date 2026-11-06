@@ -568,17 +568,17 @@
                             ColumnSpacing="10"
                             RowSpacing="10">
 
-                            <Button
+                            <Button controls:ActionIcon.Key="Actions.Calculate"
                                 x:Name="CalculateGeometryButton"
                                 Grid.Column="0"
-                                Text="{localization:Translate Actions.Calculate}"
+                                Text="{localization:Translate Actions.Calculate, ActionIcons=True}"
                                 Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
                                 Clicked="OnCalculateClicked" />
 
-                            <Button
+                            <Button controls:ActionIcon.Key="Actions.Clear"
                                 x:Name="ClearGeometryButton"
                                 Grid.Column="1"
-                                Text="{localization:Translate Actions.Clear}"
+                                Text="{localization:Translate Actions.Clear, ActionIcons=True}"
                                 Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
                                 BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 TextColor="{DynamicResource WallpaperTextPrimaryColor}"
@@ -603,7 +603,7 @@
                                 HorizontalOptions="Center"
                                 VerticalOptions="Center"
                                 ColumnSpacing="8">
-                                <controls:ThemedCopyIcon
+                                <controls:ActionIconView Key="Copy" IconSize="20" Color="{DynamicResource WallpaperTextPrimaryColor}"
                                     WidthRequest="20"
                                     HeightRequest="20" />
                                 <Label Grid.Column="1" HorizontalTextAlignment="Center" LineBreakMode="WordWrap"

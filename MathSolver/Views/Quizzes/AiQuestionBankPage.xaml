@@ -90,10 +90,7 @@
                     AutomationProperties.IsInAccessibleTree="False"
                     Opacity="{Binding Source={x:Reference AiBankBackButton}, Path=Opacity, x:DataType='Button'}" />
             </Grid>
-            <controls:EmojiLabel x:Name="AiBankHeaderEmojiLabel" Grid.Column="1"
-                                 FontSize="24" WidthRequest="32"
-                                 VerticalOptions="Center" VerticalTextAlignment="Center"
-                                 HorizontalTextAlignment="Center" />
+            <controls:ActionIconView Key="Ai" Grid.Column="1" IconSize="24" VerticalOptions="Center" />
             <VerticalStackLayout Grid.Column="2" Spacing="0" VerticalOptions="Center">
                 <Label x:Name="AiBankHeaderTitleLabel"
                        Text="{localization:Translate AiBank.Title}"
@@ -182,7 +179,7 @@
                         </Border>
                         <Button x:Name="DownloadButton" Text="{localization:Translate AiBank.Download}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
                         </VerticalStackLayout>
-                        <Button x:Name="CancelModelButton" Text="{localization:Translate AiBank.CancelModelAction}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" IsVisible="False" />
+                        <Button controls:ActionIcon.Key="AiBank.CancelModelAction" x:Name="CancelModelButton" Text="{localization:Translate AiBank.CancelModelAction, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" IsVisible="False" />
                         <ProgressBar x:Name="DownloadProgressBar" IsVisible="False" />
                         <Label x:Name="DownloadStatusLabel" LineBreakMode="WordWrap" />
                         </VerticalStackLayout>
@@ -196,7 +193,7 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
-                <Button x:Name="ReviewButton" Text="{localization:Translate AiBank.Review.Open}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
+                <Button controls:ActionIcon.Key="AiBank.Review.Open" x:Name="ReviewButton" Text="{localization:Translate AiBank.Review.Open, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnReviewClicked" />
                 <Border x:Name="ProblemCard" Style="{StaticResource SolverCardStyle}">
                     <VerticalStackLayout x:Name="ConfigurationPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ProblemSection}" Style="{StaticResource SolverSectionTitleStyle}" />
@@ -330,8 +327,8 @@
         <Border x:Name="GenerationActionBar" Grid.Row="1" Style="{StaticResource SolverActionBarStyle}">
             <VerticalStackLayout Spacing="6">
                 <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                    <Button x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />
-                    <Button x:Name="StopButton" Grid.Column="1" Text="{localization:Translate AiBank.Stop}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnStopClicked" IsEnabled="False" />
+                    <Button controls:ActionIcon.Key="AiBank.Generate" x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate, ActionIcons=True}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />
+                    <Button controls:ActionIcon.Key="AiBank.Stop" x:Name="StopButton" Grid.Column="1" Text="{localization:Translate AiBank.Stop, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnStopClicked" IsEnabled="False" />
                 </Grid>
                 <Label x:Name="JobStatusLabel" FontAttributes="Bold" FontSize="13" MaxLines="2" LineBreakMode="TailTruncation"
                        ToolTipProperties.Text="{Binding Text, Source={RelativeSource Self}, x:DataType='Label'}" />

@@ -14,7 +14,7 @@ Hiển thị phân số và căn thức theo kiểu sách giáo khoa.
 
 Icon vector theo theme và icon sao chép.
 
-- [ThemedCopyIcon.cs](Icons/ThemedCopyIcon.cs)
+- [ActionIconView.cs](Icons/ActionIconView.cs) — shared vector icons for headings and result-copy overlays.
 - [ThemedSvgPathIcon.cs](Icons/ThemedSvgPathIcon.cs)
 
 ## Interaction

@@ -297,15 +297,15 @@
                 ColumnDefinitions="*,*"
                 ColumnSpacing="10">
 
-                <Button
+                <Button controls:ActionIcon.Key="Actions.Calculate"
                     Grid.Column="0"
-                    Text="{localization:Translate Actions.Calculate}"
+                    Text="{localization:Translate Actions.Calculate, ActionIcons=True}"
                     Style="{StaticResource SolverPrimaryActionStyle}"
                     Clicked="OnCalculateClicked" />
 
-                <Button
+                <Button controls:ActionIcon.Key="Actions.Clear"
                     Grid.Column="1"
-                    Text="{localization:Translate Actions.Clear}"
+                    Text="{localization:Translate Actions.Clear, ActionIcons=True}"
                     Style="{StaticResource SolverSecondaryActionStyle}"
                     BackgroundColor="{DynamicResource WallpaperDividerColor}"
                     Clicked="OnClearClicked" />
@@ -329,7 +329,7 @@
                                 HorizontalOptions="Fill"
                                 VerticalOptions="Center" ColumnDefinitions="Auto,*" ColumnSpacing="8" Padding="12,8">
 
-                                <controls:ThemedCopyIcon
+                                <controls:ActionIconView Key="Copy" IconSize="20" Color="{DynamicResource WallpaperTextPrimaryColor}"
                                     WidthRequest="20"
                                     HeightRequest="20" />
 

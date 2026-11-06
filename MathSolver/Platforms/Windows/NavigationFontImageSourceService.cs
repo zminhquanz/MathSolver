@@ -9,7 +9,7 @@ namespace MathSolver.Platforms.Windows;
 
 /// <summary>
 /// MAUI's default Windows font-image service forces 96 DPI. Preserve the logical
-/// 24-unit canvas but render enough pixels for the requesting window's density.
+/// requested logical canvas size and render enough pixels for the window's density.
 /// </summary>
 public sealed class NavigationFontImageSourceService : ImageSourceService,
     IImageSourceService<NavigationFontImageSource>
@@ -22,7 +22,9 @@ public sealed class NavigationFontImageSourceService : ImageSourceService,
             return Task.FromResult<IImageSourceServiceResult<Microsoft.UI.Xaml.Media.ImageSource>?>(null);
 
         float density = float.IsFinite(scale) && scale > 0 ? scale : 1;
-        float size = (float)MathNavigationCatalog.IconSize;
+        float requestedSize = (float)source.Size;
+        float size = float.IsFinite(requestedSize) && requestedSize > 0
+            ? requestedSize : (float)MathNavigationCatalog.IconSize;
         var device = CanvasDevice.GetSharedDevice();
         // MAUI copies registered fonts to the application directory on Windows.
         // A file URI works for both packaged and unpackaged Win2D font loading.

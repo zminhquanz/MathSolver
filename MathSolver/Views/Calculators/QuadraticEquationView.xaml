@@ -757,16 +757,16 @@
         <Border Grid.Row="2" AutomationId="SolverFixedActionBar" Style="{StaticResource SolverActionBarStyle}">
             <Grid Style="{StaticResource SolverFooterActionButtonsStyle}" ColumnDefinitions="*,*" RowDefinitions="Auto" ColumnSpacing="10" RowSpacing="10">
 
-                            <Button
+                            <Button controls:ActionIcon.Key="Equation.Action"
                                 x:Name="CalculateQuadraticButton"
                                 Grid.Column="0"
-                                Text="{localization:Translate Equation.Action}"
+                                Text="{localization:Translate Equation.Action, ActionIcons=True}"
                                 Style="{StaticResource SolverPrimaryActionStyle}" LineBreakMode="WordWrap"
                                 Clicked="OnCalculateClicked" />
 
-                            <Button
+                            <Button controls:ActionIcon.Key="Actions.Clear"
                                 Grid.Column="1"
-                                Text="{localization:Translate Actions.Clear}"
+                                Text="{localization:Translate Actions.Clear, ActionIcons=True}"
                                 Style="{StaticResource SolverSecondaryActionStyle}" LineBreakMode="WordWrap"
                                 BackgroundColor="{DynamicResource WallpaperDividerColor}"
                                 Clicked="OnClearClicked" />
@@ -791,7 +791,7 @@
                                 VerticalOptions="Center"
                                 ColumnSpacing="8">
 
-                                <controls:ThemedCopyIcon
+                                <controls:ActionIconView Key="Copy" IconSize="20" Color="{DynamicResource WallpaperTextPrimaryColor}"
                                     WidthRequest="20"
                                     HeightRequest="20" />
 

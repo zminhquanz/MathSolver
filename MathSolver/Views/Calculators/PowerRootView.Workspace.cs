@@ -30,6 +30,7 @@ public partial class PowerRootView
         _refreshingWorkspace = true;
         try
         {
+            ActionIcon.SetKey(ExportTextButton, _isExporting ? "Stop" : "Export");
             bool powerResult = _isPowerMode && ResultBorder.IsVisible && _calculationState is not null;
             bool rootResult = !_isPowerMode && RootResultBorder.IsVisible && _rootCalculationState is not null;
             PowerResults.IsVisible = powerResult;

@@ -25,6 +25,8 @@ public sealed class TranslateExtension :
     public string Key { get; set; } =
         string.Empty;
 
+    public bool ActionIcons { get; set; }
+
     public object ProvideValue(
         IServiceProvider serviceProvider)
     {
@@ -40,7 +42,7 @@ public sealed class TranslateExtension :
         {
             Source =
                 new TranslationBindingSource(
-                    Key),
+                    Key, ActionIcons),
 
             Mode =
                 BindingMode.OneWay
@@ -56,16 +58,18 @@ public sealed class TranslateExtension :
         INotifyPropertyChanged
     {
         private readonly string _key;
+        private readonly bool _actionIcons;
 
         // Keep the delegate so it remains stable while this source exists.
         private readonly EventHandler
             _cultureChangedHandler;
 
         public TranslationBindingSource(
-            string key)
+            string key, bool actionIcons)
         {
             _key =
                 key;
+            _actionIcons = actionIcons;
 
             var weakSource =
                 new WeakReference<
@@ -109,9 +113,14 @@ public sealed class TranslateExtension :
                 _cultureChangedHandler;
         }
 
-        public string Value =>
-            MathNavigationCatalog.TranslateLabel(
-                _key);
+        public string Value
+        {
+            get
+            {
+                string text = MathNavigationCatalog.TranslateLabel(_key);
+                return _actionIcons ? ActionIconCatalog.LabelFor(_key, text) : text;
+            }
+        }
 
         public event PropertyChangedEventHandler?
             PropertyChanged;

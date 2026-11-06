@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using MathSolver.Controls;
 using MathSolver.Services;
@@ -157,13 +157,7 @@ public sealed class AiQuestionReviewPage : ContentPage
             Padding = android ? new Thickness(0, 0, 8, 0) : new Thickness(2, 0, 10, 0)
         };
         navigation.Add(backHost, 0);
-        navigation.Add(new EmojiLabel
-        {
-            Text = "\U0001F50E", // Magnifying glass: matches the pending-review action.
-            FontSize = 24, WidthRequest = 32,
-            HorizontalTextAlignment = TextAlignment.Center, VerticalTextAlignment = TextAlignment.Center,
-            VerticalOptions = LayoutOptions.Center
-        }, 1);
+        navigation.Add(new ActionIconView { Key = "Review", IconSize = 24, VerticalOptions = LayoutOptions.Center }, 1);
         var headerText = new VerticalStackLayout { Spacing = 0, VerticalOptions = LayoutOptions.Center };
         headerText.Add(_headerTitle);
         headerText.Add(_headerSubtitle);
@@ -331,7 +325,7 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     private static EmojiActionButton BatchButton(string key, string icon, string style, string automationId)
     {
-        var button = new EmojiActionButton { Caption = T(key), Emoji = icon, AutomationId = automationId };
+        var button = new EmojiActionButton { Caption = T(key), Emoji = icon, VectorIconKey = key, AutomationId = automationId };
         button.SetDynamicResource(StyleProperty, style);
         button.MinimumHeightRequest = 48;
         button.Padding = new Thickness(16, 12);

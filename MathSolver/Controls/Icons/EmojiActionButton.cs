@@ -36,9 +36,11 @@ public sealed class EmojiActionButton : Button
         if (emoji.Length > 0 && caption.StartsWith(emoji, StringComparison.Ordinal))
             caption = caption[emoji.Length..].TrimStart();
 
-#if WINDOWS
-        if (DesktopActionIcons.GlyphFor(VectorIconKey) is not null) emoji = string.Empty;
-#endif
+        if (MathSolver.Services.ActionIconCatalog.GlyphFor(VectorIconKey) is not null)
+        {
+            emoji = string.Empty;
+            caption = MathSolver.Services.ActionIconCatalog.LabelFor(VectorIconKey, caption);
+        }
 
         Text = emoji.Length == 0 ? caption : caption.Length == 0 ? emoji : $"{emoji}  {caption}";
         // Screen readers announce the action rather than the emoji's Unicode name.
@@ -47,19 +49,7 @@ public sealed class EmojiActionButton : Button
 
     private void UpdateVectorIcon()
     {
-#if WINDOWS
-        if (DesktopActionIcons.GlyphFor(VectorIconKey) is { } glyph)
-        {
-            ContentLayout = new ButtonContentLayout(ButtonContentLayout.ImagePosition.Left, 8);
-            SetBinding(ImageSourceProperty, new Binding(nameof(TextColor), source: this,
-                converter: new DesktopActionIcons.ImageConverter(glyph)));
-        }
-        else
-        {
-            RemoveBinding(ImageSourceProperty);
-            ImageSource = null;
-        }
-#endif
+        ActionIcon.SetKey(this, VectorIconKey);
         UpdateCaption();
     }
 }

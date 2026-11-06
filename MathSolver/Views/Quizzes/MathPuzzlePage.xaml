@@ -70,15 +70,13 @@
                                             ToolTipProperties.Text="{localization:Translate AiBank.Title}"
                                             Style="{StaticResource PracticeToolbarButtonStyle}"
                                             Clicked="OnOpenAiQuestionBankClicked" />
-                                    <controls:EmojiLabel x:Name="OpenAiQuestionBankEmojiLabel"
-                                                        FontSize="16" WidthRequest="18" Margin="10,0,0,0"
-                                                        HorizontalOptions="Start" VerticalOptions="Center"
-                                                        HorizontalTextAlignment="Center"
-                                                        Opacity="{Binding Source={x:Reference OpenAiQuestionBankButton}, Path=Opacity, x:DataType='Button'}" />
+                                    <controls:ActionIconView Key="Ai" IconSize="20" Margin="10,0,0,0" HorizontalOptions="Start" VerticalOptions="Center"
+                                        Color="{Binding TextColor, Source={x:Reference OpenAiQuestionBankButton}, x:DataType=Button}"
+                                        Opacity="{Binding Opacity, Source={x:Reference OpenAiQuestionBankButton}, x:DataType=Button}" />
                                 </Grid>
                                 <Button x:Name="ExportQuizPdfButton" Grid.Column="2"
                                         Text="{localization:Translate QuizPdf.Export}"
-                                        ImageSource="quiz_export_pdf.png"
+                                        controls:ActionIcon.Key="Pdf"
                                         ContentLayout="Left,6"
                                         SemanticProperties.Description="{localization:Translate QuizPdf.Title}"
                                         ToolTipProperties.Text="{localization:Translate QuizPdf.Title}"

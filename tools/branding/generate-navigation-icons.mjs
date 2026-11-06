@@ -71,7 +71,7 @@ icon('units',()=>{
   line(3,17,21,17);stroke([[7,13],[3,17],[7,21]]);
 });
 
-// Windows utility actions. Append only: existing navigation glyph IDs stay fixed.
+// Application-owned utility actions. Append only: navigation glyph IDs stay fixed.
 icon('action_copy',()=>{
   stroke([[8,7],[20,7],[20,21],[8,21]],1.75,true);stroke([[16,3],[4,3],[4,17]]);
 });
@@ -100,6 +100,34 @@ icon('action_forward',()=>{stroke([[14,5],[21,12],[14,19]]);line(3,12,21,12);});
 icon('action_settings',()=>{
   polygon(Array.from({length:48},(_,i)=>{const a=i*Math.PI/24,r=[10,10,8,8,10,10][i%6];return[12+r*Math.cos(a),12+r*Math.sin(a)];}));
   disc(12,12,6.25,true);ring(12,12,3.2,1.75);
+});
+
+// Original Math Solver action drawings. These are not Icons8 assets or traced previews.
+icon('action_calculate',()=>{
+  stroke([[6,3],[18,3],[20,5],[20,19],[18,21],[6,21],[4,19],[4,5]],1.75,true);
+  stroke([[8,7],[16,7],[16,10],[8,10]],1.5,true);
+  for(const x of [8,12,16])for(const y of [14,18])disc(x,y,.95);
+});
+icon('action_stop',()=>{stroke([[6,4],[18,4],[20,6],[20,18],[18,20],[6,20],[4,18],[4,6]],1.75,true);});
+icon('action_ai',()=>{
+  stroke([[12,5],[9,3],[6,4],[5,7],[3,9],[4,13],[6,14],[6,18],[9,21],[12,19],[15,21],[18,18],[18,14],[20,13],[21,9],[19,7],[18,4],[15,3],[12,5]],1.65);
+  line(12,5,12,19,1.5);stroke([[7,8],[9,9],[9,12],[6,13]],1.5);
+  stroke([[17,8],[15,9],[15,12],[18,13]],1.5);line(8,16,10,17,1.5);line(16,16,14,17,1.5);
+});
+icon('action_pdf',()=>{
+  stroke([[13,21],[5,21],[5,3],[14,3],[19,8],[19,12]],1.75);
+  stroke([[14,3],[14,8],[19,8]],1.5);line(8,12,13,12,1.5);line(8,16,11,16,1.5);
+  line(17,15,17,22);stroke([[14,19],[17,22],[20,19]]);
+});
+icon('action_review',()=>{
+  stroke([[11,21],[4,21],[4,3],[13,3],[18,8],[18,10]],1.75);
+  stroke([[13,3],[13,8],[18,8]],1.5);line(7,11,11,11,1.5);line(7,15,10,15,1.5);
+  stroke([[13,16],[16,19],[21,13]],1.9);
+});
+icon('action_check',()=>{stroke([[4,12],[9,17],[20,6]],2);});
+icon('action_select_all',()=>{
+  for(const [x,y,dx,dy] of [[3,3,4,0],[10,3,4,0],[17,3,4,0],[3,21,4,0],[10,21,4,0],[17,21,4,0],[3,7,0,4],[3,14,0,3],[21,7,0,4],[21,14,0,3]])line(x,y,x+dx,y+dy,1.5);
+  for(const y of [8,12,16])line(8,y,16,y,1.5);
 });
 
 // Minimal, deterministic TrueType writer. The font is only a transport for our

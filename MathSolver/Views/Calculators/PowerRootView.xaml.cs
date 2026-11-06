@@ -5770,8 +5770,7 @@ public partial class PowerRootView : LocalizedSolverView
     private static string Translate(
         string key)
     {
-        return LocalizationService.TranslateKey(
-            key);
+        return ActionIconCatalog.LabelFor(key, LocalizationService.TranslateKey(key));
     }
 
     private static string GetNttKernelDetail(
