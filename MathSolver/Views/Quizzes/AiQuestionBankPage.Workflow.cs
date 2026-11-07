@@ -4,8 +4,11 @@ namespace MathSolver.Views;
 
 public partial class AiQuestionBankPage
 {
+    private readonly MathSolver.Controls.AiGuideFlowPlayer _guideFlow = new();
+    private readonly MathSolver.Services.BatchCompletionGate _saveCompletionGate = new();
     private void RenderWorkflow(bool running, AiPresentation presentation)
     {
+        if (running) _guideFlow.Stop();
         WorkflowStatusLabel.Text = T(presentation.WorkflowKey);
         CancelModelButton.IsVisible = _bank.IsManaging;
         StopButton.IsVisible = running;
@@ -17,8 +20,8 @@ public partial class AiQuestionBankPage
     private void OnGuidanceStepsSizeChanged(object? sender, EventArgs e)
     {
         if (GuidanceSteps.Width <= 0) return;
-        int columns = MathSolver.Services.ResponsiveLayoutPolicy.UseStackedLayout(GuidanceSteps.Width, 1040)
-            ? MathSolver.Services.ResponsiveLayoutPolicy.UseStackedLayout(GuidanceSteps.Width, 560) ? 1 : 2 : 4;
+        int columns = AiGuideLayoutPolicy.Columns(GuidanceSteps.Width,
+            MathSolver.Services.ResponsiveLayoutPolicy.TextScale);
         if (GuidanceSteps.ColumnDefinitions.Count == columns) return;
         // Keep the same controls and reading order as the window/text size changes.
         for (int i = 0; i < GuidanceSteps.Children.Count; i++)
@@ -41,17 +44,14 @@ public partial class AiQuestionBankPage
     private void OnToggleGuidanceClicked(object? sender, EventArgs e)
     {
         GuidancePanel.IsVisible = !GuidancePanel.IsVisible;
+        if (GuidancePanel.IsVisible && !_bank.Generation.IsRunning) _guideFlow.RequestPlay();
+        else _guideFlow.Stop();
         RefreshWorkflowDisclosures();
     }
 
     private void RefreshWorkflowDisclosures()
     {
-#if WINDOWS
-        GuidanceOverview.IsVisible = GuidanceSteps.IsVisible = GuidancePanel.IsVisible;
-        string guidanceKey = "Desktop.Guidance";
-#else
         string guidanceKey = "Workflow.Details";
-#endif
         ModelToolsToggleButton.Text = (ModelToolsPanel.IsVisible ? "▾ " : "▸ ") + T("Workflow.ModelTools");
         GuidanceToggleButton.Text = (GuidancePanel.IsVisible ? "▾ " : "▸ ") + T(guidanceKey);
         SemanticProperties.SetDescription(ModelToolsToggleButton,

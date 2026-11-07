@@ -331,14 +331,14 @@
                                         IsRunning="False"
                                         IsVisible="False"
                                         Color="{DynamicResource PrimaryColor}" />
+                                    <controls:CompletionNotice x:Name="ExportCompletionNotice" Grid.Row="0" Grid.Column="1">
                                     <Label
                                         x:Name="ExportStatusLabel"
-                                        Grid.Row="0"
-                                        Grid.Column="1"
                                         VerticalTextAlignment="Center"
                                         FontSize="14"
                                         LineBreakMode="WordWrap"
                                         TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                                    </controls:CompletionNotice>
                                     <ProgressBar
                                         x:Name="ExportProgressBar"
                                         Grid.Row="1"

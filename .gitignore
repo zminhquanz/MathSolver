@@ -107,3 +107,9 @@ appsettings.Development.json
 
 # Publish output
 publish/
+
+# Locally licensed Icons8 artwork. Keep it outside the public GPL source distribution.
+MathSolver/Resources/Icons/Icons8/*.svg
+MathSolver/Resources/Fonts/Icons8Actions.ttf
+MathSolver/Services/Appearance/Icons8LicensedPaths.g.cs
+MathSolver/Resources/Icons/Icons8/provenance.local.json

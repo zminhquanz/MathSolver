@@ -146,6 +146,12 @@
                     <Label Text="{localization:Translate DataManagement.BankHint}" FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
                         <Label Text="{localization:Translate AiBank.DataTransferHint}" FontSize="13" LineBreakMode="WordWrap"
                                TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Button x:Name="ImportGuideToggle" Text="{localization:Translate DataManagement.ImportGuide.Show}"
+                                Style="{StaticResource SolverOutlinedActionStyle}" MinimumHeightRequest="48"
+                                HorizontalOptions="Start" LineBreakMode="WordWrap" Clicked="OnToggleImportGuideClicked" />
+                        <Grid x:Name="ImportGuideSteps" IsVisible="False" ColumnDefinitions="*" RowDefinitions="Auto"
+                              ColumnSpacing="16" RowSpacing="16" Padding="0,8"
+                              controls:AdaptiveColumns.MinimumColumnWidth="176" controls:AdaptiveColumns.MaximumColumns="3" />
                         <controls:EmojiActionButton x:Name="DownloadTemplateButton" Caption="{localization:Translate AiBank.DownloadTemplate}"
                                 Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnDownloadTemplateClicked" />
                         <Grid x:Name="ExcelTransferActionsGrid" ColumnDefinitions="*,*" RowDefinitions="Auto"
@@ -157,7 +163,9 @@
                                 HorizontalOptions="Fill" VerticalOptions="Fill" LineBreakMode="WordWrap"
                                 Caption="{localization:Translate AiBank.ExportExcel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnExportExcelClicked" />
                         </Grid>
-                        <Label x:Name="DataTransferStatusLabel" LineBreakMode="WordWrap" />
+                        <controls:CompletionNotice x:Name="TransferCompletionNotice">
+                            <Label x:Name="DataTransferStatusLabel" LineBreakMode="WordWrap" />
+                        </controls:CompletionNotice>
                         <VerticalStackLayout x:Name="ImportReviewPanel" IsVisible="False" Spacing="10">
                             <Label Text="{localization:Translate AiBank.ImportReviewTitle}" Style="{StaticResource HardwareSectionTitleStyle}" />
                             <Label Text="{localization:Translate AiBank.ImportReviewHint}" FontSize="13" LineBreakMode="WordWrap" />
@@ -233,7 +241,9 @@
                             </Border>
 
                     </VerticalStackLayout>
-                            <Label x:Name="InquiryStatusLabel" LineBreakMode="WordWrap" />
+                            <controls:CompletionNotice x:Name="RowCompletionNotice">
+                                <Label x:Name="InquiryStatusLabel" LineBreakMode="WordWrap" />
+                            </controls:CompletionNotice>
                             <Border x:Name="QueryResultsPanel" Padding="10" Style="{StaticResource DataDiagnosticCardStyle}" IsVisible="False">
                                 <VerticalStackLayout Spacing="4">
                                     <Label x:Name="QueryResultMessageLabel" LineBreakMode="WordWrap" IsVisible="False" />

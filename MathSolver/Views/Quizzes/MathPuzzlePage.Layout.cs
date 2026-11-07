@@ -38,6 +38,7 @@ public partial class MathPuzzlePage
 
     private void OnPracticePageUnloaded(object? sender, EventArgs e)
     {
+        _learningGuide.Collapse();
         _practiceLayoutLoaded = false;
         _practiceLayoutVersion++;
         _practiceScrollVersion++;

@@ -21,7 +21,7 @@ public static class ActionIcon
     internal static NavigationFontImageSource? Source(string? key, Color color, double size) =>
         ActionIconCatalog.GlyphFor(key) is { } glyph ? new NavigationFontImageSource
         {
-            FontFamily = MathNavigationCatalog.FontAlias, Glyph = glyph, Size = size,
+            FontFamily = ActionIconCatalog.FontFor(key), Glyph = glyph, Size = size,
             FontAutoScalingEnabled = false, Color = color
         } : null;
 

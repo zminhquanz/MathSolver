@@ -45,6 +45,7 @@ public partial class SettingsPage : ContentPage
     {
         InitializeComponent();
         LocalizationService.ExcludeSubtreeFromLegacyTracking(DensitySettingsCard);
+        LocalizationService.ExcludeSubtreeFromLegacyTracking(IllustrationMotionCard);
 
         LocalizationService.Attach(
             this);
@@ -702,6 +703,7 @@ public partial class SettingsPage : ContentPage
         DeveloperModeManager.ResetToDefault();
         ResultNumberDisplayMode.ResetToDefault();
         LiveWallpaperManager.ResetToDefault();
+        IllustrationMotionSettings.SetEnabled(true);
 #if ANDROID
         AndroidMaterialYouManager.SetDynamicColorEnabled(false);
 #endif
@@ -1374,6 +1376,7 @@ public partial class SettingsPage : ContentPage
 
     private void LoadCurrentSettings()
     {
+        RefreshIllustrationMotionSwitch();
         Color color = AppThemeManager.CurrentAccentColor;
         string colorHex = AppThemeManager.CurrentAccentHex;
 

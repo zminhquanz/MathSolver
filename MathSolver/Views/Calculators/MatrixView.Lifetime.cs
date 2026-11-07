@@ -17,6 +17,7 @@ public sealed partial class MatrixView
         _active = active;
         if (!active)
         {
+            _exportCompletion?.StopMotion();
             DetachMatrixKeyboard();
             _viewport.CancelRangeSelection();
             if (CanTouchUi) { _detailsRequested = _technicalRequested = false; CloseMatrixTools(); _cellValuePanel.IsVisible = false; RefreshWorkspacePresentation(); }

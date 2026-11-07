@@ -110,7 +110,7 @@ public sealed partial class MatrixView
                 await using var stream = File.OpenRead(temporary);
                 var saved = await FileSaver.Default.SaveAsync(fileName, stream, _work!.Token);
                 if (!CanPublish(version)) return;
-                if (saved.IsSuccessful) Status("Exported");
+                if (saved.IsSuccessful) { Status("Exported"); if (_work?.IsCancellationRequested != true) _exportCompletion.Complete(); }
                 else if (saved.Exception is OperationCanceledException) Status("Cancelled");
                 else ReportError("Failed");
             }, "Exporting");

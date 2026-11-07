@@ -39,7 +39,11 @@ public sealed partial class MatrixViewport
     {
 #if WINDOWS
         DetachNativeInput();
-        if (!CanUseInput || Handler?.PlatformView is not Microsoft.UI.Xaml.UIElement surface) return;
+        // Attach to the native lifetime, not the current interaction permission.
+        // Setup/inspector or an inactive cached tab can block input during Loaded;
+        // closing that panel does not raise Loaded/HandlerChanged again. The event
+        // handlers themselves still check CanUseInput before handling any input.
+        if (Handler?.PlatformView is not Microsoft.UI.Xaml.UIElement surface) return;
         _inputSurface = surface;
         surface.AddHandler(Microsoft.UI.Xaml.UIElement.PointerWheelChangedEvent, new Microsoft.UI.Xaml.Input.PointerEventHandler(OnWheel), true);
         surface.AddHandler(Microsoft.UI.Xaml.UIElement.PreviewKeyDownEvent, new Microsoft.UI.Xaml.Input.KeyEventHandler(OnKeyDown), true);

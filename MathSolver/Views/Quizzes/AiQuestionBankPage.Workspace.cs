@@ -10,14 +10,6 @@ public partial class AiQuestionBankPage
 
     private void InitializeAiWorkspace()
     {
-#if WINDOWS
-        GuidanceCard.Padding = 12;
-        GuidanceCard.StrokeThickness = 1;
-        GuidanceCard.SetDynamicResource(BackgroundColorProperty, "WallpaperSurfaceColor");
-        GuidanceCard.SetDynamicResource(Border.StrokeProperty, "WallpaperBorderBrush");
-        GuidanceContent.Remove(GuidanceStatusRow);
-        GuidanceContent.Insert(0, GuidanceStatusRow);
-#endif
         WorkflowScroll.SizeChanged += QueueAiWorkspaceRefresh;
         WorkflowScroll.Loaded += QueueAiWorkspaceRefresh;
         WorkflowScroll.Unloaded += (_, _) => InvalidateAiWorkspaceRefresh();

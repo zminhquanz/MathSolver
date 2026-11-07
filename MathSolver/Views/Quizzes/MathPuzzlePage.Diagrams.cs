@@ -58,6 +58,7 @@ public partial class MathPuzzlePage
             diagram, essential, _questionAnswered, AppLanguageManager.CurrentLanguage));
         AutomationProperties.SetIsInAccessibleTree(QuizVisualView, true);
         UpdateQuestionDiagramLayout();
+        UpdateLearningGuide();
     }
 
     private async void OnQuizDiagramToggleClicked(object? sender, EventArgs e)

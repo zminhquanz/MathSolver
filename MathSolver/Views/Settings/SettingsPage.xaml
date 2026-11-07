@@ -83,6 +83,20 @@
             HorizontalOptions="Center"
             MaximumWidthRequest="900">
 
+                <Border x:Name="IllustrationMotionCard" Style="{StaticResource ThemeCardStyle}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                            <Label Text="{localization:Translate Settings.IllustrationMotion.Title}" FontSize="16"
+                                   FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                            <Label Text="{localization:Translate Settings.IllustrationMotion.Hint}" FontSize="14"
+                                   LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />
+                        </VerticalStackLayout>
+                        <Switch x:Name="IllustrationMotionSwitch" Grid.Column="1" MinimumHeightRequest="48"
+                                VerticalOptions="Center"
+                                SemanticProperties.Description="{localization:Translate Settings.IllustrationMotion.Title}"
+                                Toggled="OnIllustrationMotionToggled" />
+                    </Grid>
+                </Border>
                 <Border x:Name="DensitySettingsCard" Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="{DynamicResource Density.Spacing}">
                         <Label Text="{localization:Translate Settings.Density.Title}"

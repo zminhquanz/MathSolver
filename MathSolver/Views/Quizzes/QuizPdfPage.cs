@@ -24,6 +24,7 @@ internal sealed class QuizPdfPage : ContentPage
     private readonly Entry _count = new() { Keyboard = Keyboard.Numeric, Text = "20", MaxLength = 3, IsVisible = false };
     private readonly Picker _countPicker = new();
     private readonly Label _status = new() { LineBreakMode = LineBreakMode.WordWrap };
+    private readonly CompletionNotice _completion;
     private readonly Button _create = new(), _stop = new(), _save = new(), _saveAnswers = new(), _share = new(), _shareAnswers = new(), _open = new();
     private readonly Button _change = new();
     private readonly Button _back = new() { AutomationId = "QuizPdfBack" };
@@ -62,7 +63,8 @@ internal sealed class QuizPdfPage : ContentPage
             "Generate" => "Pdf",
             "Cancel" => "Stop",
             "SaveQuestions" or "SaveAnswers" => "Export",
-            "ShareQuestions" or "ShareAnswers" or "OpenQuestions" => "Pdf",
+            "ShareQuestions" or "ShareAnswers" => "Share",
+            "OpenQuestions" => "Pdf",
             "Replace" => "Workspace.EditSetup",
             _ => null
         };
@@ -135,7 +137,8 @@ internal sealed class QuizPdfPage : ContentPage
         _activity.SetDynamicResource(ActivityIndicator.ColorProperty, "PrimaryColor");
         _status.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "WallpaperTextPrimaryColor");
         var progress = new Grid { ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 8 };
-        progress.Add(_activity, 0); progress.Add(_status, 1); settings.Add(progress); settings.Add(Label(T("FrozenHint")));
+        _completion = new CompletionNotice(_status);
+        progress.Add(_activity, 0); progress.Add(_completion, 1); settings.Add(progress); settings.Add(Label(T("FrozenHint")));
         top.Add(Card(settings));
         var export = new VerticalStackLayout { Spacing = 12 };
         export.Add(Label(T("ExportSection"), true));
@@ -144,7 +147,10 @@ internal sealed class QuizPdfPage : ContentPage
         export.Add(Label(T("AnswersHint"))); export.Add(_exportActions); top.Add(Card(export)); top.Add(Label(T("Preview"), true));
         _empty.Text = T("Empty"); _empty.LineBreakMode = LineBreakMode.WordWrap;
         _empty.SetDynamicResource(Microsoft.Maui.Controls.Label.TextColorProperty, "WallpaperTextPrimaryColor");
-        var emptyCard = Card(_empty); emptyCard.SetBinding(IsVisibleProperty, new Binding(nameof(IsVisible), source: _empty)); top.Add(emptyCard);
+        _empty.HorizontalTextAlignment = TextAlignment.Center;
+        var emptyCard = Card(new IllustratedMessage("pdf_blank_sheet.png", _empty));
+        emptyCard.AutomationId = "QuizPdfEmptyState";
+        emptyCard.SetBinding(IsVisibleProperty, new Binding(nameof(IsVisible), source: _empty)); top.Add(emptyCard);
         var actionButtons = new[] { Action(_save, "SaveQuestions", true), Action(_share, "ShareQuestions"), Action(_saveAnswers, "SaveAnswers"), Action(_shareAnswers, "ShareAnswers"), Action(_open, "OpenQuestions") };
         foreach (var button in actionButtons) _exportActions.Children.Add(button);
         _exportActions.SizeChanged += (_, _) => UpdateExportLayout();
@@ -373,7 +379,7 @@ internal sealed class QuizPdfPage : ContentPage
                 using var stream = new MemoryStream(bytes);
                 var result = await FileSaver.Default.SaveAsync(name, stream, cancellation);
                 if (!result.IsSuccessful) throw result.Exception ?? new IOException("PDF save failed.");
-                if (_visible) _status.Text = F("Saved", result.FilePath);
+                if (_visible) { _status.Text = F("Saved", result.FilePath); if (!cancellation.IsCancellationRequested) _completion.Complete(); }
             }
             else
             {
@@ -387,6 +393,7 @@ internal sealed class QuizPdfPage : ContentPage
     }
     private async Task RunAsync(Func<CancellationToken, Task> work)
     {
+        _completion.Reset();
         _busy = true; _run = new CancellationTokenSource(); UpdateActions();
         try { await work(_run.Token); }
         catch (OperationCanceledException) { if (_visible) _status.Text = T("Stopped"); }
@@ -437,6 +444,7 @@ internal sealed class QuizPdfPage : ContentPage
     }
     protected override void OnDisappearing()
     {
+        _completion.StopMotion();
         _visible = false; ++_headerRefreshGeneration;
         AppThemeManager.ThemeChanged -= OnHeaderResourcesChanged;
         LocalizationService.CultureChanged -= OnHeaderResourcesChanged;

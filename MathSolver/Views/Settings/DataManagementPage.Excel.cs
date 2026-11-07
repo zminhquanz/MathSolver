@@ -90,6 +90,7 @@ public partial class DataManagementPage
             ClearSqlResults();
             _loadedTable = false;
             DataTransferStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("ImportResult"), report.Inserted, report.Duplicates, report.Rejected);
+            if (report.Rejected == 0 && !cancellation.IsCancellationRequested) TransferCompletionNotice.Complete(report.Inserted);
             committed = true;
         });
         if (committed && _appeared && !_closing)
@@ -198,6 +199,7 @@ public partial class DataManagementPage
                 throw saved.Exception ?? new IOException(T("ExportFailed"));
             }
             DataTransferStatusLabel.Text = T("TemplateDownloaded");
+            if (_appeared && !cancellation.IsCancellationRequested) TransferCompletionNotice.Complete();
         });
     }
 }

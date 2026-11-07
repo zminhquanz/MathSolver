@@ -154,6 +154,7 @@ public partial class PowerRootView : LocalizedSolverView
 
     protected override void OnSolverUnloaded()
     {
+        ExportCompletionNotice.StopMotion();
         _workspaceSuspended = true;
         DeveloperModeManager.DeveloperModeChanged -=
             OnDeveloperModeChanged;
@@ -4684,6 +4685,7 @@ public partial class PowerRootView : LocalizedSolverView
                             fileSizeBytes)),
                     progress: 1d,
                     isBusy: false);
+                if (!cancellationToken.IsCancellationRequested) ExportCompletionNotice.Complete();
             }
             else if (saveResult.IsCanceled ||
                      saveResult.Exception is

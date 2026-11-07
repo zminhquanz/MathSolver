@@ -109,17 +109,26 @@
             <VerticalStackLayout Style="{StaticResource SolverContentStyle}">
                 <!-- A page introduction stays above both workspace columns, including on resize. -->
                 <Border x:Name="GuidanceCard" controls:SolverHeader.Role="Description"
-                        Style="{StaticResource SolverCardStyle}" Padding="18"
-                        BackgroundColor="{DynamicResource WallpaperPrimarySoftColor}"
-                        Stroke="{DynamicResource WallpaperPrimaryBorderBrush}" StrokeThickness="1.5">
+                        Style="{StaticResource SolverCardStyle}" Padding="16"
+                        BackgroundColor="{DynamicResource WallpaperSurfaceColor}"
+                        Stroke="{DynamicResource WallpaperBorderBrush}" StrokeThickness="1">
                     <VerticalStackLayout x:Name="GuidanceContent" Spacing="12">
                         <VerticalStackLayout x:Name="GuidanceOverview" Spacing="12">
-                        <Label Text="{localization:Translate AiBank.Workflow.Guide}" FontSize="20" FontAttributes="Bold"
-                               TextColor="{DynamicResource ContentAccentTextColor}" LineBreakMode="WordWrap"
-                               SemanticProperties.HeadingLevel="Level2" />
-                        <Label Text="{localization:Translate AiBank.Description}" FontSize="13" LineBreakMode="WordWrap" />
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="16">
+                            <Image x:Name="GuidanceArtwork" Source="ai_guide_stationery.png"
+                                   WidthRequest="{OnPlatform Android=96, Default=144}"
+                                   HeightRequest="{OnPlatform Android=80, Default=96}"
+                                   Aspect="AspectFit" VerticalOptions="Center" InputTransparent="True"
+                                   AutomationProperties.IsInAccessibleTree="False" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
+                                <Label Text="{localization:Translate AiBank.Workflow.Guide}" FontSize="20" FontAttributes="Bold"
+                                       LineBreakMode="WordWrap" SemanticProperties.HeadingLevel="Level2" />
+                                <Label Text="{localization:Translate AiBank.Workflow.Intro}" FontSize="13"
+                                       LineBreakMode="WordWrap" TextColor="{DynamicResource WallpaperTextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
                         <Grid x:Name="GuidanceSteps" ColumnDefinitions="*,*,*,*" RowDefinitions="Auto"
-                              ColumnSpacing="20" RowSpacing="14" SizeChanged="OnGuidanceStepsSizeChanged">
+                              ColumnSpacing="16" RowSpacing="16" SizeChanged="OnGuidanceStepsSizeChanged">
                             <VerticalStackLayout Spacing="5">
                                 <Label Text="{localization:Translate AiBank.Workflow.StepModel}" FontAttributes="Bold" LineBreakMode="WordWrap" />
                                 <Label Text="{localization:Translate AiBank.Workflow.StepModelHint}" FontSize="13" LineBreakMode="WordWrap" />
@@ -139,21 +148,24 @@
                         </Grid>
                         </VerticalStackLayout>
                         <Grid x:Name="GuidanceStatusRow"
-                              ColumnDefinitions="{OnPlatform WinUI='*,Auto', Default='*'}"
-                              RowDefinitions="{OnPlatform WinUI='Auto', Default='Auto,Auto'}"
+                              ColumnDefinitions="*,Auto" RowDefinitions="Auto"
                               ColumnSpacing="12" RowSpacing="12">
                         <Label x:Name="WorkflowStatusLabel" FontSize="13" FontAttributes="Bold"
                                TextColor="{DynamicResource ContentAccentTextColor}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         <Button x:Name="GuidanceToggleButton" Style="{StaticResource SolverOutlinedActionStyle}"
-                                Grid.Column="{OnPlatform WinUI=1, Default=0}" Grid.Row="{OnPlatform WinUI=0, Default=1}"
-                                HorizontalOptions="Start" FontSize="13" Padding="12,6" MinimumHeightRequest="36"
+                                Grid.Column="1" HorizontalOptions="End" VerticalOptions="Center"
+                                FontSize="13" Padding="12,8" MinimumHeightRequest="44"
                                 Clicked="OnToggleGuidanceClicked" />
                         </Grid>
                         <VerticalStackLayout x:Name="GuidancePanel" IsVisible="False" Spacing="10">
-                            <Label Text="{localization:Translate AiBank.Review.PilotHint}" FontSize="13" LineBreakMode="WordWrap" />
-                            <Label Text="{localization:Translate Learning.Hint}" FontSize="13" LineBreakMode="WordWrap" />
-                            <Label Text="{localization:Translate AiBank.InsertHint}" FontSize="13" LineBreakMode="WordWrap" />
-                            <Label Text="{localization:Translate AiBank.BackgroundHint}" FontSize="13" LineBreakMode="WordWrap" />
+                            <Grid x:Name="GuidanceFlowHost" HorizontalOptions="Center" MaximumWidthRequest="288" />
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8" MaximumWidthRequest="288" HorizontalOptions="Fill">
+                                <Label Text="{localization:Translate AiBank.Workflow.FlowCreate}" FontSize="13" HorizontalTextAlignment="Center" />
+                                <Label Grid.Column="1" Text="{localization:Translate AiBank.Workflow.FlowReview}" FontSize="13" HorizontalTextAlignment="Center" />
+                                <Label Grid.Column="2" Text="{localization:Translate AiBank.Workflow.FlowSave}" FontSize="13" HorizontalTextAlignment="Center" />
+                            </Grid>
+                            <Label Text="{localization:Translate AiBank.Workflow.SaveNote}" FontSize="13" LineBreakMode="WordWrap" />
+                            <Label Text="{localization:Translate AiBank.Workflow.ReviewNote}" FontSize="13" LineBreakMode="WordWrap" />
                         </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
@@ -168,16 +180,16 @@
                         <VerticalStackLayout x:Name="ModelDetailsPanel" Spacing="10">
                         <Label Text="{localization:Translate AiBank.ModelSection}" Style="{StaticResource SolverSectionTitleStyle}" />
                         <Label x:Name="ModelStatusLabel" LineBreakMode="WordWrap" />
-                        <Button x:Name="ChooseModelButton" Text="{localization:Translate AiBank.ChooseModel}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnChooseModelClicked" />
+                        <Button x:Name="ChooseModelButton" controls:ActionIcon.Key="AiBank.ChooseModel" Text="{localization:Translate AiBank.ChooseModel, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnChooseModelClicked" />
                         <Button x:Name="ModelToolsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleModelToolsClicked" />
                         <VerticalStackLayout x:Name="ModelToolsPanel" IsVisible="False" Spacing="8">
-                        <Button x:Name="EjectModelButton" Text="{localization:Translate AiBank.Eject}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnEjectClicked" />
-                        <Button x:Name="OpenFolderButton" Text="{localization:Translate AiBank.OpenFolder}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnOpenFolderClicked" />
+                        <Button x:Name="EjectModelButton" controls:ActionIcon.Key="Eject" Text="{localization:Translate AiBank.Eject, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnEjectClicked" />
+                        <Button x:Name="OpenFolderButton" controls:ActionIcon.Key="AiBank.OpenFolder" Text="{localization:Translate AiBank.OpenFolder, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnOpenFolderClicked" />
                         <Label Text="{localization:Translate AiBank.DownloadHint}" />
                         <Border Style="{StaticResource AiBankPickerBorderStyle}">
                             <Picker x:Name="DownloadModelPicker" Style="{StaticResource AiBankPickerStyle}" />
                         </Border>
-                        <Button x:Name="DownloadButton" Text="{localization:Translate AiBank.Download}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
+                        <Button x:Name="DownloadButton" controls:ActionIcon.Key="Download" Text="{localization:Translate AiBank.Download, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnDownloadClicked" />
                         </VerticalStackLayout>
                         <Button controls:ActionIcon.Key="AiBank.CancelModelAction" x:Name="CancelModelButton" Text="{localization:Translate AiBank.CancelModelAction, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnCancelModelClicked" IsEnabled="False" IsVisible="False" />
                         <ProgressBar x:Name="DownloadProgressBar" IsVisible="False" />
@@ -280,11 +292,16 @@
                         <Label x:Name="PreviewReadOnlyHint" IsVisible="False" Text="{localization:Translate AiBank.ReadOnlyHint}" HorizontalTextAlignment="Center" FontSize="13" />
                         <VerticalStackLayout x:Name="PreviewActionFooter" IsVisible="False" Spacing="12">
                             <BoxView HeightRequest="1" Color="{DynamicResource BorderColor}" />
+                            <controls:CompletionNotice x:Name="PreviewSaveCompletionNotice">
+                                <Label Text="{Binding Text, Source={x:Reference PreviewStatusLabel}, x:DataType='Label'}"
+                                       FontSize="14" LineBreakMode="WordWrap"
+                                       TextColor="{DynamicResource WallpaperTextPrimaryColor}" />
+                            </controls:CompletionNotice>
                             <Grid x:Name="PreviewActions" ColumnDefinitions="*" RowDefinitions="Auto,Auto"
                                   ColumnSpacing="8" RowSpacing="8" SizeChanged="OnPreviewActionsSizeChanged">
-                                <Button x:Name="InsertButton" Text="{localization:Translate AiBank.Insert}"
+                                <Button x:Name="InsertButton" controls:ActionIcon.Key="Save" Text="{localization:Translate AiBank.Insert, ActionIcons=True}"
                                         Style="{StaticResource AiBankPreviewPrimaryActionStyle}" Clicked="OnInsertClicked" IsEnabled="False" />
-                                <Button x:Name="ShareButton" Grid.Row="1"
+                                <Button x:Name="ShareButton" controls:ActionIcon.Key="Share" Grid.Row="1"
                                         Style="{StaticResource AiBankPreviewOutlinedActionStyle}" Clicked="OnShareClicked" IsEnabled="False" />
                             </Grid>
                         </VerticalStackLayout>
@@ -292,7 +309,7 @@
                 </Border>
                 <Border x:Name="DiagnosticsCard" Style="{StaticResource SolverCardStyle}" IsVisible="False">
                     <VerticalStackLayout Spacing="10">
-                        <Button x:Name="DiagnosticsToggleButton" Text="{localization:Translate AiBank.ShowDiagnostics}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleDiagnosticsClicked" />
+                        <Button x:Name="DiagnosticsToggleButton" controls:ActionIcon.Key="Code" Text="{localization:Translate AiBank.ShowDiagnostics, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleDiagnosticsClicked" />
                         <Grid x:Name="DiagnosticsPanel" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*"
                               RowSpacing="12" ColumnSpacing="12" IsVisible="False" SizeChanged="OnDiagnosticsSizeChanged">
                             <Border x:Name="ContractDiagnosticCard" Style="{StaticResource AiBankDiagnosticCardStyle}">
@@ -330,8 +347,10 @@
                     <Button controls:ActionIcon.Key="AiBank.Generate" x:Name="GenerateButton" Text="{localization:Translate AiBank.Generate, ActionIcons=True}" Style="{StaticResource SolverPrimaryActionStyle}" Clicked="OnGenerateClicked" />
                     <Button controls:ActionIcon.Key="AiBank.Stop" x:Name="StopButton" Grid.Column="1" Text="{localization:Translate AiBank.Stop, ActionIcons=True}" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnStopClicked" IsEnabled="False" />
                 </Grid>
-                <Label x:Name="JobStatusLabel" FontAttributes="Bold" FontSize="13" MaxLines="2" LineBreakMode="TailTruncation"
-                       ToolTipProperties.Text="{Binding Text, Source={RelativeSource Self}, x:DataType='Label'}" />
+                <controls:CompletionNotice x:Name="JobCompletionNotice">
+                    <Label x:Name="JobStatusLabel" FontAttributes="Bold" FontSize="13" MaxLines="2" LineBreakMode="TailTruncation"
+                           ToolTipProperties.Text="{Binding Text, Source={RelativeSource Self}, x:DataType='Label'}" />
+                </controls:CompletionNotice>
             </VerticalStackLayout>
         </Border>
     </Grid>

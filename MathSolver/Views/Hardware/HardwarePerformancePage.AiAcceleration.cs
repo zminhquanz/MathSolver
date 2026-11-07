@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Controls;
 using MathSolver.Services.Localization;
 using MathSolver.Services.QuestionBank;
 using System.Diagnostics;
@@ -39,8 +40,10 @@ public partial class HardwarePerformancePage
     {
         public object Convert(object? value, Type targetType, object? parameter,
             System.Globalization.CultureInfo culture) =>
-            ImageSource.FromFile(resource + (value is Color color && color.GetLuminosity() > 0.5f
-                ? "_light.png" : ".png"));
+            Icons8ActionCatalog.IsAvailable
+                ? ActionIcon.Source(resource == "ai_cpu" ? "Cpu" : "Gpu", value as Color ?? Colors.Black, 24)!
+                : ImageSource.FromFile(resource + (value is Color color && color.GetLuminosity() > 0.5f
+                    ? "_light.png" : ".png"));
 
         public object ConvertBack(object? value, Type targetType, object? parameter,
             System.Globalization.CultureInfo culture) => throw new NotSupportedException();

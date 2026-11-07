@@ -6,6 +6,13 @@ internal static class QuizLocalizationOverrides
     private static readonly IReadOnlyDictionary<string, string> Vietnamese =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["Quiz.LearningGuide.Show"] = "Xem cách đọc hình",
+            ["Quiz.LearningGuide.Hide"] = "Ẩn hướng dẫn",
+            ["Quiz.LearningGuide.Clock.Target"] = "Giờ trên đồng hồ: {0} giờ {1} phút",
+            ["Quiz.LearningGuide.Clock.Steps"] = "Từ đầu giờ, kim dài đi từ số 12 đến phút thứ {1}; kim ngắn dịch dần theo. Mỗi vạch nhỏ là 1 phút.",
+            ["Quiz.LearningGuide.Clock.OnHour"] = "Kim dài chỉ số 12: 0 phút. Kim ngắn chỉ số {2}: đúng {0} giờ.",
+            ["Quiz.LearningGuide.Fraction.Target"] = "Phân số biểu thị phần đã tô",
+            ["Quiz.LearningGuide.Fraction.Steps"] = "Chia hình thành {0} phần bằng nhau, tô {1} phần. Mẫu số là {0}; tử số là {1}.",
             ["Quiz.ShowDiagram"] = "Xem sơ đồ",
             ["Quiz.ComparisonSubtype"] = "So sánh < = >",
             ["Quiz.Elementary.IntegerCompare"] = "So sánh số nguyên",
@@ -209,6 +216,13 @@ internal static class QuizLocalizationOverrides
     private static readonly IReadOnlyDictionary<string, string> English =
         new Dictionary<string, string>(StringComparer.Ordinal)
         {
+            ["Quiz.LearningGuide.Show"] = "See how to read the picture",
+            ["Quiz.LearningGuide.Hide"] = "Hide guide",
+            ["Quiz.LearningGuide.Clock.Target"] = "Clock time: {0} hours {1} minutes",
+            ["Quiz.LearningGuide.Clock.Steps"] = "From the start of the hour, the long hand moves from 12 to minute {1}; the short hand moves with it. Each small tick is 1 minute.",
+            ["Quiz.LearningGuide.Clock.OnHour"] = "The long hand points to 12: 0 minutes. The short hand points to {2}.",
+            ["Quiz.LearningGuide.Fraction.Target"] = "Fraction of the picture shaded",
+            ["Quiz.LearningGuide.Fraction.Steps"] = "Divide the picture into {0} equal parts and shade {1}. The denominator is {0}; the numerator is {1}.",
             ["Quiz.ShowDiagram"] = "Show diagram",
             ["Quiz.ComparisonSubtype"] = "Compare < = >",
             ["Quiz.Elementary.IntegerCompare"] = "Compare integers",

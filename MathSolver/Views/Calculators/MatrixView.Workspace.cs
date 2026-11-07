@@ -213,7 +213,8 @@ public sealed partial class MatrixView
         _statusDetailsButton = ActionButton("Workspace.Details", "ⓘ", (_, _) =>
         { OpenMatrixTools(); _moreTools.IsVisible = _coordinatePanel.IsVisible = false; RefreshWorkspacePresentation(); }, lockDuringWork: false);
         _footerStatusRow = new Grid { ColumnSpacing = 8, ColumnDefinitions = { new(GridLength.Star), new(GridLength.Auto) } };
-        _footerStatusRow.Add(_message); _footerStatusRow.Add(_statusDetailsButton, 1, 0);
+        _exportCompletion = new CompletionNotice(_message);
+        _footerStatusRow.Add(_exportCompletion); _footerStatusRow.Add(_statusDetailsButton, 1, 0);
         _activity.SetDynamicResource(ActivityIndicator.ColorProperty, "PrimaryColor");
         _progressText.FontSize = 13;
         _progressText.IsVisible = false;

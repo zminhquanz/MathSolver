@@ -1226,6 +1226,8 @@
                                         TokenSpacing="4"
                                         HorizontalOptions="Fill" />
 
+                                    <VerticalStackLayout x:Name="LearningGuideHost" />
+
                                 </VerticalStackLayout>
                             </Border>
 

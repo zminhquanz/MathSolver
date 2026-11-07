@@ -25,7 +25,9 @@ public sealed class AiQuestionReviewPage : ContentPage
     };
     private readonly Label _status = Text(size: 14, bold: true);
     private readonly Label _feedback = Text(size: 14, secondary: true);
+    private readonly CompletionNotice _completion;
     private readonly Label _empty = Text(size: 16);
+    private readonly IllustratedMessage _emptyState;
     private readonly ActivityIndicator _activity = new() { WidthRequest = 24, HeightRequest = 24, IsVisible = false };
     private readonly Button _retry = new();
     private readonly Button _back = new() { AutomationId = "AiReviewBack" };
@@ -45,6 +47,7 @@ public sealed class AiQuestionReviewPage : ContentPage
     private bool _goingBack;
     private bool _changingSelection;
     private bool _visible;
+    private bool _loaded;
     private int _headerRefreshGeneration;
     private static string T(string key) => LocalizationService.TranslateKey("AiBank.Review." + key);
     // Selection belongs to the stable item, never to a recycled native cell.
@@ -102,8 +105,13 @@ public sealed class AiQuestionReviewPage : ContentPage
         _status.AutomationId = "AiReviewCount";
         _feedback.IsVisible = false;
         _empty.Text = T("Empty");
-        _empty.IsVisible = false;
-        _retry.Text = "🔄 " + T("Retry");
+        _empty.HorizontalTextAlignment = TextAlignment.Center;
+        _emptyState = new IllustratedMessage("review_empty_tray.png", _empty)
+        {
+            IsVisible = false, Padding = new Thickness(16), AutomationId = "AiReviewEmptyState"
+        };
+        ActionIcon.SetKey(_retry, "Refresh");
+        _retry.Text = ActionIconCatalog.LabelFor("Refresh", "\U0001F504 " + T("Retry"));
         SemanticProperties.SetDescription(_retry, T("Retry"));
         _retry.IsVisible = false;
         _retry.HorizontalOptions = LayoutOptions.Start;
@@ -179,12 +187,13 @@ public sealed class AiQuestionReviewPage : ContentPage
             ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 10
         };
         progress.Add(_activity, 0);
-        progress.Add(_feedback, 1);
+        _completion = new CompletionNotice(_feedback);
+        progress.Add(_completion, 1);
         var header = new VerticalStackLayout
         {
             Spacing = 12, Margin = new Thickness(0, 16, 0, 16),
             HorizontalOptions = LayoutOptions.Center,
-            Children = { count, hint, ActionGrid(_approveAll, _rejectAll), _empty, _retry }
+            Children = { count, hint, ActionGrid(_approveAll, _rejectAll), _emptyState, _retry }
         };
         // Constrain the reading column, never the scrolling viewport. This keeps
         // the native scrollbar (including Windows arrow buttons) at the page edge.
@@ -362,6 +371,7 @@ public sealed class AiQuestionReviewPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _completion.StopMotion();
         _visible = false;
         ++_headerRefreshGeneration;
         AppThemeManager.ThemeChanged -= OnHeaderResourcesChanged;
@@ -446,7 +456,7 @@ public sealed class AiQuestionReviewPage : ContentPage
     private void UpdateCount()
     {
         _status.Text = string.Format(CultureInfo.CurrentCulture, T("Count"), _cards.Count);
-        _empty.IsVisible = _cards.Count == 0;
+        _emptyState.IsVisible = _loaded && _cards.Count == 0;
         UpdateSelectionControls();
     }
 
@@ -487,7 +497,8 @@ public sealed class AiQuestionReviewPage : ContentPage
         SetBusy(true);
         _retry.IsVisible = false;
         _feedback.IsVisible = false;
-        _empty.IsVisible = false;
+        _loaded = false;
+        _emptyState.IsVisible = false;
         try
         {
             var rows = await _store.GetPendingReviewsAsync();
@@ -497,6 +508,7 @@ public sealed class AiQuestionReviewPage : ContentPage
                     OpenQuestionProse.Example(pending.Contract).ToWordProblem(pending.Contract).ProblemText,
                     pending.Contract.Solution, QuestionAuthoringChoices.FamilyLabel(pending.Contract.Family, AppLanguageManager.CurrentLanguage),
                     UpdateSelectionControls) { CanInteract = false });
+            _loaded = true;
             UpdateCount();
         }
         catch (Exception e)
@@ -523,6 +535,7 @@ public sealed class AiQuestionReviewPage : ContentPage
         string[] ids = requestedIds.Distinct(StringComparer.Ordinal).ToArray();
         if (ids.Length == 0) return;
         SetBusy(true);
+        _completion.Reset();
         try
         {
             if (confirm)
@@ -544,6 +557,7 @@ public sealed class AiQuestionReviewPage : ContentPage
             if (result.MissingIds.Count > 0)
                 feedback += " " + string.Format(CultureInfo.CurrentCulture, T("MissingResult"), result.MissingIds.Count);
             ShowFeedback(feedback);
+            if (_visible && approve && result.MissingIds.Count == 0) _completion.Complete(result.ApprovedIds.Count);
             // Notifications describe only rows this committed operation resolved.
             // A caller's presentation failure cannot turn a saved batch into a retry.
             foreach (string id in result.ApprovedIds) NotifyResolved(id, true);

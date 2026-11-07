@@ -28,8 +28,9 @@ public sealed class NavigationFontImageSourceService : ImageSourceService,
         var device = CanvasDevice.GetSharedDevice();
         // MAUI copies registered fonts to the application directory on Windows.
         // A file URI works for both packaged and unpackaged Win2D font loading.
-        string family = new Uri(Path.Combine(AppContext.BaseDirectory, "MathNavigationIcons.ttf")).AbsoluteUri
-            + "#Math Solver Navigation";
+        var font = ActionIconCatalog.FontResourceFor(source.FontFamily);
+        string family = new Uri(Path.Combine(AppContext.BaseDirectory, font.FileName)).AbsoluteUri
+            + "#" + font.FamilyName;
         using var format = new CanvasTextFormat
         {
             FontFamily = family,

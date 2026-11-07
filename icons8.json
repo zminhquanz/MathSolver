@@ -1,0 +1,157 @@
+{
+  "pack": "fluent-systems-regular",
+  "license": "https://icons8.com/license",
+  "usage": "Local licensed build inputs; not GPL artwork. See MathSolver/Resources/Icons/Icons8/README.md.",
+  "icons": [
+    {
+      "key": "Import",
+      "id": "st0dqOVQN8E6",
+      "file": "import.svg",
+      "codepoint": "ea00"
+    },
+    {
+      "key": "Export",
+      "id": "jKKnbderVfrn",
+      "file": "export.svg",
+      "codepoint": "ea01"
+    },
+    {
+      "key": "Settings",
+      "id": "4511GGVppfIx",
+      "file": "settings.svg",
+      "codepoint": "ea02"
+    },
+    {
+      "key": "Download",
+      "id": "sXUnPq4XYR1D",
+      "file": "download.svg",
+      "codepoint": "ea03"
+    },
+    {
+      "key": "Folder",
+      "id": "ccl15GfjlIdj",
+      "file": "opened-folder.svg",
+      "codepoint": "ea04"
+    },
+    {
+      "key": "File",
+      "id": "FN71YxTPZVQC",
+      "file": "document.svg",
+      "codepoint": "ea05"
+    },
+    {
+      "key": "Eject",
+      "id": "KdIJh5EEkZh3",
+      "file": "eject.svg",
+      "codepoint": "ea06"
+    },
+    {
+      "key": "Share",
+      "id": "TDCU7KRViM2Q",
+      "file": "share.svg",
+      "codepoint": "ea07"
+    },
+    {
+      "key": "Code",
+      "id": "UL0rGxsBMDwD",
+      "file": "code.svg",
+      "codepoint": "ea08"
+    },
+    {
+      "key": "Undo",
+      "id": "NW43CciCALcq",
+      "file": "undo.svg",
+      "codepoint": "ea09"
+    },
+    {
+      "key": "Table",
+      "id": "M1CUd7LZginJ",
+      "file": "table-1.svg",
+      "codepoint": "ea0a"
+    },
+    {
+      "key": "Search",
+      "id": "XU3XKgdpT0qG",
+      "file": "search.svg",
+      "codepoint": "ea0b"
+    },
+    {
+      "key": "Help",
+      "id": "QbUVCJcLUR8w",
+      "file": "help.svg",
+      "codepoint": "ea0c"
+    },
+    {
+      "key": "Run",
+      "id": "LVtMPps1ASuP",
+      "file": "play.svg",
+      "codepoint": "ea0d"
+    },
+    {
+      "key": "Add",
+      "id": "r4ZoJ0KDic77",
+      "file": "add.svg",
+      "codepoint": "ea0e"
+    },
+    {
+      "key": "Save",
+      "id": "78FI1reyhXx7",
+      "file": "save.svg",
+      "codepoint": "ea0f"
+    },
+    {
+      "key": "Refresh",
+      "id": "dUT1e6ccW1yv",
+      "file": "refresh.svg",
+      "codepoint": "ea10"
+    },
+    {
+      "key": "Close",
+      "id": "1NVn5K29mOSz",
+      "file": "delete-sign.svg",
+      "codepoint": "ea11"
+    },
+    {
+      "key": "Columns",
+      "id": "3RGtpQVai9CD",
+      "file": "columns.svg",
+      "codepoint": "ea12"
+    },
+    {
+      "key": "Cpu",
+      "id": "CNIQcfFwl82H",
+      "file": "processor.svg",
+      "codepoint": "ea13"
+    },
+    {
+      "key": "Gpu",
+      "id": "SDneA0rl12o3",
+      "file": "video-card.svg",
+      "codepoint": "ea14"
+    },
+    {
+      "key": "Database",
+      "id": "CL9FYPTHMfLp",
+      "file": "database.svg",
+      "codepoint": "ea15"
+    },
+    {
+      "key": "ClearSelection",
+      "id": "VbxCQcaPzpGv",
+      "file": "uncheck-all.svg",
+      "codepoint": "ea16"
+    },
+    {
+      "key": "Sql",
+      "id": "cmFi5p65O9Be",
+      "file": "search-database.svg",
+      "codepoint": "ea17"
+    },
+    {
+      "key": "Edit",
+      "id": "sKp0dy2A108d",
+      "file": "edit.svg",
+      "codepoint": "ea18"
+    }
+  ]
+}

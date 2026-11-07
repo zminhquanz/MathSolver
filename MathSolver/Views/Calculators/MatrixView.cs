@@ -23,6 +23,7 @@ public sealed partial class MatrixView : LocalizedSolverView
     private readonly Entry _aRows = NumberEntry("3"), _aColumns = NumberEntry("3"),
         _bRows = NumberEntry("3"), _bColumns = NumberEntry("3");
     private readonly Entry _row = NumberEntry("1"), _column = NumberEntry("1"), _value = NumberEntry("");
+    private CompletionNotice _exportCompletion = null!;
     private readonly Label _selection = TextLabel(), _inputStatus = TextLabel(), _message = TextLabel(),
         _range = TextLabel(), _progressText = TextLabel(), _creationNotice = TextLabel();
     private readonly Label _selectedValue = TextLabel();

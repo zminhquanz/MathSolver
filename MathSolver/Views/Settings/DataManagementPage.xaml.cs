@@ -17,6 +17,7 @@ public partial class DataManagementPage : ContentPage
     {
         InitializeComponent();
         ConfigureActionIcons();
+        ConfigureImportGuide();
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
         QueryEditor.Text = QuestionBankStore.DefaultInquiry;
     }
@@ -28,6 +29,7 @@ public partial class DataManagementPage : ContentPage
         LocalizationService.CultureChanged += OnCultureChanged;
         _bank.Generation.Changed += OnBankStateChanged;
         RefreshSqlHelp();
+        RefreshImportGuide();
         if (_pendingImport is not null) RenderImportReview();
         UpdateDataActions();
         if (!_loadedTable && _dataCancellation is null)
@@ -39,6 +41,8 @@ public partial class DataManagementPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        TransferCompletionNotice.StopMotion(); RowCompletionNotice.StopMotion();
+        _excelGuidePlayer.Stop();
         _appeared = false;
         LocalizationService.CultureChanged -= OnCultureChanged;
         _bank.Generation.Changed -= OnBankStateChanged;
@@ -53,6 +57,7 @@ public partial class DataManagementPage : ContentPage
         if (!_appeared) return;
         RefreshSqlCellLabels();
         RefreshSqlHelp();
+        RefreshImportGuide();
         if (_pendingImport is not null) RenderImportReview();
         UpdateDataActions();
     });

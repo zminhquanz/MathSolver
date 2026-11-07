@@ -1,11 +1,22 @@
 namespace MathSolver.Services;
 
-/// <summary>Application-owned action identities, separate from educational math symbols.</summary>
+/// <summary>Shared action identities, with optional licensed artwork separate from educational math symbols.</summary>
 public static class ActionIconCatalog
 {
     public const double ActionSize = 20;
     public const double NavigationSize = 24;
-    public static string? GlyphFor(string? key) => key switch
+    public static string? GlyphFor(string? key) => Icons8ActionCatalog.GlyphFor(key) ?? OriginalGlyphFor(key);
+
+    public static string FontFor(string? key) => Icons8ActionCatalog.GlyphFor(key) is not null
+        ? Icons8ActionCatalog.FontAlias : "MathNavigationIcons";
+
+    /// <summary>Resolve the actual registered font file and internal family for native renderers.</summary>
+    public static (string FileName, string FamilyName) FontResourceFor(string? alias) =>
+        Icons8ActionCatalog.IsAvailable && alias == Icons8ActionCatalog.FontAlias
+            ? ("Icons8Actions.ttf", "Math Solver Licensed Actions")
+            : ("MathNavigationIcons.ttf", "Math Solver Navigation");
+
+    private static string? OriginalGlyphFor(string? key) => key switch
     {
         "Copy" or "Workspace.Copy" or "PowerRoot.CopyResult" => "\ue90c",
         "Workspace.Paste" or "Paste" or "PasteCells" => "\ue90d",
@@ -34,7 +45,7 @@ public static class ActionIconCatalog
     public static string LabelFor(string? key, string text)
     {
         if (GlyphFor(key) is null) return text;
-        foreach (string prefix in new[] { "🗑️", "⏹️", "☑️", "🧮", "🗑", "📋", "⏹", "■", "✨", "🤖", "🔎", "🔍", "✅", "📄", "📥", "📤", "💾" })
+        foreach (string prefix in new[] { "\U0001F4E6", "\U0001F4C2", "\U0001F4C1", "\U0001F504", "\u270f\ufe0f", "\u270f", "\u2795", "\u2754", "\u25b6\ufe0f", "\u25b6", "\u21a9\ufe0f", "\u21a9", "\u2716\ufe0f", "\u2716", "\u23cf\ufe0f", "\u23cf", "\U0001F5C3\ufe0f", "\U0001F5C3", "\U0001F9FE", "🗑️", "⏹️", "☑️", "🧮", "🗑", "📋", "⏹", "■", "✨", "🤖", "🔎", "🔍", "✅", "📄", "📥", "📤", "💾" })
             if (text.StartsWith(prefix, StringComparison.Ordinal)
                 && (text.Length == prefix.Length || char.IsWhiteSpace(text[prefix.Length])))
                 return text[prefix.Length..].TrimStart();

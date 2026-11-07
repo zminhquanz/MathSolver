@@ -83,7 +83,9 @@ public partial class MathPuzzlePage : ContentPage
     public MathPuzzlePage()
     {
         InitializeComponent();
+        LearningGuideHost.Add(_learningGuide);
         SubmitEssayAnswerButton.Emoji = "\u2705";
+        RegenerateQuestionButton.VectorIconKey = "Regenerate";
         RegenerateQuestionButton.Emoji = "\U0001F504";
         // Native emoji fonts provide colour glyphs independently of the app's text font.
         PracticeHeroEmojiLabel.Text = "?  + − × ÷";
@@ -153,6 +155,7 @@ public partial class MathPuzzlePage : ContentPage
 
     protected override void OnDisappearing()
     {
+        _learningGuide.Collapse();
         _practicePageVisible = false;
         // Cancel publication from the old view visit, not the quiz session.
         _questionGenerationVersion++;
@@ -2241,6 +2244,7 @@ public partial class MathPuzzlePage : ContentPage
 
     private void ResetAnswerControls()
     {
+        _learningGuide.Configure(null, TranslateQuiz);
         _pendingAnswerButton = null;
         _choiceStatuses.Clear();
         SetAnswerControlsEnabled(true);
@@ -2506,6 +2510,7 @@ public partial class MathPuzzlePage : ContentPage
         }
 
         NextQuestionButton.IsEnabled = true;
+        UpdateLearningGuide();
         UpdateRegenerateQuestionButtonState();
         UpdateScoreLabels();
         string feedback = FeedbackFractionView.IsVisible ? FeedbackFractionView.Expression : FeedbackLabel.Text;

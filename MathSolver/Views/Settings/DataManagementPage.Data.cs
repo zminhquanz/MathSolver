@@ -289,6 +289,7 @@ public partial class DataManagementPage
             QueryCellTitleLabel.Text = string.Format(CultureInfo.CurrentCulture, T("SqlCellTitle"), cell.RowNumber, cell.ColumnName);
         CopySqlCellButton.Caption = T("CopySqlCell");
         CopySqlCellButton.Emoji = "\U0001F4CB";
+        CopySqlCellButton.VectorIconKey = "Copy";
         QueryResultsTable.UpdateInsertLabels(T("GridNull"), T("GridAutoKey"));
         UpdateSqlEditHint();
     }
@@ -303,6 +304,7 @@ public partial class DataManagementPage
             {
                 CopySqlCellButton.Caption = T("SqlCellCopied");
                 CopySqlCellButton.Emoji = "\u2705";
+                CopySqlCellButton.VectorIconKey = "Apply";
             }
         }
         catch (Exception error) { await ShowErrorAsync(error); }
@@ -325,6 +327,8 @@ public partial class DataManagementPage
     {
         if (_dataCancellation is not null || !QueryResultsTable.IsEditing || _editingSqlRow is not { } row) return;
         var values = QueryResultsTable.GetEditValues().Where(field => field.Key != "Hash").ToDictionary(field => field.Key, field => field.Value);
+        bool changed = SaveFeedbackPolicy.HasRowChanges(row.Values, values,
+            QuestionBankStore.GridColumns.Where(column => column.IsInteger).Select(column => column.Name).ToHashSet(StringComparer.Ordinal));
         int rowNumber = QueryResultsTable.EditingRowNumber;
         await RunDataOperationAsync(false, async cancellation =>
         {
@@ -335,6 +339,7 @@ public partial class DataManagementPage
             var saved = await _bank.Store.UpdateGridRowAsync(row, values, cancellation);
             if (!saved.IsSuccess) { InquiryStatusLabel.Text = ErrorText(saved.ErrorCode!); return; }
             await RefreshSqlGridAsync(CancellationToken.None, T("GridRowSaved"));
+            if (_appeared && changed && !cancellation.IsCancellationRequested) RowCompletionNotice.Complete();
         });
     }
 
@@ -424,6 +429,7 @@ public partial class DataManagementPage
             var inserted = await _bank.Store.InsertGridRowAsync(values, cancellation);
             if (!inserted.IsSuccess) { InquiryStatusLabel.Text = ErrorText(inserted.ErrorCode!); return; }
             await RefreshSqlGridAsync(CancellationToken.None, T("GridRowInserted"));
+            if (_appeared && !cancellation.IsCancellationRequested) RowCompletionNotice.Complete();
         });
     }
 
@@ -487,6 +493,7 @@ public partial class DataManagementPage
                     throw saved.Exception ?? new IOException(T("ExportFailed"));
                 }
                 DataTransferStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("ExportResult"), report.Exported, report.Skipped);
+                if (_appeared && !cancellation.IsCancellationRequested && report.Skipped == 0) TransferCompletionNotice.Complete(report.Exported);
             }
             finally { if (File.Exists(path)) File.Delete(path); }
         });

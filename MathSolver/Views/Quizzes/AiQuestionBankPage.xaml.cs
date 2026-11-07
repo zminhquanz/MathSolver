@@ -19,6 +19,8 @@ public partial class AiQuestionBankPage : ContentPage
     private bool _confirmingStop;
     private bool _openingReview;
     private bool _followLatestItem = true;
+    private int? _saveFeedbackItemNumber;
+    private ValidatedBankQuestion? _saveFeedbackQuestion;
     private int _renderQueued;
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true,
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
@@ -31,6 +33,7 @@ public partial class AiQuestionBankPage : ContentPage
     public AiQuestionBankPage()
     {
         InitializeComponent();
+        GuidanceFlowHost.Children.Add(_guideFlow);
         InitializeAiWorkspace();
         CountEntry.PropertyChanged += (_, e) =>
         {
@@ -103,6 +106,9 @@ public partial class AiQuestionBankPage : ContentPage
 
     protected override void OnDisappearing()
     {
+        PreviewSaveCompletionNotice.Reset();
+        _saveCompletionGate.Reset(); JobCompletionNotice.StopMotion();
+        _guideFlow.Stop();
         _appeared = false;
         DisplayDensityManager.Changed -= QueueAiWorkspaceRefresh;
         InvalidateAiWorkspaceRefresh();
@@ -146,7 +152,7 @@ public partial class AiQuestionBankPage : ContentPage
     private void RefreshPickerLabels()
     {
         string shareLabel = T("Share");
-        ShareButton.Text = $"📤 {shareLabel}";
+        ShareButton.Text = ActionIconCatalog.LabelFor("Share", $"\U0001F4E4 {shareLabel}");
         SemanticProperties.SetDescription(ShareButton, shareLabel);
         _updating = true;
         var operation = SelectedLearningOperation;
@@ -193,12 +199,18 @@ public partial class AiQuestionBankPage : ContentPage
             : presentation.ManagementStatusKey is not null ? T(presentation.ManagementStatusKey) + (_bank.DownloadProgress is { } progress
                 ? $" · {progress.Received / 1048576d:N0} / {(progress.Total.HasValue ? (progress.Total.Value / 1048576d).ToString("N0") : "?")} MiB" : "") : "";
         int valid = snapshot.Items.Count(i => i.Question is not null), saved = snapshot.Items.Count(i => i.State == AiItemState.Saved);
-        JobStatusLabel.Text = string.Format(CultureInfo.CurrentCulture, T("Progress"), T("Job." + snapshot.State), valid,
+        string jobStatus = string.Format(CultureInfo.CurrentCulture, T("Progress"), T("Job." + snapshot.State), valid,
             snapshot.Options?.Count ?? 0, saved) + (snapshot.Error is null ? "" : "\n" + ErrorText(snapshot.Error));
 
-        if(pending>0) JobStatusLabel.Text += " · " + string.Format(CultureInfo.CurrentCulture,T("Review.Count"),pending);
+        if(pending>0) jobStatus += " · " + string.Format(CultureInfo.CurrentCulture,T("Review.Count"),pending);
+        // Assign the composed value once: an unchanged render must not erase a completion cue.
+        JobStatusLabel.Text = jobStatus;
         RenderGenerationStatus(snapshot, presentation);
         RenderWorkflow(running, presentation);
+        bool savedBatch = _saveCompletionGate.Observe(running,
+            snapshot.State == AiJobState.Completed && snapshot.Error is null
+                && !snapshot.Items.Any(i => i.State == AiItemState.SaveFailed), saved);
+        if (_appeared && savedBatch) JobCompletionNotice.Complete(saved);
         int previous = QuestionPicker.SelectedIndex;
         _updating = true;
         string[] labels = snapshot.Items.Select(i => $"{T("Question")} {i.Number} · {T("Item." + i.State)}").ToArray();
@@ -242,7 +254,13 @@ public partial class AiQuestionBankPage : ContentPage
     {
         RefreshCreativeProseAvailability();
         var item = SelectedItem;
+        if (_saveFeedbackItemNumber != item?.Number || !ReferenceEquals(_saveFeedbackQuestion, item?.Question))
+            PreviewSaveCompletionNotice.Reset();
+        _saveFeedbackItemNumber = item?.Number;
+        _saveFeedbackQuestion = item?.Question;
         PreviewStatusLabel.Text = item is null ? T("NoPreview") : T("Item." + item.State);
+        // Validated drafts keep their status beside Save; streaming/review states keep it at the top.
+        PreviewStatusLabel.IsVisible = item?.Question is null;
         string? raw = item?.Review?.RawJson ?? item?.Attempts.LastOrDefault()?.RawJson;
         string preview = item is null ? "" : StreamingQuestionPreview.Render(raw, item.Contract);
         bool streaming = item?.Question is null && preview.Length > 0;
@@ -516,9 +534,22 @@ public partial class AiQuestionBankPage : ContentPage
     {
         var item = SelectedItem;
         if (item?.Question is null || _saving || _bank.Generation.IsDeletingAll) return;
-        _saving = true; Render();
-        try { await _bank.Generation.InsertAsync(item.Number); }
-        finally { _saving = false; Render(); }
+        bool startedDuringGeneration = _bank.Generation.IsRunning;
+        _saving = true; PreviewSaveCompletionNotice.Reset(); Render();
+        bool committed = false;
+        try
+        {
+            await _bank.Generation.InsertAsync(item.Number);
+            committed = item.State != AiItemState.Saved && _bank.Generation.Snapshot.Items.Any(i => i.Number == item.Number && i.State == AiItemState.Saved);
+        }
+        finally
+        {
+            _saving = false; Render();
+            if (committed && _appeared && !startedDuringGeneration && !_bank.Generation.IsRunning
+                && SelectedItem is { State: AiItemState.Saved } selected
+                && selected.Number == item.Number && ReferenceEquals(selected.Question, item.Question))
+                PreviewSaveCompletionNotice.Complete();
+        }
     }
 
     private async void OnShareClicked(object? sender, EventArgs e)

@@ -22,6 +22,10 @@
     <MauiAsset Include="Platforms\Android\Native\llama\arm64-v8a\LICENSE*.txt" LogicalName="ThirdParty/AndroidCpu/%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(UseLicensedIcons)' != 'false' and Exists('Resources/Fonts/Icons8Actions.ttf') and Exists('Services/Appearance/Icons8LicensedPaths.g.cs')">
+    <Icons8AssetsEnabled>true</Icons8AssetsEnabled>
+    <DefineConstants>$(DefineConstants);ICONS8_LICENSED_ASSETS</DefineConstants>
+  </PropertyGroup>
   <PropertyGroup>
     <TargetFrameworks>net10.0-android</TargetFrameworks>
     <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">$(TargetFrameworks);net10.0-ios;net10.0-maccatalyst</TargetFrameworks>
@@ -91,10 +95,17 @@
     </MauiIcon>
     <MauiSplashScreen Include="Resources\Splash\mathsolver_splash.svg" BaseSize="128,128" Color="#2563EB" />
     <MauiImage Include="Resources\Images\*" />
+    <MauiImage Update="Resources\Images\ai_guide_stationery.png" BaseSize="192,128" Resize="True" />
+    <MauiImage Update="Resources\Images\review_empty_tray.png;Resources\Images\pdf_blank_sheet.png;Resources\Images\excel_template_sheet.png;Resources\Images\excel_fill_sheet.png;Resources\Images\excel_review_sheet.png" BaseSize="180,120" Resize="True" />
+    <MauiImage Update="Resources\Images\excel_motion_sheet.png;Resources\Images\excel_motion_pencil.png" BaseSize="180,120" Resize="True" />
     <MauiFont Include="Resources\Fonts\*" />
     <EmbeddedResource Include="Resources\Fonts\OpenSans-Regular.ttf" LogicalName="QuizPdf.Regular.ttf" />
     <EmbeddedResource Include="Resources\Fonts\OpenSans-SemiBold.ttf" LogicalName="QuizPdf.Bold.ttf" />
     <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\QuizContent\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(Icons8AssetsEnabled)' != 'true'">
+    <MauiFont Remove="Resources\Fonts\Icons8Actions.ttf" />
+    <Compile Remove="Services\Appearance\Icons8LicensedPaths.g.cs" />
   </ItemGroup>
 
   <ItemGroup>
