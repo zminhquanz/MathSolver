@@ -105,8 +105,10 @@ internal static class QuizContentTests
         }), ChartMetadata(en)), "translation shuffled stable chart roles");
         var charts = QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN");
         Check(ReferenceEquals(charts, QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN")), "Lists are not cached.");
-        Check(QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes").Count == 241, "Lost applied scenes.");
-        Check(QuizContentCatalog.LoadList<FractionQuestionCatalogue.Scene>("FractionScenes").Count == 84, "Lost fraction scenes.");
-        Console.WriteLine($"Quiz JSON content passed: {vi.Texts.Count} keys per language, 325 scenes, typed/cached lists, fallback, slot rendering and malformed-pack rejection.");
+        var applied = QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes");
+        var fractions = QuizContentCatalog.LoadList<FractionQuestionCatalogue.Scene>("FractionScenes");
+        Check(applied.Count == 397 && applied.Select(s => s.Id).Distinct().Count() == applied.Count, "Lost or duplicate applied scenes.");
+        Check(fractions.Count == 208 && fractions.Select(s => s.Id).Distinct().Count() == fractions.Count, "Lost or duplicate fraction scenes.");
+        Console.WriteLine($"Quiz JSON content passed: {vi.Texts.Count} keys per language, {applied.Count + fractions.Count} unique scenes, typed/cached lists, fallback, slot rendering and malformed-pack rejection.");
     }
 }

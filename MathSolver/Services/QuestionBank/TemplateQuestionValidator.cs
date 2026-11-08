@@ -238,7 +238,8 @@ public static class BasicQuestionValidator
         if (c.Structure == BasicQuestionStructure.Remaining)
         {
             bool food = c.SceneId is "family-gifts" or "food-supplies" or "shop-stock" or "bakery" or "harvest" or "crop-harvest";
-            bool edible = unit.Id is "apples" or "oranges" or "mangoes" or "candies" or "cakes" or "bread-rolls";
+            bool edible = unit.Id is "apples" or "oranges" or "mangoes" or "candies" or "cakes" or "bread-rolls"
+                || BreadQuestionCatalogue.Types.Any(t => t.Unit.Id == unit.Id);
             if ((!food || !edible) && Has(draft.GivenB, vi ? @"\b(?:ăn|uống)\b" : @"\b(?:eats?|ate|drinks?|drank)\b")) return false;
         }
         // Animal/plant groups are herds, rearing areas or nursery sections, never packed in boxes.

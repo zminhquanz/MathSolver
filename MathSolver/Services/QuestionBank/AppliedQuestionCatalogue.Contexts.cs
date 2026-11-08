@@ -35,9 +35,13 @@ public static partial class AppliedQuestionCatalogue
     private static string? CountedPrefix(AppliedQuestionScene s) => CountedPrefixes.FirstOrDefault(p => s.Id.StartsWith(p + "-", StringComparison.Ordinal));
     private static string? SceneGroupUnit(AppliedQuestionScene s, AppLanguage language)
     {
+        if (FoodThemeCatalogue.IsTheme(s.Group)) return language == AppLanguage.Vietnamese ? "nhóm" : "group";
+        if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal))
+            return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
         if (s.StoryContextId is { } id) return QuizStoryContextCatalog.Find(id).Period(language);
         if (s.Group == QuestionKnowledgeGroup.Packaging) return QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.Contexts.SceneGroupUnit.001");
-        if (s.Group == QuestionKnowledgeGroup.Objects && CountedPrefix(s) is { } prefix) {
+        if ((s.Group is QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies)
+            && CountedPrefix(s) is { } prefix) {
             var group = CountedActivityGroup(prefix);
             return language == AppLanguage.Vietnamese ? group.Vi : group.En;
         }
@@ -47,6 +51,12 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
+        if (FoodThemeCatalogue.IsTheme(s.Group)) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+            ? (unit, vi ? "nhóm" : "groups") : (unit, unit);
+        if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal)
+            && s.Operation is (ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+            && QuestionUnits.Find(s.UnitId) is { } animal)
+            return (unit, animal.Group(lang));
         if (s.StoryContextId is { } id) {
             var context = QuizStoryContextCatalog.Find(id);
             return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
@@ -54,8 +64,9 @@ public static partial class AppliedQuestionCatalogue
         }
         if (s.Group == QuestionKnowledgeGroup.Production && s.Id.EndsWith("recover-groups", StringComparison.Ordinal)) return (QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.ExpandedInputUnits.002"), unit);
         if (s.Id is "age-past-total" or "age-future-left") return (unit, QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.ExpandedInputUnits.003"));
-        if (s.Group == QuestionKnowledgeGroup.Objects && CountedPrefix(s) is { } prefix
-            && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide) {
+        if ((s.Group is QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies)
+            && CountedPrefix(s) is { } prefix
+            && (s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)) {
             var group = CountedActivityGroup(prefix);
             return (unit, vi ? group.Vi : PluralGroup(group.En));
         }
@@ -147,6 +158,8 @@ public static partial class AppliedQuestionCatalogue
     }
     private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, ref string name, ref string other)
     {
+        if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)
+        { name=lang==AppLanguage.Vietnamese?"cửa hàng thứ nhất":"the first shop"; other=lang==AppLanguage.Vietnamese?"cửa hàng thứ hai":"the second shop"; return; }
         bool vi = lang == AppLanguage.Vietnamese;
         // Age problems do not randomly imply that a child is older than a parent.
         if (s.Id.StartsWith("age-", StringComparison.Ordinal)) { name = QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.009"); other = QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.010"); return; }
@@ -156,7 +169,8 @@ public static partial class AppliedQuestionCatalogue
         string? actor = s.UnitId switch {
             "students" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.013"), "chickens" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.014"),
             "visits" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.015"), "seedlings" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.016"),
-            "bottles" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.017"), "rolls" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.018"),
+            "bottles" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.017"),
+            "rolls" or "round-bread" or "sandwich-bread" or "banh-mi" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.018"),
             "mangoes" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.019"), "points" => QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.020"), _ => null };
         if (s.UnitId == "pages" && Math.Max(a, b) > 100) actor = QuizContentCatalog.Text(lang, "AppliedQuestionCatalogue.Contexts.SetSceneActors.021");
         if (actor is not null) {

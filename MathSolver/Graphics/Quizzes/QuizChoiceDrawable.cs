@@ -147,6 +147,17 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
                     canvas.DrawRectangle(65, 24, 5, 50);
                     for (int i = 1; i < 10; i++) canvas.DrawLine(65, 24 + i * 5, 70, 24 + i * 5);
                     canvas.FillRectangle(83, 53, 5, 5); canvas.FillRectangle(83, 66, 5, 5); break;
+                case "food":
+                    canvas.DrawArc(17,28,65,52,180,360,false,false);
+                    canvas.DrawLine(17,54,82,54); canvas.DrawLine(32,81,68,81);
+                    canvas.DrawLine(26,18,26,37); canvas.DrawLine(50,12,50,32); canvas.DrawLine(73,18,73,37); break;
+                case "drinks":
+                    canvas.DrawRoundedRectangle(19,26,50,55,5);
+                    canvas.DrawArc(56,35,31,32,270,90,false,false);
+                    canvas.DrawLine(16,88,78,88); canvas.DrawLine(32,11,32,20); canvas.DrawLine(53,11,53,20); break;
+                case "fruit":
+                    canvas.DrawEllipse(20,33,38,49);canvas.DrawEllipse(43,33,38,49);
+                    canvas.DrawLine(49,35,53,14);canvas.DrawEllipse(55,13,22,12);break;
                 case "number-counting":
                 case "arithmetic":
                     for (int i = 0; i < 5; i++) canvas.FillCircle(22 + (i % 3) * 26, 34 + (i / 3) * 30, 8);

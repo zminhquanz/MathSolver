@@ -86,7 +86,8 @@ internal static class FindXBankTests
         Check(unspecifiedRoleRejected, "AI generation accepted an unspecified X role.");
         var cycle = new FindXQuestionCycle(new Random(503));
         var roleScenes = FindXQuestionCatalogue.Available(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Subtract,
-            CurriculumTier.FiveStars, FindXUnknownRole.Minuend).ToArray();
+            CurriculumTier.FiveStars, FindXUnknownRole.Minuend)
+            .Where(s => AppliedQuestionCatalogue.IsGenerationSubject(s.SourceScene)).ToArray();
         var seenScenes = new HashSet<string>();
         foreach (var _ in roleScenes)
             Check(seenScenes.Add(cycle.Next(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Subtract,

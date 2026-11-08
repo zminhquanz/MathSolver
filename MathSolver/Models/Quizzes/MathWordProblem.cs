@@ -12,7 +12,13 @@ public sealed record MathWordProblem(
     string? ConversionStep = null,
     AppliedArithmeticReasoning? ArithmeticReasoning = null,
     QuestionFactTable? FactTable = null,
-    PracticeArithmeticDetails? PracticeDetails = null);
+    PracticeArithmeticDetails? PracticeDetails = null)
+{
+    /// <summary>Original authored item unit; an answer in boxes/times must not replace the object.</summary>
+    public string? ItemUnit { get; init; }
+    /// <summary>Presentation-only subject identity from an authored catalogue, never parsed from AI prose.</summary>
+    public string? StoryArtworkId { get; init; }
+}
 
 public sealed record QuestionFactTable(string LabelHeader, string ValueHeader, IReadOnlyList<QuestionFactRow> Rows)
 {

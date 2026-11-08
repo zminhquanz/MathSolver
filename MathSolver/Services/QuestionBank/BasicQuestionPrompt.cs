@@ -12,11 +12,11 @@ public static class BasicQuestionPrompt
     public static string Build(BasicQuestionContract contract, string? correction = null,
         IReadOnlyList<string>? duplicateProse = null, IReadOnlySet<string>? excludedProse = null, string? errorDetails = null)
     {
-        if (contract.OpenProse) return OpenQuestionProse.Prompt(contract, correction, duplicateProse, errorDetails);
+        if (contract.OpenProse) return OpenQuestionProse.Prompt(contract, correction, duplicateProse, errorDetails)+FoodThemePrompt.Guidance(contract);
         if (contract.Version == ExpandedArithmeticCatalogue.Version)
             return ExpandedArithmeticCatalogue.Prompt(contract, excludedProse, correction);
         string prompt = contract.Version == ReasoningStoryCatalogue.Version ? ReasoningStoryValidator.Prompt(contract, correction, excludedProse) : BuildCore(contract, correction, excludedProse);
-        prompt += QuestionProseRepair.Instructions(contract, correction, errorDetails);
+        prompt += QuestionProseRepair.Instructions(contract, correction, errorDetails)+FoodThemePrompt.Guidance(contract);
         if (ReasoningStoryCatalogue.UsesReviewedPhrasings(contract.Family) && excludedProse is not null) return prompt;
         if (duplicateProse is not { Count: > 0 }) return prompt;
         string instruction = contract.Language == AppLanguage.Vietnamese

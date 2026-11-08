@@ -161,7 +161,7 @@ public static class AdditionQuestionScales
                     4 => "{person}'s food warehouse", _ => "{person}'s food distribution centre" },
                 "Đếm thực phẩm đóng gói hoặc quả cùng loại; không dùng khối lượng, giá hay tiền.",
                 "Count packaged food or fruit of one kind; no mass, prices or money."),
-            "bakery" => ProductionPeriods(Scale(["cakes", "bread-rolls"], stars switch {
+            "bakery" => ProductionPeriods(Scale(BreadQuestionCatalogue.BakeryUnitIds, stars switch {
                 1 => "{person}", 2 => "gia đình {person}", 3 => "tiệm bánh của {person}",
                 4 => "xưởng bánh của {person}", _ => "nhà máy bánh của {person}" },
                 stars switch { 1 => "{person}", 2 => "{person}'s family", 3 => "{person}'s bakery",

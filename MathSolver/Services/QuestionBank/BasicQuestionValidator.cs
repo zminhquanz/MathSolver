@@ -11,7 +11,19 @@ public sealed record BasicQuestionDraft(string GivenA, string GivenB, string Que
     public IReadOnlyList<NarrativeClause>? Facts { get; init; }
     public IReadOnlyList<NarrativeClause>? SolutionLeads { get; init; }
     public string ProblemText => Facts is not null ? string.Join(" ", Facts.Select(f => f.Text.Trim()).Append(Question.Trim())) : $"{GivenA.Trim()} {GivenB.Trim()} {Question.Trim()}";
-    public MathWordProblem ToWordProblem(BasicQuestionContract c) => c.Version == ExpandedArithmeticCatalogue.Version
+    public MathWordProblem ToWordProblem(BasicQuestionContract c)
+    {
+        var word = CreateWordProblem(c);
+        return word with { ItemUnit = word.ItemUnit ?? c.Unit,
+            StoryArtworkId = word.StoryArtworkId ?? (c.Version == FractionQuestionCatalogue.Version
+                ? QuizStoryArtworkCatalogue.FractionArtwork(c.SceneId)
+                : c.Version == AppliedQuestionCatalogue.Version
+                    ? QuizStoryArtworkCatalogue.AppliedSceneArtwork(AppliedQuestionCatalogue.Find(c.SceneId))
+                    : c.Version == FindXQuestionCatalogue.Version
+                        ? QuizStoryArtworkCatalogue.AppliedSceneArtwork(FindXQuestionCatalogue.Find(c.SceneId)?.SourceScene)
+                        : null) };
+    }
+    private MathWordProblem CreateWordProblem(BasicQuestionContract c) => c.Version == ExpandedArithmeticCatalogue.Version
         ? ExpandedArithmeticCatalogue.ToWordProblem(c, this) : c.Version == ReasoningStoryCatalogue.Version
         ? new(ReasoningStoryCatalogue.Render(ProblemText, c), "", c.AnswerUnit, c.Subject) : new(c.IsTemplate
         ? BasicQuestionTemplates.RenderProblem(GivenA, GivenB, Question, c) : ProblemText,

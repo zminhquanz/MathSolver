@@ -1735,6 +1735,9 @@
       "context": "Nhóm kiến thức ở luyện tập toán đố và tạo bộ đề PDF.",
       "description": "Mỗi câu chọn ngẫu nhiên một nhóm phù hợp với dạng toán, phép tính và mức sao."
     },
+    "Learning.Group.Food": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
+    "Learning.Group.Drinks": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
+    "Learning.Group.Fruit": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
     "Learning.Group.Objects": {
       "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."

@@ -86,8 +86,28 @@ internal static class LearningProfileTests
                     && refreshed.SceneId == c.SceneId, "Fresh facts changed knowledge/dimensions.");
             }
         }
-        Check(QuestionLearningProfile.Groups().Length == 9
+        Check(QuestionLearningProfile.Groups().Length == 14
             && !new QuestionLearningProfile((QuestionKnowledgeGroup)99).IsValid, "Invalid or grade-filtered groups.");
+        // The broad count picker must no longer produce animal or school-supply scenes.
+        // Both new groups retain their own generation slots in every operation.
+        foreach (var operation in Enum.GetValues<ArithmeticOperation>())
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        {
+            for (int seed = 0; seed < 64; seed++)
+            {
+                var general = AppliedQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Objects), operation,
+                    CurriculumTier.FiveStars, language, new Random(seed * 97 + 11));
+                Check(!AppliedQuestionCatalogue.IsLegacySeparatedContract(general),
+                    "The general counts picker still generates a separated subject.");
+            }
+            foreach (var group in new[] { QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies })
+            {
+                var specialized = AppliedQuestionCatalogue.Create(new(group), operation,
+                    CurriculumTier.FiveStars, language, new Random(17));
+                Check(specialized.KnowledgeGroup == group && specialized.IsValid,
+                    "A specialized knowledge group fell back to general counts.");
+            }
+        }
         var advancedSmall = AppliedQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Add,
             CurriculumTier.FiveStars, AppLanguage.Vietnamese, new Random(18), "school-pencils-object-original");
         Check(advancedSmall.Left < 100 && advancedSmall.Right < 100 && advancedSmall.Structure == BasicQuestionStructure.RecoverInitial,
@@ -163,7 +183,8 @@ internal static class LearningProfileTests
         Check(read.SetEquals([QuestionKnowledgeGroup.Mass, QuestionKnowledgeGroup.Length, QuestionKnowledgeGroup.Transport]), "Legacy subgroups did not share measurement selection.");
         using var workbook = new MemoryStream();
         var exported = await store.ExportExcelAsync(workbook);
-        Check(exported.Exported == 39 && exported.Skipped == 0, "New group Excel export failed.");
+        int expectedGroupRows = QuestionLearningProfile.Groups().Length * 4 + 3;
+        Check(exported.Exported == expectedGroupRows && exported.Skipped == 0, "New group Excel export failed.");
         workbook.Position = 0;
         Check(QuestionBankWorkbook.Read(workbook).All(row => row.Question is not null && row.Question.Contract.IsValid), "New group Excel import failed.");
         var runtime = new TemplateRuntime();
@@ -233,6 +254,37 @@ internal static class LearningProfileTests
             new(QuestionKnowledgeGroup.Objects)) is not null, "Removing the general picker stranded old counted templates.");
         Check(await legacyStore.TakeForProfileAsync(legacyContract.Operation, legacyContract.Tier, legacyContract.Language,
             new(QuestionKnowledgeGroup.Money)) is null, "Legacy counts leaked into money group.");
+
+        // Archived Objects templates remain readable and exportable, while fresh
+        // Objects practice skips subjects that now have a dedicated picker.
+        var archivedStore = new QuestionBankStore(Path.Combine(directory, "retired-objects.db3"));
+        var archived = AppliedQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Add,
+            CurriculumTier.FiveStars, AppLanguage.Vietnamese, new Random(19), "school-pencils-object-original");
+        Check(AppliedQuestionCatalogue.IsLegacySeparatedContract(archived)
+            && AppliedQuestionCatalogue.IsLegacySeparatedUnit("pencils"),
+            "Older school-supply contracts were not recognized.");
+        var archivedDraft = AppliedQuestionCatalogue.Draft(archived);
+        Check(await archivedStore.InsertAsync(new(archived, archivedDraft, QuestionBankStore.SerializeDraft(archivedDraft),
+            "historical", DateTime.UtcNow)), "Could not archive an older Objects scene.");
+        Check((await archivedStore.TakeForProfileAsync(archived.Operation, archived.Tier, archived.Language,
+            new(QuestionKnowledgeGroup.Objects)))?.Contract.SceneId == archived.SceneId,
+            "Old Objects scenes became unreadable.");
+        using (var archiveWorkbook = new MemoryStream())
+        {
+            Check((await archivedStore.ExportExcelAsync(archiveWorkbook)).Exported == 1,
+                "Old Objects scene became unexportable.");
+            archiveWorkbook.Position = 0;
+            Check(QuestionBankWorkbook.Read(archiveWorkbook).Single().Question?.Contract.SceneId == archived.SceneId,
+                "Excel lost the historical Objects scene identifier.");
+        }
+        var archivedNumeric = new ArithmeticQuizGenerator(new BasicArithmeticEngine(), new Random(19))
+            .Generate(ArithmeticQuizMode.Essay, archived.Operation, new(archived.Tier, false));
+        var archivedProvider = new BasicPracticeQuestionProvider(archivedStore, new FixedRandom(1));
+        var freshGeneral = await archivedProvider.SelectAsync(archivedNumeric, archived.Tier, archived.Language,
+            profile: new(QuestionKnowledgeGroup.Objects), format: PracticeQuestionFormat.WordProblem);
+        Check(freshGeneral.WordProblem is not null &&
+            !AppliedQuestionCatalogue.IsLegacySeparatedUnit(freshGeneral.WordProblem.ItemUnit ?? freshGeneral.WordProblem.AnswerUnit),
+            "Practice reused a retired school-supply item under general counts.");
 
         foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
         {

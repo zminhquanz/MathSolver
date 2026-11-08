@@ -40,9 +40,34 @@ public static partial class AppliedQuestionCatalogue
         => All.Where(s => p.Allows(operation) && Enum.IsDefined(tier) && p.Includes(s.Group) && s.Operation == operation
             && (int)tier >= s.MinimumStars);
     public static AppliedQuestionScene? Find(string id) => All.FirstOrDefault(s => s.Id == id);
+    // Historical Objects scene IDs remain valid for saved contracts, but new questions
+    // must select the specialized Animals/SchoolSupplies scenes instead.
+    public static bool IsLegacySeparatedSubject(AppliedQuestionScene scene)
+        => scene.Group == QuestionKnowledgeGroup.Objects && scene.UnitId is ("books" or "pencils" or "chickens");
+    private static readonly string[] SeparatedUnitIds =
+        ["books", "notebooks", "pencils", "chickens", "ducks", "birds", "fish", "cows"];
+    public static bool IsLegacySeparatedUnit(string? unit)
+        => unit is not null && QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits)
+            .Any(u => SeparatedUnitIds.Contains(u.Id) &&
+                (unit == u.Id || unit == u.Vietnamese || unit == u.Singular || unit == u.Plural));
+    // Saved templates are still valid and exportable. Exclude them only when choosing
+    // fresh questions for the general Objects topic.
+    public static bool IsLegacySeparatedContract(BasicQuestionContract c)
+        => c.KnowledgeGroup == QuestionKnowledgeGroup.Objects && (c.Version switch
+        {
+            Version => Find(c.SceneId) is { } scene && IsLegacySeparatedSubject(scene),
+            FindXQuestionCatalogue.Version => FindXQuestionCatalogue.Find(c.SceneId) is { } findX
+                && IsLegacySeparatedSubject(findX.SourceScene),
+            _ => IsLegacySeparatedUnit(c.Unit)
+        });
+    public static bool IsGenerationSubject(AppliedQuestionScene scene)
+        => !FoodThemeCatalogue.IsLegacySubject(scene) && !IsLegacySeparatedSubject(scene);
+    public static IEnumerable<AppliedQuestionScene> GenerationAvailable(QuestionLearningProfile p, ArithmeticOperation op, CurriculumTier tier)
+        => Available(p, op, tier).Where(IsGenerationSubject);
     public static WordProblemQuantity Quantity(BasicQuestionContract c) => Find(c.SceneId)!.Group switch
     {
-        QuestionKnowledgeGroup.Objects => WordProblemQuantity.Count,
+        QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies
+            or QuestionKnowledgeGroup.Food or QuestionKnowledgeGroup.Drinks or QuestionKnowledgeGroup.Fruit => WordProblemQuantity.Count,
         QuestionKnowledgeGroup.Money => WordProblemQuantity.Money,
         QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Transport => WordProblemQuantity.Mass,
         QuestionKnowledgeGroup.Motion when c.SceneId.StartsWith("motion-speed", StringComparison.Ordinal) => WordProblemQuantity.Speed,
@@ -69,7 +94,8 @@ public static partial class AppliedQuestionCatalogue
         AppLanguage language, Random? random = null, string? sceneId = null)
     {
         random ??= Random.Shared;
-        var choices = Available(profile, operation, tier).Where(s => sceneId is null || s.Id == sceneId).ToArray();
+        var choices = Available(profile, operation, tier)
+            .Where(s => sceneId is null ? s.UnitId != "rolls" && IsGenerationSubject(s) : s.Id == sceneId).ToArray();
         if (choices.Length == 0) throw new ArgumentException("InvalidLearningProfile");
         var scene = choices[random.Next(choices.Length)];
         int cap = Ceiling(profile, scene, tier, language);
@@ -143,7 +169,7 @@ public static partial class AppliedQuestionCatalogue
         if (s.Id.StartsWith("motion-speed", StringComparison.Ordinal)) return ("km", timeUnit);
         if (c.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
             return (c.Unit, s.Group == QuestionKnowledgeGroup.Money ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.020")
-                : s.Group == QuestionKnowledgeGroup.Objects ? c.GroupUnit
+                : s.Group is QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies ? c.GroupUnit
                 : s.Group == QuestionKnowledgeGroup.Length ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.021")
                 : s.Group == QuestionKnowledgeGroup.Mass ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.022") : QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.023"));
         return (c.Unit, c.Unit);
@@ -282,7 +308,8 @@ public static partial class AppliedQuestionCatalogue
         string left = ((decimal)c.Left / s.Conversion).ToString("0.###", c.Language == AppLanguage.Vietnamese
             ? CultureInfo.GetCultureInfo("vi-VN") : CultureInfo.InvariantCulture);
         string Singular(string unit, decimal number) => c.Language != AppLanguage.English || number != 1 ? unit
-            : ExpandedSingular(unit) ?? unit switch { "books" => "book", "dollars" => "dollar", "notebooks" => "notebook", "hours" => "hour", "minutes" => "minute",
+            : ExpandedSingular(unit) ?? QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Plural == unit)?.Singular
+            ?? unit switch { "books" => "book", "dollars" => "dollar", "notebooks" => "notebook", "hours" => "hour", "minutes" => "minute",
                 "trucks" => "truck", "journeys" => "journey", "bags" => "bag", "legs" => "leg",
                 "pencils" => "pencil", "cards" => "card", _ => unit };
         // Quantity-specific units; question/solution units remain plural.

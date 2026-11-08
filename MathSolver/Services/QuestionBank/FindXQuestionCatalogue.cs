@@ -114,7 +114,7 @@ public static class FindXQuestionCatalogue
         AppLanguage language, Random? random = null, FindXUnknownRole role = FindXUnknownRole.None, string? sceneId = null)
     {
         random ??= Random.Shared;
-        var scenes = Available(profile, operation, tier, role).Where(s => sceneId is null || s.Id == sceneId).ToArray();
+        var scenes = Available(profile, operation, tier, role).Where(s => sceneId is null ? AppliedQuestionCatalogue.IsGenerationSubject(s.SourceScene) : s.Id == sceneId).ToArray();
         if (scenes.Length == 0) throw new ArgumentException("InvalidLearningProfile");
         var scene = scenes[random.Next(scenes.Length)];
         var facts = AppliedQuestionCatalogue.Create(profile, scene.SourceScene.Operation, tier, language, random, scene.SourceScene.Id);
@@ -197,7 +197,7 @@ public sealed class FindXQuestionCycle(Random? random = null)
         var key = (profile.Group, operation, tier, language, role);
         if (!_cycles.TryGetValue(key, out var cycle) || cycle.Count == 0)
         {
-            var scenes = FindXQuestionCatalogue.Available(profile, operation, tier, role).ToArray();
+            var scenes = FindXQuestionCatalogue.Available(profile, operation, tier, role).Where(s => AppliedQuestionCatalogue.IsGenerationSubject(s.SourceScene)).ToArray();
             if (scenes.Length == 0) throw new ArgumentException("InvalidLearningProfile");
             _random.Shuffle(scenes);
             cycle = new(scenes.Select(s => s.Id));

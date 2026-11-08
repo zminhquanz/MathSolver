@@ -106,11 +106,12 @@ internal static partial class FractionBankTests
         using var workbook = new MemoryStream();
         await store.ExportExcelAsync(workbook); workbook.Position = 0;
         var rows = QuestionBankWorkbook.Read(workbook);
-        Check(rows.Count == 36 && rows.All(r => r.Question?.Contract.IsValid == true), "Fraction workbook roundtrip lost denominators.");
+        int expectedRows=QuestionLearningProfile.Groups().Length*4;
+        Check(rows.Count == expectedRows && rows.All(r => r.Question?.Contract.IsValid == true), "Fraction workbook roundtrip lost denominators.");
         var imported = new QuestionBankStore(Path.Combine(directory, "fraction-import.db3"));
         workbook.Position = 0;
         var result = await imported.ImportExcelAsync(workbook);
-        Check(result.Inserted == 36 && result.Rejected == 0, "Fraction workbook import failed.");
+        Check(result.Inserted == expectedRows && result.Rejected == 0, "Fraction workbook import failed.");
         var background = new AiQuestionGenerationService(new Runtime(), imported);
         background.Start(new(ArithmeticOperation.Divide, CurriculumTier.ThreeStars, AppLanguage.English, 3, true,
             new(QuestionKnowledgeGroup.Packaging), BankQuestionFamily.Fraction));
@@ -129,7 +130,7 @@ internal static partial class FractionBankTests
         await store.QueryAsync("UPDATE BasicQuestionBank SET ProblemVariant=99 WHERE ProblemType=2");
         Check(await store.TakeFractionAsync(ArithmeticOperation.Add, CurriculumTier.FiveStars, AppLanguage.Vietnamese,
             new(QuestionKnowledgeGroup.Objects)) is null, "Corrupted metadata passed.");
-        Console.WriteLine($"Fraction bank passed: {count} scene/star/language/seed cases, 9 groups, 4 operations, 3 answer modes; SQLite/Excel/deduplication/background/practice.");
+        Console.WriteLine($"Fraction bank passed: {count} scene/star/language/seed cases, {QuestionLearningProfile.Groups().Length} groups, 4 operations, 3 answer modes; SQLite/Excel/deduplication/background/practice.");
     }
 
 

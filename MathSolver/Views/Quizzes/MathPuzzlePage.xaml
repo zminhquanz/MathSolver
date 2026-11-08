@@ -880,7 +880,8 @@
 
                             <Grid x:Name="QuestionDiagramGrid" RowDefinitions="Auto,Auto"
                                   RowSpacing="16" ColumnSpacing="20" SizeChanged="OnQuestionDiagramSizeChanged">
-                                <VerticalStackLayout x:Name="QuestionTextPanel" Spacing="8" VerticalOptions="Center">
+                                <VerticalStackLayout x:Name="QuestionTextPanel" Spacing="12" VerticalOptions="Center"
+                                                     SizeChanged="OnQuestionStoryPanelSizeChanged">
                                     <controls:QuestionFactTableView x:Name="PracticeFactTable" />
                                     <Label x:Name="QuestionExpressionLabel" FontSize="34" FontAttributes="Bold"
                                            HorizontalTextAlignment="Center" LineBreakMode="WordWrap"
@@ -898,6 +899,9 @@
                                            HorizontalOptions="Fill" HorizontalTextAlignment="Center"
                                            VerticalTextAlignment="Center" LineBreakMode="WordWrap"
                                            TextColor="{DynamicResource ContentAccentTextColor}" />
+                                    <Image x:Name="QuestionStoryArtwork" IsVisible="False" Aspect="AspectFit"
+                                           WidthRequest="180" HeightRequest="120" HorizontalOptions="Center"
+                                           InputTransparent="True" AutomationProperties.IsInAccessibleTree="False" />
                                 </VerticalStackLayout>
                                 <VerticalStackLayout x:Name="QuizDiagramPanel" Grid.Row="1" IsVisible="False" Spacing="8">
                                     <Label x:Name="QuizDiagramCaptionLabel" FontSize="15" FontAttributes="Bold"

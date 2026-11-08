@@ -86,7 +86,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (_random.Next(2) == 0) return BuiltIn();
         var saved = await store.TakeFractionAsync(operation, tier, language, profile, cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
-        if (saved is null) return BuiltIn();
+        if (saved is null || profile.Group == QuestionKnowledgeGroup.Objects && IsRetiredObjectsSubject(saved.Contract)) return BuiltIn();
         var c = saved.Contract;
         var validation = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validation.IsValid || c.Family != BankQuestionFamily.Fraction || c.Operation != operation
@@ -113,7 +113,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         if (_random.Next(2) == 0) return BuiltIn();
         var saved = await store.TakeFindXAsync(operation, tier, language, profile, cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
-        if (saved is null) return BuiltIn();
+        if (saved is null || profile.Group == QuestionKnowledgeGroup.Objects && IsRetiredObjectsSubject(saved.Contract)) return BuiltIn();
         // Never trust an arbitrary provider's family/profile, even if it returns a record.
         var c = saved.Contract;
         var validated = QuestionBankStore.ValidateSavedQuestion(saved);
@@ -142,8 +142,19 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             bool numeric = format == PracticeQuestionFormat.Mixed && _csharpFormatRandom.Next(2) == 0;
             var practiceGroup = profile?.Group ?? QuestionKnowledgeGroup.Objects;
             if (expandedPractice && (int)tier >= 4 && PracticeArithmeticStoryGenerator.Supports(practiceGroup))
-                return numeric ? generated : new PracticeArithmeticStoryGenerator(_random).Generate(
-                    generated.Expression.Operation, tier, language, practiceGroup, generated.Mode);
+            {
+                if (numeric) return generated;
+                var generator = new PracticeArithmeticStoryGenerator(_random);
+                for (int attempt=0; attempt<32; attempt++)
+                {
+                    var story=generator.Generate(generated.Expression.Operation,tier,language,practiceGroup,generated.Mode);
+                    if (practiceGroup != QuestionKnowledgeGroup.Objects ||
+                        !FoodThemeCatalogue.IsThemedItem(story.WordProblem?.ItemUnit ?? story.WordProblem?.AnswerUnit)
+                        && !AppliedQuestionCatalogue.IsLegacySeparatedUnit(story.WordProblem?.ItemUnit ?? story.WordProblem?.AnswerUnit))
+                        return story;
+                }
+                // A bounded fallback retains a word problem in the selected non-food group.
+            }
             if (profile is null) return numeric ? generated
                 : _builtIn.Next(generated.Expression.Operation, tier, language, generated.Mode);
             var c = _applied.Next(profile, generated.Expression.Operation, tier, language);
@@ -159,7 +170,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
             ? store.TakeAsync(generated.Expression.Operation, tier, language, cancellationToken)
             : store.TakeForProfileAsync(generated.Expression.Operation, tier, language, profile, cancellationToken)).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
-        if (saved is null) return BuiltIn();
+        if (saved is null || profile?.Group == QuestionKnowledgeGroup.Objects && IsRetiredObjectsSubject(saved.Contract)) return BuiltIn();
         var c = saved.Contract;
         // Keep unpriced historical money templates available to legacy consumers,
         // but price-bounded practice only reuses the new item-aware contract.
@@ -172,4 +183,8 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         var facts = saved.Contract.FreshFacts();
         return facts.ToPracticeQuestion(saved.Draft.ToWordProblem(facts), generated.Mode);
     }
+
+    private static bool IsRetiredObjectsSubject(BasicQuestionContract contract)
+        => FoodThemeCatalogue.IsLegacyContract(contract)
+            || AppliedQuestionCatalogue.IsLegacySeparatedContract(contract);
 }

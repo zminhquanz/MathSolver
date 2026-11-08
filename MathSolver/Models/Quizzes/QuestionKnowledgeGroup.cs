@@ -6,5 +6,6 @@ public enum QuestionKnowledgeGroup
     // A practice/PDF selection only; generated and stored contracts use a concrete group.
     Mixed = -1,
     Objects = 0, Money = 1, Mass = 2, Length = 3, Transport = 4, Motion = 5,
-    Time = 6, Measurement = 7, Geometry = 8, Packaging = 9, Production = 10, Data = 11
+    Time = 6, Measurement = 7, Geometry = 8, Packaging = 9, Production = 10, Data = 11,
+    Food = 12, Drinks = 13, Fruit = 14, Animals = 15, SchoolSupplies = 16
 }

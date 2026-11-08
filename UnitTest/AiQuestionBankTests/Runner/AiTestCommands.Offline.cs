@@ -10,6 +10,13 @@ internal static partial class AiTestCommands
 {
     private static IEnumerable<TestCommand> Offline() =>
     [
+        new(["--remaining-subject-artwork"],"--remaining-subject-artwork",args=>{RemainingSubjectArtworkTests.Run();return Task.CompletedTask;},args=>args is ["--remaining-subject-artwork"]),
+        new(["--food-theme-interchange"],"--food-theme-interchange <directory>",args=>FoodThemeInterchangeTests.RunAsync(args[1]),args=>args is ["--food-theme-interchange",_]),
+        new(["--food-theme-model"],"--food-theme-model <gguf> <directory>",args=>OpenProseTests.RunModelAsync(args[1],args[2],FoodThemeTests.NativeCases(),requireGpu:true),args=>args is ["--food-theme-model",_,_]),
+        new(["--food-theme-manifest"],"--food-theme-manifest",args=>{FoodThemeTests.WriteManifest();return Task.CompletedTask;},args=>args is ["--food-theme-manifest"]),
+        new(["--food-themes"],"--food-themes",args=>{FoodThemeTests.Run();return Task.CompletedTask;},args=>args is ["--food-themes"]),
+        new(["--bread-variants"],"--bread-variants",args=>{BreadStoryVariantTests.Run();return Task.CompletedTask;},args=>args is ["--bread-variants"]),
+        new(["--story-artwork-sources"],"--story-artwork-sources",args=>{QuizStoryArtworkSourceTests.Run();return Task.CompletedTask;},args=>args is ["--story-artwork-sources"]),
         new(["--ui-reading-columns"], "--ui-reading-columns", args => { ReadingColumnTests.Run(); return Task.CompletedTask; }, args => args is ["--ui-reading-columns"]),
         new(["--six-finite-open"],"--six-finite-open",args=>SixFiniteOpenTests.RunAsync(),args=>args is ["--six-finite-open"]),
         new(["--six-finite-open-gpu"],"--six-finite-open-gpu <gguf> <directory>",args=>SixFiniteOpenTests.RunGpuAsync(args[1],args[2]),args=>args is ["--six-finite-open-gpu",_,_]),

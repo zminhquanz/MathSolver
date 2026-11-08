@@ -1,0 +1,60 @@
+using MathSolver.Models;
+
+namespace MathSolver.Services.QuestionBank;
+
+/// <summary>Authored subjects and units. Country examples never determine a mathematical relation.</summary>
+public static class FoodThemeCatalogue
+{
+    public sealed record Subject(QuestionKnowledgeGroup Group, QuestionUnit Unit, string ArtworkId,
+        string? FractionVietnamese = null, string? FractionEnglish = null, string? FractionArtworkId = null);
+    private static QuestionUnit Unit(string id, string vi, string one, string many) => new(id, vi, one, many, "khay", "tray", "trays");
+    public static IReadOnlyList<Subject> Subjects { get; } = Array.AsReadOnly<Subject>(
+    [
+        .. BreadQuestionCatalogue.Types.Select(t => new Subject(QuestionKnowledgeGroup.Food, t.Unit, t.ArtworkId)),
+        new(QuestionKnowledgeGroup.Food, Unit("cakes","chiếc bánh","cake","cakes"),"cake"),
+        new(QuestionKnowledgeGroup.Food, Unit("eggs","quả trứng","egg","eggs"),"egg"),
+        new(QuestionKnowledgeGroup.Food, Unit("candies","viên kẹo","sweet","sweets"),"candy"),
+        new(QuestionKnowledgeGroup.Food, Unit("pho","tô phở","bowl of pho","bowls of pho"),"pho"),
+        new(QuestionKnowledgeGroup.Food, Unit("lamingtons","chiếc bánh lamington","lamington","lamingtons"),"lamington"),
+        new(QuestionKnowledgeGroup.Food, Unit("fish-chips","suất cá chiên và khoai tây","fish and chips meal","fish and chips meals"),"fish_chips"),
+        new(QuestionKnowledgeGroup.Food, Unit("hamburgers","chiếc hamburger","hamburger","hamburgers"),"hamburger"),
+        new(QuestionKnowledgeGroup.Food, Unit("pancakes","chiếc bánh pancake","pancake","pancakes"),"pancake"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("drinking-water","ly nước lọc","glass of drinking water","glasses of drinking water"),"water","lít nước lọc","litres of drinking water"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("milk-glasses","ly sữa","glass of milk","glasses of milk"),"milk_liquid","lít sữa","litres of milk"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("milk-cartons","hộp sữa","milk carton","milk cartons"),"milk_carton","lít sữa","litres of milk","milk_liquid"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("orange-juice-glasses","ly nước cam","glass of orange juice","glasses of orange juice"),"orange_juice","lít nước cam","litres of orange juice"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("tea-cups","tách trà","cup of tea","cups of tea"),"tea","lít trà","litres of tea"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("lemon-tea-glasses","ly trà chanh","glass of lemon tea","glasses of lemon tea"),"lemon_tea","lít trà chanh","litres of lemon tea"),
+        new(QuestionKnowledgeGroup.Drinks, Unit("milkshakes","ly sữa lắc","glass of milkshake","glasses of milkshake"),"milkshake","lít sữa lắc","litres of milkshake"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("apples","quả táo","apple","apples"),"apple"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("oranges","quả cam","orange","oranges"),"orange"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("mangoes","quả xoài","mango","mangoes"),"mango"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("bananas","quả chuối","banana","bananas"),"banana"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("dragon-fruit","quả thanh long","dragon fruit","dragon fruits"),"dragon_fruit"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("strawberries","quả dâu tây","strawberry","strawberries"),"strawberry"),
+        new(QuestionKnowledgeGroup.Fruit, Unit("pears","quả lê","pear","pears"),"pear")
+    ]);
+    // Existing registries retain their original singular/plural/group units for saved contracts.
+    private static readonly string[] ExistingUnits = ["sandwich-bread","round-bread","banh-mi","cakes","candies","milk-cartons","apples","oranges","mangoes"];
+    internal static IEnumerable<QuestionUnit> AdditionalUnits => Subjects.Where(s => !ExistingUnits.Contains(s.Unit.Id)).Select(s => s.Unit);
+    public static bool IsTheme(QuestionKnowledgeGroup group) => group is QuestionKnowledgeGroup.Food or QuestionKnowledgeGroup.Drinks or QuestionKnowledgeGroup.Fruit;
+    internal static string EnglishFractionUnit(string sceneId, string unit, bool proper, bool one)
+    {
+        var subject = Subjects.FirstOrDefault(s => sceneId.StartsWith(
+            $"fraction-theme-{s.Group.ToString().ToLowerInvariant()}-{s.Unit.Id}-", StringComparison.Ordinal));
+        if (subject is null || (!proper && !one)) return unit;
+        string singular = subject.FractionEnglish?.Replace("litres", "litre", StringComparison.Ordinal) ?? subject.Unit.Singular;
+        return proper ? "of " + ("aeiou".Contains(char.ToLowerInvariant(singular[0])) ? "an " : "a ") + singular : singular;
+    }
+    public static bool IsThemedItem(string? unit) => unit is "chiếc bánh mì" or "ổ bánh mì" or "bread rolls" or "bread roll" or "suất ăn" or "meals" or "túi gạo" or "rice bags"
+        || Subjects.Any(s => unit == s.Unit.Vietnamese || unit == s.Unit.Plural || unit == s.Unit.Singular);
+    public static bool IsLegacyContract(BasicQuestionContract c) => c.KnowledgeGroup == QuestionKnowledgeGroup.Objects &&
+        (c.Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Find(c.SceneId) is { } f && IsLegacyFraction(f)
+        : c.Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.Find(c.SceneId) is { } x && IsLegacySubject(x.SourceScene)
+        : c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Find(c.SceneId) is { } a && IsLegacySubject(a)
+        : IsThemedItem(c.Unit));
+    public static bool IsLegacySubject(AppliedQuestionScene s) => s.Group == QuestionKnowledgeGroup.Objects
+        && (s.UnitId is "rolls" or "meals" or "rice-bags" || Subjects.Any(t => t.Unit.Id == s.UnitId));
+    public static bool IsLegacyFraction(FractionQuestionCatalogue.Scene s) => s.Group == QuestionKnowledgeGroup.Objects
+        && (s.Id.StartsWith("fraction-bread-",StringComparison.Ordinal) || s.Id.StartsWith("fraction-cake-",StringComparison.Ordinal));
+}

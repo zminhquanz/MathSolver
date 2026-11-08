@@ -10,7 +10,8 @@ public sealed record QuestionLearningProfile(QuestionKnowledgeGroup Group)
     public bool Allows(ArithmeticOperation operation) => (IsValid || IsMixed) && Enum.IsDefined(operation);
     public static QuestionKnowledgeGroup[] Groups(bool includeMixed = false) => includeMixed
         ? [QuestionKnowledgeGroup.Mixed, .. Groups()]
-        : [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Money,
+        : [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies,
+        QuestionKnowledgeGroup.Food, QuestionKnowledgeGroup.Drinks, QuestionKnowledgeGroup.Fruit, QuestionKnowledgeGroup.Money,
         QuestionKnowledgeGroup.Time, QuestionKnowledgeGroup.Measurement, QuestionKnowledgeGroup.Geometry,
         QuestionKnowledgeGroup.Packaging, QuestionKnowledgeGroup.Production, QuestionKnowledgeGroup.Data, QuestionKnowledgeGroup.Motion];
     public bool Includes(QuestionKnowledgeGroup group) => group == Group || Group == QuestionKnowledgeGroup.Measurement

@@ -48,6 +48,7 @@ public static class QuestionAuthoringWorkbook
                 "initial-stock" => W(vi,"luong_ban_dau","initial_stock"),
                 "start-hour"=>W(vi,"gio_bat_dau","start_hour"),"start-minute"=>W(vi,"phut_bat_dau","start_minute"),
                 "end-hour"=>W(vi,"gio_ket_thuc","end_hour"),"end-minute"=>W(vi,"phut_ket_thuc","end_minute"),
+                "end-day-offset"=>W(vi,"so_ngay_sau_bat_dau","days_after_start"),
                 "duration-minutes"=>W(vi,"thoi_gian_phut","duration_minutes"),
                 "time_actor"=>W(vi,"nguoi_thuc_hien","activity_owner"),"time_activity"=>W(vi,"hoat_dong","activity"),
                 "owner_a" => W(vi,"doi_tuong_thu_nhat","first_owner"),
@@ -67,7 +68,11 @@ public static class QuestionAuthoringWorkbook
                 "capacity" => W(vi, "suc_chua", "capacity"),
                 _ when q.Role.StartsWith("owner_", StringComparison.Ordinal) => W(vi, "doi_tuong_", "owner_") + (int.Parse(q.Role[6..]) + 1),
                 _ when q.Role.StartsWith("chart_category_", StringComparison.Ordinal) => W(vi, "nhom_du_lieu_", "data_category_") + (int.Parse(q.Role[15..]) + 1),
-                _ => W(vi, q.Id.StartsWith('f') ? "du_kien_" : "doi_tuong_don_vi_", q.Id.StartsWith('f') ? "fact_" : "owner_or_unit_") + (int.Parse(q.Id[1..]) + 1)
+                // Named immutable facts (include_start, include_end, etc.) are
+                // not indexed f0/v0 slots. Keep their stable identifier.
+                _ => q.Id.Length > 1 && int.TryParse(q.Id.AsSpan(1), out int index)
+                    ? W(vi, q.Id.StartsWith('f') ? "du_kien_" : "doi_tuong_don_vi_", q.Id.StartsWith('f') ? "fact_" : "owner_or_unit_") + (index + 1)
+                    : q.Id
             };
             int occurrence = used.GetValueOrDefault(name) + 1;
             used[name] = occurrence;

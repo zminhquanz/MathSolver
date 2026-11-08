@@ -83,7 +83,8 @@ public static class ArithmeticQuestionCatalogue
         var choice = choices[random.Next(choices.Length)];
         var scale = Scale(choice.Scene.Id, operation, tier)!;
         if (unitId is not null && !scale.UnitIds.Contains(unitId)) throw new ArgumentException("ChangedUnits");
-        var unit = QuestionUnits.Find(unitId ?? scale.UnitIds[random.Next(scale.UnitIds.Length)])!;
+        var units = BreadQuestionCatalogue.GenerationUnits(scale.UnitIds);
+        var unit = QuestionUnits.Find(unitId ?? units[random.Next(units.Length)])!;
         var (a, b) = Numbers(operation, tier, choice.Structure, scale, random);
         string Actor() => scale.Actor(language, scale.ActorPattern(language) == "{person}"
             ? QuestionNames.Create(language, random) : language == AppLanguage.Vietnamese

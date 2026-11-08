@@ -7,6 +7,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../NativeUi/RemainingSubjectFixtures.cs" Link="RemainingSubjectFixtures.cs" />
     <ProjectReference Include="../TestSupport/TestSupport.csproj" />
     <PackageReference Include="LLamaSharp" Version="0.30.0" />
     <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.30.0" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />

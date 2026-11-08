@@ -30,6 +30,7 @@ public partial class MathPuzzlePage
         bool available = mandatory || diagram is not null;
         // A revealed solution opens supporting diagrams, but cannot make required data collapsible.
         bool visible = available && (mandatory || _diagramExpanded || _questionAnswered);
+        UpdateStoryArtwork(visible);
         QuizDiagramToggleButton.IsVisible = available && !mandatory && !_questionAnswered;
         QuizDiagramToggleButton.Text = TranslateQuiz(_diagramExpanded ? "Quiz.HideDiagram" : "Quiz.ShowDiagram");
         QuizDiagramPanel.IsVisible = visible;
@@ -108,6 +109,7 @@ public partial class MathPuzzlePage
 
     private void UpdateQuestionDiagramLayout()
     {
+        ResizeStoryArtwork();
         bool wide = QuizDiagramPanel.IsVisible &&
             QuizResponsiveLayout.PlaceDiagramBesideQuestion(QuestionDiagramGrid.Width, ResponsiveLayoutPolicy.TextScale);
         if (_wideDiagramLayout == wide) return;
@@ -121,6 +123,8 @@ public partial class MathPuzzlePage
 
     private void ResetQuizDiagram()
     {
+        QuestionStoryArtwork.IsVisible = false;
+        QuestionStoryArtwork.Source = null;
         QuestionCurriculumLabel.Text = "";
         QuestionCurriculumLabel.IsVisible = false;
         _diagramScrollVersion++;

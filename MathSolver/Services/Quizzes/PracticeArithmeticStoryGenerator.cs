@@ -12,7 +12,8 @@ public sealed record PracticeCountContext(string Id, QuestionKnowledgeGroup Grou
     bool AllowsMentalLargeNumbers = false);
 public sealed record PracticeMoneyItem(string Id, string Name, string Buyer, string Unit,
     int MinimumPrice, int MaximumPrice, int PriceStep, int MaximumCount, int MinimumStars,
-    int MaximumCountFourStars = 0, string PluralName = "", int MaximumPurchaseTotal = 0, bool IsInstitutional = false);
+    int MaximumCountFourStars = 0, string PluralName = "", int MaximumPurchaseTotal = 0, bool IsInstitutional = false,
+    string? ArtworkId = null);
 public sealed record PracticeArithmeticTemplate(string Id, string Problem, string Lead, string FirstLead = "",
     string[]? AlternativeProblems = null);
 
@@ -182,7 +183,8 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         var details = new PracticeArithmeticDetails(contextId, cap, purchases.AsReadOnly(), steps.AsReadOnly(), templateId,
             new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(values));
         var word = new MathWordProblem(Render(template.Problem, values), Render(template.Lead, values), unit, actor,
-            group == QuestionKnowledgeGroup.Money ? WordProblemQuantity.Money : WordProblemQuantity.Count, PracticeDetails: details);
+            group == QuestionKnowledgeGroup.Money ? WordProblemQuantity.Money : WordProblemQuantity.Count, PracticeDetails: details)
+            { ItemUnit = unit };
         var choices = new List<BigInteger>();
         BigInteger? presented = null; bool? assertion = null;
         if (mode == ArithmeticQuizMode.MultipleChoice)

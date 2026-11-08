@@ -62,8 +62,8 @@ public static class AdditionQuestionCatalogue
         new("food-supplies", "food", AdditionSceneKind.Stock, AdditionActorKind.Person,
             ["apples", "oranges", "cakes", "milk-cartons", "rice-bags"], "có", "has", "có|giữ|lưu giữ", "has|holds|owns|had", 99999, StockRelations),
         new("bakery", "food", AdditionSceneKind.Periods, AdditionActorKind.Workshop,
-            ["cakes", "bread-rolls"], "làm được", "bakes", "làm|nướng|hoàn thành", "bakes?|baked|makes?|made", 99999,
-            [BasicQuestionStructure.Combine], "bake", "baked"),
+            BreadQuestionCatalogue.BakeryUnitIds, "chuẩn bị được", "prepares", "chuẩn bị|làm|nướng|hoàn thành", "prepares?|prepared|bakes?|baked|makes?|made", 99999,
+            [BasicQuestionStructure.Combine], "prepare", "prepared"),
         new("poultry", "animals", AdditionSceneKind.Stock, AdditionActorKind.Farm,
             ["chickens", "ducks"], "có", "has", "có|nuôi|giữ", "has|keeps?|raises?|had", 99999, StockRelations),
         new("fish-farm", "animals", AdditionSceneKind.Stock, AdditionActorKind.Farm,
@@ -94,8 +94,8 @@ public static class AdditionQuestionCatalogue
             [BasicQuestionStructure.Combine], "record", "recorded")
     });
 
-    public static IReadOnlyList<QuestionUnit> ExtraUnits { get; } = Array.AsReadOnly(new QuestionUnit[]
-    {
+    public static IReadOnlyList<QuestionUnit> ExtraUnits { get; } = Array.AsReadOnly<QuestionUnit>(
+    [
         new("plastic-bottles", "chai nhựa", "plastic bottle", "plastic bottles", "bao", "sack", "sacks"),
         new("cans", "lon", "can", "cans", "bao", "sack", "sacks"),
         new("paper-flowers", "bông hoa giấy", "paper flower", "paper flowers", "hộp", "box", "boxes"),
@@ -114,6 +114,13 @@ public static class AdditionQuestionCatalogue
         new("ducks", "con vịt", "duck", "ducks", "đàn", "flock", "flocks"),
         new("fish", "con cá", "fish", "fish", "bể", "tank", "tanks"),
         new("cows", "con bò", "cow", "cows", "đàn", "herd", "herds"),
+        new("horses", "con ngựa", "horse", "horses", "đàn", "herd", "herds"),
+        new("deer", "con nai", "deer", "deer", "đàn", "herd", "herds"),
+        new("dogs", "con chó", "dog", "dogs", "đàn", "pack", "packs"),
+        new("rabbits", "con thỏ", "rabbit", "rabbits", "nhóm", "group", "groups"),
+        new("turtles", "con rùa", "turtle", "turtles", "nhóm", "group", "groups"),
+        new("tortoises", "con rùa cạn", "tortoise", "tortoises", "nhóm", "group", "groups"),
+        new("geese", "con ngỗng", "goose", "geese", "đàn", "flock", "flocks"),
         new("mangoes", "quả xoài", "mango", "mangoes", "giỏ", "basket", "baskets"),
         new("rice-sacks", "bao lúa", "rice sack", "rice sacks", "kho", "warehouse", "warehouses"),
         new("products", "sản phẩm", "product", "products", "thùng", "box", "boxes"),
@@ -123,8 +130,10 @@ public static class AdditionQuestionCatalogue
         new("tiles", "viên gạch lát", "tile", "tiles", "kiện", "pallet", "pallets"),
         new("responses", "phiếu trả lời", "survey response", "survey responses", "tập", "bundle", "bundles"),
         new("coin-heads", "lần xuất hiện mặt ngửa", "heads outcome", "heads outcomes", "đợt", "trial session", "trial sessions"),
-        new("die-sixes", "lần xuất hiện mặt sáu", "six outcome", "six outcomes", "đợt", "trial session", "trial sessions")
-    });
+        new("die-sixes", "lần xuất hiện mặt sáu", "six outcome", "six outcomes", "đợt", "trial session", "trial sessions"),
+        .. BreadQuestionCatalogue.Types.Select(t => t.Unit),
+        .. FoodThemeCatalogue.AdditionalUnits
+    ]);
     public static AdditionScene? Find(string id) => Scenes.FirstOrDefault(s => s.Id == id);
     public static int MinimumStars(BasicQuestionStructure structure) => structure switch
     {
@@ -170,7 +179,8 @@ public static class AdditionQuestionCatalogue
         if (other == name) other = scale.Actor(language, language == AppLanguage.Vietnamese
             ? name == scale.Actor(language, "An") ? "Bình" : "An"
             : name == scale.Actor(language, "James") ? "Mary" : "James");
-        var unit = QuestionUnits.Find(scale.UnitIds[random.Next(scale.UnitIds.Length)])!;
+        var units = BreadQuestionCatalogue.GenerationUnits(scale.UnitIds);
+        var unit = QuestionUnits.Find(units[random.Next(units.Length)])!;
         var parts = scale.Parts(language);
         return BasicQuestionTemplates.ApplyUnit(new(Version, ArithmeticOperation.Add, tier, language, a, b,
             name, unit.Item(language), unit.Group(language), choice.Structure, other,

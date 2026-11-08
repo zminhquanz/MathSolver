@@ -38,6 +38,36 @@ internal sealed partial class QuizChoiceDrawable
                 canvas.DrawLine(87, 76, 87, 84);
                 canvas.DrawEllipse(55, 79, 32, 10);
                 break;
+            case "knowledge-animals":
+                // A chick silhouette stays legible beside the existing thin-line icons.
+                canvas.DrawEllipse(25, 34, 55, 42);
+                canvas.DrawCircle(58, 27, 18);
+                canvas.FillCircle(65, 23, 3);
+                var beak = new PathF();
+                beak.MoveTo(74, 31);
+                beak.LineTo(91, 35);
+                beak.LineTo(75, 41);
+                beak.Close();
+                canvas.DrawPath(beak);
+                canvas.DrawArc(34, 47, 26, 17, 200, 345, false, false);
+                canvas.DrawLine(40, 76, 40, 88);
+                canvas.DrawLine(62, 76, 62, 88);
+                canvas.DrawLine(33, 88, 47, 88);
+                canvas.DrawLine(55, 88, 69, 88);
+                break;
+            case "knowledge-school-supplies":
+                // A ruled notebook and a pencil represent classroom supplies.
+                canvas.DrawRoundedRectangle(13, 21, 50, 64, 4);
+                canvas.DrawLine(24, 21, 24, 85);
+                for (int row = 0; row < 3; row++)
+                    canvas.DrawLine(32, 38 + row * 15, 55, 38 + row * 15);
+                canvas.DrawLine(75, 20, 88, 27);
+                canvas.DrawLine(69, 72, 82, 79);
+                canvas.DrawLine(75, 20, 69, 72);
+                canvas.DrawLine(88, 27, 82, 79);
+                canvas.DrawLine(69, 72, 72, 89);
+                canvas.DrawLine(82, 79, 72, 89);
+                break;
             case "knowledge-packaging":
                 Box(31, 14, 38, 32);
                 Box(9, 53, 38, 32);

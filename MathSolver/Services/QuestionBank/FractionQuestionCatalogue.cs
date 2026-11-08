@@ -35,7 +35,8 @@ public static class FractionQuestionCatalogue
         AppLanguage language, Random? random = null, string? sceneId = null)
     {
         random ??= Random.Shared;
-        var eligible = Available(profile, op, tier).ToArray();
+        var eligible = Available(profile, op, tier)
+            .Where(s => sceneId is not null || !BreadQuestionCatalogue.IsLegacyFraction(s.Id) && !FoodThemeCatalogue.IsLegacyFraction(s)).ToArray();
         if (eligible.Length == 0 || language is not (AppLanguage.Vietnamese or AppLanguage.English)) throw new ArgumentException("InvalidFractionProfile");
         var s = sceneId is null ? eligible[random.Next(eligible.Length)] : eligible.Single(x => x.Id == sceneId);
         int max = MaximumDenominator(tier);
@@ -129,8 +130,11 @@ public static class FractionQuestionCatalogue
     public static string Render(string text, BasicQuestionContract c)
     {
         var s = Find(c.SceneId)!; bool vi = c.Language == AppLanguage.Vietnamese;
-        string rendered = text.Replace("{a}", Left(c).ToString()).Replace("{b}", Right(c).ToString()).Replace("{name}", c.Subject)
-            .Replace("{unit_a}", vi ? s.UnitA : s.EnUnitA).Replace("{unit_b}", vi ? s.UnitB : s.EnUnitB).Replace("{unit}", c.Unit);
+        var a = Left(c); var b = Right(c);
+        string unitA = vi ? s.UnitA : FoodThemeCatalogue.EnglishFractionUnit(c.SceneId, s.EnUnitA, a.Numerator < a.Denominator, a.Numerator == a.Denominator);
+        string unitB = vi ? s.UnitB : FoodThemeCatalogue.EnglishFractionUnit(c.SceneId, s.EnUnitB, b.Numerator < b.Denominator, b.Numerator == b.Denominator);
+        string rendered = text.Replace("{a}", a.ToString()).Replace("{b}", b.ToString()).Replace("{name}", c.Subject)
+            .Replace("{unit_a}", unitA).Replace("{unit_b}", unitB).Replace("{unit}", c.Unit);
         return rendered.Length == 0 ? rendered : char.ToUpperInvariant(rendered[0]) + rendered[1..];
     }
     public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example)
@@ -188,7 +192,8 @@ public sealed class FractionQuestionCycle(Random? random = null)
     private readonly Queue<string> _history = new();
     public BasicQuestionContract Next(QuestionLearningProfile profile, ArithmeticOperation op, CurriculumTier tier, AppLanguage language)
     {
-        var scene = FractionQuestionCatalogue.Available(profile, op, tier).OrderBy(_ => _random.Next())
+        var scene = FractionQuestionCatalogue.Available(profile, op, tier)
+            .Where(s => !BreadQuestionCatalogue.IsLegacyFraction(s.Id) && !FoodThemeCatalogue.IsLegacyFraction(s)).OrderBy(_ => _random.Next())
             .OrderBy(s => _history.Count(id => id == s.Id)).First();
         var c = FractionQuestionCatalogue.Create(profile, op, tier, language, _random, scene.Id);
         _history.Enqueue(scene.Id); if (_history.Count > 64) _history.Dequeue(); return c;

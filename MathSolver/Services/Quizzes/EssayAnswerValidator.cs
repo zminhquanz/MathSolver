@@ -344,6 +344,7 @@ public sealed partial class EssayAnswerValidator
                 solution,
                 expectedUnit,
                 question.WordProblem?.ProblemText) ||
+            ContainsEnglishUnitPhrase(solution, expectedUnit) ||
             ContainsNormalizedPhrase(solution, expectedUnit) ||
             ContainsNormalizedPhrase(
                 solution,
@@ -1332,6 +1333,8 @@ public sealed partial class EssayAnswerValidator
     {
         // A lead describes "the number of trees" even when the answer happens
         // to be "1 tree". Compare whole unit phrases in both number forms.
+        // Match hyphenated authored nouns as the same word tokens used below.
+        expectedUnit = expectedUnit.Replace('-', ' ');
         if (!Regex.IsMatch(expectedUnit, @"\A[a-z]+(?: [a-z]+)*\z", RegexOptions.CultureInvariant)) return false;
         string singular = NormalizeEnglishUnitToSingular(expectedUnit);
         int length = expectedUnit.Split(' ').Length;
@@ -1352,6 +1355,7 @@ public sealed partial class EssayAnswerValidator
                 "cookies" => "cookie",
                 "brownies" => "brownie",
                 "budgies" => "budgie",
+                "loaves" => "loaf",
                 _ => string.Empty
             };
 

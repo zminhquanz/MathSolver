@@ -10,7 +10,7 @@ public sealed class AppliedQuestionCycle(Random? random = null)
     public BasicQuestionContract Next(QuestionLearningProfile profile, ArithmeticOperation operation,
         CurriculumTier tier, AppLanguage language)
     {
-        var scenes = AppliedQuestionCatalogue.Available(profile, operation, tier).ToArray();
+        var scenes = AppliedQuestionCatalogue.GenerationAvailable(profile, operation, tier).ToArray();
         if (scenes.Length == 0) throw new ArgumentException("InvalidLearningProfile");
         string key = $"{profile.Group}/{operation}/{tier}/{language}/";
         var selected = scenes.OrderBy(_ => _random.Next())

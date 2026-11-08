@@ -49,8 +49,8 @@ public static class QuestionAuthoringChoices
 
     public static string[] Scenes(BankQuestionFamily family, ArithmeticOperation operation, CurriculumTier tier, QuestionKnowledgeGroup group,
         FindXUnknownRole role = FindXUnknownRole.None) => family switch {
-        BankQuestionFamily.Arithmetic => AppliedQuestionCatalogue.Available(new(group), operation, tier).Select(s => s.Id).ToArray(),
-        BankQuestionFamily.FindX => FindXQuestionCatalogue.Available(new(group), operation, tier, role).Select(s => s.Id).ToArray(),
-        BankQuestionFamily.Fraction => FractionQuestionCatalogue.Available(new(group), operation, tier).Select(s => s.Id).ToArray(),
+        BankQuestionFamily.Arithmetic => AppliedQuestionCatalogue.GenerationAvailable(new(group), operation, tier).Select(s => s.Id).ToArray(),
+        BankQuestionFamily.FindX => FindXQuestionCatalogue.Available(new(group), operation, tier, role).Where(s => AppliedQuestionCatalogue.IsGenerationSubject(s.SourceScene)).Select(s => s.Id).ToArray(),
+        BankQuestionFamily.Fraction => FractionQuestionCatalogue.Available(new(group), operation, tier).Where(s => !FoodThemeCatalogue.IsLegacyFraction(s)).Select(s => s.Id).ToArray(),
         _ => [] };
 }
