@@ -61,6 +61,7 @@ public static class QuestionUnits
         new("pencil-cases", "hộp bút", "pencil case", "pencil cases", "thùng", "carton", "cartons"),
         new("compasses", "chiếc compa", "drawing compass", "drawing compasses", "hộp", "box", "boxes"),
         new("rulers", "cây thước kẻ", "ruler", "rulers", "hộp", "box", "boxes"),
+        new("color-markers", "cây bút dạ quang", "colored marker", "colored markers", "hộp", "box", "boxes"),
         new("satchels", "chiếc cặp táp", "school satchel", "school satchels", "thùng", "carton", "cartons"),
         new("candies", "viên kẹo", "sweet", "sweets", "túi", "bag", "bags"),
         new("apples", "quả táo", "apple", "apples", "giỏ", "basket", "baskets"),
@@ -68,6 +69,7 @@ public static class QuestionUnits
         new("flowers", "bông hoa", "flower", "flowers", "bó", "bunch", "bunches"),
         new("cards", "tấm thiệp", "card", "cards", "hộp", "box", "boxes"),
         new("balls", "quả bóng", "ball", "balls", "túi", "bag", "bags"),
+        new("marbles", "viên bi", "marble", "marbles", "túi", "bag", "bags"),
         new("stickers", "nhãn dán", "sticker", "stickers", "gói", "pack", "packs"),
         new("cakes", "chiếc bánh", "cake", "cakes", "hộp", "box", "boxes")
     });

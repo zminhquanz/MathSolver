@@ -36,8 +36,9 @@ public static partial class AppliedQuestionCatalogue
     private static string? SceneGroupUnit(AppliedQuestionScene s, AppLanguage language)
     {
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
-            || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId == "erasers"))
+            || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId is "erasers" or "color-markers"))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
+        if (s.Group == QuestionKnowledgeGroup.Food) return language == AppLanguage.Vietnamese ? "bàn" : "table";
         if (FoodThemeCatalogue.IsTheme(s.Group)) return language == AppLanguage.Vietnamese ? "nhóm" : "group";
         if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
@@ -54,6 +55,8 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
+        if (s.Group == QuestionKnowledgeGroup.Food) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+            ? (unit, vi ? "bàn" : "tables") : (unit, unit);
         if (FoodThemeCatalogue.IsTheme(s.Group)) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, vi ? "nhóm" : "groups") : (unit, unit);
         if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal)
@@ -162,7 +165,7 @@ public static partial class AppliedQuestionCatalogue
     private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, ref string name, ref string other)
     {
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
-            || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId == "erasers"))
+            || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && (s.UnitId is "erasers" or "color-markers")))
         {
             // Family-sized counts use people; larger quantities belong to a relevant shop.
             // Multiplication can describe substantial stock even when both factors are small.
@@ -174,12 +177,18 @@ public static partial class AppliedQuestionCatalogue
                     "footwear-pairs" => ("cửa hàng giày dép", "shoe shop"),
                     "clothing-sets" => ("cửa hàng quần áo", "clothing shop"),
                     "toothbrushes" or "combs" => ("cửa hàng đồ dùng cá nhân", "personal care shop"),
-                    "erasers" => ("cửa hàng văn phòng phẩm", "stationery shop"),
+                    "erasers" or "color-markers" => ("cửa hàng văn phòng phẩm", "stationery shop"),
                     _ => ("cửa hàng đồ gia dụng", "housewares shop")
                 };
                 name = lang == AppLanguage.Vietnamese ? $"{viShop} thứ nhất" : $"the first {enShop}";
                 other = lang == AppLanguage.Vietnamese ? $"{viShop} thứ hai" : $"the second {enShop}";
             }
+            return;
+        }
+        if (s.Group == QuestionKnowledgeGroup.Food)
+        {
+            name = FoodThemePrompt.OwnerVenue(name, lang, restaurant: false);
+            other = FoodThemePrompt.OwnerVenue(other, lang, restaurant: true);
             return;
         }
         if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)

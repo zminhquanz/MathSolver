@@ -51,8 +51,11 @@ public static class FractionQuestionCatalogue
                 (a, b) = (b, a);
             if (s.CountResult) a = new(b.Numerator * random.Next(2, 9), b.Denominator);
             if (s.Id == "fraction-motion-distance") a = new(a.Numerator + random.Next(2, 6) * a.Denominator, a.Denominator);
+            string subject = QuestionNames.Create(language, random, false);
+            if (s.Group == QuestionKnowledgeGroup.Food)
+                subject = FoodThemePrompt.OwnerVenue(subject, language, restaurant: false);
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
-                QuestionNames.Create(language, random, false), language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
+                subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
                 TopicId: profile.Group.ToString(), SceneId: s.Id, KnowledgeGroup: profile.Group,
                 LeftDenominator: (int)a.Denominator, RightDenominator: (int)b.Denominator);
             if (IsValid(c)) return c;

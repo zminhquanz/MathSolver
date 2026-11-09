@@ -101,6 +101,17 @@ internal static class QuizStoryArtwork
         new("theme-fish-chips", "fish_chips", ["suất cá chiên và khoai tây", "fish and chips meal", "fish and chips meals"]),
         new("theme-hamburgers", "hamburger", ["chiếc hamburger", "hamburger", "hamburgers"]),
         new("theme-pancakes", "pancake", ["chiếc bánh pancake", "pancake", "pancakes"]),
+        new("theme-com-tam", "com_tam", ["suất cơm tấm", "serving of broken rice", "servings of broken rice"]),
+        new("theme-op-la", "op_la", ["phần trứng ốp-la", "serving of fried eggs", "servings of fried eggs"]),
+        new("theme-thit-kho-trung", "thit_kho_trung", ["phần thịt kho trứng", "serving of braised pork and eggs", "servings of braised pork and eggs"]),
+        new("theme-banh-xeo", "banh_xeo", ["chiếc bánh xèo", "Vietnamese sizzling pancake", "Vietnamese sizzling pancakes"]),
+        new("theme-bun-thit-nuong-cha-gio", "bun_thit_nuong_cha_gio", ["tô bún thịt nướng chả giò", "bowl of grilled pork vermicelli with spring rolls", "bowls of grilled pork vermicelli with spring rolls"]),
+        new("theme-hu-tieu-nam-vang", "hu_tieu_nam_vang", ["tô hủ tiếu Nam Vang", "bowl of Nam Vang noodle soup", "bowls of Nam Vang noodle soup"]),
+        new("theme-mi-quang", "mi_quang", ["tô mì Quảng", "bowl of Quang noodles", "bowls of Quang noodles"]),
+        new("theme-bun-bo-hue", "bun_bo_hue", ["tô bún bò Huế", "bowl of Hue beef noodle soup", "bowls of Hue beef noodle soup"]),
+        new("theme-banh-cuon", "banh_cuon", ["đĩa bánh cuốn", "plate of steamed rice rolls", "plates of steamed rice rolls"]),
+        new("theme-kimchi", "kimchi", ["đĩa kim chi", "plate of kimchi", "plates of kimchi"]),
+        new("theme-sushi", "sushi", ["phần sushi", "serving of sushi", "servings of sushi"]),
         new("theme-drinking-water", "water", ["ly nước lọc", "glass of drinking water", "glasses of drinking water"]),
         new("theme-milk-glasses", "milk_liquid", ["ly sữa", "glass of milk", "glasses of milk"]),
         new("theme-milk-cartons", "milk_carton", ["hộp sữa", "milk carton", "milk cartons"]),
@@ -127,10 +138,10 @@ internal static class QuizStoryArtwork
         new("sugar", "sugar", ["đường", "sugar"]),
         new("carrots", "carrot", ["cà rốt", "carrot", "carrots"]),
         new("potatoes", "potato", ["khoai tây", "potato", "potatoes"]),
-        new("biscuits", "biscuit", ["bánh quy", "biscuit", "biscuits", "cookie", "cookies"]),
+        new("biscuits", "biscuit", ["bánh quy", "chiếc bánh quy", "biscuit", "biscuits", "cookie", "cookies"]),
         new("jam", "jam", ["mứt", "jam"]),
         new("fencing-wire", "fencing_wire", ["dây hàng rào", "fencing wire"]),
-        new("color-markers", "colored_markers", ["bút màu", "bút lông màu", "marker", "markers", "colour markers", "color markers"]),
+        new("color-markers", "colored_markers", ["bút màu", "bút lông màu", "cây bút dạ quang", "colored marker", "colored markers", "marker", "markers", "colour markers", "color markers"]),
         new("fish-sauce", "fish_sauce", ["nước mắm", "fish sauce", "bottle of fish sauce", "bottles of fish sauce"]),
         new("televisions", "television", ["ti vi", "chiếc ti vi", "television", "televisions"]),
         new("laptops", "laptop", ["máy tính xách tay", "laptop", "laptops"]),
@@ -172,7 +183,7 @@ internal static class QuizStoryArtwork
             return "quiz_story_money.png";
         // An authoritative original item (not an answer in boxes/times) must never be replaced by a guess.
         if (itemUnit is not null) knownUnits = [Normalize(itemUnit)];
-        string[] matches = Objects.Where(item => item.Units.Any(knownUnits.Contains)).Select(item => item.Asset).Distinct().ToArray();
+        string[] matches = Objects.Where(item => item.Units.Any(value => knownUnits.Contains(Normalize(value)))).Select(item => item.Asset).Distinct().ToArray();
         return matches.Length == 1 ? Asset(matches[0]) : null;
     }
 

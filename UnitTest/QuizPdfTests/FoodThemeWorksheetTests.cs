@@ -31,6 +31,11 @@ internal static class FoodThemeWorksheetTests
                 }
                 else Check(new ArithmeticQuizValidator(new BasicArithmeticEngine()).Validate(q).IsValid,"Theme PDF integer invalid");
                 var printed=QuizWorksheetBuilder.Format(q,language);Check(!printed.Prompt.Contains('{')&&!printed.Answer.Contains('{'),"Unbound theme PDF slots");
+                if(subject.Group==QuestionKnowledgeGroup.Food)
+                {
+                    string venue=language==AppLanguage.Vietnamese?"quán ăn của ":"'s eatery";
+                    Check(printed.Prompt.Contains(venue,StringComparison.OrdinalIgnoreCase),"Prepared-food PDF missing named eatery: "+c.SceneId);
+                }
                 if(mode==ArithmeticQuizMode.TrueFalse)Check(printed.Answer==(q.PresentedEquationIsCorrect==true?printed.Options[0]:printed.Options[1]),"Truth key changed");
                 items.Add(printed);traces.Add(new{language,mode,subject.Group,subject.Unit.Id,Fraction=fraction,printed.Prompt,printed.Answer});count++;
             }

@@ -96,6 +96,7 @@
     <MauiSplashScreen Include="Resources\Splash\mathsolver_splash.svg" BaseSize="128,128" Color="#2563EB" />
     <MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\ai_guide_stationery.png" BaseSize="192,128" Resize="True" />
+    <MauiImage Update="Resources\Images\quiz_story_*.png" BaseSize="240,160" Resize="True" />
     <MauiImage Update="Resources\Images\review_empty_tray.png;Resources\Images\pdf_blank_sheet.png;Resources\Images\excel_template_sheet.png;Resources\Images\excel_fill_sheet.png;Resources\Images\excel_review_sheet.png" BaseSize="180,120" Resize="True" />
     <MauiImage Update="Resources\Images\excel_motion_sheet.png;Resources\Images\excel_motion_pencil.png" BaseSize="180,120" Resize="True" />
     <MauiFont Include="Resources\Fonts\*" />

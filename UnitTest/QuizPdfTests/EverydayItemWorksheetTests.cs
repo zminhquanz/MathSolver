@@ -16,6 +16,9 @@ internal static class EverydayItemWorksheetTests
     private static readonly Item[] Subjects =
     [
         new(QuestionKnowledgeGroup.SchoolSupplies, "erasers", "school-erasers-"),
+        new(QuestionKnowledgeGroup.SchoolSupplies, "color-markers", "school-color-markers-"),
+        new(QuestionKnowledgeGroup.Objects, "balls", "daily-balls-"),
+        new(QuestionKnowledgeGroup.Objects, "marbles", "daily-marbles-"),
         new(QuestionKnowledgeGroup.Objects, "footwear-pairs", "daily-footwear-pairs-"),
         new(QuestionKnowledgeGroup.Objects, "clothing-sets", "daily-clothing-sets-"),
         new(QuestionKnowledgeGroup.Objects, "toothbrushes", "daily-toothbrushes-"),

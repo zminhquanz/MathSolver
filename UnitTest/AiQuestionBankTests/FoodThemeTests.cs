@@ -17,6 +17,25 @@ internal static class FoodThemeTests
         FoodThemeCatalogue.Subjects.Select(s => new { Group=s.Group.ToString(), s.Unit, s.ArtworkId, s.FractionVietnamese, s.FractionEnglish, s.FractionArtworkId }),
         new System.Text.Json.JsonSerializerOptions { WriteIndented=true, Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
     private static void Check(bool ok, string why) { if (!ok) throw new Exception(why); }
+    internal static void CheckFoodVenue(BasicQuestionContract contract, BasicQuestionDraft draft)
+    {
+        if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food) return;
+        bool vi = contract.Language == AppLanguage.Vietnamese;
+        string eatery = vi ? "quán ăn của " : "'s eatery";
+        string restaurant = vi ? "nhà hàng của " : "'s restaurant";
+        Check(contract.Subject.Contains(eatery, StringComparison.OrdinalIgnoreCase),
+            $"Prepared food has no named owner's eatery: {contract.SceneId}/{contract.Language}: {contract.Subject}");
+        if (!string.IsNullOrWhiteSpace(contract.OtherSubject))
+            Check(contract.OtherSubject.Contains(restaurant, StringComparison.OrdinalIgnoreCase),
+                $"Prepared food has no named second restaurant: {contract.SceneId}/{contract.Language}: {contract.OtherSubject}");
+        string story = draft.ToWordProblem(contract).ProblemText;
+        Check(story.Contains(contract.Subject, StringComparison.OrdinalIgnoreCase),
+            $"Rendered prepared-food story omits owner venue: {contract.SceneId}/{contract.Language}: {story}");
+        string prompt = BasicQuestionPrompt.Build(contract);
+        string instruction = vi ? "Tất cả món ăn đã chế biến được phục vụ" : "All prepared dishes are served";
+        Check(prompt.Split(instruction, StringSplitOptions.None).Length == 2,
+            $"Prepared-food AI guidance missing or duplicated: {contract.SceneId}/{contract.Language}");
+    }
     private static void CheckArtwork(BasicQuestionContract contract, BasicQuestionDraft draft, string expected)
     {
         Check(contract.IsValid, "Invalid source: " + contract.SceneId);
@@ -59,13 +78,49 @@ internal static class FoodThemeTests
         }
         return checkedCount;
     }
+    private static int CheckNewDishArtwork()
+    {
+        var dishes = new (string UnitId, string ArtworkId)[]
+        {
+            ("com-tam", "com_tam"), ("op-la", "op_la"),
+            ("thit-kho-trung", "thit_kho_trung"), ("banh-xeo", "banh_xeo"),
+            ("bun-thit-nuong-cha-gio", "bun_thit_nuong_cha_gio"),
+            ("hu-tieu-nam-vang", "hu_tieu_nam_vang"), ("mi-quang", "mi_quang"),
+            ("bun-bo-hue", "bun_bo_hue"), ("banh-cuon", "banh_cuon"),
+            ("kimchi", "kimchi"), ("sushi", "sushi")
+        };
+        int verified = 0;
+        foreach (var (id, artwork) in dishes)
+        {
+            var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == id);
+            Check(subject.Group == QuestionKnowledgeGroup.Food && subject.ArtworkId == artwork,
+                "Incorrect food group or image mapping: " + id);
+            foreach (var language in Enum.GetValues<AppLanguage>())
+            foreach (var operation in Enum.GetValues<ArithmeticOperation>())
+            foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.Fraction, BankQuestionFamily.FindX })
+            {
+                var contract = FoodThemeInterchangeTests.Contract(subject, operation, language, family);
+                var draft = BasicQuestionTemplates.Example(contract);
+                Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), contract).IsValid,
+                    $"Invalid authored/AI example: {id}/{family}/{operation}/{language}");
+                CheckFoodVenue(contract, draft);
+                CheckArtwork(contract, draft, artwork);
+                verified++;
+            }
+        }
+        return verified;
+    }
     public static void Run()
     {
         int count = 0;
         int animalCount = CheckAnimalArtwork();
+        int dishCount = CheckNewDishArtwork();
         foreach (var subject in FoodThemeCatalogue.Subjects)
         foreach (var language in Enum.GetValues<AppLanguage>())
-            Check(QuizStoryArtwork.Select(true,false,[subject.Unit.Item(language)]) == $"quiz_story_{subject.ArtworkId}.png", "Exact counted subject picture: " + subject.Unit.Id);
+        {
+            var matched = QuizStoryArtwork.Select(true,false,[subject.Unit.Item(language)]);
+            Check(matched == $"quiz_story_{subject.ArtworkId}.png", $"Exact counted subject picture: {subject.Unit.Id}/{language}: expected {subject.ArtworkId}, got {matched ?? "<none>"} for '{subject.Unit.Item(language)}'");
+        }
         foreach (var (name, value) in new[] { ("Food",12),("Drinks",13),("Fruit",14) })
         {
             Check(Enum.TryParse<QuestionKnowledgeGroup>(name, out var group) && (int)group == value, "Missing stable knowledge group: " + name);
@@ -81,6 +136,7 @@ internal static class FoodThemeTests
                 var source = AppliedQuestionCatalogue.Find(c.SceneId)!;
                 var subject = FoodThemeCatalogue.Subjects.Single(s => s.Group == group && s.Unit.Id == source.UnitId);
                 CheckArtwork(c, draft, subject.ArtworkId);
+                CheckFoodVenue(c, draft);
                 Check(draft.ToWordProblem(c).Quantity==WordProblemQuantity.Count,"A counted food/drink/fruit story must not be graded as distance");
                 Check(AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft), c).IsValid, "Standard AI template syntax/meaning");
                 Check(OpenQuestionProse.Supports(c), "New theme inherits conservative open prose support");
@@ -94,6 +150,7 @@ internal static class FoodThemeTests
                     Check(FractionQuestionCatalogue.Render("{a} {unit_a}",f).Contains(" of a"),"English proper fractions need a singular object/volume phrase");
                 CheckArtwork(f, FractionQuestionCatalogue.Draft(f),
                     QuizStoryArtworkCatalogue.FractionArtwork(f.SceneId)!);
+                CheckFoodVenue(f, FractionQuestionCatalogue.Draft(f));
                 var roles = FindXQuestionCatalogue.Available(profile, op, tier).ToArray();
                 Check(roles.Length > 0, "Find X theme roles available");
                 var x = FindXQuestionCatalogue.Create(profile, op, tier, language, new(7));
@@ -101,9 +158,10 @@ internal static class FoodThemeTests
                 var xScene = FindXQuestionCatalogue.Find(x.SceneId)!.SourceScene;
                 var xSubject = FoodThemeCatalogue.Subjects.Single(s => s.Group == group && s.Unit.Id == xScene.UnitId);
                 CheckArtwork(x, FindXQuestionCatalogue.Draft(x), xSubject.ArtworkId);
+                CheckFoodVenue(x, FindXQuestionCatalogue.Draft(x));
                 count++;
             }
         }
-        Console.WriteLine($"PASS animal images: {animalCount} bilingual species/operation fixtures with Find X; food/drink/fruit images: {count} bilingual group/operation/tier fixtures across arithmetic, fractions, Find X and AI relation checks.");
+        Console.WriteLine($"PASS animal images: {animalCount} bilingual species/operation fixtures with Find X; new dish images: {dishCount} bilingual operation/family/AI fixtures; food/drink/fruit images: {count} bilingual group/operation/tier fixtures across arithmetic, fractions, Find X and AI relation checks.");
     }
 }

@@ -18,6 +18,7 @@ internal static partial class QuizStoryArtworkCatalogue
                 "fountain-pens" => "fountain_pen", "ink-bottles" => "ink_bottle",
                 "pencil-cases" => "pencil_case", "compasses" => "compass",
                 "rulers" => "ruler", "satchels" => "satchel", "erasers" => "eraser",
+                "color-markers" => "colored_markers",
                 _ => null
             };
         if (scene.Group == QuestionKnowledgeGroup.Objects)
@@ -28,6 +29,7 @@ internal static partial class QuizStoryArtworkCatalogue
                 "serving-bowls" => "serving_bowl", "rice-bowls" => "rice_bowl",
                 "plates" => "plate", "spoons" => "spoon", "forks" => "fork",
                 "chopstick-pairs" => "chopsticks", "drinking-glasses" => "drinking_glass",
+                "balls" => "ball", "marbles" => "marble",
                 _ => null
             };
         if (scene.Group == QuestionKnowledgeGroup.Animals)

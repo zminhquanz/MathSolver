@@ -44,6 +44,7 @@ internal static class FoodThemeInterchangeTests
             foreach(var family in new[]{BankQuestionFamily.Arithmetic,BankQuestionFamily.Fraction,BankQuestionFamily.FindX})
             {
                 var c=Contract(subject,op,language,family);var d=BasicQuestionTemplates.Example(c);string raw=QuestionBankStore.SerializeDraft(d);
+                FoodThemeTests.CheckFoodVenue(c,d);
                 Check(BasicQuestionValidator.Validate(raw,c).IsValid,"Typed source before interchange: "+c.SceneId);
                 records.Add(new(c,d,raw,"C# themes",DateTime.UtcNow));fixtures++;
             }
@@ -51,7 +52,8 @@ internal static class FoodThemeInterchangeTests
             await File.WriteAllBytesAsync(Path.Combine(folder,"food-themes-"+culture+"-backup.xlsx"),backup.ToArray());backup.Position=0;
             var rows=QuestionBankWorkbook.Read(backup);Check(rows.Count==records.Count&&rows.All(r=>r.Question is not null),"Backup lost themed rows: "+string.Join(',',rows.Where(r=>r.Question is null).Select(r=>r.ErrorCode)));
             for(int i=0;i<rows.Count;i++)Check(rows[i].Question!.Contract==records[i].Contract&&rows[i].Question!.Contract.AnswerText==records[i].Contract.AnswerText,"Backup changed subject/group/fractions");
-            var store=new QuestionBankStore(Path.Combine(folder,"themes-"+culture+".db3"));backup.Position=0;var imported=await store.ImportExcelAsync(backup);
+            // Isolate this run so a previous verification cannot turn fresh inserts into duplicates.
+            var store=new QuestionBankStore(Path.Combine(folder,$"themes-{culture}-{Guid.NewGuid():N}.db3"));backup.Position=0;var imported=await store.ImportExcelAsync(backup);
             int unique=records.Select(r=>QuestionProseIdentity.Hash(r.Contract,r.Draft)).Distinct().Count();
             Check(imported.Inserted==unique&&imported.Duplicates==records.Count-unique&&imported.Rejected==0,"SQLite import/dedup mismatch: "+System.Text.Json.JsonSerializer.Serialize(imported));
             foreach(var group in new[]{QuestionKnowledgeGroup.Food,QuestionKnowledgeGroup.Drinks,QuestionKnowledgeGroup.Fruit})
