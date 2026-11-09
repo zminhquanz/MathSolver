@@ -6,6 +6,7 @@ internal static class PdfTestCommands
         new Dictionary<string, PdfTestCommand>(StringComparer.Ordinal)
         {
             ["--food-themes"] = new("Food/drink/fruit themes", FoodThemeWorksheetTests.Run),
+            ["--everyday-items"] = new("School eraser and everyday objects", EverydayItemWorksheetTests.Run),
             ["--applied-open"] = new("Applied open-prose", AppliedOpenWorksheetTests.Run),
             ["--practical-open"] = new("Practical open-prose", PracticalOpenWorksheetTests.Run),
             ["--motion-open"] = new("Motion", MotionOpenWorksheetTests.Run),

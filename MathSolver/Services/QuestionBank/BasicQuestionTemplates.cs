@@ -40,9 +40,28 @@ public static class QuestionUnits
 {
     public static IReadOnlyList<QuestionUnit> All { get; } = Array.AsReadOnly(new QuestionUnit[]
     {
+        // Stable unit IDs are shared by authored/AI scenes and Excel round-trips.
+        new("erasers", "cục gôm", "eraser", "erasers", "hộp", "box", "boxes"),
+        new("footwear-pairs", "đôi giày dép", "pair of shoes or sandals", "pairs of shoes or sandals", "kệ", "shelf", "shelves"),
+        new("clothing-sets", "bộ quần áo", "set of clothes", "sets of clothes", "tủ", "wardrobe", "wardrobes"),
+        new("toothbrushes", "bàn chải đánh răng", "toothbrush", "toothbrushes", "hộp", "box", "boxes"),
+        new("combs", "chiếc lược", "comb", "combs", "hộp", "box", "boxes"),
+        new("serving-bowls", "cái tô", "serving bowl", "serving bowls", "thùng", "carton", "cartons"),
+        new("rice-bowls", "cái chén", "rice bowl", "rice bowls", "thùng", "carton", "cartons"),
+        new("plates", "cái đĩa", "plate", "plates", "chồng", "stack", "stacks"),
+        new("spoons", "cái muỗng", "spoon", "spoons", "khay", "tray", "trays"),
+        new("forks", "cái nĩa", "fork", "forks", "khay", "tray", "trays"),
+        new("chopstick-pairs", "đôi đũa", "pair of chopsticks", "pairs of chopsticks", "ống", "holder", "holders"),
+        new("drinking-glasses", "cái ly", "drinking glass", "drinking glasses", "khay", "tray", "trays"),
         new("books", "quyển sách", "book", "books", "thùng", "box", "boxes"),
         new("notebooks", "quyển vở", "notebook", "notebooks", "gói", "pack", "packs"),
         new("pencils", "bút chì", "pencil", "pencils", "hộp", "box", "boxes"),
+        new("fountain-pens", "cây bút mực", "fountain pen", "fountain pens", "hộp", "box", "boxes"),
+        new("ink-bottles", "bình mực", "ink bottle", "ink bottles", "khay", "tray", "trays"),
+        new("pencil-cases", "hộp bút", "pencil case", "pencil cases", "thùng", "carton", "cartons"),
+        new("compasses", "chiếc compa", "drawing compass", "drawing compasses", "hộp", "box", "boxes"),
+        new("rulers", "cây thước kẻ", "ruler", "rulers", "hộp", "box", "boxes"),
+        new("satchels", "chiếc cặp táp", "school satchel", "school satchels", "thùng", "carton", "cartons"),
         new("candies", "viên kẹo", "sweet", "sweets", "túi", "bag", "bags"),
         new("apples", "quả táo", "apple", "apples", "giỏ", "basket", "baskets"),
         new("oranges", "quả cam", "orange", "oranges", "giỏ", "basket", "baskets"),

@@ -9,7 +9,7 @@ namespace MathSolver.Services;
 
 public sealed record PracticeCountContext(string Id, QuestionKnowledgeGroup Group, string Actor,
     string Unit, string GroupUnit, int Capacity, int MaximumPerGroup, string TemplatePrefix = "count",
-    bool AllowsMentalLargeNumbers = false);
+    bool AllowsMentalLargeNumbers = false, string? ArtworkId = null);
 public sealed record PracticeMoneyItem(string Id, string Name, string Buyer, string Unit,
     int MinimumPrice, int MaximumPrice, int PriceStep, int MaximumCount, int MinimumStars,
     int MaximumCountFourStars = 0, string PluralName = "", int MaximumPurchaseTotal = 0, bool IsInstitutional = false,
@@ -38,6 +38,7 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
         var purchases = new List<PracticePurchase>();
         var steps = new List<PracticeSolutionStep>();
         string contextId, templateId, unit, actor;
+        string? artworkId = null;
         int cap, a, b, answerStep = 1;
         PracticeArithmeticStyle? style = null;
         if (group == QuestionKnowledgeGroup.Money)
@@ -125,7 +126,7 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
                 ? PracticeArithmeticStyle.Mental : PracticeArithmeticStyle.Written;
             style = requestedStyle ?? sampledStyle;
             cap = Math.Min(context.Capacity, PracticeArithmeticDifficulty.Maximum(tier, style));
-            unit = context.Unit; actor = context.Actor; contextId = context.Id;
+            unit = context.Unit; actor = context.Actor; contextId = context.Id; artworkId = context.ArtworkId;
             values["group"] = context.GroupUnit;
             int factor = (int)tier >= 4 ? 99 : (int)tier <= 1 ? 5 : 9;
             if (style == PracticeArithmeticStyle.Mental)
@@ -184,7 +185,7 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
             new System.Collections.ObjectModel.ReadOnlyDictionary<string, string>(values));
         var word = new MathWordProblem(Render(template.Problem, values), Render(template.Lead, values), unit, actor,
             group == QuestionKnowledgeGroup.Money ? WordProblemQuantity.Money : WordProblemQuantity.Count, PracticeDetails: details)
-            { ItemUnit = unit };
+            { ItemUnit = unit, StoryArtworkId = artworkId };
         var choices = new List<BigInteger>();
         BigInteger? presented = null; bool? assertion = null;
         if (mode == ArithmeticQuizMode.MultipleChoice)

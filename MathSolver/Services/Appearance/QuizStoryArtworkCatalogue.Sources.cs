@@ -11,11 +11,31 @@ internal static partial class QuizStoryArtworkCatalogue
     internal static string? AppliedSceneArtwork(AppliedQuestionScene? scene)
     {
         if (scene is null) return null;
+        if (scene.Group == QuestionKnowledgeGroup.SchoolSupplies)
+            return scene.UnitId switch
+            {
+                "books" => "books", "notebooks" => "notebook", "pencils" => "pencil",
+                "fountain-pens" => "fountain_pen", "ink-bottles" => "ink_bottle",
+                "pencil-cases" => "pencil_case", "compasses" => "compass",
+                "rulers" => "ruler", "satchels" => "satchel", "erasers" => "eraser",
+                _ => null
+            };
+        if (scene.Group == QuestionKnowledgeGroup.Objects)
+            return scene.UnitId switch
+            {
+                "footwear-pairs" => "footwear", "clothing-sets" => "clothing",
+                "toothbrushes" => "toothbrush", "combs" => "comb",
+                "serving-bowls" => "serving_bowl", "rice-bowls" => "rice_bowl",
+                "plates" => "plate", "spoons" => "spoon", "forks" => "fork",
+                "chopstick-pairs" => "chopsticks", "drinking-glasses" => "drinking_glass",
+                _ => null
+            };
         if (scene.Group == QuestionKnowledgeGroup.Animals)
             return scene.UnitId switch
             {
                 "chickens" => "chicken", "ducks" => "duck", "birds" => "bird", "fish" => "fish",
                 "cows" => "cow", "horses" => "horse", "deer" => "deer", "dogs" => "dog",
+                "cats" => "cat", "pigs" => "pig",
                 "rabbits" => "rabbit", "turtles" => "turtle", "tortoises" => "tortoise", "geese" => "goose",
                 _ => null
             };

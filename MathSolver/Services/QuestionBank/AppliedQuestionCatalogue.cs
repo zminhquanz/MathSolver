@@ -146,10 +146,19 @@ public static partial class AppliedQuestionCatalogue
         if (Find(c.SceneId)!.StoryContextId is not null)
             return c.Language == AppLanguage.English && c.Answer.IsOne ? ExpandedSingular(c.Unit) ?? c.Unit : c.Unit;
         if (c.Structure == BasicQuestionStructure.CountGroups)
-            return c.Language == AppLanguage.Vietnamese || c.Answer.IsOne ? c.GroupUnit : c.GroupUnit + "s";
+            return c.Answer.IsOne ? c.GroupUnit : PluralGroupUnit(c);
         if (c.Language == AppLanguage.English && c.Answer.IsOne)
             return ExpandedUnit(Find(c.SceneId)!.UnitId, c.Language, true) ?? QuestionUnits.Find(Find(c.SceneId)!.UnitId)?.Item(c.Language, true) ?? (c.Unit == "dollars" ? "dollar" : c.Unit);
         return c.Unit;
+    }
+    private static string PluralGroupUnit(BasicQuestionContract c)
+    {
+        if (c.Language == AppLanguage.Vietnamese) return c.GroupUnit;
+        var unit = QuestionUnits.Find(Find(c.SceneId)?.UnitId);
+        // A group's plural form can be irregular (box/boxes, shelf/shelves).
+        // Only use catalogue inflection when the stored singular group matches.
+        return unit is not null && c.GroupUnit == unit.Group(c.Language, singular: true)
+            ? unit.Group(c.Language) : c.GroupUnit + "s";
     }
     public static (string A, string B) InputUnits(BasicQuestionContract c)
     {
@@ -324,7 +333,7 @@ public static partial class AppliedQuestionCatalogue
             .Replace("{b} {unit_b}", "{b} " + Singular(units.B, c.Right * s.RightDisplayFactor));
         string text = template.Replace("{unit_a}", units.A).Replace("{unit_b}", units.B)
             .Replace("{unit}", c.Unit).Replace("{group}", c.GroupUnit)
-            .Replace("{groups}", c.Language == AppLanguage.Vietnamese ? c.GroupUnit : c.GroupUnit + "s")
+            .Replace("{groups}", PluralGroupUnit(c))
             .Replace("{name}", c.Subject).Replace("{other}", c.OtherSubject)
             .Replace("{a}", left).Replace("{b}", (c.Right * s.RightDisplayFactor).ToString(CultureInfo.InvariantCulture));
         if (c.Language == AppLanguage.English)

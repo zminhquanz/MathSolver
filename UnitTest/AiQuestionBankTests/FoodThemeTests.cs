@@ -32,6 +32,7 @@ internal static class FoodThemeTests
         {
             ("chickens", "chicken"), ("ducks", "duck"), ("birds", "bird"), ("fish", "fish"),
             ("cows", "cow"), ("horses", "horse"), ("deer", "deer"), ("dogs", "dog"),
+            ("cats", "cat"), ("pigs", "pig"),
             ("rabbits", "rabbit"), ("turtles", "turtle"), ("tortoises", "tortoise"), ("geese", "goose")
         };
         int checkedCount = 0;

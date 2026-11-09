@@ -73,7 +73,9 @@ public static class AdditionQuestionScales
                     4 => "{person}'s district library", _ => "{person}'s city library" },
                 "Sách được lưu giữ trong góc sách, tủ sách hoặc thư viện theo quy mô đã chọn.",
                 "Books held in the selected reading corner, bookcase or library."),
-            "school-supplies" => Scale(stars <= 2 ? ["books", "notebooks", "pencils", "cards"] : ["books", "notebooks", "pencils"],
+            "school-supplies" => Scale(stars <= 2
+                ? ["books", "notebooks", "pencils", "fountain-pens", "ink-bottles", "pencil-cases", "compasses", "rulers", "satchels", "erasers", "cards"]
+                : ["books", "notebooks", "pencils", "fountain-pens", "ink-bottles", "pencil-cases", "compasses", "rulers", "satchels", "erasers"],
                 stars switch { 1 => "nhóm của {person}", 2 => "lớp của {person}", 3 => "trường do {person} phụ trách",
                     4 => "cụm trường do {person} phụ trách", _ => "mạng lưới trường do {person} phụ trách" },
                 stars switch { 1 => "{person}'s group", 2 => "{person}'s class", 3 => "{person}'s school",
