@@ -100,7 +100,14 @@ internal static class FoodThemeTests
             ("bun-thit-nuong-cha-gio", "bun_thit_nuong_cha_gio"),
             ("hu-tieu-nam-vang", "hu_tieu_nam_vang"), ("mi-quang", "mi_quang"),
             ("bun-bo-hue", "bun_bo_hue"), ("banh-cuon", "banh_cuon"),
-            ("kimchi", "kimchi"), ("sushi", "sushi")
+            ("kimchi", "kimchi"), ("sushi", "sushi"),
+            ("banh-cam", "banh_cam"), ("banh-com", "banh_com"),
+            ("banh-trung-thu", "banh_trung_thu"), ("banh-pia", "banh_pia"),
+            ("croissants", "croissant"), ("banh-da-lon", "banh_da_lon"),
+            ("banh-bo", "banh_bo"), ("muffins", "muffin"),
+            ("cupcakes", "cupcake"), ("cookies", "cookie"),
+            ("donuts", "donut"), ("waffles", "waffle"),
+            ("apple-pies", "apple_pie"), ("flans", "flan")
         };
         int verified = 0;
         foreach (var (id, artwork) in dishes)
@@ -125,6 +132,10 @@ internal static class FoodThemeTests
     }
     public static void Run()
     {
+        Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),
+            "Hamburgers must use an eatery or restaurant, not a bakery");
+        Check(FoodThemeCatalogue.IsBakeryFood("cakes") && FoodThemeCatalogue.IsBakeryFood("flans"),
+            "Desserts must use a named bakery or cake shop");
         int count = 0;
         int animalCount = CheckAnimalArtwork();
         int dishCount = CheckNewDishArtwork();

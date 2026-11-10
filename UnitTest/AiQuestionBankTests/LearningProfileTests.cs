@@ -66,7 +66,7 @@ internal static class LearningProfileTests
                         if (mode != ArithmeticQuizMode.Essay) continue;
                         string equation = $"{AppliedQuestionCatalogue.Reasoning(c)?.Equation ?? $"{c.Left} {BasicArithmeticEngine.GetSymbol(operation)} {c.Right}"} = {c.Answer} {c.AnswerUnit}";
                         var graded = essay.Validate(question, word.SolutionLead, equation, $"{c.Answer} {c.AnswerUnit}");
-                        Check(graded.IsCorrect, $"Correct solution failed grading: {scene.Id}/{language}: {graded}");
+                        Check(graded.IsCorrect, $"Correct solution failed grading: {scene.Id}/{language}: {graded}. Lead='{word.SolutionLead}', Unit='{c.Unit}', AnswerUnit='{c.AnswerUnit}', Problem='{word.ProblemText}'");
                         Check(!essay.Validate(question, word.SolutionLead, equation, $"{c.Answer + 1} {c.AnswerUnit}").IsCorrect, "Wrong answer passed.");
                         string badUnit = c.AnswerUnit.StartsWith("m³", StringComparison.Ordinal) ? "m²" : c.AnswerUnit.StartsWith("m²", StringComparison.Ordinal) ? "m³" : c.AnswerUnit.StartsWith("kg", StringComparison.Ordinal) ? "km" : "kg";
                         Check(!essay.Validate(question, word.SolutionLead, equation, $"{c.Answer} {badUnit}").IsCorrect,

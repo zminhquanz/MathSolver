@@ -51,7 +51,7 @@ public sealed class PracticeArithmeticStoryGenerator(Random? random = null)
             var item = items[_random.Next(items.Length)];
             Validate(item);
             answerStep = item.PriceStep;
-            unit = item.Unit; actor = item.Buyer; contextId = item.Id;
+            unit = item.Unit; actor = item.Buyer; contextId = item.Id; artworkId = item.ArtworkId;
             int countCap = (int)tier == 4 && item.MaximumCountFourStars > 0 ? item.MaximumCountFourStars : item.MaximumCount;
             int purchaseCap = Math.Min(cap, item.MaximumPurchaseTotal == 0 ? cap : item.MaximumPurchaseTotal);
             countCap = Math.Min(countCap, purchaseCap / item.MinimumPrice);

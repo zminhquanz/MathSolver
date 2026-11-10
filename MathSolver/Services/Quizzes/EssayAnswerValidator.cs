@@ -1352,10 +1352,12 @@ public sealed partial class EssayAnswerValidator
             {
                 "cacti" => "cactus",
                 "mice" => "mouse",
+                "geese" => "goose",
                 "cookies" => "cookie",
                 "brownies" => "brownie",
                 "budgies" => "budgie",
                 "loaves" => "loaf",
+                "shelves" => "shelf",
                 _ => string.Empty
             };
 

@@ -12,6 +12,20 @@ public static class FoodThemeCatalogue
     [
         .. BreadQuestionCatalogue.Types.Select(t => new Subject(QuestionKnowledgeGroup.Food, t.Unit, t.ArtworkId)),
         new(QuestionKnowledgeGroup.Food, Unit("cakes","chiếc bánh kem","cream cake","cream cakes"),"cake"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-cam","chiếc bánh cam","Vietnamese sesame ball","Vietnamese sesame balls"),"banh_cam"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-com","chiếc bánh cốm","green rice cake","green rice cakes"),"banh_com"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-trung-thu","chiếc bánh trung thu","mooncake","mooncakes"),"banh_trung_thu"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-pia","chiếc bánh pía","pia pastry","pia pastries"),"banh_pia"),
+        new(QuestionKnowledgeGroup.Food, Unit("croissants","chiếc bánh croissant","croissant","croissants"),"croissant"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-da-lon","miếng bánh da lợn","layered steamed cake slice","layered steamed cake slices"),"banh_da_lon"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-bo","chiếc bánh bò","Vietnamese honeycomb cake","Vietnamese honeycomb cakes"),"banh_bo"),
+        new(QuestionKnowledgeGroup.Food, Unit("muffins","chiếc bánh muffin","muffin","muffins"),"muffin"),
+        new(QuestionKnowledgeGroup.Food, Unit("cupcakes","chiếc bánh cupcake","cupcake","cupcakes"),"cupcake"),
+        new(QuestionKnowledgeGroup.Food, Unit("cookies","chiếc bánh cookie","cookie","cookies"),"cookie"),
+        new(QuestionKnowledgeGroup.Food, Unit("donuts","chiếc bánh donut","donut","donuts"),"donut"),
+        new(QuestionKnowledgeGroup.Food, Unit("waffles","chiếc bánh waffle","waffle","waffles"),"waffle"),
+        new(QuestionKnowledgeGroup.Food, Unit("apple-pies","chiếc bánh táo","apple pie","apple pies"),"apple_pie"),
+        new(QuestionKnowledgeGroup.Food, Unit("flans","chiếc bánh flan","crème caramel","crème caramels"),"flan"),
         new(QuestionKnowledgeGroup.Food, Unit("biscuits","chiếc bánh quy","biscuit","biscuits"),"biscuit"),
         new(QuestionKnowledgeGroup.Food, Unit("eggs","quả trứng","egg","eggs"),"egg"),
         new(QuestionKnowledgeGroup.Food, Unit("candies","viên kẹo","sweet","sweets"),"candy"),
@@ -54,7 +68,10 @@ public static class FoodThemeCatalogue
     // Bánh cuốn and bánh xèo remain restaurant dishes.
     public static bool IsBakeryFood(string? unitId) => unitId is
         "sandwich-bread" or "round-bread" or "banh-mi" or "bread-rolls" or
-        "cakes" or "biscuits" or "lamingtons" or "pancakes" or "hamburgers";
+        "cakes" or "biscuits" or "lamingtons" or "pancakes" or
+        "banh-cam" or "banh-com" or "banh-trung-thu" or "banh-pia" or
+        "croissants" or "banh-da-lon" or "banh-bo" or "muffins" or
+        "cupcakes" or "cookies" or "donuts" or "waffles" or "apple-pies" or "flans";
 
     public static bool IsBakeryFractionScene(string sceneId) =>
         Subjects.Any(s => s.Group == QuestionKnowledgeGroup.Food && IsBakeryFood(s.Unit.Id)

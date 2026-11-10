@@ -13454,6 +13454,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-total.UnitA",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-total.UnitA",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-total.UnitA",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-total.UnitA",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-total.UnitA",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-total.UnitA",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-total.UnitA",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-total.UnitA",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-total.UnitA",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-total.UnitA",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-total.UnitA",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-total.UnitA",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-total.UnitA",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-total.UnitA",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-total.UnitA",
       "Text": "chiếc bánh quy",
       "Variables": []
@@ -13461,6 +13531,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-total.UnitB",
       "Text": "chiếc bánh kem",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-total.UnitB",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-total.UnitB",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-total.UnitB",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-total.UnitB",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-total.UnitB",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-total.UnitB",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-total.UnitB",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-total.UnitB",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-total.UnitB",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-total.UnitB",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-total.UnitB",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-total.UnitB",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-total.UnitB",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-total.UnitB",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -13474,6 +13614,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-total.ResultUnit",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-total.ResultUnit",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-total.ResultUnit",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-total.ResultUnit",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-total.ResultUnit",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-total.ResultUnit",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-total.ResultUnit",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-total.ResultUnit",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-total.ResultUnit",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-total.ResultUnit",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-total.ResultUnit",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-total.ResultUnit",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-total.ResultUnit",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-total.ResultUnit",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-total.ResultUnit",
       "Text": "chiếc bánh quy",
       "Variables": []
@@ -13481,6 +13691,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-remaining.UnitA",
       "Text": "chiếc bánh kem",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-remaining.UnitA",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-remaining.UnitA",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-remaining.UnitA",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-remaining.UnitA",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-remaining.UnitA",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-remaining.UnitA",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-remaining.UnitA",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-remaining.UnitA",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-remaining.UnitA",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-remaining.UnitA",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-remaining.UnitA",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-remaining.UnitA",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-remaining.UnitA",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-remaining.UnitA",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -13494,6 +13774,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-remaining.UnitB",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-remaining.UnitB",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-remaining.UnitB",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-remaining.UnitB",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-remaining.UnitB",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-remaining.UnitB",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-remaining.UnitB",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-remaining.UnitB",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-remaining.UnitB",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-remaining.UnitB",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-remaining.UnitB",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-remaining.UnitB",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-remaining.UnitB",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-remaining.UnitB",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-remaining.UnitB",
       "Text": "chiếc bánh quy",
       "Variables": []
@@ -13501,6 +13851,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-remaining.ResultUnit",
       "Text": "chiếc bánh kem",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-remaining.ResultUnit",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-remaining.ResultUnit",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-remaining.ResultUnit",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-remaining.ResultUnit",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-remaining.ResultUnit",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-remaining.ResultUnit",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-remaining.ResultUnit",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-remaining.ResultUnit",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-remaining.ResultUnit",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-remaining.ResultUnit",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-remaining.ResultUnit",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-remaining.ResultUnit",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-remaining.ResultUnit",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-remaining.ResultUnit",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -13514,6 +13934,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-groups.UnitA",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-groups.UnitA",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-groups.UnitA",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-groups.UnitA",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-groups.UnitA",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-groups.UnitA",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-groups.UnitA",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-groups.UnitA",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-groups.UnitA",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-groups.UnitA",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-groups.UnitA",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-groups.UnitA",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-groups.UnitA",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-groups.UnitA",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-groups.UnitA",
       "Text": "chiếc bánh quy",
       "Variables": []
@@ -13521,6 +14011,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-groups.UnitB",
       "Text": "",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-groups.UnitB",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-groups.UnitB",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-groups.UnitB",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-groups.UnitB",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-groups.UnitB",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-groups.UnitB",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-groups.UnitB",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-groups.UnitB",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-groups.UnitB",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-groups.UnitB",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-groups.UnitB",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-groups.UnitB",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-groups.UnitB",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-groups.UnitB",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -13534,6 +14094,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-groups.ResultUnit",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-groups.ResultUnit",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-groups.ResultUnit",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-groups.ResultUnit",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-groups.ResultUnit",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-groups.ResultUnit",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-groups.ResultUnit",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-groups.ResultUnit",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-groups.ResultUnit",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-groups.ResultUnit",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-groups.ResultUnit",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-groups.ResultUnit",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-groups.ResultUnit",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-groups.ResultUnit",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-groups.ResultUnit",
       "Text": "chiếc bánh quy",
       "Variables": []
@@ -13541,6 +14171,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-share.UnitA",
       "Text": "chiếc bánh kem",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-share.UnitA",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-share.UnitA",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-share.UnitA",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-share.UnitA",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-share.UnitA",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-share.UnitA",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-share.UnitA",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-share.UnitA",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-share.UnitA",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-share.UnitA",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-share.UnitA",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-share.UnitA",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-share.UnitA",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-share.UnitA",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -13554,6 +14254,76 @@
       "Variables": []
     },
     {
+      "Id": "Fraction.fraction-theme-food-banh-cam-share.UnitB",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-share.UnitB",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-share.UnitB",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-share.UnitB",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-share.UnitB",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-share.UnitB",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-share.UnitB",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-share.UnitB",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-share.UnitB",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-share.UnitB",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-share.UnitB",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-share.UnitB",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-share.UnitB",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-share.UnitB",
+      "Text": "chiếc bánh flan",
+      "Variables": []
+    },
+    {
       "Id": "Fraction.fraction-theme-food-biscuits-share.UnitB",
       "Text": "",
       "Variables": []
@@ -13561,6 +14331,76 @@
     {
       "Id": "Fraction.fraction-theme-food-cakes-share.ResultUnit",
       "Text": "chiếc bánh kem",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-cam-share.ResultUnit",
+      "Text": "chiếc bánh cam",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-com-share.ResultUnit",
+      "Text": "chiếc bánh cốm",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-trung-thu-share.ResultUnit",
+      "Text": "chiếc bánh trung thu",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-pia-share.ResultUnit",
+      "Text": "chiếc bánh pía",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-croissants-share.ResultUnit",
+      "Text": "chiếc bánh croissant",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-da-lon-share.ResultUnit",
+      "Text": "miếng bánh da lợn",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-banh-bo-share.ResultUnit",
+      "Text": "chiếc bánh bò",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-muffins-share.ResultUnit",
+      "Text": "chiếc bánh muffin",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cupcakes-share.ResultUnit",
+      "Text": "chiếc bánh cupcake",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-cookies-share.ResultUnit",
+      "Text": "chiếc bánh cookie",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-donuts-share.ResultUnit",
+      "Text": "chiếc bánh donut",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-waffles-share.ResultUnit",
+      "Text": "chiếc bánh waffle",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-apple-pies-share.ResultUnit",
+      "Text": "chiếc bánh táo",
+      "Variables": []
+    },
+    {
+      "Id": "Fraction.fraction-theme-food-flans-share.ResultUnit",
+      "Text": "chiếc bánh flan",
       "Variables": []
     },
     {
@@ -34386,6 +35226,440 @@
         }
       },
       {
+        "Id": "theme-food-banh-cam-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-cam",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-cam"
+        }
+      },
+      {
+        "Id": "theme-food-banh-com-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-com",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-com"
+        }
+      },
+      {
+        "Id": "theme-food-banh-trung-thu-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-trung-thu",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-trung-thu"
+        }
+      },
+      {
+        "Id": "theme-food-banh-pia-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-pia",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-pia"
+        }
+      },
+      {
+        "Id": "theme-food-croissants-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "croissants",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "croissants"
+        }
+      },
+      {
+        "Id": "theme-food-banh-da-lon-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-da-lon",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-da-lon"
+        }
+      },
+      {
+        "Id": "theme-food-banh-bo-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "banh-bo",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "banh-bo"
+        }
+      },
+      {
+        "Id": "theme-food-muffins-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "muffins",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "muffins"
+        }
+      },
+      {
+        "Id": "theme-food-cupcakes-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "cupcakes",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "cupcakes"
+        }
+      },
+      {
+        "Id": "theme-food-cookies-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "cookies",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "cookies"
+        }
+      },
+      {
+        "Id": "theme-food-donuts-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "donuts",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "donuts"
+        }
+      },
+      {
+        "Id": "theme-food-waffles-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "waffles",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "waffles"
+        }
+      },
+      {
+        "Id": "theme-food-apple-pies-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "apple-pies",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "apple-pies"
+        }
+      },
+      {
+        "Id": "theme-food-flans-total",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit},",
+            "GivenB": "{other} phục vụ {b} {unit}.",
+            "Question": "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} được phục vụ là:",
+            "UnitId": "flans",
+            "ProblemText": "{name} phục vụ {a} {unit}, {other} phục vụ {b} {unit}. Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit},",
+            "{name} đã bán {a} {unit},"
+          ],
+          "GivenB": [
+            "{other} phục vụ {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi cả hai cơ sở phục vụ tất cả bao nhiêu {unit}?",
+            "Cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} được phục vụ là:"
+          ],
+          "UnitId": "flans"
+        }
+      },
+      {
         "Id": "theme-food-biscuits-total",
         "Family": "Applied",
         "Examples": [
@@ -34445,6 +35719,440 @@
             "Số {unit} chưa bán còn lại là:"
           ],
           "UnitId": "cakes"
+        }
+      },
+      {
+        "Id": "theme-food-banh-cam-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-cam",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-cam"
+        }
+      },
+      {
+        "Id": "theme-food-banh-com-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-com",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-com"
+        }
+      },
+      {
+        "Id": "theme-food-banh-trung-thu-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-trung-thu",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-trung-thu"
+        }
+      },
+      {
+        "Id": "theme-food-banh-pia-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-pia",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-pia"
+        }
+      },
+      {
+        "Id": "theme-food-croissants-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "croissants",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "croissants"
+        }
+      },
+      {
+        "Id": "theme-food-banh-da-lon-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-da-lon",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-da-lon"
+        }
+      },
+      {
+        "Id": "theme-food-banh-bo-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "banh-bo",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "banh-bo"
+        }
+      },
+      {
+        "Id": "theme-food-muffins-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "muffins",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "muffins"
+        }
+      },
+      {
+        "Id": "theme-food-cupcakes-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "cupcakes",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "cupcakes"
+        }
+      },
+      {
+        "Id": "theme-food-cookies-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "cookies",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "cookies"
+        }
+      },
+      {
+        "Id": "theme-food-donuts-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "donuts",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "donuts"
+        }
+      },
+      {
+        "Id": "theme-food-waffles-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "waffles",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "waffles"
+        }
+      },
+      {
+        "Id": "theme-food-apple-pies-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "apple-pies",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "apple-pies"
+        }
+      },
+      {
+        "Id": "theme-food-flans-remaining",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit},",
+            "GivenB": "quán đã bán cho khách {b} {unit}.",
+            "Question": "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} chưa bán còn lại là:",
+            "UnitId": "flans",
+            "ProblemText": "{name} chuẩn bị {a} {unit}, quán đã bán cho khách {b} {unit}. Hỏi {name} còn lại bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit},",
+            "Ban đầu, {name} làm sẵn {a} {unit},"
+          ],
+          "GivenB": [
+            "quán đã bán cho khách {b} {unit}."
+          ],
+          "Questions": [
+            "Hỏi {name} còn lại bao nhiêu {unit}?",
+            "{name} còn bao nhiêu {unit} chưa bán?"
+          ],
+          "Leads": [
+            "Số {unit} chưa bán còn lại là:"
+          ],
+          "UnitId": "flans"
         }
       },
       {
@@ -34510,6 +36218,440 @@
         }
       },
       {
+        "Id": "theme-food-banh-cam-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-cam",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-cam"
+        }
+      },
+      {
+        "Id": "theme-food-banh-com-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-com",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-com"
+        }
+      },
+      {
+        "Id": "theme-food-banh-trung-thu-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-trung-thu",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-trung-thu"
+        }
+      },
+      {
+        "Id": "theme-food-banh-pia-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-pia",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-pia"
+        }
+      },
+      {
+        "Id": "theme-food-croissants-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "croissants",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "croissants"
+        }
+      },
+      {
+        "Id": "theme-food-banh-da-lon-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-da-lon",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-da-lon"
+        }
+      },
+      {
+        "Id": "theme-food-banh-bo-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "banh-bo",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "banh-bo"
+        }
+      },
+      {
+        "Id": "theme-food-muffins-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "muffins",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "muffins"
+        }
+      },
+      {
+        "Id": "theme-food-cupcakes-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "cupcakes",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "cupcakes"
+        }
+      },
+      {
+        "Id": "theme-food-cookies-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "cookies",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "cookies"
+        }
+      },
+      {
+        "Id": "theme-food-donuts-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "donuts",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "donuts"
+        }
+      },
+      {
+        "Id": "theme-food-waffles-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "waffles",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "waffles"
+        }
+      },
+      {
+        "Id": "theme-food-apple-pies-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "apple-pies",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "apple-pies"
+        }
+      },
+      {
+        "Id": "theme-food-flans-groups",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "GivenB": "có tất cả {b} {unit_b} được phục vụ như nhau.",
+            "Question": "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng số {unit} phục vụ các bàn là:",
+            "UnitId": "flans",
+            "ProblemText": "Tại {name}, mỗi bàn được phục vụ {a} {unit_a}, có tất cả {b} {unit_b} được phục vụ như nhau. Hỏi quán phục vụ tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "Tại {name}, mỗi bàn được phục vụ {a} {unit_a},",
+            "Mỗi bàn ở {name} gọi {a} {unit_a},"
+          ],
+          "GivenB": [
+            "có tất cả {b} {unit_b} được phục vụ như nhau."
+          ],
+          "Questions": [
+            "Hỏi quán phục vụ tất cả bao nhiêu {unit}?",
+            "Tổng cộng các bàn được phục vụ bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng số {unit} phục vụ các bàn là:"
+          ],
+          "UnitId": "flans"
+        }
+      },
+      {
         "Id": "theme-food-biscuits-groups",
         "Family": "Applied",
         "Examples": [
@@ -34569,6 +36711,440 @@
             "Số {unit} được phục vụ mỗi bàn là:"
           ],
           "UnitId": "cakes"
+        }
+      },
+      {
+        "Id": "theme-food-banh-cam-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-cam",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-cam"
+        }
+      },
+      {
+        "Id": "theme-food-banh-com-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-com",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-com"
+        }
+      },
+      {
+        "Id": "theme-food-banh-trung-thu-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-trung-thu",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-trung-thu"
+        }
+      },
+      {
+        "Id": "theme-food-banh-pia-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-pia",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-pia"
+        }
+      },
+      {
+        "Id": "theme-food-croissants-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "croissants",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "croissants"
+        }
+      },
+      {
+        "Id": "theme-food-banh-da-lon-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-da-lon",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-da-lon"
+        }
+      },
+      {
+        "Id": "theme-food-banh-bo-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "banh-bo",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "banh-bo"
+        }
+      },
+      {
+        "Id": "theme-food-muffins-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "muffins",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "muffins"
+        }
+      },
+      {
+        "Id": "theme-food-cupcakes-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "cupcakes",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "cupcakes"
+        }
+      },
+      {
+        "Id": "theme-food-cookies-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "cookies",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "cookies"
+        }
+      },
+      {
+        "Id": "theme-food-donuts-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "donuts",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "donuts"
+        }
+      },
+      {
+        "Id": "theme-food-waffles-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "waffles",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "waffles"
+        }
+      },
+      {
+        "Id": "theme-food-apple-pies-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "apple-pies",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "apple-pies"
+        }
+      },
+      {
+        "Id": "theme-food-flans-share",
+        "Family": "Applied",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "GivenB": "quán chia đều số món đó cho {b} {unit_b}.",
+            "Question": "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "SolutionLead": "Số {unit} được phục vụ mỗi bàn là:",
+            "UnitId": "flans",
+            "ProblemText": "{name} chuẩn bị tổng cộng {a} {unit_a}, quán chia đều số món đó cho {b} {unit_b}. Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị tổng cộng {a} {unit_a},",
+            "Trong một lượt khách, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "quán chia đều số món đó cho {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi mỗi bàn được phục vụ bao nhiêu {unit}?",
+            "Mỗi bàn nhận được bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Số {unit} được phục vụ mỗi bàn là:"
+          ],
+          "UnitId": "flans"
         }
       },
       {
@@ -37610,6 +40186,440 @@
         }
       },
       {
+        "Id": "fraction-theme-food-banh-cam-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-cam-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-cam-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-com-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-com-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-com-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-trung-thu-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-trung-thu-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-trung-thu-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-pia-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-pia-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-pia-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-croissants-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-croissants-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-croissants-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-da-lon-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-da-lon-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-da-lon-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-bo-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-bo-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-bo-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-muffins-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-muffins-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-muffins-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cupcakes-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-cupcakes-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cupcakes-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cookies-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-cookies-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cookies-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-donuts-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-donuts-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-donuts-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-waffles-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-waffles-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-waffles-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-apple-pies-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-apple-pies-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-apple-pies-total"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-flans-total",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} phục vụ {a} {unit_a},",
+            "GivenB": "một lượt phục vụ khác có thêm {b} {unit_b}.",
+            "Question": "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "SolutionLead": "Tổng lượng món phục vụ là ({unit}):",
+            "UnitId": "fraction-theme-food-flans-total",
+            "ProblemText": "{name} phục vụ {a} {unit_a}, một lượt phục vụ khác có thêm {b} {unit_b}. Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} phục vụ {a} {unit_a},",
+            "{name} đã chuẩn bị {a} {unit_a},"
+          ],
+          "GivenB": [
+            "một lượt phục vụ khác có thêm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi hai lượt phục vụ có tất cả bao nhiêu {unit}?",
+            "Tổng lượng món phục vụ qua hai lượt là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Tổng lượng món phục vụ là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-flans-total"
+        }
+      },
+      {
         "Id": "fraction-theme-food-biscuits-total",
         "Family": "Fraction",
         "Examples": [
@@ -37669,6 +40679,440 @@
             "Chênh lệch giữa hai phần là ({unit}):"
           ],
           "UnitId": "fraction-theme-food-cakes-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-cam-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-cam-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-cam-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-com-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-com-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-com-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-trung-thu-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-trung-thu-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-trung-thu-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-pia-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-pia-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-pia-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-croissants-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-croissants-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-croissants-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-da-lon-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-da-lon-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-da-lon-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-bo-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-bo-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-bo-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-muffins-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-muffins-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-muffins-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cupcakes-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-cupcakes-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cupcakes-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cookies-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-cookies-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cookies-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-donuts-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-donuts-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-donuts-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-waffles-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-waffles-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-waffles-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-apple-pies-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-apple-pies-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-apple-pies-remaining"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-flans-remaining",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "GivenB": "phần thứ hai của quán gồm {b} {unit_b}.",
+            "Question": "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "SolutionLead": "Chênh lệch giữa hai phần là ({unit}):",
+            "UnitId": "fraction-theme-food-flans-remaining",
+            "ProblemText": "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a}, phần thứ hai của quán gồm {b} {unit_b}. Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị phần thứ nhất gồm {a} {unit_a},",
+            "Phần món thứ nhất tại {name} gồm {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần thứ hai của quán gồm {b} {unit_b}."
+          ],
+          "Questions": [
+            "Hỏi phần thứ nhất nhiều hơn phần thứ hai bao nhiêu {unit}?",
+            "Chênh lệch giữa hai phần món là bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Chênh lệch giữa hai phần là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-flans-remaining"
         }
       },
       {
@@ -37734,6 +41178,440 @@
         }
       },
       {
+        "Id": "fraction-theme-food-banh-cam-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-cam-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-cam-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-com-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-com-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-com-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-trung-thu-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-trung-thu-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-trung-thu-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-pia-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-pia-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-pia-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-croissants-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-croissants-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-croissants-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-da-lon-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-da-lon-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-da-lon-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-bo-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-bo-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-bo-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-muffins-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-muffins-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-muffins-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cupcakes-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-cupcakes-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cupcakes-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cookies-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-cookies-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cookies-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-donuts-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-donuts-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-donuts-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-waffles-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-waffles-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-waffles-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-apple-pies-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-apple-pies-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-apple-pies-groups"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-flans-groups",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} chuẩn bị {a} {unit_a},",
+            "GivenB": "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị.",
+            "Question": "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món dành cho khách đặt trước là ({unit}):",
+            "UnitId": "fraction-theme-food-flans-groups",
+            "ProblemText": "{name} chuẩn bị {a} {unit_a}, phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị. Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} chuẩn bị {a} {unit_a},",
+            "Ban đầu, {name} làm sẵn {a} {unit_a},"
+          ],
+          "GivenB": [
+            "phần dành cho khách đặt trước bằng {b} lượng đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi phần dành cho khách đặt trước là bao nhiêu {unit}?",
+            "Quán dành bao nhiêu {unit} cho khách đặt trước?"
+          ],
+          "Leads": [
+            "Lượng món dành cho khách đặt trước là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-flans-groups"
+        }
+      },
+      {
         "Id": "fraction-theme-food-biscuits-groups",
         "Family": "Fraction",
         "Examples": [
@@ -37793,6 +41671,440 @@
             "Lượng món quán chuẩn bị ban đầu là ({unit}):"
           ],
           "UnitId": "fraction-theme-food-cakes-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-cam-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-cam-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-cam-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-com-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-com-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-com-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-trung-thu-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-trung-thu-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-trung-thu-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-pia-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-pia-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-pia-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-croissants-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-croissants-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-croissants-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-da-lon-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-da-lon-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-da-lon-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-banh-bo-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-banh-bo-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-banh-bo-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-muffins-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-muffins-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-muffins-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cupcakes-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-cupcakes-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cupcakes-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-cookies-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-cookies-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-cookies-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-donuts-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-donuts-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-donuts-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-waffles-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-waffles-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-waffles-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-apple-pies-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-apple-pies-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-apple-pies-share"
+        }
+      },
+      {
+        "Id": "fraction-theme-food-flans-share",
+        "Family": "Fraction",
+        "Examples": [
+          {
+            "GivenA": "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "GivenB": "lượng này bằng {b} tổng lượng món quán đã chuẩn bị.",
+            "Question": "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "SolutionLead": "Lượng món quán chuẩn bị ban đầu là ({unit}):",
+            "UnitId": "fraction-theme-food-flans-share",
+            "ProblemText": "{name} đã phục vụ {a} {unit_a} cho khách, lượng này bằng {b} tổng lượng món quán đã chuẩn bị. Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?"
+          }
+        ],
+        "Prose": {
+          "GivenA": [
+            "{name} đã phục vụ {a} {unit_a} cho khách,",
+            "Trong lượt đầu, {name} đã bán {a} {unit_a},"
+          ],
+          "GivenB": [
+            "lượng này bằng {b} tổng lượng món quán đã chuẩn bị."
+          ],
+          "Questions": [
+            "Hỏi {name} đã chuẩn bị ban đầu bao nhiêu {unit}?",
+            "Ban đầu quán đã chuẩn bị bao nhiêu {unit}?"
+          ],
+          "Leads": [
+            "Lượng món quán chuẩn bị ban đầu là ({unit}):"
+          ],
+          "UnitId": "fraction-theme-food-flans-share"
         }
       },
       {
@@ -47782,11 +52094,13 @@
       {"Id":"national-data-register","Capacity":999999999,"MaximumPerGroup":20000000,"GroupUnit":"đợt tổng hợp","Actor":"Hệ thống tổng hợp dữ liệu toàn quốc","Unit":"bản ghi","Group":"Data","AllowsMentalLargeNumbers":true}
     ],
     "PracticeMoneyItems": [
-      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":3000,"MaximumCount":10,"Buyer":"Gia đình An","Name":"bút bi","MaximumPrice":10000,"PriceStep":1000,"Unit":"đồng","PluralName":"bút bi","MaximumPurchaseTotal":100000},
-      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":35000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai dầu ăn","MaximumPrice":70000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai dầu ăn","MaximumPurchaseTotal":280000},
+      {"Id":"ballpoint-pen","MinimumStars":4,"MinimumPrice":3000,"MaximumCount":10,"Buyer":"Gia đình An","Name":"bút bi","MaximumPrice":10000,"PriceStep":1000,"Unit":"đồng","PluralName":"bút bi","MaximumPurchaseTotal":100000,"ArtworkId":"pen"},
+      {"Id":"cooking-oil","MinimumStars":4,"MinimumPrice":35000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai dầu ăn","MaximumPrice":70000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai dầu ăn","MaximumPurchaseTotal":280000,"ArtworkId":"oil"},
       {"Id":"fish-sauce","MinimumStars":4,"MinimumPrice":20000,"MaximumCount":4,"Buyer":"Gia đình An","Name":"chai nước mắm","MaximumPrice":50000,"PriceStep":5000,"Unit":"đồng","PluralName":"chai nước mắm","MaximumPurchaseTotal":200000,"ArtworkId":"fish_sauce"},
-      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc xe đạp trẻ em","MaximumPrice":5000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc xe đạp trẻ em","MaximumPurchaseTotal":15000000},
-      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":200000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc ba lô học sinh","MaximumPrice":500000,"PriceStep":10000,"Unit":"đồng","PluralName":"chiếc ba lô học sinh","MaximumPurchaseTotal":1000000},
+      {"Id":"child-bicycle","MinimumStars":5,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc xe đạp trẻ em","MaximumPrice":5000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc xe đạp trẻ em","MaximumPurchaseTotal":15000000,"ArtworkId":"bicycle"},
+      {"Id":"school-backpack","MinimumStars":4,"MinimumPrice":200000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc ba lô học sinh","MaximumPrice":500000,"PriceStep":10000,"Unit":"đồng","PluralName":"chiếc ba lô học sinh","MaximumPurchaseTotal":1000000,"ArtworkId":"backpack"},
+      {"Id":"refrigerator","MinimumStars":4,"MinimumPrice":5000000,"MaximumCount":2,"Buyer":"Gia đình An","Name":"chiếc tủ lạnh","MaximumPrice":12000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc tủ lạnh","MaximumPurchaseTotal":24000000,"ArtworkId":"refrigerator"},
+      {"Id":"mobile-phone","MinimumStars":4,"MinimumPrice":2000000,"MaximumCount":3,"Buyer":"Gia đình An","Name":"chiếc điện thoại di động","MaximumPrice":8000000,"PriceStep":100000,"Unit":"đồng","PluralName":"chiếc điện thoại di động","MaximumPurchaseTotal":24000000,"ArtworkId":"mobile_phone"},
       {"MaximumCountFourStars":2,"Id":"television","MinimumStars":4,"MinimumPrice":5000000,"MaximumCount":2,"Buyer":"Gia đình An","MaximumPrice":20000000,"Name":"chiếc ti vi","PluralName":"chiếc ti vi","PriceStep":500000,"Unit":"đồng","MaximumPurchaseTotal":40000000,"ArtworkId":"television"},
       {"MaximumCountFourStars":2,"Id":"school-laptop","MinimumStars":4,"MinimumPrice":15000000,"MaximumCount":20,"Buyer":"Nhà trường","MaximumPrice":30000000,"Name":"chiếc máy tính xách tay","PluralName":"chiếc máy tính xách tay","PriceStep":500000,"Unit":"đồng","MaximumPurchaseTotal":600000000,"IsInstitutional":true,"ArtworkId":"laptop"}
     ],

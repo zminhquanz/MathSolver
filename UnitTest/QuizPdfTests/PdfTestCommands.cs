@@ -7,6 +7,7 @@ internal static class PdfTestCommands
         {
             ["--food-themes"] = new("Food/drink/fruit themes", FoodThemeWorksheetTests.Run),
             ["--everyday-items"] = new("School eraser and everyday objects", EverydayItemWorksheetTests.Run),
+            ["--money-items"] = new("Six illustrated money transaction items", MoneyItemWorksheetTests.Run),
             ["--applied-open"] = new("Applied open-prose", AppliedOpenWorksheetTests.Run),
             ["--practical-open"] = new("Practical open-prose", PracticalOpenWorksheetTests.Run),
             ["--motion-open"] = new("Motion", MotionOpenWorksheetTests.Run),

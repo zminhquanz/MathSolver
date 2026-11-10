@@ -46,16 +46,20 @@ internal static class FoodThemeWorksheetTests
                 items.Add(printed);traces.Add(new{language,mode,subject.Group,subject.Unit.Id,Fraction=fraction,printed.Prompt,printed.Answer});count++;
             }
             string title=language==AppLanguage.Vietnamese?"Thức ăn · Nước uống · Trái cây":"Food · Drinks · Fruit";
-            var sheet=new QuizWorksheet("FOOD-THEMES",title,title,language,CurriculumTier.ThreeStars,mode,items);
-            string snapshot=JsonSerializer.Serialize(sheet);
-            foreach(bool answers in new[]{false,true})
+            int batch=0;
+            foreach(var group in items.Chunk(QuizWorksheetBuilder.MaximumCount))
             {
-                byte[] bytes=QuizPdfWriter.Write(sheet,answers);PdfAssertions.HasEmbeddedText(bytes);string text=PdfTestReader.ExtractText(bytes);
-                Check(!text.Contains("{unit")&&!text.Contains("{name}"),"PDF text contains template fields");
-                Check(text.Contains(language==AppLanguage.Vietnamese?"Thức ăn":"Food"),"Theme title not embedded");
-                File.WriteAllBytes(Path.Combine(directory,$"food-themes-{language}-{mode}-{(answers?"answers":"worksheet")}.pdf"),bytes);pdfs++;
+                var sheet=new QuizWorksheet($"FOOD-THEMES-{++batch}",title,title,language,CurriculumTier.ThreeStars,mode,group);
+                string snapshot=JsonSerializer.Serialize(sheet);
+                foreach(bool answers in new[]{false,true})
+                {
+                    byte[] bytes=QuizPdfWriter.Write(sheet,answers);PdfAssertions.HasEmbeddedText(bytes);string text=PdfTestReader.ExtractText(bytes);
+                    Check(!text.Contains("{unit")&&!text.Contains("{name}"),"PDF text contains template fields");
+                    Check(text.Contains(language==AppLanguage.Vietnamese?"Thức ăn":"Food"),"Theme title not embedded");
+                    File.WriteAllBytes(Path.Combine(directory,$"food-themes-{language}-{mode}-part{batch}-{(answers?"answers":"worksheet")}.pdf"),bytes);pdfs++;
+                }
+                Check(JsonSerializer.Serialize(sheet)==snapshot,"Export changed frozen facts/answers");
             }
-            Check(JsonSerializer.Serialize(sheet)==snapshot,"Export changed frozen facts/answers");
         }
         File.WriteAllText(Path.Combine(directory,"food-theme-pdf-cases.json"),JsonSerializer.Serialize(traces,new JsonSerializerOptions{WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping}));
         Console.WriteLine($"PASS food theme PDF: {count} exact subject/fraction/mode/VI-EN fixtures, {pdfs} app-generated worksheets/keys, embedded text, frozen facts and native math diagrams.");

@@ -107,8 +107,8 @@ internal static class QuizContentTests
         Check(ReferenceEquals(charts, QuizContentCatalog.LoadList<DataChartStoryContext>("DataChartContexts", "vi-VN")), "Lists are not cached.");
         var applied = QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes");
         var fractions = QuizContentCatalog.LoadList<FractionQuestionCatalogue.Scene>("FractionScenes");
-        Check(applied.Count == 397 && applied.Select(s => s.Id).Distinct().Count() == applied.Count, "Lost or duplicate applied scenes.");
-        Check(fractions.Count == 208 && fractions.Select(s => s.Id).Distinct().Count() == fractions.Count, "Lost or duplicate fraction scenes.");
+        Check(applied.Count == 849 && applied.Select(s => s.Id).Distinct().Count() == applied.Count, "Lost or duplicate applied scenes.");
+        Check(fractions.Count == 256 && fractions.Select(s => s.Id).Distinct().Count() == fractions.Count, "Lost or duplicate fraction scenes.");
         Console.WriteLine($"Quiz JSON content passed: {vi.Texts.Count} keys per language, {applied.Count + fractions.Count} unique scenes, typed/cached lists, fallback, slot rendering and malformed-pack rejection.");
     }
 }
