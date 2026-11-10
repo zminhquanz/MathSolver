@@ -38,7 +38,10 @@ public static partial class AppliedQuestionCatalogue
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
             || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId is "erasers" or "color-markers"))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
-        if (s.Group == QuestionKnowledgeGroup.Food) return language == AppLanguage.Vietnamese ? "bàn" : "table";
+        if (s.Group == QuestionKnowledgeGroup.Food)
+            return FoodThemeCatalogue.IsBakeryFood(s.UnitId)
+                ? (language == AppLanguage.Vietnamese ? "khay" : "tray")
+                : (language == AppLanguage.Vietnamese ? "bàn" : "table");
         if (FoodThemeCatalogue.IsTheme(s.Group)) return language == AppLanguage.Vietnamese ? "nhóm" : "group";
         if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
@@ -56,7 +59,8 @@ public static partial class AppliedQuestionCatalogue
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
         if (s.Group == QuestionKnowledgeGroup.Food) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
-            ? (unit, vi ? "bàn" : "tables") : (unit, unit);
+            ? (unit, FoodThemeCatalogue.IsBakeryFood(s.UnitId) ? (vi ? "khay" : "trays") : (vi ? "bàn" : "tables"))
+            : (unit, unit);
         if (FoodThemeCatalogue.IsTheme(s.Group)) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, vi ? "nhóm" : "groups") : (unit, unit);
         if (s.Group == QuestionKnowledgeGroup.Animals && s.Id.StartsWith("animal-", StringComparison.Ordinal)
@@ -187,8 +191,9 @@ public static partial class AppliedQuestionCatalogue
         }
         if (s.Group == QuestionKnowledgeGroup.Food)
         {
-            name = FoodThemePrompt.OwnerVenue(name, lang, restaurant: false);
-            other = FoodThemePrompt.OwnerVenue(other, lang, restaurant: true);
+            bool bakery = FoodThemeCatalogue.IsBakeryFood(s.UnitId);
+            name = FoodThemePrompt.OwnerVenue(name, lang, restaurant: false, bakery: bakery);
+            other = FoodThemePrompt.OwnerVenue(other, lang, restaurant: true, bakery: bakery);
             return;
         }
         if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)

@@ -4,10 +4,12 @@ namespace MathSolver.Services.QuestionBank;
 
 internal static class FoodThemePrompt
 {
-    internal static string OwnerVenue(string owner, AppLanguage language, bool restaurant)
+    internal static string OwnerVenue(string owner, AppLanguage language, bool restaurant, bool bakery = false)
         => language == AppLanguage.Vietnamese
-            ? (restaurant ? "nhà hàng của " : "quán ăn của ") + owner
-            : owner + (restaurant ? "'s restaurant" : "'s eatery");
+            ? (bakery ? (restaurant ? "cửa hàng bánh của " : "tiệm bánh của ")
+                : (restaurant ? "nhà hàng của " : "quán ăn của ")) + owner
+            : owner + (bakery ? (restaurant ? "'s cake shop" : "'s bakery")
+                : (restaurant ? "'s restaurant" : "'s eatery"));
 
     internal static string Guidance(BasicQuestionContract c)
     {
@@ -27,7 +29,11 @@ internal static class FoodThemePrompt
                 ArithmeticOperation.Multiply=>vi?"Biết lượng ban đầu và phân số được chọn; hỏi giá trị phần được chọn.":"The original amount and selected fraction are given; ask the selected amount.",
                 ArithmeticOperation.Divide=>vi?"Biết giá trị một phần và phân số tương ứng; hỏi lượng ban đầu.":"The value of one part and its fraction are given; ask the original whole amount.",
                 _=>relation };
-        string venueGuidance = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
+        string venueGuidance = FoodThemeCatalogue.IsBakeryContract(c)
+            ? vi
+                ? " Bánh được làm hoặc bán tại tiệm bánh/cửa hàng bánh có chủ được nêu tên; riêng bánh cuốn và bánh xèo là món phục vụ tại quán ăn/nhà hàng. {name} và {other} đã bao gồm tên tiệm và chủ tiệm; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng khay bánh để chia số bánh, không dùng bàn ăn hoặc nhóm chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của bánh."
+                : " Cakes, pastries and bakery items are made or sold at a named owner's bakery or cake shop. Steamed rice rolls and Vietnamese sizzling pancakes remain restaurant dishes. {name} and {other} already include the bakery and owner; never add a duplicate owner. For whole-number multiplication/division, use trays rather than tables or generic groups. For fractions, retain the given part-to-whole relation."
+            : c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             ? vi
                 ? " Tất cả món ăn đã chế biến được phục vụ hoặc bán tại quán ăn/nhà hàng có chủ được nêu tên. {name} và {other} đã bao gồm tên quán và chủ quán; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng bàn ăn để chia suất; không dùng 'nhóm' chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của món đã làm."
                 : " All prepared dishes are served or sold at a named owner's eatery or restaurant. {name} and {other} already include the business and owner; do not add another owner prefix. For whole-number multiplication/division, distribute servings across tables, not generic groups. For fractions, retain the given part-to-whole relation of prepared dishes."

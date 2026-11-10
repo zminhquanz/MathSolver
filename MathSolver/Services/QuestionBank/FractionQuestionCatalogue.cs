@@ -53,7 +53,8 @@ public static class FractionQuestionCatalogue
             if (s.Id == "fraction-motion-distance") a = new(a.Numerator + random.Next(2, 6) * a.Denominator, a.Denominator);
             string subject = QuestionNames.Create(language, random, false);
             if (s.Group == QuestionKnowledgeGroup.Food)
-                subject = FoodThemePrompt.OwnerVenue(subject, language, restaurant: false);
+                subject = FoodThemePrompt.OwnerVenue(subject, language, restaurant: false,
+                    bakery: FoodThemeCatalogue.IsBakeryFractionScene(s.Id));
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
                 subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
                 TopicId: profile.Group.ToString(), SceneId: s.Id, KnowledgeGroup: profile.Group,

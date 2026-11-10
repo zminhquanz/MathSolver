@@ -16,6 +16,25 @@ internal sealed partial class QuizChoiceDrawable
 
         switch (id)
         {
+            case "knowledge-objects":
+                // Everyday clothing: a recognizable T-shirt, not counting dots.
+                var shirt = new PathF();
+                shirt.MoveTo(28, 20);
+                shirt.LineTo(39, 15);
+                shirt.CurveTo(43, 23, 57, 23, 61, 15);
+                shirt.LineTo(72, 20);
+                shirt.LineTo(90, 38);
+                shirt.LineTo(76, 52);
+                shirt.LineTo(68, 43);
+                shirt.LineTo(68, 84);
+                shirt.LineTo(32, 84);
+                shirt.LineTo(32, 43);
+                shirt.LineTo(24, 52);
+                shirt.LineTo(10, 38);
+                shirt.Close();
+                canvas.DrawPath(shirt);
+                canvas.DrawLine(33, 77, 67, 77);
+                break;
             case "language-vietnamese":
             case "language-english":
                 canvas.DrawCircle(50, 39, 28);
@@ -39,21 +58,30 @@ internal sealed partial class QuizChoiceDrawable
                 canvas.DrawEllipse(55, 79, 32, 10);
                 break;
             case "knowledge-animals":
-                // A chick silhouette stays legible beside the existing thin-line icons.
-                canvas.DrawEllipse(25, 34, 55, 42);
-                canvas.DrawCircle(58, 27, 18);
-                canvas.FillCircle(65, 23, 3);
+                // One continuous outline makes the chick clear at small icon sizes.
+                var chick = new PathF();
+                chick.MoveTo(24, 52);
+                chick.CurveTo(30, 45, 39, 42, 48, 44);
+                chick.CurveTo(48, 30, 59, 20, 71, 24);
+                chick.CurveTo(84, 28, 85, 42, 79, 52);
+                chick.CurveTo(76, 70, 64, 79, 47, 79);
+                chick.CurveTo(29, 79, 22, 68, 24, 52);
+                chick.Close();
+                canvas.DrawPath(chick);
+                canvas.DrawLine(24, 58, 11, 48);
+                canvas.DrawLine(24, 65, 10, 60);
+                canvas.FillCircle(70, 36, 3);
                 var beak = new PathF();
-                beak.MoveTo(74, 31);
-                beak.LineTo(91, 35);
-                beak.LineTo(75, 41);
+                beak.MoveTo(82, 42);
+                beak.LineTo(94, 47);
+                beak.LineTo(80, 53);
                 beak.Close();
                 canvas.DrawPath(beak);
-                canvas.DrawArc(34, 47, 26, 17, 200, 345, false, false);
-                canvas.DrawLine(40, 76, 40, 88);
-                canvas.DrawLine(62, 76, 62, 88);
-                canvas.DrawLine(33, 88, 47, 88);
-                canvas.DrawLine(55, 88, 69, 88);
+                canvas.DrawArc(35, 52, 24, 14, 190, 350, false, false);
+                canvas.DrawLine(43, 79, 43, 88);
+                canvas.DrawLine(63, 77, 63, 88);
+                canvas.DrawLine(37, 88, 49, 88);
+                canvas.DrawLine(57, 88, 69, 88);
                 break;
             case "knowledge-school-supplies":
                 // A ruled notebook and a pencil represent classroom supplies.

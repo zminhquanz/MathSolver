@@ -11,7 +11,7 @@ public static class FoodThemeCatalogue
     public static IReadOnlyList<Subject> Subjects { get; } = Array.AsReadOnly<Subject>(
     [
         .. BreadQuestionCatalogue.Types.Select(t => new Subject(QuestionKnowledgeGroup.Food, t.Unit, t.ArtworkId)),
-        new(QuestionKnowledgeGroup.Food, Unit("cakes","chiếc bánh","cake","cakes"),"cake"),
+        new(QuestionKnowledgeGroup.Food, Unit("cakes","chiếc bánh kem","cream cake","cream cakes"),"cake"),
         new(QuestionKnowledgeGroup.Food, Unit("biscuits","chiếc bánh quy","biscuit","biscuits"),"biscuit"),
         new(QuestionKnowledgeGroup.Food, Unit("eggs","quả trứng","egg","eggs"),"egg"),
         new(QuestionKnowledgeGroup.Food, Unit("candies","viên kẹo","sweet","sweets"),"candy"),
@@ -50,6 +50,26 @@ public static class FoodThemeCatalogue
     private static readonly string[] ExistingUnits = ["sandwich-bread","round-bread","banh-mi","cakes","candies","milk-cartons","apples","oranges","mangoes"];
     internal static IEnumerable<QuestionUnit> AdditionalUnits => Subjects.Where(s => !ExistingUnits.Contains(s.Unit.Id)).Select(s => s.Unit);
     public static bool IsTheme(QuestionKnowledgeGroup group) => group is QuestionKnowledgeGroup.Food or QuestionKnowledgeGroup.Drinks or QuestionKnowledgeGroup.Fruit;
+    // Food names are stable identifiers shared by C#, AI contracts, PDF and Excel.
+    // Bánh cuốn and bánh xèo remain restaurant dishes.
+    public static bool IsBakeryFood(string? unitId) => unitId is
+        "sandwich-bread" or "round-bread" or "banh-mi" or "bread-rolls" or
+        "cakes" or "biscuits" or "lamingtons" or "pancakes" or "hamburgers";
+
+    public static bool IsBakeryFractionScene(string sceneId) =>
+        Subjects.Any(s => s.Group == QuestionKnowledgeGroup.Food && IsBakeryFood(s.Unit.Id)
+            && sceneId.StartsWith($"fraction-theme-food-{s.Unit.Id}-", StringComparison.Ordinal));
+
+    public static bool IsBakeryContract(BasicQuestionContract c)
+    {
+        if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food) return false;
+        if (c.Version == FractionQuestionCatalogue.Version) return IsBakeryFractionScene(c.SceneId);
+        if (c.Version == FindXQuestionCatalogue.Version)
+            return IsBakeryFood(FindXQuestionCatalogue.Find(c.SceneId)?.SourceScene.UnitId);
+        if (c.Version == AppliedQuestionCatalogue.Version)
+            return IsBakeryFood(AppliedQuestionCatalogue.Find(c.SceneId)?.UnitId);
+        return false;
+    }
     internal static string EnglishFractionUnit(string sceneId, string unit, bool proper, bool one)
     {
         var subject = Subjects.FirstOrDefault(s => sceneId.StartsWith(

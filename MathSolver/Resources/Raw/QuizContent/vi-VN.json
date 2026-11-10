@@ -13450,7 +13450,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-total.UnitA",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13460,7 +13460,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-total.UnitB",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13470,7 +13470,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-total.ResultUnit",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13480,7 +13480,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-remaining.UnitA",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13490,7 +13490,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-remaining.UnitB",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13500,7 +13500,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-remaining.ResultUnit",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13510,7 +13510,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-groups.UnitA",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13530,7 +13530,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-groups.ResultUnit",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13540,7 +13540,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-share.UnitA",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {
@@ -13560,7 +13560,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-cakes-share.ResultUnit",
-      "Text": "chiếc bánh",
+      "Text": "chiếc bánh kem",
       "Variables": []
     },
     {

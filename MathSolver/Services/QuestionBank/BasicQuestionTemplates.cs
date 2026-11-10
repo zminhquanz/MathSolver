@@ -71,7 +71,7 @@ public static class QuestionUnits
         new("balls", "quả bóng", "ball", "balls", "túi", "bag", "bags"),
         new("marbles", "viên bi", "marble", "marbles", "túi", "bag", "bags"),
         new("stickers", "nhãn dán", "sticker", "stickers", "gói", "pack", "packs"),
-        new("cakes", "chiếc bánh", "cake", "cakes", "hộp", "box", "boxes")
+        new("cakes", "chiếc bánh kem", "cream cake", "cream cakes", "hộp", "box", "boxes")
     });
     public static QuestionUnit? Find(string? id) => All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Id == id);
     public static QuestionUnit? Find(BasicQuestionContract c) => (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version

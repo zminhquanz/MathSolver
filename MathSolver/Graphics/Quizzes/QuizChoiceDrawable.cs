@@ -156,8 +156,24 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
                     canvas.DrawArc(56,35,31,32,270,90,false,false);
                     canvas.DrawLine(16,88,78,88); canvas.DrawLine(32,11,32,20); canvas.DrawLine(53,11,53,20); break;
                 case "fruit":
-                    canvas.DrawEllipse(20,33,38,49);canvas.DrawEllipse(43,33,38,49);
-                    canvas.DrawLine(49,35,53,14);canvas.DrawEllipse(55,13,22,12);break;
+                    // Apple outline with distinct lobes, stem and leaf.
+                    var apple = new PathF();
+                    apple.MoveTo(50, 35);
+                    apple.CurveTo(35, 25, 19, 36, 20, 54);
+                    apple.CurveTo(20, 74, 32, 87, 42, 85);
+                    apple.CurveTo(48, 83, 52, 83, 58, 85);
+                    apple.CurveTo(70, 88, 81, 70, 80, 53);
+                    apple.CurveTo(79, 37, 65, 27, 50, 35);
+                    apple.Close();
+                    canvas.DrawPath(apple);
+                    canvas.DrawLine(50, 35, 54, 14);
+                    var leaf = new PathF();
+                    leaf.MoveTo(54, 25);
+                    leaf.CurveTo(61, 12, 73, 13, 80, 16);
+                    leaf.CurveTo(76, 27, 65, 31, 54, 25);
+                    leaf.Close();
+                    canvas.DrawPath(leaf);
+                    break;
                 case "number-counting":
                 case "arithmetic":
                     for (int i = 0; i < 5; i++) canvas.FillCircle(22 + (i % 3) * 26, 34 + (i / 3) * 30, 8);

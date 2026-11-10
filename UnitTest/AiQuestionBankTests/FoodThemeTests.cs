@@ -21,18 +21,31 @@ internal static class FoodThemeTests
     {
         if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food) return;
         bool vi = contract.Language == AppLanguage.Vietnamese;
-        string eatery = vi ? "quán ăn của " : "'s eatery";
-        string restaurant = vi ? "nhà hàng của " : "'s restaurant";
+        bool bakery = FoodThemeCatalogue.IsBakeryContract(contract);
+        string eatery = vi ? (bakery ? "tiệm bánh của " : "quán ăn của ")
+            : (bakery ? "'s bakery" : "'s eatery");
+        string restaurant = vi ? (bakery ? "cửa hàng bánh của " : "nhà hàng của ")
+            : (bakery ? "'s cake shop" : "'s restaurant");
         Check(contract.Subject.Contains(eatery, StringComparison.OrdinalIgnoreCase),
             $"Prepared food has no named owner's eatery: {contract.SceneId}/{contract.Language}: {contract.Subject}");
         if (!string.IsNullOrWhiteSpace(contract.OtherSubject))
             Check(contract.OtherSubject.Contains(restaurant, StringComparison.OrdinalIgnoreCase),
                 $"Prepared food has no named second restaurant: {contract.SceneId}/{contract.Language}: {contract.OtherSubject}");
+        if (bakery)
+        {
+            Check(!contract.Subject.Contains(vi ? "quán ăn" : "'s eatery", StringComparison.OrdinalIgnoreCase),
+                "Bakery question received restaurant wording: " + contract.SceneId);
+            Check(contract.Unit.Contains(vi ? "bánh kem" : "cream cake", StringComparison.OrdinalIgnoreCase)
+                || !contract.SceneId.Contains("food-cakes-", StringComparison.Ordinal),
+                "Cake question must count cream cakes: " + contract.SceneId);
+        }
         string story = draft.ToWordProblem(contract).ProblemText;
         Check(story.Contains(contract.Subject, StringComparison.OrdinalIgnoreCase),
             $"Rendered prepared-food story omits owner venue: {contract.SceneId}/{contract.Language}: {story}");
         string prompt = BasicQuestionPrompt.Build(contract);
-        string instruction = vi ? "Tất cả món ăn đã chế biến được phục vụ" : "All prepared dishes are served";
+        string instruction = bakery
+            ? (vi ? "Bánh được làm hoặc bán tại" : "Cakes, pastries and bakery items are made or sold")
+            : (vi ? "Tất cả món ăn đã chế biến được phục vụ" : "All prepared dishes are served");
         Check(prompt.Split(instruction, StringSplitOptions.None).Length == 2,
             $"Prepared-food AI guidance missing or duplicated: {contract.SceneId}/{contract.Language}");
     }

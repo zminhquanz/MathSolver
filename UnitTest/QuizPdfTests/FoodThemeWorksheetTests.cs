@@ -33,8 +33,14 @@ internal static class FoodThemeWorksheetTests
                 var printed=QuizWorksheetBuilder.Format(q,language);Check(!printed.Prompt.Contains('{')&&!printed.Answer.Contains('{'),"Unbound theme PDF slots");
                 if(subject.Group==QuestionKnowledgeGroup.Food)
                 {
-                    string venue=language==AppLanguage.Vietnamese?"quán ăn của ":"'s eatery";
-                    Check(printed.Prompt.Contains(venue,StringComparison.OrdinalIgnoreCase),"Prepared-food PDF missing named eatery: "+c.SceneId);
+                    bool bakery=FoodThemeCatalogue.IsBakeryFood(subject.Unit.Id);
+                    string venue=language==AppLanguage.Vietnamese
+                        ? (bakery?"tiệm bánh của ":"quán ăn của ")
+                        : (bakery?"'s bakery":"'s eatery");
+                    Check(printed.Prompt.Contains(venue,StringComparison.OrdinalIgnoreCase),"Food PDF missing correct named venue: "+c.SceneId);
+                    if(subject.Unit.Id=="cakes")
+                        Check(printed.Prompt.Contains(language==AppLanguage.Vietnamese?"bánh kem":"cream cake",StringComparison.OrdinalIgnoreCase),
+                            "PDF contains generic cake wording: "+c.SceneId);
                 }
                 if(mode==ArithmeticQuizMode.TrueFalse)Check(printed.Answer==(q.PresentedEquationIsCorrect==true?printed.Options[0]:printed.Options[1]),"Truth key changed");
                 items.Add(printed);traces.Add(new{language,mode,subject.Group,subject.Unit.Id,Fraction=fraction,printed.Prompt,printed.Answer});count++;
