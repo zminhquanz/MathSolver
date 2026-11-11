@@ -13,7 +13,12 @@ internal static partial class QuizStoryArtworkCatalogue
     private static readonly Lazy<IReadOnlyDictionary<string, string?>> FractionArtworkIds = new(() =>
         QuizContentCatalog.LoadList<FractionRow>("FractionScenes").ToDictionary(row => row.Id, row => row.ArtworkId));
 
-    internal static string? FractionArtwork(string sceneId) => FractionArtworkIds.Value.GetValueOrDefault(sceneId);
+    internal static string? FractionArtwork(string sceneId)
+    {
+        if (FractionArtworkIds.Value.TryGetValue(sceneId, out var artwork)) return artwork;
+        return QuestionBank.FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
+            sceneId.StartsWith($"fraction-theme-food-{d.Unit.Id}-", StringComparison.Ordinal))?.ArtworkId;
+    }
 
     internal static IReadOnlyList<StoryArtworkActor> MotionActors(AppLanguage language) => MotionCache.GetOrAdd(language, LoadMotion);
 

@@ -14,7 +14,21 @@ public static class FractionQuestionCatalogue
         bool WholeShare = false, bool CountResult = false, int MinimumStars = 1, string? Formula = null,
         WordProblemQuantity Quantity = WordProblemQuantity.Unspecified)
     {
-        private string Unit(string culture, string field) => QuizContentCatalog.Text(culture, $"Fraction.{Id}.{field}");
+        private string Unit(string culture, string field)
+        {
+            if (Id.StartsWith("fraction-theme-food-", StringComparison.Ordinal))
+            {
+                var dish = FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
+                    Id.StartsWith($"fraction-theme-food-{d.Unit.Id}-", StringComparison.Ordinal));
+                if (dish is not null)
+                {
+                    if (field == "UnitB" && (Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide))
+                        return "";
+                    return culture == "vi-VN" ? dish.Unit.Vietnamese : dish.Unit.Plural;
+                }
+            }
+            return QuizContentCatalog.Text(culture, $"Fraction.{Id}.{field}");
+        }
         public string UnitA => Unit("vi-VN", "UnitA");
         public string UnitB => Unit("vi-VN", "UnitB");
         public string ResultUnit => Unit("vi-VN", "ResultUnit");
@@ -23,7 +37,20 @@ public static class FractionQuestionCatalogue
         public string EnResultUnit => Unit("en-US", "ResultUnit");
     }
 
-    public static IReadOnlyList<Scene> All { get; } = QuizContentCatalog.LoadList<Scene>("FractionScenes");
+    public static IReadOnlyList<Scene> All { get; } = BuildScenes();
+    private static IReadOnlyList<Scene> BuildScenes()
+    {
+        var scenes = QuizContentCatalog.LoadList<Scene>("FractionScenes").ToList();
+        foreach (var dish in FoodThemeCatalogue.NewRestaurantDishes)
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"fraction-theme-food-{dish.Unit.Id}-{suffix}",
+                QuestionKnowledgeGroup.Food, operation));
+        return scenes.AsReadOnly();
+    }
     public static Scene? Find(string id) => All.FirstOrDefault(s => s.Id == id);
     public static IEnumerable<Scene> Available(QuestionLearningProfile profile, ArithmeticOperation operation, CurriculumTier tier)
         => All.Where(s => s.Group == profile.Group && s.Operation == operation && (int)tier >= s.MinimumStars);
@@ -53,8 +80,11 @@ public static class FractionQuestionCatalogue
             if (s.Id == "fraction-motion-distance") a = new(a.Numerator + random.Next(2, 6) * a.Denominator, a.Denominator);
             string subject = QuestionNames.Create(language, random, false);
             if (s.Group == QuestionKnowledgeGroup.Food)
-                subject = FoodThemePrompt.OwnerVenue(subject, language, restaurant: false,
-                    bakery: FoodThemeCatalogue.IsBakeryFractionScene(s.Id));
+            {
+                bool bakery = FoodThemeCatalogue.IsBakeryFractionScene(s.Id);
+                subject = FoodThemePrompt.OwnerVenue(subject, language,
+                    random.Next(FoodThemePrompt.VenueCount(bakery)), bakery);
+            }
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
                 subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
                 TopicId: profile.Group.ToString(), SceneId: s.Id, KnowledgeGroup: profile.Group,

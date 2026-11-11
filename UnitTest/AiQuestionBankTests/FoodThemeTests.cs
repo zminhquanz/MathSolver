@@ -17,20 +17,82 @@ internal static class FoodThemeTests
         FoodThemeCatalogue.Subjects.Select(s => new { Group=s.Group.ToString(), s.Unit, s.ArtworkId, s.FractionVietnamese, s.FractionEnglish, s.FractionArtworkId }),
         new System.Text.Json.JsonSerializerOptions { WriteIndented=true, Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
     private static void Check(bool ok, string why) { if (!ok) throw new Exception(why); }
+    private static void CheckAllFoodVenueKinds()
+    {
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var (unit, bakery) in new[] { ("cakes", true), ("pho", false) })
+        {
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (int seed in Enumerable.Range(0, 80))
+            {
+                var contract = AppliedQuestionCatalogue.Create(new QuestionLearningProfile(QuestionKnowledgeGroup.Food),
+                    ArithmeticOperation.Add, CurriculumTier.ThreeStars, language, new Random(seed),
+                    $"theme-food-{unit}-total");
+                CheckFoodVenue(contract, AppliedQuestionCatalogue.Draft(contract));
+                foreach (int i in Enumerable.Range(0, FoodThemePrompt.VenueCount(bakery)))
+                {
+                    string venue = FoodThemePrompt.Venue(bakery, i, language);
+                    string ownerPhrase = language == AppLanguage.Vietnamese ? venue + " của " : "'s " + venue;
+                    if (contract.Subject.Contains(ownerPhrase, StringComparison.OrdinalIgnoreCase))
+                        seen.Add(venue);
+                }
+            }
+            Check(seen.Count == FoodThemePrompt.VenueCount(bakery),
+                $"Seeded C# scenes did not exercise every food venue: {unit}/{language}: {string.Join(", ", seen)}");
+        }
+    }
+    private static void CheckAiCombinedVenueValidation()
+    {
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var (unit, bakery) in new[] { ("cakes", true), ("pho", false) })
+        {
+            var contract = AppliedQuestionCatalogue.Create(new QuestionLearningProfile(QuestionKnowledgeGroup.Food),
+                ArithmeticOperation.Add, CurriculumTier.ThreeStars, language, new Random(23),
+                $"theme-food-{unit}-total");
+            var draft = AppliedQuestionCatalogue.Draft(contract);
+            Check(FoodThemePrompt.CombinedQuestionNamesVenue(draft.Question, contract),
+                "C# reference question has mismatched food venues");
+
+            var venues = Enumerable.Range(0, FoodThemePrompt.VenueCount(bakery))
+                .Select(i => FoodThemePrompt.Venue(bakery, i, language)).ToArray();
+            string current = venues.Single(v => contract.Subject.Contains(
+                language == AppLanguage.Vietnamese ? v + " của " : "'s " + v,
+                StringComparison.OrdinalIgnoreCase));
+            string different = venues.First(v => v != current);
+            string replacement = language == AppLanguage.Vietnamese ? "cả hai " + different
+                : "the two " + (different switch {
+                    "bakery" => "bakeries", "cake shop" => "cake shops", "eatery" => "eateries",
+                    "restaurant" => "restaurants", _ => "diners"
+                });
+            string invalid = draft.Question.Replace(
+                language == AppLanguage.Vietnamese ? "cả hai cơ sở" : "the two businesses",
+                replacement, StringComparison.OrdinalIgnoreCase);
+            Check(invalid != draft.Question, "Reference question no longer has a replaceable venue phrase");
+            Check(!FoodThemePrompt.CombinedQuestionNamesVenue(invalid, contract),
+                "Mismatched AI venue must not pass the semantic venue check");
+            Check(!AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft with { Question = invalid }), contract).IsValid,
+                "Mismatched AI venue must be rejected before saving to the question bank");
+            var creative = contract with { OpenProse = true };
+            if (OpenQuestionProse.Supports(creative))
+                Check(!OpenQuestionProse.Validate(QuestionBankStore.SerializeDraft(draft with { Question = invalid }), creative).IsValid,
+                    "Creative AI prose must reject a mismatched food venue");
+        }
+    }
     internal static void CheckFoodVenue(BasicQuestionContract contract, BasicQuestionDraft draft)
     {
         if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food) return;
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool bakery = FoodThemeCatalogue.IsBakeryContract(contract);
-        string eatery = vi ? (bakery ? "tiệm bánh của " : "quán ăn của ")
-            : (bakery ? "'s bakery" : "'s eatery");
-        string restaurant = vi ? (bakery ? "cửa hàng bánh của " : "nhà hàng của ")
-            : (bakery ? "'s cake shop" : "'s restaurant");
-        Check(contract.Subject.Contains(eatery, StringComparison.OrdinalIgnoreCase),
-            $"Prepared food has no named owner's eatery: {contract.SceneId}/{contract.Language}: {contract.Subject}");
+        var venues = Enumerable.Range(0, FoodThemePrompt.VenueCount(bakery))
+            .Select(i => FoodThemePrompt.Venue(bakery, i, contract.Language)).ToArray();
+        string ActorVenue(string v) => vi ? v + " của " : "'s " + v;
+        var matching = venues.Where(v => contract.Subject.Contains(ActorVenue(v), StringComparison.OrdinalIgnoreCase)).ToArray();
+        Check(matching.Length == 1,
+            $"Prepared food requires one valid venue: {contract.SceneId}/{contract.Language}: {contract.Subject}");
+        string venue = matching[0];
         if (!string.IsNullOrWhiteSpace(contract.OtherSubject))
-            Check(contract.OtherSubject.Contains(restaurant, StringComparison.OrdinalIgnoreCase),
-                $"Prepared food has no named second restaurant: {contract.SceneId}/{contract.Language}: {contract.OtherSubject}");
+            Check(contract.OtherSubject.Contains(ActorVenue(venue), StringComparison.OrdinalIgnoreCase),
+                $"Food owners must have identical venue kinds: {contract.SceneId}/{contract.Language}: {contract.Subject}, {contract.OtherSubject}");
         if (bakery)
         {
             Check(!contract.Subject.Contains(vi ? "quán ăn" : "'s eatery", StringComparison.OrdinalIgnoreCase),
@@ -42,12 +104,28 @@ internal static class FoodThemeTests
         string story = draft.ToWordProblem(contract).ProblemText;
         Check(story.Contains(contract.Subject, StringComparison.OrdinalIgnoreCase),
             $"Rendered prepared-food story omits owner venue: {contract.SceneId}/{contract.Language}: {story}");
+        if (contract.Structure == BasicQuestionStructure.Combine)
+        {
+            Check(story.Contains(contract.OtherSubject, StringComparison.OrdinalIgnoreCase),
+                "Combined food story omits second matching venue: " + story);
+            string pair = vi ? "cả hai " + venue : "the two " + (venue switch
+            {
+                "bakery" => "bakeries", "cake shop" => "cake shops", "eatery" => "eateries",
+                "restaurant" => "restaurants", _ => "diners"
+            });
+            Check(story.Contains(pair, StringComparison.OrdinalIgnoreCase),
+                "Combined food question must name both matching businesses: " + story);
+        }
         string prompt = BasicQuestionPrompt.Build(contract);
         string instruction = bakery
             ? (vi ? "Bánh được làm hoặc bán tại" : "Cakes, pastries and bakery items are made or sold")
             : (vi ? "Tất cả món ăn đã chế biến được phục vụ" : "All prepared dishes are served");
         Check(prompt.Split(instruction, StringSplitOptions.None).Length == 2,
             $"Prepared-food AI guidance missing or duplicated: {contract.SceneId}/{contract.Language}");
+        if (contract.Structure == BasicQuestionStructure.Combine)
+            Check(prompt.Contains(contract.Subject) && prompt.Contains(contract.OtherSubject)
+                && prompt.Contains(vi ? "Hai cửa hàng trong cùng một đề" : "Both owners run the same kind of venue"),
+                "Combined food AI prompt must keep the venue relation");
     }
     private static void CheckArtwork(BasicQuestionContract contract, BasicQuestionDraft draft, string expected)
     {
@@ -100,6 +178,12 @@ internal static class FoodThemeTests
             ("bun-thit-nuong-cha-gio", "bun_thit_nuong_cha_gio"),
             ("hu-tieu-nam-vang", "hu_tieu_nam_vang"), ("mi-quang", "mi_quang"),
             ("bun-bo-hue", "bun_bo_hue"), ("banh-cuon", "banh_cuon"),
+            ("banh-chung", "banh_chung"), ("banh-day", "banh_day"),
+            ("banh-tet", "banh_tet"), ("banh-beo", "banh_beo"),
+            ("banh-khot", "banh_khot"), ("banh-bot-loc", "banh_bot_loc"),
+            ("banh-gio", "banh_gio"),
+            ("banh-bao-thit-trung-cut", "banh_bao_thit_trung_cut"),
+            ("ha-cao", "ha_cao"),
             ("kimchi", "kimchi"), ("sushi", "sushi"),
             ("banh-cam", "banh_cam"), ("banh-com", "banh_com"),
             ("banh-trung-thu", "banh_trung_thu"), ("banh-pia", "banh_pia"),
@@ -115,6 +199,10 @@ internal static class FoodThemeTests
             var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == id);
             Check(subject.Group == QuestionKnowledgeGroup.Food && subject.ArtworkId == artwork,
                 "Incorrect food group or image mapping: " + id);
+            if (id is "banh-chung" or "banh-day" or "banh-tet" or "banh-beo" or
+                "banh-khot" or "banh-bot-loc" or "banh-gio" or "banh-bao-thit-trung-cut" or "ha-cao")
+                Check(!FoodThemeCatalogue.IsBakeryFood(id),
+                    "Traditional prepared dish must belong to a restaurant/eatery/diner: " + id);
             foreach (var language in Enum.GetValues<AppLanguage>())
             foreach (var operation in Enum.GetValues<ArithmeticOperation>())
             foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.Fraction, BankQuestionFamily.FindX })
@@ -132,8 +220,12 @@ internal static class FoodThemeTests
     }
     public static void Run()
     {
+        CheckAllFoodVenueKinds();
+        CheckAiCombinedVenueValidation();
         Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),
             "Hamburgers must use an eatery or restaurant, not a bakery");
+        Check(!FoodThemeCatalogue.IsBakeryFood("banh-xeo") && !FoodThemeCatalogue.IsBakeryFood("banh-cuon"),
+            "Banh xeo and banh cuon must use an eatery/restaurant rather than a bakery");
         Check(FoodThemeCatalogue.IsBakeryFood("cakes") && FoodThemeCatalogue.IsBakeryFood("flans"),
             "Desserts must use a named bakery or cake shop");
         int count = 0;

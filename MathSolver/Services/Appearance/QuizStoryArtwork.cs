@@ -119,6 +119,9 @@ internal static class QuizStoryArtwork
         new("theme-op-la", "op_la", ["phần trứng ốp-la", "serving of fried eggs", "servings of fried eggs"]),
         new("theme-thit-kho-trung", "thit_kho_trung", ["phần thịt kho trứng", "serving of braised pork and eggs", "servings of braised pork and eggs"]),
         new("theme-banh-xeo", "banh_xeo", ["chiếc bánh xèo", "Vietnamese sizzling pancake", "Vietnamese sizzling pancakes"]),
+        .. MathSolver.Services.QuestionBank.FoodThemeCatalogue.NewRestaurantDishes.Select(d =>
+            new ObjectArtwork("theme-" + d.Unit.Id, d.ArtworkId,
+                [d.Unit.Vietnamese, d.Unit.Singular, d.Unit.Plural])),
         new("theme-bun-thit-nuong-cha-gio", "bun_thit_nuong_cha_gio", ["tô bún thịt nướng chả giò", "bowl of grilled pork vermicelli with spring rolls", "bowls of grilled pork vermicelli with spring rolls"]),
         new("theme-hu-tieu-nam-vang", "hu_tieu_nam_vang", ["tô hủ tiếu Nam Vang", "bowl of Nam Vang noodle soup", "bowls of Nam Vang noodle soup"]),
         new("theme-mi-quang", "mi_quang", ["tô mì Quảng", "bowl of Quang noodles", "bowls of Quang noodles"]),

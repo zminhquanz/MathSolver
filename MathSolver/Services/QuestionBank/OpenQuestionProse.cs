@@ -91,6 +91,8 @@ public static class OpenQuestionProse
     {
         var syntax = ValidateSyntax(raw, c);
         if (!syntax.IsValid) return syntax;
+        if (!FoodThemePrompt.CombinedQuestionNamesVenue(syntax.Draft!.Question, c))
+            return new(null, "ChangedRelationOrTarget", ErrorDetails: "question: both food venues must have the same type");
         if (FiniteOpenCatalogue.IsProfile(c)) return FiniteOpenCatalogue.Validate(c, syntax.Draft!);
         if(SameMonthCalendarCatalogue.IsProfile(c))return SameMonthCalendarMeaning.Validate(c,syntax.Draft!);
         if(OvernightTimeCatalogue.IsProfile(c))return OvernightTimeMeaning.Validate(c,syntax.Draft!);

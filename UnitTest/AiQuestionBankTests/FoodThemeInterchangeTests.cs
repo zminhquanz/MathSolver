@@ -51,7 +51,12 @@ internal static class FoodThemeInterchangeTests
             string culture=QuizContentCatalog.Culture(language);using var backup=new MemoryStream();QuestionBankWorkbook.WriteBackup(backup,records);
             await File.WriteAllBytesAsync(Path.Combine(folder,"food-themes-"+culture+"-backup.xlsx"),backup.ToArray());backup.Position=0;
             var rows=QuestionBankWorkbook.Read(backup);Check(rows.Count==records.Count&&rows.All(r=>r.Question is not null),"Backup lost themed rows: "+string.Join(',',rows.Where(r=>r.Question is null).Select(r=>r.ErrorCode)));
-            for(int i=0;i<rows.Count;i++)Check(rows[i].Question!.Contract==records[i].Contract&&rows[i].Question!.Contract.AnswerText==records[i].Contract.AnswerText,"Backup changed subject/group/fractions");
+            for(int i=0;i<rows.Count;i++)
+            {
+                Check(rows[i].Question!.Contract==records[i].Contract&&rows[i].Question!.Contract.AnswerText==records[i].Contract.AnswerText,"Backup changed subject/group/fractions");
+                Check(rows[i].Question!.Draft==records[i].Draft,"Backup changed food venue narrative: "+records[i].Contract.SceneId);
+                FoodThemeTests.CheckFoodVenue(rows[i].Question!.Contract,rows[i].Question!.Draft);
+            }
             // Isolate this run so a previous verification cannot turn fresh inserts into duplicates.
             var store=new QuestionBankStore(Path.Combine(folder,$"themes-{culture}-{Guid.NewGuid():N}.db3"));backup.Position=0;var imported=await store.ImportExcelAsync(backup);
             int unique=records.Select(r=>QuestionProseIdentity.Hash(r.Contract,r.Draft)).Distinct().Count();
@@ -71,11 +76,19 @@ internal static class FoodThemeInterchangeTests
                     using(var inactive=new MemoryStream(bytes))Check(QuestionBankWorkbook.Read(inactive).Count==0,"Template example imported without explicit activation");
                     await File.WriteAllBytesAsync(Path.Combine(folder,$"{group}-{family}-{culture}-template.xlsx"),bytes);
                     using var active=new MemoryStream(ActivateExample(bytes,language));var authored=QuestionBankWorkbook.Read(active).Single();
-                    Check(authored.Question?.Contract==c&&QuestionBankStore.ValidateSavedQuestion(authored.Question!).IsValid,"Authoring metadata/role/group changed");templates++;
+                    Check(authored.Question?.Contract==c&&QuestionBankStore.ValidateSavedQuestion(authored.Question!).IsValid,"Authoring metadata/role/group changed");
+                    if(group==QuestionKnowledgeGroup.Food)FoodThemeTests.CheckFoodVenue(authored.Question!.Contract,authored.Question!.Draft);
+                    templates++;
                 }
             }
             using var exported=new MemoryStream();await store.ExportExcelAsync(exported);exported.Position=0;
-            Check(QuestionBankWorkbook.Read(exported).Count==unique,"Re-export lost nonduplicate themed rows");
+            var reexported=QuestionBankWorkbook.Read(exported);
+            Check(reexported.Count==unique,"Re-export lost nonduplicate themed rows");
+            foreach(var row in reexported)
+            {
+                Check(row.Question is not null,"Re-export lost a themed record");
+                FoodThemeTests.CheckFoodVenue(row.Question!.Contract,row.Question!.Draft);
+            }
         }
         Console.WriteLine($"PASS food themes interchange: {fixtures} typed records, {templates} VI/EN authoring templates, OOXML schema, explicit import, backup/SQLite/re-export and all three family selectors.");
     }

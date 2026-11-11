@@ -34,10 +34,18 @@ internal static class FoodThemeWorksheetTests
                 if(subject.Group==QuestionKnowledgeGroup.Food)
                 {
                     bool bakery=FoodThemeCatalogue.IsBakeryFood(subject.Unit.Id);
-                    string venue=language==AppLanguage.Vietnamese
-                        ? (bakery?"tiệm bánh của ":"quán ăn của ")
-                        : (bakery?"'s bakery":"'s eatery");
-                    Check(printed.Prompt.Contains(venue,StringComparison.OrdinalIgnoreCase),"Food PDF missing correct named venue: "+c.SceneId);
+                    string venue=Enumerable.Range(0,FoodThemePrompt.VenueCount(bakery))
+                        .Select(i=>FoodThemePrompt.Venue(bakery,i,language))
+                        .Single(v=>c.Subject.Contains(language==AppLanguage.Vietnamese?v+" của ":"'s "+v,StringComparison.OrdinalIgnoreCase));
+                    Check(printed.Prompt.Contains(c.Subject,StringComparison.OrdinalIgnoreCase),"Food PDF missing named venue: "+c.SceneId);
+                    if(!fraction)
+                    {
+                        Check(c.OtherSubject.Contains(language==AppLanguage.Vietnamese?venue+" của ":"'s "+venue,StringComparison.OrdinalIgnoreCase),
+                            "Food PDF mismatched venue owners: "+c.SceneId);
+                        string pair=language==AppLanguage.Vietnamese?"cả hai "+venue:"the two "+(venue switch{
+                            "bakery"=>"bakeries","cake shop"=>"cake shops","eatery"=>"eateries","restaurant"=>"restaurants",_=>"diners"});
+                        Check(printed.Prompt.Contains(pair,StringComparison.OrdinalIgnoreCase),"Food PDF question missing both matching venues: "+c.SceneId);
+                    }
                     if(subject.Unit.Id=="cakes")
                         Check(printed.Prompt.Contains(language==AppLanguage.Vietnamese?"bánh kem":"cream cake",StringComparison.OrdinalIgnoreCase),
                             "PDF contains generic cake wording: "+c.SceneId);

@@ -166,7 +166,7 @@ public static partial class AppliedQuestionCatalogue
             return (c.Operation == ArithmeticOperation.Divide ? c.Answer : c.Left) <= 20000;
         return true;
     }
-    private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, ref string name, ref string other)
+    private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, Random random, ref string name, ref string other)
     {
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
             || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && (s.UnitId is "erasers" or "color-markers")))
@@ -192,8 +192,9 @@ public static partial class AppliedQuestionCatalogue
         if (s.Group == QuestionKnowledgeGroup.Food)
         {
             bool bakery = FoodThemeCatalogue.IsBakeryFood(s.UnitId);
-            name = FoodThemePrompt.OwnerVenue(name, lang, restaurant: false, bakery: bakery);
-            other = FoodThemePrompt.OwnerVenue(other, lang, restaurant: true, bakery: bakery);
+            int venue = random.Next(FoodThemePrompt.VenueCount(bakery));
+            name = FoodThemePrompt.OwnerVenue(name, lang, venue, bakery);
+            other = FoodThemePrompt.OwnerVenue(other, lang, venue, bakery);
             return;
         }
         if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)

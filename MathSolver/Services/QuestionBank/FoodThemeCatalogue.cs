@@ -38,6 +38,17 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Food, Unit("op-la","phần trứng ốp-la","serving of fried eggs","servings of fried eggs"),"op_la"),
         new(QuestionKnowledgeGroup.Food, Unit("thit-kho-trung","phần thịt kho trứng","serving of braised pork and eggs","servings of braised pork and eggs"),"thit_kho_trung"),
         new(QuestionKnowledgeGroup.Food, Unit("banh-xeo","chiếc bánh xèo","Vietnamese sizzling pancake","Vietnamese sizzling pancakes"),"banh_xeo"),
+        // These nine traditional dishes are served by eateries, diners and restaurants.
+        // Their "bánh" names describe the food, not the kind of business selling it.
+        new(QuestionKnowledgeGroup.Food, Unit("banh-chung","chiếc bánh chưng","square sticky rice cake","square sticky rice cakes"),"banh_chung"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-day","chiếc bánh dày","round sticky rice cake","round sticky rice cakes"),"banh_day"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-tet","đòn bánh tét","cylindrical sticky rice cake","cylindrical sticky rice cakes"),"banh_tet"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-beo","chén bánh bèo","small dish of steamed rice cake","small dishes of steamed rice cakes"),"banh_beo"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-khot","chiếc bánh khọt","mini savory rice pancake","mini savory rice pancakes"),"banh_khot"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-bot-loc","chiếc bánh bột lọc","translucent tapioca dumpling","translucent tapioca dumplings"),"banh_bot_loc"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-gio","chiếc bánh giò","pyramid steamed rice dumpling","pyramid steamed rice dumplings"),"banh_gio"),
+        new(QuestionKnowledgeGroup.Food, Unit("banh-bao-thit-trung-cut","chiếc bánh bao nhân thịt và trứng cút","pork and quail egg steamed bun","pork and quail egg steamed buns"),"banh_bao_thit_trung_cut"),
+        new(QuestionKnowledgeGroup.Food, Unit("ha-cao","viên há cảo","steamed shrimp dumpling","steamed shrimp dumplings"),"ha_cao"),
         new(QuestionKnowledgeGroup.Food, Unit("bun-thit-nuong-cha-gio","tô bún thịt nướng chả giò","bowl of grilled pork vermicelli with spring rolls","bowls of grilled pork vermicelli with spring rolls"),"bun_thit_nuong_cha_gio"),
         new(QuestionKnowledgeGroup.Food, Unit("hu-tieu-nam-vang","tô hủ tiếu Nam Vang","bowl of Nam Vang noodle soup","bowls of Nam Vang noodle soup"),"hu_tieu_nam_vang"),
         new(QuestionKnowledgeGroup.Food, Unit("mi-quang","tô mì Quảng","bowl of Quang noodles","bowls of Quang noodles"),"mi_quang"),
@@ -60,6 +71,15 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Fruit, Unit("strawberries","quả dâu tây","strawberry","strawberries"),"strawberry"),
         new(QuestionKnowledgeGroup.Fruit, Unit("pears","quả lê","pear","pears"),"pear")
     ]);
+    // A shared C# source for question scenes, AI templates, PDF and Excel contracts.
+    // These are prepared savoury dishes served at eateries, diners and restaurants.
+    private static readonly string[] RestaurantDishIds =
+    [
+        "banh-chung", "banh-day", "banh-tet", "banh-beo", "banh-khot",
+        "banh-bot-loc", "banh-gio", "banh-bao-thit-trung-cut", "ha-cao"
+    ];
+    public static IReadOnlyList<Subject> NewRestaurantDishes { get; } =
+        Array.AsReadOnly(RestaurantDishIds.Select(id => Subjects.Single(subject => subject.Unit.Id == id)).ToArray());
     // Existing registries retain their original singular/plural/group units for saved contracts.
     private static readonly string[] ExistingUnits = ["sandwich-bread","round-bread","banh-mi","cakes","candies","milk-cartons","apples","oranges","mangoes"];
     internal static IEnumerable<QuestionUnit> AdditionalUnits => Subjects.Where(s => !ExistingUnits.Contains(s.Unit.Id)).Select(s => s.Unit);

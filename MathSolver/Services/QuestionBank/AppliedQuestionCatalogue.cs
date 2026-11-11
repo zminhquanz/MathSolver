@@ -34,7 +34,21 @@ public sealed record AppliedQuestionScene(string Id, QuestionKnowledgeGroup Grou
 public static partial class AppliedQuestionCatalogue
 {
     public const int Version = 5;
-    public static IReadOnlyList<AppliedQuestionScene> All { get; } = QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes");
+    public static IReadOnlyList<AppliedQuestionScene> All { get; } = BuildScenes();
+
+    private static IReadOnlyList<AppliedQuestionScene> BuildScenes()
+    {
+        var scenes = QuizContentCatalog.LoadList<AppliedQuestionScene>("AppliedScenes").ToList();
+        foreach (var dish in FoodThemeCatalogue.NewRestaurantDishes)
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"theme-food-{dish.Unit.Id}-{suffix}", QuestionKnowledgeGroup.Food,
+                operation, 1, 10000, 99, dish.Unit.Id));
+        return scenes.AsReadOnly();
+    }
 
     public static IEnumerable<AppliedQuestionScene> Available(QuestionLearningProfile p, ArithmeticOperation operation, CurriculumTier tier)
         => All.Where(s => p.Allows(operation) && Enum.IsDefined(tier) && p.Includes(s.Group) && s.Operation == operation
@@ -116,7 +130,7 @@ public static partial class AppliedQuestionCatalogue
         if (profile.Group == QuestionKnowledgeGroup.Motion)
         { subject = QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.Create.010");
           other = QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.Create.011"); }
-        SetSceneActors(scene, language, a, b, ref subject, ref other);
+        SetSceneActors(scene, language, a, b, random, ref subject, ref other);
         string unit = AnswerUnit(scene, language);
         int perGroup = scene.Structure == BasicQuestionStructure.CountGroups ? b : operation == ArithmeticOperation.Divide ? a / b : a;
         string groupUnit = profile.Group == QuestionKnowledgeGroup.Objects && perGroup > 100
@@ -306,6 +320,8 @@ public static partial class AppliedQuestionCatalogue
             string mismatches = SemanticProseRules.MismatchedFields(c.Language, ("given_a", d.GivenA, prose.GivenA),
                 ("given_b", d.GivenB, prose.GivenB), ("question", d.Question, prose.Questions), ("solution_lead", d.SolutionLead, prose.Leads));
             if (mismatches.Length > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: mismatches);
+            if (!FoodThemePrompt.CombinedQuestionNamesVenue(d.Question, c))
+                return new(null, "ChangedRelationOrTarget", ErrorDetails: "question: both food venues must have the same type");
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }
@@ -339,6 +355,7 @@ public static partial class AppliedQuestionCatalogue
         if (c.Language == AppLanguage.English)
             text = Regex.Replace(text, @"\b1 (more |fewer |additional )?" + Regex.Escape(c.Unit) + @"\b",
                 m => "1 " + m.Groups[1].Value + Singular(c.Unit, 1));
+        text = FoodThemePrompt.AlignCombinedQuestion(text, c);
         return Regex.Replace(text, @"(^|[.!?]\s+)(\p{Ll})", m => m.Groups[1].Value + m.Groups[2].Value.ToUpperInvariant());
     }
     public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)
