@@ -38,8 +38,8 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Food, Unit("op-la","phần trứng ốp-la","serving of fried eggs","servings of fried eggs"),"op_la"),
         new(QuestionKnowledgeGroup.Food, Unit("thit-kho-trung","phần thịt kho trứng","serving of braised pork and eggs","servings of braised pork and eggs"),"thit_kho_trung"),
         new(QuestionKnowledgeGroup.Food, Unit("banh-xeo","chiếc bánh xèo","Vietnamese sizzling pancake","Vietnamese sizzling pancakes"),"banh_xeo"),
-        // These nine traditional dishes are served by eateries, diners and restaurants.
-        // Their "bánh" names describe the food, not the kind of business selling it.
+        // Five wrapped/steamed cakes are sold at bakeries; banh beo, banh khot,
+        // banh bot loc and ha cao remain prepared dishes at eateries.
         new(QuestionKnowledgeGroup.Food, Unit("banh-chung","chiếc bánh chưng","square sticky rice cake","square sticky rice cakes"),"banh_chung"),
         new(QuestionKnowledgeGroup.Food, Unit("banh-day","chiếc bánh dày","round sticky rice cake","round sticky rice cakes"),"banh_day"),
         new(QuestionKnowledgeGroup.Food, Unit("banh-tet","đòn bánh tét","cylindrical sticky rice cake","cylindrical sticky rice cakes"),"banh_tet"),
@@ -72,7 +72,7 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Fruit, Unit("pears","quả lê","pear","pears"),"pear")
     ]);
     // A shared C# source for question scenes, AI templates, PDF and Excel contracts.
-    // These are prepared savoury dishes served at eateries, diners and restaurants.
+    // Shared scenes for nine traditional foods; their selling venue depends on IsBakeryFood.
     private static readonly string[] RestaurantDishIds =
     [
         "banh-chung", "banh-day", "banh-tet", "banh-beo", "banh-khot",
@@ -91,7 +91,8 @@ public static class FoodThemeCatalogue
         "cakes" or "biscuits" or "lamingtons" or "pancakes" or
         "banh-cam" or "banh-com" or "banh-trung-thu" or "banh-pia" or
         "croissants" or "banh-da-lon" or "banh-bo" or "muffins" or
-        "cupcakes" or "cookies" or "donuts" or "waffles" or "apple-pies" or "flans";
+        "cupcakes" or "cookies" or "donuts" or "waffles" or "apple-pies" or "flans" or
+        "banh-chung" or "banh-gio" or "banh-day" or "banh-bao-thit-trung-cut" or "banh-tet";
 
     public static bool IsBakeryFractionScene(string sceneId) =>
         Subjects.Any(s => s.Group == QuestionKnowledgeGroup.Food && IsBakeryFood(s.Unit.Id)

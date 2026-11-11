@@ -29,8 +29,8 @@
     "dynamic": "Câu có biến được app thay bằng dữ liệu — giữ nguyên các placeholder.",
     "legacy": "Cần bổ sung ngữ cảnh: chuỗi cũ có thể xuất hiện ở nhiều vị trí; xem tham chiếu source hoặc hỏi người phát triển.",
     "AiBank": "AI question bank: model management, generation, validation, review and storage.",
-    "Learning": "Chọn nhóm kiến thức ở luyện tập toán cơ bản hoặc bổ sung đề bằng AI.",
-    "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm kiến thức và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
+    "Learning": "Chọn nhóm chủ đề ở luyện tập toán cơ bản hoặc bổ sung đề bằng AI.",
+    "FindXBank": "Tìm X ở ngân hàng đề AI: chọn nhóm chủ đề và thành phần chưa biết. C# sinh số, tính nghiệm và kiểm tra bằng cách thế lại."
   },
   "translationNotes": {
     "AiBank.ProcessedQuestionsEmpty": {
@@ -1728,66 +1728,66 @@
       "translatorNote": "Preserve mathematical symbols, JSON field names and placeholders. Questions are reviewed here; practice and grading are on the main page."
     },
     "Learning.Group": {
-      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
-      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+      "context": "Lựa chọn nhóm chủ đề; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm chủ đề chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
     "Learning.Group.Mixed": {
-      "context": "Nhóm kiến thức ở luyện tập toán đố và tạo bộ đề PDF.",
+      "context": "Nhóm chủ đề ở luyện tập toán đố và tạo bộ đề PDF.",
       "description": "Mỗi câu chọn ngẫu nhiên một nhóm phù hợp với dạng toán, phép tính và mức sao."
     },
-    "Learning.Group.Food": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
-    "Learning.Group.Drinks": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
-    "Learning.Group.Fruit": {"context":"Knowledge group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
+    "Learning.Group.Food": {"context":"Theme group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
+    "Learning.Group.Drinks": {"context":"Theme group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
+    "Learning.Group.Fruit": {"context":"Theme group shared by practice, AI supplementation, PDF and Excel.","description":"Concrete food/drink/fruit theme; preserves mathematical relationships and units."},
     "Learning.Group.Objects": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Money": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Mass": {
-      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
-      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+      "context": "Lựa chọn nhóm chủ đề; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm chủ đề chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
     "Learning.Group.Length": {
-      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
-      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+      "context": "Lựa chọn nhóm chủ đề; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm chủ đề chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
     "Learning.Group.Transport": {
-      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
-      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+      "context": "Lựa chọn nhóm chủ đề; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm chủ đề chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
     "Learning.Group.Motion": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Hint": {
-      "context": "Lựa chọn nhóm kiến thức; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
-      "description": "Nhóm kiến thức chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
+      "context": "Lựa chọn nhóm chủ đề; dùng chung ở Toán đố cơ bản và Bổ sung đề bằng AI.",
+      "description": "Nhóm chủ đề chọn đại lượng và đơn vị; độ khó 1–5 sao chọn phạm vi số và quan hệ toán, không lọc theo lớp."
     },
     "Learning.Group.Time": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Measurement": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Geometry": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Packaging": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Production": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "Learning.Group.Data": {
-      "context": "Tên nhóm kiến thức dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
+      "context": "Tên nhóm chủ đề dùng chung ở luyện tập C# và bổ sung mẫu đề bằng AI.",
       "description": "Chọn loại dữ kiện và đại lượng; không phải lớp học hoặc mức sao."
     },
     "FindXBank.Title": {
@@ -2570,7 +2570,7 @@
     },
     {
       "key": "AiBank.SqlHelpColumns",
-      "source": "• Hash: mã dòng, không sửa; để trống khi thêm để tự tạo.\n• Operation: 0 cộng, 1 trừ, 2 nhân, 3 chia. Stars: 1–5. Language: 0 Việt, 1 Anh.\n• ProblemType / ProblemVariant: mã bài toán / dạng bài. KnowledgeGroup: mã nhóm kiến thức.\n• ContractJson / DraftJson / RawJson: dữ liệu JSON; cần đúng cấu trúc để luyện tập.\n• CreatedUtc / LastUsedUtc: ticks UTC của .NET. UseCount: số lần dùng.\n• NULL là giá trị rỗng; chuỗi để trống không phải NULL.",
+      "source": "• Hash: mã dòng, không sửa; để trống khi thêm để tự tạo.\n• Operation: 0 cộng, 1 trừ, 2 nhân, 3 chia. Stars: 1–5. Language: 0 Việt, 1 Anh.\n• ProblemType / ProblemVariant: mã bài toán / dạng bài. KnowledgeGroup: mã nhóm chủ đề.\n• ContractJson / DraftJson / RawJson: dữ liệu JSON; cần đúng cấu trúc để luyện tập.\n• CreatedUtc / LastUsedUtc: ticks UTC của .NET. UseCount: số lần dùng.\n• NULL là giá trị rỗng; chuỗi để trống không phải NULL.",
       "mode": "exact"
     },
     {
@@ -10485,7 +10485,7 @@
     },
     {
       "key": "AiBank.TemplateGroup",
-      "source": "Chọn nhóm kiến thức",
+      "source": "Chọn nhóm chủ đề",
       "mode": "exact"
     },
     {

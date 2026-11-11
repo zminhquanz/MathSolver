@@ -4,10 +4,14 @@ using MathSolver.Services.QuestionBank;
 
 internal static class FoodThemeTests
 {
+    private static readonly string[] TakeawayBakeryCakeIds =
+        ["banh-chung", "banh-gio", "banh-day", "banh-bao-thit-trung-cut", "banh-tet"];
+
     internal static IEnumerable<(string Name,BasicQuestionContract Contract)> NativeCases()
     {
         foreach(var language in Enum.GetValues<AppLanguage>())
-        foreach(var (id,op) in new[]{("pho",ArithmeticOperation.Subtract),("lemon-tea-glasses",ArithmeticOperation.Multiply),("strawberries",ArithmeticOperation.Add)})
+        foreach(var (id,op) in new[]{("pho",ArithmeticOperation.Subtract),("lemon-tea-glasses",ArithmeticOperation.Multiply),("strawberries",ArithmeticOperation.Add)}
+            .Concat(TakeawayBakeryCakeIds.Select(id => (id,ArithmeticOperation.Add))))
         {
             var s=FoodThemeCatalogue.Subjects.Single(s=>s.Unit.Id==id);
             yield return ($"{s.Group}/{id}/{op}/{language}",FoodThemeInterchangeTests.Contract(s,op,language,BankQuestionFamily.Arithmetic));
@@ -20,7 +24,7 @@ internal static class FoodThemeTests
     private static void CheckAllFoodVenueKinds()
     {
         foreach (var language in Enum.GetValues<AppLanguage>())
-        foreach (var (unit, bakery) in new[] { ("cakes", true), ("pho", false) })
+        foreach (var (unit, bakery) in BakeryVenueCases())
         {
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (int seed in Enumerable.Range(0, 80))
@@ -44,7 +48,7 @@ internal static class FoodThemeTests
     private static void CheckAiCombinedVenueValidation()
     {
         foreach (var language in Enum.GetValues<AppLanguage>())
-        foreach (var (unit, bakery) in new[] { ("cakes", true), ("pho", false) })
+        foreach (var (unit, bakery) in BakeryVenueCases())
         {
             var contract = AppliedQuestionCatalogue.Create(new QuestionLearningProfile(QuestionKnowledgeGroup.Food),
                 ArithmeticOperation.Add, CurriculumTier.ThreeStars, language, new Random(23),
@@ -78,6 +82,13 @@ internal static class FoodThemeTests
                     "Creative AI prose must reject a mismatched food venue");
         }
     }
+    private static IEnumerable<(string Unit, bool Bakery)> BakeryVenueCases()
+    {
+        yield return ("cakes", true);
+        yield return ("pho", false);
+        foreach (var id in TakeawayBakeryCakeIds)
+            yield return (id, true);
+    }
     internal static void CheckFoodVenue(BasicQuestionContract contract, BasicQuestionDraft draft)
     {
         if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food) return;
@@ -104,6 +115,16 @@ internal static class FoodThemeTests
         string story = draft.ToWordProblem(contract).ProblemText;
         Check(story.Contains(contract.Subject, StringComparison.OrdinalIgnoreCase),
             $"Rendered prepared-food story omits owner venue: {contract.SceneId}/{contract.Language}: {story}");
+        if (TakeawayBakeryCakeIds.Any(id => contract.SceneId.Contains("food-" + id + "-", StringComparison.Ordinal)))
+        {
+            foreach (string restaurantTerm in vi ? new[] { "quán ăn", "nhà hàng", "phục vụ", "bàn ăn" }
+                : new[] { "eatery", "restaurant", "diner", "serve at tables", "dining table" })
+                Check(!story.Contains(restaurantTerm, StringComparison.OrdinalIgnoreCase),
+                    $"Takeaway bakery cake uses restaurant wording: {contract.SceneId}/{contract.Language}: {story}");
+            Check(story.Contains(vi ? "bán" : "sell", StringComparison.OrdinalIgnoreCase)
+                || story.Contains(vi ? "chuẩn bị" : "prepare", StringComparison.OrdinalIgnoreCase),
+                $"Takeaway bakery cake lacks selling/preparing context: {contract.SceneId}/{contract.Language}: {story}");
+        }
         if (contract.Structure == BasicQuestionStructure.Combine)
         {
             Check(story.Contains(contract.OtherSubject, StringComparison.OrdinalIgnoreCase),
@@ -199,8 +220,10 @@ internal static class FoodThemeTests
             var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == id);
             Check(subject.Group == QuestionKnowledgeGroup.Food && subject.ArtworkId == artwork,
                 "Incorrect food group or image mapping: " + id);
-            if (id is "banh-chung" or "banh-day" or "banh-tet" or "banh-beo" or
-                "banh-khot" or "banh-bot-loc" or "banh-gio" or "banh-bao-thit-trung-cut" or "ha-cao")
+            if (id is "banh-chung" or "banh-gio" or "banh-day" or "banh-bao-thit-trung-cut" or "banh-tet")
+                Check(FoodThemeCatalogue.IsBakeryFood(id),
+                    "Traditional takeaway cake must belong to a bakery/cake shop: " + id);
+            else if (id is "banh-beo" or "banh-khot" or "banh-bot-loc" or "ha-cao")
                 Check(!FoodThemeCatalogue.IsBakeryFood(id),
                     "Traditional prepared dish must belong to a restaurant/eatery/diner: " + id);
             foreach (var language in Enum.GetValues<AppLanguage>())

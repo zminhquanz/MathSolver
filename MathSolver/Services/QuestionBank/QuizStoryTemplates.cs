@@ -32,18 +32,20 @@ internal static class QuizStoryTemplates
         string family = contract.Version == FractionQuestionCatalogue.Version ? "Fraction" : "Applied";
         if (stories.TryGetValue((family, contract.SceneId), out var template)) return template;
 
-        // Traditional dishes inherit the reviewed prepared-food phrasing used for pho.
-        // The original UnitId is replaced so validation, AI and worksheet exports
-        // operate on the exact new contract rather than an unrelated food type.
-        var restaurantDish = FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
+        // These nine food IDs share generated scenes. Five are takeaway bakery
+        // products and need selling/packing prose; the others use eatery prose.
+        var traditionalDish = FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
             contract.SceneId.StartsWith($"{(family == "Fraction" ? "fraction-" : "")}theme-food-{d.Unit.Id}-", StringComparison.Ordinal));
-        if (restaurantDish is not null)
+        if (traditionalDish is not null)
         {
             string prefix = family == "Fraction" ? "fraction-theme-food-" : "theme-food-";
-            string suffix = contract.SceneId[(prefix.Length + restaurantDish.Unit.Id.Length)..];
+            string suffix = contract.SceneId[(prefix.Length + traditionalDish.Unit.Id.Length)..];
+            string unitId = family == "Fraction" ? contract.SceneId : traditionalDish.Unit.Id;
+            if (FoodThemeCatalogue.IsBakeryFood(traditionalDish.Unit.Id))
+                return BakeryDishStoryTemplates.Create(contract.SceneId, family, suffix.TrimStart('-'), contract.Language, unitId);
+
             if (stories.TryGetValue((family, prefix + "pho" + suffix), out var reference))
             {
-                string unitId = family == "Fraction" ? contract.SceneId : restaurantDish.Unit.Id;
                 return new(contract.SceneId, family,
                     reference.Examples.Select(e => e with { UnitId = unitId }).ToArray(),
                     reference.Prose with { UnitId = unitId });

@@ -246,7 +246,7 @@ Calculators, algorithm-generated math puzzles, formulas, and multiplication tabl
 ## Technology
 
 - C#
-- .NET 10 and .NET MAUI
+- .NET 11 and .NET MAUI 11
 - XAML
 
 ## Project Structure
@@ -273,7 +273,9 @@ MathSolver/
 
 ### Requirements
 
-Install the .NET 10 SDK and the .NET MAUI workload. For Windows development, use Visual Studio with the .NET MAUI development tools installed. Android development also requires the Android SDK and an emulator or physical device.
+Install the .NET 11 SDK (11.0.100 or a later 11.0 feature band) and the .NET MAUI 11 workloads. The SDK version is configured in `global.json`. For Windows development, use Visual Studio with the .NET MAUI development tools installed. Android development also requires the Android SDK and an emulator or physical device.
+
+Android builds use CoreCLR and require Android 7.0 (API 24) or later, as required by .NET 11. The app uses CommunityToolkit.Maui 17.0.0 and CommunityToolkit.Maui.MediaElement 12.0.0.
 
 ### Clone the Repository
 
@@ -291,13 +293,13 @@ dotnet restore
 ### Build
 
 ```bash
-dotnet build MathSolver/MathSolver.csproj -f net10.0-android
+dotnet build MathSolver/MathSolver.csproj -f net11.0-android
 ```
 
 On Windows, build the Windows target with:
 
 ```powershell
-dotnet build MathSolver/MathSolver.csproj -f net10.0-windows10.0.19041.0
+dotnet build MathSolver/MathSolver.csproj -f net11.0-windows10.0.19041.0
 ```
 
 You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application. Android Debug and Release device builds use the SDK's development signing key by default; no `MathSolver.keystore` file is required. Release APK builds target Android ARM64.
@@ -305,13 +307,13 @@ You can also open the solution in Visual Studio, select **Windows Machine** or a
 To build a development-signed Release ARM64 APK for testing on a device:
 
 ```powershell
-dotnet build MathSolver/MathSolver.csproj -f net10.0-android -c Release -r android-arm64 -t:SignAndroidPackage
+dotnet build MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 -t:SignAndroidPackage
 ```
 
 For distribution, explicitly select your existing release keystore in Visual Studio's signing settings or supply the signing properties below. Set the two password environment variables locally first; keep passwords and private keys out of the repository.
 
 ```powershell
-dotnet publish MathSolver/MathSolver.csproj -f net10.0-android -c Release -r android-arm64 `
+dotnet publish MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 `
   -p:AndroidKeyStore=true `
   -p:AndroidSigningKeyStore="C:/private/MathSolver.keystore" `
   -p:AndroidSigningKeyAlias=mathsolver `

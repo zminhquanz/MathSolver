@@ -274,8 +274,13 @@ internal sealed class QuizChoicePage : ContentPage
     // WinUI's scrollbar overlays the ItemsPresenter. Reserve space inside that
     // presenter, not outside the CollectionView (which would move the bar too).
     private const double ScrollbarGutter = 24;
+    // CV2 caches the first template's pre-binding height in its WrapperView.
+    // Choice cards update HeightRequest after the dialog has measured, so each
+    // realized Windows card must be remeasured rather than reuse that cache.
+    private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureAllItems;
 #else
     private const double ScrollbarGutter = 0;
+    private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
 #endif
     private readonly IReadOnlyList<QuizChoiceOption> _choices;
     private readonly TaskCompletionSource<int?> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -348,10 +353,13 @@ internal sealed class QuizChoicePage : ContentPage
         _header.Add(_heading);
         _header.Add(_close, 1);
         _header.SizeChanged += (_, _) => Resize();
-        _search = new SearchBar { Placeholder = IllustratedQuizPicker.Text("Choice.Search"), MinimumHeightRequest = 48 };
+        bool themeChoices = choices.Count > 0 && choices.All(option =>
+            option.Key.StartsWith("Learning.Group.", StringComparison.Ordinal));
+        string searchText = IllustratedQuizPicker.Text(themeChoices ? "Choice.SearchThemes" : "Choice.Search");
+        _search = new SearchBar { Placeholder = searchText, MinimumHeightRequest = 48 };
         _search.SetDynamicResource(SearchBar.TextColorProperty, "TextPrimaryColor");
         _search.SetDynamicResource(SearchBar.PlaceholderColorProperty, "TextSecondaryColor");
-        SemanticProperties.SetDescription(_search, IllustratedQuizPicker.Text("Choice.Search"));
+        SemanticProperties.SetDescription(_search, searchText);
         _search.TextChanged += (_, _) => ApplyFilter();
         _search.SearchButtonPressed += OnSearchSubmitted;
         _search.SizeChanged += (_, _) => Resize();
@@ -367,14 +375,14 @@ internal sealed class QuizChoicePage : ContentPage
         _searchRow.Add(_compactClose, 1);
         _searchRow.SizeChanged += (_, _) => Resize();
         _list = new CollectionView { SelectionMode = SelectionMode.None, ItemsLayout = _itemsLayout,
-            ItemSizingStrategy = ItemSizingStrategy.MeasureFirstItem,
+            ItemSizingStrategy = GridSizingStrategy,
             VerticalScrollBarVisibility = ScrollBarVisibility.Default,
             ItemTemplate = new DataTemplate(CreateChoiceCard),
-            EmptyView = new Label { Text = IllustratedQuizPicker.Text("Choice.Empty"), FontSize = 16,
+            EmptyView = new Label { Text = IllustratedQuizPicker.Text(themeChoices ? "Choice.EmptyThemes" : "Choice.Empty"), FontSize = 16,
                 HorizontalTextAlignment = TextAlignment.Center, Margin = new Thickness(12) } };
 #if WINDOWS
-        _list.HandlerChanged += (_, _) => ApplyScrollbarGutter();
-        _list.Loaded += (_, _) => ApplyScrollbarGutter();
+        _list.HandlerChanged += (_, _) => ApplyWindowsLayout();
+        _list.Loaded += (_, _) => ApplyWindowsLayout();
 #endif
         var body = new Grid { RowDefinitions = new() { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) }, RowSpacing = 12 };
         body.Add(_header);
@@ -440,20 +448,40 @@ internal sealed class QuizChoicePage : ContentPage
             if (_itemsLayout.Span != layout.Columns) _itemsLayout.Span = layout.Columns;
             IItemsLayout itemsLayout = layout.UseList ? _listLayout : _itemsLayout;
             if (!ReferenceEquals(_list.ItemsLayout, itemsLayout)) _list.ItemsLayout = itemsLayout;
-            _list.ItemSizingStrategy = layout.UseList ? ItemSizingStrategy.MeasureAllItems : ItemSizingStrategy.MeasureFirstItem;
+            _list.ItemSizingStrategy = layout.UseList ? ItemSizingStrategy.MeasureAllItems : GridSizingStrategy;
+#if WINDOWS
+            ApplyWindowsLayout();
+#endif
         }
         finally { _resizing = false; }
     }
 
 #if WINDOWS
-    private void ApplyScrollbarGutter()
+    private void ApplyWindowsLayout()
     {
         if (_dismissed) return;
-        if (_list.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.ListViewBase nativeList)
+        if (_list.Handler?.PlatformView is Microsoft.UI.Xaml.Controls.Control nativeList)
         {
-            // FormsGridView binds this padding to its ItemsPresenter. The wrap
-            // grid then divides the remaining width evenly between all columns.
+            // Both the MAUI 11 ItemsView and the legacy ListViewBase expose
+            // Padding on Control. Keep the last card clear of the scroll bar.
             nativeList.Padding = new Microsoft.UI.Xaml.Thickness(0, 0, ScrollbarGutter, 0);
+            if (nativeList is Microsoft.UI.Xaml.Controls.ItemsView itemsView &&
+                itemsView.Layout is Microsoft.UI.Xaml.Controls.UniformGridLayout grid &&
+                _list.ItemsLayout is GridItemsLayout columns && _card.WidthRequest > 0)
+            {
+                // MAUI 11 uses UniformGridLayout: Span is only a maximum, and
+                // auto width caches the first template's full-row measurement.
+                // Supply the cross-axis size explicitly, using the same spacing
+                // adjustment as MAUI's ApplyMinItemSizeForSpan. Subtract our
+                // inner padding and scrollbar gutter before dividing into cells.
+                double width = _card.WidthRequest - _card.Padding.HorizontalThickness
+                    - 2 * _card.StrokeThickness - ScrollbarGutter;
+                grid.MinItemWidth = Math.Max(1, Math.Floor(width / columns.Span) - columns.HorizontalItemSpacing);
+                // The first native measurement can precede the responsive
+                // HeightRequest binding. Do not retain that smaller cached row
+                // height: reserve the whole Border plus its 2px outer margins.
+                grid.MinItemHeight = ChoiceCardHeight + 4;
+            }
         }
     }
 #endif
