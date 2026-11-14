@@ -79,15 +79,31 @@ public static class FractionQuestionCatalogue
             if (s.CountResult) a = new(b.Numerator * random.Next(2, 9), b.Denominator);
             if (s.Id == "fraction-motion-distance") a = new(a.Numerator + random.Next(2, 6) * a.Denominator, a.Denominator);
             string subject = QuestionNames.Create(language, random, false);
+            string other = "";
+            bool paired = FoodThemePrompt.IsPairedFractionScene(s.Id);
             if (s.Group == QuestionKnowledgeGroup.Food)
             {
                 bool bakery = FoodThemeCatalogue.IsBakeryFractionScene(s.Id);
-                subject = FoodThemePrompt.OwnerVenue(subject, language,
-                    random.Next(FoodThemePrompt.VenueCount(bakery)), bakery);
+                int venue = random.Next(FoodThemePrompt.VenueCount(bakery));
+                if (paired)
+                {
+                    for (int ownerAttempt = 0; ownerAttempt < 32; ownerAttempt++)
+                    {
+                        other = QuestionNames.Create(language, random, false);
+                        if (other != subject) break;
+                    }
+                    if (other == subject)
+                        other = language == AppLanguage.Vietnamese
+                            ? QuestionNames.GivenName(subject) == "An" ? "Bình" : "An"
+                            : QuestionNames.GivenName(subject) == "Emma" ? "James" : "Emma";
+                    other = FoodThemePrompt.OwnerVenue(other, language, venue, bakery);
+                }
+                subject = FoodThemePrompt.OwnerVenue(subject, language, venue, bakery);
             }
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
                 subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
                 TopicId: profile.Group.ToString(), SceneId: s.Id, KnowledgeGroup: profile.Group,
+                Structure: paired ? BasicQuestionStructure.Combine : BasicQuestionStructure.Increase, OtherSubject: other,
                 LeftDenominator: (int)a.Denominator, RightDenominator: (int)b.Denominator);
             if (IsValid(c)) return c;
         }
@@ -116,7 +132,15 @@ public static class FractionQuestionCatalogue
             || c.RightDenominator > MaximumDenominator(c.Tier) || string.IsNullOrWhiteSpace(c.Subject)
             || c.Subject.Length > 100 || c.Subject.Any(ch => char.IsControl(ch) || char.IsDigit(ch) || ch is '{' or '}')
             || c.Unit != (c.Language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit) || c.GroupUnit != ""
-            || c.Structure != BasicQuestionStructure.Increase || c.OtherSubject != "" || c.PartA != "" || c.PartB != "") return false;
+            || c.PartA != "" || c.PartB != "") return false;
+        // Preserve saved single-owner fraction contracts; new six-dish totals use two owners.
+        bool paired = FoodThemePrompt.IsPairedFractionScene(c.SceneId) && c.Structure == BasicQuestionStructure.Combine;
+        if (paired)
+        {
+            if (string.IsNullOrWhiteSpace(c.OtherSubject) || c.OtherSubject == c.Subject || c.OtherSubject.Length > 100
+                || c.OtherSubject.Any(ch => char.IsControl(ch) || char.IsDigit(ch) || ch is '{' or '}')) return false;
+        }
+        else if (c.Structure != BasicQuestionStructure.Increase || c.OtherSubject != "") return false;
         var a = Left(c); var b = Right(c);
         if (a.Numerator > a.Denominator * 8 || !s.CountResult && s.Id != "fraction-motion-distance" && a.Numerator >= a.Denominator || b.Numerator >= b.Denominator
             || a.Numerator != c.Left || a.Denominator != c.LeftDenominator || b.Numerator != c.Right || b.Denominator != c.RightDenominator) return false;
@@ -157,6 +181,8 @@ public static class FractionQuestionCatalogue
             string mismatches = SemanticProseRules.MismatchedFields(c.Language, ("given_a", d.GivenA, pool.GivenA),
                 ("given_b", d.GivenB, pool.GivenB), ("question", d.Question, pool.Questions), ("solution_lead", d.SolutionLead, pool.Leads));
             if (mismatches.Length > 0) return new(null, "ChangedRelationOrTarget", ErrorDetails: mismatches);
+            if (!FoodThemePrompt.CombinedQuestionNamesVenue(d.Question, c))
+                return new(null, "ChangedRelationOrTarget", ErrorDetails: "question: both food venues must have the same type");
             return new(d, null, c);
         }
         catch (JsonException) { return new(null, "InvalidJson"); }
@@ -168,7 +194,8 @@ public static class FractionQuestionCatalogue
         string unitA = vi ? s.UnitA : FoodThemeCatalogue.EnglishFractionUnit(c.SceneId, s.EnUnitA, a.Numerator < a.Denominator, a.Numerator == a.Denominator);
         string unitB = vi ? s.UnitB : FoodThemeCatalogue.EnglishFractionUnit(c.SceneId, s.EnUnitB, b.Numerator < b.Denominator, b.Numerator == b.Denominator);
         string rendered = text.Replace("{a}", a.ToString()).Replace("{b}", b.ToString()).Replace("{name}", c.Subject)
-            .Replace("{unit_a}", unitA).Replace("{unit_b}", unitB).Replace("{unit}", c.Unit);
+            .Replace("{other}", c.OtherSubject).Replace("{unit_a}", unitA).Replace("{unit_b}", unitB).Replace("{unit}", c.Unit);
+        rendered = FoodThemePrompt.AlignCombinedQuestion(rendered, c);
         return rendered.Length == 0 ? rendered : char.ToUpperInvariant(rendered[0]) + rendered[1..];
     }
     public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example)

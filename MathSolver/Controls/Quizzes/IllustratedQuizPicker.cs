@@ -28,6 +28,7 @@ public sealed class IllustratedQuizPicker : ContentView
         _captionKey = captionKey;
         DisplayDensityManager.BindControl(this);
         _open = ChoiceButton(drawFocusBorder: false);
+        Action? refreshFrameFocus = null;
         // Focus belongs to the field's single outer outline, not a second inner
         // button outline. Keep stroke thickness constant so content never shifts.
         if (frame is not null)
@@ -36,7 +37,11 @@ public sealed class IllustratedQuizPicker : ContentView
             {
                 if (_open.Handler?.PlatformView is null || frame.Handler?.PlatformView is null) return;
                 frame.SetDynamicResource(Border.StrokeProperty, _open.IsFocused ? "PrimaryColor" : "BorderBrush");
+                if (_open.IsFocused && _illustration?.IsThemeGroup == true)
+                    frame.Stroke = new SolidColorBrush(QuizChoiceIllustration.ReadableInk(
+                        ThemeResource.GetColor("PrimaryColor", "#2563EB"), ThemeResource.GetColor("InputBackgroundColor", "#FFFFFF")));
             }
+            refreshFrameFocus = UpdateFrameFocus;
             _open.Focused += (_, _) => UpdateFrameFocus();
             _open.Unfocused += (_, _) => UpdateFrameFocus();
             _open.Loaded += (_, _) => UpdateFrameFocus();
@@ -51,6 +56,11 @@ public sealed class IllustratedQuizPicker : ContentView
         _title.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
         _illustration = new QuizChoiceIllustration { WidthRequest = 32, HeightRequest = 32,
             VerticalOptions = LayoutOptions.Center };
+        _illustration.SetDynamicResource(QuizChoiceIllustration.InkSurfaceColorProperty, "InputBackgroundColor");
+        _illustration.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName is nameof(QuizChoiceIllustration.InkColor) or nameof(QuizChoiceIllustration.InkSurfaceColor)) refreshFrameFocus?.Invoke();
+        };
         var arrow = new Polyline { Points = new PointCollection { new(1, 1), new(5, 5), new(9, 1) },
             StrokeThickness = 1.5, WidthRequest = 10, HeightRequest = 6,
             VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Center,
@@ -105,7 +115,8 @@ public sealed class IllustratedQuizPicker : ContentView
             if (Application.Current?.Resources.TryGetValue("TextPrimaryColor", out var value) == true
                 && value is Color primary)
             {
-                try { _title.TextColor = primary; }
+                try { _title.TextColor = _illustration.IsThemeGroup
+                    ? QuizChoiceIllustration.ReadableInk(primary, ThemeResource.GetColor("InputBackgroundColor", "#FFFFFF")) : primary; }
                 catch (Exception error) when (error is System.Runtime.InteropServices.COMException or ObjectDisposedException)
                 { System.Diagnostics.Debug.WriteLine($"Illustrated picker theme text deferred: {error}"); }
             }
@@ -189,6 +200,7 @@ public sealed class IllustratedQuizPicker : ContentView
         _title.Opacity = _illustration.Opacity = _picker.IsEnabled ? 1 : 0.5;
         string description = "";
         _illustration.IsVisible = index >= 0 && index < _keys.Length && !string.IsNullOrEmpty(_keys[index]);
+        _illustration.IsThemeGroup = _illustration.IsVisible && QuizThemeIconPolicy.IsGroupKey(_keys[index]);
         if (_illustration.IsVisible)
         {
             var option = QuizChoiceCatalog.Create(index, _keys[index], _title.Text,
@@ -323,6 +335,10 @@ internal sealed class QuizChoicePage : ContentPage
     private bool _resizing;
     private bool _hostDestroyed;
     private Window? _hostWindow;
+#if ANDROID
+    private Android.Views.View? _androidViewport;
+    private Android.Views.ViewTreeObserver? _androidObserver;
+#endif
     internal bool WasHostDestroyed => _hostDestroyed;
 #if WINDOWS
     private Microsoft.UI.Xaml.UIElement? _keyboardSurface;
@@ -399,6 +415,23 @@ internal sealed class QuizChoicePage : ContentPage
         _root.Add(_card);
         _root.SizeChanged += (_, _) => Resize();
         Content = _root;
+#if ANDROID
+        Loaded += (_, _) =>
+        {
+            if (_dismissed || _androidViewport is not null || Handler?.PlatformView is not Android.Views.View native) return;
+            _androidViewport = native;
+            _androidObserver = native.ViewTreeObserver;
+            if (_androidObserver is { IsAlive: true }) _androidObserver.GlobalLayout += OnAndroidViewportLayout;
+            OnAndroidViewportLayout(this, EventArgs.Empty);
+        };
+#endif
+#if WINDOWS
+        Loaded += (_, _) =>
+        {
+            AttachWindowsKeyboard();
+            Dispatcher.Dispatch(() => { if (CanUseDialog && DeviceInfo.Idiom == DeviceIdiom.Desktop) _search.Focus(); });
+        };
+#endif
         SizeChanged += (_, _) => Resize();
         Unloaded += (_, _) => EndLifetime();
         ApplyFilter();
@@ -426,12 +459,15 @@ internal sealed class QuizChoicePage : ContentPage
         {
             // With a keyboard in landscape, keep search and Close on one row so
             // the list still has usable height. The page's accessible Title remains.
-            bool shortInputArea = _root.Height < 260;
+            double viewportHeight = Math.Max(1, _root.Height - _root.Padding.VerticalThickness);
+            bool shortInputArea = viewportHeight < 260;
+            if (_list.Parent is Grid body) body.RowSpacing = viewportHeight < 120 ? 0 : viewportHeight < 180 ? 4 : 12;
+            _card.StrokeThickness = viewportHeight < 120 ? 0 : 1;
             _header.IsVisible = !shortInputArea;
             _compactClose.IsVisible = shortInputArea;
             // Searching changes the items, not the position/size of the field being
             // typed into. Fit the original catalogue, including an empty result set.
-            var layout = QuizChoiceLayout.Calculate(_root.Width, _root.Height, _choices.Count,
+            var layout = QuizChoiceLayout.Calculate(_root.Width, viewportHeight, _choices.Count,
                 ResponsiveLayoutPolicy.TextScale, ScrollbarGutter,
                 _searchRow.Height > 0 ? (_header.IsVisible ? Math.Max(48, _header.Height) : 0) + _searchRow.Height : 0,
                 forceSingleColumn: DeviceInfo.Idiom == DeviceIdiom.Phone);
@@ -441,7 +477,7 @@ internal sealed class QuizChoicePage : ContentPage
             ChoiceCardHeight = layout.UseList ? -1 : layout.ItemHeight - 4;
             ChoiceIconSize = layout.UseList ? 44 : 54;
             ChoiceTextMaxLines = layout.UseList ? -1 : 3;
-            _heading.MaxLines = _root.Height < 400 ? 1 : 2;
+            _heading.MaxLines = viewportHeight < 400 ? 1 : 2;
             _close.Text = layout.Width < 600 * ResponsiveLayoutPolicy.TextScale ? "×" : IllustratedQuizPicker.Text("Choice.Close");
             _close.FontSize = _close.Text == "×" ? 24 : 14;
             _close.FontAutoScalingEnabled = _close.Text != "×";
@@ -509,6 +545,14 @@ internal sealed class QuizChoicePage : ContentPage
 
     private View CreateChoiceCard()
     {
+        static void RestoreResource(Element view, BindableProperty property, string key)
+        {
+            // Group contrast assigns a local value. Reusing the same resource key
+            // alone is a no-op in MAUI; detach first when a template is rebound.
+            view.RemoveDynamicResource(property);
+            view.ClearValue(property);
+            view.SetDynamicResource(property, key);
+        }
         var button = IllustratedQuizPicker.ChoiceButton();
         var icon = new QuizChoiceIllustration { WidthRequest = 54, HeightRequest = 54,
             VerticalOptions = LayoutOptions.Center };
@@ -541,19 +585,46 @@ internal sealed class QuizChoicePage : ContentPage
         layout.Add(IllustratedQuizPicker.ChoiceDisplay(display));
         var card = new Border { Content = layout, StrokeThickness = 1,
             StrokeShape = new RoundRectangle { CornerRadius = 12 }, Margin = new Thickness(2), MinimumHeightRequest = 96 };
+        icon.SetBinding(QuizChoiceIllustration.InkSurfaceColorProperty, new Binding(nameof(BackgroundColor), source: card));
+        void RefreshGroupColors()
+        {
+            if (card.BindingContext is not QuizChoiceOption option || !QuizThemeIconPolicy.IsGroupKey(option.Key)) return;
+            var surface = card.BackgroundColor ?? Colors.White;
+            var primary = QuizChoiceIllustration.ReadableInk(ThemeResource.GetColor("TextPrimaryColor", "#1E293B"), surface);
+            var secondary = QuizChoiceIllustration.ReadableInk(ThemeResource.GetColor("TextSecondaryColor", "#64748B"), surface);
+            var accent = QuizChoiceIllustration.ReadableInk(ThemeResource.GetColor("PrimaryColor", "#2563EB"), surface);
+            title.TextColor = primary; description.TextColor = secondary; check.TextColor = accent;
+            button.BorderColor = accent;
+            if (option.IsSelected) card.Stroke = new SolidColorBrush(accent);
+        }
+        card.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(BackgroundColor)) RefreshGroupColors();
+        };
+        icon.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(QuizChoiceIllustration.InkColor)) RefreshGroupColors();
+        };
         card.SetBinding(HeightRequestProperty, new Binding(nameof(ChoiceCardHeight), source: this));
         card.BindingContextChanged += (_, _) =>
         {
-            if (card.BindingContext is not QuizChoiceOption option) return;
+            if (card.BindingContext is not QuizChoiceOption option) { icon.IsThemeGroup = false; return; }
+            bool group = QuizThemeIconPolicy.IsGroupKey(option.Key);
             title.Text = option.Title;
-            description.Text = option.Description;
+            description.Text = group ? option.Summary ?? option.Description : option.Description;
             description.IsVisible = !string.IsNullOrWhiteSpace(option.Description);
+            card.SetDynamicResource(BackgroundColorProperty, option.IsSelected ? "PrimarySoftColor" : "SurfaceAltColor");
+            icon.IsThemeGroup = group;
             icon.IllustrationId = option.IllustrationId;
             icon.IsVisible = !string.IsNullOrWhiteSpace(option.IllustrationId);
             check.IsVisible = option.IsSelected;
             card.StrokeThickness = option.IsSelected ? 2 : 1;
             card.SetDynamicResource(Border.StrokeProperty, option.IsSelected ? "PrimaryBorderBrush" : "BorderBrush");
-            card.SetDynamicResource(BackgroundColorProperty, option.IsSelected ? "PrimarySoftColor" : "SurfaceAltColor");
+            RestoreResource(title, Label.TextColorProperty, "TextPrimaryColor");
+            RestoreResource(description, Label.TextColorProperty, "TextSecondaryColor");
+            RestoreResource(check, Label.TextColorProperty, "PrimaryColor");
+            RestoreResource(button, Button.BorderColorProperty, "PrimaryColor");
+            RefreshGroupColors();
             SemanticProperties.SetDescription(button, option.Title + ". " + option.Description
                 + (option.IsSelected ? ". " + IllustratedQuizPicker.Text("Choice.Selected") : ""));
         };
@@ -600,9 +671,7 @@ internal sealed class QuizChoicePage : ContentPage
         Resize();
         LocalizationService.CultureChanged += OnCultureChanged;
 #if WINDOWS
-        _keyboardSurface = Content.Handler?.PlatformView as Microsoft.UI.Xaml.UIElement;
-        _keyHandler = OnKeyDown;
-        _keyboardSurface?.AddHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler, true);
+        AttachWindowsKeyboard();
         // Touch tablets should not open their on-screen keyboard on arrival.
         Dispatcher.Dispatch(() => { if (CanUseDialog && DeviceInfo.Idiom == DeviceIdiom.Desktop) _search.Focus(); });
 #endif
@@ -635,6 +704,11 @@ internal sealed class QuizChoicePage : ContentPage
         LocalizationService.CultureChanged -= OnCultureChanged;
         if (_hostWindow is not null) _hostWindow.Destroying -= OnHostDestroying;
         _hostWindow = null;
+#if ANDROID
+        if (_androidObserver is { IsAlive: true } observer) observer.GlobalLayout -= OnAndroidViewportLayout;
+        _androidObserver = null;
+        _androidViewport = null;
+#endif
 #if WINDOWS
         try
         {
@@ -654,7 +728,45 @@ internal sealed class QuizChoicePage : ContentPage
 
     private void OnCultureChanged(object? sender, EventArgs e) => Dispatcher.Dispatch(async () =>
     { if (CanUseDialog) await CloseAsync(null); });
+#if ANDROID
+    private void OnAndroidViewportLayout(object? sender, EventArgs e)
+    {
+        if (_dismissed || _androidViewport is null || _root.Handler?.PlatformView is not Android.Views.View nativeRoot) return;
+        var insets = AndroidX.Core.View.ViewCompat.GetRootWindowInsets(_androidViewport);
+        if (insets is null) return;
+        bool keyboard = insets.IsVisible(AndroidX.Core.View.WindowInsetsCompat.Type.Ime());
+        double overlap = 0;
+        if (keyboard)
+        {
+            // Account only for overlap: the modal may already consume system bars
+            // or resize partway. Root padding itself does not move its bottom edge.
+            var decor = _androidViewport.RootView!;
+            int[] windowPosition = new int[2], rootPosition = new int[2];
+            decor.GetLocationOnScreen(windowPosition); nativeRoot.GetLocationOnScreen(rootPosition);
+            int keyboardTop = windowPosition[1] + decor.Height - (insets.GetInsets(AndroidX.Core.View.WindowInsetsCompat.Type.Ime())?.Bottom ?? 0);
+            double density = nativeRoot.Resources?.DisplayMetrics?.Density ?? 1;
+            overlap = Math.Max(0, rootPosition[1] + nativeRoot.Height - keyboardTop) / Math.Max(1, density);
+        }
+        if (Math.Abs(_root.Padding.Bottom - overlap) > .5)
+        {
+            _root.Padding = new Thickness(0, 0, 0, overlap);
+            Resize();
+        }
+    }
+
+#endif
 #if WINDOWS
+    private void AttachWindowsKeyboard()
+    {
+        // A newly presented modal may appear before its content handler exists.
+        // Loaded retries the same attachment; lifetime cleanup removes it once.
+        if (!_visible || _dismissed || _keyHandler is not null) return;
+        _keyboardSurface = Content.Handler?.PlatformView as Microsoft.UI.Xaml.UIElement;
+        if (_keyboardSurface is null) return;
+        _keyHandler = OnKeyDown;
+        _keyboardSurface.AddHandler(Microsoft.UI.Xaml.UIElement.KeyDownEvent, _keyHandler, true);
+    }
+
     private async void OnKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
         if (e.Key != global::Windows.System.VirtualKey.Escape) return;

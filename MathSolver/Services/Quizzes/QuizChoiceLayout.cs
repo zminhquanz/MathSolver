@@ -13,8 +13,10 @@ internal readonly record struct QuizChoiceLayout(double Width, double Height, in
         double scale = Math.Max(1, textScale);
         double availableWidth = Math.Max(1, viewportWidth - 24);
         bool shortViewport = viewportHeight < 400;
+        bool keyboardViewport = viewportHeight < 180;
+        bool minimalViewport = viewportHeight < 120;
         bool compact = availableWidth < 600 * scale || shortViewport || forceSingleColumn;
-        double padding = shortViewport ? 8 : availableWidth < 600 ? 12 : 16;
+        double padding = minimalViewport ? 0 : keyboardViewport ? 4 : shortViewport ? 8 : availableWidth < 600 ? 12 : 16;
         double frame = 2 * padding + 2;
         double width = Math.Min(1100, availableWidth);
         int count = Math.Max(0, itemCount);
@@ -32,7 +34,7 @@ internal readonly record struct QuizChoiceLayout(double Width, double Height, in
         double itemHeight = (columns == 1 ? 128 : 152) * scale;
         double chrome = frame + 24 + (headerHeight > 0 ? headerHeight : 96 * scale);
         double contentHeight = count == 0 ? 96 * scale : rows * itemHeight + (rows - 1) * 10;
-        double height = Math.Min(Math.Max(1, viewportHeight - 24),
+        double height = Math.Min(Math.Max(1, viewportHeight - (minimalViewport ? 0 : keyboardViewport ? 4 : 24)),
             Math.Min(compact ? viewportHeight : 780, chrome + contentHeight));
         return new(width, height, columns, itemHeight, padding);
     }

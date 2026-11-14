@@ -144,7 +144,13 @@ public sealed record BasicQuestionContract(
         if (!IsTemplate) return this;
         if (Version == ExpandedArithmeticCatalogue.Version) return ExpandedArithmeticCatalogue.Fresh(this, random);
         if (Version == ReasoningStoryCatalogue.Version) return ReasoningStoryCatalogue.Fresh(this, random);
-        if (Version == FractionQuestionCatalogue.Version) return FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
+        if (Version == FractionQuestionCatalogue.Version)
+        {
+            var fraction = FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
+            // A saved one-owner draft must retain its original actor slots on replay.
+            return Structure == BasicQuestionStructure.Increase && fraction.Structure == BasicQuestionStructure.Combine
+                ? fraction with { Structure = Structure, OtherSubject = "" } : fraction;
+        }
         if (Version == FindXQuestionCatalogue.Version) return FindXQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, UnknownRole, SceneId);
         if (Version == AppliedQuestionCatalogue.Version) return AppliedQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
         if (Version == AdditionQuestionCatalogue.Version) return AdditionQuestionCatalogue.Refresh(this, random);

@@ -4,6 +4,20 @@ namespace MathSolver.Services.QuestionBank;
 
 internal static class FoodThemePrompt
 {
+    private static readonly string[] PairedDishIds = ["bot-chien", "spaghetti", "pizzas", "mixed-salad", "hot-dogs", "udon"];
+
+    internal static bool IsPairedFractionScene(string sceneId)
+        => PairedDishIds.Any(id => sceneId == $"fraction-theme-food-{id}-total");
+
+    internal static bool IsPairedDish(BasicQuestionContract c)
+    {
+        string sceneId = c.Version == FindXQuestionCatalogue.Version
+            ? FindXQuestionCatalogue.Find(c.SceneId)?.SourceScene.Id ?? "" : c.SceneId;
+        return c.KnowledgeGroup == QuestionKnowledgeGroup.Food && PairedDishIds.Any(id =>
+            sceneId.StartsWith($"theme-food-{id}-", StringComparison.Ordinal)
+            || sceneId.StartsWith($"fraction-theme-food-{id}-", StringComparison.Ordinal));
+    }
+
     // A single venue kind is chosen per question and shared by both owners.
     private static readonly (string Vi, string En)[] Bakeries =
         [("tiệm bánh", "bakery"), ("cửa hàng bánh", "cake shop")];
@@ -33,6 +47,7 @@ internal static class FoodThemePrompt
     // AI drafts must keep the same venue in the question as in both C# owner facts.
     internal static bool CombinedQuestionNamesVenue(string questionTemplate, BasicQuestionContract c)
     {
+        if (c.Version == FindXQuestionCatalogue.Version) c = FindXQuestionCatalogue.AsApplied(c);
         if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food || c.Structure != BasicQuestionStructure.Combine)
             return true;
 
@@ -45,8 +60,15 @@ internal static class FoodThemePrompt
             if (!c.Subject.Contains(ownerPrefix, StringComparison.OrdinalIgnoreCase)) continue;
             if (!c.OtherSubject.Contains(ownerPrefix, StringComparison.OrdinalIgnoreCase)) return false;
 
-            string question = AppliedQuestionCatalogue.Render(questionTemplate, c);
+            // The six prepared dishes supply an explicit pair in their reviewed templates.
+            // Validate AI wording before rendering can repair a generic venue phrase.
+            string question = IsPairedDish(c) ? questionTemplate : AppliedQuestionCatalogue.Render(questionTemplate, c);
             string pair = vi ? "cả hai " + venue : "the two " + PluralVenue(venue);
+            if (IsPairedDish(c) && (question.Contains(vi ? "cơ sở" : "business", StringComparison.OrdinalIgnoreCase)
+                || !vi && question.Contains("places", StringComparison.OrdinalIgnoreCase)
+                || Enumerable.Range(0, VenueCount(bakery)).Select(i => Venue(bakery, i, c.Language))
+                    .Where(v => v != venue).Any(v => question.Contains(vi ? v : PluralVenue(v), StringComparison.OrdinalIgnoreCase))))
+                return false;
             return question.Contains(pair, StringComparison.OrdinalIgnoreCase);
         }
         return false;
@@ -71,6 +93,13 @@ internal static class FoodThemePrompt
             }
         }
         if (venue is null) return text;
+        // Saved drafts are reused with FreshFacts(), which can choose another venue.
+        // Rebind their explicit pair at display time; AI validation still checks raw prose.
+        if (IsPairedDish(c))
+            foreach (var kind in kinds)
+                text = c.Language == AppLanguage.Vietnamese
+                    ? text.Replace("cả hai " + kind.Vi, "cả hai " + venue, StringComparison.OrdinalIgnoreCase)
+                    : text.Replace("the two " + PluralVenue(kind.En), "the two " + PluralVenue(venue), StringComparison.OrdinalIgnoreCase);
         if (c.Language == AppLanguage.Vietnamese)
             return text.Replace("cả hai cơ sở", "cả hai " + venue, StringComparison.OrdinalIgnoreCase)
                 .Replace("Hai cơ sở", "Hai " + venue, StringComparison.OrdinalIgnoreCase);
@@ -104,8 +133,8 @@ internal static class FoodThemePrompt
                 : " Cakes, pastries and bakery items are made or sold at a named owner's bakery or cake shop, including banh chung, banh gio, banh day, pork-and-quail-egg steamed buns and banh tet. Describe preparing or selling the cakes in the shop, rather than serving restaurant meals at tables. Steamed rice rolls and Vietnamese sizzling pancakes remain restaurant dishes. {name} and {other} already include the bakery and owner; never add a duplicate owner. For whole-number multiplication/division, use trays rather than tables or generic groups. For fractions, retain the given part-to-whole relation."
             : c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             ? vi
-                ? " Tất cả món ăn đã chế biến được phục vụ hoặc bán tại quán ăn/nhà hàng/tiệm ăn có chủ được nêu tên; bao gồm bánh bèo, bánh khọt, bánh bột lọc, há cảo, bánh cuốn và bánh xèo. {name} và {other} đã bao gồm tên quán và chủ quán; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng bàn ăn để chia suất; không dùng 'nhóm' chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của món đã làm."
-                : " All prepared dishes are served or sold at a named owner's eatery, restaurant or diner; including banh beo, banh khot, banh bot loc, steamed dumplings, steamed rice rolls and Vietnamese sizzling pancakes. {name} and {other} already include the business and owner; do not add another owner prefix. For whole-number multiplication/division, distribute servings across tables, not generic groups. For fractions, retain the given part-to-whole relation of prepared dishes."
+                ? " Tất cả món ăn đã chế biến được phục vụ hoặc bán tại quán ăn/nhà hàng/tiệm ăn có chủ được nêu tên; bao gồm bánh bèo, bánh khọt, bánh bột lọc, há cảo, bánh cuốn, bánh xèo, bột chiên, mì Ý, pizza, salad, hot dog và udon. {name} và {other} đã bao gồm tên quán và chủ quán; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng bàn ăn để chia suất; không dùng 'nhóm' chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của món đã làm."
+                : " All prepared dishes are served or sold at a named owner's eatery, restaurant or diner; including banh beo, banh khot, banh bot loc, steamed dumplings, steamed rice rolls, Vietnamese sizzling pancakes, bot chien, spaghetti, pizza, salad, hot dogs and udon. {name} and {other} already include the business and owner; do not add another owner prefix. For whole-number multiplication/division, distribute servings across tables, not generic groups. For fractions, retain the given part-to-whole relation of prepared dishes."
             : "";
         string pairGuidance = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             && c.Structure == BasicQuestionStructure.Combine && !string.IsNullOrWhiteSpace(c.OtherSubject)

@@ -37,7 +37,7 @@
       {"Key":"Language.Vietnamese","IllustrationId":"language-vietnamese","DescriptionKey":"Choice.Language.Vietnamese"},
       {"Key":"Language.English","IllustrationId":"language-english","DescriptionKey":"Choice.Language.English"},
       {"Key":"Learning.Group.Mixed","IllustrationId":"mixed","DescriptionKey":"Choice.Group.Mixed"},
-      {"Key":"Learning.Group.Objects","IllustrationId":"knowledge-objects","DescriptionKey":"Choice.Group.Objects"},
+      {"Key":"Learning.Group.Objects","IllustrationId":"knowledge-objects","DescriptionKey":"Choice.Group.Objects","SummaryKey":"Choice.Group.Objects.Summary"},
       {"Key":"Learning.Group.Money","IllustrationId":"knowledge-money","DescriptionKey":"Choice.Group.Money"},
       {"Key":"Learning.Group.Time","IllustrationId":"clock","DescriptionKey":"Choice.Group.Time"},
       {"Key":"Learning.Group.Measurement","IllustrationId":"measurement","DescriptionKey":"Choice.Group.Measurement"},
@@ -241,7 +241,7 @@
         "DescriptionKey": "Choice.Group.Fruit"
       },
       {"Key":"Learning.Group.Animals","IllustrationId":"knowledge-animals","DescriptionKey":"Choice.Group.Animals"},
-      {"Key":"Learning.Group.SchoolSupplies","IllustrationId":"knowledge-school-supplies","DescriptionKey":"Choice.Group.SchoolSupplies"}
+      {"Key":"Learning.Group.SchoolSupplies","IllustrationId":"knowledge-school-supplies","DescriptionKey":"Choice.Group.SchoolSupplies","SummaryKey":"Choice.Group.SchoolSupplies.Summary"}
     ],
     "AppliedScenes": [
       {

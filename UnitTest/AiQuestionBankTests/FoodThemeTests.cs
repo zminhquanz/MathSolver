@@ -6,12 +6,22 @@ internal static class FoodThemeTests
 {
     private static readonly string[] TakeawayBakeryCakeIds =
         ["banh-chung", "banh-gio", "banh-day", "banh-bao-thit-trung-cut", "banh-tet"];
+    private static readonly (string UnitId, string ArtworkId, string Vietnamese, string Singular, string Plural)[] AdditionalPreparedDishes =
+    [
+        ("bot-chien", "bot_chien", "phần bột chiên", "serving of Vietnamese fried rice flour cakes", "servings of Vietnamese fried rice flour cakes"),
+        ("pizzas", "pizza", "chiếc bánh pizza", "pizza", "pizzas"),
+        ("mixed-salad", "mixed_salad", "phần salad trộn", "serving of mixed salad", "servings of mixed salad"),
+        ("spaghetti", "spaghetti", "đĩa mì Ý", "plate of spaghetti", "plates of spaghetti"),
+        ("hot-dogs", "hot_dog", "chiếc bánh hot dog", "hot dog", "hot dogs"),
+        ("udon", "udon", "tô mì udon", "bowl of udon", "bowls of udon")
+    ];
 
     internal static IEnumerable<(string Name,BasicQuestionContract Contract)> NativeCases()
     {
         foreach(var language in Enum.GetValues<AppLanguage>())
         foreach(var (id,op) in new[]{("pho",ArithmeticOperation.Subtract),("lemon-tea-glasses",ArithmeticOperation.Multiply),("strawberries",ArithmeticOperation.Add)}
-            .Concat(TakeawayBakeryCakeIds.Select(id => (id,ArithmeticOperation.Add))))
+            .Concat(TakeawayBakeryCakeIds.Select(id => (id,ArithmeticOperation.Add)))
+            .Concat(AdditionalPreparedDishes.Select(d => (d.UnitId,ArithmeticOperation.Add))))
         {
             var s=FoodThemeCatalogue.Subjects.Single(s=>s.Unit.Id==id);
             yield return ($"{s.Group}/{id}/{op}/{language}",FoodThemeInterchangeTests.Contract(s,op,language,BankQuestionFamily.Arithmetic));
@@ -70,7 +80,12 @@ internal static class FoodThemeTests
                 });
             string invalid = draft.Question.Replace(
                 language == AppLanguage.Vietnamese ? "cả hai cơ sở" : "the two businesses",
-                replacement, StringComparison.OrdinalIgnoreCase);
+                replacement, StringComparison.OrdinalIgnoreCase).Replace(
+                language == AppLanguage.Vietnamese ? "cả hai " + current
+                    : "the two " + (current switch {
+                        "bakery" => "bakeries", "cake shop" => "cake shops", "eatery" => "eateries",
+                        "restaurant" => "restaurants", _ => "diners"
+                    }), replacement, StringComparison.OrdinalIgnoreCase);
             Check(invalid != draft.Question, "Reference question no longer has a replaceable venue phrase");
             Check(!FoodThemePrompt.CombinedQuestionNamesVenue(invalid, contract),
                 "Mismatched AI venue must not pass the semantic venue check");
@@ -88,6 +103,36 @@ internal static class FoodThemeTests
         yield return ("pho", false);
         foreach (var id in TakeawayBakeryCakeIds)
             yield return (id, true);
+        foreach (var dish in AdditionalPreparedDishes)
+            yield return (dish.UnitId, false);
+    }
+    private static void CheckAdditionalPreparedDishes()
+    {
+        foreach (var dish in AdditionalPreparedDishes)
+        {
+            Check(FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == dish.UnitId) == 1,
+                "Prepared dish missing or duplicated: " + dish.UnitId);
+            Check(!FoodThemeCatalogue.IsBakeryFood(dish.UnitId), "Prepared dish must use an eatery: " + dish.UnitId);
+            foreach (string unit in new[] { dish.Vietnamese, dish.Singular, dish.Plural })
+            {
+                Check(FoodThemeCatalogue.IsThemedItem(unit), "Prepared dish not recognized by practice routing: " + unit);
+                Check(QuizStoryArtwork.Select(true, false, [unit]) == $"quiz_story_{dish.ArtworkId}.png",
+                    "Prepared dish unit selects wrong artwork: " + unit);
+            }
+            Check(QuizStoryArtwork.Select(true, false, [], artworkId: "theme-" + dish.UnitId) == $"quiz_story_{dish.ArtworkId}.png",
+                "Prepared dish authored identity not registered: " + dish.UnitId);
+            var registered = QuestionUnits.Find(dish.UnitId);
+            Check(registered?.Vietnamese == dish.Vietnamese && registered.Singular == dish.Singular && registered.Plural == dish.Plural,
+                "Prepared dish units unavailable to contracts: " + dish.UnitId);
+            foreach (var tier in Enum.GetValues<CurriculumTier>())
+            foreach (var operation in Enum.GetValues<ArithmeticOperation>())
+            foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.Fraction, BankQuestionFamily.FindX })
+            {
+                var scenes = QuestionAuthoringChoices.Scenes(family, operation, tier, QuestionKnowledgeGroup.Food);
+                Check(scenes.Any(id => id.Contains("theme-food-" + dish.UnitId + "-", StringComparison.Ordinal)),
+                    $"Prepared dish absent from UI/AI/Excel choices: {dish.UnitId}/{family}/{operation}/{tier}");
+            }
+        }
     }
     internal static void CheckFoodVenue(BasicQuestionContract contract, BasicQuestionDraft draft)
     {
@@ -215,7 +260,7 @@ internal static class FoodThemeTests
             ("apple-pies", "apple_pie"), ("flans", "flan")
         };
         int verified = 0;
-        foreach (var (id, artwork) in dishes)
+        foreach (var (id, artwork) in dishes.Concat(AdditionalPreparedDishes.Select(d => (d.UnitId, d.ArtworkId))))
         {
             var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == id);
             Check(subject.Group == QuestionKnowledgeGroup.Food && subject.ArtworkId == artwork,
@@ -241,8 +286,10 @@ internal static class FoodThemeTests
         }
         return verified;
     }
-    public static void Run()
+    public static void Run(string? wordingOutput = null)
     {
+        PreparedDishVenueTests.Run(wordingOutput);
+        CheckAdditionalPreparedDishes();
         CheckAllFoodVenueKinds();
         CheckAiCombinedVenueValidation();
         Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),

@@ -46,6 +46,23 @@ internal static class QuizStoryTemplates
 
             if (stories.TryGetValue((family, prefix + "pho" + suffix), out var reference))
             {
+                if (FoodThemePrompt.IsPairedDish(contract) && contract.Structure == BasicQuestionStructure.Combine)
+                {
+                    bool vi = contract.Language == AppLanguage.Vietnamese;
+                    var prose = reference.Prose with { UnitId = unitId };
+                    if (family == "Fraction")
+                        prose = prose with {
+                            GivenA = [vi ? "{name} phục vụ {a} {unit_a}," : "{name} serves {a} {unit_a},"],
+                            GivenB = [vi ? "{other} phục vụ {b} {unit_b}." : "{other} serves {b} {unit_b}."],
+                            Questions = [vi ? "Hỏi cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
+                                : "How many {unit} do the two businesses serve altogether?"]
+                        };
+                    prose = prose with { Questions = prose.Questions.Select(q => FoodThemePrompt.AlignCombinedQuestion(q, contract)).ToArray() };
+                    var examples = family == "Fraction" ? prose.Stories().Take(1).ToArray()
+                        : reference.Examples.Select(e => e with { UnitId = unitId,
+                            Question = FoodThemePrompt.AlignCombinedQuestion(e.Question, contract) }).ToArray();
+                    return new(contract.SceneId, family, examples, prose);
+                }
                 return new(contract.SceneId, family,
                     reference.Examples.Select(e => e with { UnitId = unitId }).ToArray(),
                     reference.Prose with { UnitId = unitId });

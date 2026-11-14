@@ -2,11 +2,12 @@ using Microsoft.Maui.Graphics;
 
 namespace MathSolver.Graphics;
 
-internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawable
+internal sealed partial class QuizChoiceDrawable(string id, Color ink, bool isThemeGroup = false) : IDrawable
 {
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         float size = Math.Min(dirtyRect.Width, dirtyRect.Height);
+        if (isThemeGroup && (!float.IsFinite(dirtyRect.Width) || !float.IsFinite(dirtyRect.Height))) return;
         if (size <= 0) return;
         canvas.SaveState();
         try
@@ -14,6 +15,7 @@ internal sealed partial class QuizChoiceDrawable(string id, Color ink) : IDrawab
             canvas.Translate((dirtyRect.Width - size) / 2, (dirtyRect.Height - size) / 2);
             canvas.Scale(size / 100, size / 100);
             canvas.StrokeColor = canvas.FillColor = canvas.FontColor = ink;
+            if (isThemeGroup && DrawThemeGroup(canvas, size)) return;
             canvas.StrokeSize = 3;
             canvas.FontSize = 22;
             void Label(string text, float y = 34) => canvas.DrawString(text, 5, y, 90, 32,

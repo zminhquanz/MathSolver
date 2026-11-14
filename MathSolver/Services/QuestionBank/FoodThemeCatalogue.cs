@@ -56,6 +56,12 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Food, Unit("banh-cuon","đĩa bánh cuốn","plate of steamed rice rolls","plates of steamed rice rolls"),"banh_cuon"),
         new(QuestionKnowledgeGroup.Food, Unit("kimchi","đĩa kim chi","plate of kimchi","plates of kimchi"),"kimchi"),
         new(QuestionKnowledgeGroup.Food, Unit("sushi","phần sushi","serving of sushi","servings of sushi"),"sushi"),
+        new(QuestionKnowledgeGroup.Food, Unit("bot-chien","phần bột chiên","serving of Vietnamese fried rice flour cakes","servings of Vietnamese fried rice flour cakes"),"bot_chien"),
+        new(QuestionKnowledgeGroup.Food, Unit("pizzas","chiếc bánh pizza","pizza","pizzas"),"pizza"),
+        new(QuestionKnowledgeGroup.Food, Unit("mixed-salad","phần salad trộn","serving of mixed salad","servings of mixed salad"),"mixed_salad"),
+        new(QuestionKnowledgeGroup.Food, Unit("spaghetti","đĩa mì Ý","plate of spaghetti","plates of spaghetti"),"spaghetti"),
+        new(QuestionKnowledgeGroup.Food, Unit("hot-dogs","chiếc bánh hot dog","hot dog","hot dogs"),"hot_dog"),
+        new(QuestionKnowledgeGroup.Food, Unit("udon","tô mì udon","bowl of udon","bowls of udon"),"udon"),
         new(QuestionKnowledgeGroup.Drinks, Unit("drinking-water","ly nước lọc","glass of drinking water","glasses of drinking water"),"water","lít nước lọc","litres of drinking water"),
         new(QuestionKnowledgeGroup.Drinks, Unit("milk-glasses","ly sữa","glass of milk","glasses of milk"),"milk_liquid","lít sữa","litres of milk"),
         new(QuestionKnowledgeGroup.Drinks, Unit("milk-cartons","hộp sữa","milk carton","milk cartons"),"milk_carton","lít sữa","litres of milk","milk_liquid"),
@@ -72,11 +78,12 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Fruit, Unit("pears","quả lê","pear","pears"),"pear")
     ]);
     // A shared C# source for question scenes, AI templates, PDF and Excel contracts.
-    // Shared scenes for nine traditional foods; their selling venue depends on IsBakeryFood.
+    // Shared scenes for additional dishes; their selling venue depends on IsBakeryFood.
     private static readonly string[] RestaurantDishIds =
     [
         "banh-chung", "banh-day", "banh-tet", "banh-beo", "banh-khot",
-        "banh-bot-loc", "banh-gio", "banh-bao-thit-trung-cut", "ha-cao"
+        "banh-bot-loc", "banh-gio", "banh-bao-thit-trung-cut", "ha-cao",
+        "bot-chien", "pizzas", "mixed-salad", "spaghetti", "hot-dogs", "udon"
     ];
     public static IReadOnlyList<Subject> NewRestaurantDishes { get; } =
         Array.AsReadOnly(RestaurantDishIds.Select(id => Subjects.Single(subject => subject.Unit.Id == id)).ToArray());

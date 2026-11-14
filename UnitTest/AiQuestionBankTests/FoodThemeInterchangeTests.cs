@@ -9,7 +9,7 @@ using DocumentFormat.OpenXml.Validation;
 internal static class FoodThemeInterchangeTests
 {
     private static void Check(bool ok,string why){if(!ok)throw new Exception(why);}
-    private static byte[] ActivateExample(byte[] bytes,AppLanguage language)
+    internal static byte[] ActivateExample(byte[] bytes,AppLanguage language)
     {
         using var stream=new MemoryStream();stream.Write(bytes);
         using(var zip=new ZipArchive(stream,ZipArchiveMode.Update,true))

@@ -71,6 +71,7 @@ internal static class FoodThemeWorksheetTests
         }
         File.WriteAllText(Path.Combine(directory,"food-theme-pdf-cases.json"),JsonSerializer.Serialize(traces,new JsonSerializerOptions{WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping}));
         Console.WriteLine($"PASS food theme PDF: {count} exact subject/fraction/mode/VI-EN fixtures, {pdfs} app-generated worksheets/keys, embedded text, frozen facts and native math diagrams.");
+        PreparedDishVenueWorksheetTests.Run(directory);
         return Task.CompletedTask;
     }
 }

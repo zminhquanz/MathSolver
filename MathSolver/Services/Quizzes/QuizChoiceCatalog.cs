@@ -3,9 +3,9 @@ using System.Text;
 
 namespace MathSolver.Services;
 
-public sealed record QuizChoiceDefinition(string Key, string IllustrationId, string DescriptionKey);
+public sealed record QuizChoiceDefinition(string Key, string IllustrationId, string DescriptionKey, string? SummaryKey = null);
 public sealed record QuizChoiceOption(int Index, string Key, string Title, string Description,
-    string IllustrationId, bool IsSelected);
+    string IllustrationId, bool IsSelected, string? Summary = null);
 
 /// <summary>Stable presentation IDs are independent of translated labels and filtered list positions.</summary>
 public static class QuizChoiceCatalog
@@ -21,7 +21,8 @@ public static class QuizChoiceCatalog
         if (!Definitions.TryGetValue(key, out var definition))
             throw new InvalidDataException("Missing illustrated quiz choice: " + key);
         return new(index, key, title, QuizContentCatalog.Text(language, definition.DescriptionKey),
-            definition.IllustrationId, selected);
+            definition.IllustrationId, selected, key.StartsWith("Learning.Group.", StringComparison.Ordinal) && definition.SummaryKey is { } summary
+                ? QuizContentCatalog.Text(language, summary) : null);
     }
 
     public static IReadOnlyList<QuizChoiceOption> Filter(IEnumerable<QuizChoiceOption> choices, string query)

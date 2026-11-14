@@ -6,6 +6,8 @@ using MathSolver.Services.Printing;
 using MathSolver.Services.Core;
 using PdfSharp.Pdf.IO;
 using System.Text.Json;
+if (args.Length > 0 && args[0] == "--theme-icons-only")
+    return QuizThemeIconTests.Run(args.Skip(1).ToArray());
 if (args is ["--help"] or ["--list"])
 {
     Console.WriteLine("Usage: QuizPdfTests [--artifacts [output-root] | legacy-output-root | <focused-command> output-root]");
