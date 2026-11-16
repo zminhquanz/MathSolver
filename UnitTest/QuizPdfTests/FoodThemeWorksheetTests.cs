@@ -33,6 +33,24 @@ internal static class FoodThemeWorksheetTests
                 var printed=QuizWorksheetBuilder.Format(q,language);Check(!printed.Prompt.Contains('{')&&!printed.Answer.Contains('{'),"Unbound theme PDF slots");
                 if(subject.Group==QuestionKnowledgeGroup.Food)
                 {
+                    if(FoodThemeCatalogue.IsCheDessert(subject.Unit.Id))
+                    {
+                        bool viChe=language==AppLanguage.Vietnamese;
+                        string first=viChe?"quán chè thứ nhất":"the first dessert shop";
+                        string second=viChe?"quán chè thứ hai":"the second dessert shop";
+                        string both=viChe?"cả hai quán chè":"both dessert shops";
+                        Check(c.Subject.Equals(first,StringComparison.OrdinalIgnoreCase),"PDF chè subject lost first dessert shop: "+c.SceneId);
+                        Check(printed.Prompt.Contains(first,StringComparison.OrdinalIgnoreCase)
+                            && printed.Prompt.Contains(second,StringComparison.OrdinalIgnoreCase)
+                            && printed.Prompt.Contains(both,StringComparison.OrdinalIgnoreCase),
+                            "PDF chè total must name both dessert shops: "+c.SceneId);
+                        if(!fraction)
+                            Check(c.OtherSubject.Equals(second,StringComparison.OrdinalIgnoreCase)
+                                && printed.Prompt.Contains(viChe?"bán được":"sold",StringComparison.OrdinalIgnoreCase),
+                                "PDF chè integer total must describe both sales: "+c.SceneId);
+                    }
+                    else
+                    {
                     bool bakery=FoodThemeCatalogue.IsBakeryFood(subject.Unit.Id);
                     string venue=Enumerable.Range(0,FoodThemePrompt.VenueCount(bakery))
                         .Select(i=>FoodThemePrompt.Venue(bakery,i,language))
@@ -49,6 +67,26 @@ internal static class FoodThemeWorksheetTests
                     if(subject.Unit.Id=="cakes")
                         Check(printed.Prompt.Contains(language==AppLanguage.Vietnamese?"bánh kem":"cream cake",StringComparison.OrdinalIgnoreCase),
                             "PDF contains generic cake wording: "+c.SceneId);
+                    }
+                }
+                if(subject.Group==QuestionKnowledgeGroup.Drinks)
+                {
+                    bool vi=language==AppLanguage.Vietnamese;
+                    string first=vi?"quán nước thứ nhất":"the first drink shop";
+                    string second=vi?"quán nước thứ hai":"the second drink shop";
+                    string both=vi?"cả hai quán nước":"both drink shops";
+                    Check(c.Subject.Equals(first,StringComparison.OrdinalIgnoreCase),"PDF drink contract lost drink shop: "+c.SceneId);
+                    Check(printed.Prompt.Contains(first,StringComparison.OrdinalIgnoreCase),"PDF drink story missing first shop: "+c.SceneId);
+                    if(!fraction)
+                    {
+                        Check(c.OtherSubject.Equals(second,StringComparison.OrdinalIgnoreCase),"PDF drink contract mismatched second shop: "+c.SceneId);
+                    }
+                    Check(printed.Prompt.Contains(second,StringComparison.OrdinalIgnoreCase)
+                        && printed.Prompt.Contains(both,StringComparison.OrdinalIgnoreCase),
+                        "PDF drink total must name both shops: "+c.SceneId);
+                    if(!fraction)
+                        Check(printed.Prompt.Contains(vi?"bán được":"sold",StringComparison.OrdinalIgnoreCase),
+                            "PDF drink total must describe sales: "+c.SceneId);
                 }
                 if(mode==ArithmeticQuizMode.TrueFalse)Check(printed.Answer==(q.PresentedEquationIsCorrect==true?printed.Options[0]:printed.Options[1]),"Truth key changed");
                 items.Add(printed);traces.Add(new{language,mode,subject.Group,subject.Unit.Id,Fraction=fraction,printed.Prompt,printed.Answer});count++;
@@ -72,6 +110,8 @@ internal static class FoodThemeWorksheetTests
         File.WriteAllText(Path.Combine(directory,"food-theme-pdf-cases.json"),JsonSerializer.Serialize(traces,new JsonSerializerOptions{WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping}));
         Console.WriteLine($"PASS food theme PDF: {count} exact subject/fraction/mode/VI-EN fixtures, {pdfs} app-generated worksheets/keys, embedded text, frozen facts and native math diagrams.");
         PreparedDishVenueWorksheetTests.Run(directory);
+        KoreanDishWorksheetTests.Run(directory);
+        VietnameseDishWorksheetTests.Run(directory);
         return Task.CompletedTask;
     }
 }

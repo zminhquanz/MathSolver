@@ -5,6 +5,8 @@ internal static class PdfTestCommands
     internal static IReadOnlyDictionary<string, PdfTestCommand> All { get; } =
         new Dictionary<string, PdfTestCommand>(StringComparer.Ordinal)
         {
+            ["--community-themes"] = new("Toys/Healthcare/School", CommunityThemeWorksheetTests.Run),
+            ["--mixed-groups"] = new("Mixed knowledge groups", MixedKnowledgeGroupsTests.Run),
             ["--food-themes"] = new("Food/drink/fruit themes", FoodThemeWorksheetTests.Run),
             ["--everyday-items"] = new("School eraser and everyday objects", EverydayItemWorksheetTests.Run),
             ["--money-items"] = new("Six illustrated money transaction items", MoneyItemWorksheetTests.Run),

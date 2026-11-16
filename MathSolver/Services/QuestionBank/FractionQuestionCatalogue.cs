@@ -18,8 +18,7 @@ public static class FractionQuestionCatalogue
         {
             if (Id.StartsWith("fraction-theme-food-", StringComparison.Ordinal))
             {
-                var dish = FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
-                    Id.StartsWith($"fraction-theme-food-{d.Unit.Id}-", StringComparison.Ordinal));
+                var dish = FoodThemeCatalogue.RestaurantDishForScene(Id);
                 if (dish is not null)
                 {
                     if (field == "UnitB" && (Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide))
@@ -80,9 +79,25 @@ public static class FractionQuestionCatalogue
             if (s.Id == "fraction-motion-distance") a = new(a.Numerator + random.Next(2, 6) * a.Denominator, a.Denominator);
             string subject = QuestionNames.Create(language, random, false);
             string other = "";
-            bool paired = FoodThemePrompt.IsPairedFractionScene(s.Id);
+            bool drinkPair = s.Group == QuestionKnowledgeGroup.Drinks
+                && op is ArithmeticOperation.Add or ArithmeticOperation.Subtract;
+            bool paired = FoodThemePrompt.IsPairedFractionScene(s.Id) || drinkPair;
+            if (s.Group == QuestionKnowledgeGroup.Drinks)
+            {
+                subject = language == AppLanguage.Vietnamese ? "quán nước thứ nhất" : "the first drink shop";
+                if (paired)
+                    other = language == AppLanguage.Vietnamese ? "quán nước thứ hai" : "the second drink shop";
+            }
             if (s.Group == QuestionKnowledgeGroup.Food)
             {
+                if (FoodThemeCatalogue.IsCheDessert(FoodThemeCatalogue.RestaurantDishForScene(s.Id)?.Unit.Id))
+                {
+                    subject = language == AppLanguage.Vietnamese ? "quán chè thứ nhất" : "the first dessert shop";
+                    if (paired)
+                        other = language == AppLanguage.Vietnamese ? "quán chè thứ hai" : "the second dessert shop";
+                }
+                else
+                {
                 bool bakery = FoodThemeCatalogue.IsBakeryFractionScene(s.Id);
                 int venue = random.Next(FoodThemePrompt.VenueCount(bakery));
                 if (paired)
@@ -99,6 +114,7 @@ public static class FractionQuestionCatalogue
                     other = FoodThemePrompt.OwnerVenue(other, language, venue, bakery);
                 }
                 subject = FoodThemePrompt.OwnerVenue(subject, language, venue, bakery);
+                }
             }
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
                 subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
@@ -134,7 +150,10 @@ public static class FractionQuestionCatalogue
             || c.Unit != (c.Language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit) || c.GroupUnit != ""
             || c.PartA != "" || c.PartB != "") return false;
         // Preserve saved single-owner fraction contracts; new six-dish totals use two owners.
-        bool paired = FoodThemePrompt.IsPairedFractionScene(c.SceneId) && c.Structure == BasicQuestionStructure.Combine;
+        bool drinkPair = s.Group == QuestionKnowledgeGroup.Drinks
+            && c.Operation is ArithmeticOperation.Add or ArithmeticOperation.Subtract;
+        bool paired = (FoodThemePrompt.IsPairedFractionScene(c.SceneId) || drinkPair)
+            && c.Structure == BasicQuestionStructure.Combine;
         if (paired)
         {
             if (string.IsNullOrWhiteSpace(c.OtherSubject) || c.OtherSubject == c.Subject || c.OtherSubject.Length > 100

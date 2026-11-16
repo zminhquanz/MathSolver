@@ -11,6 +11,7 @@ public sealed record QuestionLearningProfile(QuestionKnowledgeGroup Group)
     public static QuestionKnowledgeGroup[] Groups(bool includeMixed = false) => includeMixed
         ? [QuestionKnowledgeGroup.Mixed, .. Groups()]
         : [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies,
+        QuestionKnowledgeGroup.Toys, QuestionKnowledgeGroup.Healthcare, QuestionKnowledgeGroup.School,
         QuestionKnowledgeGroup.Food, QuestionKnowledgeGroup.Drinks, QuestionKnowledgeGroup.Fruit, QuestionKnowledgeGroup.Money,
         QuestionKnowledgeGroup.Time, QuestionKnowledgeGroup.Measurement, QuestionKnowledgeGroup.Geometry,
         QuestionKnowledgeGroup.Packaging, QuestionKnowledgeGroup.Production, QuestionKnowledgeGroup.Data, QuestionKnowledgeGroup.Motion];

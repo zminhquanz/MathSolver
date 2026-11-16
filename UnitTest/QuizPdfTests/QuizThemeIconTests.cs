@@ -23,10 +23,11 @@ internal static class QuizThemeIconTests
             {
                 ["Mixed"] = "mixed", ["Objects"] = "knowledge-objects", ["Animals"] = "knowledge-animals",
                 ["SchoolSupplies"] = "knowledge-school-supplies", ["Food"] = "food", ["Drinks"] = "drinks", ["Fruit"] = "fruit",
+                ["Toys"] = "knowledge-objects", ["Healthcare"] = "knowledge-packaging", ["School"] = "knowledge-school-supplies",
                 ["Money"] = "knowledge-money", ["Time"] = "clock", ["Measurement"] = "measurement", ["Geometry"] = "geometry",
                 ["Packaging"] = "knowledge-packaging", ["Production"] = "knowledge-production", ["Data"] = "data-table", ["Motion"] = "motion"
             };
-            Require(groups.Length == expectedMapping.Count && groups.All(g => expectedMapping.TryGetValue(g.Key["Learning.Group.".Length..], out var id) && g.IllustrationId == id), "Stable15-group key→ID mapping");
+            Require(groups.Length == expectedMapping.Count && groups.All(g => expectedMapping.TryGetValue(g.Key["Learning.Group.".Length..], out var id) && g.IllustrationId == id), "Stable group key→ID mapping");
             var aliases = QuizChoiceCatalog.Definitions.Values.Where(x => !x.Key.StartsWith("Learning.Group.", StringComparison.Ordinal)
                 && groups.Any(g => g.IllustrationId == x.IllustrationId)).ToArray();
             var streams = aliases.ToDictionary(x => x.Key, x => Capture(x.IllustrationId, 54, false).Trace.ToArray());
@@ -39,7 +40,7 @@ internal static class QuizThemeIconTests
                 return 0;
             }
             var original = JsonSerializer.Deserialize<Dictionary<string, string[]>>(File.ReadAllText(baseline))!;
-            Require(aliases.Length == 10 && groups.Length == 15, "Expected15 theme choices/10 shared aliases");
+            Require(aliases.Length == 10 && groups.Length == 18, "Expected 18 theme choices/10 shared aliases");
             foreach (var alias in streams) Require(original[alias.Key].SequenceEqual(alias.Value), "Non-group changed: " + alias.Key);
             Directory.CreateDirectory(Path.Combine(output, "vectors"));
             var metrics = new List<object>();
@@ -72,7 +73,10 @@ internal static class QuizThemeIconTests
                 }
                 Require(options.Where(x => x.Key is not ("Learning.Group.Objects" or "Learning.Group.SchoolSupplies"))
                     .All(x => x.Summary is null), "Optional summary fallback preserves full descriptions");
-                var found = QuizChoiceCatalog.Filter(options, language == AppLanguage.Vietnamese ? "ban chai" : "toothbrush").Single();
+                // Healthcare also matches the separate Vietnamese tokens "băng" and "chai".
+                // The original Objects choice must retain its index among all valid matches.
+                var found = QuizChoiceCatalog.Filter(options, language == AppLanguage.Vietnamese ? "ban chai" : "toothbrush")
+                    .Single(x => x.Key == "Learning.Group.Objects");
                 Require(found.Index == Array.FindIndex(options, x => x.Key == found.Key), "Filter preserves original index");
             }
             Require(!QuizThemeIconPolicy.IsGroupKey("Quiz.OperationMixed") && QuizThemeIconPolicy.IsGroupKey("Learning.Group.Mixed"), "Scope is based on key, not ID");
@@ -109,7 +113,7 @@ internal static class QuizThemeIconTests
                 Require(ReadableColorPolicy.Contrast(QuizThemeIconPolicy.InkOn(Rgb(color), bg), bg) >= 4.5, "Foreground contrast: " + color + "/" + surface);
             }
             File.WriteAllText(Path.Combine(output, "mapping-and-aliases.json"), JsonSerializer.Serialize(new { Groups = groups, AliasKeys = aliases.Select(x => x.Key), Metrics = metrics }, new JsonSerializerOptions { WriteIndented = true }));
-            Console.WriteLine("PASS theme icons:15 groups×3 sizes;10 unchanged aliases; bounds/stroke/font isolation; VI/EN full search");
+            Console.WriteLine($"PASS theme icons:{groups.Length} groups×3 sizes;10 unchanged aliases; bounds/stroke/font isolation; VI/EN full search");
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine("FAIL theme icons: " + e); return 1; }

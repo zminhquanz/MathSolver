@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MathSolver.Models;
 
 namespace MathSolver.Services.QuestionBank;
 
@@ -30,17 +31,20 @@ internal static class QuizStoryTemplates
             return result;
         });
         string family = contract.Version == FractionQuestionCatalogue.Version ? "Fraction" : "Applied";
-        if (stories.TryGetValue((family, contract.SceneId), out var template)) return template;
+        if (stories.TryGetValue((family, contract.SceneId), out var template))
+            return contract.KnowledgeGroup == QuestionKnowledgeGroup.Drinks
+                ? DrinkShopStoryTemplates.Create(template, contract) : template;
 
-        // These nine food IDs share generated scenes. Five are takeaway bakery
-        // products and need selling/packing prose; the others use eatery prose.
-        var traditionalDish = FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
-            contract.SceneId.StartsWith($"{(family == "Fraction" ? "fraction-" : "")}theme-food-{d.Unit.Id}-", StringComparison.Ordinal));
+        // Restaurant dishes share generated scenes; bakery products use selling/packing prose.
+        var traditionalDish = FoodThemeCatalogue.RestaurantDishForScene(contract.SceneId);
         if (traditionalDish is not null)
         {
             string prefix = family == "Fraction" ? "fraction-theme-food-" : "theme-food-";
             string suffix = contract.SceneId[(prefix.Length + traditionalDish.Unit.Id.Length)..];
             string unitId = family == "Fraction" ? contract.SceneId : traditionalDish.Unit.Id;
+            if (FoodThemeCatalogue.IsCheDessert(traditionalDish.Unit.Id)
+                && stories.TryGetValue((family, prefix + "pho" + suffix), out var cheReference))
+                return CheDessertStoryTemplates.Create(cheReference, contract, unitId);
             if (FoodThemeCatalogue.IsBakeryFood(traditionalDish.Unit.Id))
                 return BakeryDishStoryTemplates.Create(contract.SceneId, family, suffix.TrimStart('-'), contract.Language, unitId);
 

@@ -59,6 +59,18 @@ public sealed class AiQuestionReviewPage : ContentPage
         public string Reference { get; } = reference;
         public string Calculation { get; } = calculation;
         public string Heading { get; } = heading;
+        public string CreatedDate
+        {
+            get
+            {
+                // SQLite can return a UTC timestamp with DateTimeKind.Unspecified.
+                DateTime utc = Pending.CreatedUtc.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(Pending.CreatedUtc, DateTimeKind.Utc)
+                    : Pending.CreatedUtc;
+                return string.Format(CultureInfo.CurrentCulture, T("CreatedDate"),
+                    utc.ToLocalTime().ToString("dd/MM/yyyy", CultureInfo.InvariantCulture));
+            }
+        }
         public string SelectionDescription => string.Format(CultureInfo.CurrentCulture, T("SelectQuestion"), Heading, Candidate);
         private bool _isSelected;
         public bool IsSelected
@@ -234,6 +246,9 @@ public sealed class AiQuestionReviewPage : ContentPage
         heading.SetBinding(Label.TextProperty, nameof(Card.Heading));
         heading.SetDynamicResource(Label.TextColorProperty, "TextPrimaryColor");
         SemanticProperties.SetHeadingLevel(heading, SemanticHeadingLevel.Level2);
+        var createdDate = Text(size: 13, secondary: true);
+        createdDate.AutomationId = "AiReviewCreatedDate";
+        createdDate.SetBinding(Label.TextProperty, nameof(Card.CreatedDate));
         var selector = new CheckBox
         {
             AutomationId = "AiReviewSelectQuestion", VerticalOptions = LayoutOptions.Start,
@@ -248,7 +263,7 @@ public sealed class AiQuestionReviewPage : ContentPage
             ColumnDefinitions = [new(GridLength.Auto), new(GridLength.Star)], ColumnSpacing = 8
         };
         headingRow.Add(selector);
-        headingRow.Add(heading, 1);
+        headingRow.Add(new VerticalStackLayout { Spacing = 4, Children = { heading, createdDate } }, 1);
         var comparison = new Grid { ColumnSpacing = 16, RowSpacing = 12 };
         comparison.Add(Section("Candidate", nameof(Card.Candidate), highlighted: true));
         comparison.Add(Section("Reference", nameof(Card.Reference)));

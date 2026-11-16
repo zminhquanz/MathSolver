@@ -17,11 +17,17 @@ internal static class PreparedDishVenueWorksheetTests
         {
             bool vi = language == AppLanguage.Vietnamese;
             var items = new List<QuizPrintItem>();
-            foreach (string dish in new[] { "bot-chien", "spaghetti", "pizzas", "mixed-salad", "hot-dogs", "udon" })
+            foreach (string dish in new[] { "bot-chien", "spaghetti", "pizzas", "mixed-salad", "hot-dogs", "udon",
+                "steak-bo", "steak-ga", "steak-cuu", "steak-bo-sot-tieu", "steak-ga-sot-kem-nam",
+                "steak-bo-sot-ruou-vang-do", "steak-bo-sot-bearnaise", "steak-cuu-sot-chimichurri",
+                "steak-ga-sot-bbq", "steak-cuu-sot-bo-toi" })
             foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.Fraction, BankQuestionFamily.FindX })
             foreach (var venue in new[] { (Vi: "quán ăn", En: "eatery", Plural: "eateries"),
                 (Vi: "nhà hàng", En: "restaurant", Plural: "restaurants"), (Vi: "tiệm ăn", En: "diner", Plural: "diners") })
             {
+                // Exercise every steak/sauce in each family without exceeding the PDF's 100-question limit.
+                // The older six dishes still exercise all three venue types.
+                if (dish.StartsWith("steak-", StringComparison.Ordinal) && venue.En != "restaurant") continue;
                 string id = $"theme-food-{dish}-total";
                 BasicQuestionContract Create(int seed)
                 {
@@ -41,12 +47,24 @@ internal static class PreparedDishVenueWorksheetTests
                 var q = c.ToPracticeQuestion(d.ToWordProblem(c), mode, new(11));
                 var printed = QuizWorksheetBuilder.Format(q, language);
                 string label = $"{dish}/{family}/{language}/{venue.Vi}/{mode}";
-                if (!printed.Prompt.Contains(pair, StringComparison.OrdinalIgnoreCase)
+                // Only Combine contracts have two separate owners/venues. The new
+                // steak fraction scenes use one restaurant over two service rounds.
+                if (c.Structure == BasicQuestionStructure.Combine
+                    && !printed.Prompt.Contains(pair, StringComparison.OrdinalIgnoreCase)
                     || !printed.Prompt.Contains(c.Subject, StringComparison.OrdinalIgnoreCase)
                     || !printed.Prompt.Contains(c.OtherSubject, StringComparison.OrdinalIgnoreCase)
                     || printed.Prompt.Contains(vi ? "cơ sở" : "businesses", StringComparison.OrdinalIgnoreCase)
                     || printed.Prompt.Contains('{')) throw new Exception("PDF venue pair changed: " + label + ": " + printed.Prompt);
                 if (q.ExactAnswer != c.ExactAnswer) throw new Exception("PDF venue change altered answer: " + label);
+                if (dish.StartsWith("steak-", StringComparison.Ordinal))
+                {
+                    var food = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == dish);
+                    string item = vi ? food.Unit.Vietnamese : food.Unit.Singular;
+                    string prefix = vi ? "suất " : "serving of ";
+                    if (item.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) item = item[prefix.Length..];
+                    if (!printed.Prompt.Contains(item, StringComparison.OrdinalIgnoreCase))
+                        throw new Exception("PDF lost steak protein/sauce identity: " + label + ": " + printed.Prompt);
+                }
                 items.Add(printed);
                 traces.Add(new { dish, family, language, mode, venue = venue.Vi, printed.Prompt, printed.Answer });
                 cases++;
@@ -67,6 +85,6 @@ internal static class PreparedDishVenueWorksheetTests
         }
         File.WriteAllText(Path.Combine(directory, "prepared-dish-venue-pdf-cases.json"), JsonSerializer.Serialize(traces,
             new JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
-        Console.WriteLine($"PASS prepared dish venue PDF: {cases} six-dish/three-venue/three-family/VI-EN/mode fixtures, {pdfs} embedded-text worksheets/keys.");
+        Console.WriteLine($"PASS prepared dish venue PDF: {cases} six baseline dishes (all venues) + ten steak/sauce dishes (restaurant), three families/VI-EN/modes, {pdfs} embedded-text worksheets/keys.");
     }
 }

@@ -67,6 +67,7 @@ internal static partial class OpenProseTests
 
     internal static async Task RunAsync()
     {
+        VerifyCreativePromptGuidance();
         int cases = 0, novel = 0;
         foreach (var (_, seed) in Cases())
         {
@@ -123,6 +124,24 @@ internal static partial class OpenProseTests
         await CheckReviewStorageAndWorkerAsync();
         await MatrixAsync();
         Console.WriteLine($"PASS {cases} open-prose profiles, {novel} new equivalent openings, schema/placeholder mutations, fresh C# grading, review routing and exhausted-reference grammar.");
+    }
+
+    private static void VerifyCreativePromptGuidance()
+    {
+        // Profile-specific writing instructions and same-day time's early return must all
+        // retain the common creative/semantic requirements in both languages.
+        foreach (var (name, seed) in Cases().Concat(SameDayTimeTests.NativeCases()).Concat(SixFiniteOpenTests.NativeCases()))
+        {
+            var c = seed with { OpenProse = true };
+            Check(OpenQuestionProse.Supports(c), "Creative prompt test profile is unsupported: " + name);
+            var prompt = OpenQuestionProse.Prompt(c, "DuplicateProse", ["already-used wording"], "Maintain the math relation");
+            string novelty = c.Language == AppLanguage.Vietnamese ? "Tránh chỉ thay tên, số" : "Do more than swap names, numbers";
+            string validity = c.Language == AppLanguage.Vietnamese ? "một đáp án xác định" : "one determinate answer";
+            Check(prompt.Contains(novelty, StringComparison.Ordinal) && prompt.Contains(validity, StringComparison.Ordinal),
+                "Creative guidance was overridden for " + name);
+            Check(prompt.Contains("DuplicateProse", StringComparison.Ordinal) && prompt.Contains("already-used wording", StringComparison.Ordinal),
+                "Retry/duplicate feedback was lost for " + name);
+        }
     }
 
     private sealed record Attempt(string Case, string Family, bool Open, float Temperature, int Number, string Outcome,

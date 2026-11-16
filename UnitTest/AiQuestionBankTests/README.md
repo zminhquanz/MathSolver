@@ -22,7 +22,7 @@ with at most three attempts and seeded original-wording exclusions. Replay with
 `--open-prose-evidence <directory>`. See
 [decimal open wording](../../MathSolver/DECIMAL_OPEN_PROSE.md).
 
-`--open-prose` checks the opt-in one-step/Find X/unit-conversion wording pilot,
+`--open-prose` checks the automatic one-step/Find X/unit-conversion wording path,
 1,344 bilingual profiles, fresh C# grading and the separate persistent review
 queue. `--open-prose-model <model.gguf> [directory]` runs six fixed profiles with
 a closed baseline at 0.5 and open wording at 0.4/0.5/0.6 (maximum three attempts

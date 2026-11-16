@@ -9,6 +9,26 @@ internal static class QuizStoryArtworkSourceTests
     internal static void Run()
     {
         int count=ConnectedSubjects();
+        var healthcare = new (string UnitId, string ArtId)[]
+        {
+            ("paracetamol-boxes", "medical_paracetamol_box"),
+            ("vitamin-c-boxes", "medical_vitamin_c_box"),
+            ("cough-syrup-bottles", "medical_cough_syrup_bottle"),
+            ("medical-bandage-rolls", "medical_bandage_roll"),
+            ("medical-gauze-packs", "medical_gauze_pack")
+        };
+        foreach (var (unitId, artId) in healthcare)
+        {
+            var scene = AppliedQuestionCatalogue.All.Single(s => s.Group == QuestionKnowledgeGroup.Healthcare
+                && s.UnitId == unitId && s.Operation == ArithmeticOperation.Add);
+            Check(QuizStoryArtworkCatalogue.AppliedSceneArtwork(scene) == artId,
+                "Healthcare C# scene artwork mapping: " + unitId);
+            Check(QuizStoryArtwork.Select(true, false, [], artworkId: artId) == $"quiz_story_{artId}.png",
+                "Healthcare artwork asset not registered: " + artId);
+            count++;
+        }
+        Check(QuizStoryArtworkCatalogue.AppliedSceneArtwork(null) is null,
+            "Null scene must not select healthcare artwork");
         foreach(var language in Enum.GetValues<AppLanguage>())
         {
             string culture=QuizContentCatalog.Culture(language);

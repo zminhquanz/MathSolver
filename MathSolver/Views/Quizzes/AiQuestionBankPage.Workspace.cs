@@ -15,7 +15,6 @@ public partial class AiQuestionBankPage
         WorkflowScroll.Unloaded += (_, _) => InvalidateAiWorkspaceRefresh();
         WorkflowScroll.HandlerChanging += (_, _) => InvalidateAiWorkspaceRefresh();
         LanguagePicker.SelectedIndexChanged += (_, _) => RefreshOtherOptionsSummary();
-        CreativeProseSwitch.Toggled += (_, _) => RefreshOtherOptionsSummary();
         AutoInsertSwitch.Toggled += (_, _) => RefreshOtherOptionsSummary();
     }
 
@@ -81,7 +80,6 @@ public partial class AiQuestionBankPage
             + T(OtherOptionsPanel.IsVisible ? "Workflow.Expanded" : "Workflow.Collapsed"));
         string language = LanguagePicker.SelectedItem?.ToString() ?? "";
         OtherOptionsSummaryLabel.Text = string.Join(" · ", language,
-            T(AutoInsertSwitch.IsToggled ? "Workspace.AutoSaveOn" : "Workspace.AutoSaveOff"),
-            T(SupportsCreativeProse && CreativeProseSwitch.IsToggled ? "Workspace.CreativeOn" : "Workspace.CreativeOff"));
+            T(AutoInsertSwitch.IsToggled ? "Workspace.AutoSaveOn" : "Workspace.AutoSaveOff"));
     }
 }

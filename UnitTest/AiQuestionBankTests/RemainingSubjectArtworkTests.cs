@@ -1,3 +1,4 @@
+#if HAS_REMAINING_SUBJECT_FIXTURES
 using MathSolver.Models;
 using MathSolver.Services;
 using MathSolver.Testing;
@@ -40,3 +41,11 @@ internal static class RemainingSubjectArtworkTests
         Console.WriteLine($"PASS remaining subjects: {count} real VI/EN C# questions, all22 new identities, motion/measurement/proportion/chart/purchase ownership and frozen-fact guards.");
     }
 }
+#else
+internal static class RemainingSubjectArtworkTests
+{
+    internal static void Run() => throw new InvalidOperationException(
+        "--remaining-subject-artwork requires UnitTest/NativeUi/RemainingSubjectFixtures.cs. " +
+        "The optional artwork test cannot run until its source fixtures are present.");
+}
+#endif

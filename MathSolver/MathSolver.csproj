@@ -2,8 +2,10 @@
   <Import Project="../tools/msbuild/PdfSharpCore.props" />
   <ItemGroup>
     <PackageReference Include="LLamaSharp" Version="0.30.0" />
-    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
-    <PackageReference Include="LLamaSharp.Backend.Vulkan" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
+    <!-- Reference Windows packages directly: the cross-platform metapackages also copy
+         Linux native backends into Windows output through their NuGet .props files. -->
+    <PackageReference Include="LLamaSharp.Backend.Cuda12.Windows" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
+    <PackageReference Include="LLamaSharp.Backend.Vulkan.Windows" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'" />
     <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.30.0" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'" />
     <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
     <PackageReference Include="CommunityToolkit.Maui" Version="17.0.0" />
@@ -103,6 +105,49 @@
     <EmbeddedResource Include="Resources\Fonts\OpenSans-SemiBold.ttf" LogicalName="QuizPdf.Bold.ttf" />
     <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\QuizContent\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
+  <!-- WinUI Release loads artwork from a single optimized archive. Shell
+       navigation icons and OS-owned app/splash assets remain native resources. -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);MATHSOLVER_WINDOWS_ARTWORK_PACK</DefineConstants>
+    <!-- Retain English/Vietnamese managed satellite assemblies on Windows Release.
+         Windows App SDK native resources are handled by its own packaging targets. -->
+    <SatelliteResourceLanguages>en;en-US;vi;vi-VN</SatelliteResourceLanguages>
+    <WindowsArtworkPackPath>$(MSBuildProjectDirectory)\obj\artwork\$(Configuration)\$(TargetFramework)\mathsolver-artwork.pack</WindowsArtworkPackPath>
+  </PropertyGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+    <WindowsArtworkSource Include="Resources\Images\*.png;Resources\Images\*.svg" />
+    <MauiImage Remove="Resources\Images\*.png;Resources\Images\*.svg" />
+    <!-- WinUI Shell icons use native resource URIs, bypassing the packed
+         FileImageSource service used by ordinary MAUI Image controls. -->
+    <MauiImage Include="Resources\Images\calculate.svg;Resources\Images\quiz.svg;Resources\Images\function.svg;Resources\Images\grid_on.svg" />
+    <Content Include="$(WindowsArtworkPackPath)" Link="mathsolver-artwork.pack" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <!-- Windows App SDK self-contained mode adds every WinUI .mui culture as a
+       loose file. Use its supported exclusion item before it creates output
+       items, retaining all en-* and vi-* resources and every native DLL. -->
+  <Target Name="RestrictWindowsAppSdkReleaseMuiCultures"
+          BeforeTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents"
+          DependsOnTargets="GetWindowsAppSDKNativePlatform"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+    <ItemGroup>
+      <_WindowsAppSdkMui Include="%(WindowsAppSdkComponentPackages.Identity)runtimes-framework\win-$(NativePlatform)\native\**\*.mui" />
+      <MicrosoftWindowsAppSDKFilesExcluded Include="@(_WindowsAppSdkMui)"
+          Condition="!$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('en-')) and !$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('vi-'))" />
+    </ItemGroup>
+  </Target>
+  <Target Name="PackWindowsArtwork" BeforeTargets="GetCopyToOutputDirectoryItems;_GetCopyToPublishDirectoryItems"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'"
+          Inputs="@(WindowsArtworkSource);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
+          Outputs="$(WindowsArtworkPackPath)">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(WindowsArtworkPackPath)'))" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(WindowsArtworkPackPath)&quot;" />
+  </Target>
+  <Target Name="PruneOldWindowsArtworkCopies" AfterTargets="Build"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+    <!-- $(TargetDir) ends in a slash; appending '.' avoids a trailing backslash
+         escaping the closing quote in powershell.exe's Windows argument parsing. -->
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\prune-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputDirectory &quot;$(TargetDir).&quot;" />
+  </Target>
   <ItemGroup Condition="'$(Icons8AssetsEnabled)' != 'true'">
     <MauiFont Remove="Resources\Fonts\Icons8Actions.ttf" />
     <Compile Remove="Services\Appearance\Icons8LicensedPaths.g.cs" />

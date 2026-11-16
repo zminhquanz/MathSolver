@@ -86,11 +86,12 @@ public partial class AiQuestionBankPage : ContentPage
         if (options is not null && !choosing)
         {
             _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;
-            _family = options.Family;
+            _family = AiCreativeAuthoringChoices.Supports(options.Family)
+                ? options.Family : BankQuestionFamily.Arithmetic;
             _unknownRole = options.UnknownRole;
             _storyVariant = options.StoryVariant;
             _updating = true;
-            ProblemPicker.SelectedIndex = (int)_family;
+            ProblemPicker.SelectedIndex = AiCreativeAuthoringChoices.SelectionIndex(_family);
             _updating = false;
             RefreshLearningPickers(options.Operation);
             StarsPicker.SelectedIndex = (int)options.Tier - 1;
@@ -98,7 +99,6 @@ public partial class AiQuestionBankPage : ContentPage
             BatchModePicker.SelectedIndex = options.Count > 1 ? 1 : 0;
             CountEntry.Text = options.Count.ToString(CultureInfo.InvariantCulture);
             AutoInsertSwitch.IsToggled = options.AutoInsert;
-            CreativeProseSwitch.IsToggled = options.CreativeProse;
             RefreshFindXRoles();
         }
         Render();
@@ -158,11 +158,11 @@ public partial class AiQuestionBankPage : ContentPage
         var operation = SelectedLearningOperation;
         int stars = Math.Max(0, StarsPicker.SelectedIndex);
         int language = Math.Max(0, LanguagePicker.SelectedIndex), mode = Math.Max(0, BatchModePicker.SelectedIndex);
-        ProblemPicker.ItemsSource = new[] { T("BasicArithmetic"), LocalizationService.TranslateKey("FindXBank.Title"),
-            LocalizationService.TranslateKey("FractionBank.Title"), LocalizationService.TranslateKey("Quiz.ProblemTwoNumbers"),
-            LocalizationService.TranslateKey("Quiz.ProblemAverage"), LocalizationService.TranslateKey("Quiz.ProblemPercentage"),
-            LocalizationService.TranslateKey("Quiz.ProblemMultiStep"), LocalizationService.TranslateKey("Quiz.ProblemMotion"), LocalizationService.TranslateKey("Quiz.ProblemProportion"), LocalizationService.TranslateKey("Quiz.ProblemDecimal"), LocalizationService.TranslateKey("Quiz.ProblemMeasurement"), LocalizationService.TranslateKey("Quiz.ProblemRemainder"), LocalizationService.TranslateKey("Quiz.ProblemTime"), LocalizationService.TranslateKey("Quiz.ProblemFractionSkills"), LocalizationService.TranslateKey("Quiz.ProblemGeometry"), LocalizationService.TranslateKey("Quiz.ProblemData"), LocalizationService.TranslateKey("Quiz.ProblemProbability"), LocalizationService.TranslateKey("Quiz.ProblemVisualGeometry") }; ProblemPicker.SelectedIndex = (int)_family;
-        IllustratedQuizPicker.SetKeys(ProblemPicker, new[] { "AiBank.BasicArithmetic", "FindXBank.Title", "FractionBank.Title", "Quiz.ProblemTwoNumbers", "Quiz.ProblemAverage", "Quiz.ProblemPercentage", "Quiz.ProblemMultiStep", "Quiz.ProblemMotion", "Quiz.ProblemProportion", "Quiz.ProblemDecimal", "Quiz.ProblemMeasurement", "Quiz.ProblemRemainder", "Quiz.ProblemTime", "Quiz.ProblemFractionSkills", "Quiz.ProblemGeometry", "Quiz.ProblemData", "Quiz.ProblemProbability", "Quiz.ProblemVisualGeometry" });
+        string[] familyKeys = AiCreativeAuthoringChoices.Families.Select(QuestionAuthoringChoices.FamilyKey).ToArray();
+        ProblemPicker.ItemsSource = AiCreativeAuthoringChoices.Families.Select(family => family == BankQuestionFamily.Arithmetic
+            ? T("BasicArithmetic") : LocalizationService.TranslateKey(QuestionAuthoringChoices.FamilyKey(family))).ToArray();
+        ProblemPicker.SelectedIndex = AiCreativeAuthoringChoices.SelectionIndex(_family);
+        IllustratedQuizPicker.SetKeys(ProblemPicker, familyKeys);
         StarsPicker.ItemsSource = IllustratedQuizPicker.DifficultyLabels();
         IllustratedQuizPicker.SetTextOptions(StarsPicker);
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
@@ -229,22 +229,8 @@ public partial class AiQuestionBankPage : ContentPage
     }
 
     private AiQuestionItem? SelectedItem => _bank.Generation.Snapshot.Items.ElementAtOrDefault(QuestionPicker.SelectedIndex);
-    private bool SupportsCreativeProse => FiniteOpenCatalogue.Supports(_family, _storyVariant) || _family is BankQuestionFamily.Arithmetic or BankQuestionFamily.FindX or BankQuestionFamily.Measurement
-            || _family==BankQuestionFamily.Motion&&Enum.IsDefined((MotionQuizType)_storyVariant)
-            || _family==BankQuestionFamily.Geometry && (_storyVariant==RectanglePerimeterPilot.Variant || _storyVariant==RectangleAreaPilot.Variant || _storyVariant==TriangleAreaPilot.Variant || QuadrilateralAreaPilot.IsVariant(_storyVariant))
-            || _family==BankQuestionFamily.Proportion && _storyVariant is (int)ProportionQuizType.Direct or (int)ProportionQuizType.UnitaryGroupCount
-            || _family==BankQuestionFamily.TwoNumbers && _storyVariant is (int)ElementaryQuizType.SumDifference or (int)ElementaryQuizType.SumRatio or (int)ElementaryQuizType.DifferenceRatio
-            || _family==BankQuestionFamily.Average && _storyVariant is (int)AverageQuizType.Direct or (int)AverageQuizType.MissingValue
-            || _family==BankQuestionFamily.Percentage && _storyVariant is (int)PercentageQuizType.FindWholeFromPercentageValue or (int)PercentageQuizType.FindPercentageValue or (int)PercentageQuizType.FindRemainingAfterDonation or (int)PercentageQuizType.FindPercentageRatio
-            || _family==BankQuestionFamily.MultiStep && _storyVariant==MoneyChangePilot.Variant
-            || _family==BankQuestionFamily.Spatial && _storyVariant==RectangleSidePilot.Variant
-            || _family==BankQuestionFamily.FractionQuantity && _storyVariant is (int)ElementaryQuizType.FractionOfNumber or (int)ElementaryQuizType.FractionRemaining or (int)ElementaryQuizType.WholeFromFraction
-            || _family==BankQuestionFamily.Time && (SameDayTimePilot.IsType((ElementaryQuizType)_storyVariant) || _storyVariant==(int)SameDayBreakPilot.Type || _storyVariant==(int)OvernightTimePilot.Type || SameMonthCalendarPilot.IsType((ElementaryQuizType)_storyVariant))
-            || _family==BankQuestionFamily.Decimal && ElementaryQuizGenerator.DecimalStoryTypes.Contains((ElementaryQuizType)_storyVariant);
-    private void RefreshCreativeProseAvailability()
+    private void RefreshMotionHintsAndOptions()
     {
-        CreativeProsePanel.IsEnabled = SupportsCreativeProse;
-        CreativeProsePanel.Opacity = SupportsCreativeProse ? 1 : 0.5;
         MotionOpenHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant==(int)MotionQuizType.Basic;
         MotionExtendedHintLabel.IsVisible = _family==BankQuestionFamily.Motion&&_storyVariant is (int)MotionQuizType.Meeting or (int)MotionQuizType.Chasing or (int)MotionQuizType.River;
         RefreshOtherOptionsSummary();
@@ -252,7 +238,7 @@ public partial class AiQuestionBankPage : ContentPage
 
     private void RenderSelected()
     {
-        RefreshCreativeProseAvailability();
+        RefreshMotionHintsAndOptions();
         var item = SelectedItem;
         if (_saveFeedbackItemNumber != item?.Number || !ReferenceEquals(_saveFeedbackQuestion, item?.Question))
             PreviewSaveCompletionNotice.Reset();
@@ -499,7 +485,7 @@ public partial class AiQuestionBankPage : ContentPage
         {
             _followLatestItem = true;
             _bank.Generation.Start(new(ReasoningStoryCatalogue.Supports(_family) ? ArithmeticOperation.Add : SelectedLearningOperation, (CurriculumTier)(StarsPicker.SelectedIndex + 1),
-                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant, CreativeProse: SupportsCreativeProse && CreativeProseSwitch.IsToggled));
+                LanguagePicker.SelectedIndex == 0 ? AppLanguage.Vietnamese : AppLanguage.English, count, AutoInsertSwitch.IsToggled, ReasoningStoryCatalogue.Supports(_family) ? null : CurrentLearningProfile, _family, _unknownRole, _storyVariant, CreativeProse: true));
             _updating = true;
             try { QuestionPicker.SelectedIndex = -1; }
             finally { _updating = false; }

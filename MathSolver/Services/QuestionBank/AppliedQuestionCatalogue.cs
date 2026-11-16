@@ -81,6 +81,7 @@ public static partial class AppliedQuestionCatalogue
     public static WordProblemQuantity Quantity(BasicQuestionContract c) => Find(c.SceneId)!.Group switch
     {
         QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies
+            or QuestionKnowledgeGroup.Toys or QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School
             or QuestionKnowledgeGroup.Food or QuestionKnowledgeGroup.Drinks or QuestionKnowledgeGroup.Fruit => WordProblemQuantity.Count,
         QuestionKnowledgeGroup.Money => WordProblemQuantity.Money,
         QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Transport => WordProblemQuantity.Mass,
@@ -192,7 +193,8 @@ public static partial class AppliedQuestionCatalogue
         if (s.Id.StartsWith("motion-speed", StringComparison.Ordinal)) return ("km", timeUnit);
         if (c.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
             return (c.Unit, s.Group == QuestionKnowledgeGroup.Money ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.020")
-                : s.Group is QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies ? c.GroupUnit
+                : s.Group is QuestionKnowledgeGroup.Objects or QuestionKnowledgeGroup.Animals or QuestionKnowledgeGroup.SchoolSupplies
+                    or QuestionKnowledgeGroup.Toys or QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School ? c.GroupUnit
                 : s.Group == QuestionKnowledgeGroup.Length ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.021")
                 : s.Group == QuestionKnowledgeGroup.Mass ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.022") : QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.InputUnits.023"));
         return (c.Unit, c.Unit);

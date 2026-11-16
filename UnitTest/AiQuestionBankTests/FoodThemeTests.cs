@@ -6,14 +6,69 @@ internal static class FoodThemeTests
 {
     private static readonly string[] TakeawayBakeryCakeIds =
         ["banh-chung", "banh-gio", "banh-day", "banh-bao-thit-trung-cut", "banh-tet"];
-    private static readonly (string UnitId, string ArtworkId, string Vietnamese, string Singular, string Plural)[] AdditionalPreparedDishes =
+    private static readonly (string UnitId, string ArtworkId, string Vietnamese, string Singular, string Plural, bool Bakery)[] AdditionalPreparedDishes =
     [
-        ("bot-chien", "bot_chien", "phần bột chiên", "serving of Vietnamese fried rice flour cakes", "servings of Vietnamese fried rice flour cakes"),
-        ("pizzas", "pizza", "chiếc bánh pizza", "pizza", "pizzas"),
-        ("mixed-salad", "mixed_salad", "phần salad trộn", "serving of mixed salad", "servings of mixed salad"),
-        ("spaghetti", "spaghetti", "đĩa mì Ý", "plate of spaghetti", "plates of spaghetti"),
-        ("hot-dogs", "hot_dog", "chiếc bánh hot dog", "hot dog", "hot dogs"),
-        ("udon", "udon", "tô mì udon", "bowl of udon", "bowls of udon")
+        ("che-dau-do", "che_dau_do", "chén chè đậu đỏ", "bowl of red bean sweet soup", "bowls of red bean sweet soup", false),
+        ("che-dau-den", "che_dau_den", "chén chè đậu đen", "bowl of black bean sweet soup", "bowls of black bean sweet soup", false),
+        ("che-dau-xanh", "che_dau_xanh", "chén chè đậu xanh", "bowl of mung bean sweet soup", "bowls of mung bean sweet soup", false),
+        ("che-troi-nuoc", "che_troi_nuoc", "chén chè trôi nước", "bowl of glutinous rice ball sweet soup", "bowls of glutinous rice ball sweet soup", false),
+        ("che-thap-cam", "che_thap_cam", "chén chè thập cẩm", "bowl of mixed Vietnamese sweet soup", "bowls of mixed Vietnamese sweet soup", false),
+        ("che-thai", "che_thai", "chén chè Thái", "bowl of Thai-style fruit sweet soup", "bowls of Thai-style fruit sweet soup", false),
+        ("che-chuoi", "che_chuoi", "chén chè chuối", "bowl of banana and coconut sweet soup", "bowls of banana and coconut sweet soup", false),
+        ("che-bap", "che_bap", "chén chè bắp", "bowl of sweet corn pudding", "bowls of sweet corn pudding", false),
+        ("che-hat-sen-long-nhan", "che_hat_sen_long_nhan", "chén chè hạt sen long nhãn", "bowl of lotus seed and longan sweet soup", "bowls of lotus seed and longan sweet soup", false),
+        ("che-dau-phong", "che_dau_phong", "chén chè đậu phộng", "bowl of peanut sweet soup", "bowls of peanut sweet soup", false),
+        ("che-khuc-bach", "che_khuc_bach", "chén chè khúc bạch", "bowl of almond panna cotta sweet soup", "bowls of almond panna cotta sweet soup", false),
+        ("che-suong-sa-hat-luu", "che_suong_sa_hat_luu", "chén chè sương sa hạt lựu", "bowl of jelly and pomegranate-seed sweet soup", "bowls of jelly and pomegranate-seed sweet soup", false),
+        ("che-khoai-mon", "che_khoai_mon", "chén chè khoai môn", "bowl of taro sweet soup", "bowls of taro sweet soup", false),
+        ("bot-chien", "bot_chien", "phần bột chiên", "serving of Vietnamese fried rice flour cakes", "servings of Vietnamese fried rice flour cakes", false),
+        ("pizzas", "pizza", "chiếc bánh pizza", "pizza", "pizzas", false),
+        ("mixed-salad", "mixed_salad", "phần salad trộn", "serving of mixed salad", "servings of mixed salad", false),
+        ("spaghetti", "spaghetti", "đĩa mì Ý", "plate of spaghetti", "plates of spaghetti", false),
+        ("hot-dogs", "hot_dog", "chiếc bánh hot dog", "hot dog", "hot dogs", false),
+        ("udon", "udon", "tô mì udon", "bowl of udon", "bowls of udon", false),
+        ("goi-cuon", "goi_cuon", "đĩa gỏi cuốn", "plate of fresh spring rolls", "plates of fresh spring rolls", false),
+        ("bun-cha", "bun_cha", "suất bún chả", "serving of bun cha", "servings of bun cha", false),
+        ("banh-trang-tron", "banh_trang_tron", "phần bánh tráng trộn", "serving of Vietnamese rice paper salad", "servings of Vietnamese rice paper salad", false),
+        ("banh-trang-nuong", "banh_trang_nuong", "chiếc bánh tráng nướng", "grilled Vietnamese rice paper", "grilled Vietnamese rice papers", false),
+        ("pha-lau-bo", "pha_lau_bo", "phần phá lấu bò", "serving of Vietnamese beef offal stew", "servings of Vietnamese beef offal stew", false),
+        ("ca-ri-ga-viet", "ca_ri_ga_viet", "phần cà ri gà Việt Nam", "serving of Vietnamese chicken curry", "servings of Vietnamese chicken curry", false),
+        ("ca-ri-bo-nhat", "ca_ri_bo_nhat", "phần cà ri bò Nhật Bản", "serving of Japanese beef curry", "servings of Japanese beef curry", false),
+        ("tau-hu-nuoc-duong", "tau_hu_nuoc_duong", "chén tàu hũ nước đường gừng và nước cốt dừa", "bowl of tofu pudding with ginger syrup and coconut milk", "bowls of tofu pudding with ginger syrup and coconut milk", false),
+        ("jjinppang", "jjinppang", "chiếc bánh Jjinppang nhân đậu đỏ", "Korean jjinppang red bean bun", "Korean jjinppang red bean buns", true),
+        ("chapssal-doughnut", "chapssal_doughnut", "chiếc bánh Chapssal doughnut", "Korean chapssal doughnut", "Korean chapssal doughnuts", true),
+        ("bibimbap", "bibimbap", "tô cơm trộn Hàn Quốc", "bowl of Korean bibimbap", "bowls of Korean bibimbap", false),
+        ("steak-bo", "steak_bo", "suất steak bò", "serving of beef steak", "servings of beef steak", false),
+        ("steak-ga", "steak_ga", "suất steak gà", "serving of chicken steak", "servings of chicken steak", false),
+        ("steak-cuu", "steak_cuu", "suất steak cừu", "serving of lamb steak", "servings of lamb steak", false),
+        ("steak-bo-sot-tieu", "steak_bo_sot_tieu", "suất steak bò sốt tiêu", "serving of beef steak with peppercorn sauce", "servings of beef steak with peppercorn sauce", false),
+        ("steak-ga-sot-kem-nam", "steak_ga_sot_kem_nam", "suất steak gà sốt kem nấm", "serving of chicken steak with creamy mushroom sauce", "servings of chicken steak with creamy mushroom sauce", false),
+        ("steak-bo-sot-ruou-vang-do", "steak_bo_sot_ruou_vang_do", "suất steak bò sốt rượu vang đỏ", "serving of beef steak with red wine sauce", "servings of beef steak with red wine sauce", false),
+        ("steak-bo-sot-bearnaise", "steak_bo_sot_bearnaise", "suất steak bò sốt béarnaise", "serving of beef steak with béarnaise sauce", "servings of beef steak with béarnaise sauce", false),
+        ("steak-cuu-sot-chimichurri", "steak_cuu_sot_chimichurri", "suất steak cừu sốt chimichurri", "serving of lamb steak with chimichurri sauce", "servings of lamb steak with chimichurri sauce", false),
+        ("steak-ga-sot-bbq", "steak_ga_sot_bbq", "suất steak gà sốt BBQ", "serving of chicken steak with BBQ sauce", "servings of chicken steak with BBQ sauce", false),
+        ("steak-cuu-sot-bo-toi", "steak_cuu_sot_bo_toi", "suất steak cừu sốt bơ tỏi thảo mộc", "serving of lamb steak with garlic herb butter", "servings of lamb steak with garlic herb butter", false),
+        ("tteokbokki", "tteokbokki", "đĩa bánh gạo cay Tteokbokki", "plate of Korean spicy rice cakes (tteokbokki)", "plates of Korean spicy rice cakes (tteokbokki)", false),
+        ("korean-corn-dog", "korean_corn_dog", "chiếc Korean Corn Dog", "Korean corn dog", "Korean corn dogs", false),
+        ("hotteok", "hotteok", "chiếc bánh Hotteok", "Korean hotteok sweet pancake", "Korean hotteok sweet pancakes", true),
+        ("bungeoppang", "bungeoppang", "chiếc bánh Bungeoppang", "Korean bungeoppang fish-shaped pastry", "Korean bungeoppang fish-shaped pastries", true),
+        ("gyeranppang", "gyeranppang", "chiếc bánh Gyeranppang", "Korean gyeranppang egg bread", "Korean gyeranppang egg breads", true),
+        ("sundae-gukbap", "sundae_gukbap", "tô Sundae Gukbap", "bowl of Korean blood sausage rice soup (sundae gukbap)", "bowls of Korean blood sausage rice soup (sundae gukbap)", false),
+        ("andong-jjimdak", "andong_jjimdak", "phần Andong Jjimdak", "serving of Andong Jjimdak (Korean braised chicken)", "servings of Andong Jjimdak (Korean braised chicken)", false),
+        ("kalguksu", "kalguksu", "tô Kalguksu", "bowl of Korean knife-cut noodle soup (kalguksu)", "bowls of Korean knife-cut noodle soup (kalguksu)", false),
+        ("squid-sundae", "squid_sundae", "phần Squid Sundae", "serving of Squid Sundae (Korean stuffed squid)", "servings of Squid Sundae (Korean stuffed squid)", false),
+        ("com-suon-cay", "com_suon_cay", "suất cơm sườn cây", "serving of rice with grilled pork ribs", "servings of rice with grilled pork ribs", false),
+        ("com-chien-hai-san", "com_chien_hai_san", "đĩa cơm chiên hải sản", "plate of seafood fried rice", "plates of seafood fried rice", false),
+        ("com-chien-duong-chau", "com_chien_duong_chau", "đĩa cơm chiên Dương Châu", "plate of Yangzhou fried rice", "plates of Yangzhou fried rice", false),
+        ("com-ga-xoi-mo", "com_ga_xoi_mo", "suất cơm gà xối mỡ", "serving of crispy fried chicken with rice", "servings of crispy fried chicken with rice", false),
+        ("com-ga-sot-me", "com_ga_sot_me", "suất cơm gà sốt me", "serving of chicken with tamarind sauce and rice", "servings of chicken with tamarind sauce and rice", false),
+        ("com-ga-sot-tieu-xanh", "com_ga_sot_tieu_xanh", "suất cơm gà sốt tiêu xanh", "serving of chicken with green peppercorn sauce and rice", "servings of chicken with green peppercorn sauce and rice", false),
+        ("canh-chua-ca-loc", "canh_chua_ca_loc", "tô canh chua cá lóc", "bowl of sour snakehead fish soup", "bowls of sour snakehead fish soup", false),
+        ("canh-kho-qua-nhoi-thit", "canh_kho_qua_nhoi_thit", "tô canh khổ qua nhồi thịt", "bowl of stuffed bitter melon soup", "bowls of stuffed bitter melon soup", false),
+        ("canh-bi-do-ham-xuong", "canh_bi_do_ham_xuong", "tô canh bí đỏ hầm xương", "bowl of pumpkin and pork bone soup", "bowls of pumpkin and pork bone soup", false),
+        ("canh-cua-rau-day-mong-toi", "canh_cua_rau_day_mong_toi", "tô canh cua rau đay, mồng tơi", "bowl of crab soup with jute mallow and Malabar spinach", "bowls of crab soup with jute mallow and Malabar spinach", false),
+        ("canh-rau-ngot-thit-bam", "canh_rau_ngot_thit_bam", "tô canh rau ngót thịt băm", "bowl of sweet leaf soup with minced pork", "bowls of sweet leaf soup with minced pork", false),
+        ("ca-loc-kho-to", "ca_loc_kho_to", "phần cá lóc kho tộ", "serving of claypot braised snakehead fish", "servings of claypot braised snakehead fish", false)
     ];
 
     internal static IEnumerable<(string Name,BasicQuestionContract Contract)> NativeCases()
@@ -97,14 +152,86 @@ internal static class FoodThemeTests
                     "Creative AI prose must reject a mismatched food venue");
         }
     }
+    internal static void CheckDrinkShopVenue(BasicQuestionContract contract, BasicQuestionDraft draft)
+    {
+        if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Drinks) return;
+        var storyOperation = contract.Version == FindXQuestionCatalogue.Version
+            ? FindXQuestionCatalogue.Find(contract.SceneId)!.SourceScene.Operation
+            : contract.Operation;
+        bool vi = contract.Language == AppLanguage.Vietnamese;
+        string first = vi ? "quán nước thứ nhất" : "the first drink shop";
+        string second = vi ? "quán nước thứ hai" : "the second drink shop";
+        string pair = vi ? "cả hai quán nước" : "both drink shops";
+        Check(contract.Subject.Equals(first, StringComparison.OrdinalIgnoreCase),
+            "Drink venue must be the first drink shop: " + contract.SceneId + "/" + contract.Subject);
+        if (contract.Version != FractionQuestionCatalogue.Version)
+            Check(contract.OtherSubject.Equals(second, StringComparison.OrdinalIgnoreCase),
+                "Drink venue must be the second drink shop: " + contract.SceneId + "/" + contract.OtherSubject);
+        string problem = draft.ToWordProblem(contract).ProblemText;
+        Check(problem.Contains(first, StringComparison.OrdinalIgnoreCase),
+            "Drink story must mention the first drink shop: " + contract.SceneId + ": " + problem);
+        if (storyOperation == ArithmeticOperation.Add ||
+            contract.Version == FractionQuestionCatalogue.Version && storyOperation == ArithmeticOperation.Subtract)
+        {
+            Check(problem.Contains(second, StringComparison.OrdinalIgnoreCase)
+                && problem.Contains(pair, StringComparison.OrdinalIgnoreCase),
+                "Drink addition/comparison must name both drink shops: " + contract.SceneId + ": " + problem);
+        }
+        if (contract.Version != FractionQuestionCatalogue.Version && storyOperation == ArithmeticOperation.Add)
+        {
+            Check(problem.Contains(vi ? "bán được" : "sold", StringComparison.OrdinalIgnoreCase),
+                "Drink addition must describe sales: " + contract.SceneId);
+            Check(FoodThemePrompt.CombinedQuestionNamesVenue(draft.Question, contract),
+                "Drink AI reference question must name both beverage shops: " + contract.SceneId);
+        }
+        string prompt = BasicQuestionPrompt.Build(contract);
+        Check(prompt.Contains(vi ? "quán nước" : "drink shop", StringComparison.OrdinalIgnoreCase),
+            "Drink AI prompt lost shop vocabulary: " + contract.SceneId);
+    }
+
+    private static void CheckDrinkShopAiValidation()
+    {
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        {
+            var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == "orange-juice-glasses");
+            var original = FoodThemeInterchangeTests.Contract(subject, ArithmeticOperation.Add, language, BankQuestionFamily.Arithmetic);
+            var contract = original with { Left = 5, Right = 10 };
+            Check(contract.IsValid && contract.Left + contract.Right == 15,
+                "5 + 10 orange juice example must remain valid");
+            var draft = AppliedQuestionCatalogue.Draft(contract);
+            CheckDrinkShopVenue(contract, draft);
+            bool vi = language == AppLanguage.Vietnamese;
+            string rendered = draft.ToWordProblem(contract).ProblemText;
+            Check(rendered.Contains($"{contract.Subject} {(vi ? "bán được" : "sold")} 5 {contract.Unit}",
+                    StringComparison.OrdinalIgnoreCase),
+                "First drink shop must sell exactly five glasses of orange juice: " + rendered);
+            Check(rendered.Contains($"{contract.OtherSubject} {(vi ? "bán được" : "sold")} 10 {contract.Unit}",
+                    StringComparison.OrdinalIgnoreCase),
+                "Second drink shop must sell exactly ten glasses of orange juice: " + rendered);
+            Check(rendered.Contains(vi
+                    ? "Hỏi cả hai quán nước bán được tổng cộng bao nhiêu ly nước cam?"
+                    : "How many glasses of orange juice did both drink shops sell altogether?",
+                    StringComparison.OrdinalIgnoreCase),
+                "Orange juice example must ask for the total sold by both drink shops: " + rendered);
+            Check(contract.Answer == 15 && AppliedQuestionCatalogue.Validate(
+                    QuestionBankStore.SerializeDraft(draft), contract).IsValid,
+                "The rendered 5 + 10 drink shop story must validate and answer 15");
+            string invalid = draft.Question.Replace(language == AppLanguage.Vietnamese ? "cả hai quán nước" : "both drink shops",
+                language == AppLanguage.Vietnamese ? "cả hai cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
+            Check(invalid != draft.Question && !FoodThemePrompt.CombinedQuestionNamesVenue(invalid, contract),
+                "AI must reject generic stores in drink questions");
+            Check(!AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft with { Question = invalid }), contract).IsValid,
+                "Drink AI validation accepted a generic store");
+        }
+    }
     private static IEnumerable<(string Unit, bool Bakery)> BakeryVenueCases()
     {
         yield return ("cakes", true);
         yield return ("pho", false);
         foreach (var id in TakeawayBakeryCakeIds)
             yield return (id, true);
-        foreach (var dish in AdditionalPreparedDishes)
-            yield return (dish.UnitId, false);
+        foreach (var dish in AdditionalPreparedDishes.Where(d => !FoodThemeCatalogue.IsCheDessert(d.UnitId)))
+            yield return (dish.UnitId, dish.Bakery);
     }
     private static void CheckAdditionalPreparedDishes()
     {
@@ -112,7 +239,18 @@ internal static class FoodThemeTests
         {
             Check(FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == dish.UnitId) == 1,
                 "Prepared dish missing or duplicated: " + dish.UnitId);
-            Check(!FoodThemeCatalogue.IsBakeryFood(dish.UnitId), "Prepared dish must use an eatery: " + dish.UnitId);
+            Check(FoodThemeCatalogue.IsBakeryFood(dish.UnitId) == dish.Bakery,
+                "Prepared dish has the wrong selling venue: " + dish.UnitId);
+            // Regression: a base steak ID must not capture a longer sauce variant.
+            foreach (string scenePrefix in new[] { "theme-food-", "fraction-theme-food-" })
+                Check(FoodThemeCatalogue.RestaurantDishForScene(scenePrefix + dish.UnitId + "-total")?.Unit.Id == dish.UnitId,
+                    "Scene resolved to another prepared dish: " + scenePrefix + dish.UnitId);
+            var fractionScene = FractionQuestionCatalogue.Find("fraction-theme-food-" + dish.UnitId + "-total");
+            Check(fractionScene is not null && fractionScene.UnitA == dish.Vietnamese && fractionScene.EnUnitA == dish.Plural,
+                "Fraction unit resolved to another prepared dish: " + dish.UnitId);
+            if (dish.UnitId.StartsWith("steak-", StringComparison.Ordinal))
+                Check(FoodThemeCatalogue.EnglishFractionUnit(fractionScene!.Id, dish.Plural, true, false).Contains(
+                    dish.Singular, StringComparison.Ordinal), "Fraction English singular lost the steak sauce: " + dish.UnitId);
             foreach (string unit in new[] { dish.Vietnamese, dish.Singular, dish.Plural })
             {
                 Check(FoodThemeCatalogue.IsThemedItem(unit), "Prepared dish not recognized by practice routing: " + unit);
@@ -139,6 +277,39 @@ internal static class FoodThemeTests
         if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food) return;
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool bakery = FoodThemeCatalogue.IsBakeryContract(contract);
+        string? resolvedDishId = contract.Version == FindXQuestionCatalogue.Version
+            ? FindXQuestionCatalogue.Find(contract.SceneId)?.SourceScene.UnitId
+            : FoodThemeCatalogue.RestaurantDishForScene(contract.SceneId)?.Unit.Id;
+        foreach (var dish in AdditionalPreparedDishes.Where(d => d.UnitId == resolvedDishId))
+        {
+            Check(bakery == dish.Bakery, "Food contract has the wrong selling venue: " + contract.SceneId);
+            Check(contract.Unit == (vi ? dish.Vietnamese : dish.Plural),
+                "Food contract changed the counted serving: " + contract.SceneId + "/" + contract.Language);
+        }
+        if (FoodThemeCatalogue.IsCheDessertContract(contract))
+        {
+            string first = vi ? "quán chè thứ nhất" : "the first dessert shop";
+            string second = vi ? "quán chè thứ hai" : "the second dessert shop";
+            string both = vi ? "cả hai quán chè" : "both dessert shops";
+            Check(contract.Subject.Equals(first, StringComparison.OrdinalIgnoreCase),
+                "Dessert contract must name first dessert shop: " + contract.SceneId);
+            if (contract.Structure == BasicQuestionStructure.Combine)
+                Check(contract.OtherSubject.Equals(second, StringComparison.OrdinalIgnoreCase),
+                    "Combined dessert contract must name second dessert shop: " + contract.SceneId);
+            string cheStory = draft.ToWordProblem(contract).ProblemText;
+            Check(cheStory.Contains(first, StringComparison.OrdinalIgnoreCase),
+                "Dessert story must name first dessert shop: " + contract.SceneId);
+            if (contract.Structure == BasicQuestionStructure.Combine)
+                Check(cheStory.Contains(second, StringComparison.OrdinalIgnoreCase)
+                    && cheStory.Contains(both, StringComparison.OrdinalIgnoreCase),
+                    "Combined dessert story must name both dessert shops: " + contract.SceneId);
+            Check(!cheStory.Contains(vi ? "cửa hàng" : "the two businesses", StringComparison.OrdinalIgnoreCase),
+                "Dessert story replaced a dessert shop with a generic store");
+            string chePrompt = BasicQuestionPrompt.Build(contract);
+            Check(chePrompt.Contains(vi ? "Đề món chè" : "Vietnamese sweet-soup stories", StringComparison.Ordinal),
+                "Dessert AI prompt lost its approved shop scenario: " + contract.SceneId);
+            return;
+        }
         var venues = Enumerable.Range(0, FoodThemePrompt.VenueCount(bakery))
             .Select(i => FoodThemePrompt.Venue(bakery, i, contract.Language)).ToArray();
         string ActorVenue(string v) => vi ? v + " của " : "'s " + v;
@@ -292,6 +463,7 @@ internal static class FoodThemeTests
         CheckAdditionalPreparedDishes();
         CheckAllFoodVenueKinds();
         CheckAiCombinedVenueValidation();
+        CheckDrinkShopAiValidation();
         Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),
             "Hamburgers must use an eatery or restaurant, not a bakery");
         Check(!FoodThemeCatalogue.IsBakeryFood("banh-xeo") && !FoodThemeCatalogue.IsBakeryFood("banh-cuon"),

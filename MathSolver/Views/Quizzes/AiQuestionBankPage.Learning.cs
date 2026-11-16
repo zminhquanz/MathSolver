@@ -27,28 +27,13 @@ public partial class AiQuestionBankPage
             LearningGroupPanel.IsVisible = !ReasoningStoryCatalogue.Supports(_family);
             if (ReasoningStoryCatalogue.Supports(_family))
             {
-                string[] keys = _family switch
-                {
-                    BankQuestionFamily.TwoNumbers => ["Quiz.Elementary.SumDifference", "Quiz.Elementary.SumRatio", "Quiz.Elementary.DifferenceRatio"],
-                    BankQuestionFamily.Average => ["Quiz.AverageDirect", "Quiz.AverageTotalToAverage", "Quiz.AverageAverageToTotal", "Quiz.AverageMissingValue", "Quiz.AverageIndirectData", "Quiz.AverageTwoGroups"],
-                    BankQuestionFamily.MultiStep => ElementaryQuizGenerator.Types(QuizProblemKind.MultiStep)
-                        .Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Motion => ["Quiz.MotionBasic", "Quiz.MotionChasing", "Quiz.MotionMeeting", "Quiz.MotionRiver"],
-                    BankQuestionFamily.Proportion => ["Quiz.ProportionDirect", "Quiz.ProportionInverse", "Quiz.ProportionUnitaryGroupCount"],
-                    BankQuestionFamily.Decimal => ElementaryQuizGenerator.DecimalBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Measurement => ElementaryQuizGenerator.MeasurementBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Remainder => ElementaryQuizGenerator.RemainderStoryTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Time => ElementaryQuizGenerator.TimeBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.FractionQuantity => ElementaryQuizGenerator.FractionQuantityBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Geometry => ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1))
-                        .Select(variant => "Quiz.Geometry" + ReasoningStoryCatalogue.GeometryProfile(variant).Shape).ToArray(),
-                    BankQuestionFamily.Spatial => ElementaryQuizGenerator.VisualBankTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Data => ElementaryQuizGenerator.DataChartTypes.Select(type => "Quiz.Elementary." + type).ToArray(),
-                    BankQuestionFamily.Probability => ElementaryQuizGenerator.Types(QuizProblemKind.Probability).Select(type => "Quiz.Elementary." + type).ToArray(),
-                    _ => ["Quiz.PercentageRatio", "Quiz.PercentageValue", "Quiz.PercentageWhole", "Quiz.PercentageRemaining"]
-                };
-                _storyVariants = ReasoningStoryCatalogue.Variants(_family, (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
+                _storyVariants = AiCreativeAuthoringChoices.Variants(_family,
+                    (CurriculumTier)(Math.Max(0, StarsPicker.SelectedIndex) + 1));
+                if (_storyVariants.Length == 0)
+                    throw new InvalidOperationException($"No AI story variants for {_family} at the selected difficulty.");
                 if (!_storyVariants.Contains(_storyVariant)) _storyVariant = _storyVariants[0];
+                string[] keys = _storyVariants.Select(variant =>
+                    QuestionAuthoringChoices.VariantKey(_family, variant)).ToArray();
                 string[] labels = _family == BankQuestionFamily.Geometry
                     ? _storyVariants.Select(variant => {
                         var profile = ReasoningStoryCatalogue.GeometryProfile(variant);
@@ -86,8 +71,7 @@ public partial class AiQuestionBankPage
     private void OnBankProblemChanged(object? sender, EventArgs e)
     {
         if (_updating || ProblemPicker.SelectedIndex < 0) return;
-        _family = Enum.IsDefined((BankQuestionFamily)ProblemPicker.SelectedIndex)
-            ? (BankQuestionFamily)ProblemPicker.SelectedIndex : BankQuestionFamily.Arithmetic;
+        _family = AiCreativeAuthoringChoices.FamilyAt(ProblemPicker.SelectedIndex);
         RefreshLearningPickers(SelectedLearningOperation);
         RefreshFindXRoles();
     }
@@ -114,7 +98,7 @@ public partial class AiQuestionBankPage
 
     private void RefreshFindXRoles()
     {
-        RefreshCreativeProseAvailability();
+        RefreshMotionHintsAndOptions();
         FindXRolePanel.IsVisible = _family == BankQuestionFamily.FindX;
         if (!FindXRolePanel.IsVisible) { _unknownRole = FindXUnknownRole.None; return; }
         _updatingLearning = true;

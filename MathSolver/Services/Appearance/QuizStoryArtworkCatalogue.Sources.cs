@@ -11,6 +11,20 @@ internal static partial class QuizStoryArtworkCatalogue
     internal static string? AppliedSceneArtwork(AppliedQuestionScene? scene)
     {
         if (scene is null) return null;
+        if (scene.Group == QuestionKnowledgeGroup.Healthcare)
+            return scene.UnitId switch
+            {
+                "paracetamol-boxes" => "medical_paracetamol_box",
+                "vitamin-c-boxes" => "medical_vitamin_c_box",
+                "cough-syrup-bottles" => "medical_cough_syrup_bottle",
+                "medical-bandage-rolls" => "medical_bandage_roll",
+                "medical-gauze-packs" => "medical_gauze_pack",
+                _ => null
+            };
+        if (scene.Group == QuestionKnowledgeGroup.Toys)
+            return scene.UnitId switch { "marbles" => "marble", "balls" => "ball", _ => null };
+        if (scene.Group == QuestionKnowledgeGroup.School)
+            return scene.UnitId == "students" ? "student" : null;
         if (scene.Group == QuestionKnowledgeGroup.SchoolSupplies)
             return scene.UnitId switch
             {

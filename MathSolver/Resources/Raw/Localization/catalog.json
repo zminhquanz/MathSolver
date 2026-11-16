@@ -663,6 +663,21 @@
       "description": "A label or instruction for writing the solution, calculation and final answer.",
       "translatorNote": "Keep {0}, {1}, ... placeholders and mathematical symbols unchanged. Keep skill names and button labels concise."
     },
+    "Quiz.EssayEquationPlaceholderAdd": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "Addition example matching the selected arithmetic operation.",
+      "translatorNote": "Keep the numbers and mathematical symbols unchanged."
+    },
+    "Quiz.EssayEquationPlaceholderSubtract": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "Subtraction example matching the selected arithmetic operation.",
+      "translatorNote": "Keep the numbers and mathematical symbols unchanged."
+    },
+    "Quiz.EssayEquationPlaceholderDivide": {
+      "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
+      "description": "Division example matching the selected arithmetic operation.",
+      "translatorNote": "Keep the numbers and mathematical symbols unchanged."
+    },
     "Quiz.AverageEssayEquationPlaceholder": {
       "context": "Math puzzles > Written answer; input labels, instructions and grading feedback.",
       "description": "A label or instruction for writing the solution, calculation and final answer.",
@@ -1913,8 +1928,6 @@
     {"key":"AiBank.Workspace.OtherOptions","source":"Tùy chọn khác","mode":"exact"},
     {"key":"AiBank.Workspace.AutoSaveOn","source":"Tự lưu bật","mode":"exact"},
     {"key":"AiBank.Workspace.AutoSaveOff","source":"Tự lưu tắt","mode":"exact"},
-    {"key":"AiBank.Workspace.CreativeOn","source":"Diễn đạt đa dạng","mode":"exact"},
-    {"key":"AiBank.Workspace.CreativeOff","source":"Diễn đạt tiêu chuẩn","mode":"exact"},
     {"key":"Matrix.RangeSelection.Start","source":"Chọn vùng","mode":"exact"},
     {"key":"Matrix.RangeSelection.Cancel","source":"Hủy chọn vùng","mode":"exact"},
     {"key":"Matrix.RangeSelection.FirstHint","source":"Chạm ô đầu. Kéo bảng để cuộn, rồi chạm ô cuối để chọn vùng.","mode":"exact"},
@@ -2304,7 +2317,6 @@
     {"key":"PowerRoot.Diagnostics.UnderMillisecond","source":"< 1 ms","mode":"exact"},
     {"key":"PowerRoot.Diagnostics.Seconds","source":"{0} s","mode":"exact"},
     {"key":"PowerRoot.Diagnostics.NoNtt","source":"Không ghi nhận phép nhân NTT","mode":"exact"},
-    {"key": "AiBank.Review.Experimental", "source": "Diễn đạt đa dạng", "mode": "exact"},
     {"key": "AiBank.Item.PendingReview", "source": "Đề chờ duyệt · Chưa dùng để luyện tập", "mode": "exact"},
     {"key": "AiBank.Error.SemanticReviewRequired", "source": "Cách diễn đạt này cần được kiểm tra trước khi dùng. Mở Đề chờ duyệt để đối chiếu.", "mode": "exact"},
     {"key": "AiBank.Review.Open", "source": "🔎 Đề chờ duyệt", "mode": "exact"},
@@ -2323,9 +2335,10 @@
     {"key": "Fraction.Expression.Error.TooLarge", "source": "Số trong biểu thức hoặc kết quả trung gian quá lớn. Hãy rút gọn hoặc nhập biểu thức nhỏ hơn.", "mode": "exact"},
     {"key": "Quiz.PercentageRemaining", "source": "Phần trăm đã tặng → tìm phần còn lại", "mode": "exact"},
     {"key": "Quiz.PercentageRemainingEssayEquationPlaceholder", "source": "Ví dụ: 80 − 80 × 25 ÷ 100 = 60", "mode": "exact"},
-    {"key": "AiBank.Review.PilotHint", "source": "Bật Diễn đạt đa dạng để thử câu mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Ở chế độ này, số thập phân chỉ tạo bài một bước.", "mode": "exact"},
+    {"key": "AiBank.Review.PilotHint", "source": "AI tự tạo cách diễn đạt mới cho đề một bước, Tìm X, đổi đơn vị và số thập phân có lời văn. Đề chưa xác minh được ý nghĩa sẽ chờ duyệt, không tự đưa vào luyện tập. Số thập phân hiện chỉ tạo bài một bước.", "mode": "exact"},
     {"key": "AiBank.Review.Hint", "source": "Đối chiếu đề AI với đề tham khảo và phép tính chuẩn. Chỉ chấp nhận khi chủ thể, các lượng, đơn vị, quan hệ và câu hỏi đều đúng. Việc duyệt sẽ đưa đề vào ngân hàng đề để luyện tập.", "mode": "exact"},
     {"key": "AiBank.Review.Count", "source": "Chờ duyệt: {0}", "mode": "exact"},
+    {"key": "AiBank.Review.CreatedDate", "source": "Ngày tạo: {0}", "mode": "exact"},
     {"key": "AiBank.Review.SelectedCount", "source": "Đã chọn {0} / {1} đề", "mode": "exact"},
     {"key": "AiBank.Review.SelectQuestion", "source": "Chọn đề {0}: {1}", "mode": "exact"},
     {"key": "AiBank.Review.SelectAll", "source": "Chọn tất cả", "mode": "exact"},
@@ -3236,6 +3249,21 @@
     {
       "key": "Quiz.EssayEquationPlaceholder",
       "source": "Ví dụ: 5 × 6 = 30",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationPlaceholderAdd",
+      "source": "Ví dụ: 5 + 6 = 11",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationPlaceholderSubtract",
+      "source": "Ví dụ: 9 − 4 = 5",
+      "mode": "exact"
+    },
+    {
+      "key": "Quiz.EssayEquationPlaceholderDivide",
+      "source": "Ví dụ: 12 ÷ 3 = 4",
       "mode": "exact"
     },
     {
@@ -9955,12 +9983,12 @@
     },
     {
       "key": "AiBank.Error.ProsePoolExhausted",
-      "source": "Không còn mẫu lời văn chưa trùng cho lựa chọn hiện tại. Các đề đã tạo hoặc lưu vẫn được giữ. Hãy chọn nhóm/dạng khác, hoặc bật Diễn đạt đa dạng nếu dạng bài hỗ trợ.",
+      "source": "Lựa chọn hiện tại không còn bối cảnh có thể tiếp tục sinh đề hợp lệ. Các đề đã tạo hoặc lưu vẫn được giữ. Hãy chọn nhóm hoặc dạng bài khác.",
       "mode": "exact"
     },
     {
       "key": "AiBank.Error.ProseContextExhausted",
-      "source": "Không còn mẫu lời văn chưa trùng cho bối cảnh này. Đề được bỏ qua; ứng dụng chuyển sang lượt tiếp theo nếu còn.",
+      "source": "AI chưa tạo được cách diễn đạt mới hợp lệ cho bối cảnh này trong số lần thử cho phép. Đề được bỏ qua; ứng dụng chuyển sang lượt tiếp theo nếu còn.",
       "mode": "exact"
     },
     {
@@ -10542,8 +10570,11 @@
       "key": "AiBank.Error.ExcelInvalidVariableSyntax",
       "source": "Cú pháp biến chưa đúng. Viết biến trong một cặp ngoặc nhọn, ví dụ {a} hoặc {name}; không thiếu hoặc lồng dấu ngoặc.",
       "mode": "exact"
-    }
-  ],
+    },
+      {"key":"Learning.Group.Toys","source":"Đồ chơi","mode":"exact"},
+      {"key":"Learning.Group.Healthcare","source":"Y tế","mode":"exact"},
+      {"key":"Learning.Group.School","source":"Trường học","mode":"exact"}
+    ],
   "capturedTerms": [
     {
       "key": "captured.term.so.thu.nhat.c16f9ea3",

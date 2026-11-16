@@ -11,6 +11,11 @@ internal static class QuizStoryArtwork
     // Exact authored nouns, including QuestionUnits' VI/singular/plural forms. No prose parsing.
     private static readonly ObjectArtwork[] Objects =
     [
+        new("paracetamol-boxes", "medical_paracetamol_box", ["hộp thuốc paracetamol", "box of paracetamol", "boxes of paracetamol"]),
+        new("vitamin-c-boxes", "medical_vitamin_c_box", ["hộp vitamin C", "box of vitamin C", "boxes of vitamin C"]),
+        new("cough-syrup-bottles", "medical_cough_syrup_bottle", ["chai siro ho", "bottle of cough syrup", "bottles of cough syrup"]),
+        new("medical-bandage-rolls", "medical_bandage_roll", ["cuộn băng y tế", "roll of medical bandage", "rolls of medical bandage"]),
+        new("medical-gauze-packs", "medical_gauze_pack", ["gói gạc y tế", "pack of medical gauze", "packs of medical gauze"]),
         new("erasers", "eraser", ["cục gôm", "cục tẩy", "eraser", "erasers"]),
         new("footwear-pairs", "footwear", ["đôi giày dép", "đôi giày", "đôi dép", "pair of shoes or sandals", "pairs of shoes or sandals"]),
         new("clothing-sets", "clothing", ["bộ quần áo", "set of clothes", "sets of clothes"]),

@@ -241,7 +241,10 @@
         "DescriptionKey": "Choice.Group.Fruit"
       },
       {"Key":"Learning.Group.Animals","IllustrationId":"knowledge-animals","DescriptionKey":"Choice.Group.Animals"},
-      {"Key":"Learning.Group.SchoolSupplies","IllustrationId":"knowledge-school-supplies","DescriptionKey":"Choice.Group.SchoolSupplies","SummaryKey":"Choice.Group.SchoolSupplies.Summary"}
+      {"Key":"Learning.Group.SchoolSupplies","IllustrationId":"knowledge-school-supplies","DescriptionKey":"Choice.Group.SchoolSupplies","SummaryKey":"Choice.Group.SchoolSupplies.Summary"},
+      {"Key":"Learning.Group.Toys","IllustrationId":"knowledge-objects","DescriptionKey":"Choice.Group.Toys"},
+      {"Key":"Learning.Group.Healthcare","IllustrationId":"knowledge-packaging","DescriptionKey":"Choice.Group.Healthcare"},
+      {"Key":"Learning.Group.School","IllustrationId":"knowledge-school-supplies","DescriptionKey":"Choice.Group.School"}
     ],
     "AppliedScenes": [
       {
@@ -6175,7 +6178,43 @@
         "Conversion": 1,
         "RightDisplayFactor": 1,
         "StoryContextId": null
-      }
+      },
+      {"Id":"community-toys-marbles-total","Group":"Toys","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"marbles"},
+      {"Id":"community-toys-marbles-left","Group":"Toys","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"marbles"},
+      {"Id":"community-toys-marbles-groups","Group":"Toys","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"marbles"},
+      {"Id":"community-toys-marbles-share","Group":"Toys","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"marbles"},
+      {"Id":"community-toys-balls-total","Group":"Toys","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"balls"},
+      {"Id":"community-toys-balls-left","Group":"Toys","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"balls"},
+      {"Id":"community-toys-balls-groups","Group":"Toys","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"balls"},
+      {"Id":"community-toys-balls-share","Group":"Toys","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"balls"},
+      {"Id":"community-healthcare-paracetamol-boxes-total","Group":"Healthcare","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"paracetamol-boxes"},
+      {"Id":"community-healthcare-paracetamol-boxes-left","Group":"Healthcare","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"paracetamol-boxes"},
+      {"Id":"community-healthcare-paracetamol-boxes-groups","Group":"Healthcare","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"paracetamol-boxes"},
+      {"Id":"community-healthcare-paracetamol-boxes-share","Group":"Healthcare","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"paracetamol-boxes"},
+      {"Id":"community-healthcare-vitamin-c-boxes-total","Group":"Healthcare","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"vitamin-c-boxes"},
+      {"Id":"community-healthcare-vitamin-c-boxes-left","Group":"Healthcare","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"vitamin-c-boxes"},
+      {"Id":"community-healthcare-vitamin-c-boxes-groups","Group":"Healthcare","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"vitamin-c-boxes"},
+      {"Id":"community-healthcare-vitamin-c-boxes-share","Group":"Healthcare","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"vitamin-c-boxes"},
+      {"Id":"community-healthcare-cough-syrup-bottles-total","Group":"Healthcare","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"cough-syrup-bottles"},
+      {"Id":"community-healthcare-cough-syrup-bottles-left","Group":"Healthcare","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"cough-syrup-bottles"},
+      {"Id":"community-healthcare-cough-syrup-bottles-groups","Group":"Healthcare","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"cough-syrup-bottles"},
+      {"Id":"community-healthcare-cough-syrup-bottles-share","Group":"Healthcare","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"cough-syrup-bottles"},
+      {"Id":"community-healthcare-medical-bandage-rolls-total","Group":"Healthcare","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-bandage-rolls"},
+      {"Id":"community-healthcare-medical-bandage-rolls-left","Group":"Healthcare","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-bandage-rolls"},
+      {"Id":"community-healthcare-medical-bandage-rolls-groups","Group":"Healthcare","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-bandage-rolls"},
+      {"Id":"community-healthcare-medical-bandage-rolls-share","Group":"Healthcare","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-bandage-rolls"},
+      {"Id":"community-healthcare-medical-gauze-packs-total","Group":"Healthcare","Operation":"Add","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-gauze-packs"},
+      {"Id":"community-healthcare-medical-gauze-packs-left","Group":"Healthcare","Operation":"Subtract","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-gauze-packs"},
+      {"Id":"community-healthcare-medical-gauze-packs-groups","Group":"Healthcare","Operation":"Multiply","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-gauze-packs"},
+      {"Id":"community-healthcare-medical-gauze-packs-share","Group":"Healthcare","Operation":"Divide","MinimumStars":1,"Capacity":1000,"MaxFactor":30,"UnitId":"medical-gauze-packs"},
+      {"Id":"community-school-students-total","Group":"School","Operation":"Add","MinimumStars":1,"Capacity":40,"MaxFactor":30,"UnitId":"students"},
+      {"Id":"community-school-students-left","Group":"School","Operation":"Subtract","MinimumStars":1,"Capacity":40,"MaxFactor":30,"UnitId":"students"},
+      {"Id":"community-school-students-groups","Group":"School","Operation":"Multiply","MinimumStars":1,"Capacity":40,"MaxFactor":30,"UnitId":"students"},
+      {"Id":"community-school-students-share","Group":"School","Operation":"Divide","MinimumStars":1,"Capacity":40,"MaxFactor":30,"UnitId":"students"},
+      {"Id":"community-school-teachers-total","Group":"School","Operation":"Add","MinimumStars":1,"Capacity":100,"MaxFactor":30,"UnitId":"teachers"},
+      {"Id":"community-school-teachers-left","Group":"School","Operation":"Subtract","MinimumStars":1,"Capacity":100,"MaxFactor":30,"UnitId":"teachers"},
+      {"Id":"community-school-teachers-groups","Group":"School","Operation":"Multiply","MinimumStars":1,"Capacity":100,"MaxFactor":30,"UnitId":"teachers"},
+      {"Id":"community-school-teachers-share","Group":"School","Operation":"Divide","MinimumStars":1,"Capacity":100,"MaxFactor":30,"UnitId":"teachers"}
     ],
     "FractionScenes": [
       {
@@ -9493,7 +9532,19 @@
         "MinimumStars": 1,
         "Formula": null,
         "Quantity": "Unspecified"
-      }
+      },
+      {"Id":"fraction-community-toys-Add","Group":"Toys","Operation":"Add","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-toys-Subtract","Group":"Toys","Operation":"Subtract","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-toys-Multiply","Group":"Toys","Operation":"Multiply","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-toys-Divide","Group":"Toys","Operation":"Divide","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-healthcare-Add","Group":"Healthcare","Operation":"Add","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-healthcare-Subtract","Group":"Healthcare","Operation":"Subtract","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-healthcare-Multiply","Group":"Healthcare","Operation":"Multiply","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-healthcare-Divide","Group":"Healthcare","Operation":"Divide","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-school-Add","Group":"School","Operation":"Add","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-school-Subtract","Group":"School","Operation":"Subtract","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-school-Multiply","Group":"School","Operation":"Multiply","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null},
+      {"Id":"fraction-community-school-Divide","Group":"School","Operation":"Divide","WholeShare":false,"CountResult":false,"MinimumStars":1,"Quantity":"Area","ArtworkId":null}
     ],
     "StoryContexts": [
       {

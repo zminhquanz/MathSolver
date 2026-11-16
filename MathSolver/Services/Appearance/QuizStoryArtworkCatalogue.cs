@@ -16,8 +16,7 @@ internal static partial class QuizStoryArtworkCatalogue
     internal static string? FractionArtwork(string sceneId)
     {
         if (FractionArtworkIds.Value.TryGetValue(sceneId, out var artwork)) return artwork;
-        return QuestionBank.FoodThemeCatalogue.NewRestaurantDishes.FirstOrDefault(d =>
-            sceneId.StartsWith($"fraction-theme-food-{d.Unit.Id}-", StringComparison.Ordinal))?.ArtworkId;
+        return QuestionBank.FoodThemeCatalogue.RestaurantDishForScene(sceneId)?.ArtworkId;
     }
 
     internal static IReadOnlyList<StoryArtworkActor> MotionActors(AppLanguage language) => MotionCache.GetOrAdd(language, LoadMotion);

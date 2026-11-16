@@ -41,6 +41,12 @@ public static class QuestionUnits
     public static IReadOnlyList<QuestionUnit> All { get; } = Array.AsReadOnly(new QuestionUnit[]
     {
         // Stable unit IDs are shared by authored/AI scenes and Excel round-trips.
+        new("paracetamol-boxes", "hộp thuốc paracetamol", "box of paracetamol", "boxes of paracetamol", "thùng", "carton", "cartons"),
+        new("vitamin-c-boxes", "hộp vitamin C", "box of vitamin C", "boxes of vitamin C", "thùng", "carton", "cartons"),
+        new("cough-syrup-bottles", "chai siro ho", "bottle of cough syrup", "bottles of cough syrup", "thùng", "carton", "cartons"),
+        new("medical-bandage-rolls", "cuộn băng y tế", "roll of medical bandage", "rolls of medical bandage", "hộp", "box", "boxes"),
+        new("medical-gauze-packs", "gói gạc y tế", "pack of medical gauze", "packs of medical gauze", "hộp", "box", "boxes"),
+        new("teachers", "giáo viên", "teacher", "teachers", "tổ", "team", "teams"),
         new("erasers", "cục gôm", "eraser", "erasers", "hộp", "box", "boxes"),
         new("footwear-pairs", "đôi giày dép", "pair of shoes or sandals", "pairs of shoes or sandals", "kệ", "shelf", "shelves"),
         new("clothing-sets", "bộ quần áo", "set of clothes", "sets of clothes", "tủ", "wardrobe", "wardrobes"),

@@ -690,7 +690,13 @@ public partial class MathPuzzlePage : ContentPage
                 ? TranslateQuiz("Quiz.PercentageRemainingEssayEquationPlaceholder")
                 : percentageType == PercentageQuizType.FindWholeFromPercentageValue
                 ? TranslateQuiz("Quiz.PercentageWholeEssayEquationPlaceholder")
-                : Translate("Quiz.EssayEquationPlaceholder");
+                : Translate(question?.Expression.Operation switch
+                {
+                    ArithmeticOperation.Add => "Quiz.EssayEquationPlaceholderAdd",
+                    ArithmeticOperation.Subtract => "Quiz.EssayEquationPlaceholderSubtract",
+                    ArithmeticOperation.Divide => "Quiz.EssayEquationPlaceholderDivide",
+                    _ => "Quiz.EssayEquationPlaceholder"
+                });
         if (!isUnitaryGroups&&!string.IsNullOrWhiteSpace(expectedEquationUnit))
         {
             equationPlaceholder +=

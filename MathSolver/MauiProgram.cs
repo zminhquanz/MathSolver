@@ -59,8 +59,15 @@ namespace MathSolver
             });
 
 #if WINDOWS
-            builder.ConfigureImageSources(sources => sources.AddService<NavigationFontImageSource,
-                MathSolver.Platforms.Windows.NavigationFontImageSourceService>());
+            builder.ConfigureImageSources(sources =>
+            {
+                sources.AddService<NavigationFontImageSource,
+                    MathSolver.Platforms.Windows.NavigationFontImageSourceService>();
+#if MATHSOLVER_WINDOWS_ARTWORK_PACK
+                sources.AddService<FileImageSource,
+                    MathSolver.Platforms.Windows.PackedFileImageSourceService>();
+#endif
+            });
 #endif
 
 #if ANDROID

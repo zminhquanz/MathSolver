@@ -247,10 +247,6 @@
                         <Button x:Name="OtherOptionsToggleButton" Style="{StaticResource SolverOutlinedActionStyle}" Clicked="OnToggleOtherOptionsClicked" />
                         <Label x:Name="OtherOptionsSummaryLabel" Style="{StaticResource AiBankMutedStatusStyle}" />
                         <VerticalStackLayout x:Name="OtherOptionsPanel" IsVisible="False" Spacing="10">
-                            <Grid x:Name="CreativeProsePanel" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                <Label Text="{localization:Translate AiBank.Review.Experimental}" VerticalOptions="Center" />
-                                <Switch x:Name="CreativeProseSwitch" Grid.Column="1" IsToggled="False" />
-                            </Grid>
                             <Label Text="{localization:Translate AiBank.Language}" />
                             <Border Style="{StaticResource AiBankPickerBorderStyle}">
                                 <Picker x:Name="LanguagePicker" Style="{StaticResource AiBankPickerStyle}" />

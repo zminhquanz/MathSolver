@@ -148,6 +148,7 @@ public static class OpenQuestionProse
         if (!Supports(c)) throw new ArgumentException("Unsupported open prose profile.");
         if (SameDayTimeCatalogue.IsProfile(c))
             return SameDayTimeCatalogue.OpenPrompt(c)
+                + "\n" + CreativeWritingGuidance(c.Language)
                 + (correction is null ? "" : c.Language==AppLanguage.Vietnamese
                     ? "\nLượt trước chưa đạt: " + correction + ". " + details + " Viết lại rõ vai trò thời điểm và thời lượng, giữ đúng câu hỏi."
                     : "\nPrevious attempt: " + correction + ". " + details + " Rewrite with clear clock and duration roles and the correct target.")
@@ -222,7 +223,8 @@ public static class OpenQuestionProse
                 BasicQuestionStructure.CountGroups => "a: total items; b: items per group; target: number of groups.",
                 _ => "Preserve the reference's owners, event direction and target exactly."
             });
-        return instruction + (FiniteOpenCatalogue.IsProfile(c) ? "\nAuthoring roles: " : "\nC# relation: ") + relation + "; context=" + (MotionExtendedCatalogue.IsProfile(c)?"extended-motion-roles":MotionOpenCatalogue.IsProfile(c)?"one-vehicle-journey":UnitaryGroupsOpenCatalogue.IsProfile(c)?"equal-counted-groups-find-group-count":UnitaryTotalOpenCatalogue.IsProfile(c)?"equal-counted-groups":DifferenceRatioOpenCatalogue.IsProfile(c)?"direct-counted-items":c.SceneId)
+        return instruction + "\n" + CreativeWritingGuidance(c.Language)
+            + (FiniteOpenCatalogue.IsProfile(c) ? "\nAuthoring roles: " : "\nC# relation: ") + relation + "; context=" + (MotionExtendedCatalogue.IsProfile(c)?"extended-motion-roles":MotionOpenCatalogue.IsProfile(c)?"one-vehicle-journey":UnitaryGroupsOpenCatalogue.IsProfile(c)?"equal-counted-groups-find-group-count":UnitaryTotalOpenCatalogue.IsProfile(c)?"equal-counted-groups":DifferenceRatioOpenCatalogue.IsProfile(c)?"direct-counted-items":c.SceneId)
             + "\n"+(MotionExtendedCatalogue.IsProfile(c)?MotionExtendedCatalogue.ContextHint(c):MotionOpenCatalogue.IsProfile(c)?MotionOpenCatalogue.ContextHint(c.Language):UnitaryGroupsOpenCatalogue.IsProfile(c)?UnitaryGroupsOpenCatalogue.ContextHint(c.Language):UnitaryTotalOpenCatalogue.IsProfile(c)?UnitaryTotalOpenCatalogue.ContextHint(c.Language):DifferenceRatioOpenCatalogue.IsProfile(c)?DifferenceRatioOpenCatalogue.ContextHint(c.Language)
                 :(vi?"Chủ thể dùng biến, không điền tên. Đơn vị/đồ vật đã chọn (chỉ để hiểu bối cảnh): ":"Use actor placeholders, never actual names. Selected units/objects (context only): ")+c.Unit+"; "+c.GroupUnit)
             + "\nReference JSON:\n" + QuestionBankStore.SerializeDraft(UnitaryTotalOpenCatalogue.IsProfile(c)
@@ -245,6 +247,16 @@ public static class OpenQuestionProse
                 : "\nPrevious attempt: " + correction + ". " + details + " Reword all fields while preserving their facts and relation.")
             + (duplicates is not { Count: > 0 } ? "" : "\nAvoid this wording: " + JsonSerializer.Serialize(duplicates.TakeLast(1), Json));
     }
+
+    private static string CreativeWritingGuidance(AppLanguage language) => language == AppLanguage.Vietnamese ? """
+        Mỗi lượt hãy sáng tạo lời văn và cách đặt câu hỏi tự nhiên, phù hợp học sinh: linh hoạt cách mở đầu, trình tự kể và liên kết câu nếu không làm sai thứ tự sự việc. Tránh chỉ thay tên, số, dấu câu hoặc dùng lại khuôn câu cũ.
+        Bảo đảm mọi dữ kiện cần giải đều có mặt, vai trò và mối quan hệ giữa các đại lượng rõ ràng, đơn vị nhất quán, câu hỏi chỉ nhắm đúng đại lượng cần tìm và có một đáp án xác định.
+        Không thêm/bớt dữ kiện, người, điều kiện hoặc phép toán; giữ nguyên biến, vai trò, bước và các giới hạn riêng của dạng bài. Trả về đúng JSON được yêu cầu.
+        """ : """
+        Each time, write fresh, natural wording and a sensible question for students: vary the opening, narrative flow and sentence links where chronology permits. Do more than swap names, numbers, punctuation or reuse a sentence template.
+        Include all facts needed to solve the problem; keep quantity roles and relationships clear, units consistent, and the question focused on the exact target with one determinate answer.
+        Do not add or remove facts, actors, conditions or operations. Preserve placeholders, roles, steps and all profile-specific constraints. Return the required JSON only.
+        """;
 
     public static string Grammar(BasicQuestionContract c)
     {

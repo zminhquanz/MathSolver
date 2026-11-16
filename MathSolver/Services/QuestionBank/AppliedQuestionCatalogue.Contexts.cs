@@ -35,9 +35,14 @@ public static partial class AppliedQuestionCatalogue
     private static string? CountedPrefix(AppliedQuestionScene s) => CountedPrefixes.FirstOrDefault(p => s.Id.StartsWith(p + "-", StringComparison.Ordinal));
     private static string? SceneGroupUnit(AppliedQuestionScene s, AppLanguage language)
     {
+        if (s.Group is QuestionKnowledgeGroup.Toys or QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School)
+            return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
             || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId is "erasers" or "color-markers"))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
+        if (s.Group == QuestionKnowledgeGroup.Food)
+            if (FoodThemeCatalogue.IsCheDessert(s.UnitId))
+                return language == AppLanguage.Vietnamese ? "khay" : "tray";
         if (s.Group == QuestionKnowledgeGroup.Food)
             return FoodThemeCatalogue.IsBakeryFood(s.UnitId)
                 ? (language == AppLanguage.Vietnamese ? "khay" : "tray")
@@ -58,6 +63,8 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
+        if (FoodThemeCatalogue.IsCheDessert(s.UnitId)) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+            ? (unit, vi ? "khay" : "trays") : (unit, unit);
         if (s.Group == QuestionKnowledgeGroup.Food) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, FoodThemeCatalogue.IsBakeryFood(s.UnitId) ? (vi ? "khay" : "trays") : (vi ? "bàn" : "tables"))
             : (unit, unit);
@@ -168,6 +175,17 @@ public static partial class AppliedQuestionCatalogue
     }
     private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, Random random, ref string name, ref string other)
     {
+        if (s.Group is QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School)
+        {
+            string communityActor = s.Group == QuestionKnowledgeGroup.Healthcare
+                ? lang == AppLanguage.Vietnamese ? "kho y tế" : "medical supply store"
+                : s.UnitId == "teachers"
+                    ? lang == AppLanguage.Vietnamese ? "trường học" : "school"
+                    : lang == AppLanguage.Vietnamese ? "lớp học" : "class";
+            name = lang == AppLanguage.Vietnamese ? communityActor + " thứ nhất" : "the first " + communityActor;
+            other = lang == AppLanguage.Vietnamese ? communityActor + " thứ hai" : "the second " + communityActor;
+            return;
+        }
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
             || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && (s.UnitId is "erasers" or "color-markers")))
         {
@@ -191,10 +209,22 @@ public static partial class AppliedQuestionCatalogue
         }
         if (s.Group == QuestionKnowledgeGroup.Food)
         {
+            if (FoodThemeCatalogue.IsCheDessert(s.UnitId))
+            {
+                name = lang == AppLanguage.Vietnamese ? "quán chè thứ nhất" : "the first dessert shop";
+                other = lang == AppLanguage.Vietnamese ? "quán chè thứ hai" : "the second dessert shop";
+                return;
+            }
             bool bakery = FoodThemeCatalogue.IsBakeryFood(s.UnitId);
             int venue = random.Next(FoodThemePrompt.VenueCount(bakery));
             name = FoodThemePrompt.OwnerVenue(name, lang, venue, bakery);
             other = FoodThemePrompt.OwnerVenue(other, lang, venue, bakery);
+            return;
+        }
+        if (s.Group == QuestionKnowledgeGroup.Drinks)
+        {
+            name = lang == AppLanguage.Vietnamese ? "quán nước thứ nhất" : "the first drink shop";
+            other = lang == AppLanguage.Vietnamese ? "quán nước thứ hai" : "the second drink shop";
             return;
         }
         if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)
