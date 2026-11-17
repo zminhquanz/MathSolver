@@ -41,7 +41,7 @@ public static partial class AppliedQuestionCatalogue
             || (s.Group == QuestionKnowledgeGroup.SchoolSupplies && s.UnitId is "erasers" or "color-markers"))
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
         if (s.Group == QuestionKnowledgeGroup.Food)
-            if (FoodThemeCatalogue.IsCheDessert(s.UnitId))
+            if (FoodThemeCatalogue.DessertShopKind(s.UnitId) is not null)
                 return language == AppLanguage.Vietnamese ? "khay" : "tray";
         if (s.Group == QuestionKnowledgeGroup.Food)
             return FoodThemeCatalogue.IsBakeryFood(s.UnitId)
@@ -63,7 +63,7 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
-        if (FoodThemeCatalogue.IsCheDessert(s.UnitId)) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+        if (FoodThemeCatalogue.DessertShopKind(s.UnitId) is not null) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, vi ? "khay" : "trays") : (unit, unit);
         if (s.Group == QuestionKnowledgeGroup.Food) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, FoodThemeCatalogue.IsBakeryFood(s.UnitId) ? (vi ? "khay" : "trays") : (vi ? "bàn" : "tables"))
@@ -209,10 +209,11 @@ public static partial class AppliedQuestionCatalogue
         }
         if (s.Group == QuestionKnowledgeGroup.Food)
         {
-            if (FoodThemeCatalogue.IsCheDessert(s.UnitId))
+            if (FoodThemeCatalogue.DessertShopKind(s.UnitId) is { } dessert)
             {
-                name = lang == AppLanguage.Vietnamese ? "quán chè thứ nhất" : "the first dessert shop";
-                other = lang == AppLanguage.Vietnamese ? "quán chè thứ hai" : "the second dessert shop";
+                var actors = FoodThemePrompt.DessertShopActors(dessert, lang);
+                name = actors.First;
+                other = actors.Second;
                 return;
             }
             bool bakery = FoodThemeCatalogue.IsBakeryFood(s.UnitId);

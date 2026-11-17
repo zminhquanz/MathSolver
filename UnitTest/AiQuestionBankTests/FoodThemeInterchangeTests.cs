@@ -23,9 +23,13 @@ internal static class FoodThemeInterchangeTests
     private static readonly string[] VietnameseFoodIds =
     [
         "com-suon-cay", "com-chien-hai-san", "com-chien-duong-chau",
-        "com-ga-xoi-mo", "com-ga-sot-me", "com-ga-sot-tieu-xanh",
+        "com-ga-xoi-mo", "com-ga-sot-me", "com-ga-sot-tieu-xanh", "com-ga-mam-toi",
         "canh-chua-ca-loc", "canh-kho-qua-nhoi-thit", "canh-bi-do-ham-xuong",
         "canh-cua-rau-day-mong-toi", "canh-rau-ngot-thit-bam", "ca-loc-kho-to"
+    ];
+    private static readonly string[] DessertShopIds =
+    [
+        "kem-bo-da-lat", "kem-trang-tien", "sua-chua-ha-long"
     ];
     internal static byte[] ActivateExample(byte[] bytes,AppLanguage language)
     {
@@ -74,9 +78,12 @@ internal static class FoodThemeInterchangeTests
                 "Unexpected number of steak subjects in the shared catalogue");
             Check(KoreanFoodIds.All(id => FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == id) == 1),
                 "A Korean dish is missing or duplicated in the shared catalogue");
-            Check(VietnameseFoodIds.Length == 12 && VietnameseFoodIds.All(id => FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == id) == 1),
-                "One of the 12 Vietnamese dishes is missing or duplicated in the shared catalogue");
-            foreach (var id in WesternSteakIds.Concat(KoreanFoodIds).Concat(VietnameseFoodIds))
+            Check(VietnameseFoodIds.Length == 13 && VietnameseFoodIds.All(id => FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == id) == 1),
+                "One of the 13 Vietnamese dishes is missing or duplicated in the shared catalogue");
+            Check(DessertShopIds.All(id => FoodThemeCatalogue.Subjects.Count(s => s.Unit.Id == id) == 1
+                && FoodThemeCatalogue.DessertShopKind(id) is not null),
+                "One of the ice cream/yogurt shop subjects is missing, duplicated or misclassified");
+            foreach (var id in WesternSteakIds.Concat(KoreanFoodIds).Concat(VietnameseFoodIds).Concat(DessertShopIds))
             foreach (var family in new[]{BankQuestionFamily.Arithmetic,BankQuestionFamily.Fraction,BankQuestionFamily.FindX})
             {
                 var subject=FoodThemeCatalogue.Subjects.Single(s=>s.Unit.Id==id);
@@ -85,13 +92,24 @@ internal static class FoodThemeInterchangeTests
                 string aiPrompt=BasicQuestionPrompt.Build(contract);
                 Check(aiPrompt.Contains(contract.Unit,StringComparison.OrdinalIgnoreCase),
                     "AI prompt lost the exact prepared dish unit: "+id+"/"+family+"/"+language);
-                string guard = VietnameseFoodIds.Contains(id)
+                string guard = DessertShopIds.Contains(id)
+                    ? language == AppLanguage.Vietnamese ? "hai chủ thể cố định" : "fixed actors"
+                    : VietnameseFoodIds.Contains(id)
                     ? language == AppLanguage.Vietnamese ? "Giữ đúng món Việt Nam đã chọn" : "Preserve the exact Vietnamese prepared dish"
                     : KoreanFoodIds.Contains(id)
                     ? language == AppLanguage.Vietnamese ? "không nhầm dồi" : "Never confuse blood sausage"
                     : language == AppLanguage.Vietnamese ? "Giữ đúng thịt bò/gà/cừu" : "Preserve the C# protein";
                 Check(aiPrompt.Contains(guard, StringComparison.OrdinalIgnoreCase),
                     "AI prompt lost the food identity guard: "+id+"/"+family+"/"+language);
+                if (DessertShopIds.Contains(id))
+                {
+                    string dessert=FoodThemeCatalogue.DessertShopKind(id)!;
+                    var (first,second,both)=FoodThemePrompt.DessertShopActors(dessert,language);
+                    Check(contract.Subject.Equals(first,StringComparison.OrdinalIgnoreCase)
+                        && contract.OtherSubject.Equals(second,StringComparison.OrdinalIgnoreCase)
+                        && aiPrompt.Contains(both,StringComparison.OrdinalIgnoreCase),
+                        "AI/Excel dessert shop actor contract changed: "+id+"/"+family+"/"+language);
+                }
             }
             for(int i=0;i<rows.Count;i++)
             {
@@ -128,7 +146,7 @@ internal static class FoodThemeInterchangeTests
             using var exported=new MemoryStream();await store.ExportExcelAsync(exported);exported.Position=0;
             var reexported=QuestionBankWorkbook.Read(exported);
             Check(reexported.Count==unique,"Re-export lost nonduplicate themed rows");
-            foreach (var id in WesternSteakIds.Concat(KoreanFoodIds).Concat(VietnameseFoodIds))
+            foreach (var id in WesternSteakIds.Concat(KoreanFoodIds).Concat(VietnameseFoodIds).Concat(DessertShopIds))
             foreach (var family in new[]{BankQuestionFamily.Arithmetic,BankQuestionFamily.Fraction,BankQuestionFamily.FindX})
             {
                 var subject=FoodThemeCatalogue.Subjects.Single(s=>s.Unit.Id==id);
@@ -143,6 +161,6 @@ internal static class FoodThemeInterchangeTests
                 FoodThemeTests.CheckDrinkShopVenue(row.Question!.Contract,row.Question!.Draft);
             }
         }
-        Console.WriteLine($"PASS food themes interchange: {fixtures} typed records, {templates} VI/EN authoring templates, exact 10 steak/sauce, 9 Korean and 12 Vietnamese dish identities across three families and both languages, AI prompts, OOXML schema, explicit import, backup/SQLite/re-export.");
+        Console.WriteLine($"PASS food themes interchange: {fixtures} typed records, {templates} VI/EN authoring templates, exact 10 steak/sauce, 9 Korean and {VietnameseFoodIds.Length} Vietnamese dish identities across three families and both languages, AI prompts, OOXML schema, explicit import, backup/SQLite/re-export.");
     }
 }

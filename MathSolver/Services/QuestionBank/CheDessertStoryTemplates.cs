@@ -4,11 +4,11 @@ namespace MathSolver.Services.QuestionBank;
 
 /// <summary>
 /// Reviewed dessert-shop stories shared by algorithmic drafts, AI examples,
-/// PDF worksheets and Excel round trips for all thirteen Vietnamese chè dishes.
+/// PDF worksheets and Excel round trips for chè, ice cream, and yogurt subjects.
 /// </summary>
 internal static class CheDessertStoryTemplates
 {
-    internal static QuizStoryTemplate Create(QuizStoryTemplate reference, BasicQuestionContract contract, string unitId)
+    internal static QuizStoryTemplate Create(QuizStoryTemplate reference, BasicQuestionContract contract, string unitId, string dessert = "chè")
     {
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool fraction = contract.Version == FractionQuestionCatalogue.Version;
@@ -91,6 +91,24 @@ internal static class CheDessertStoryTemplates
                     Questions = [vi ? "Hỏi mỗi khay có bao nhiêu {unit}?"
                         : "How many {unit} are in each tray?"]
                 }
+            };
+        }
+        if (dessert != "chè")
+        {
+            string shopEn = dessert == "kem" ? "ice cream shop" : "yogurt shop";
+            string foodEn = dessert == "kem" ? "ice cream" : "yogurt";
+            string Reword(string value) => value
+                .Replace("quán chè", "quán " + dessert, StringComparison.Ordinal)
+                .Replace("số chè", "số " + dessert, StringComparison.Ordinal)
+                .Replace("lượng chè", "lượng " + dessert, StringComparison.Ordinal)
+                .Replace("dessert shops", shopEn + "s", StringComparison.Ordinal)
+                .Replace("dessert shop", shopEn, StringComparison.Ordinal)
+                .Replace("sweet soup", foodEn, StringComparison.Ordinal);
+            prose = prose with
+            {
+                GivenA = prose.GivenA.Select(Reword).ToArray(),
+                GivenB = prose.GivenB.Select(Reword).ToArray(),
+                Questions = prose.Questions.Select(Reword).ToArray()
             };
         }
         return new(contract.SceneId, reference.Family, prose.Stories().Take(2).ToArray(), prose);

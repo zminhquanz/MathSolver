@@ -90,11 +90,12 @@ public static class FractionQuestionCatalogue
             }
             if (s.Group == QuestionKnowledgeGroup.Food)
             {
-                if (FoodThemeCatalogue.IsCheDessert(FoodThemeCatalogue.RestaurantDishForScene(s.Id)?.Unit.Id))
+                if (FoodThemeCatalogue.DessertShopKind(FoodThemeCatalogue.RestaurantDishForScene(s.Id)?.Unit.Id) is { } dessert)
                 {
-                    subject = language == AppLanguage.Vietnamese ? "quán chè thứ nhất" : "the first dessert shop";
+                    var actors = FoodThemePrompt.DessertShopActors(dessert, language);
+                    subject = actors.First;
                     if (paired)
-                        other = language == AppLanguage.Vietnamese ? "quán chè thứ hai" : "the second dessert shop";
+                        other = actors.Second;
                 }
                 else
                 {

@@ -10,7 +10,7 @@ internal static class FoodThemePrompt
         "tteokbokki", "korean-corn-dog", "hotteok", "bungeoppang", "gyeranppang",
         "sundae-gukbap", "andong-jjimdak", "kalguksu", "squid-sundae"
     };
-    // Specificity guard: keep 12 Vietnamese prepared dishes distinct in AI prose.
+    // Specificity guard: keep 13 Vietnamese prepared dishes distinct in AI prose.
     // The full counted unit still comes from the deterministic C# contract.
     private static readonly IReadOnlyDictionary<string, (string Vi, string En)> VietnameseDishDescriptions =
         new Dictionary<string, (string, string)>(StringComparer.Ordinal)
@@ -21,6 +21,7 @@ internal static class FoodThemePrompt
             ["com-ga-xoi-mo"] = ("cơm với gà chiên da giòn bằng dầu nóng", "rice with crispy fried chicken"),
             ["com-ga-sot-me"] = ("cơm với gà phủ sốt me chua ngọt", "rice with chicken in sweet-and-sour tamarind sauce"),
             ["com-ga-sot-tieu-xanh"] = ("cơm với gà phủ sốt tiêu xanh", "rice with chicken in green peppercorn sauce"),
+            ["com-ga-mam-toi"] = ("cơm gà ăn cùng nước mắm pha tỏi", "chicken rice served with garlic fish sauce"),
             ["canh-chua-ca-loc"] = ("canh chua có cá lóc và rau nấu canh chua", "sour soup with snakehead fish and vegetables"),
             ["canh-kho-qua-nhoi-thit"] = ("canh khổ qua cắt khúc nhồi thịt", "soup of bitter melon pieces stuffed with pork"),
             ["canh-bi-do-ham-xuong"] = ("canh bí đỏ hầm với xương heo", "pumpkin soup simmered with pork bones"),
@@ -31,7 +32,7 @@ internal static class FoodThemePrompt
 
     internal static bool IsPairedFractionScene(string sceneId)
         => PairedDishIds.Any(id => sceneId == $"fraction-theme-food-{id}-total")
-            || FoodThemeCatalogue.IsCheDessert(FoodThemeCatalogue.RestaurantDishForScene(sceneId)?.Unit.Id)
+            || FoodThemeCatalogue.DessertShopKind(FoodThemeCatalogue.RestaurantDishForScene(sceneId)?.Unit.Id) is not null
                 && (sceneId.EndsWith("-total", StringComparison.Ordinal)
                     || sceneId.EndsWith("-remaining", StringComparison.Ordinal));
 
@@ -64,6 +65,21 @@ internal static class FoodThemePrompt
             ? Venue(bakery, choice, language) + " của " + owner
             : owner + "'s " + Venue(bakery, choice, language);
 
+    internal static (string First, string Second, string Both) DessertShopActors(string dessert, AppLanguage language)
+    {
+        if (language == AppLanguage.Vietnamese)
+            return ($"quán {dessert} thứ nhất", $"quán {dessert} thứ hai", $"cả hai quán {dessert}");
+
+        string shop = dessert switch
+        {
+            "chè" => "dessert shop",
+            "kem" => "ice cream shop",
+            "sữa chua" => "yogurt shop",
+            _ => throw new ArgumentOutOfRangeException(nameof(dessert), dessert, "Unsupported dessert venue")
+        };
+        return ($"the first {shop}", $"the second {shop}", $"both {shop}s");
+    }
+
     private static string PluralVenue(string venue) => venue switch
     {
         "bakery" => "bakeries", "cake shop" => "cake shops", "eatery" => "eateries",
@@ -74,14 +90,14 @@ internal static class FoodThemePrompt
     internal static bool CombinedQuestionNamesVenue(string questionTemplate, BasicQuestionContract c)
     {
         if (c.Version == FindXQuestionCatalogue.Version) c = FindXQuestionCatalogue.AsApplied(c);
-        if (FoodThemeCatalogue.IsCheDessertContract(c))
+        if (FoodThemeCatalogue.DessertShopKind(c) is { } dessert)
         {
             if (c.Structure != BasicQuestionStructure.Combine) return true;
-            bool viChe = c.Language == AppLanguage.Vietnamese;
-            return c.Subject.Equals(viChe ? "quán chè thứ nhất" : "the first dessert shop", StringComparison.OrdinalIgnoreCase)
-                && c.OtherSubject.Equals(viChe ? "quán chè thứ hai" : "the second dessert shop", StringComparison.OrdinalIgnoreCase)
-                && questionTemplate.Contains(viChe ? "cả hai quán chè" : "both dessert shops", StringComparison.OrdinalIgnoreCase)
-                && !questionTemplate.Contains(viChe ? "cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
+            var actors = DessertShopActors(dessert, c.Language);
+            return c.Subject.Equals(actors.First, StringComparison.OrdinalIgnoreCase)
+                && c.OtherSubject.Equals(actors.Second, StringComparison.OrdinalIgnoreCase)
+                && questionTemplate.Contains(actors.Both, StringComparison.OrdinalIgnoreCase)
+                && !questionTemplate.Contains(c.Language == AppLanguage.Vietnamese ? "cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
         }
         if (c.KnowledgeGroup == QuestionKnowledgeGroup.Drinks)
         {
@@ -120,7 +136,7 @@ internal static class FoodThemePrompt
 
     internal static string AlignCombinedQuestion(string text, BasicQuestionContract c)
     {
-        if (FoodThemeCatalogue.IsCheDessertContract(c)) return text;
+        if (FoodThemeCatalogue.DessertShopKind(c) is not null) return text;
         if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food || c.Structure != BasicQuestionStructure.Combine
             || !text.Contains('?')) return text;
 
@@ -158,10 +174,14 @@ internal static class FoodThemePrompt
     {
         if(!FoodThemeCatalogue.IsTheme(c.KnowledgeGroup))return "";
         bool vi=c.Language==AppLanguage.Vietnamese;
-        if (FoodThemeCatalogue.IsCheDessertContract(c))
-            return vi
-                ? "\nĐề món chè: quán chè thứ nhất và quán chè thứ hai là hai chủ thể cố định, không thay bằng cửa hàng, tiệm bánh, nhà hàng hoặc người sở hữu. {unit} là chén chè đúng tên món do C# chọn; không lặp tên chè sau {unit}, {unit_a}, {unit_b}. Phép cộng số nguyên: hai quán bán riêng, dùng 'bán được' ở cả hai dữ kiện và hỏi 'cả hai quán chè bán được tổng cộng bao nhiêu'. Phép trừ số nguyên: một quán chuẩn bị rồi bán bớt. Phân số cộng/trừ: hai quán có lượng riêng, hỏi tổng hoặc chênh lệch, giữ nguyên các phân số. Phép nhân/chia số nguyên: dùng khay chè; phép nhân/chia phân số: giữ đúng quan hệ phần-toàn phần."
-                : "\nVietnamese sweet-soup stories: the first dessert shop and the second dessert shop are fixed actors; do not replace them with generic stores, bakeries, restaurants, or owners. {unit} already specifies the bowl and exact dessert name, so never repeat the food after {unit}, {unit_a}, or {unit_b}. For integer addition, both shops sell separate amounts: 'sold' in both facts, and ask how many both dessert shops sold altogether. For integer subtraction one shop prepares then sells some. For fraction addition/subtraction compare two separate shop amounts and ask for their total or difference. For integer multiplication/division use trays; for fraction multiplication/division preserve the part-to-whole relationship.";
+        if (FoodThemeCatalogue.DessertShopKind(c) is { } dessert)
+        {
+            var shops = DessertShopActors(dessert, c.Language);
+            string dessertGuidance = vi
+                ? $"\nĐề món {dessert}: '{shops.First}' và '{shops.Second}' là hai chủ thể cố định; không thay bằng cửa hàng, tiệm bánh, nhà hàng hoặc người sở hữu. {{unit}} là đơn vị món đúng tên do C# chọn; không lặp tên món sau đơn vị. Phép cộng số nguyên: hai quán bán riêng, dùng 'bán được' ở cả hai dữ kiện và hỏi '{shops.Both} bán được tổng cộng bao nhiêu'. Phép trừ số nguyên: một quán chuẩn bị rồi bán bớt. Phân số cộng/trừ: hai quán có lượng riêng, hỏi tổng hoặc chênh lệch. Phép nhân/chia số nguyên: dùng khay; phân số nhân/chia giữ quan hệ phần-toàn phần. Giữ nguyên {{unit}}, {{unit_a}}, {{unit_b}}."
+                : $"\nVietnamese {dessert} stories: '{shops.First}' and '{shops.Second}' are fixed actors; do not replace them with generic stores, bakeries, restaurants or owners. The full C# {{unit}} specifies the exact item and serving; do not repeat the item after {{unit}}, {{unit_a}} or {{unit_b}}. For integer addition, both shops sell separate amounts: use 'sold' in both facts and ask how many {shops.Both} sold altogether. For integer subtraction, one shop prepares then sells some. For fraction addition/subtraction, compare two shop amounts and ask for their sum or difference. For integer multiplication/division use trays; for fractions preserve the part-to-whole relationship.";
+            return dessertGuidance + (vi ? "\nĐơn vị món C# đã chọn: " : "\nC# counted unit: ") + c.Unit + ".";
+        }
         if (c.KnowledgeGroup == QuestionKnowledgeGroup.Drinks)
             return vi
                 ? "\nĐề nước uống: {name} là 'quán nước thứ nhất', {other} là 'quán nước thứ hai'. Không dùng 'cửa hàng' hay chủ thể cá nhân để thay thế. Giữ nguyên {unit}, {unit_a}, {unit_b} theo C# và không lặp tên nước sau đơn vị. Với phép cộng số nguyên, cả hai quán nước bán hai lượng riêng, dùng 'bán được' trong hai dữ kiện và hỏi 'cả hai quán nước bán được tổng cộng bao nhiêu'. Với phân số cộng/trừ, so sánh hai lượng riêng của hai quán nước; hỏi tổng hoặc chênh lệch, giữ đúng đơn vị và phân số. Với phép nhân/chia giữ quan hệ nhóm hoặc phần-toàn phần của đề."

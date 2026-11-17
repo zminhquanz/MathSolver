@@ -33,21 +33,20 @@ internal static class FoodThemeWorksheetTests
                 var printed=QuizWorksheetBuilder.Format(q,language);Check(!printed.Prompt.Contains('{')&&!printed.Answer.Contains('{'),"Unbound theme PDF slots");
                 if(subject.Group==QuestionKnowledgeGroup.Food)
                 {
-                    if(FoodThemeCatalogue.IsCheDessert(subject.Unit.Id))
+                    if(FoodThemeCatalogue.DessertShopKind(subject.Unit.Id) is { } dessert)
                     {
-                        bool viChe=language==AppLanguage.Vietnamese;
-                        string first=viChe?"quán chè thứ nhất":"the first dessert shop";
-                        string second=viChe?"quán chè thứ hai":"the second dessert shop";
-                        string both=viChe?"cả hai quán chè":"both dessert shops";
-                        Check(c.Subject.Equals(first,StringComparison.OrdinalIgnoreCase),"PDF chè subject lost first dessert shop: "+c.SceneId);
+                        bool vi=language==AppLanguage.Vietnamese;
+                        var (first,second,both)=FoodThemePrompt.DessertShopActors(dessert,language);
+                        Check(c.Subject.Equals(first,StringComparison.OrdinalIgnoreCase),"PDF dessert subject lost first shop: "+c.SceneId);
                         Check(printed.Prompt.Contains(first,StringComparison.OrdinalIgnoreCase)
                             && printed.Prompt.Contains(second,StringComparison.OrdinalIgnoreCase)
                             && printed.Prompt.Contains(both,StringComparison.OrdinalIgnoreCase),
-                            "PDF chè total must name both dessert shops: "+c.SceneId);
+                            "PDF dessert total must name both shops: "+c.SceneId);
                         if(!fraction)
                             Check(c.OtherSubject.Equals(second,StringComparison.OrdinalIgnoreCase)
-                                && printed.Prompt.Contains(viChe?"bán được":"sold",StringComparison.OrdinalIgnoreCase),
-                                "PDF chè integer total must describe both sales: "+c.SceneId);
+                                && printed.Prompt.Contains($"{first} {(vi?"bán được":"sold")} {c.Left} {c.Unit}",StringComparison.OrdinalIgnoreCase)
+                                && printed.Prompt.Contains($"{second} {(vi?"bán được":"sold")} {c.Right} {c.Unit}",StringComparison.OrdinalIgnoreCase),
+                                "PDF dessert integer total must describe two independent sales: "+c.SceneId);
                     }
                     else
                     {

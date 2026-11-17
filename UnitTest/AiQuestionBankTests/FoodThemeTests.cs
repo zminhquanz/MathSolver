@@ -63,6 +63,10 @@ internal static class FoodThemeTests
         ("com-ga-xoi-mo", "com_ga_xoi_mo", "suất cơm gà xối mỡ", "serving of crispy fried chicken with rice", "servings of crispy fried chicken with rice", false),
         ("com-ga-sot-me", "com_ga_sot_me", "suất cơm gà sốt me", "serving of chicken with tamarind sauce and rice", "servings of chicken with tamarind sauce and rice", false),
         ("com-ga-sot-tieu-xanh", "com_ga_sot_tieu_xanh", "suất cơm gà sốt tiêu xanh", "serving of chicken with green peppercorn sauce and rice", "servings of chicken with green peppercorn sauce and rice", false),
+        ("com-ga-mam-toi", "com_ga_mam_toi", "suất cơm gà mắm tỏi", "serving of chicken rice with garlic fish sauce", "servings of chicken rice with garlic fish sauce", false),
+        ("kem-bo-da-lat", "kem_bo_da_lat", "ly kem bơ Đà Lạt", "glass of Da Lat avocado ice cream", "glasses of Da Lat avocado ice cream", false),
+        ("kem-trang-tien", "kem_trang_tien", "que kem Tràng Tiền", "Trang Tien ice cream bar", "Trang Tien ice cream bars", false),
+        ("sua-chua-ha-long", "sua_chua_ha_long", "cốc sữa chua Hạ Long", "cup of Ha Long yogurt", "cups of Ha Long yogurt", false),
         ("canh-chua-ca-loc", "canh_chua_ca_loc", "tô canh chua cá lóc", "bowl of sour snakehead fish soup", "bowls of sour snakehead fish soup", false),
         ("canh-kho-qua-nhoi-thit", "canh_kho_qua_nhoi_thit", "tô canh khổ qua nhồi thịt", "bowl of stuffed bitter melon soup", "bowls of stuffed bitter melon soup", false),
         ("canh-bi-do-ham-xuong", "canh_bi_do_ham_xuong", "tô canh bí đỏ hầm xương", "bowl of pumpkin and pork bone soup", "bowls of pumpkin and pork bone soup", false),
@@ -224,13 +228,48 @@ internal static class FoodThemeTests
                 "Drink AI validation accepted a generic store");
         }
     }
+    private static void CheckDessertShopAiValidation()
+    {
+        foreach (var unitId in new[] { "kem-bo-da-lat", "kem-trang-tien", "sua-chua-ha-long" })
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        {
+            var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == unitId);
+            var original = FoodThemeInterchangeTests.Contract(subject, ArithmeticOperation.Add, language, BankQuestionFamily.Arithmetic);
+            var contract = original with { Left = 10, Right = 20 };
+            Check(contract.IsValid && contract.Answer == 30, "Dessert shop 10 + 20 contract invalid: " + unitId);
+            var draft = AppliedQuestionCatalogue.Draft(contract);
+            CheckFoodVenue(contract, draft);
+            var (first, second, both) = FoodThemePrompt.DessertShopActors(
+                FoodThemeCatalogue.DessertShopKind(unitId)!, language);
+            string guidance = FoodThemePrompt.Guidance(contract);
+            Check(guidance.Contains("{unit}", StringComparison.Ordinal)
+                && guidance.Contains("{unit_a}", StringComparison.Ordinal)
+                && guidance.Contains("{unit_b}", StringComparison.Ordinal)
+                && !guidance.Contains("{{unit}}", StringComparison.Ordinal),
+                "Dessert AI guidance has escaped or missing unit placeholders: " + unitId);
+            bool vi = language == AppLanguage.Vietnamese;
+            string rendered = draft.ToWordProblem(contract).ProblemText;
+            Check(rendered.Contains($"{first} {(vi ? "bán được" : "sold")} 10 {contract.Unit}", StringComparison.OrdinalIgnoreCase)
+                && rendered.Contains($"{second} {(vi ? "bán được" : "sold")} 20 {contract.Unit}", StringComparison.OrdinalIgnoreCase),
+                "Dessert shop must sell the two independent amounts: " + rendered);
+            Check(rendered.Contains(both, StringComparison.OrdinalIgnoreCase)
+                && rendered.Contains(vi ? "bán được tổng cộng bao nhiêu" : "sell altogether", StringComparison.OrdinalIgnoreCase),
+                "Dessert shop question must ask for the total sold: " + rendered);
+            Check(AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft), contract).IsValid,
+                "Dessert shop AI reference must validate: " + unitId);
+            string generic = draft.Question.Replace(both, vi ? "cả hai cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
+            Check(generic != draft.Question && !FoodThemePrompt.CombinedQuestionNamesVenue(generic, contract)
+                && !AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft with { Question = generic }), contract).IsValid,
+                "AI must reject generic stores in dessert questions: " + unitId);
+        }
+    }
     private static IEnumerable<(string Unit, bool Bakery)> BakeryVenueCases()
     {
         yield return ("cakes", true);
         yield return ("pho", false);
         foreach (var id in TakeawayBakeryCakeIds)
             yield return (id, true);
-        foreach (var dish in AdditionalPreparedDishes.Where(d => !FoodThemeCatalogue.IsCheDessert(d.UnitId)))
+        foreach (var dish in AdditionalPreparedDishes.Where(d => FoodThemeCatalogue.DessertShopKind(d.UnitId) is null))
             yield return (dish.UnitId, dish.Bakery);
     }
     private static void CheckAdditionalPreparedDishes()
@@ -286,11 +325,9 @@ internal static class FoodThemeTests
             Check(contract.Unit == (vi ? dish.Vietnamese : dish.Plural),
                 "Food contract changed the counted serving: " + contract.SceneId + "/" + contract.Language);
         }
-        if (FoodThemeCatalogue.IsCheDessertContract(contract))
+        if (FoodThemeCatalogue.DessertShopKind(contract) is { } dessert)
         {
-            string first = vi ? "quán chè thứ nhất" : "the first dessert shop";
-            string second = vi ? "quán chè thứ hai" : "the second dessert shop";
-            string both = vi ? "cả hai quán chè" : "both dessert shops";
+            var (first, second, both) = FoodThemePrompt.DessertShopActors(dessert, contract.Language);
             Check(contract.Subject.Equals(first, StringComparison.OrdinalIgnoreCase),
                 "Dessert contract must name first dessert shop: " + contract.SceneId);
             if (contract.Structure == BasicQuestionStructure.Combine)
@@ -306,7 +343,7 @@ internal static class FoodThemeTests
             Check(!cheStory.Contains(vi ? "cửa hàng" : "the two businesses", StringComparison.OrdinalIgnoreCase),
                 "Dessert story replaced a dessert shop with a generic store");
             string chePrompt = BasicQuestionPrompt.Build(contract);
-            Check(chePrompt.Contains(vi ? "Đề món chè" : "Vietnamese sweet-soup stories", StringComparison.Ordinal),
+            Check(chePrompt.Contains(vi ? "Đề món " + dessert : "Vietnamese " + dessert + " stories", StringComparison.Ordinal),
                 "Dessert AI prompt lost its approved shop scenario: " + contract.SceneId);
             return;
         }
@@ -464,6 +501,7 @@ internal static class FoodThemeTests
         CheckAllFoodVenueKinds();
         CheckAiCombinedVenueValidation();
         CheckDrinkShopAiValidation();
+        CheckDessertShopAiValidation();
         Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),
             "Hamburgers must use an eatery or restaurant, not a bakery");
         Check(!FoodThemeCatalogue.IsBakeryFood("banh-xeo") && !FoodThemeCatalogue.IsBakeryFood("banh-cuon"),

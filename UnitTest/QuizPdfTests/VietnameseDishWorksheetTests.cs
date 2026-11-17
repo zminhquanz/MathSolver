@@ -4,7 +4,7 @@ using MathSolver.Services.QuestionBank;
 using MathSolver.Services.Printing;
 using System.Text.Json;
 
-/// <summary>End-to-end PDF assertions for all twelve Vietnamese prepared foods.</summary>
+/// <summary>End-to-end PDF assertions for all thirteen Vietnamese prepared foods.</summary>
 internal static class VietnameseDishWorksheetTests
 {
     private static readonly (string Id, string Vietnamese, string English)[] Dishes =
@@ -15,6 +15,7 @@ internal static class VietnameseDishWorksheetTests
         ("com-ga-xoi-mo", "cơm gà xối mỡ", "crispy fried chicken"),
         ("com-ga-sot-me", "cơm gà sốt me", "tamarind sauce"),
         ("com-ga-sot-tieu-xanh", "cơm gà sốt tiêu xanh", "green peppercorn sauce"),
+        ("com-ga-mam-toi", "cơm gà mắm tỏi", "chicken rice with garlic fish sauce"),
         ("canh-chua-ca-loc", "canh chua cá lóc", "sour snakehead fish soup"),
         ("canh-kho-qua-nhoi-thit", "canh khổ qua nhồi thịt", "stuffed bitter melon"),
         ("canh-bi-do-ham-xuong", "canh bí đỏ hầm xương", "pumpkin and pork bone"),
@@ -102,6 +103,6 @@ internal static class VietnameseDishWorksheetTests
         }
         File.WriteAllText(Path.Combine(directory, "vietnamese-food-pdf-cases.json"),
             JsonSerializer.Serialize(traces, new JsonSerializerOptions { WriteIndented = true }));
-        Console.WriteLine($"PASS Vietnamese food PDF: {cases} cases across 12 dishes, 3 families, VI/EN and modes; {pdfs} text-verified worksheets and answer keys.");
+        Console.WriteLine($"PASS Vietnamese food PDF: {cases} cases across {Dishes.Length} dishes, 3 families, VI/EN and modes; {pdfs} text-verified worksheets and answer keys.");
     }
 }

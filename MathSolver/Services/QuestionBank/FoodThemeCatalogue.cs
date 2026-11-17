@@ -98,6 +98,10 @@ public static class FoodThemeCatalogue
         new(QuestionKnowledgeGroup.Food, Unit("com-ga-xoi-mo","suất cơm gà xối mỡ","serving of crispy fried chicken with rice","servings of crispy fried chicken with rice"),"com_ga_xoi_mo"),
         new(QuestionKnowledgeGroup.Food, Unit("com-ga-sot-me","suất cơm gà sốt me","serving of chicken with tamarind sauce and rice","servings of chicken with tamarind sauce and rice"),"com_ga_sot_me"),
         new(QuestionKnowledgeGroup.Food, Unit("com-ga-sot-tieu-xanh","suất cơm gà sốt tiêu xanh","serving of chicken with green peppercorn sauce and rice","servings of chicken with green peppercorn sauce and rice"),"com_ga_sot_tieu_xanh"),
+        new(QuestionKnowledgeGroup.Food, Unit("com-ga-mam-toi","suất cơm gà mắm tỏi","serving of chicken rice with garlic fish sauce","servings of chicken rice with garlic fish sauce"),"com_ga_mam_toi"),
+        new(QuestionKnowledgeGroup.Food, Unit("kem-bo-da-lat","ly kem bơ Đà Lạt","glass of Da Lat avocado ice cream","glasses of Da Lat avocado ice cream"),"kem_bo_da_lat"),
+        new(QuestionKnowledgeGroup.Food, Unit("kem-trang-tien","que kem Tràng Tiền","Trang Tien ice cream bar","Trang Tien ice cream bars"),"kem_trang_tien"),
+        new(QuestionKnowledgeGroup.Food, Unit("sua-chua-ha-long","cốc sữa chua Hạ Long","cup of Ha Long yogurt","cups of Ha Long yogurt"),"sua_chua_ha_long"),
         new(QuestionKnowledgeGroup.Food, Unit("canh-chua-ca-loc","tô canh chua cá lóc","bowl of sour snakehead fish soup","bowls of sour snakehead fish soup"),"canh_chua_ca_loc"),
         new(QuestionKnowledgeGroup.Food, Unit("canh-kho-qua-nhoi-thit","tô canh khổ qua nhồi thịt","bowl of stuffed bitter melon soup","bowls of stuffed bitter melon soup"),"canh_kho_qua_nhoi_thit"),
         new(QuestionKnowledgeGroup.Food, Unit("canh-bi-do-ham-xuong","tô canh bí đỏ hầm xương","bowl of pumpkin and pork bone soup","bowls of pumpkin and pork bone soup"),"canh_bi_do_ham_xuong"),
@@ -148,7 +152,8 @@ public static class FoodThemeCatalogue
         "tteokbokki", "korean-corn-dog", "hotteok", "bungeoppang", "gyeranppang",
         "sundae-gukbap", "andong-jjimdak", "kalguksu", "squid-sundae",
         "com-suon-cay", "com-chien-hai-san", "com-chien-duong-chau",
-        "com-ga-xoi-mo", "com-ga-sot-me", "com-ga-sot-tieu-xanh",
+        "com-ga-xoi-mo", "com-ga-sot-me", "com-ga-sot-tieu-xanh", "com-ga-mam-toi",
+        "kem-bo-da-lat", "kem-trang-tien", "sua-chua-ha-long",
         "canh-chua-ca-loc", "canh-kho-qua-nhoi-thit", "canh-bi-do-ham-xuong",
         "canh-cua-rau-day-mong-toi", "canh-rau-ngot-thit-bam", "ca-loc-kho-to",
         "che-dau-do", "che-dau-den", "che-dau-xanh", "che-troi-nuoc",
@@ -181,6 +186,22 @@ public static class FoodThemeCatalogue
         or "che-thap-cam" or "che-thai" or "che-chuoi" or "che-bap"
         or "che-hat-sen-long-nhan" or "che-dau-phong" or "che-khuc-bach"
         or "che-suong-sa-hat-luu" or "che-khoai-mon";
+    // One stable venue type for each prepared dessert, shared by C#, AI, PDF and Excel.
+    internal static string? DessertShopKind(string? unitId) => IsCheDessert(unitId) ? "chè"
+        : unitId is "kem-bo-da-lat" or "kem-trang-tien" ? "kem"
+        : unitId == "sua-chua-ha-long" ? "sữa chua" : null;
+    internal static string? DessertShopKind(BasicQuestionContract c)
+    {
+        if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food) return null;
+        string? unitId = c.Version switch
+        {
+            FractionQuestionCatalogue.Version => RestaurantDishForScene(c.SceneId)?.Unit.Id,
+            FindXQuestionCatalogue.Version => FindXQuestionCatalogue.Find(c.SceneId)?.SourceScene.UnitId,
+            AppliedQuestionCatalogue.Version => AppliedQuestionCatalogue.Find(c.SceneId)?.UnitId,
+            _ => null
+        };
+        return DessertShopKind(unitId);
+    }
     internal static bool IsCheDessertContract(BasicQuestionContract c)
     {
         if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food) return false;

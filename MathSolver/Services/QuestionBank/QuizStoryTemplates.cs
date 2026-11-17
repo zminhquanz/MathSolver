@@ -42,9 +42,9 @@ internal static class QuizStoryTemplates
             string prefix = family == "Fraction" ? "fraction-theme-food-" : "theme-food-";
             string suffix = contract.SceneId[(prefix.Length + traditionalDish.Unit.Id.Length)..];
             string unitId = family == "Fraction" ? contract.SceneId : traditionalDish.Unit.Id;
-            if (FoodThemeCatalogue.IsCheDessert(traditionalDish.Unit.Id)
-                && stories.TryGetValue((family, prefix + "pho" + suffix), out var cheReference))
-                return CheDessertStoryTemplates.Create(cheReference, contract, unitId);
+            if (FoodThemeCatalogue.DessertShopKind(traditionalDish.Unit.Id) is { } dessert
+                && stories.TryGetValue((family, prefix + "pho" + suffix), out var dessertReference))
+                return CheDessertStoryTemplates.Create(dessertReference, contract, unitId, dessert);
             if (FoodThemeCatalogue.IsBakeryFood(traditionalDish.Unit.Id))
                 return BakeryDishStoryTemplates.Create(contract.SceneId, family, suffix.TrimStart('-'), contract.Language, unitId);
 
