@@ -29,7 +29,7 @@
   <PropertyGroup>
     <TargetFrameworks>net11.0-android</TargetFrameworks>
     <TargetFrameworks Condition="!$([MSBuild]::IsOSPlatform('linux'))">$(TargetFrameworks);net11.0-ios;net11.0-maccatalyst</TargetFrameworks>
-    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.19041.0</TargetFrameworks>
+    <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net11.0-windows10.0.26100.0</TargetFrameworks>
 
     <!-- Note for MacCatalyst:
     The default runtime is maccatalyst-x64, except in Release config, in which case the default runtime is maccatalyst-x64;maccatalyst-arm64.
@@ -137,6 +137,12 @@
   </ItemGroup>
   <PropertyGroup>
     <_ArtworkPackSourceList>$(MSBuildProjectDirectory)\obj\artwork\$(Configuration)\$(TargetFramework)\sources.txt</_ArtworkPackSourceList>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net11.0-android|AnyCPU'">
+    <AndroidKeyStore>True</AndroidKeyStore>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net11.0-android|AnyCPU'">
+    <AndroidKeyStore>True</AndroidKeyStore>
   </PropertyGroup>
   <Target Name="TrackArtworkPackSources">
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_ArtworkPackSourceList)'))" />
