@@ -30,7 +30,12 @@ internal static class TemplateTests
             var validation = BasicQuestionValidator.Validate(json, c);
             Check(validation.IsValid && validation.Contract == c, $"Valid {language}/{structure}/{tier}/{unit.Id} rejected: {validation.ErrorCode}");
             string prompt = BasicQuestionPrompt.Build(c);
-            Check(!prompt.Contains("\"Left\"") && !prompt.Contains("\"Right\"") && !prompt.Contains(c.Subject), "Numeric/actor preview facts leaked into the template prompt.");
+            // Names can occur incidentally in the unit catalogue or instructions.
+            // Changing both preview actors must leave the reusable prompt unchanged.
+            var changedActors = c with { Subject = "Preview Subject Alpha", OtherSubject = "Preview Subject Beta" };
+            Check(!prompt.Contains("\"Left\"") && !prompt.Contains("\"Right\"")
+                && prompt == BasicQuestionPrompt.Build(changedActors),
+                $"Numeric/actor preview facts leaked into the {language}/{structure}/{tier}/{unit.Id} template prompt.");
             for (int seed = 0; seed < 3; seed++)
             {
                 var fresh = c.FreshFacts(new Random(11 + seed));

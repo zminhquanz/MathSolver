@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services;
+using MathSolver.Services.QuestionBank;
 
 namespace MathSolver.Tests;
 
@@ -7,15 +8,13 @@ internal static partial class PuzzleTests
 {
     public static void CheckIllustratedChoices()
     {
-        // Validate the keys used by the AI subtype picker, not only entries already
-        // present in the catalog: missing entries otherwise escape catalog checks.
-        using var pickerSource = typeof(PuzzleTests).Assembly.GetManifestResourceStream("QuizLocalization.AiQuestionBankPage.Learning.cs")
-            ?? throw new Exception("Missing AI picker source for catalog validation.");
-        using var reader = new StreamReader(pickerSource);
-        var aiSubtypeKeys = System.Text.RegularExpressions.Regex.Matches(reader.ReadToEnd(), "\"(Quiz\\.[A-Za-z0-9_.]+)\"")
-            .Select(match => match.Groups[1].Value)
-            .Where(key => !key.EndsWith('.') && key != "Quiz.Geometry")
-            .Concat(Enum.GetValues<GeometryQuizShape>().Select(shape => "Quiz.Geometry" + shape))
+        // Follow the same shared routing as the AI picker, across every difficulty.
+        // Scanning UI literals misses keys now constructed by VariantKey.
+        var aiSubtypeKeys = AiCreativeAuthoringChoices.Families
+            .Where(ReasoningStoryCatalogue.Supports)
+            .SelectMany(family => Enum.GetValues<CurriculumTier>().SelectMany(tier =>
+                AiCreativeAuthoringChoices.Variants(family, tier)
+                    .Select(variant => QuestionAuthoringChoices.VariantKey(family, variant))))
             .Distinct(StringComparer.Ordinal).ToArray();
         Require(aiSubtypeKeys.Contains("Quiz.ProportionDirect") && aiSubtypeKeys.Contains("Quiz.ProportionInverse"),
             "AI proportion subtype routes must be validated.");

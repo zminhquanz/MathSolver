@@ -90,7 +90,7 @@ internal static partial class PuzzleTests
             }
         }
         Require(largeFour && largeFive && smallFive && twoSteps, "Expanded ranges lost large facts, small contexts or two-step reasoning.");
-        Require(seen.SetEquals(new[] { "ballpoint-pen", "cooking-oil", "fish-sauce", "child-bicycle", "school-backpack", "television", "school-laptop" }), "Some shopping items never occur.");
+        Require(seen.SetEquals(new[] { "ballpoint-pen", "cooking-oil", "fish-sauce", "child-bicycle", "school-backpack", "refrigerator", "mobile-phone", "television", "school-laptop" }), "Unexpected shopping coverage: " + string.Join(", ", seen.Order()));
         // Practice opts in. The bank's default generator and profiles keep their previous ceilings.
         foreach (var tier in new[] { CurriculumTier.FourStars, CurriculumTier.FiveStars })
         {

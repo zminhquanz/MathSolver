@@ -55,7 +55,10 @@ internal static partial class PuzzleTests
         foreach (int count in new[] { 0, 1, 2, 4, 9, 19, 40 })
         {
             var dialog = QuizChoiceLayout.Calculate(width, height, count, scale, scrollbarGutter: gutter);
-            Require(dialog.Width > 0 && dialog.Width <= width - 24 && dialog.Height > 0 && dialog.Height <= height - 24,
+            // Keyboard-only viewports trade decorative outer space for reachable
+            // search and list targets. Ordinary windows retain 12 DIP each side.
+            double verticalGap = height < 120 ? 0 : height < 180 ? 4 : 24;
+            Require(dialog.Width > 0 && dialog.Width <= width - 24 && dialog.Height > 0 && dialog.Height <= height - verticalGap,
                 "Choice dialog must stay inside the viewport, including landscape and enlarged text.");
             Require(dialog.Columns >= 1 && dialog.Columns <= Math.Max(1, Math.Min(count, 3)),
                 "Choice dialog must not create unused columns.");
