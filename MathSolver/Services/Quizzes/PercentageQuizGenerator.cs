@@ -106,7 +106,7 @@ public sealed partial class PercentageQuizGenerator
 
         return new(
             PercentageQuizType.FindPercentageRatio,
-            [whole, part],
+            (int[])[whole, part],
             percentage,
             unit,
             item.RatioPart,
@@ -139,7 +139,7 @@ public sealed partial class PercentageQuizGenerator
 
         return new(
             PercentageQuizType.FindPercentageValue,
-            [whole, percentage],
+            (int[])[whole, percentage],
             value,
             unit,
             subject,
@@ -172,7 +172,7 @@ public sealed partial class PercentageQuizGenerator
 
         return new(
             PercentageQuizType.FindWholeFromPercentageValue,
-            [value, percentage],
+            (int[])[value, percentage],
             whole,
             unit,
             subject,

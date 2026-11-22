@@ -41,7 +41,7 @@ public sealed partial class PercentageQuizGenerator
             : sum + contract.EquationText[quantity.ToString().Length..];
         return contract with
         {
-            Facts = [.. parts, contract.Facts[1]],
+            Facts = (int[])[.. parts, contract.Facts[1]],
             ProblemText = problem,
             EquationText = equation,
             SolutionText = contract.SolutionText.Replace(contract.EquationText, equation, StringComparison.Ordinal),

@@ -176,10 +176,10 @@ public sealed partial class MotionQuizGenerator
             + (language == AppLanguage.Vietnamese ? "Đáp số: " : "Answer: ") + data.Answer + " " + data.AnswerUnit;
         var contract = new MotionQuizContract(type, data.Relation.Kind, data.Facts, data.Answer, data.AnswerUnit,
             lead, data.Problem, data.Equation, solution, data.RepresentativeLeft, data.RepresentativeOperation, data.RepresentativeRight,
-            data.IsRoad ? ["km/h", data.TimeUnit, "km"] : ["km/h"])
+            data.IsRoad ? (string[])["km/h", data.TimeUnit, "km"] : (string[])["km/h"])
         {
             NarrativeId = data.Profile,
-            NarrativeActors = data.IsRoad ? [data.Context.First, data.Context.Second] : [data.Context.First]
+            NarrativeActors = data.IsRoad ? (string[])[data.Context.First, data.Context.Second] : (string[])[data.Context.First]
         };
         return CreateQuestion(mode, contract);
     }

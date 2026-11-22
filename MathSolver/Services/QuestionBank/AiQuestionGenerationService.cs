@@ -256,7 +256,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
                     break;
                 }
                 UpdateItem(number, i => i with { State = AiItemState.Generating,
-                    Attempts = [.. i.Attempts, new(attempt, prompt, "", null, false)] });
+                    Attempts = (MathSolver.Services.QuestionBank.AiQuestionAttempt[])[.. i.Attempts, new(attempt, prompt, "", null, false)] });
                 using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 timeout.CancelAfter(TimeSpan.FromMinutes(5));
                 var partial = new StringBuilder();
@@ -420,7 +420,7 @@ public sealed class AiQuestionGenerationService(IQuestionTextRuntime runtime, IQ
     }
 
     private void Append(AiQuestionItem item)
-    { lock (_sync) _snapshot = _snapshot with { Items = [.. _snapshot.Items, item] }; Notify(); }
+    { lock (_sync) _snapshot = _snapshot with { Items = (MathSolver.Services.QuestionBank.AiQuestionItem[])[.. _snapshot.Items, item] }; Notify(); }
     private void UpdateItem(int number, Func<AiQuestionItem, AiQuestionItem> update)
     { lock (_sync) _snapshot = _snapshot with { Items = _snapshot.Items.Select(i => i.Number == number ? update(i) : i).ToArray() }; Notify(); }
     private void UpdateAttempt(int number, int attempt, Func<AiQuestionAttempt, AiQuestionAttempt> update)

@@ -21,8 +21,8 @@ public static partial class QuizContentValidation
             var language=pack.Culture=="vi-VN"?AppLanguage.Vietnamese:AppLanguage.English;
             var proof=new BasicQuestionContract(ReasoningStoryCatalogue.Version,ArithmeticOperation.Add,CurriculumTier.OneStar,language,1,1,"","","");
             var reference=new BasicQuestionDraft("","",RequiredString(row,"Question"),"","story")
-            {Facts=[new("fact_0",RequiredString(row,"Whole")),new("fact_1",RequiredString(row,"Part"))],
-                SolutionLeads=[new("step_0",RequiredString(row,"Lead"))]};
+            {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",RequiredString(row,"Whole")),new("fact_1",RequiredString(row,"Part"))],
+                SolutionLeads=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("step_0",RequiredString(row,"Lead"))]};
             if(!PercentageRatioOpenMeaning.Validate(proof,reference).IsValid)Fail("Unproved percentage-ratio reference relation.");
         }
     }

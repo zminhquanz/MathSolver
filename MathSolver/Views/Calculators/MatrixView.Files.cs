@@ -41,10 +41,10 @@ public sealed partial class MatrixView
                 PickerTitle = T("Import"),
                 FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
                 {
-                    [DevicePlatform.WinUI] = [".csv", ".tsv", ".txt"],
-                    [DevicePlatform.Android] = ["text/*", "application/csv", "application/octet-stream"],
-                    [DevicePlatform.iOS] = ["public.plain-text", "public.comma-separated-values-text"],
-                    [DevicePlatform.MacCatalyst] = ["public.plain-text", "public.comma-separated-values-text"]
+                    [DevicePlatform.WinUI] = (string[])[".csv", ".tsv", ".txt"],
+                    [DevicePlatform.Android] = (string[])["text/*", "application/csv", "application/octet-stream"],
+                    [DevicePlatform.iOS] = (string[])["public.plain-text", "public.comma-separated-values-text"],
+                    [DevicePlatform.MacCatalyst] = (string[])["public.plain-text", "public.comma-separated-values-text"]
                 })
             });
             if (file is null || !CanPublish(version) || _busy || _selected != target) return;

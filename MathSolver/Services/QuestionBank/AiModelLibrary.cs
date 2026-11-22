@@ -13,7 +13,7 @@ public sealed class AiModelLibrary(string directory)
     private static readonly HttpClient Client = new() { Timeout = Timeout.InfiniteTimeSpan };
     public string DirectoryPath { get; } = directory;
     public static IReadOnlyList<AiModelDownload> Downloads { get; } =
-    [
+    (MathSolver.Services.QuestionBank.AiModelDownload[])[
         new("Gemma 4 E2B · Q4_0", "google/gemma-4-E2B-it-qat-q4_0-gguf", "gemma-4-E2B_q4_0-it.gguf"),
         new("Gemma 4 E4B · Q4_0", "google/gemma-4-E4B-it-qat-q4_0-gguf", "gemma-4-E4B_q4_0-it.gguf")
     ];

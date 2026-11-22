@@ -97,7 +97,7 @@ public sealed partial class GeometryQuizGenerator
         var contract=new GeometryQuizContract(d.Context.ShapeId,GeometryMeasurement.Area,dimensions,d.Context.Unit,d.Context.Object,d.Context.Shape,
             d.Area,d.IsTrapezoid?"S = ((a + b) × h) ÷ 2":"S = a × h",d.Expression)
         {Reasoning=new(tier,d.IsTrapezoid?"trapezoid-area-direct":"parallelogram-area-direct",language,givens,
-            [QuadrilateralAreaPilot.Relation(d.Variant)],[],new HashSet<string>(),d.Problem,d.Problem,d.Expression)};
+            (string[])[QuadrilateralAreaPilot.Relation(d.Variant)],[],new HashSet<string>(),d.Problem,d.Problem,d.Expression)};
         if(!QuadrilateralAreaPilot.ValidContract(contract))throw new InvalidOperationException("InvalidQuadrilateralAreaFacts");
         return CreateQuestion(mode,contract) with {WordProblem=new(d.Problem,d.Render(d.Context.Lead),d.AreaUnit,d.Context.Object)};
     }

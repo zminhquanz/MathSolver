@@ -44,7 +44,7 @@ public sealed partial class PercentageQuizGenerator
     internal ArithmeticQuizQuestion GenerateOpenRatio(ArithmeticQuizMode mode,AppLanguage language,CurriculumTier tier,string profile)
     {
         var d=PercentageRatioPilot.Create(profile,language,tier,_random);string equation=d.Expression+" = "+PercentageRatioPilot.N(d.Answer);
-        var p=new PercentageQuizContract(PercentageQuizType.FindPercentageRatio,[d.Whole,d.Part],d.Answer,"%",d.Render(d.Context.Lead),d.Problem,equation,
+        var p=new PercentageQuizContract(PercentageQuizType.FindPercentageRatio,(int[])[d.Whole,d.Part],d.Answer,"%",d.Render(d.Context.Lead),d.Problem,equation,
             FormatSolution(d.Render(d.Context.Lead)+":",equation,"%",d.Answer,language),d.Part*100,ArithmeticOperation.Divide,d.Whole){StoryContextId=profile};
         return CreateQuestion(mode,p,includeWordProblem:false);
     }

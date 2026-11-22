@@ -36,7 +36,7 @@ public sealed partial class ElementaryQuizGenerator
                 int count = _random.Next(1, level <= 2 ? 11 : 21);
                 Direct(count);
                 problem = L("Counting");
-                visual = new("foundation-count", [], [count], "", AccessibleDescription: L("CountDescription", ("count", N(count))));
+                visual = new("foundation-count", [], (decimal[])[count], "", AccessibleDescription: L("CountDescription", ("count", N(count))));
                 break;
             }
             case ElementaryQuizType.ReadNumber:
@@ -85,7 +85,7 @@ public sealed partial class ElementaryQuizGenerator
                 break;
             }
             case ElementaryQuizType.Parity:
-                TextChoice(L(number % 2 == 0 ? "Even" : "Odd"), [L("Even"), L("Odd"), L("BothParity"), L("NeitherParity")]);
+                TextChoice(L(number % 2 == 0 ? "Even" : "Odd"), (string[])[L("Even"), L("Odd"), L("BothParity"), L("NeitherParity")]);
                 problem = L("Parity", ("number", N(number)));
                 break;
             case ElementaryQuizType.RomanNumerals:
@@ -117,7 +117,7 @@ public sealed partial class ElementaryQuizGenerator
                 // Three-element lists only have two first-element swaps; reversing supplies the third distractor.
                 wrong.Add(Format(sorted.Reverse()));
                 TextChoice(Format(sorted), wrong);
-                t.Answers[0] = t.Answers[0] with { Aliases = [string.Join(", ", sorted.Select(Item)),
+                t.Answers[0] = t.Answers[0] with { Aliases = (string[])[string.Join(", ", sorted.Select(Item)),
                     string.Join(descending ? " > " : " < ", sorted.Select(Item))] };
                 problem = L("Order", ("direction", L(descending ? "Descending" : "Ascending")), ("numbers", string.Join(", ", values.Select(Item))));
                 break;
@@ -177,7 +177,7 @@ public sealed partial class ElementaryQuizGenerator
                 {
                     t.Answer(label, $"{t.Given("numerator", numerator)}/{t.Given("denominator", denominator)}");
                     problem = L("FractionPicture");
-                    visual = new("foundation-fraction", [], [numerator, denominator], "", AccessibleDescription: L("FractionDescription", ("numerator", N(numerator)), ("denominator", N(denominator))));
+                    visual = new("foundation-fraction", [], (decimal[])[numerator, denominator], "", AccessibleDescription: L("FractionDescription", ("numerator", N(numerator)), ("denominator", N(denominator))));
                 }
                 break;
             }
@@ -188,23 +188,23 @@ public sealed partial class ElementaryQuizGenerator
                 string[] shortNames = [L("LeftShort"), L("RightShort"), L("AboveShort"), L("BelowShort")];
                 TextChoice(names[position], names, shortNames[position]);
                 problem = L("SpatialPosition");
-                visual = new("foundation-position", ["A", "B"], [position], "", AccessibleDescription: L("PositionDescription", ("position", names[position])));
+                visual = new("foundation-position", (string[])["A", "B"], (decimal[])[position], "", AccessibleDescription: L("PositionDescription", ("position", names[position])));
                 break;
             }
             case ElementaryQuizType.IdentifyLine:
             {
                 string[] names = [L("Segment"), L("Line"), L("Curve"), L("Polyline")];
                 int index = _random.Next(4); TextChoice(names[index], names); problem = L("IdentifyLine");
-                visual = new("foundation-line", [], [index], "", AccessibleDescription: L("LineShapeDescription" + index));
+                visual = new("foundation-line", [], (decimal[])[index], "", AccessibleDescription: L("LineShapeDescription" + index));
                 break;
             }
             case ElementaryQuizType.Midpoint:
             {
                 bool centered = _random.Next(2) == 0;
                 int left = _random.Next(2, 11), right = centered ? left : left + _random.Next(1, 5);
-                TextChoice(L(centered ? "MidpointYes" : "MidpointNo"), [L("MidpointYes"), L("MidpointNo"), L("Endpoint"), L("Outside")]);
+                TextChoice(L(centered ? "MidpointYes" : "MidpointNo"), (string[])[L("MidpointYes"), L("MidpointNo"), L("Endpoint"), L("Outside")]);
                 problem = L("Midpoint");
-                visual = new("foundation-midpoint", ["A", "M", "B"], [left, right], "cm", AccessibleDescription: L("MidpointDescription", ("left", N(left)), ("right", N(right))));
+                visual = new("foundation-midpoint", (string[])["A", "M", "B"], (decimal[])[left, right], "cm", AccessibleDescription: L("MidpointDescription", ("left", N(left)), ("right", N(right))));
                 break;
             }
             case ElementaryQuizType.CircleParts:
@@ -212,7 +212,7 @@ public sealed partial class ElementaryQuizGenerator
                 string[] names = [L("Center"), L("Radius"), L("Diameter"), L("Circle")];
                 int index = _random.Next(3); TextChoice(names[index], names);
                 problem = L("CircleParts", ("target", index == 0 ? "O" : index == 1 ? "OC" : "AB"));
-                visual = new("foundation-circle", ["O", "A", "B", "C"], [], "", AccessibleDescription: L("CircleDescription"));
+                visual = new("foundation-circle", (string[])["O", "A", "B", "C"], [], "", AccessibleDescription: L("CircleDescription"));
                 break;
             }
             case ElementaryQuizType.ShapeNet:
@@ -220,7 +220,7 @@ public sealed partial class ElementaryQuizGenerator
                 int index = _random.Next(3);
                 string[] names = [L("Cube"), L("Cuboid"), L("Cylinder"), L("Sphere")];
                 TextChoice(names[index], names); problem = L("ShapeNet");
-                visual = new("foundation-net", [], [index], "", AccessibleDescription: L("NetDescription" + index));
+                visual = new("foundation-net", [], (decimal[])[index], "", AccessibleDescription: L("NetDescription" + index));
                 break;
             }
             case ElementaryQuizType.TriangleKind:
@@ -228,25 +228,25 @@ public sealed partial class ElementaryQuizGenerator
                 int index = _random.Next(4);
                 string[] names = [L("AcuteTriangle"), L("RightTriangle"), L("ObtuseTriangle"), L("EquilateralTriangle")];
                 TextChoice(names[index], names); problem = L("TriangleKind");
-                visual = new("foundation-triangle", [], [index], "", AccessibleDescription: L("TriangleDescription" + index));
+                visual = new("foundation-triangle", [], (decimal[])[index], "", AccessibleDescription: L("TriangleDescription" + index));
                 break;
             }
             case ElementaryQuizType.ReadRuler:
             {
                 int start = _random.Next(0, 4), end = start + _random.Next(2, 7); Direct(end - start, "cm");
-                problem = L("ReadRuler"); visual = new("foundation-ruler", [], [start, end], "cm",
+                problem = L("ReadRuler"); visual = new("foundation-ruler", [], (decimal[])[start, end], "cm",
                     AccessibleDescription: L("RulerDescription", ("start", N(start)), ("end", N(end)))); break;
             }
             case ElementaryQuizType.ReadProtractor:
             {
                 int degrees = _random.Next(2, 17) * 10; Direct(degrees, "°");
-                problem = L("ReadProtractor"); visual = new("foundation-protractor", [], [degrees], "°",
+                problem = L("ReadProtractor"); visual = new("foundation-protractor", [], (decimal[])[degrees], "°",
                     AccessibleDescription: L("ProtractorDescription", ("degrees", N(degrees)))); break;
             }
             case ElementaryQuizType.ReadThermometer:
             {
                 int degrees = _random.Next(0, 21) * 2; Direct(degrees, "°C");
-                problem = L("ReadThermometer"); visual = new("foundation-thermometer", [], [degrees], "°C",
+                problem = L("ReadThermometer"); visual = new("foundation-thermometer", [], (decimal[])[degrees], "°C",
                     AccessibleDescription: L("ThermometerDescription", ("degrees", N(degrees)))); break;
             }
             default: throw new ArgumentOutOfRangeException(nameof(type));

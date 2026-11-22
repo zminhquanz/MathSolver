@@ -12,18 +12,18 @@ internal sealed class WallpaperModePickerHandler : PickerHandler2
 {
     private AlertDialog? _dialog;
 
-    protected override void ConnectHandler(MauiMaterialPicker platformView)
+    protected override void ConnectHandler(MauiMaterialPickerTextInputLayout platformView)
     {
         base.ConnectHandler(platformView);
-        platformView.SetOnClickListener(new OpenWallpaperDialogListener(this));
+        platformView.Picker.SetOnClickListener(new OpenWallpaperDialogListener(this));
         ((WallpaperModePicker)VirtualView).PropertyChanged += OnPickerPropertyChanged;
     }
 
-    protected override void DisconnectHandler(MauiMaterialPicker platformView)
+    protected override void DisconnectHandler(MauiMaterialPickerTextInputLayout platformView)
     {
         ((WallpaperModePicker)VirtualView).PropertyChanged -= OnPickerPropertyChanged;
         _dialog?.Dismiss();
-        platformView.SetOnClickListener(null);
+        platformView.Picker.SetOnClickListener(null);
         base.DisconnectHandler(platformView);
     }
 

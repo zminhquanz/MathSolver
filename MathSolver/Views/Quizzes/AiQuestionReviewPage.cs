@@ -539,7 +539,7 @@ public sealed class AiQuestionReviewPage : ContentPage
     private async Task ActAsync(Card card, bool approve)
     {
         if (_busy || _goingBack || card is null || !_cards.Contains(card)) return;
-        await ResolveAsync([card.Pending.Id], approve, approve);
+        await ResolveAsync((string[])[card.Pending.Id], approve, approve);
     }
 
     private async Task ResolveAsync(IReadOnlyList<string> requestedIds, bool approve, bool confirm)

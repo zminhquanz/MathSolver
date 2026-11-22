@@ -79,7 +79,7 @@ internal static class PercentageWholeOpenMeaning
                 question="How many {v1} did {v0} have originally?";
         }
         var proof=FractionWholeOpenMeaning.Validate(c,draft with
-            {Facts=[draft.Facts[0] with {Text=gift},draft.Facts[1] with {Text=share}],Question=question});
+            {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[draft.Facts[0] with {Text=gift},draft.Facts[1] with {Text=share}],Question=question});
         if(proof.IsValid)return new(draft,null,c);
         return result;
     }

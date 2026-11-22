@@ -71,6 +71,6 @@ public sealed partial class ElementaryQuizGenerator
         _random.Shuffle(distractors);
         return t.Build("recognize-" + ids[index], QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.NewSkills.CreateShapeRecognition.021"),
             new("shape", [], [], "", RotationDegrees: rotation, ScenarioId: ids[index]))
-            with { ChoiceTexts = [names[index], .. distractors.Take(3)] };
+            with { ChoiceTexts = (string[])[names[index], .. distractors.Take(3)] };
     }
 }

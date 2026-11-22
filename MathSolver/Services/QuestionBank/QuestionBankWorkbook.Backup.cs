@@ -22,13 +22,13 @@ public static partial class QuestionBankWorkbook
             QuestionAuthoringChoices.FamilyLabel(q.Contract.Family, language), new string('★', (int)q.Contract.Tier),
             q.Contract.Language == AppLanguage.Vietnamese ? "Tiếng Việt" : "English", q.WordProblem.ProblemText,
             QuestionAuthoringWorkbook.Answer(q), QuestionAuthoringWorkbook.Solution(q), q.ModelName, QuestionAuthoringWorkbook.PreviewData(q) });
-        SpreadsheetWorkbook.Write(output, [
+        SpreadsheetWorkbook.Write(output, (MathSolver.Services.QuestionBank.SpreadsheetSheet[])[
             new(W("Ngân hàng đề", "Question bank"), SpreadsheetWorkbook.Table(headers, overview)),
-            new(W("Hướng dẫn", "Guide"), SpreadsheetWorkbook.Table([W("Mục", "Item"), W("Giải thích", "Explanation")], new IReadOnlyList<string>[] {
-                [W("Mục đích", "Purpose"), W("Sao lưu và khôi phục ngân hàng đề; dùng Nhập Excel trong app để xem trước và khôi phục.", "Back up and restore the question bank; use Import Excel in the app to review and restore.")],
-                [W("Trang minh họa", "Overview"), W("Đề bài và đáp án để đọc. Chỉnh sửa trang này không thay đổi dữ liệu sẽ được khôi phục.", "Questions and answers are for reading. Editing this sheet does not change the restored data.")],
-                [W("Dữ liệu nội bộ", "Internal data"), W("Trang Questions được ẩn và chứa cấu trúc đầy đủ. Không chỉnh sửa hoặc xóa trang này. Dữ liệu sai không được khôi phục.", "Hidden Questions contains the complete schema. Do not edit or remove it. Invalid data is not restored.")],
-                [W("Soạn đề mới", "Author new templates"), W("Dùng Tải mẫu Excel để soạn đề trong app. Không dùng bản sao lưu làm mẫu soạn đề.", "Use Download authoring template in the app. Do not use a backup as an authoring form.")]
+            new(W("Hướng dẫn", "Guide"), SpreadsheetWorkbook.Table((string[])[W("Mục", "Item"), W("Giải thích", "Explanation")], new IReadOnlyList<string>[] {
+                (string[])[W("Mục đích", "Purpose"), W("Sao lưu và khôi phục ngân hàng đề; dùng Nhập Excel trong app để xem trước và khôi phục.", "Back up and restore the question bank; use Import Excel in the app to review and restore.")],
+                (string[])[W("Trang minh họa", "Overview"), W("Đề bài và đáp án để đọc. Chỉnh sửa trang này không thay đổi dữ liệu sẽ được khôi phục.", "Questions and answers are for reading. Editing this sheet does not change the restored data.")],
+                (string[])[W("Dữ liệu nội bộ", "Internal data"), W("Trang Questions được ẩn và chứa cấu trúc đầy đủ. Không chỉnh sửa hoặc xóa trang này. Dữ liệu sai không được khôi phục.", "Hidden Questions contains the complete schema. Do not edit or remove it. Invalid data is not restored.")],
+                (string[])[W("Soạn đề mới", "Author new templates"), W("Dùng Tải mẫu Excel để soạn đề trong app. Không dùng bản sao lưu làm mẫu soạn đề.", "Use Download authoring template in the app. Do not use a backup as an authoring form.")]
             }, false)),
             new("Questions", internalSheet, true)
         ]);

@@ -101,7 +101,7 @@ public partial class PowerRootView
         var rows = new VerticalStackLayout { Spacing = 10 };
         rows.Add(TimingTable(PowerDiagnosticsPresentation.PhaseRows(diagnostics)));
         rows.Add(DiagnosticText(D("TimingNote"), secondary: true));
-        var later = PowerDiagnosticsPresentation.Measured([
+        var later = PowerDiagnosticsPresentation.Measured((MathSolver.Services.Core.PowerTimingRow[])[
             new("CleanupTime", _powerCleanupElapsed ?? TimeSpan.Zero),
             new("TxtPreparationTime", _powerTxtPreparationElapsed ?? TimeSpan.Zero)
         ]);
@@ -171,7 +171,7 @@ public partial class PowerRootView
             {
                 rows.Add(DiagnosticText(Format("PowerRoot.InfoExponentSplit", diagnostics.FirstExponent.ToString("N0"),
                     diagnostics.SecondExponent.ToString("N0"), diagnostics.FirstBranchWorkerCount, diagnostics.SecondBranchWorkerCount)));
-                rows.Add(TimingTable(PowerDiagnosticsPresentation.Measured([
+                rows.Add(TimingTable(PowerDiagnosticsPresentation.Measured((MathSolver.Services.Core.PowerTimingRow[])[
                     new("BranchOne", diagnostics.FirstBranchElapsed), new("BranchTwo", diagnostics.SecondBranchElapsed),
                     new("Combine", diagnostics.FinalCombineElapsed)
                 ])));

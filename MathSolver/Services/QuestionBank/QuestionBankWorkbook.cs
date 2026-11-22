@@ -78,7 +78,7 @@ public static partial class QuestionBankWorkbook
             cancellationToken.ThrowIfCancellationRequested();
             if (rowNumber > 1048576) throw new InvalidDataException("ExcelRowLimit");
             var c = question.Contract;
-            Row([c.Version.ToString(CultureInfo.InvariantCulture), c.Operation.ToString(), ((int)c.Tier).ToString(CultureInfo.InvariantCulture),
+            Row((string[])[c.Version.ToString(CultureInfo.InvariantCulture), c.Operation.ToString(), ((int)c.Tier).ToString(CultureInfo.InvariantCulture),
                 c.Language == AppLanguage.Vietnamese ? "vi-VN" : "en-US", c.Left.ToString(CultureInfo.InvariantCulture), c.Right.ToString(CultureInfo.InvariantCulture),
                 c.Subject, c.Unit, c.GroupUnit, question.Draft.GivenA, question.Draft.GivenB, question.Draft.Question, question.ModelName,
                 DateTime.SpecifyKind(question.CreatedUtc, DateTimeKind.Utc).ToString("O", CultureInfo.InvariantCulture), question.RawJson,
@@ -185,7 +185,7 @@ public static partial class QuestionBankWorkbook
             var values = header.ToDictionary(h => h.Value, h => cells.GetValueOrDefault(h.Key, ""), StringComparer.OrdinalIgnoreCase);
             if (formula)
             {
-                result.Add(new(number, null, "ExcelFormulaNotAllowed") { Issues = [new(formulaColumn, "ExcelFormulaNotAllowed")] });
+                result.Add(new(number, null, "ExcelFormulaNotAllowed") { Issues = (MathSolver.Services.QuestionBank.BankWorkbookIssue[])[new(formulaColumn, "ExcelFormulaNotAllowed")] });
                 continue;
             }
             string readingColumn = "";
@@ -229,7 +229,7 @@ public static partial class QuestionBankWorkbook
                 var validation = QuestionBankStore.ValidateDraft(json, contract, userAuthored);
                 if (!validation.IsValid)
                 {
-                    result.Add(new(number, null, validation.ErrorCode) { Issues = [new(validation.ErrorDetails ?? "GivenA / GivenB / Question", validation.ErrorCode!)] });
+                    result.Add(new(number, null, validation.ErrorCode) { Issues = (MathSolver.Services.QuestionBank.BankWorkbookIssue[])[new(validation.ErrorDetails ?? "GivenA / GivenB / Question", validation.ErrorCode!)] });
                     continue;
                 }
                 if (validation.Contract is { } resolved && resolved != contract)
@@ -240,7 +240,7 @@ public static partial class QuestionBankWorkbook
                     string.IsNullOrWhiteSpace(Get("ModelName")) ? "Excel import" : Get("ModelName"), created) { UserAuthored = userAuthored }, null));
             }
             catch (Exception error) when (error is FormatException or OverflowException or ArgumentException or JsonException)
-            { result.Add(new(number, null, "InvalidExcelRow") { Issues = [new(readingColumn, "InvalidExcelRow")] }); }
+            { result.Add(new(number, null, "InvalidExcelRow") { Issues = (MathSolver.Services.QuestionBank.BankWorkbookIssue[])[new(readingColumn, "InvalidExcelRow")] }); }
         }
         if (header is null) throw new InvalidDataException("ExcelColumnsMissing");
         return result;

@@ -96,7 +96,7 @@ public static class QuizWorksheetBuilder
                     ? assertion + (unit.Length > 0 ? " " + unit : "")
                     : q.FindXProblem is not null ? "x = " + assertion : expression + " = " + assertion;
             prompt += "\n" + (vi ? "Nhận định: " : "Statement: ") + assertion;
-            options = vi ? ["Đúng", "Sai"] : ["True", "False"];
+            options = vi ? (string[])["Đúng", "Sai"] : (string[])["True", "False"];
             answer = q.PresentedEquationIsCorrect == true ? options[0] : options[1];
         }
         else if (q.Mode == ArithmeticQuizMode.MultipleChoice)

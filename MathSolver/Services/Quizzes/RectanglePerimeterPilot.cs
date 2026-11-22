@@ -56,7 +56,7 @@ public sealed partial class GeometryQuizGenerator
             d.Context.Object,d.Context.Shape,answer,formula,BuildSubstitutionExpression("rectangle",GeometryMeasurement.Perimeter,dimensions))
         {
             Reasoning=new(tier,"rectangle-perimeter-direct",language,
-                [new("a",d.Length,d.Unit,d.Render(d.Context.LengthFact)),new("b",d.Width,d.Unit,d.Render(d.Context.WidthFact))],
+                (MathSolver.Models.GeometryGivenFact[])[new("a",d.Length,d.Unit,d.Render(d.Context.LengthFact)),new("b",d.Width,d.Unit,d.Render(d.Context.WidthFact))],
                 [],[],new HashSet<string>(),d.Problem,d.Problem,d.Expression)
         };
         return CreateQuestion(mode,contract) with {WordProblem=new(d.Problem,d.Render(d.Context.Lead),d.Unit,d.Context.Object)};

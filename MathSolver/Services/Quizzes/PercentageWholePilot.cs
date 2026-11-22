@@ -50,7 +50,7 @@ public sealed partial class PercentageQuizGenerator
     {
         var d=PercentageWholePilot.Create(profile,language,tier,_random);
         string equation=d.Expression+" = "+d.Whole;
-        var contract=new PercentageQuizContract(PercentageQuizType.FindWholeFromPercentageValue,[d.Donated,d.Percentage],d.Whole,
+        var contract=new PercentageQuizContract(PercentageQuizType.FindWholeFromPercentageValue,(int[])[d.Donated,d.Percentage],d.Whole,
             d.Context.Unit,d.Render(d.Context.Lead),d.Problem,equation,
             FormatSolution(d.Render(d.Context.Lead),equation,d.Context.Unit,d.Whole,language),
             d.Donated*100,ArithmeticOperation.Divide,d.Percentage) {StoryContextId=profile};

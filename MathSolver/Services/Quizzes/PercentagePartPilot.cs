@@ -46,7 +46,7 @@ public sealed partial class PercentageQuizGenerator
     {
         var d=PercentagePartPilot.Create(profile,language,tier,_random);
         string equation=d.Expression+" = "+PercentagePartPilot.N(d.Answer);
-        var contract=new PercentageQuizContract(PercentageQuizType.FindPercentageValue,[d.Whole,d.Percentage],d.Answer,
+        var contract=new PercentageQuizContract(PercentageQuizType.FindPercentageValue,(int[])[d.Whole,d.Percentage],d.Answer,
             d.Context.PartUnit,d.Context.PartNoun,d.Problem,equation,
             FormatSolution(d.Render(d.Context.Lead)+":",equation,d.Context.PartUnit,d.Answer,language),
             d.Whole*d.Percentage,ArithmeticOperation.Divide,100){StoryContextId=profile};

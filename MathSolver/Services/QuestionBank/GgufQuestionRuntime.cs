@@ -206,7 +206,7 @@ public sealed partial class GgufQuestionRuntime : IQuestionTextRuntime
                         MaxTokens = MaximumOutputTokens,
                         OverflowStrategy = ContextOverflowStrategy.ThrowException,
                         SamplingPipeline = sampling,
-                        AntiPrompts = ["<end_of_turn>", "<|im_end|>", "<|turn>", "<turn|>"]
+                        AntiPrompts = (string[])["<end_of_turn>", "<|im_end|>", "<|turn>", "<turn|>"]
                     }, cancellationToken).ConfigureAwait(false))
                     {
                         // LLamaSharp v0.27 yields once per sampled non-EOG token, even

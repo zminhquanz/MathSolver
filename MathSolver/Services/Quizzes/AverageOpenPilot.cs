@@ -47,7 +47,7 @@ public sealed partial class AverageQuizGenerator
     {
         var d=AverageOpenPilot.Create(profile,language,tier,_random);
         string equation=d.Expression+" = "+d.Average;
-        var contract=new AverageQuizContract(AverageQuizType.Direct,[d.GroupCount,..d.Counts],d.Average,d.Context.Unit,
+        var contract=new AverageQuizContract(AverageQuizType.Direct,(int[])[d.GroupCount,..d.Counts],d.Average,d.Context.Unit,
             d.Render(d.Context.Lead),d.Problem,equation,FormatSolution(d.Render(d.Context.Lead)+":",equation,d.Context.Unit,d.Average,language),
             d.Total,ArithmeticOperation.Divide,d.GroupCount){StoryContextId=profile};
         return CreateQuestion(mode,contract,includeWordProblem:false);

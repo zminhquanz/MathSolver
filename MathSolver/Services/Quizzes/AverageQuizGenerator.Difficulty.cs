@@ -24,7 +24,7 @@ public sealed partial class AverageQuizGenerator
         string equation = $"{target} × {count} − ({string.Join(" + ", known)}) = {missing}";
         string lead = QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.003", ("count", $"{count}"));
         return new(AverageQuizType.MissingValue,
-            vi ? [known.Length, .. known, count, count, target] : [.. known, known.Length, count, target, count],
+            vi ? (int[])[known.Length, .. known, count, count, target] : (int[])[.. known, known.Length, count, target, count],
             missing, unit, QuizContentCatalog.Text(language, "AverageQuizGenerator.Difficulty.CreateTieredMissingValue.004"), problem, equation,
             FormatSolution(lead, equation, unit, missing, language), total, ArithmeticOperation.Subtract,
             knownTotal, KnownScores: known);

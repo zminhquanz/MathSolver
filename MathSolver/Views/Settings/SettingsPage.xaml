@@ -672,6 +672,7 @@
                                     HorizontalOptions="Fill"
                                     VerticalOptions="Fill"
                                     FontSize="14"
+                                    FontAttributes="Bold"
                                     TextColor="{DynamicResource TextPrimaryColor}"
                                     TitleColor="{DynamicResource TextSecondaryColor}"
                                     SelectedIndexChanged="OnLiveWallpaperModeChanged" />

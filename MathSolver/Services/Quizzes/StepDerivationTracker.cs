@@ -59,9 +59,9 @@ internal sealed class StepDerivationTracker
         int index = 0;
         foreach (string text in facts.Distinct())
             if (EssayCalculationEvaluator.TryEvaluate(text, out var value, out _, preferDecimalNotation) && !_known.ContainsKey(value))
-                Remember(value, [new(new Polynomial(new SortedDictionary<string, BigInteger>(StringComparer.Ordinal) { ["v" + index++] = 1 }), Polynomial.Constant(1))]);
+                Remember(value, (MathSolver.Services.StepDerivationTracker.Origin[])[new(new Polynomial(new SortedDictionary<string, BigInteger>(StringComparer.Ordinal) { ["v" + index++] = 1 }), Polynomial.Constant(1))]);
         foreach (string text in constants.Distinct())
-            if (EssayCalculationEvaluator.TryEvaluate(text, out var value, out _, preferDecimalNotation)) Remember(value, [Origin.Constant(value)]);
+            if (EssayCalculationEvaluator.TryEvaluate(text, out var value, out _, preferDecimalNotation)) Remember(value, (MathSolver.Services.StepDerivationTracker.Origin[])[Origin.Constant(value)]);
     }
     internal void Remember(V value, IEnumerable<Origin> origins)
     {

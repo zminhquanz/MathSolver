@@ -129,11 +129,11 @@ public sealed partial class GeometryQuizGenerator
         shape switch
         {
             GeometryQuizShape.Cube or GeometryQuizShape.RectangularPrism =>
-                [GeometryMeasurement.Volume, GeometryMeasurement.LateralArea, GeometryMeasurement.TotalArea],
+                (MathSolver.Models.GeometryMeasurement[])[GeometryMeasurement.Volume, GeometryMeasurement.LateralArea, GeometryMeasurement.TotalArea],
             null =>
-                [GeometryMeasurement.Perimeter, GeometryMeasurement.Area, GeometryMeasurement.Volume,
+                (MathSolver.Models.GeometryMeasurement[])[GeometryMeasurement.Perimeter, GeometryMeasurement.Area, GeometryMeasurement.Volume,
                  GeometryMeasurement.LateralArea, GeometryMeasurement.TotalArea],
-            _ => [GeometryMeasurement.Perimeter, GeometryMeasurement.Area]
+            _ => (MathSolver.Models.GeometryMeasurement[])[GeometryMeasurement.Perimeter, GeometryMeasurement.Area]
         };
 
     private static bool IsTemplateAllowedByCurriculum(

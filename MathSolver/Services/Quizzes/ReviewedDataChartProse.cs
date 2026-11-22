@@ -18,7 +18,7 @@ internal static class ReviewedDataChartProse
         if (parts.Length != source.Length || candidate.Reasoning!.Steps.Count != expected.Reasoning!.Steps.Count) return false;
         string Render(string text) => Regex.Replace(text, @"\{(f\d+)\}", m => capture.Slots[m.Groups[1].Value].Value);
         bool Match(string text, string original) => capture.Phrasings(original).Any(choice =>
-            SemanticProseRules.MatchesRendered(text, [Render(choice)], chart.Profile.Language));
+            SemanticProseRules.MatchesRendered(text, (string[])[Render(choice)], chart.Profile.Language));
         for (int i = 0; i < parts.Length; i++) if (!Match(parts[i], source[i])) return false;
         return candidate.Reasoning.Steps.Select((step, i) => Match(step.Label.TrimEnd(':', ' '),
             capture.Project(expected.Reasoning.Steps[i].Label).TrimEnd(':', ' '))).All(matched => matched);

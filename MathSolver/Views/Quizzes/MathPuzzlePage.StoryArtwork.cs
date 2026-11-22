@@ -13,12 +13,12 @@ public partial class MathPuzzlePage
             || _currentQuestion?.ProportionProblem is not null || _currentQuestion?.AverageProblem is not null
             || _currentQuestion?.PercentageProblem is not null
             || elementary is { Kind: QuizProblemKind.MultiStep, Reasoning: not null };
-        IEnumerable<string> units = word is null ? [] : [word.AnswerUnit];
+        IEnumerable<string> units = word is null ? [] : (string[])[word.AnswerUnit];
         if (elementary is not null)
             units = units.Concat(elementary.Answers.Select(answer => answer.Unit))
                 .Concat(elementary.Reasoning?.Givens.Select(given => given.Unit) ?? []);
         if (_currentQuestion?.ProportionProblem is { } proportion)
-            units = units.Concat([proportion.AnswerUnit, proportion.GroupCountUnits?.Items ?? ""]);
+            units = units.Concat((string[])[proportion.AnswerUnit, proportion.GroupCountUnits?.Items ?? ""]);
         if (_currentQuestion?.AverageProblem is { } average) units = units.Append(average.AnswerUnit);
         if (_currentQuestion?.PercentageProblem is { } percentage) units = units.Append(percentage.AnswerUnit);
         bool hasFactTable = word?.FactTable is not null;

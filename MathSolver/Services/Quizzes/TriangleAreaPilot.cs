@@ -66,8 +66,8 @@ public sealed partial class GeometryQuizGenerator
         var contract=new GeometryQuizContract("triangle",GeometryMeasurement.Area,dimensions,d.Context.Unit,d.Context.Object,d.Context.Shape,
             d.Area,"S = (a × h) ÷ 2",BuildSubstitutionExpression("triangle",GeometryMeasurement.Area,dimensions))
         {Reasoning=new(tier,"triangle-area-direct",language,
-            [new("a",d.Base,d.LengthUnit,d.Render(d.Context.BaseFact)),new("h",d.Height,d.LengthUnit,d.Render(d.Context.HeightFact))],
-            [TriangleAreaPilot.Relation],[],new HashSet<string>(),d.Problem,d.Problem,d.Expression)};
+            (MathSolver.Models.GeometryGivenFact[])[new("a",d.Base,d.LengthUnit,d.Render(d.Context.BaseFact)),new("h",d.Height,d.LengthUnit,d.Render(d.Context.HeightFact))],
+            (string[])[TriangleAreaPilot.Relation],[],new HashSet<string>(),d.Problem,d.Problem,d.Expression)};
         if(!TriangleAreaPilot.ValidContract(contract))throw new InvalidOperationException("InvalidTriangleAreaFacts");
         return CreateQuestion(mode,contract) with {WordProblem=new(d.Problem,d.Render(d.Context.Lead),d.AreaUnit,d.Context.Object)};
     }

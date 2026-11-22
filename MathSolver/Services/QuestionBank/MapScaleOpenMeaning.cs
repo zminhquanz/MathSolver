@@ -9,8 +9,8 @@ internal static class MapScaleOpenMeaning
     {
         if(new[]{context.ScaleFact,context.LengthFact,context.Question,context.CentimetreLead,context.ActualLead}.Any(string.IsNullOrWhiteSpace))return false;
         var d=new BasicQuestionDraft("","",context.Question,context.ActualLead,"story")
-        {Facts=[new("fact_0",context.ScaleFact),new("fact_1",context.LengthFact)],
-            SolutionLeads=[new("step_0",context.CentimetreLead),new("step_1",context.ActualLead)]};
+        {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",context.ScaleFact),new("fact_1",context.LengthFact)],
+            SolutionLeads=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("step_0",context.CentimetreLead),new("step_1",context.ActualLead)]};
         return Validate(language,d,null).IsValid;
     }
     internal static BasicDraftValidation Validate(BasicQuestionContract c,BasicQuestionDraft d)=>Validate(c.Language,d,c);

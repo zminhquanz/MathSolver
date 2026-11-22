@@ -173,7 +173,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
                 string[][] names = [["A", "O", "B"], ["M", "O", "N"], ["X", "P", "Y"], ["C", "E", "D"]];
                 string[] labels = names[_random.Next(names.Length)];
                 string name = string.Concat(labels);
-                visual = new("angle", labels, [degrees], "°", RotationDegrees:
+                visual = new("angle", labels, (decimal[])[degrees], "°", RotationDegrees:
                     scale == 1 ? _random.Next(2) * 180 : scale == 2 ? _random.Next(4) * 90 : _random.Next(12) * 30);
                 string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.041", ("name", $"{name}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.042", ("name", $"{name}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.043", ("labels_1", $"{labels[1]}"), ("labels_0", $"{labels[0]}"), ("labels_2", $"{labels[2]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.044", ("labels_1", $"{labels[1]}")) };
                 problem = prompts[_random.Next(prompts.Length)];
@@ -248,7 +248,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
                     string relation = _random.Next(4) switch { 0 or 1 => target, 2 => parallel ? "perpendicular" : "parallel", _ => "intersecting" };
                     decimal difference = relation switch { "parallel" => 0, "perpendicular" => 90, _ => _random.Next(2, 6) * 15 };
                     visual = new(relation, names[..2], [], "", Lines:
-                        [new(names[0], rotation, relation == "parallel" ? -.28f : 0),
+                        (MathSolver.Models.QuizVisualLine[])[new(names[0], rotation, relation == "parallel" ? -.28f : 0),
                          new(names[1], rotation + difference, relation == "parallel" ? .28f : 0)]);
                     string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.064", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.065", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.066", ("names_0", $"{names[0]}"), ("names_1", $"{names[1]}")) };
                     problem = prompts[_random.Next(prompts.Length)];

@@ -20,7 +20,7 @@ internal static class SameDayTimeCatalogue
         string signature=string.Join("|",d.Profile,c.Language,c.Tier,string.Join("/",quantities.Select(v=>v.Role+(v.Id.StartsWith('v')?v.Value:""))),string.Join("/",d.Relation.Facts),d.Relation.Question,d.Relation.Lead);
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(signature)));
         return new(q,d.Profile,d.Context.Actor,c.Language==AppLanguage.Vietnamese?"phút":"minutes",p.AnswerText,schema,quantities,facts,d.Relation.Question,
-            [new("step_0",d.Relation.Lead,calculation)],facts.Select((f,i)=>(f.Role,Choices:new[]{f.Text,d.Relation.AlternativeFacts[i]})).ToDictionary(x=>x.Role,x=>x.Choices),
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Relation.Lead,calculation)],facts.Select((f,i)=>(f.Role,Choices:new[]{f.Text,d.Relation.AlternativeFacts[i]})).ToDictionary(x=>x.Role,x=>x.Choices),
             [d.Relation.Question,d.Relation.AlternativeQuestion],new Dictionary<string,string[]>{{"step_0",[d.Relation.Lead]}});
     }
     internal static string PromptRelation(BasicQuestionContract c)

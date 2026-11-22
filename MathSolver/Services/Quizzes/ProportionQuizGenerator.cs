@@ -268,7 +268,7 @@ public sealed partial class ProportionQuizGenerator
 
         int rate = rateProfile switch
         {
-            DirectRateProfile.FabricMeters => PickFrom([2, 3, 4, 5]),
+            DirectRateProfile.FabricMeters => PickFrom((int[])[2, 3, 4, 5]),
             DirectRateProfile.TreesPerStudent => _random.Next(2, 9),
             DirectRateProfile.MoneyDong =>
                 language == AppLanguage.Vietnamese
@@ -276,9 +276,9 @@ public sealed partial class ProportionQuizGenerator
                     : _random.Next(2, 13),
             DirectRateProfile.CargoTons => _random.Next(2, 11),
             DirectRateProfile.FuelLiters => _random.Next(1, 9) * 5,
-            DirectRateProfile.RiceBagKilograms => PickFrom([10, 20, 25, 30, 40, 50]),
+            DirectRateProfile.RiceBagKilograms => PickFrom((int[])[10, 20, 25, 30, 40, 50]),
             DirectRateProfile.VegetableGrams => _random.Next(2, 11) * 50,
-            DirectRateProfile.FruitGrams => PickFrom([100, 125, 150, 175, 200, 225, 250, 300]),
+            DirectRateProfile.FruitGrams => PickFrom((int[])[100, 125, 150, 175, 200, 225, 250, 300]),
             DirectRateProfile.MeatGrams => _random.Next(2, 11) * 50,
             DirectRateProfile.EggGrams => _random.Next(45, 76),
             DirectRateProfile.DistanceKilometers => _random.Next(30, 91),
@@ -351,9 +351,9 @@ public sealed partial class ProportionQuizGenerator
                     break;
 
                 case ProportionScenarioKind.TravelSpeedTime:
-                    a = PickFrom([20, 30, 40, 50, 60]); // km/h
+                    a = PickFrom((int[])[20, 30, 40, 50, 60]); // km/h
                     b = _random.Next(1, 7);             // giờ
-                    c = PickFrom([20, 30, 40, 50, 60]);
+                    c = PickFrom((int[])[20, 30, 40, 50, 60]);
                     break;
 
                 case ProportionScenarioKind.TransportTrips:
@@ -364,8 +364,8 @@ public sealed partial class ProportionQuizGenerator
 
                 case ProportionScenarioKind.PackagingCount:
                     a = _random.Next(4, 21);
-                    b = PickFrom([5, 10, 20, 25, 40, 50]);
-                    c = PickFrom([5, 10, 20, 25, 40, 50]);
+                    b = PickFrom((int[])[5, 10, 20, 25, 40, 50]);
+                    c = PickFrom((int[])[5, 10, 20, 25, 40, 50]);
                     break;
 
                 default:

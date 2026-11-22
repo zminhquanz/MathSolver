@@ -18,7 +18,7 @@ internal static class PercentageRatioOpenCatalogue
         NarrativeClause[] facts=[new("fact_0",d.Context.Whole),new("fact_1",d.Context.Part)];
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",d.Profile,c.Language,c.Tier,PercentageRatioPilot.Relation,d.Context,string.Join("/",roles)))));
         return new(q,d.Profile,d.Render(d.Context.Lead),"%",d.Answer+" %",schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,q.PercentageProblem!.EquationText+" %")],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,q.PercentageProblem!.EquationText+" %")],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
             [d.Context.Question],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string PromptRelation(BasicQuestionContract c)=>PercentageRatioPilot.Relation+"; f0=whole count (100-percent base); f1=count of a subset within f0, not an extra stock; v0=owner; v1/v2=whole items/noun; v3/v4=subset items/noun; target=part divided by whole, expressed as a percentage; static inventory, no events";

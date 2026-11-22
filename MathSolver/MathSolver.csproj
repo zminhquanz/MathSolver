@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <Import Project="../tools/msbuild/PdfSharpCore.props" />
   <ItemGroup>
     <PackageReference Include="LLamaSharp" Version="0.30.0" />
@@ -10,8 +10,7 @@
     <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
     <PackageReference Include="CommunityToolkit.Maui" Version="17.0.0" />
     <PackageReference Include="CommunityToolkit.Maui.MediaElement" Version="12.0.0" />
-    <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="11.0.0" />
+    <PackageReference Include="Microsoft.Maui.Controls" Version="11.0.10" />
   </ItemGroup>
 
   <!-- Rebuilt from LLamaSharp 0.30.0's exact llama.cpp revision with 16 KiB
@@ -47,6 +46,7 @@
 
     <ApplicationId>com.quanvu.mathsolver</ApplicationId>
     <ApplicationDisplayVersion>0.2.1</ApplicationDisplayVersion>
+    <PackageVersion>$(ApplicationDisplayVersion)</PackageVersion>
     <ApplicationVersion>1</ApplicationVersion>
     <WindowsPackageType>None</WindowsPackageType>
 
@@ -141,42 +141,27 @@
   <Target Name="TrackArtworkPackSources">
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_ArtworkPackSourceList)'))" />
     <!-- A moved or removed file can predate the existing pack. Track membership as well as timestamps. -->
-    <WriteLinesToFile File="$(_ArtworkPackSourceList)" Lines="@(WindowsArtworkSource);@(AndroidArtworkSource)"
-                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile File="$(_ArtworkPackSourceList)" Lines="@(WindowsArtworkSource);@(AndroidArtworkSource)" Overwrite="true" WriteOnlyWhenDifferent="true" />
   </Target>
-  <Target Name="PackAndroidArtwork" AfterTargets="_ResizetizeInjectPlatformItems"
-          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'"
-          DependsOnTargets="TrackArtworkPackSources"
-          Inputs="@(AndroidArtworkSource);$(_ArtworkPackSourceList);$(_ResizetizerStampFile);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
-          Outputs="$(AndroidArtworkPackPath)">
+  <Target Name="PackAndroidArtwork" AfterTargets="_ResizetizeInjectPlatformItems" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'" DependsOnTargets="TrackArtworkPackSources" Inputs="@(AndroidArtworkSource);$(_ArtworkPackSourceList);$(_ResizetizerStampFile);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1" Outputs="$(AndroidArtworkPackPath)">
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(AndroidArtworkPackPath)&quot; -AndroidSvgRasterDirectory &quot;$(_MauiIntermediateImagesFullPath)drawable-xxxhdpi&quot;" />
   </Target>
-  <Target Name="PruneAndroidArtwork" AfterTargets="PackAndroidArtwork"
-          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+  <Target Name="PruneAndroidArtwork" AfterTargets="PackAndroidArtwork" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\prune-android-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -ResizetizerDirectory &quot;$(_MauiIntermediateImagesFullPath).&quot;" />
   </Target>
   <!-- Windows App SDK self-contained mode adds every WinUI .mui culture as a
        loose file. Use its supported exclusion item before it creates output
        items, retaining all en-* and vi-* resources and every native DLL. -->
-  <Target Name="RestrictWindowsAppSdkReleaseMuiCultures"
-          BeforeTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents"
-          DependsOnTargets="GetWindowsAppSDKNativePlatform"
-          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+  <Target Name="RestrictWindowsAppSdkReleaseMuiCultures" BeforeTargets="AddMicrosoftWindowsAppSDKPayloadFilesFromComponents" DependsOnTargets="GetWindowsAppSDKNativePlatform" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
     <ItemGroup>
       <_WindowsAppSdkMui Include="%(WindowsAppSdkComponentPackages.Identity)runtimes-framework\win-$(NativePlatform)\native\**\*.mui" />
-      <MicrosoftWindowsAppSDKFilesExcluded Include="@(_WindowsAppSdkMui)"
-          Condition="!$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('en-')) and !$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('vi-'))" />
+      <MicrosoftWindowsAppSDKFilesExcluded Include="@(_WindowsAppSdkMui)" Condition="!$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('en-')) and !$([System.String]::Copy('%(_WindowsAppSdkMui.RecursiveDir)').ToLowerInvariant().StartsWith('vi-'))" />
     </ItemGroup>
   </Target>
-  <Target Name="PackWindowsArtwork" BeforeTargets="GetCopyToOutputDirectoryItems;_GetCopyToPublishDirectoryItems"
-          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'"
-          DependsOnTargets="TrackArtworkPackSources"
-          Inputs="@(WindowsArtworkSource);$(_ArtworkPackSourceList);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
-          Outputs="$(WindowsArtworkPackPath)">
+  <Target Name="PackWindowsArtwork" BeforeTargets="GetCopyToOutputDirectoryItems;_GetCopyToPublishDirectoryItems" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'" DependsOnTargets="TrackArtworkPackSources" Inputs="@(WindowsArtworkSource);$(_ArtworkPackSourceList);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1" Outputs="$(WindowsArtworkPackPath)">
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(WindowsArtworkPackPath)&quot;" />
   </Target>
-  <Target Name="PruneOldWindowsArtworkCopies" AfterTargets="Build"
-          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
+  <Target Name="PruneOldWindowsArtworkCopies" AfterTargets="Build" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
     <!-- $(TargetDir) ends in a slash; appending '.' avoids a trailing backslash
          escaping the closing quote in powershell.exe's Windows argument parsing. -->
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\prune-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputDirectory &quot;$(TargetDir).&quot;" />

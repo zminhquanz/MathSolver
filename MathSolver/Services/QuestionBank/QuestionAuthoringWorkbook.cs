@@ -93,7 +93,7 @@ public static class QuestionAuthoringWorkbook
         string yes = W(vi, "Nhập", "Import"), skip = W(vi, "Bỏ qua", "Skip");
         string[] headers = [W(vi, "Xử lý dòng", "Row action"), .. fields.Select(f => f.Header)];
         string[] example = [skip, .. fields.Select(f => Replace(f.Example, aliases))];
-        var input = SpreadsheetWorkbook.Table(headers, [example]);
+        var input = SpreadsheetWorkbook.Table(headers, (System.Collections.Generic.IReadOnlyList<string>[])[example]);
         input.Add(new XElement(SpreadsheetWorkbook.Ns + "dataValidations", new XAttribute("count", 1),
             new XElement(SpreadsheetWorkbook.Ns + "dataValidation", new XAttribute("type", "list"),
                 new XAttribute("allowBlank", 1), new XAttribute("showErrorMessage", 1),
@@ -101,20 +101,20 @@ public static class QuestionAuthoringWorkbook
                 new XAttribute("error", yes + " / " + skip), new XAttribute("sqref", "A2:A10001"),
                 new XElement(SpreadsheetWorkbook.Ns + "formula1", "\"" + yes + "," + skip + "\""))));
         List<IReadOnlyList<string>> guide = [
-            [W(vi, "Dạng toán", "Problem type"), title],
-            [W(vi, "Mức độ", "Difficulty"), new string('★', (int)contract.Tier)],
-            [W(vi, "Ngôn ngữ đề", "Question language"), contract.Language == AppLanguage.Vietnamese ? "Tiếng Việt" : "English"],
-            [W(vi, "Tình huống để đối chiếu", "Reference situation"), Example(contract).ToWordProblem(contract).ProblemText],
-            [W(vi, "Cách dùng", "How to use"), W(vi,
+            (string[])[W(vi, "Dạng toán", "Problem type"), title],
+            (string[])[W(vi, "Mức độ", "Difficulty"), new string('★', (int)contract.Tier)],
+            (string[])[W(vi, "Ngôn ngữ đề", "Question language"), contract.Language == AppLanguage.Vietnamese ? "Tiếng Việt" : "English"],
+            (string[])[W(vi, "Tình huống để đối chiếu", "Reference situation"), Example(contract).ToWordProblem(contract).ProblemText],
+            (string[])[W(vi, "Cách dùng", "How to use"), W(vi,
                 "Chỉnh lời văn ở trang Nhập đề; chọn Nhập ở cột Xử lý dòng. Dòng ví dụ ban đầu được đặt Bỏ qua. Sao chép dòng để thêm mẫu; không đổi tên cột. Trang Ví dụ không được nhập.",
                 "Edit prose on Input and choose Import in Row action. The initial example is set to Skip. Copy a row to add templates; keep column names. Examples is never imported.")],
-            [W(vi, "Quan hệ và vai trò", "Relation and roles"), W(vi,
+            (string[])[W(vi, "Quan hệ và vai trò", "Relation and roles"), W(vi,
                 "Bạn tự kiểm soát lời văn, quan hệ và đơn vị. App chỉ kiểm tra ô bắt buộc, cú pháp biến và đủ biến số của từng dữ kiện; không đối chiếu từ ngữ với mẫu AI. Có thể thêm từ nối như ‘và’, hỏi ‘cả hai’ hoặc viết lại câu. Xem trước để bảo đảm lời văn khớp phép tính C# của tình huống đã chọn.",
                 "You control the wording, relation and units. The app checks required cells, valid substitution syntax and the numeric slots of each fact; it does not compare your wording with AI examples. You may add linking words or rephrase freely. Review the result against the selected C# calculation.")],
-            [W(vi, "Số và đáp án", "Numbers and answers"), W(vi,
+            (string[])[W(vi, "Số và đáp án", "Numbers and answers"), W(vi,
                 "Giữ các biến số của từng dữ kiện để C# thay số mới và tính đáp án. Tên và đơn vị có thể lặp lại, chuyển sang câu khác hoặc viết cụ thể. Lời văn không làm thay đổi phép tính hay đáp án C#; người soạn chịu trách nhiệm kiểm tra sự phù hợp.",
                 "Keep each fact's numeric slots so C# can substitute fresh values and compute answers. Names and units may be repeated, moved to another sentence or written explicitly. Wording does not change the C# calculation or answer; the author checks consistency.")],
-            [W(vi, "Giới hạn", "Limits"), W(vi, "File .xlsx, tối đa 20 MB / 10.000 dòng. Không dùng công thức Excel. Xem trước và xác nhận trong app trước khi lưu.",
+            (string[])[W(vi, "Giới hạn", "Limits"), W(vi, "File .xlsx, tối đa 20 MB / 10.000 dòng. Không dùng công thức Excel. Xem trước và xác nhận trong app trước khi lưu.",
                 ".xlsx files, up to 20 MB / 10,000 rows. Do not use Excel formulas. Review and confirm in the app before saving.")]
         ];
         var variables = fields.SelectMany(f => Variables.Matches(f.Example).Select(m => m.Value)).Distinct().ToArray();
@@ -128,23 +128,23 @@ public static class QuestionAuthoringWorkbook
                 "{unit}" or "{unit_a}" or "{unit_b}" => W(vi, "Đơn vị của lượng", "Quantity unit"),
                 "{group}" => W(vi, "Đơn vị nhóm / bao gói", "Group / container unit"),
                 _ => W(vi, "Vai trò được đặt tên trong biến; giữ nguyên như ví dụ", "Named role; keep the variable as in the example") };
-            guide.Add([aliases.GetValueOrDefault(variable, variable), meaning + " — " + W(vi, "minh họa: ", "example: ") + value]);
+            guide.Add((string[])[aliases.GetValueOrDefault(variable, variable), meaning + " — " + W(vi, "minh họa: ", "example: ") + value]);
         }
         foreach (var field in fields)
-            guide.Add([field.Header, W(vi, "Ô bắt buộc. Biến minh họa: ", "Required cell. Example variables: ")
+            guide.Add((string[])[field.Header, W(vi, "Ô bắt buộc. Biến minh họa: ", "Required cell. Example variables: ")
                 + string.Join(", ", Variables.Matches(Replace(field.Example, aliases)).Select(m => m.Value))
                 + "\n" + Replace(field.Example, aliases)]);
         var examples = new List<IReadOnlyList<string>>();
         var draft = Example(contract);
         var first = new ValidatedBankQuestion(contract, draft, QuestionBankStore.SerializeDraft(draft), "Excel example", DateTime.UtcNow);
-        examples.Add([yes, .. fields.Select(f => Replace(f.Example, aliases)), first.WordProblem.ProblemText, Solution(first), PreviewData(first)]);
+        examples.Add((string[])[yes, .. fields.Select(f => Replace(f.Example, aliases)), first.WordProblem.ProblemText, Solution(first), PreviewData(first)]);
         var fresh = contract.FreshFacts(new Random(1751));
         var second = new ValidatedBankQuestion(fresh, draft, QuestionBankStore.SerializeDraft(draft), "Excel example", DateTime.UtcNow);
-        examples.Add([yes, .. fields.Select(f => Replace(f.Example, aliases)), second.WordProblem.ProblemText, Solution(second), PreviewData(second)]);
-        SpreadsheetWorkbook.Write(output, [
-            new(W(vi, "Hướng dẫn", "Guide"), SpreadsheetWorkbook.Table([W(vi, "Mục", "Item"), W(vi, "Giải thích", "Explanation")], guide, false)),
+        examples.Add((string[])[yes, .. fields.Select(f => Replace(f.Example, aliases)), second.WordProblem.ProblemText, Solution(second), PreviewData(second)]);
+        SpreadsheetWorkbook.Write(output, (MathSolver.Services.QuestionBank.SpreadsheetSheet[])[
+            new(W(vi, "Hướng dẫn", "Guide"), SpreadsheetWorkbook.Table((string[])[W(vi, "Mục", "Item"), W(vi, "Giải thích", "Explanation")], guide, false)),
             new(InputName(vi), input),
-            new(W(vi, "Ví dụ", "Examples"), SpreadsheetWorkbook.Table([.. headers, W(vi, "Đề minh họa", "Rendered example"), W(vi, "Lời giải do app tính", "App-calculated solution"), W(vi, "Dữ liệu minh họa kèm đề", "Supporting example data")], examples))
+            new(W(vi, "Ví dụ", "Examples"), SpreadsheetWorkbook.Table((string[])[.. headers, W(vi, "Đề minh họa", "Rendered example"), W(vi, "Lời giải do app tính", "App-calculated solution"), W(vi, "Dữ liệu minh họa kèm đề", "Supporting example data")], examples))
         ], JsonSerializer.Serialize(metadata));
     }
 

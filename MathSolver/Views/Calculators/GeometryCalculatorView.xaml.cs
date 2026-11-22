@@ -508,14 +508,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
         return geometryId switch
         {
             "square" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài cạnh a")
             ],
 
             "rectangle" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Chiều dài a"),
@@ -525,7 +525,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "triangle" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài đáy a"),
@@ -541,7 +541,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "right_triangle" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Cạnh góc vuông a"),
@@ -554,21 +554,21 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "equilateral_triangle" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài cạnh a")
             ],
 
             "circle" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "r",
                     "Bán kính r")
             ],
 
             "trapezoid" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Đáy a"),
@@ -587,7 +587,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "isosceles_trapezoid" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Đáy a"),
@@ -603,7 +603,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "right_trapezoid" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Đáy a"),
@@ -619,7 +619,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "rhombus" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài cạnh a"),
@@ -635,7 +635,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "parallelogram" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài đáy a"),
@@ -648,14 +648,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "cube" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Độ dài cạnh a")
             ],
 
             "rectangular_prism" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "a",
                     "Chiều dài a"),
@@ -668,14 +668,14 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "sphere" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "r",
                     "Bán kính r")
             ],
 
             "cylinder" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "r",
                     "Bán kính đáy r"),
@@ -685,7 +685,7 @@ public partial class GeometryCalculatorView : LocalizedSolverView
             ],
 
             "cone" =>
-            [
+            (MathSolver.Views.GeometryCalculatorView.GeometryInputFieldDefinition[])[
                 Field(
                     "r",
                     "Bán kính đáy r"),

@@ -21,7 +21,7 @@ internal static class RectanglePerimeterOpenCatalogue
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",RectanglePerimeterPilot.Relation,
             d.Profile,c.Language,c.Tier,d.Context,string.Join("/",quantities.Select(x=>x.Role))))));
         return new(q,d.Profile,d.Render(d.Context.Lead),d.Unit,d.Perimeter+" "+d.Unit,schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.Unit)],
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.Unit)],
             facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),[d.Context.Question],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string WritingInstructions(BasicQuestionContract c)

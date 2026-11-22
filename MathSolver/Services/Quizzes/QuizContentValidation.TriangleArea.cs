@@ -33,8 +33,8 @@ public static partial class QuizContentValidation
             var proofContract=new BasicQuestionContract(ReasoningStoryCatalogue.Version,ArithmeticOperation.Add,CurriculumTier.OneStar,language,1,1,"","","");
             var reference=new BasicQuestionDraft("","",RequiredString(row,"Question"),"","story")
             {
-                Facts=[new("fact_0",RequiredString(row,"ShapeFact")),new("fact_1",RequiredString(row,"BaseFact")),new("fact_2",RequiredString(row,"HeightFact"))],
-                SolutionLeads=[new("step_0",RequiredString(row,"Lead"))]
+                Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",RequiredString(row,"ShapeFact")),new("fact_1",RequiredString(row,"BaseFact")),new("fact_2",RequiredString(row,"HeightFact"))],
+                SolutionLeads=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("step_0",RequiredString(row,"Lead"))]
             };
             if(!TriangleAreaOpenMeaning.Validate(proofContract,reference).IsValid)
                 Fail("Triangle reference must prove the supplied base, its corresponding perpendicular height and the whole-area target.");

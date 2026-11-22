@@ -25,8 +25,8 @@ internal static class MoneyChangeOpenMeaning
         if(new[]{context.PriceFact,context.CountFact,context.PaidFact,context.Question,context.CostLead,context.ChangeLead}.Any(string.IsNullOrWhiteSpace))return false;
         var draft=new BasicQuestionDraft("","",context.Question,context.ChangeLead,"story")
         {
-            Facts=[new("fact_0",context.PriceFact),new("fact_1",context.CountFact),new("fact_2",context.PaidFact)],
-            SolutionLeads=[new("step_0",context.CostLead),new("step_1",context.ChangeLead)]
+            Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",context.PriceFact),new("fact_1",context.CountFact),new("fact_2",context.PaidFact)],
+            SolutionLeads=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("step_0",context.CostLead),new("step_1",context.ChangeLead)]
         };
         return Validate(language,draft,null).IsValid;
     }

@@ -23,7 +23,7 @@ internal static class TriangleAreaOpenCatalogue
         NarrativeClause[] facts=[new("fact_0",d.Context.ShapeFact),new("fact_1",d.Context.BaseFact),new("fact_2",d.Context.HeightFact)];
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",TriangleAreaPilot.Relation,d.Profile,c.Language,c.Tier,d.Context,string.Join("/",quantities.Select(x=>x.Role))))));
         return new(q,d.Profile,d.Render(d.Context.Lead),d.AreaUnit,d.Area+" "+d.AreaUnit,schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
             [d.Context.Question],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string PromptRelation(BasicQuestionContract c)=>TriangleAreaPilot.Relation+"; f0=base; f1=perpendicular height corresponding to that supplied base; v0=one object; v1=triangle; v2=length unit; v3=area unit; target=entire triangle area; direct given dimensions only";

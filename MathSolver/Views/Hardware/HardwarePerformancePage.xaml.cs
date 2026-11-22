@@ -1284,13 +1284,13 @@ public partial class HardwarePerformancePage : ContentPage
             RuntimeInformation.ProcessArchitecture is
                 Architecture.Arm or
                 Architecture.Arm64
-                ? [
+                ? (string[])[
                     "Hardware",
                     "model name",
                     "Processor",
                     "CPU model"
                 ]
-                : [
+                : (string[])[
                     "model name",
                     "Processor",
                     "Hardware",
@@ -1367,7 +1367,7 @@ public partial class HardwarePerformancePage : ContentPage
 
         string? cpuMegahertzText =
             ReadCpuInfoValue(
-                [
+                (string[])[
                     "cpu MHz",
                     "clock"
                 ]);
@@ -2487,17 +2487,17 @@ public partial class HardwarePerformancePage : ContentPage
             new BenchmarkVerticalChartDrawable
             {
                 SeriesLabels =
-                    [IsVietnamese ? "Điểm" : "Score"],
+                    (string[])[IsVietnamese ? "Điểm" : "Score"],
 
                 Groups =
-                [
+                (MathSolver.Graphics.BenchmarkVerticalChartGroup[])[
                     new BenchmarkVerticalChartGroup(
                         IsVietnamese ? "Đơn luồng" : "Single",
-                        [singleScore]),
+                        (double?[])[singleScore]),
 
                     new BenchmarkVerticalChartGroup(
                         IsVietnamese ? "Đa luồng" : "Multi",
-                        [multiScore])
+                        (double?[])[multiScore])
                 ]
             };
 
@@ -2580,7 +2580,7 @@ public partial class HardwarePerformancePage : ContentPage
             groups.Add(
                 new BenchmarkVerticalChartGroup(
                     groupLabel,
-                    [singleScore.Value, multiScore.Value]));
+                    (double?[])[singleScore.Value, multiScore.Value]));
 
             string singleText =
                 singleScore.Value.ToString(
@@ -2607,7 +2607,7 @@ public partial class HardwarePerformancePage : ContentPage
             new BenchmarkVerticalChartDrawable
             {
                 SeriesLabels =
-                [
+                (string[])[
                     IsVietnamese ? "Đơn luồng" : "Single",
                     IsVietnamese ? "Đa luồng" : "Multi"
                 ],

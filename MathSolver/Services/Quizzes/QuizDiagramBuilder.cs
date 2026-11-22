@@ -66,7 +66,7 @@ public static class QuizDiagramBuilder
                 string original=revealSolution?elementary.Answers[0].Value.ToString():"?";
                 string caption=(language==AppLanguage.Vietnamese?"Tổng số ban đầu = ":"Original whole = ")+original+" "+unit;
                 string label=(language==AppLanguage.Vietnamese?"Đã tặng = ":"Given away = ")+givens["donated-count"]+" "+unit;
-                diagram=new("fractions",caption,[new(label,[],FractionNumerator:int.Parse(givens["numerator"],CultureInfo.InvariantCulture),
+                diagram=new("fractions",caption,(MathSolver.Models.QuizDiagramRow[])[new(label,[],FractionNumerator:int.Parse(givens["numerator"],CultureInfo.InvariantCulture),
                     FractionDenominator:int.Parse(givens["denominator"],CultureInfo.InvariantCulture))]);
             }
             else if (elementary.Type == ElementaryQuizType.FractionRemaining && elementary.Reasoning is { } remaining)
@@ -77,7 +77,7 @@ public static class QuizDiagramBuilder
                 int d = int.Parse(givens["donated-denominator"], CultureInfo.InvariantCulture);
                 string caption = (language == AppLanguage.Vietnamese ? "Tổng số ban đầu = " : "Original whole = ") + givens["whole"] + " " + unit;
                 string label = language == AppLanguage.Vietnamese ? "Phần đã tặng" : "Donated fraction";
-                diagram = new("fractions", caption, [new(label, [], FractionNumerator:n, FractionDenominator:d)]);
+                diagram = new("fractions", caption, (MathSolver.Models.QuizDiagramRow[])[new(label, [], FractionNumerator:n, FractionDenominator:d)]);
             }
             else if (elementary.Reasoning is not null && elementary.Kind == QuizProblemKind.FractionSkills)
             {
@@ -119,8 +119,8 @@ public static class QuizDiagramBuilder
                 };
                 if (!ratio)
                 {
-                    rows[0] = rows[0] with { Segments = [new("?", 2)] };
-                    rows[1] = rows[1] with { Segments = [new("?", 2), new(facts[1], Highlight: true)] };
+                    rows[0] = rows[0] with { Segments = (MathSolver.Models.QuizDiagramSegment[])[new("?", 2)] };
+                    rows[1] = rows[1] with { Segments = (MathSolver.Models.QuizDiagramSegment[])[new("?", 2), new(facts[1], Highlight: true)] };
                 }
                 if (revealSolution)
                 {
@@ -146,7 +146,7 @@ public static class QuizDiagramBuilder
                 string caption = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.019") + " = " + (wholeGiven ? facts[0] : unknown) + " " + elementary.Answers[0].Unit;
                 string part = QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.020") + " = " + (wholeGiven ? unknown : facts[0]) + " " + elementary.Answers[0].Unit;
                 diagram = new("fractions", caption,
-                    [new(part, [], FractionNumerator: numerator, FractionDenominator: denominator)]);
+                    (MathSolver.Models.QuizDiagramRow[])[new(part, [], FractionNumerator: numerator, FractionDenominator: denominator)]);
             }
             else if (elementary.Kind == QuizProblemKind.FractionSkills && elementary.Visual is null)
             {
@@ -191,14 +191,14 @@ public static class QuizDiagramBuilder
                     Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.028"), 0, 1); Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.029"), 1, -1); break;
                 case MotionQuestionKind.BasicRestDistance:
                     Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.030"), 0, 1);
-                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.031"), [new(V(1, timeUnit)), new(V(2, timeUnit), Highlight: true)])); break;
+                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.031"), (MathSolver.Models.QuizDiagramSegment[])[new(V(1, timeUnit)), new(V(2, timeUnit), Highlight: true)])); break;
                 case MotionQuestionKind.BasicDistance:
-                    Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.032"), 0, 1); rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.033"), [new(V(1, timeUnit))])); break;
+                    Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.032"), 0, 1); rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.033"), (MathSolver.Models.QuizDiagramSegment[])[new(V(1, timeUnit))])); break;
                 case MotionQuestionKind.BasicSpeed:
-                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.034"), [new(V(0, distanceUnit))], 1));
-                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.035"), [new(V(1, timeUnit))])); break;
+                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.034"), (MathSolver.Models.QuizDiagramSegment[])[new(V(0, distanceUnit))], 1));
+                    rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.035"), (MathSolver.Models.QuizDiagramSegment[])[new(V(1, timeUnit))])); break;
                 case MotionQuestionKind.BasicTime:
-                    Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.036"), 0, 1); rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.037"), [new(V(1, distanceUnit))])); break;
+                    Arrow(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.036"), 0, 1); rows.Add(new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.037"), (MathSolver.Models.QuizDiagramSegment[])[new(V(1, distanceUnit))])); break;
             }
             diagram = new("motion", caption, rows.AsReadOnly());
             if (revealSolution) solution = motion.SolutionText;
@@ -208,25 +208,25 @@ public static class QuizDiagramBuilder
             QuizDiagramRow Row(ReducedFraction value) => new(value.ToString(), [],
                 FractionNumerator: value.Numerator >= 0 && value.Numerator <= 128 ? (int)value.Numerator : null,
                 FractionDenominator: value.Denominator <= 32 ? (int)value.Denominator : null);
-            diagram = new("fractions", fraction.ExpressionText + " = ?", [Row(fraction.LeftOperand), Row(fraction.RightOperand)]);
+            diagram = new("fractions", fraction.ExpressionText + " = ?", (MathSolver.Models.QuizDiagramRow[])[Row(fraction.LeftOperand), Row(fraction.RightOperand)]);
             if (revealSolution) solution = fraction.ExpressionText + " = " + fraction.CorrectAnswer;
         }
         else if (question.AverageProblem is { IndirectData: AverageIndirectData data } average)
         {
             string unit = average.AnswerUnit;
             diagram = new("bars", QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.038") + " = " + (revealSolution ? average.CorrectAnswer.ToString(CultureInfo.InvariantCulture) : "?") + " " + unit,
-            [
-                new("Lan", [new(data.FirstQuantity + " " + unit, 3)]),
-                new("Mai = ?", [new("?", 3), new("+" + data.Increase + " " + unit, Highlight: true)]),
-                new("Hoa = ?", [new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.039") + ": " + data.Decrease + " " + unit, 3)])
+            (MathSolver.Models.QuizDiagramRow[])[
+                new("Lan", (MathSolver.Models.QuizDiagramSegment[])[new(data.FirstQuantity + " " + unit, 3)]),
+                new("Mai = ?", (MathSolver.Models.QuizDiagramSegment[])[new("?", 3), new("+" + data.Increase + " " + unit, Highlight: true)]),
+                new("Hoa = ?", (MathSolver.Models.QuizDiagramSegment[])[new(QuizContentCatalog.Text(language, "QuizDiagramBuilder.Build.039") + ": " + data.Decrease + " " + unit, 3)])
             ]);
             if (revealSolution)
             {
                 int mai = data.FirstQuantity + data.Increase, hoa = mai - data.Decrease;
-                diagram = diagram with { Rows = [
-                    new("Lan", [new(data.FirstQuantity + " " + unit, data.FirstQuantity)]),
-                    new("Mai", [new(mai + " " + unit, mai)]),
-                    new("Hoa", [new(hoa + " " + unit, hoa)])
+                diagram = diagram with { Rows = (MathSolver.Models.QuizDiagramRow[])[
+                    new("Lan", (MathSolver.Models.QuizDiagramSegment[])[new(data.FirstQuantity + " " + unit, data.FirstQuantity)]),
+                    new("Mai", (MathSolver.Models.QuizDiagramSegment[])[new(mai + " " + unit, mai)]),
+                    new("Hoa", (MathSolver.Models.QuizDiagramSegment[])[new(hoa + " " + unit, hoa)])
                 ] };
                 solution = average.SolutionText;
             }

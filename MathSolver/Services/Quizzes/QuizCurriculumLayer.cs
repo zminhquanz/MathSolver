@@ -448,7 +448,7 @@ public static class QuizCurriculumLayer
             // của hình chữ nhật, hình vuông.
             CurriculumTier.TwoStars => new(
                 20,
-                [GeometryQuizShape.Triangle],
+                (MathSolver.Models.GeometryQuizShape[])[GeometryQuizShape.Triangle],
                 new Dictionary<GeometryQuizShape, IReadOnlySet<GeometryMeasurement>>
                 {
                     [GeometryQuizShape.Triangle] = PerimeterOnly
@@ -458,7 +458,7 @@ public static class QuizCurriculumLayer
             // Chưa có công thức diện tích tam giác.
             CurriculumTier.ThreeStars => new(
                 30,
-                [
+                (MathSolver.Models.GeometryQuizShape[])[
                     GeometryQuizShape.Square,
                     GeometryQuizShape.Rectangle,
                     GeometryQuizShape.Triangle
@@ -474,7 +474,7 @@ public static class QuizCurriculumLayer
             // Tam giác vẫn chỉ dùng chu vi; hình thang/tròn chưa tính diện tích.
             CurriculumTier.FourStars => new(
                 40,
-                [
+                (MathSolver.Models.GeometryQuizShape[])[
                     GeometryQuizShape.Square,
                     GeometryQuizShape.Rectangle,
                     GeometryQuizShape.Triangle,
@@ -688,29 +688,29 @@ public static class QuizCurriculumLayer
                 ElementaryQuizType.Parity or ElementaryQuizType.LetterExpression => 4,
                 _ => 1
             })).ToArray(),
-            QuizProblemKind.VisualGeometry => level <= 2 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.SpatialPosition, .. ElementaryQuizGenerator.SpatialSkillTypes]
-                : level == 3 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle, .. ElementaryQuizGenerator.SpatialSkillTypes]
-                : level == 4 ? [ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,
+            QuizProblemKind.VisualGeometry => level <= 2 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.SpatialPosition, .. ElementaryQuizGenerator.SpatialSkillTypes]
+                : level == 3 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle, .. ElementaryQuizGenerator.SpatialSkillTypes]
+                : level == 4 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.RecognizeShape, ElementaryQuizType.CountSides, ElementaryQuizType.ClassifyAngle,
                     ElementaryQuizType.ParallelLines, ElementaryQuizType.PerpendicularLines, ElementaryQuizType.RectangleSide, .. ElementaryQuizGenerator.SpatialSkillTypes]
                 : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Time => level == 1 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.CalendarWeekday]
                 : level == 2 ? [ElementaryQuizType.ReadClock, ElementaryQuizType.Calendar, ElementaryQuizType.CalendarWeekday, ElementaryQuizType.SameMonthElapsed, ElementaryQuizType.SameMonthInclusive]
                 : ElementaryQuizGenerator.Types(kind).Where(t => level >= 4 || t is not (ElementaryQuizType.SecondsConversion or ElementaryQuizType.YearCentury)).ToArray(),
-            QuizProblemKind.Data => level < 2 ? [] : level <= 3 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph]
-                : level == 4 ? [ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph, ElementaryQuizType.ReadBarChart,
+            QuizProblemKind.Data => level < 2 ? [] : level <= 3 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph]
+                : level == 4 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.ReadTable, ElementaryQuizType.ReadPictograph, ElementaryQuizType.ReadBarChart,
                     ElementaryQuizType.ChartTotal, ElementaryQuizType.ChartDifference] : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.Measurement => level < 3 ? [] : level == 3 ? [ElementaryQuizType.LengthConversion,
+            QuizProblemKind.Measurement => level < 3 ? [] : level == 3 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.LengthConversion,
                     ElementaryQuizType.MassConversion, ElementaryQuizType.CapacityConversion, ElementaryQuizType.MixedLength]
-                : level == 4 ? [ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion,
+                : level == 4 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.LengthConversion, ElementaryQuizType.MassConversion,
                     ElementaryQuizType.CapacityConversion, ElementaryQuizType.MixedLength, ElementaryQuizType.AreaConversion]
                 : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.TwoNumbers => level < 4 ? [] : level == 4 ? [ElementaryQuizType.SumDifference] : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.FractionSkills => level < 4 ? [] : level == 4 ? [ElementaryQuizType.ReduceFraction,
+            QuizProblemKind.TwoNumbers => level < 4 ? [] : level == 4 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.SumDifference] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.FractionSkills => level < 4 ? [] : level == 4 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.ReduceFraction,
                     ElementaryQuizType.CommonDenominator, ElementaryQuizType.FractionOfNumber, ElementaryQuizType.FractionRemaining, ElementaryQuizType.OrderRelatedFractions] : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.Probability => level < 2 ? [] : level < 5 ? [ElementaryQuizType.Likelihood] : ElementaryQuizGenerator.Types(kind),
+            QuizProblemKind.Probability => level < 2 ? [] : level < 5 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.Likelihood] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Remainder => level < 3 ? [] : ElementaryQuizGenerator.Types(kind),
             QuizProblemKind.Decimal => level < 5 ? [] : ElementaryQuizGenerator.Types(kind),
-            QuizProblemKind.MultiStep => level < 2 ? [] : level == 2 ? [ElementaryQuizType.MultiStepAddSubtract,
+            QuizProblemKind.MultiStep => level < 2 ? [] : level == 2 ? (MathSolver.Models.ElementaryQuizType[])[ElementaryQuizType.MultiStepAddSubtract,
                 ElementaryQuizType.MultiStepEqualGroups, ElementaryQuizType.MultiStepRemaining] : ElementaryQuizGenerator.Types(kind),
             _ => []
         };

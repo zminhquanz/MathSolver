@@ -264,8 +264,8 @@ public static class FractionQuestionCatalogue
         {
             string a = Left(c).ToString(), b = Right(c).ToString();
             expression = expression with { EquivalentExpressions = scene.Formula == "({a} + {b}) × 2"
-                ? [$"2 × ({a} + {b})", $"2 × ({b} + {a})", $"({b} + {a}) × 2"]
-                : [$"({b} + {a}) ÷ 2"] };
+                ? (string[])[$"2 × ({a} + {b})", $"2 × ({b} + {a})", $"({b} + {a}) × 2"]
+                : (string[])[$"({b} + {a}) ÷ 2"] };
         }
         return new(new(0, c.Operation, 1), mode, 0, null, presented.HasValue ? presented == answer : null, [],
             text, FractionProblem: expression is null ? fraction : null, ExpressionProblem: expression);

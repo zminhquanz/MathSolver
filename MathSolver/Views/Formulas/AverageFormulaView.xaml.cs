@@ -72,7 +72,7 @@ public partial class AverageFormulaView : ContentView
         if (vi)
         {
             return
-            [
+            (MathSolver.Models.AverageFormulaItem[])[
                 new(
                     AverageQuizType.Direct,
                     "1. Tìm trung bình cộng trực tiếp",
@@ -119,7 +119,7 @@ public partial class AverageFormulaView : ContentView
         }
 
         return
-        [
+        (MathSolver.Models.AverageFormulaItem[])[
             new(
                 AverageQuizType.Direct,
                 "1. Find the mean directly",

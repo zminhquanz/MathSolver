@@ -74,7 +74,7 @@ internal static class SumRatioOpenCatalogue
                 "The count of {v2} that {v0} holds equals {f1} of the count of {v2} owned by {v1}.",
                 "How many {v2} does {v1} hold, and how many does {v0} hold?")
         };
-        return example with {Facts=[new("fact_0",total),new("fact_1",ratio)],Question=question};
+        return example with {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",total),new("fact_1",ratio)],Question=question};
     }
     internal static string PromptRelation(BasicQuestionContract c)
     {

@@ -11,7 +11,7 @@ internal static class InverseWorkPilot
         string Given, string Condition, string Question, string SingleLead, string TeamLead);
     // Context and unit choices are finite typed data; the writing model never chooses them.
     private static readonly IReadOnlyList<Context> Vietnamese =
-    [
+    (MathSolver.Services.InverseWorkPilot.Context[])[
         new("painting", "công nhân", "công nhân", "ngày", "việc sơn một khu trường học",
             "{f0} {v0} hoàn thành {v2} trong {f1} {v1}.",
             "Khối lượng công việc giữ nguyên; năng suất của mỗi {v3} bằng nhau và không thay đổi.",
@@ -24,7 +24,7 @@ internal static class InverseWorkPilot
             "Thời gian một {v3} hoàn thành công việc đó", "Thời gian {f2} {v0} hoàn thành công việc đó")
     ];
     private static readonly IReadOnlyList<Context> English =
-    [
+    (MathSolver.Services.InverseWorkPilot.Context[])[
         new("painting", "workers", "worker", "days", "painting a school complex",
             "{f0} {v0} complete {v2} in {f1} {v1}.",
             "The amount of work stays fixed; the productivity of each {v3} is equal and unchanged.",

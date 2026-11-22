@@ -12,7 +12,7 @@ internal static class PowerDiagnosticsPresentation
         NttKernelExecution.Merge(diagnostics.KernelUsage.Where(row => row.Calls > 0));
 
     internal static IReadOnlyList<PowerTimingRow> PhaseRows(ParallelPowerDiagnostics diagnostics) =>
-        Measured([
+        Measured((MathSolver.Services.Core.PowerTimingRow[])[
             new("BitReversal", diagnostics.BitReversal),
             new("Forward", diagnostics.ForwardTransform),
             new("Pointwise", diagnostics.Pointwise),
@@ -24,20 +24,20 @@ internal static class PowerDiagnosticsPresentation
     internal static IReadOnlyList<PowerTimingRow> Measured(IEnumerable<PowerTimingRow> rows) =>
         rows.Where(row => row.Elapsed > TimeSpan.Zero).ToArray();
 
-    internal static IReadOnlyList<PowerTimingRow> ForwardRows(ParallelPowerDiagnostics diagnostics) => Measured([
+    internal static IReadOnlyList<PowerTimingRow> ForwardRows(ParallelPowerDiagnostics diagnostics) => Measured((MathSolver.Services.Core.PowerTimingRow[])[
         new("LocalL3", diagnostics.ForwardLocalL3), new("LocalL2", diagnostics.ForwardLocalL2),
         new("LocalL1", diagnostics.ForwardLocalL1), new("GlobalCached", diagnostics.ForwardGlobalCached),
         new("GlobalUncached", diagnostics.ForwardGlobalUncached),
         new("GlobalTwiddle", diagnostics.ForwardGlobalTwiddlePreparation), new("LocalTwiddle", diagnostics.ForwardLocalTwiddlePreparation)
     ]);
 
-    internal static IReadOnlyList<PowerTimingRow> InverseRows(ParallelPowerDiagnostics diagnostics) => Measured([
+    internal static IReadOnlyList<PowerTimingRow> InverseRows(ParallelPowerDiagnostics diagnostics) => Measured((MathSolver.Services.Core.PowerTimingRow[])[
         new("LocalL3", diagnostics.InverseLocalL3), new("LocalL2", diagnostics.InverseLocalL2),
         new("LocalL1", diagnostics.InverseLocalL1), new("GlobalCached", diagnostics.InverseGlobalCached),
         new("GlobalUncached", diagnostics.InverseGlobalUncached), new("FinalPrefix", diagnostics.InverseFinalPrefix)
     ]);
 
-    internal static IReadOnlyList<PowerTimingRow> InverseL1Rows(ParallelPowerDiagnostics diagnostics) => Measured([
+    internal static IReadOnlyList<PowerTimingRow> InverseL1Rows(ParallelPowerDiagnostics diagnostics) => Measured((MathSolver.Services.Core.PowerTimingRow[])[
         new("Packed816", diagnostics.InverseL1Packed816), new("GenericPair", diagnostics.InverseL1GenericStagePair),
         new("Radix4", diagnostics.InverseL1Radix4Tail)
     ]);

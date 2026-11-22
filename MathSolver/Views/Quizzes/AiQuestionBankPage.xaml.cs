@@ -26,8 +26,8 @@ public partial class AiQuestionBankPage : ContentPage
         Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     private static readonly FilePickerFileType GgufType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
     {
-        [DevicePlatform.WinUI] = [".gguf"], [DevicePlatform.Android] = ["application/octet-stream", "*/*"],
-        [DevicePlatform.iOS] = ["public.data"], [DevicePlatform.MacCatalyst] = ["public.data"]
+        [DevicePlatform.WinUI] = (string[])[".gguf"], [DevicePlatform.Android] = (string[])["application/octet-stream", "*/*"],
+        [DevicePlatform.iOS] = (string[])["public.data"], [DevicePlatform.MacCatalyst] = (string[])["public.data"]
     });
 
     public AiQuestionBankPage()
@@ -166,7 +166,7 @@ public partial class AiQuestionBankPage : ContentPage
         StarsPicker.ItemsSource = IllustratedQuizPicker.DifficultyLabels();
         IllustratedQuizPicker.SetTextOptions(StarsPicker);
         LanguagePicker.ItemsSource = new[] { LocalizationService.TranslateKey("Language.Vietnamese"), LocalizationService.TranslateKey("Language.English") };
-        IllustratedQuizPicker.SetKeys(LanguagePicker, ["Language.Vietnamese", "Language.English"]);
+        IllustratedQuizPicker.SetKeys(LanguagePicker, (string[])["Language.Vietnamese", "Language.English"]);
         BatchModePicker.ItemsSource = new[] { T("Single"), T("Batch") };
         DownloadModelPicker.ItemsSource = AiModelLibrary.Downloads.Select(m => m.Name).ToArray();
         if (DownloadModelPicker.SelectedIndex < 0) DownloadModelPicker.SelectedIndex = 0;

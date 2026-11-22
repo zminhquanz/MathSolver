@@ -316,17 +316,17 @@ public static partial class AppliedQuestionCatalogue
                 ArithmeticOperation.Add => QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.025"),
                 ArithmeticOperation.Subtract => QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.026"),
                 _ => vi ? "Số " + context.ViPeriod : "Number of " + QuizStoryContextCatalog.PluralPeriod(context.EnPeriod) };
-            return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.027"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.028"), [
+            return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.027"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.028"), (MathSolver.Models.QuestionFactRow[])[
                 new(firstLabel, c.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                 new(secondLabel, c.Right.ToString(System.Globalization.CultureInfo.InvariantCulture)) ]) { IsSummary = true };
         }
         if (c.SceneId.StartsWith("survey-", StringComparison.Ordinal))
-            return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.029"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.030"), [
+            return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.029"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.030"), (MathSolver.Models.QuestionFactRow[])[
                 new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.031"), c.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)),
                 new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.032"), c.Right.ToString(System.Globalization.CultureInfo.InvariantCulture)) ]) { IsSummary = true };
         string first = c.SceneId == "visitors-average-groups" ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.033")
             : (c.Operation == ArithmeticOperation.Multiply ? QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.037") : QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.038"));
-        return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.034"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.035"), [
+        return new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.034"), QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.035"), (MathSolver.Models.QuestionFactRow[])[
             new(first, c.Left.ToString(System.Globalization.CultureInfo.InvariantCulture)),
             new(QuizContentCatalog.Text(c.Language, "AppliedQuestionCatalogue.Contexts.FactTable.036"), c.Right.ToString(System.Globalization.CultureInfo.InvariantCulture)) ]) { IsSummary = true };
     }

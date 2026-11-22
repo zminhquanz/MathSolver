@@ -27,12 +27,12 @@ public static class UserQuestionTemplateValidator
     {
         if (c.Version == ExpandedArithmeticCatalogue.Version)
             return ExpandedArithmeticCatalogue.Validate(QuestionBankStore.SerializeDraft(draft), c).IsValid
-                ? [] : [new("", "ChangedRelationOrTarget")];
-        if (!c.IsValid || !c.IsTemplate) return [new("", "InvalidContract")];
+                ? [] : (MathSolver.Services.QuestionBank.TemplateSyntaxIssue[])[new("", "ChangedRelationOrTarget")];
+        if (!c.IsValid || !c.IsTemplate) return (MathSolver.Services.QuestionBank.TemplateSyntaxIssue[])[new("", "InvalidContract")];
         var example = BasicQuestionTemplates.Example(c);
         if (draft.UnitId != example.UnitId
             || !SameRoles(draft.Facts, example.Facts) || !SameRoles(draft.SolutionLeads, example.SolutionLeads))
-            return [new("", "InvalidFields")];
+            return (MathSolver.Services.QuestionBank.TemplateSyntaxIssue[])[new("", "InvalidFields")];
         var expected = Fields(example).ToDictionary(f => f.Id, f => f.Text);
         string[] candidates = c.Version == ReasoningStoryCatalogue.Version
             ? ReasoningStoryCatalogue.Lesson(c).Quantities.Select(q => "{" + q.Id + "}").ToArray()

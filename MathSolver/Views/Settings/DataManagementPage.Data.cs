@@ -19,10 +19,10 @@ public partial class DataManagementPage
     private string _sqlHelpTopic = "SqlHelpQuery";
     private static readonly FilePickerFileType ExcelType = new(new Dictionary<DevicePlatform, IEnumerable<string>>
     {
-        [DevicePlatform.WinUI] = [".xlsx"],
-        [DevicePlatform.Android] = ["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
-        [DevicePlatform.iOS] = ["org.openxmlformats.spreadsheetml.sheet"],
-        [DevicePlatform.MacCatalyst] = ["org.openxmlformats.spreadsheetml.sheet"]
+        [DevicePlatform.WinUI] = (string[])[".xlsx"],
+        [DevicePlatform.Android] = (string[])["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+        [DevicePlatform.iOS] = (string[])["org.openxmlformats.spreadsheetml.sheet"],
+        [DevicePlatform.MacCatalyst] = (string[])["org.openxmlformats.spreadsheetml.sheet"]
     });
 
     private void UpdateDataActions()

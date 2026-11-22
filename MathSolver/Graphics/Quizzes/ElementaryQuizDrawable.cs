@@ -156,7 +156,7 @@ public sealed partial class ElementaryQuizDrawable(QuizVisualData? source) : IDr
             else if (data.Kind is "parallel" or "perpendicular" or "intersecting" or "line-pairs")
             {
                 IReadOnlyList<QuizVisualLine> lines = data.Lines ??
-                    [new("a", 0, data.Kind == "parallel" ? -.28f : 0),
+                    (MathSolver.Models.QuizVisualLine[])[new("a", 0, data.Kind == "parallel" ? -.28f : 0),
                      new("b", data.Kind == "parallel" ? 0 : data.Kind == "perpendicular" ? 90 : 45,
                          data.Kind == "parallel" ? .28f : 0)];
                 float cx = width / 2, cy = height / 2;

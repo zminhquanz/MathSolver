@@ -2,7 +2,6 @@ using CommunityToolkit.Maui;
 using CommunityToolkit.Maui.Core;
 using MathSolver.Controls;
 using MathSolver.Services;
-using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Handlers;
 
 namespace MathSolver
@@ -79,10 +78,6 @@ namespace MathSolver
                     MathSolver.Platforms.Android.PackedFileImageSourceService>());
 #endif
             ConfigureAndroidMaterial3Phase3(builder);
-#endif
-
-#if DEBUG
-            builder.Logging.AddDebug();
 #endif
 
             return builder.Build();

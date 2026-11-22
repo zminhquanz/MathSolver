@@ -85,7 +85,7 @@ public sealed partial class ElementaryQuizGenerator
         }
         text += QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.017");
         return t.Build("age-" + level, text, diagram: new("bars", QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.AgeStories.CreateAgeTwoNumbers.018"),
-            [new(first, [new("?")]), new(second, [new("?")])])) with { StoryContextId = "family-age" };
+            (MathSolver.Models.QuizDiagramRow[])[new(first, (MathSolver.Models.QuizDiagramSegment[])[new("?")]), new(second, (MathSolver.Models.QuizDiagramSegment[])[new("?")])])) with { StoryContextId = "family-age" };
         string F(string role) => t.Givens.Single(g => g.Role == role).Value;
     }
 }

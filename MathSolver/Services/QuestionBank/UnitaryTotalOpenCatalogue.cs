@@ -68,6 +68,6 @@ internal static class UnitaryTotalOpenCatalogue
             (_,"gifts")=>"Each {v2} contains the same number of {v1}, and the new groups have that same count.",
             _=>"Every {v2} holds an equal number of {v1}, and this count remains unchanged for the new groups."
         };
-        return draft with {Facts=[draft.Facts![0],draft.Facts[1] with {Text=condition}]};
+        return draft with {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[draft.Facts![0],draft.Facts[1] with {Text=condition}]};
     }
 }

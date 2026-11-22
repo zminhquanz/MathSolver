@@ -84,12 +84,12 @@ internal static partial class MotionExtendedMeaning
         return targets.FirstOrDefault(t=>Matches(question,t.Pattern)).Kind;
     }
     private static IEnumerable<(string,string)> WrongSubstitutions(bool vi)=>vi?
-        [("xuất phát cùng lúc","xuất phát khác lúc"),("bắt đầu đồng thời","bắt đầu khác lúc"),
+        ((string, string)[])[("xuất phát cùng lúc","xuất phát khác lúc"),("bắt đầu đồng thời","bắt đầu khác lúc"),
          ("cùng chiều","ngược chiều"),("ngược chiều về phía nhau","cùng chiều ra xa nhau"),("tiến về phía nhau","đi ra xa nhau"),
          ("không dừng nghỉ","có dừng nghỉ"),("không nghỉ","có nghỉ"),("không đổi","thay đổi"),("giữ nguyên","thay đổi"),
          ("ở phía trước","ở phía sau"),("dẫn trước","ở phía sau"),("xuôi dòng","ngược dòng"),("ngược dòng","xuôi dòng"),
          ("so với bờ","so với nước"),("nước yên lặng","nước đang chảy"),("hằng số","thay đổi")]
-        :[("simultaneously","at different times"),("at the same time","at different times"),("towards each other","away from each other"),
+        :((string, string)[])[("simultaneously","at different times"),("at the same time","at different times"),("towards each other","away from each other"),
           ("towards one another","away from one another"),("in the same direction","in opposite directions"),
           ("with no stops","with a stop"),("without stopping","with a stop"),("constant","variable"),("unchanged","changing"),
           ("ahead of","behind"),("with a lead of","with a delay of"),("downstream","upstream"),("upstream","downstream"),

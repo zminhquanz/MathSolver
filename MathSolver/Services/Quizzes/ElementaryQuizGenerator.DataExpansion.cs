@@ -103,7 +103,7 @@ public sealed partial class ElementaryQuizGenerator
             if (type == ElementaryQuizType.SortData)
             {
                 targets = ids.ToArray(); targetKind = DataChartQuestionKind.CategoryCounts;
-                hidden.UnionWith([0, 1, 2]);
+                hidden.UnionWith((int[])[0, 1, 2]);
                 problem += Text("Classify", ("first", labels[0]), ("second", labels[1]), ("third", labels[2]), ("unit", context.Unit));
                 for (int i = 0; i < 3; i++)
                 {

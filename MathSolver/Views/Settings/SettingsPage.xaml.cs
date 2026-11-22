@@ -47,10 +47,10 @@ public partial class SettingsPage : ContentPage
         new(
             new Dictionary<DevicePlatform, IEnumerable<string>>
             {
-                [DevicePlatform.WinUI] = [".mp4"],
-                [DevicePlatform.Android] = ["video/mp4"],
-                [DevicePlatform.iOS] = ["public.mpeg-4"],
-                [DevicePlatform.MacCatalyst] = ["public.mpeg-4"]
+                [DevicePlatform.WinUI] = (string[])[".mp4"],
+                [DevicePlatform.Android] = (string[])["video/mp4"],
+                [DevicePlatform.iOS] = (string[])["public.mpeg-4"],
+                [DevicePlatform.MacCatalyst] = (string[])["public.mpeg-4"]
             });
 
     public SettingsPage()

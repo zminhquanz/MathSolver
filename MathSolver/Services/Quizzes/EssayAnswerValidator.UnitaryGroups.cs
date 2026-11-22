@@ -39,7 +39,7 @@ public sealed partial class EssayAnswerValidator
                 $"{p.C} ÷ ({p.B} ÷ {p.A})",$"{p.C} × {p.A} ÷ {p.B}",$"{p.A} × {p.C} ÷ {p.B}",
                 $"{p.C} ÷ {p.B} × {p.A}",$"{p.A} ÷ {p.B} × {p.C}",$"{p.A} ÷ ({p.B} ÷ {p.C})"};
             bool shape=equals>0&&(MatchesUnitaryGroupCalculation(calculation[..equals],forms)
-                ||!first&&lines.Length==2&&MatchesUnitaryGroupCalculation(calculation[..equals],[$"{p.C} ÷ {rate}"]));
+                ||!first&&lines.Length==2&&MatchesUnitaryGroupCalculation(calculation[..equals],(string[])[$"{p.C} ÷ {rate}"]));
             var result=ValidateCalculatedEquation(first?q with {CorrectAnswer=rate}:q,calculation);
             if(result.IsCorrect&&!shape)result=(false,EssayAnswerError.WrongOperandsOrOperation);
             bool unitOk=first?IsGroupRateUnit(unit,p.GroupCountUnits!):GroupCountUnitMatches(unit,p.GroupCountUnits!.Groups);

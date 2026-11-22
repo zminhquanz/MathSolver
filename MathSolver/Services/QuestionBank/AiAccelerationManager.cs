@@ -43,7 +43,7 @@ public static class AiAccelerationManager
             Backend = AiGpuBackend.Cpu;
 #else
             Adapter = AiAccelerationPolicy.SelectAdapter(WindowsAiGpuDetector.GetAdapters(), OperatingSystem.IsWindows());
-            Backend = AiAccelerationPolicy.SelectBackend(Adapter is null ? [] : [Adapter], OperatingSystem.IsWindows());
+            Backend = AiAccelerationPolicy.SelectBackend(Adapter is null ? [] : (MathSolver.Services.QuestionBank.AiGpuAdapter[])[Adapter], OperatingSystem.IsWindows());
 #endif
             bool supported = Backend != AiGpuBackend.Cpu;
             Mode = supported && Preferences.Default.Get(UseGpuPreferenceKey, true) ? AiComputeMode.Gpu : AiComputeMode.Cpu;

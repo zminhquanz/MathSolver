@@ -47,7 +47,7 @@ public sealed partial class ElementaryQuizGenerator
         b.Answer(d.Context.SmallerOwner,$"({total}-{difference})/2",d.Context.Unit);
         b.Answer(d.Context.LargerOwner,$"({total}+{difference})/2",d.Context.Unit);
         var diagram=new QuizDiagram("bars",d.Render(d.Context.Total+" "+d.Context.Difference),
-            [new(d.Context.SmallerOwner,[new("?",2)]),new(d.Context.LargerOwner,[new("?",2),new(d.Difference.ToString(CultureInfo.InvariantCulture),Highlight:true)])]);
+            (MathSolver.Models.QuizDiagramRow[])[new(d.Context.SmallerOwner,(MathSolver.Models.QuizDiagramSegment[])[new("?",2)]),new(d.Context.LargerOwner,(MathSolver.Models.QuizDiagramSegment[])[new("?",2),new(d.Difference.ToString(CultureInfo.InvariantCulture),Highlight:true)])]);
         var contract=b.Build(SumDifferencePilot.Relation,d.Problem,diagram:diagram) with {StoryContextId=d.Profile};
         return CompleteQuestion(mode,contract,[],null);
     }

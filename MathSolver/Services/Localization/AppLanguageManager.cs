@@ -17,7 +17,7 @@ public sealed record AppLanguageOption(
 public static class AppLanguageCatalog
 {
     public static IReadOnlyList<AppLanguageOption> Options { get; } =
-    [
+    (MathSolver.Services.AppLanguageOption[])[
         new(
             AppLanguage.Vietnamese,
             "Language.Vietnamese"),

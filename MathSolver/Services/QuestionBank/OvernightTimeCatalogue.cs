@@ -16,14 +16,14 @@ internal static class OvernightTimeCatalogue
         var q=new ElementaryQuizGenerator(new(c.Story.Seed)).GenerateOvernightTime(ArithmeticQuizMode.Essay,c.Language,c.Tier,d.Profile);
         string[] roles=["start-hour","start-minute","end-hour","end-minute"];
         var quantities=roles.Select((r,i)=>new NarrativeQuantity("f"+i,r,d.Values["f"+i])).Concat(
-            [new("day_offset","end-day-offset","1"),new("v0","time-actor",d.Context.Actor),new("v1","time-activity",d.Context.Activity)]).ToArray();
+            (MathSolver.Services.QuestionBank.NarrativeQuantity[])[new("day_offset","end-day-offset","1"),new("v0","time-actor",d.Context.Actor),new("v1","time-activity",d.Context.Activity)]).ToArray();
         var facts=d.Context.Facts.Select((text,i)=>new NarrativeClause("fact_"+i,text)).ToArray();
         string signature=string.Join("|",OvernightTimePilot.Relation,d.Profile,c.Language,c.Tier,
             System.Text.Json.JsonSerializer.Serialize(d.Context),"end-day-offset=1",string.Join("/",roles));
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(signature)));
         string unit=c.Language==AppLanguage.Vietnamese?"phút":"minutes";
         return new(q,d.Profile,d.Context.Actor,unit,q.ElementaryProblem!.AnswerText,schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,QuizMathExpressionFormatter.Format(d.Expression)+" = "+d.Elapsed+" "+unit)],
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,QuizMathExpressionFormatter.Format(d.Expression)+" = "+d.Elapsed+" "+unit)],
             facts.Select((f,i)=>(f.Role,Texts:new[]{f.Text,d.Context.AlternativeFacts[i]})).ToDictionary(x=>x.Role,x=>x.Texts),
             [d.Context.Question,d.Context.AlternativeQuestion],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }

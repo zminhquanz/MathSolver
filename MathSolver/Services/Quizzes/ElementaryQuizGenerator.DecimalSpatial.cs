@@ -48,7 +48,7 @@ public sealed partial class ElementaryQuizGenerator
                 + (type == ElementaryQuizType.SpatialBetween
                     ? T("BetweenQuestion", ("first", row[0]), ("third", row[2]))
                     : T(type == ElementaryQuizType.SpatialFront ? "FrontQuestion" : "BehindQuestion", ("second", row[1])));
-            visual = new("foundation-queue", row.Append(T("ForwardDirection")).ToArray(), [0, 1, 2], "",
+            visual = new("foundation-queue", row.Append(T("ForwardDirection")).ToArray(), (decimal[])[0, 1, 2], "",
                 AccessibleDescription: T("SpatialFact", ("first", row[0]), ("second", row[1]), ("third", row[2])));
         }
         else

@@ -63,7 +63,7 @@ internal static partial class ElementaryEssayValidator
         if (lines.Length > 64 || (equations?.Length ?? 0) > 32768 || (answerText?.Length ?? 0) > 4096)
             return new(false, false, false, EssayAnswerError.WrongSolutionContent,
                 EssayAnswerError.InvalidEquationFormat, EssayAnswerError.InvalidAnswerFormat)
-            { Details = [QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.003")] };
+            { Details = (string[])[QuizContentCatalog.Text(contract.Language, "ElementaryEssayValidator.Validate.003")] };
         for (int index = 0; index < lines.Length; index++)
         {
             string line = lines[index];

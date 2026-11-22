@@ -33,7 +33,7 @@ internal static class OpenProseMeaning
     }
 
     internal static bool Matches(string candidate, string reference, AppLanguage language) =>
-        SemanticProseRules.Matches(Normalize(candidate, language), [Normalize(reference, language)], language);
+        SemanticProseRules.Matches(Normalize(candidate, language), (string[])[Normalize(reference, language)], language);
 
     internal static bool HasContradiction(BasicQuestionDraft draft, BasicQuestionDraft reference, AppLanguage language)
     {

@@ -37,7 +37,7 @@ public static class ReasoningStoryValidator
             string? languageError = QuestionProseLanguage.ValidateAndNormalize(draft, c.Language, out draft);
             if (languageError is not null) return new(null, languageError);
             bool Matches(string text, IEnumerable<string> examples) => examples.Any(example =>
-                SemanticProseRules.Matches(text, [example], c.Language)
+                SemanticProseRules.Matches(text, (string[])[example], c.Language)
                 // '$' is a currency unit in English price facts, not punctuation.
                 && (c.Family != BankQuestionFamily.Proportion || text.Count(ch => ch == '$') == example.Count(ch => ch == '$')));
             var mismatches = draft.Facts!.Zip(lesson.Facts)

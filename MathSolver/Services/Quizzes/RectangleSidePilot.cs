@@ -104,8 +104,8 @@ public sealed partial class ElementaryQuizGenerator
         b.Step(d.Render(d.Context.HalfLead),$"{perimeter}/2",d.Unit);
         b.Answer(d.Render(d.Context.Lead),$"{perimeter}/2-{known}",d.Unit);
         bool askLength=d.Context.TargetRole=="length";
-        var visual=new QuizVisualData("missing-side",[],[d.Perimeter,d.Known],d.Unit,
-            Polygons:[ShapeRectangle(0,0,6,4)],Annotations:[new(askLength?"?":$"{d.Known} {d.Unit}",3,-.5m),
+        var visual=new QuizVisualData("missing-side",[],(decimal[])[d.Perimeter,d.Known],d.Unit,
+            Polygons:(MathSolver.Models.QuizVisualPolygon[])[ShapeRectangle(0,0,6,4)],Annotations:(MathSolver.Models.QuizVisualAnnotation[])[new(askLength?"?":$"{d.Known} {d.Unit}",3,-.5m),
                 new(askLength?$"{d.Known} {d.Unit}":"?",6.8m,2),new($"P = {d.Perimeter} {d.Unit}",3,2)],ScenarioId:d.Context.Relation);
         var contract=b.Build(d.Context.Relation,d.Problem,visual) with {StoryContextId=d.Profile};
         return CompleteQuestion(mode,contract,[],null);

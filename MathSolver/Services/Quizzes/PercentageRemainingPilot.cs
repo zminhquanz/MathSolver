@@ -54,7 +54,7 @@ public sealed partial class PercentageQuizGenerator
     {
         var d=PercentageRemainingPilot.Create(profile,language,tier,_random);
         string equation=d.Expression+" = "+d.Answer.ToString(CultureInfo.InvariantCulture);
-        return new(PercentageQuizType.FindRemainingAfterDonation,[d.Whole,d.Percentage],d.Answer,d.Context.Unit,
+        return new(PercentageQuizType.FindRemainingAfterDonation,(int[])[d.Whole,d.Percentage],d.Answer,d.Context.Unit,
             d.Render(d.Context.Lead),d.Problem,equation,FormatSolution(d.Render(d.Context.Lead)+":",equation,d.Context.Unit,d.Answer,language),
             d.Whole,ArithmeticOperation.Subtract,d.Donated){StoryContextId=d.Profile};
     }

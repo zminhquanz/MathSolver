@@ -113,7 +113,7 @@ public sealed partial class AverageQuizGenerator
 
         return new AverageQuizContract(
             AverageQuizType.Direct,
-            [count, .. values],
+            (int[])[count, .. values],
             average,
             context.Unit,
             context.Subject,
@@ -142,7 +142,7 @@ public sealed partial class AverageQuizGenerator
 
         return new(
             AverageQuizType.TotalToAverage,
-            [count, total],
+            (int[])[count, total],
             average,
             context.Unit,
             context.Subject,
@@ -171,7 +171,7 @@ public sealed partial class AverageQuizGenerator
 
         return new(
             AverageQuizType.AverageToTotal,
-            [count, average],
+            (int[])[count, average],
             total,
             context.Unit,
             QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateAverageToTotal.019", ("context_ViSubject", $"{context.Subject}"), ("context_EnSubject", $"{context.Subject}")),
@@ -218,8 +218,8 @@ public sealed partial class AverageQuizGenerator
                 language);
 
             IReadOnlyList<int> facts = language == AppLanguage.Vietnamese
-                ? [3, a, b, c, count, count, targetAverage]
-                : [a, b, c, 3, count, targetAverage, count];
+                ? (int[])[3, a, b, c, count, count, targetAverage]
+                : (int[])[a, b, c, 3, count, targetAverage, count];
 
             return new(
                 AverageQuizType.MissingValue,
@@ -261,7 +261,7 @@ public sealed partial class AverageQuizGenerator
                 $"({lan} + ({lan} + {more}) + ({lan} + {more} − {less})) ÷ 3 = {average}";
             var contract = new AverageQuizContract(
                 AverageQuizType.IndirectData,
-                [lan, more, less],
+                (int[])[lan, more, less],
                 average,
                 context.Unit,
                 QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateIndirectData.021", ("context_ViSubject", $"{context.Subject}"), ("context_EnSubject", $"{context.Subject}")),
@@ -309,7 +309,7 @@ public sealed partial class AverageQuizGenerator
 
             return new(
                 AverageQuizType.TwoGroups,
-                [countA, averageA, countB, averageB],
+                (int[])[countA, averageA, countB, averageB],
                 average,
                 context.Unit,
                 context.Subject,
@@ -333,7 +333,7 @@ public sealed partial class AverageQuizGenerator
             language);
         return new(
             AverageQuizType.TwoGroups,
-            [ca, aa, cb, ab],
+            (int[])[ca, aa, cb, ab],
             answer,
             QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.009"),
             QuizContentCatalog.Text(language, "AverageQuizGenerator.CreateTwoGroups.010"),

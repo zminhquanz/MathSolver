@@ -143,7 +143,7 @@ public static class MeasurementEngine
     }
 
     private static readonly IReadOnlyList<MeasurementCategory> CategoriesValue =
-    [
+    (MathSolver.Services.MeasurementEngine.MeasurementCategory[])[
         new(
             "length",
             "Formula.Measurement.Category.Length",
@@ -151,7 +151,7 @@ public static class MeasurementEngine
             "m",
             "km",
             "m",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("km", "Formula.Measurement.Unit.Kilometre", "km", 0.001m),
                 Linear("hm", "Formula.Measurement.Unit.Hectometre", "hm", 0.01m),
                 Linear("dam", "Formula.Measurement.Unit.Decametre", "dam", 0.1m),
@@ -169,7 +169,7 @@ public static class MeasurementEngine
             "kg",
             "t",
             "kg",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("t", "Formula.Measurement.Unit.Tonne", "t", 0.001m),
                 Linear("q", "Formula.Measurement.Unit.Quintal", "q", 0.01m),
                 Linear("y", "Formula.Measurement.Unit.Yen", "yến", 0.1m)
@@ -191,7 +191,7 @@ public static class MeasurementEngine
             "s",
             "hour",
             "minute",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Ratio("week", "Formula.Measurement.Unit.Week", "week", 604800m)
                     with { SymbolKey = "Formula.Measurement.OutputUnit.Week" },
                 Ratio("day", "Formula.Measurement.Unit.Day", "day", 86400m)
@@ -214,7 +214,7 @@ public static class MeasurementEngine
             "m2",
             "m2",
             "cm2",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("km2", "Formula.Measurement.Unit.SquareKilometre", "km²", 0.000001m),
                 Linear("ha", "Formula.Measurement.Unit.Hectare", "ha", 0.0001m),
                 Linear("hm2", "Formula.Measurement.Unit.SquareHectometre", "hm²", 0.0001m),
@@ -233,7 +233,7 @@ public static class MeasurementEngine
             "m3",
             "m3",
             "dm3",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("m3", "Formula.Measurement.Unit.CubicMetre", "m³", 1m),
                 Linear("dm3", "Formula.Measurement.Unit.CubicDecimetre", "dm³", 1000m),
                 Linear("cm3", "Formula.Measurement.Unit.CubicCentimetre", "cm³", 1000000m),
@@ -248,7 +248,7 @@ public static class MeasurementEngine
             "l",
             "l",
             "ml",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("kl", "Formula.Measurement.Unit.Kilolitre", "kL", 0.001m),
                 Linear("hl", "Formula.Measurement.Unit.Hectolitre", "hL", 0.01m),
                 Linear("dal", "Formula.Measurement.Unit.Decalitre", "daL", 0.1m),
@@ -266,7 +266,7 @@ public static class MeasurementEngine
             "mps",
             "kmh",
             "mps",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 Linear("kmh", "Formula.Measurement.Unit.KilometrePerHour", "km/h", 3.6m),
                 Linear("mps", "Formula.Measurement.Unit.MetrePerSecond", "m/s", 1m),
                 Ratio("knot", "Formula.Measurement.Unit.Knot", "kn", 463m, 900m)
@@ -280,7 +280,7 @@ public static class MeasurementEngine
             "celsius",
             "celsius",
             "fahrenheit",
-            [
+            (MathSolver.Services.MeasurementEngine.MeasurementUnit[])[
                 new(
                     "celsius",
                     "Formula.Measurement.Unit.Celsius",

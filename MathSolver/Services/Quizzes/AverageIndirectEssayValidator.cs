@@ -21,8 +21,8 @@ internal static class AverageIndirectEssayValidator
             average.AnswerUnit, average.EquationText.Split('=')[0].Trim());
         var contract = new ElementaryQuizContract(QuizProblemKind.Average, default, AppLanguageManager.CurrentLanguage,
             average.ProblemText, average.SolutionText,
-            [data.FirstQuantity.ToString(CultureInfo.InvariantCulture), data.Increase.ToString(CultureInfo.InvariantCulture), data.Decrease.ToString(CultureInfo.InvariantCulture)],
-            ["0", "1", "2", "3"], [answer], RequiresSolution: false);
+            (string[])[data.FirstQuantity.ToString(CultureInfo.InvariantCulture), data.Increase.ToString(CultureInfo.InvariantCulture), data.Decrease.ToString(CultureInfo.InvariantCulture)],
+            (string[])["0", "1", "2", "3"], (MathSolver.Models.ElementaryAnswer[])[answer], RequiresSolution: false);
         var result = ElementaryEssayValidator.Validate(question with { ElementaryProblem = contract },
             null, equations, ElementaryQuizContract.FormatAnswer(answer));
         steps = result.Steps;

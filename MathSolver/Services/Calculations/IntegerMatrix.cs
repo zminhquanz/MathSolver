@@ -144,7 +144,7 @@ public sealed class MatrixCalculation : IDisposable
     public BigInteger[]? BigValues { get; private set; }
     public bool IsFileBacked => _blocks?.IsFileBacked ?? false;
     public IReadOnlyCollection<MatrixNumberStorage> StorageKinds => _blocks?.StorageKinds
-        ?? (BigValues is not null ? [MatrixNumberStorage.BigInteger] : [MatrixNumberStorage.Int128]);
+        ?? (BigValues is not null ? (MathSolver.Services.Core.MatrixNumberStorage[])[MatrixNumberStorage.BigInteger] : (MathSolver.Services.Core.MatrixNumberStorage[])[MatrixNumberStorage.Int128]);
     public long StoredBytes => _blocks?.StoredBytes ?? (long)Rows * Columns * 16;
     public long WorkspaceLimitBytes { get; internal set; }
     public long CacheLimitBytes => _blocks?.CacheLimitBytes ?? 0;

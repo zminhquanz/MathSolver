@@ -28,8 +28,8 @@ public static class OpenQuestionProse
 
     internal static IReadOnlyList<BasicQuestionDraft> Examples(BasicQuestionContract c) => c.Version == ExpandedArithmeticCatalogue.Version
         ? ExpandedArithmeticCatalogue.Drafts(c) : c.Version == ReasoningStoryCatalogue.Version
-            ? [Example(c),..ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).Take(7)]
-            : [Example(c), c.Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.Draft(c, 1)
+            ? (MathSolver.Services.QuestionBank.BasicQuestionDraft[])[Example(c),..ReviewedReasoningProse.NovelDrafts(c, new HashSet<string>()).Take(7)]
+            : (MathSolver.Services.QuestionBank.BasicQuestionDraft[])[Example(c), c.Version == FindXQuestionCatalogue.Version ? FindXQuestionCatalogue.Draft(c, 1)
                 : c.Version == AppliedQuestionCatalogue.Version ? AppliedQuestionCatalogue.Draft(c, 1) : OneStepQuestionCatalogue.Draft(c, 1)];
 
     internal static (string Id, string Text)[] Fields(BasicQuestionDraft draft) => UserQuestionTemplateValidator.Fields(draft).ToArray();

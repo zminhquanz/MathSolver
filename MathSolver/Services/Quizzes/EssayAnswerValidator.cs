@@ -434,15 +434,15 @@ public sealed partial class EssayAnswerValidator
         measurement switch
         {
             GeometryMeasurement.Perimeter =>
-                ["chu vi", "perimeter"],
+                (string[])["chu vi", "perimeter"],
             GeometryMeasurement.Area =>
-                ["diện tích", "area"],
+                (string[])["diện tích", "area"],
             GeometryMeasurement.TotalArea =>
-                ["diện tích toàn phần", "total surface area"],
+                (string[])["diện tích toàn phần", "total surface area"],
             GeometryMeasurement.LateralArea =>
-                ["diện tích xung quanh", "lateral surface area"],
+                (string[])["diện tích xung quanh", "lateral surface area"],
             GeometryMeasurement.Volume =>
-                ["thể tích", "volume"],
+                (string[])["thể tích", "volume"],
             _ => []
         };
 
@@ -451,12 +451,12 @@ public sealed partial class EssayAnswerValidator
         {
             MotionQuestionKind.BasicDistance or
             MotionQuestionKind.BasicRestDistance =>
-                ["quãng đường", "distance"],
+                (string[])["quãng đường", "distance"],
             MotionQuestionKind.BasicTime or
             MotionQuestionKind.CatchUpTime or
             MotionQuestionKind.MeetingTime =>
-                ["thời gian", "time"],
-            _ => ["vận tốc", "tốc độ", "speed"]
+                (string[])["thời gian", "time"],
+            _ => (string[])["vận tốc", "tốc độ", "speed"]
         };
 
     private static bool ContainsNormalizedPhrase(

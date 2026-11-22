@@ -59,9 +59,9 @@ internal static class RemainderGroupsPilot
         string fullLead = vi ? "Số {v0} đầy" : "Number of full {v0}";
         string minimumLead = vi ? "Số {v0} tối thiểu cần dùng" : "Minimum number of {v0} needed";
         return vi
-            ? [new(relation + "/pens", "cái bút", "hộp", "hộp", 12, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead),
+            ? (MathSolver.Services.RemainderGroupsPilot.Context[])[new(relation + "/pens", "cái bút", "hộp", "hộp", 12, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead),
                new(relation + "/apples", "quả táo", "giỏ", "giỏ", 15, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead)]
-            : [new(relation + "/pens", "pens", "boxes", "box", 12, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead),
+            : (MathSolver.Services.RemainderGroupsPilot.Context[])[new(relation + "/pens", "pens", "boxes", "box", 12, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead),
                new(relation + "/apples", "apples", "baskets", "basket", 15, total, alternate, capacity, capacityAlternate, question, questionAlternate, fullLead, minimumLead)];
     }
     internal static IEnumerable<string> Profiles(AppLanguage language, int variant) => Contexts(language, variant).Select(c => Prefix + c.Id);

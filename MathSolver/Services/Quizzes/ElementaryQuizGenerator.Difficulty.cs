@@ -239,9 +239,9 @@ public sealed partial class ElementaryQuizGenerator
             rows = [new(smallLabel, Parts(smallParts)), new(largeLabel, Parts(largeParts))];
         }
         else if (type == ElementaryQuizType.SumDifference)
-            rows = [new(smallLabel, [new("?", 2)]), new(largeLabel,
-                [new("?", 2), new(level <= 3 ? differenceExpression : "?", Highlight: true)])];
-        else rows = [new(smallLabel, [new("?")]), new(largeLabel, [new("?")])];
+            rows = [new(smallLabel, (MathSolver.Models.QuizDiagramSegment[])[new("?", 2)]), new(largeLabel,
+                (MathSolver.Models.QuizDiagramSegment[])[new("?", 2), new(level <= 3 ? differenceExpression : "?", Highlight: true)])];
+        else rows = [new(smallLabel, (MathSolver.Models.QuizDiagramSegment[])[new("?")]), new(largeLabel, (MathSolver.Models.QuizDiagramSegment[])[new("?")])];
         var diagram = new QuizDiagram("bars", QuizContentCatalog.Text(t.Language, "ElementaryQuizGenerator.Difficulty.CreateTwoNumberDifficulty.009"), rows);
         // Prose is built from semantic fact roles, never by replacing mathematical nouns.
         string text = TwoNumberStory(t, context, smallLabel, largeLabel, sum, level);

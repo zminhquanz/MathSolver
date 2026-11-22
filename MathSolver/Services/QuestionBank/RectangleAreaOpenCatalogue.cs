@@ -22,7 +22,7 @@ internal static class RectangleAreaOpenCatalogue
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",RectangleAreaPilot.Relation,
             d.Profile,c.Language,c.Tier,d.Context,string.Join("/",quantities.Select(x=>x.Role))))));
         return new(q,d.Profile,d.Render(d.Context.Lead),d.AreaUnit,d.Area+" "+d.AreaUnit,schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],
             facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),[d.Context.Question],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string WritingInstructions(AppLanguage language)=>language==AppLanguage.Vietnamese?"""

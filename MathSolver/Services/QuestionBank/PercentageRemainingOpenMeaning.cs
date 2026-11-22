@@ -90,7 +90,7 @@ internal static class PercentageRemainingOpenMeaning
                 question="How many {v1} does {v0} have left?";
         }
         var proof=FractionRemainingOpenMeaning.Validate(c,draft with
-            {Facts=[facts[0] with {Text=whole},facts[1]],Question=question});
+            {Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[facts[0] with {Text=whole},facts[1]],Question=question});
         if(proof.IsValid)return new(draft,null,c);
         return result;
     }

@@ -99,7 +99,7 @@ public static class ExpandedArithmeticCatalogue
             int split = problem.LastIndexOf(". ", StringComparison.Ordinal) + 2;
             if (split < 2 || !problem.EndsWith('?')) throw new InvalidDataException("Expanded template needs a separate question.");
             return new BasicQuestionDraft("", "", problem[split..], leads[^1].Text, "expanded-practice")
-            { Facts = [new("situation", problem[..split].Trim())], SolutionLeads = leads };
+            { Facts = (MathSolver.Services.QuestionBank.NarrativeClause[])[new("situation", problem[..split].Trim())], SolutionLeads = leads };
         }).ToArray();
     }
 

@@ -156,7 +156,7 @@ public sealed partial class MotionQuizGenerator
             return new(
                 MotionQuizType.Basic,
                 kind,
-                [speed, totalElapsed, restTime],
+                (int[])[speed, totalElapsed, restTime],
                 distance,
                 distanceUnit,
                 QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.002"),
@@ -166,7 +166,7 @@ public sealed partial class MotionQuizGenerator
                 profile.TimeDivisor == 1 ? travelTime : speed * travelTime,
                 profile.TimeDivisor == 1 ? ArithmeticOperation.Multiply : ArithmeticOperation.Divide,
                 profile.TimeDivisor == 1 ? speed * profile.DistanceScale : profile.TimeDivisor,
-                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = [subject] };
+                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = (string[])[subject] };
         }
 
         if (kind == MotionQuestionKind.BasicDistance)
@@ -182,7 +182,7 @@ public sealed partial class MotionQuizGenerator
             return new(
                 MotionQuizType.Basic,
                 kind,
-                [speed, time],
+                (int[])[speed, time],
                 distance,
                 distanceUnit,
                 QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.004"),
@@ -192,7 +192,7 @@ public sealed partial class MotionQuizGenerator
                 profile.TimeDivisor == 1 ? speed : speed * time,
                 profile.TimeDivisor == 1 ? ArithmeticOperation.Multiply : ArithmeticOperation.Divide,
                 profile.TimeDivisor == 1 ? time * profile.DistanceScale : profile.TimeDivisor,
-                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = [subject] };
+                DistinctUnits(speedUnit, timeUnit, distanceUnit)) { NarrativeActors = (string[])[subject] };
         }
 
         if (kind == MotionQuestionKind.BasicSpeed)
@@ -210,7 +210,7 @@ public sealed partial class MotionQuizGenerator
             return new(
                 MotionQuizType.Basic,
                 kind,
-                [distance, time],
+                (int[])[distance, time],
                 speed,
                 speedUnit,
                 QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.006"),
@@ -220,7 +220,7 @@ public sealed partial class MotionQuizGenerator
                 numerator,
                 ArithmeticOperation.Divide,
                 time,
-                DistinctUnits(distanceUnit, timeUnit, speedUnit)) { NarrativeActors = [subject] };
+                DistinctUnits(distanceUnit, timeUnit, speedUnit)) { NarrativeActors = (string[])[subject] };
         }
 
         // BasicTime
@@ -238,7 +238,7 @@ public sealed partial class MotionQuizGenerator
         return new(
             MotionQuizType.Basic,
             kind,
-            [targetSpeed, targetDistance],
+            (int[])[targetSpeed, targetDistance],
             targetTime,
             timeUnit,
             QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateBasicContract.008"),
@@ -248,7 +248,7 @@ public sealed partial class MotionQuizGenerator
             timeNumerator,
             ArithmeticOperation.Divide,
             targetSpeed,
-            DistinctUnits(speedUnit, distanceUnit, timeUnit)) { NarrativeActors = [subject] };
+            DistinctUnits(speedUnit, distanceUnit, timeUnit)) { NarrativeActors = (string[])[subject] };
     }
 
     private MotionQuizContract CreateChasingContract(AppLanguage language, int? level)
@@ -281,7 +281,7 @@ public sealed partial class MotionQuizGenerator
         return new(
             MotionQuizType.Chasing,
             MotionQuestionKind.CatchUpTime,
-            [gap, slowSpeed, fastSpeed],
+            (int[])[gap, slowSpeed, fastSpeed],
             time,
             timeUnit,
             QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateChasingContract.011"),
@@ -291,7 +291,7 @@ public sealed partial class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             relativeSpeed,
-            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = [slowSubject, fastSubject] };
+            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = (string[])[slowSubject, fastSubject] };
     }
 
     private MotionQuizContract CreateMeetingContract(AppLanguage language, int? level)
@@ -324,7 +324,7 @@ public sealed partial class MotionQuizGenerator
         return new(
             MotionQuizType.Meeting,
             MotionQuestionKind.MeetingTime,
-            [distance, speed1, speed2],
+            (int[])[distance, speed1, speed2],
             time,
             timeUnit,
             QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateMeetingContract.014"),
@@ -334,7 +334,7 @@ public sealed partial class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             relativeSpeed,
-            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = [subject1, subject2] };
+            DistinctUnits(distanceUnit, speedUnit, timeUnit)) { NarrativeActors = (string[])[subject1, subject2] };
     }
 
     private MotionQuizContract CreateRiverContract(AppLanguage language, int? level)
@@ -431,7 +431,7 @@ public sealed partial class MotionQuizGenerator
         return new(
             MotionQuizType.River,
             kind,
-            [boatSpeed, currentSpeed],
+            (int[])[boatSpeed, currentSpeed],
             answer,
             speedUnit,
             (isDownstream ? QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.022") : QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverSimpleContract.023")),
@@ -441,7 +441,7 @@ public sealed partial class MotionQuizGenerator
             boatSpeed,
             isDownstream ? ArithmeticOperation.Add : ArithmeticOperation.Subtract,
             currentSpeed,
-            DistinctUnits(speedUnit)) { NarrativeActors = [craft] };
+            DistinctUnits(speedUnit)) { NarrativeActors = (string[])[craft] };
     }
 
     private static MotionQuizContract CreateRiverDerivedContract(
@@ -466,7 +466,7 @@ public sealed partial class MotionQuizGenerator
         return new(
             MotionQuizType.River,
             kind,
-            [downstream, upstream],
+            (int[])[downstream, upstream],
             answer,
             speedUnit,
             (findBoat ? QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.026") : QuizContentCatalog.Text(language, "MotionQuizGenerator.CreateRiverDerivedContract.027")),
@@ -476,7 +476,7 @@ public sealed partial class MotionQuizGenerator
             numerator,
             ArithmeticOperation.Divide,
             2,
-            DistinctUnits(speedUnit)) { NarrativeActors = [craft] };
+            DistinctUnits(speedUnit)) { NarrativeActors = (string[])[craft] };
     }
 
     private ArithmeticQuizQuestion CreateQuestion(

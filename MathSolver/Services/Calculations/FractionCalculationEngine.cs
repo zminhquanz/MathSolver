@@ -142,7 +142,7 @@ public sealed class FractionCalculationEngine
                     $"Ta thực hiện {operationName} hai phân số.",
 
                 mathLines:
-                [
+                (string[])[
                     $"{numerator1}/{denominator1} " +
                     $"{operationSymbol} " +
                     $"{numerator2}/{denominator2}"
@@ -174,7 +174,7 @@ public sealed class FractionCalculationEngine
                         "của hai mẫu số.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"BCNN({denominator1}, {denominator2}) " +
                         $"= {commonDenominator}"
                     ]));
@@ -190,7 +190,7 @@ public sealed class FractionCalculationEngine
                         $"với {multiplier1}.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{commonDenominator} ÷ {denominator1} " +
                         $"= {multiplier1}",
 
@@ -215,7 +215,7 @@ public sealed class FractionCalculationEngine
                         $"với {multiplier2}.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{commonDenominator} ÷ {denominator2} " +
                         $"= {multiplier2}",
 
@@ -238,7 +238,7 @@ public sealed class FractionCalculationEngine
                         "Hai phân số lúc này đã có cùng mẫu số.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{convertedNumerator1}/{commonDenominator} " +
                         $"và {convertedNumerator2}/{commonDenominator}"
                     ]));
@@ -258,7 +258,7 @@ public sealed class FractionCalculationEngine
                     $"{verb} hai tử số.",
 
                 mathLines:
-                [
+                (string[])[
                     $"{convertedNumerator1}/{commonDenominator} " +
                     $"{operationSymbol} " +
                     $"{convertedNumerator2}/{commonDenominator}"
@@ -276,7 +276,7 @@ public sealed class FractionCalculationEngine
                     $"Giữ nguyên mẫu số {commonDenominator}.",
 
                 mathLines:
-                [
+                (string[])[
                     $"{convertedNumerator1} {operationSymbol} " +
                     $"{convertedNumerator2} = {resultNumerator}",
 
@@ -351,7 +351,7 @@ public sealed class FractionCalculationEngine
                 title: "Phép tính",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} × {n2}/{d2}"
                 ]));
 
@@ -360,7 +360,7 @@ public sealed class FractionCalculationEngine
                 title: "Thực hiện phép nhân",
                 description: "Nhân tử với tử, mẫu với mẫu",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} × {n2}/{d2}",
                     $"= {n1}×{n2}/{d1}×{d2}",
                     $"= {numerator}/{denominator}"
@@ -371,7 +371,7 @@ public sealed class FractionCalculationEngine
                 title: "Kết quả phép nhân",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} × {n2}/{d2}",
                     $"= {numerator}/{denominator}"
                 ]));
@@ -422,7 +422,7 @@ public sealed class FractionCalculationEngine
                 title: "Phép tính",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} ÷ {n2}/{d2}"
                 ]));
 
@@ -431,7 +431,7 @@ public sealed class FractionCalculationEngine
                 title: "Đảo phân số chia",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} ÷ {n2}/{d2}\n" +
                     $"= {n1}/{d1} × {d2}/{n2}"
                 ]));
@@ -441,7 +441,7 @@ public sealed class FractionCalculationEngine
                 title: "Thực hiện phép nhân",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"= ({n1} × {d2}) ÷ ({d1} × {n2})\n" +
                     $"= {numerator}/{denominator}"
                 ]));
@@ -453,7 +453,7 @@ public sealed class FractionCalculationEngine
                     "Đổi phép chia thành phép nhân với phân số nghịch đảo:",
 
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} ÷ {n2}/{d2}",
                     $"= {n1}/{d1} × {d2}/{n2}",
                     $"= {numerator}/{denominator}"
@@ -497,7 +497,7 @@ public sealed class FractionCalculationEngine
                 title: "Hai phân số ban đầu",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} và {n2}/{d2}"
                 ]));
 
@@ -511,7 +511,7 @@ public sealed class FractionCalculationEngine
                 title: "Quy đồng mẫu số",
                 description: "",
                 mathLines:
-                [
+                (string[])[
                     $"{n1}/{d1} = ({n1} × {factor1}) ÷ " +
                     $"({d1} × {factor1}) = {converted1}/{lcm}\n" +
                     $"{n2}/{d2} = ({n2} × {factor2}) ÷ " +
@@ -526,7 +526,7 @@ public sealed class FractionCalculationEngine
                 "Hai phân số sau khi quy đồng là:",
 
             mathLines:
-            [
+            (string[])[
                 $"{converted1}/{lcm} và {converted2}/{lcm}"
             ],
 
@@ -550,7 +550,7 @@ public sealed class FractionCalculationEngine
                         "Phân số có tử số bằng 0 nên kết quả bằng 0.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{numerator}/{denominator} = 0"
                     ],
 
@@ -585,7 +585,7 @@ public sealed class FractionCalculationEngine
                         $"Chia cả tử và mẫu cho {gcd}.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{numerator}/{denominator} = " +
                     $"{simplifiedNumerator}/{simplifiedDenominator}"
                     ],
@@ -602,7 +602,7 @@ public sealed class FractionCalculationEngine
                         "Phân số đã ở dạng tối giản.",
 
                     mathLines:
-                    [
+                    (string[])[
                         $"{numerator}/{denominator}"
                     ],
 

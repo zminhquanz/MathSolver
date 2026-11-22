@@ -52,7 +52,7 @@ public sealed partial class ElementaryQuizGenerator
         b.Answer(d.Context.LargerOwner,$"{part}*{large}",d.Context.Unit);
         QuizDiagramSegment[] Parts(int count)=>Enumerable.Range(0,count).Select(_=>new QuizDiagramSegment("?")).ToArray();
         var diagram=new QuizDiagram("bars",d.Render(d.Context.Total),
-            [new(d.Context.SmallerOwner,Parts(d.SmallerParts)),new(d.Context.LargerOwner,Parts(d.LargerParts))]);
+            (MathSolver.Models.QuizDiagramRow[])[new(d.Context.SmallerOwner,Parts(d.SmallerParts)),new(d.Context.LargerOwner,Parts(d.LargerParts))]);
         var contract=b.Build(SumRatioPilot.Relation,d.Problem,diagram:diagram) with {StoryContextId=d.Profile};
         return CompleteQuestion(mode,contract,[],null);
     }

@@ -91,7 +91,7 @@ public sealed partial class MotionQuizGenerator
             d.Relation.Kind is MotionQuestionKind.BasicSpeed or MotionQuestionKind.BasicTime?d.Distance:d.Speed,
             d.Relation.Kind is MotionQuestionKind.BasicSpeed or MotionQuestionKind.BasicTime?ArithmeticOperation.Divide:ArithmeticOperation.Multiply,
             d.Relation.Kind==MotionQuestionKind.BasicTime?d.Speed:d.TravelHours,new[]{"km/h",d.TimeUnit,"km"})
-            {NarrativeActors=[d.Context.Subject],NarrativeId=d.Profile};
+            {NarrativeActors=(string[])[d.Context.Subject],NarrativeId=d.Profile};
         return CreateQuestion(mode,p);
     }
 }

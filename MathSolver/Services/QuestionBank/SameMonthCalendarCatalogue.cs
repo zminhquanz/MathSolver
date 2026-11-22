@@ -33,14 +33,14 @@ internal static class SameMonthCalendarCatalogue
             slots=["f0","f1","f2","f3","f4","f5","v0","v1","v2","v3","v4"];
         }
         var quantities=slots.Select((id,i)=>new NarrativeQuantity(id,roles[i],d.Values[id])).Concat(
-            [new("include_start","include-start",d.IncludeStart?"1":"0"),new("include_end","include-end","1")]).ToArray();
+            (MathSolver.Services.QuestionBank.NarrativeQuantity[])[new("include_start","include-start",d.IncludeStart?"1":"0"),new("include_end","include-end","1")]).ToArray();
         var facts=d.Context.Facts.Select((text,i)=>new NarrativeClause("fact_"+i,text)).ToArray();
         string signature=string.Join("|",SameMonthCalendarPilot.ProfileRelation(d.Profile),d.Profile,c.Language,c.Tier,
             System.Text.Json.JsonSerializer.Serialize(d.Context),$"include-start={(d.IncludeStart?1:0)};include-end=1",string.Join("/",roles));
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(signature)));
         string unit=c.Language==AppLanguage.Vietnamese?"ngày":"days";
         return new(q,d.Profile,d.Context.Actor,unit,q.ElementaryProblem!.AnswerText,schema,quantities,facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,QuizMathExpressionFormatter.Format(d.Expression)+" = "+d.Elapsed+" "+unit)],
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,QuizMathExpressionFormatter.Format(d.Expression)+" = "+d.Elapsed+" "+unit)],
             facts.Select((f,i)=>(f.Role,Texts:new[]{f.Text,d.Context.AlternativeFacts[i]})).ToDictionary(x=>x.Role,x=>x.Texts),
             [d.Context.Question,d.Context.AlternativeQuestion],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }

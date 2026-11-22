@@ -22,12 +22,12 @@ internal static class QuadrilateralAreaOpenCatalogue
         var quantities=new List<NarrativeQuantity>{new("f0",d.IsTrapezoid?"trapezoid-longer-parallel-base":"parallelogram-base",d.Values["f0"]),
             new("f1",d.IsTrapezoid?"trapezoid-shorter-parallel-base":"parallelogram-corresponding-perpendicular-height",d.Values["f1"])};
         if(d.IsTrapezoid)quantities.Add(new("f2","trapezoid-corresponding-perpendicular-height",d.Values["f2"]));
-        quantities.AddRange([new("v0",d.Context.ShapeId+"-object",d.Context.Object),new("v1",d.Context.ShapeId+"-shape",d.Context.Shape),
+        quantities.AddRange((MathSolver.Services.QuestionBank.NarrativeQuantity[])[new("v0",d.Context.ShapeId+"-object",d.Context.Object),new("v1",d.Context.ShapeId+"-shape",d.Context.Shape),
             new("v2",d.Context.LengthUnitRole,d.LengthUnit),new("v3",d.Context.AreaUnitRole,d.AreaUnit)]);
         NarrativeClause[] facts=[new("fact_0",d.Context.ShapeFact),new("fact_1",d.Context.BaseFact),new("fact_2",d.Context.HeightFact)];
         string schema=Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(string.Join("\n",QuadrilateralAreaPilot.Relation(c.BankVariant),d.Profile,c.Language,c.Tier,d.Context,string.Join("/",quantities.Select(x=>x.Role))))));
         return new(q,d.Profile,d.Render(d.Context.Lead),d.AreaUnit,d.Area+" "+d.AreaUnit,schema,quantities.ToArray(),facts,d.Context.Question,
-            [new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
+            (MathSolver.Services.QuestionBank.NarrativeStep[])[new("step_0",d.Context.Lead,q.GeometryProblem!.EquationText+" "+d.AreaUnit)],facts.ToDictionary(f=>f.Role,f=>new[]{f.Text}),
             [d.Context.Question],new Dictionary<string,string[]>{{"step_0",[d.Context.Lead]}});
     }
     internal static string PromptRelation(BasicQuestionContract c)=>QuadrilateralAreaPilot.Relation(c.BankVariant)

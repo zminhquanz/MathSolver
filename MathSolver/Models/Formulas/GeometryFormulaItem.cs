@@ -64,7 +64,7 @@ public static class GeometryFormulaCatalog
             translate?.Invoke(text) ?? text;
 
         return
-        [
+        (MathSolver.Models.GeometryFormulaItem[])[
             Create(
                 id: "square",
                 category: GeometryCategory.Plane,
@@ -72,16 +72,16 @@ public static class GeometryFormulaCatalog
                 name: T("Hình vuông"),
                 cardHeight: 500,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a × 4"),
                     T("Diện tích: S = a × a")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài một cạnh")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Bốn cạnh bằng nhau; bốn góc vuông; hai đường chéo bằng nhau, vuông góc và cắt nhau tại trung điểm.")
                 ]),
 
@@ -92,17 +92,17 @@ public static class GeometryFormulaCatalog
                 name: T("Hình chữ nhật"),
                 cardHeight: 500,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = (a + b) × 2"),
                     T("Diện tích: S = a × b")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: chiều dài"),
                     T("b: chiều rộng")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Các cạnh đối song song và bằng nhau; bốn góc vuông; hai đường chéo bằng nhau và cắt nhau tại trung điểm.")
                 ]),
 
@@ -113,18 +113,18 @@ public static class GeometryFormulaCatalog
                 name: T("Hình tam giác"),
                 cardHeight: 520,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a + b + c"),
                     T("Diện tích: S = (a × h) ÷ 2")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài đáy"),
                     T("b, c: hai cạnh còn lại"),
                     T("h: chiều cao tương ứng với đáy a")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Tổng ba góc bằng 180°; tổng độ dài hai cạnh bất kỳ luôn lớn hơn cạnh còn lại.")
                 ]),
 
@@ -135,19 +135,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình tam giác vuông"),
                 cardHeight: 540,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a + b + c"),
                     T("Diện tích: S = (a × b) ÷ 2"),
                     T("Quan hệ cạnh: c² = a² + b²")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a, b: hai cạnh góc vuông"),
                     T("c: cạnh huyền"),
                     T("Góc giữa a và b bằng 90°")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có một góc vuông; hai góc nhọn phụ nhau; cạnh huyền đối diện góc vuông và là cạnh dài nhất.")
                 ]),
 
@@ -158,19 +158,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình tam giác đều"),
                 cardHeight: 560,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a × 3"),
                     T("Diện tích: S = (a × h) ÷ 2"),
                     T("Hoặc: S = (a² × √3) ÷ 4")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài mỗi cạnh"),
                     T("h: chiều cao, h = (a × √3) ÷ 2"),
                     T("Ba cạnh bằng nhau; ba góc đều bằng 60°")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Ba đường cao đồng thời là ba trung tuyến, ba đường phân giác và ba đường trung trực.")
                 ]),
 
@@ -181,19 +181,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình tròn"),
                 cardHeight: 530,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: C = 2 × π × r"),
                     T("Hoặc: C = π × d"),
                     T("Diện tích: S = π × r × r")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("r: bán kính"),
                     T("d: đường kính, d = 2 × r"),
                     T("π ≈ 3,14")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Mọi điểm trên đường tròn cách tâm một khoảng bằng bán kính; đường kính đi qua tâm và dài gấp đôi bán kính.")
                 ]),
 
@@ -204,18 +204,18 @@ public static class GeometryFormulaCatalog
                 name: T("Hình thang"),
                 cardHeight: 530,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a + b + c + d"),
                     T("Diện tích: S = ((a + b) × h) ÷ 2")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a, b: hai đáy song song"),
                     T("c, d: hai cạnh bên"),
                     T("h: chiều cao")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có một cặp cạnh đối song song gọi là hai đáy; chiều cao là khoảng cách vuông góc giữa hai đáy.")
                 ]),
 
@@ -226,18 +226,18 @@ public static class GeometryFormulaCatalog
                 name: T("Hình thang cân"),
                 cardHeight: 550,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a + b + 2c"),
                     T("Diện tích: S = ((a + b) × h) ÷ 2")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a, b: hai đáy song song"),
                     T("c: hai cạnh bên bằng nhau"),
                     T("h: chiều cao")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Hai cạnh bên bằng nhau; hai góc kề mỗi đáy bằng nhau; hai đường chéo bằng nhau.")
                 ]),
 
@@ -248,18 +248,18 @@ public static class GeometryFormulaCatalog
                 name: T("Hình thang vuông"),
                 cardHeight: 550,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a + b + c + h"),
                     T("Diện tích: S = ((a + b) × h) ÷ 2")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a, b: hai đáy song song"),
                     T("h: cạnh bên vuông góc với hai đáy, đồng thời là chiều cao"),
                     T("c: cạnh bên còn lại")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có hai góc vuông; một cạnh bên vuông góc với hai đáy và chính là chiều cao.")
                 ]),
 
@@ -270,19 +270,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình thoi"),
                 cardHeight: 550,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = a × 4"),
                     T("Diện tích: S = (d₁ × d₂) ÷ 2"),
                     T("Hoặc: S = a × h")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài một cạnh"),
                     T("d₁, d₂: hai đường chéo"),
                     T("h: chiều cao")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Bốn cạnh bằng nhau; các cạnh đối song song; hai đường chéo vuông góc, cắt nhau tại trung điểm và phân giác các góc.")
                 ]),
 
@@ -293,18 +293,18 @@ public static class GeometryFormulaCatalog
                 name: T("Hình bình hành"),
                 cardHeight: 530,
                 formulas:
-                [
+                (string[])[
                     T("Chu vi: P = (a + b) × 2"),
                     T("Diện tích: S = a × h")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài đáy"),
                     T("b: độ dài cạnh bên"),
                     T("h: chiều cao tương ứng với đáy a")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Các cạnh đối song song và bằng nhau; các góc đối bằng nhau; hai đường chéo cắt nhau tại trung điểm.")
                 ]),
 
@@ -315,19 +315,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình lập phương"),
                 cardHeight: 550,
                 formulas:
-                [
+                (string[])[
                     T("Diện tích xung quanh: Sxq = 4 x a x a = 4a²"),
                     T("Diện tích toàn phần: Stp = 6 x a x a = 6a²"),
                     T("Thể tích: V = a x a x a = a³")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: độ dài một cạnh"),
                     T("Có 6 mặt là các hình vuông bằng nhau"),
                     T("Sxq gồm 4 mặt bên; Stp gồm cả 6 mặt")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có 6 mặt vuông, 12 cạnh bằng nhau và 8 đỉnh; ba cạnh gặp nhau tại mỗi đỉnh đôi một vuông góc.")
                 ]),
 
@@ -338,19 +338,19 @@ public static class GeometryFormulaCatalog
                 name: T("Hình hộp chữ nhật"),
                 cardHeight: 570,
                 formulas:
-                [
+                (string[])[
                     T("Diện tích xung quanh: Sxq = 2 × (a + b) × h"),
                     T("Diện tích toàn phần: Stp = 2 × (a × b + a × h + b × h)"),
                     T("Thể tích: V = a × b × h")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("a: chiều dài"),
                     T("b: chiều rộng"),
                     T("h: chiều cao")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có 6 mặt chữ nhật, 12 cạnh và 8 đỉnh; các mặt đối diện song song và bằng nhau.")
                 ]),
 
@@ -361,17 +361,17 @@ public static class GeometryFormulaCatalog
                 name: T("Hình cầu"),
                 cardHeight: 520,
                 formulas:
-                [
+                (string[])[
                     T("Diện tích mặt cầu: S = 4 × π × r²"),
                     T("Thể tích: V = (4 × π × r³) ÷ 3")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("r: bán kính hình cầu"),
                     T("π ≈ 3,14")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Mọi điểm trên mặt cầu cách tâm một khoảng bằng bán kính; hình cầu không có cạnh và không có đỉnh.")
                 ]),
 
@@ -382,20 +382,20 @@ public static class GeometryFormulaCatalog
                 name: T("Hình trụ"),
                 cardHeight: 590,
                 formulas:
-                [
+                (string[])[
                     T("Diện tích đáy: Sđ = π × r²"),
                     T("Diện tích xung quanh: Sxq = 2 × π × r × h"),
                     T("Diện tích toàn phần: Stp = 2 × π × r × (r + h)"),
                     T("Thể tích: V = π × r² × h")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("r: bán kính đáy"),
                     T("h: chiều cao"),
                     T("π ≈ 3,14")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có hai đáy tròn bằng nhau và song song; chiều cao là khoảng cách vuông góc giữa hai mặt đáy.")
                 ]),
 
@@ -406,21 +406,21 @@ public static class GeometryFormulaCatalog
                 name: T("Hình nón"),
                 cardHeight: 610,
                 formulas:
-                [
+                (string[])[
                     T("Diện tích đáy: Sđ = π × r²"),
                     T("Diện tích xung quanh: Sxq = π × r × l"),
                     T("Diện tích toàn phần: Stp = π × r × (r + l)"),
                     T("Thể tích: V = (π × r² × h) ÷ 3")
                 ],
                 symbols:
-                [
+                (string[])[
                     T("r: bán kính đáy"),
                     T("h: chiều cao"),
                     T("l: đường sinh"),
                     T("π ≈ 3,14")
                 ],
                 properties:
-                [
+                (string[])[
                     T("Có một đáy tròn và một đỉnh; chiều cao vuông góc với mặt đáy; đường sinh nối đỉnh với đường tròn đáy.")
                 ])
         ];

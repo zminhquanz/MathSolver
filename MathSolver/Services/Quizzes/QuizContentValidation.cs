@@ -178,7 +178,7 @@ public static partial class QuizContentValidation
                 foreach (var (field, alternativesField) in FractionQuantityTextFields)
                 {
                     string template = RequiredString(context, field);
-                    if (!Slots(template).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
+                    if (!Slots(template).SetEquals((string[])["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
                     var alternatives = RequiredArray(context, alternativesField);
                     if (alternatives.GetArrayLength() < 2) Fail("Fraction quantity facts need reviewed alternatives.");
                     var seen = new HashSet<string>(StringComparer.Ordinal) { template.Trim() };
@@ -305,7 +305,7 @@ public static partial class QuizContentValidation
             int capacity = row.GetProperty("Capacity").GetInt32(), size = row.GetProperty("MaximumSize").GetInt32();
             if (RequiredString(row, "Activity") != id || size < 5 || capacity < size * 2 - 1)
                 Fail("Invalid packing activity capacity.");
-            foreach (int clause in Enumerable.Range(1, 11).Concat([18, 19]))
+            foreach (int clause in Enumerable.Range(1, 11).Concat((int[])[18, 19]))
                 if (!textIds.Contains("ElementaryQuizGenerator.ContextStories.CreateRemainderStory.Activity." + id + "." + clause.ToString("000")))
                     Fail("Incomplete packing activity: " + id);
         }

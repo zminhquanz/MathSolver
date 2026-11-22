@@ -42,7 +42,7 @@ public static class AppFontCatalog
     /// MauiProgram tự đăng ký toàn bộ font trong danh sách này.
     /// </summary>
     public static IReadOnlyList<AppFontOption> Options { get; } =
-    [
+    (MathSolver.Services.AppFontOption[])[
         new(
             Key: "SystemDefault",
             DisplayName: "Mặc định hệ thống",

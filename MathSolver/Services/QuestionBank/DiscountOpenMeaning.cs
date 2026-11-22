@@ -17,8 +17,8 @@ internal static class DiscountOpenMeaning
         if(new[]{context.PriceFact,context.DiscountFact,context.Question,context.DiscountLead,context.PayableLead}.Any(string.IsNullOrWhiteSpace))return false;
         var draft=new BasicQuestionDraft("","",context.Question,context.PayableLead,"story")
         {
-            Facts=[new("fact_0",context.PriceFact),new("fact_1",context.DiscountFact)],
-            SolutionLeads=[new("step_0",context.DiscountLead),new("step_1",context.PayableLead)]
+            Facts=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("fact_0",context.PriceFact),new("fact_1",context.DiscountFact)],
+            SolutionLeads=(MathSolver.Services.QuestionBank.NarrativeClause[])[new("step_0",context.DiscountLead),new("step_1",context.PayableLead)]
         };
         return Validate(language,draft,null).IsValid;
     }

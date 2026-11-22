@@ -125,12 +125,12 @@ public static class WordProblemUnitEquivalence
                 Normalize(unit));
 
         return IsVietnamesePenUnit(unit)
-            ? [
+            ? (string[])[
                 $"cây {core}",
                 $"cái {core}",
                 $"chiếc {core}"
             ]
-            : [Normalize(unit)];
+            : (string[])[Normalize(unit)];
     }
 
     public static string RemoveVietnameseClassifier(

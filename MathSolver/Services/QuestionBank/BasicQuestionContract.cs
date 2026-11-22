@@ -26,7 +26,7 @@ public sealed record BasicQuestionContract(
         ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ExactAnswer
         : Version == FractionQuestionCatalogue.Version ? FractionQuestionCatalogue.Answer(this) : new(Answer, BigInteger.One);
     [JsonIgnore] public IReadOnlyList<ReducedFraction> ExactAnswers => Version == ReasoningStoryCatalogue.Version
-        ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ExactAnswers : [ExactAnswer];
+        ? ReasoningStoryCatalogue.Lesson(this).QuestionModel.ExactAnswers : (MathSolver.Models.ReducedFraction[])[ExactAnswer];
     [JsonIgnore] public BigInteger Answer => Version == ReasoningStoryCatalogue.Version
         ? ExactAnswer.Denominator.IsOne ? ExactAnswer.Numerator : throw new InvalidOperationException("UseExactAnswer") : Version == FractionQuestionCatalogue.Version
         ? FractionQuestionCatalogue.Answer(this) is { } fraction && fraction.Denominator.IsOne ? fraction.Numerator : throw new InvalidOperationException("UseExactFractionAnswer")

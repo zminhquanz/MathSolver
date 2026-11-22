@@ -39,7 +39,7 @@ public static partial class QuizContentValidation
             }
             else if (second.GetString() != "") Fail("River relation requires one craft.");
         }
-        if (!ids.SetEquals(["cyclists", "cars", "canoe", "motorboat"])) Fail("Unknown extended motion contexts.");
+        if (!ids.SetEquals((string[])["cyclists", "cars", "canoe", "motorboat"])) Fail("Unknown extended motion contexts.");
         ids.Clear();
         foreach (var relation in relations.EnumerateArray())
         {
@@ -75,7 +75,7 @@ public static partial class QuizContentValidation
             CheckText(RequiredString(relation, "Question"), [road ? "v3" : "v2"]);
             CheckText(RequiredString(relation, "Lead"), []);
         }
-        if (!ids.SetEquals(["meeting", "chasing", "downstream", "upstream", "boat", "current"])) Fail("Unknown extended motion relation.");
+        if (!ids.SetEquals((string[])["meeting", "chasing", "downstream", "upstream", "boat", "current"])) Fail("Unknown extended motion relation.");
 
         static int ReadEnum<T>(JsonElement row, string field) where T : struct, Enum
         {

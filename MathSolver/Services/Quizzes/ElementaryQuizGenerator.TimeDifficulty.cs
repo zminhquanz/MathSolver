@@ -56,7 +56,7 @@ public sealed partial class ElementaryQuizGenerator
             int hour = _random.Next(1, level == 5 ? 9 : 11);
             int minute = level switch { 1 => 0, 2 => _random.Next(1, 4) * 15, 3 => _random.Next(12) * 5, 4 => _random.Next(45, 60), _ => _random.Next(40, 60) };
             string h = t.Given("start-hour", hour), m = t.Given("start-minute", minute);
-            var clock = new QuizVisualData("clock", [], [hour, minute], "", ScenarioId: "starting-clock");
+            var clock = new QuizVisualData("clock", [], (decimal[])[hour, minute], "", ScenarioId: "starting-clock");
             string problem = Text("008");
             if (level <= 3)
             {

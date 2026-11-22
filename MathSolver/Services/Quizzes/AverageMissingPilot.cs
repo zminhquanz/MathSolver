@@ -48,9 +48,9 @@ public sealed partial class AverageQuizGenerator
     {
         var d=AverageMissingPilot.Create(profile,language,tier,_random);
         string equation=d.Expression+" = "+d.Missing;
-        var contract=new AverageQuizContract(AverageQuizType.MissingValue,[3,d.Mean,d.Known0,d.Known1],d.Missing,d.Context.Unit,
+        var contract=new AverageQuizContract(AverageQuizType.MissingValue,(int[])[3,d.Mean,d.Known0,d.Known1],d.Missing,d.Context.Unit,
             d.Render(d.Context.Lead),d.Problem,equation,FormatSolution(d.Render(d.Context.Lead)+":",equation,d.Context.Unit,d.Missing,language),
-            d.Mean*3,ArithmeticOperation.Subtract,d.Known0+d.Known1,KnownScores:[d.Known0,d.Known1]){StoryContextId=profile};
+            d.Mean*3,ArithmeticOperation.Subtract,d.Known0+d.Known1,KnownScores:(int[])[d.Known0,d.Known1]){StoryContextId=profile};
         return CreateQuestion(mode,contract,includeWordProblem:false);
     }
 }
