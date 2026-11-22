@@ -32,6 +32,17 @@ public partial class SettingsPage : ContentPage
     private readonly List<AppLanguageOption> _languageOptions =
         AppLanguageCatalog.Options.ToList();
 
+    private const string MathAnimationLabelKey = "Settings.Wallpaper.MathAnimation";
+    private const string MathAnimation2LabelKey = "Settings.Wallpaper.MathAnimation2";
+
+    private static readonly (LiveWallpaperMode Mode, string LabelKey)[] WallpaperModeOptions =
+    [
+        (LiveWallpaperMode.StaticSchoolImage, "Settings.Wallpaper.SchoolStill"),
+        (LiveWallpaperMode.MathAnimation, MathAnimationLabelKey),
+        (LiveWallpaperMode.MathAnimation2, MathAnimation2LabelKey),
+        (LiveWallpaperMode.Mp4, "Settings.Wallpaper.Mp4")
+    ];
+
     private static readonly FilePickerFileType Mp4WallpaperFileType =
         new(
             new Dictionary<DevicePlatform, IEnumerable<string>>
@@ -815,23 +826,13 @@ public partial class SettingsPage : ContentPage
         object? sender,
         EventArgs e)
     {
-        if (_updatingLiveWallpaperModePicker ||
-            LiveWallpaperModePicker.SelectedIndex < 0)
+        int index = LiveWallpaperModePicker.SelectedIndex;
+        if (_updatingLiveWallpaperModePicker || (uint)index >= WallpaperModeOptions.Length)
         {
             return;
         }
 
-        LiveWallpaperMode selectedMode =
-            LiveWallpaperModePicker.SelectedIndex switch
-            {
-                0 => LiveWallpaperMode.MathAnimation,
-                1 => LiveWallpaperMode.MathAnimation2,
-                2 => LiveWallpaperMode.Mp4,
-                3 => LiveWallpaperMode.StaticSchoolImage,
-                _ => LiveWallpaperMode.MathAnimation
-            };
-
-        LiveWallpaperManager.SetMode(selectedMode);
+        LiveWallpaperManager.SetMode(WallpaperModeOptions[index].Mode);
         UpdateLiveWallpaperSettings();
         ValidateSelectedVideoWallpaper();
 
@@ -968,16 +969,10 @@ public partial class SettingsPage : ContentPage
         _updatingLiveWallpaperModePicker = true;
         try
         {
-            if (LiveWallpaperModePicker.Items.Count >= 4)
+            if (LiveWallpaperModePicker.Items.Count == WallpaperModeOptions.Length)
             {
-                LiveWallpaperModePicker.SelectedIndex = mode switch
-                {
-                    LiveWallpaperMode.MathAnimation => 0,
-                    LiveWallpaperMode.MathAnimation2 => 1,
-                    LiveWallpaperMode.Mp4 => 2,
-                    LiveWallpaperMode.StaticSchoolImage => 3,
-                    _ => 0
-                };
+                LiveWallpaperModePicker.SelectedIndex =
+                    Array.FindIndex(WallpaperModeOptions, option => option.Mode == mode);
             }
         }
         finally
@@ -1047,10 +1042,7 @@ public partial class SettingsPage : ContentPage
 
         if (mode == LiveWallpaperMode.MathAnimation)
         {
-            MathAnimationTitleLabel.Text =
-                useEnglish
-                    ? "Math Solver Animation (Mathematical Style)"
-                    : "Animation Math Solver (Mathematical Style)";
+            MathAnimationTitleLabel.Text = LocalizationService.TranslateKey(MathAnimationLabelKey);
             MathAnimationSummaryLabel.Text =
                 useEnglish
                     ? "Geometric constructions • rotating solids • circle tracer • quadratic graph"
@@ -1063,10 +1055,7 @@ public partial class SettingsPage : ContentPage
         }
         else if (mode == LiveWallpaperMode.MathAnimation2)
         {
-            MathAnimationTitleLabel.Text =
-                useEnglish
-                    ? "Math Solver Animation 2 (Neural Network + Mathematical Space)"
-                    : "Animation Math Solver 2 (Neural network + Mathematical Space)";
+            MathAnimationTitleLabel.Text = LocalizationService.TranslateKey(MathAnimation2LabelKey);
             MathAnimationSummaryLabel.Text =
                 useEnglish
                     ? "Layered neural network • AI processor • travelling signals • rotating geometry and flowing graphs"
@@ -1084,10 +1073,7 @@ public partial class SettingsPage : ContentPage
         }
         else
         {
-            MathAnimationTitleLabel.Text =
-                useEnglish
-                    ? "Math Solver Animation (Mathematical Style)"
-                    : "Animation Math Solver (Mathematical Style)";
+            MathAnimationTitleLabel.Text = LocalizationService.TranslateKey(MathAnimationLabelKey);
             MathAnimationSummaryLabel.Text =
                 useEnglish
                     ? "GraphicsView • 24 FPS • no external file • lighter than video"
@@ -1172,31 +1158,14 @@ public partial class SettingsPage : ContentPage
         _updatingLiveWallpaperModePicker = true;
         try
         {
-            int selectedMode = LiveWallpaperManager.Mode switch
-            {
-                LiveWallpaperMode.MathAnimation => 0,
-                LiveWallpaperMode.MathAnimation2 => 1,
-                LiveWallpaperMode.Mp4 => 2,
-                LiveWallpaperMode.StaticSchoolImage => 3,
-                _ => 0
-            };
-
+            LiveWallpaperMode mode = LiveWallpaperManager.Mode;
             LiveWallpaperModePicker.Items.Clear();
-            LiveWallpaperModePicker.Items.Add(
-                useEnglish
-                    ? "Math Solver animation (Mathematical Style)"
-                    : "Animation Math Solver (Mathematical Style)");
-            LiveWallpaperModePicker.Items.Add(
-                useEnglish
-                    ? "Math Solver animation 2 (Neural network + Mathematical Space)"
-                    : "Animation Math Solver 2 (Neural network + Mathematical Space)");
-            LiveWallpaperModePicker.Items.Add(
-                useEnglish
-                    ? "MP4 live wallpaper"
-                    : "Live Wallpaper MP4");
-            LiveWallpaperModePicker.Items.Add(
-                LocalizationService.TranslateKey("Settings.Wallpaper.SchoolStill"));
-            LiveWallpaperModePicker.SelectedIndex = selectedMode;
+            foreach (var option in WallpaperModeOptions)
+            {
+                LiveWallpaperModePicker.Items.Add(LocalizationService.TranslateKey(option.LabelKey));
+            }
+            LiveWallpaperModePicker.SelectedIndex =
+                Array.FindIndex(WallpaperModeOptions, option => option.Mode == mode);
         }
         finally
         {
@@ -1205,10 +1174,7 @@ public partial class SettingsPage : ContentPage
 
         if (LiveWallpaperManager.Mode == LiveWallpaperMode.MathAnimation2)
         {
-            MathAnimationTitleLabel.Text =
-                useEnglish
-                    ? "Math Solver Animation 2 (Neural Network + Mathematical Space)"
-                    : "Animation Math Solver 2 (Neural network + Mathematical Space)";
+            MathAnimationTitleLabel.Text = LocalizationService.TranslateKey(MathAnimation2LabelKey);
 
             MathAnimationSummaryLabel.Text =
                 useEnglish
@@ -1217,10 +1183,7 @@ public partial class SettingsPage : ContentPage
         }
         else
         {
-            MathAnimationTitleLabel.Text =
-                useEnglish
-                    ? "Math Solver Animation (Mathematical Style)"
-                    : "Animation Math Solver (Mathematical Style)";
+            MathAnimationTitleLabel.Text = LocalizationService.TranslateKey(MathAnimationLabelKey);
 
             MathAnimationSummaryLabel.Text =
                 useEnglish

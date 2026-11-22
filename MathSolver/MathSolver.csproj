@@ -134,11 +134,20 @@
     <MauiImage Remove="Resources\Images\*.png" />
     <MauiAsset Include="$(AndroidArtworkPackPath)" LogicalName="mathsolver-artwork.pack" />
   </ItemGroup>
+  <PropertyGroup>
+    <_ArtworkPackSourceList>$(MSBuildProjectDirectory)\obj\artwork\$(Configuration)\$(TargetFramework)\sources.txt</_ArtworkPackSourceList>
+  </PropertyGroup>
+  <Target Name="TrackArtworkPackSources">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_ArtworkPackSourceList)'))" />
+    <!-- A moved or removed file can predate the existing pack. Track membership as well as timestamps. -->
+    <WriteLinesToFile File="$(_ArtworkPackSourceList)" Lines="@(WindowsArtworkSource);@(AndroidArtworkSource)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
   <Target Name="PackAndroidArtwork" AfterTargets="_ResizetizeInjectPlatformItems"
           Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'"
-          Inputs="@(AndroidArtworkSource);$(_ResizetizerStampFile);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
+          DependsOnTargets="TrackArtworkPackSources"
+          Inputs="@(AndroidArtworkSource);$(_ArtworkPackSourceList);$(_ResizetizerStampFile);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
           Outputs="$(AndroidArtworkPackPath)">
-    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(AndroidArtworkPackPath)'))" />
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(AndroidArtworkPackPath)&quot; -AndroidSvgRasterDirectory &quot;$(_MauiIntermediateImagesFullPath)drawable-xxxhdpi&quot;" />
   </Target>
   <Target Name="PruneAndroidArtwork" AfterTargets="PackAndroidArtwork"
@@ -160,9 +169,9 @@
   </Target>
   <Target Name="PackWindowsArtwork" BeforeTargets="GetCopyToOutputDirectoryItems;_GetCopyToPublishDirectoryItems"
           Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'"
-          Inputs="@(WindowsArtworkSource);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
+          DependsOnTargets="TrackArtworkPackSources"
+          Inputs="@(WindowsArtworkSource);$(_ArtworkPackSourceList);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
           Outputs="$(WindowsArtworkPackPath)">
-    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(WindowsArtworkPackPath)'))" />
     <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(WindowsArtworkPackPath)&quot;" />
   </Target>
   <Target Name="PruneOldWindowsArtworkCopies" AfterTargets="Build"

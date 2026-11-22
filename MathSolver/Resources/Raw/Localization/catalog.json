@@ -1885,6 +1885,9 @@
     {"key":"Settings.Wallpaper.Type","source":"Kiểu hình nền","mode":"exact"},
     {"key":"Settings.Wallpaper.SchoolStill","source":"Nhất Quỷ Nhì Ma, Thứ Ba Học Trò","mode":"exact"},
     {"key":"Settings.Wallpaper.SchoolStillHint","source":"Tranh màu nước tĩnh hiển thị trên tab học toán đang mở.","mode":"exact"},
+    {"key":"Settings.Wallpaper.MathAnimation","source":"Hoạt ảnh Math Solver (Phong cách toán học)","mode":"exact"},
+    {"key":"Settings.Wallpaper.MathAnimation2","source":"Hoạt ảnh Math Solver 2 (Mạng nơ-ron và không gian toán học)","mode":"exact"},
+    {"key":"Settings.Wallpaper.Mp4","source":"Hình nền động MP4","mode":"exact"},
     {
       "key": "AiBank.ProcessedQuestionsEmpty",
       "source": "Chưa có đề đã xử lý. Chọn model và dạng toán để bắt đầu tạo đề.",

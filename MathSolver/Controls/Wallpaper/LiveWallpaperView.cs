@@ -11,8 +11,8 @@ namespace MathSolver.Controls;
 /// </summary>
 public sealed class LiveWallpaperView : Grid
 {
-    private const string SchoolLandscapeAsset = "Wallpapers/school_days_watercolor.png";
-    private const string SchoolPortraitAsset = "Wallpapers/school_days_watercolor_portrait.png";
+    private const string SchoolLandscapeAsset = "school_days_watercolor.png";
+    private const string SchoolPortraitAsset = "school_days_watercolor_portrait.png";
 
     private static readonly TimeSpan AnimationInterval =
         TimeSpan.FromMilliseconds(1000d / 24d);
@@ -445,18 +445,7 @@ public sealed class LiveWallpaperView : Grid
         }
 
         _staticWallpaperAsset = asset;
-        image.Source = ImageSource.FromStream(async cancellationToken =>
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            Stream stream = await FileSystem.OpenAppPackageFileAsync(asset).ConfigureAwait(false);
-            if (cancellationToken.IsCancellationRequested)
-            {
-                stream.Dispose();
-                cancellationToken.ThrowIfCancellationRequested();
-            }
-
-            return stream;
-        });
+        image.Source = ImageSource.FromFile(asset);
     }
 
     private void ReleaseStaticWallpaper()
