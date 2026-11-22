@@ -665,7 +665,7 @@
                                 <RoundRectangle CornerRadius="10" />
                             </Border.StrokeShape>
                             <Grid>
-                                <Picker
+                                <controls:WallpaperModePicker
                                     x:Name="LiveWallpaperModePicker"
                                     MinimumHeightRequest="{DynamicResource Density.ControlHeight}"
                                     Margin="{OnPlatform Android='0', WinUI='0', Default='12,0,0,0'}"

@@ -1159,6 +1159,9 @@ public partial class SettingsPage : ContentPage
         try
         {
             LiveWallpaperMode mode = LiveWallpaperManager.Mode;
+#if ANDROID
+            LiveWallpaperModePicker.Title = LocalizationService.TranslateKey("Settings.Wallpaper.Type");
+#endif
             LiveWallpaperModePicker.Items.Clear();
             foreach (var option in WallpaperModeOptions)
             {

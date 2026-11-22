@@ -62,6 +62,7 @@
        Windows remains on the existing WinUI rendering and styles. -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">
     <UseMaterial3>true</UseMaterial3>
+    <MauiAndroidSystemBarsUseMauiChrome>true</MauiAndroidSystemBarsUseMauiChrome>
     <!-- Local Debug/Release device builds use the SDK development key.
          Supply AndroidKeyStore=true and signing properties for distribution. -->
     <AndroidKeyStore Condition="'$(AndroidKeyStore)' == ''">false</AndroidKeyStore>

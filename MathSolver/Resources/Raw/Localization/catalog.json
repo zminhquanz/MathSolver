@@ -8511,6 +8511,46 @@
       "mode": "exact"
     },
     {
+      "key": "Hardware.AccelerationByTask",
+      "source": "Tăng tốc theo tác vụ",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.LargePowerNttLabel",
+      "source": "Lũy thừa lớn (NTT/CRT)",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.LargePowerTxtLabel",
+      "source": "Xuất TXT lũy thừa lớn",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.MatrixSimdLabel",
+      "source": "Ma trận từ 16 × 16",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.SmallMatrixScalar",
+      "source": "Ma trận nhỏ hơn dùng Scalar.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.ThreadingBenchmarkOnly",
+      "source": "Đa luồng chỉ áp dụng cho bài đo hiệu năng.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.AndroidCpuBenchmarkNote",
+      "source": "Benchmark CPU trên Android dùng NEON/AdvSIMD khi bật tăng tốc.",
+      "mode": "exact"
+    },
+    {
+      "key": "Hardware.NoBenchmarkResults",
+      "source": "Chưa có kết quả.",
+      "mode": "exact"
+    },
+    {
       "key": "Hardware.AccelerationDescription",
       "source": "Bật SIMD cho benchmark và toàn ứng dụng.",
       "mode": "exact"

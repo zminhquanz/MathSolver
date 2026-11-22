@@ -687,48 +687,34 @@ public partial class HardwarePerformancePage : ContentPage
             !hasSimd;
 #endif
 
-        string accelerationStatus =
+        AccelerationStatusLabel.IsVisible =
+            accelerationUnavailable ||
+            !effectiveUseSimd ||
+            !SimdModeSelectorContainer.IsVisible ||
+            CalculationAccelerationManager.SelectedSimdMode != selectedMode;
+        AccelerationStatusLabel.Text =
+            accelerationUnavailable
+                ? LocalizationService.TranslateKey(LocalizationKeys.Hardware.AccelerationUnavailable)
+                : effectiveUseSimd
+                    ? CalculationAccelerationManager.GetModeDisplayName(selectedMode)
+                    : LocalizationService.TranslateKey(LocalizationKeys.Hardware.AccelerationOff);
+
+        PowerExportBackendValueLabel.Text =
             LocalizationService.TranslateKey(
-                accelerationUnavailable
+                !CalculationAccelerationManager.IsPowerExportAccelerationAvailable
                     ? LocalizationKeys.Hardware.AccelerationUnavailable
-                    : effectiveUseSimd
+                    : CalculationAccelerationManager.UsePowerExportSimd
                         ? LocalizationKeys.Hardware.AccelerationOn
                         : LocalizationKeys.Hardware.AccelerationOff);
 
-        CalculationSimdMode? sveMode = CalculationAccelerationManager.EnabledPowerNttSveMode;
-        bool usePowerNttSimd = sveMode.HasValue ||
-            CalculationAccelerationManager.UsePowerNttAvx2 ||
-            CalculationAccelerationManager.UsePowerNttSse ||
-            CalculationAccelerationManager.UsePowerNttNeon;
+        ParabolaBackendValueLabel.Text =
+            !ParabolaSimdEvaluator.IsAccelerationAvailable
+                ? LocalizationService.TranslateKey(LocalizationKeys.Hardware.AccelerationUnavailable)
+                : ParabolaSimdEvaluator.BackendName;
 
-        string nttAccelerationStatus =
-            LocalizationService.TranslateKey(
-                !CalculationAccelerationManager
-                    .IsPowerNttAccelerationAvailable
-                    ? LocalizationKeys.Hardware.NttAccelerationUnavailable
-                    : usePowerNttSimd
-                        ? LocalizationKeys.Hardware.NttAccelerationOn
-                        : LocalizationKeys.Hardware.NttAccelerationOff);
-
-        string powerExportAccelerationStatus =
-            LocalizationService.TranslateKey(
-                !CalculationAccelerationManager.IsPowerExportAccelerationAvailable
-                    ? LocalizationKeys.Hardware.PowerExportAccelerationUnavailable
-                    : CalculationAccelerationManager.UsePowerExportSimd
-                        ? LocalizationKeys.Hardware.PowerExportAccelerationOn
-                        : LocalizationKeys.Hardware.PowerExportAccelerationOff);
-
-        string parabolaAccelerationStatus =
-            LocalizationService.TranslateKey(
-                !ParabolaSimdEvaluator.IsAccelerationAvailable
-                    ? LocalizationKeys.Hardware.ParabolaAccelerationUnavailable
-                    : effectiveUseSimd
-                        ? LocalizationKeys.Hardware.ParabolaAccelerationOn
-                        : LocalizationKeys.Hardware.ParabolaAccelerationOff);
-
-        string nttBackendStatus =
+        NttBackendValueLabel.Text =
 #if ANDROID
-            sveMode is { } mode
+            CalculationAccelerationManager.EnabledPowerNttSveMode is { } mode
                 ? CalculationAccelerationManager.GetModeDisplayName(mode) +
                     (IsVietnamese ? " (128-bit) cho số mũ >1M" : " (128-bit) for exponents >1M")
                 : !useSimd || selectedMode != CalculationSimdMode.ArmNeon
@@ -741,14 +727,16 @@ public partial class HardwarePerformancePage : ContentPage
 #else
             CalculationAccelerationManager.UsePowerNttAvx2
                 ? CalculationAccelerationManager.AllowAvx512
-                    ? "AVX-512 / AVX2 NTT/CRT (global-tail SIMD)"
-                    : "AVX2 NTT/CRT (256-bit, global-tail SIMD)"
+                    ? "AVX-512 / AVX2"
+                    : "AVX2 (256-bit)"
                 : CalculationAccelerationManager.UsePowerNttSse
-                    ? CalculationAccelerationManager.PowerNttSseBackendName + " (128-bit NTT/CRT, ≤100M; global-tail SIMD)"
-                    : "Scalar";
+                    ? CalculationAccelerationManager.PowerNttSseBackendName + " (128-bit, ≤100M)"
+                    : !CalculationAccelerationManager.IsPowerNttAccelerationAvailable
+                        ? LocalizationService.TranslateKey(LocalizationKeys.Hardware.AccelerationUnavailable)
+                        : "Scalar";
 #endif
 
-        string matrixBackendStatus = CalculationAccelerationManager.EffectiveMatrixBackend switch
+        MatrixBackendValueLabel.Text = CalculationAccelerationManager.EffectiveMatrixBackend switch
         {
             MatrixBackend.Neon => MatrixEngine.NeonBackendName,
             MatrixBackend.Sve => "SVE (128-bit)",
@@ -758,23 +746,6 @@ public partial class HardwarePerformancePage : ContentPage
             MatrixBackend.Sse2 => "SSE2 (128-bit)",
             _ => "Scalar"
         };
-        string matrixAccelerationStatus = string.Format(
-            CultureInfo.CurrentCulture,
-            LocalizationService.TranslateKey(LocalizationKeys.Hardware.MatrixAcceleration),
-            matrixBackendStatus);
-
-        accelerationStatus +=
-            Environment.NewLine +
-            nttAccelerationStatus + " (" + nttBackendStatus + ")" +
-            Environment.NewLine +
-            powerExportAccelerationStatus +
-            Environment.NewLine +
-            parabolaAccelerationStatus + " (" + ParabolaSimdEvaluator.BackendName + ")" +
-            Environment.NewLine + matrixAccelerationStatus;
-
-        AccelerationStatusLabel.Text =
-            accelerationStatus + Environment.NewLine + "SIMD: " + CalculationAccelerationManager.GetModeDisplayName(CalculationAccelerationManager.SelectedSimdMode) + " → " + (effectiveUseSimd ? CalculationAccelerationManager.GetModeDisplayName(selectedMode) : "Scalar");
-
         MultithreadingStatusLabel.Text =
             !hasMultipleThreads
                 ? LocalizationService.Translate(
@@ -833,9 +804,9 @@ public partial class HardwarePerformancePage : ContentPage
             (useEnglish, isLocked) switch
             {
                 (true, true) => "Multithreading is locked while the benchmark is running.",
-                (true, false) => "Turn multithreading on or off for benchmarks and calculations.",
+                (true, false) => "Turn multithreading on or off for benchmarks.",
                 (false, true) => "Đa luồng đang bị khóa trong lúc đo sức mạnh.",
-                _ => "Bật hoặc tắt đa luồng cho benchmark và các phép tính."
+                _ => "Bật hoặc tắt đa luồng cho bài đo hiệu năng."
             };
 
         SemanticProperties.SetDescription(
@@ -2244,28 +2215,28 @@ public partial class HardwarePerformancePage : ContentPage
 
         StandardBenchmarkDescriptionLabel.Text =
             IsVietnamese
-                ? "Mỗi kiểu được đo liên tiếp trong 10 giây và lấy kết quả cao nhất. Float/Double hiển thị MFLOPS/GFLOPS; Int32/Int64 hiển thị MOPS/GOPS."
-                : "Each data type is measured continuously for 10 seconds and the best result is kept. Float/Double are shown in MFLOPS/GFLOPS; Int32/Int64 in MOPS/GOPS.";
+                ? "Đo thông lượng cao nhất của Int32, Int64, Float và Double."
+                : "Measure peak throughput for Int32, Int64, Float and Double.";
 
         StandardBenchmarkNoteLabel.Text =
             IsVietnamese
-                ? "Bài đo kéo dài khoảng 40 giây, chưa tính thời gian khởi động ngắn giữa các kiểu dữ liệu."
-                : "The benchmark takes about 40 seconds, excluding the short warm-up between data types.";
+                ? "Khoảng 40 giây đo, cộng thời gian khởi động."
+                : "About 40 seconds of measurement, plus warm-up.";
 
         ThreadComparisonDescriptionLabel.Text =
             IsVietnamese
-                ? "Chạy cùng backend hiện tại hai lần: một luồng và đa luồng. Nếu tăng tốc phần cứng bật, cả Int32, Int64, Float và Double dùng SIMD; nếu tắt thì dùng Scalar."
-                : "Run the same current backend twice: single-threaded and multi-threaded. With hardware acceleration on, Int32, Int64, Float and Double all use SIMD; with it off, they use Scalar.";
+                ? "So sánh một luồng với nhiều luồng trên cùng backend CPU."
+                : "Compare single-threaded and multithreaded throughput on the same CPU backend.";
 
         ThreadComparisonNoteLabel.Text =
             IsVietnamese
-                ? "Bài đo chạy 2 lượt, mỗi lượt giữ nguyên chuẩn 4 kiểu dữ liệu × 10 giây."
-                : "The test runs 2 passes; each pass keeps the standard 4 data types × 10 seconds.";
+                ? "Khoảng 80 giây đo (2 lượt × 4 kiểu dữ liệu × 10 giây), cộng thời gian khởi động."
+                : "About 80 seconds of measurement (2 passes × 4 data types × 10 seconds), plus warm-up.";
 
         SimdComparisonDescriptionLabel.Text =
             IsVietnamese
-                ? "Đo Float và Double với SSE 128-bit, AVX 256-bit và AVX-512 512-bit; mỗi loại chạy một lần đơn luồng và một lần đa luồng."
-                : "Benchmark Float and Double with 128-bit SSE, 256-bit AVX and 512-bit AVX-512; each width runs once single-threaded and once multi-threaded.";
+                ? "So sánh thông lượng Float và Double theo độ rộng SIMD, ở chế độ đơn luồng và đa luồng."
+                : "Compare Float and Double throughput by SIMD width in single-threaded and multithreaded runs.";
 
 #if WINDOWS
         int availableSimdGroupCount =
@@ -2274,10 +2245,11 @@ public partial class HardwarePerformancePage : ContentPage
         int simdPassCount =
             availableSimdGroupCount * 2;
 
+        SimdComparisonNoteLabel.IsVisible = simdPassCount > 0;
         SimdComparisonNoteLabel.Text =
             IsVietnamese
-                ? $"Bài đo chạy {simdPassCount} lượt: {availableSimdGroupCount} nhóm SIMD được CPU hỗ trợ × đơn luồng / đa luồng. Nhóm không hỗ trợ được ẩn khỏi biểu đồ và điểm số."
-                : $"The test runs {simdPassCount} passes: {availableSimdGroupCount} CPU-supported SIMD groups × single-thread / multi-thread. Unsupported groups are hidden from the chart and score.";
+                ? $"Khoảng {simdPassCount * 20} giây đo ({simdPassCount} lượt), cộng thời gian khởi động."
+                : $"About {simdPassCount * 20} seconds of measurement ({simdPassCount} passes), plus warm-up.";
 #else
         SimdComparisonNoteLabel.Text =
             IsVietnamese
@@ -2293,17 +2265,13 @@ public partial class HardwarePerformancePage : ContentPage
             if (_lastThreadComparisonResult is null)
             {
                 ThreadComparisonStatusLabel.Text =
-                    IsVietnamese
-                        ? "Chưa chạy so sánh đơn luồng / đa luồng."
-                        : "Single-thread / multi-thread comparison has not been run yet.";
+                    LocalizationService.TranslateKey("Hardware.NoBenchmarkResults");
             }
 
             if (_lastSimdComparisonResult is null)
             {
                 SimdComparisonStatusLabel.Text =
-                    IsVietnamese
-                        ? "Chưa chạy so sánh SIMD."
-                        : "SIMD comparison has not been run yet.";
+                    LocalizationService.TranslateKey("Hardware.NoBenchmarkResults");
             }
         }
 
@@ -2434,7 +2402,7 @@ public partial class HardwarePerformancePage : ContentPage
             RunBenchmarkButton,
             RawBenchmarkKind.Standard,
             IsVietnamese
-                ? "Chạy đo sức mạnh"
+                ? "Chạy bài đo"
                 : "Run benchmark",
             canRunWhenIdle: true);
 
@@ -2477,7 +2445,7 @@ public partial class HardwarePerformancePage : ContentPage
         button.Text =
             isActive
                 ? (IsVietnamese
-                    ? "Dừng đo sức mạnh"
+                    ? "Dừng bài đo"
                     : "Stop benchmark")
                 : idleText;
 
@@ -3391,8 +3359,7 @@ public partial class HardwarePerformancePage : ContentPage
             if (!_isBenchmarkRunning)
             {
                 BenchmarkStatusLabel.Text =
-                    LocalizationService.Translate(
-                        "Chưa chạy đo sức mạnh.");
+                    LocalizationService.TranslateKey("Hardware.NoBenchmarkResults");
             }
 
             return;

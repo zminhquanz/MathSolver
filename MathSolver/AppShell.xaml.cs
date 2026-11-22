@@ -503,7 +503,7 @@ public partial class AppShell : Shell
             itemId: 2,
             order: 2,
             title: useEnglish ? "Hardware information" : "Thông tin phần cứng",
-            iconResource: Resource.Drawable.benchmark);
+            iconResource: Resource.Drawable.hardware_chip);
 
         AddAndroidSettingsMenuItem(
             popup,
@@ -1852,14 +1852,13 @@ public partial class AppShell : Shell
             return;
         }
 #if ANDROID
-        // The focused landscape matrix owns this presentation while active.
-        // Do not let delayed main-page restoration pulses overwrite its policy.
-        if (currentPage is CalculationPage { KeepMatrixNavigationCompact: true })
-        {
-            Shell.SetTabBarIsVisible(currentPage, false);
-            return;
-        }
-#endif
+        // A false/true pulse queues Remove/Replace fragment transactions for
+        // Android's bottom tabs. Reapply the current policy without removing them.
+        Shell.SetTabBarIsVisible(
+            currentPage,
+            currentPage is not CalculationPage { KeepMatrixNavigationCompact: true });
+        MainTabBar.Handler?.UpdateValue(Shell.TabBarIsVisibleProperty.PropertyName);
+#else
 
         // Native Shell chrome có state riêng. Nếu attached property của main
         // page vốn đã là true thì gán true lần nữa có thể không phát
@@ -1872,6 +1871,7 @@ public partial class AppShell : Shell
         Shell.SetTabBarIsVisible(
             currentPage,
             true);
+#endif
     }
 
 #if WINDOWS
