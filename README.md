@@ -231,13 +231,13 @@ Math Solver includes:
 - Preset or custom accent colors, including HEX and RGB controls
 - Font customization
 - Vietnamese and English built-in localization
-- Optional animated mathematics background or an imported H.264 MP4 live wallpaper
+- Optional school-days watercolor, animated mathematics backgrounds, or an imported H.264 MP4 wallpaper
 - Animated tab transitions
 - Reusable vector and `GraphicsView` illustrations
 - Adaptive card layouts based on the available screen width
 - Settings for full-length numeric results and developer diagnostics
 
-Imported MP4 wallpaper clips require a compatible H.264 decoder and can be up to 120 seconds long. On Android, the video is limited to 3,686,400 pixels (equivalent to 2560 × 1440).
+Choose the wallpaper type in **Settings → Wallpaper**. The watercolor is bundled for offline use and adapts to wide or upright viewports. Imported MP4 wallpaper clips require a compatible H.264 decoder and can be up to 120 seconds long. On Android, the video is limited to 3,686,400 pixels (equivalent to 2560 × 1440).
 
 ## Offline Operation
 

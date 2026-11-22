@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Text;
 
 namespace MathSolver.Services;
 
@@ -30,6 +31,19 @@ public static partial class QuizContentCatalog
     private static readonly ConcurrentDictionary<string, Lazy<QuizContentPack>> Packs = new(StringComparer.OrdinalIgnoreCase);
     private static readonly ConcurrentDictionary<(string Culture, string List, Type Type), object> Lists = new();
     private static readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, QuizContentText>> Texts = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly Lazy<JsonDocument> CatalogDocument = new(() =>
+    {
+        using var stream = typeof(QuizContentCatalog).Assembly.GetManifestResourceStream(ResourcePrefix + "catalogues.json")
+            ?? throw new InvalidDataException("Missing quiz catalogues.");
+        var document = JsonDocument.Parse(stream);
+        if (document.RootElement.GetProperty("Version").GetInt32() != 1)
+        {
+            document.Dispose();
+            throw new InvalidDataException("Unsupported quiz catalogue version.");
+        }
+        return document;
+    }, LazyThreadSafetyMode.ExecutionAndPublication);
+    [ThreadStatic] private static StringBuilder? s_renderBuilder;
     private static readonly HashSet<string> FactVariables = ["a", "b", "name", "other", "unit", "group", "group_one",
         "groups", "unit_a", "unit_b", "part_a", "part_b", "quantity", "person", "0", "1", "2", "3"];
 
@@ -116,26 +130,22 @@ public static partial class QuizContentCatalog
     public static IReadOnlyList<T> LoadList<T>(string name, string? culture = null)
     {
         string key = culture is null ? "catalogues" : CultureInfo.GetCultureInfo(culture).Name;
-        return (IReadOnlyList<T>)Lists.GetOrAdd((key, name, typeof(T)), _ => {
+        return (IReadOnlyList<T>)Lists.GetOrAdd((key, name, typeof(T)), static (cacheKey, requestedCulture) => {
+            string name = cacheKey.List;
             JsonElement data;
-            if (culture is null)
+            if (requestedCulture is null)
             {
-                using var stream = typeof(QuizContentCatalog).Assembly.GetManifestResourceStream(ResourcePrefix + "catalogues.json")
-                    ?? throw new InvalidDataException("Missing quiz catalogues.");
-                using var document = JsonDocument.Parse(stream);
-                if (document.RootElement.GetProperty("Version").GetInt32() != 1)
-                    throw new InvalidDataException("Unsupported quiz catalogue version.");
-                data = document.RootElement.GetProperty("Lists").GetProperty(name).Clone();
+                data = CatalogDocument.Value.RootElement.GetProperty("Lists").GetProperty(name);
             }
             else
             {
-                if (!Pack(culture).Lists.TryGetValue(name, out data) && !Pack(FallbackCulture).Lists.TryGetValue(name, out data))
+                if (!Pack(requestedCulture).Lists.TryGetValue(name, out data) && !Pack(FallbackCulture).Lists.TryGetValue(name, out data))
                     throw new InvalidDataException($"Missing quiz list '{name}'.");
             }
             var values = data.Deserialize<List<T>>(Options) ?? throw new InvalidDataException($"Invalid quiz list '{name}'.");
             if (values.Count == 0 || values.Any(value => value is null)) throw new InvalidDataException($"Empty quiz list '{name}'.");
             return values.AsReadOnly();
-        });
+        }, culture);
     }
 
     public static string Text(AppLanguage language, string id, params (string Name, string Value)[] values)
@@ -151,12 +161,79 @@ public static partial class QuizContentCatalog
     private static string Render(QuizContentText entry, string unit, (string Name, string Value)[] values)
     {
         string id = entry.Id, template = entry.ForUnit(unit);
-        var supplied = values.ToDictionary(v => v.Name, v => v.Value, StringComparer.Ordinal);
-        if (!entry.Variables.ToHashSet(StringComparer.Ordinal).SetEquals(supplied.Keys))
+        ReadOnlySpan<(string Name, string Value)> supplied = values;
+        // The packs are validated when loaded. Per-render slots are short, so
+        // a contiguous scan avoids two temporary hash collections per question.
+        for (int i = 0; i < supplied.Length; i++)
+        {
+            if (supplied[i].Name is null) throw new ArgumentNullException(nameof(values));
+            for (int j = 0; j < i; j++)
+                if (string.Equals(supplied[i].Name, supplied[j].Name, StringComparison.Ordinal))
+                    throw new ArgumentException("Duplicate quiz text variable.", nameof(values));
+        }
+        bool valid = supplied.Length == entry.Variables.Length;
+        foreach (string expected in entry.Variables)
+        {
+            bool found = false;
+            foreach (var value in supplied)
+                if (string.Equals(expected, value.Name, StringComparison.Ordinal))
+                {
+                    found = true;
+                    break;
+                }
+            if (!found) valid = false;
+        }
+        if (!valid)
             throw new InvalidDataException($"Values do not match the variables of '{id}'.");
-        // A single replacement pass prevents data containing braces from becoming a second template.
-        string rendered = Placeholders().Replace(template, match => supplied.TryGetValue(match.Groups[1].Value, out var value) ? value : match.Value);
-        QuizNarrativeCapture.Current?.Record(template, supplied, rendered);
+        // Enumerate matches over the original text, so substituted braces cannot
+        // be interpreted as another placeholder. Keep the scratch buffer thread-local.
+        StringBuilder? builder = null;
+        string rendered;
+        int copiedThrough = 0;
+        try
+        {
+            foreach (var match in Placeholders().EnumerateMatches(template))
+            {
+                if (builder is null)
+                {
+                    builder = s_renderBuilder ?? new StringBuilder(128);
+                    s_renderBuilder = null;
+                }
+                builder.Append(template.AsSpan(copiedThrough, match.Index - copiedThrough));
+                ReadOnlySpan<char> name = template.AsSpan(match.Index + 1, match.Length - 2);
+                bool substituted = false;
+                foreach (var value in supplied)
+                {
+                    if (!name.SequenceEqual(value.Name.AsSpan())) continue;
+                    builder.Append(value.Value);
+                    substituted = true;
+                    break;
+                }
+                if (!substituted) builder.Append(template.AsSpan(match.Index, match.Length));
+                copiedThrough = match.Index + match.Length;
+            }
+
+            if (builder is null) rendered = template;
+            else
+            {
+                builder.Append(template.AsSpan(copiedThrough));
+                rendered = builder.ToString();
+            }
+        }
+        finally
+        {
+            if (builder is not null)
+            {
+                builder.Clear();
+                if (builder.Capacity <= 2048) s_renderBuilder = builder;
+            }
+        }
+        if (QuizNarrativeCapture.Current is { } capture)
+        {
+            var arguments = new Dictionary<string, string>(values.Length, StringComparer.Ordinal);
+            foreach (var (name, value) in values) arguments.Add(name, value);
+            capture.Record(template, arguments, rendered);
+        }
         return rendered;
     }
 

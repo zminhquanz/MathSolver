@@ -16,6 +16,16 @@ public static class FractionQuestionCatalogue
     {
         private string Unit(string culture, string field)
         {
+            if (FractionThemeCatalogue.FindScene(Id) is { } material)
+                return material.Unit(culture, field, Operation);
+            if (Id.StartsWith("fraction-theme-drinks-", StringComparison.Ordinal)
+                && FoodThemeCatalogue.DrinkForScene(Id) is { } drink)
+            {
+                if (field == "UnitB" && Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+                    return "";
+                return culture == "vi-VN" ? drink.FractionVietnamese ?? drink.Unit.Vietnamese
+                    : drink.FractionEnglish ?? drink.Unit.Plural;
+            }
             if (Id.StartsWith("fraction-theme-food-", StringComparison.Ordinal))
             {
                 var dish = FoodThemeCatalogue.RestaurantDishForScene(Id);
@@ -40,6 +50,7 @@ public static class FractionQuestionCatalogue
     private static IReadOnlyList<Scene> BuildScenes()
     {
         var scenes = QuizContentCatalog.LoadList<Scene>("FractionScenes").ToList();
+        scenes.AddRange(FractionThemeCatalogue.Scenes());
         foreach (var dish in FoodThemeCatalogue.NewRestaurantDishes)
         foreach (var (suffix, operation) in new[]
         {
@@ -48,17 +59,26 @@ public static class FractionQuestionCatalogue
         })
             scenes.Add(new($"fraction-theme-food-{dish.Unit.Id}-{suffix}",
                 QuestionKnowledgeGroup.Food, operation));
+        foreach (var drink in FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Drinks
+            && !scenes.Any(existing => existing.Id == $"fraction-theme-drinks-{s.Unit.Id}-total")))
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"fraction-theme-drinks-{drink.Unit.Id}-{suffix}",
+                QuestionKnowledgeGroup.Drinks, operation));
         return scenes.AsReadOnly();
     }
     public static Scene? Find(string id) => All.FirstOrDefault(s => s.Id == id);
     public static IEnumerable<Scene> Available(QuestionLearningProfile profile, ArithmeticOperation operation, CurriculumTier tier)
-        => All.Where(s => s.Group == profile.Group && s.Operation == operation && (int)tier >= s.MinimumStars);
+        => All.Where(s => profile.Includes(s.Group) && s.Operation == operation && (int)tier >= s.MinimumStars);
     public static int MaximumDenominator(CurriculumTier tier) => tier switch
     { CurriculumTier.OneStar => 6, CurriculumTier.TwoStars => 12, CurriculumTier.ThreeStars => 12,
         CurriculumTier.FourStars => 20, CurriculumTier.FiveStars => 30, _ => 0 };
 
     public static BasicQuestionContract Create(QuestionLearningProfile profile, ArithmeticOperation op, CurriculumTier tier,
-        AppLanguage language, Random? random = null, string? sceneId = null)
+        AppLanguage language, Random? random = null, string? sceneId = null, int? venueChoice = null)
     {
         random ??= Random.Shared;
         var eligible = Available(profile, op, tier)
@@ -84,9 +104,12 @@ public static class FractionQuestionCatalogue
             bool paired = FoodThemePrompt.IsPairedFractionScene(s.Id) || drinkPair;
             if (s.Group == QuestionKnowledgeGroup.Drinks)
             {
-                subject = language == AppLanguage.Vietnamese ? "quán nước thứ nhất" : "the first drink shop";
+                string? drinkId = FoodThemeCatalogue.DrinkForScene(s.Id)?.Unit.Id;
+                var shops = FoodThemePrompt.DrinkShopActors(FoodThemeCatalogue.IsCoffeeDrinkId(drinkId),
+                    FoodThemeCatalogue.IsMilkTeaDrinkId(drinkId), language);
+                subject = shops.First;
                 if (paired)
-                    other = language == AppLanguage.Vietnamese ? "quán nước thứ hai" : "the second drink shop";
+                    other = shops.Second;
             }
             if (s.Group == QuestionKnowledgeGroup.Food)
             {
@@ -100,7 +123,7 @@ public static class FractionQuestionCatalogue
                 else
                 {
                 bool bakery = FoodThemeCatalogue.IsBakeryFractionScene(s.Id);
-                int venue = random.Next(FoodThemePrompt.VenueCount(bakery));
+                int venue = venueChoice ?? random.Next(FoodThemePrompt.VenueCount(bakery));
                 if (paired)
                 {
                     for (int ownerAttempt = 0; ownerAttempt < 32; ownerAttempt++)
@@ -119,7 +142,7 @@ public static class FractionQuestionCatalogue
             }
             var c = new BasicQuestionContract(Version, op, tier, language, (int)a.Numerator, (int)b.Numerator,
                 subject, language == AppLanguage.Vietnamese ? s.ResultUnit : s.EnResultUnit, "",
-                TopicId: profile.Group.ToString(), SceneId: s.Id, KnowledgeGroup: profile.Group,
+                TopicId: s.Group.ToString(), SceneId: s.Id, KnowledgeGroup: s.Group,
                 Structure: paired ? BasicQuestionStructure.Combine : BasicQuestionStructure.Increase, OtherSubject: other,
                 LeftDenominator: (int)a.Denominator, RightDenominator: (int)b.Denominator);
             if (IsValid(c)) return c;

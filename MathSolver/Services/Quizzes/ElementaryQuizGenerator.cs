@@ -1,5 +1,6 @@
 using MathSolver.Models;
 using MathSolver.Services.Core;
+using System.Collections.Concurrent;
 using System.Globalization;
 
 namespace MathSolver.Services;
@@ -12,8 +13,26 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
     private readonly bool _expandNarratives = expandNarratives;
     private readonly bool _expandActivityStories = expandActivityStories;
     private readonly bool _expandedNumberPractice = expandedNumberPractice;
+    private static readonly string[][] LineNameSets =
+        [["a", "b", "c", "d", "e"], ["d", "e", "f", "g", "h"], ["m", "n", "p", "q", "r"]];
+    private static readonly ConcurrentDictionary<QuizProblemKind, IReadOnlyList<ElementaryQuizType>> TypeCache = new();
+
+    private sealed class ChoiceScratch
+    {
+        internal readonly List<string> Choices = new(4);
+        internal readonly List<string> Unique = new(4);
+        internal ElementaryAnswer[]? SingleAnswer;
+        internal ElementaryAnswer[]? PairAnswers;
+    }
+
+    [ThreadStatic]
+    private static ChoiceScratch? s_choiceScratch;
+
     public static bool Supports(QuizProblemKind kind) => Types(kind).Count > 0;
-    public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind) => kind switch
+    public static IReadOnlyList<ElementaryQuizType> Types(QuizProblemKind kind)
+        => TypeCache.GetOrAdd(kind, static key => Array.AsReadOnly(CreateTypes(key)));
+
+    private static ElementaryQuizType[] CreateTypes(QuizProblemKind kind) => kind switch
     {
         QuizProblemKind.NumberSense => [ElementaryQuizType.Counting, ElementaryQuizType.ReadNumber,
             ElementaryQuizType.WriteNumber, ElementaryQuizType.PlaceValue, ElementaryQuizType.AdjacentNumbers,
@@ -47,16 +66,18 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
     public ArithmeticQuizQuestion Generate(ArithmeticQuizMode mode, QuizProblemKind kind,
         ElementaryQuizType? selected, AppLanguage language, CurriculumTier tier)
     {
-        IReadOnlyList<ElementaryQuizType> types = (kind, selected) switch
+        ElementaryQuizType type;
+        if (kind is QuizProblemKind.Arithmetic && selected == ElementaryQuizType.IntegerCompare
+            || kind is QuizProblemKind.Fraction && selected == ElementaryQuizType.CompareFractions)
+            type = selected.Value;
+        else
         {
-            (QuizProblemKind.Arithmetic, ElementaryQuizType.IntegerCompare) => [ElementaryQuizType.IntegerCompare],
-            (QuizProblemKind.Fraction, ElementaryQuizType.CompareFractions) => [ElementaryQuizType.CompareFractions],
-            _ => Types(kind)
-        };
-        if (types.Count == 0) throw new ArgumentOutOfRangeException(nameof(kind));
-        var type = selected.HasValue && types.Contains(selected.Value) ? selected.Value : types[_random.Next(types.Count)];
+            IReadOnlyList<ElementaryQuizType> types = Types(kind);
+            if (types.Count == 0) throw new ArgumentOutOfRangeException(nameof(kind));
+            type = selected.HasValue && types.Contains(selected.Value) ? selected.Value : types[_random.Next(types.Count)];
+        }
         if (CreateDifficultyContract(kind, type, language, tier) is { } difficultyContract)
-            return CompleteQuestion(mode, difficultyContract, [], difficultyContract.ChoiceTexts?.ToArray());
+            return CompleteQuestion(mode, difficultyContract, [], difficultyContract.ChoiceTexts);
         bool vi = language == AppLanguage.Vietnamese;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
         int scale = (int)tier;
@@ -166,8 +187,7 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
                 bool parallel = type == ElementaryQuizType.ParallelLines;
                 bool choosePair = scale >= 4 || scale == 3 && _random.Next(2) == 0;
                 decimal rotation = scale == 1 ? _random.Next(2) * 90 : scale == 2 ? _random.Next(4) * 45 : _random.Next(12) * 15;
-                string[][] nameSets = [["a", "b", "c", "d", "e"], ["d", "e", "f", "g", "h"], ["m", "n", "p", "q", "r"]];
-                string[] names = nameSets[_random.Next(nameSets.Length)];
+                string[] names = LineNameSets[_random.Next(LineNameSets.Length)];
                 if (choosePair)
                 {
                     bool hasPair = _random.Next(4) != 0;
@@ -176,29 +196,39 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
                     decimal[] directions = hasPair
                         ? parallel ? [0, 0, 25, 55, 120] : [0, 90, 25, 55, 120]
                         : [0, 25, 55, 120, 155];
-                    directions = directions[..lineCount].Select(direction => direction + rotation).ToArray();
-                    _random.Shuffle(directions);
-                    var lines = names.Select((label, lineIndex) => new QuizVisualLine(label, directions[lineIndex],
-                        parallel && hasPair ? (lineIndex - (lineCount - 1) / 2f) * .22f : 0)).ToArray();
+                    Span<decimal> activeDirections = directions.AsSpan(0, lineCount);
+                    for (int i = 0; i < activeDirections.Length; i++) activeDirections[i] += rotation;
+                    _random.Shuffle(activeDirections);
+                    var lines = new QuizVisualLine[lineCount];
+                    for (int i = 0; i < lineCount; i++)
+                        lines[i] = new(names[i], directions[i],
+                            parallel && hasPair ? (i - (lineCount - 1) / 2f) * .22f : 0);
                     visual = new("line-pairs", names, [], "", Lines: lines);
                     string Pair(int left, int right) => QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.050", ("names_left", $"{names[left]}"), ("names_right", $"{names[right]}"));
                     string none = parallel ? QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.051") : QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.052");
                     int pairIndex = -1;
-                    var pairs = (from left in Enumerable.Range(0, lineCount)
-                                 from right in Enumerable.Range(left + 1, lineCount - left - 1)
-                                 select (Left: left, Right: right)).ToArray();
-                    for (int candidate = 0; candidate < pairs.Length; candidate++)
+                    Span<(int Left, int Right)> pairs = stackalloc (int, int)[10];
+                    int pairCount = 0;
+                    for (int left = 0; left < lineCount; left++)
+                        for (int right = left + 1; right < lineCount; right++)
+                            pairs[pairCount++] = (left, right);
+                    for (int candidate = 0; candidate < pairCount; candidate++)
                     {
                         var pair = pairs[candidate];
                         decimal difference = Math.Abs(directions[pair.Left] - directions[pair.Right]) % 180;
                         if (difference == (parallel ? 0 : 90)) pairIndex = candidate;
                     }
-                    string[] distractors = pairs.Where((_, candidate) => candidate != pairIndex)
-                        .Select(pair => Pair(pair.Left, pair.Right)).ToArray();
+                    string[] distractors = new string[pairCount - (pairIndex < 0 ? 0 : 1)];
+                    int distractorCount = 0;
+                    for (int i = 0; i < pairCount; i++)
+                        if (i != pairIndex) distractors[distractorCount++] = Pair(pairs[i].Left, pairs[i].Right);
                     _random.Shuffle(distractors);
                     string correctPair = pairIndex < 0 ? none : Pair(pairs[pairIndex].Left, pairs[pairIndex].Right);
-                    textChoices = pairIndex < 0 ? [.. distractors.Take(3), none]
-                        : [correctPair, .. distractors.Take(2), none];
+                    int take = Math.Min(pairIndex < 0 ? 3 : 2, distractors.Length);
+                    textChoices = new string[take + (pairIndex < 0 ? 1 : 2)];
+                    if (pairIndex >= 0) textChoices[0] = correctPair;
+                    Array.Copy(distractors, 0, textChoices, pairIndex < 0 ? 0 : 1, take);
+                    textChoices[^1] = none;
                     string relationName = parallel ? QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.053") : QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.054");
                     string[] prompts = new[] { QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.055", ("string_Join_names", $"{string.Join(", ", names)}"), ("relationName", $"{relationName}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.056", ("relationName", $"{relationName}")), QuizContentCatalog.Text(language, "ElementaryQuizGenerator.Generate.057", ("relationName", $"{relationName}")) };
                     problem = prompts[_random.Next(prompts.Length)];
@@ -256,88 +286,173 @@ public sealed partial class ElementaryQuizGenerator(Random? random = null, bool 
     }
 
     private ArithmeticQuizQuestion CompleteQuestion(ArithmeticQuizMode mode, ElementaryQuizContract contract,
-        List<string> work, string[]? textChoices)
+        List<string> work, IReadOnlyList<string>? textChoices)
     {
         if (contract.DataChart is not null) DataChartQuestionValidator.Validate(contract);
         if (contract.AreaMeasurement is not null) AreaMeasurementQuestionValidator.Validate(contract);
         bool vi = contract.Language == AppLanguage.Vietnamese;
         string N(decimal value) => value.ToString("0.################", CultureInfo.InvariantCulture);
-        var answers = contract.Answers.ToList();
+        IReadOnlyList<ElementaryAnswer> answers = contract.Answers;
         if (contract.Reasoning?.Explanation is { } explanation) work.Add(explanation);
         if (contract.IsComparison)
             work.Add(contract.FormatComparison(answers[0].Text!));
         // Display task-required forms, not only their normalized rational values.
-        answers = answers.Select(answer => answer.RequireMixedNumber ? answer with { Text = Mixed(answer.Value) }
-            : answer.RequiredDenominator is int denominator ? answer with { Text = $"{answer.Value.Numerator * denominator / answer.Value.Denominator}/{denominator}" } : answer).ToList();
-        contract = contract with { Answers = answers };
+        ElementaryAnswer[]? formattedAnswers = null;
+        for (int i = 0; i < answers.Count; i++)
+        {
+            var answer = answers[i];
+            if (!answer.RequireMixedNumber && answer.RequiredDenominator is null) continue;
+            formattedAnswers ??= [.. answers];
+            formattedAnswers[i] = answer.RequireMixedNumber ? answer with { Text = Mixed(answer.Value) }
+                : answer with { Text = $"{answer.Value.Numerator * answer.RequiredDenominator!.Value / answer.Value.Denominator}/{answer.RequiredDenominator.Value}" };
+        }
+        if (formattedAnswers is not null)
+        {
+            answers = formattedAnswers;
+            contract = contract with { Answers = answers };
+        }
         string answerLabel = QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.071");
         // Keep evaluation expressions intact; use school division notation only in the displayed work.
         string DisplayStepExpression(string expression) => QuizMathExpressionFormatter.Format(expression,
             preserveFractions: contract.Kind == QuizProblemKind.FractionSkills && contract.Reasoning?.ScenarioId != FractionWholePilot.Relation
                 || contract.Type == ElementaryQuizType.ExperimentalProbability);
         if (contract.Reasoning is not null)
-            work.AddRange(contract.Reasoning.Steps.Select(step => step.Label + ":" + Environment.NewLine +
-                DisplayStepExpression(step.Expression) + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit)));
+            foreach (var step in contract.Reasoning.Steps)
+                work.Add(step.Label + ":" + Environment.NewLine + DisplayStepExpression(step.Expression)
+                    + " = " + step.DisplayValue + (step.Unit.Length == 0 ? "" : " " + step.Unit));
         if (contract.Reasoning is not null && work.Count == 0 && contract.Type != ElementaryQuizType.ReadClock
             && !IsFoundationSkill(contract.Type))
             work.Add(answers[0].Label + ": " + ElementaryQuizContract.FormatAnswer(answers[0]));
-        contract = contract with { SolutionText = string.Join(Environment.NewLine,
-            work.Append(answerLabel + ": " + contract.AnswerText)) };
+        work.Add(answerLabel + ": " + contract.AnswerText);
+        contract = contract with { SolutionText = string.Join(Environment.NewLine, work) };
         bool sumRatioTuple = contract.Type == ElementaryQuizType.SumRatio && answers.Count == 2
             && contract.Reasoning?.ScenarioId == SumRatioPilot.Relation;
         bool differenceRatioTuple = contract.Type == ElementaryQuizType.DifferenceRatio && answers.Count == 2
             && contract.Reasoning?.ScenarioId == DifferenceRatioPilot.Relation;
         bool pairedProposal = contract.Type == ElementaryQuizType.QuotientRemainder && answers.Count == 2 || sumRatioTuple || differenceRatioTuple;
-        var choices = new List<string> { contract.AnswerText };
-        if (textChoices is not null)
-            choices.AddRange(textChoices.Where(text => !string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)));
-        else if (contract.Type == ElementaryQuizType.ExperimentalProbability)
+        // Each list is scratch storage. ChoiceTexts receives its own array below.
+        // Remove the slot while in use so nested generation cannot share buffers.
+        var scratch = s_choiceScratch ?? new ChoiceScratch();
+        s_choiceScratch = null;
+        var choices = scratch.Choices;
+        try
         {
-            int total = contract.ProbabilityScenario!.TotalCount;
-            int favorable = contract.ProbabilityScenario.EventCount;
-            choices.AddRange(Enumerable.Range(1, 3).Select(delta =>
-                new ReducedFraction((favorable + delta) % (total + 1), total).ToString()));
+            choices.Add(contract.AnswerText);
+            if (textChoices is not null)
+            {
+                foreach (string text in textChoices)
+                    if (!string.Equals(text, contract.AnswerText, StringComparison.OrdinalIgnoreCase)) choices.Add(text);
+            }
+            else if (contract.Type == ElementaryQuizType.ExperimentalProbability)
+            {
+                int total = contract.ProbabilityScenario!.TotalCount;
+                int favorable = contract.ProbabilityScenario.EventCount;
+                for (int delta = 1; delta <= 3; delta++)
+                    choices.Add(new ReducedFraction((favorable + delta) % (total + 1), total).ToString());
+            }
+            else
+            {
+                // Reuse one contiguous proposal array across all three distractors.
+                var alternative = answers.Count switch
+                {
+                    1 => scratch.SingleAnswer ??= new ElementaryAnswer[1],
+                    2 => scratch.PairAnswers ??= new ElementaryAnswer[2],
+                    _ => new ElementaryAnswer[answers.Count]
+                };
+                for (int delta = 1; delta <= 3; delta++)
+                {
+                    // Paired proposals exercise either result and both. A direct ratio
+                    // sum-ratio also swaps owners; difference-ratio shifts both counts
+                    // equally, preserving the difference while changing the ratio.
+                    for (int index = 0; index < answers.Count; index++)
+                    {
+                        var answer = answers[index];
+                        alternative[index] = (pairedProposal ? delta < 3 && index != delta - 1 : index != 0) ? answer
+                            : sumRatioTuple && delta == 3 ? answer with { Value = answers[1 - index].Value }
+                            : answer.Text is not null
+                            ? answer with { Text = WrongText(answer, delta, vi) }
+                            : answer with { Value = new(answer.Value.Numerator + delta * answer.Value.Denominator, answer.Value.Denominator),
+                                DisplayValue = answer.DisplayValue is not null
+                                    ? N((decimal)answer.Value.Numerator / (decimal)answer.Value.Denominator + delta) : null };
+                    }
+                    choices.Add((contract with { Answers = alternative }).AnswerText);
+                }
+            }
+            var uniqueOptions = scratch.Unique;
+            foreach (string choice in choices)
+                if (uniqueOptions.Count < 4 && !uniqueOptions.Contains(choice)) uniqueOptions.Add(choice);
+            // Text tasks may naturally have only three alternatives; add a localized 'unsure'.
+            if (uniqueOptions.Count < 4)
+            {
+                string unsure = QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.072");
+                if (!uniqueOptions.Contains(unsure)) uniqueOptions.Add(unsure);
+            }
+            string[] options = uniqueOptions.ToArray();
+            _random.Shuffle(options);
+            bool correct = _random.Next(2) == 0;
+            contract = contract with { PresentedText = correct ? contract.AnswerText
+                : choices[pairedProposal ? _random.Next(1, choices.Count) : 1], ChoiceTexts = options };
+            return new(new(0, ArithmeticOperation.Add, 0), mode, 0, null, correct, [], ElementaryProblem: contract);
         }
-        else if (textChoices is null) for (int delta = 1; delta <= 3; delta++)
+        finally
         {
-            // Paired proposals exercise either result and both. A direct ratio
-            // sum-ratio also swaps owners; difference-ratio shifts both counts
-            // equally, preserving the difference while changing the ratio.
-            var alternative = answers.Select((answer, index) => (pairedProposal ? delta < 3 && index != delta - 1 : index != 0) ? answer
-                : sumRatioTuple && delta == 3 ? answer with { Value = answers[1-index].Value }
-                : answer.Text is not null
-                ? answer with { Text = WrongText(answer, delta, vi) }
-                : answer with { Value = new(answer.Value.Numerator + delta * answer.Value.Denominator, answer.Value.Denominator),
-                    DisplayValue = answer.DisplayValue is not null
-                        ? N((decimal)answer.Value.Numerator / (decimal)answer.Value.Denominator + delta) : null }).ToArray();
-            choices.Add((contract with { Answers = alternative }).AnswerText);
+            scratch.Choices.Clear();
+            scratch.Unique.Clear();
+            if (scratch.SingleAnswer is not null) Array.Clear(scratch.SingleAnswer);
+            if (scratch.PairAnswers is not null) Array.Clear(scratch.PairAnswers);
+            if (scratch.Choices.Capacity <= 16 && scratch.Unique.Capacity <= 16)
+                s_choiceScratch = scratch;
         }
-        string[] options = choices.Distinct().ToArray();
-        // Text tasks may naturally have only three alternatives; add a localized 'unsure'.
-        if (options.Length < 4) options = [.. options, QuizContentCatalog.Text(contract.Language, "ElementaryQuizGenerator.CompleteQuestion.072")];
-        options = options.Distinct().Take(4).ToArray();
-        _random.Shuffle(options);
-        bool correct = _random.Next(2) == 0;
-        contract = contract with { PresentedText = correct ? contract.AnswerText
-            : choices[pairedProposal ? _random.Next(1, choices.Count) : 1], ChoiceTexts = options };
-        return new(new(0, ArithmeticOperation.Add, 0), mode, 0, null, correct, [], ElementaryProblem: contract);
     }
 
     private static string Mixed(ReducedFraction value) => $"{value.Numerator / value.Denominator} {value.Numerator % value.Denominator}/{value.Denominator}";
     private static string WrongText(ElementaryAnswer answer, int delta, bool vi)
     {
-        if (answer.Text is ">" or "<" or "=") return new[] { ">", "<", "=" }.Where(text => text != answer.Text).ElementAt((delta - 1) % 2);
+        if (answer.Text is ">" or "<" or "=")
+            return SelectWrongOption(answer.Text, delta, wrap: true, ">", "<", "=");
         if (answer.RequireMixedNumber) return Mixed(new(answer.Value.Numerator + delta * answer.Value.Denominator, answer.Value.Denominator));
         if (answer.RequiredDenominator is int denominator) return (answer.Value.Numerator * denominator / answer.Value.Denominator + delta).ToString() + "/" + denominator;
-        string? normalizedText = answer.Text?.ToLowerInvariant();
-        if (normalizedText is "góc nhọn" or "góc vuông" or "góc tù" or "góc bẹt" or "acute" or "right" or "obtuse" or "straight")
-            return (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.073"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.074"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.075"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.076") })
-                .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ElementAt(delta - 1);
-        if (normalizedText is "song song" or "vuông góc" or "cắt nhau nhưng không vuông góc" or "parallel" or "perpendicular" or "intersecting but not perpendicular")
-            return (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.077"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.078"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.079"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.080") })
-                .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ElementAt(delta - 1);
-        string[] likelihoodChoices = (new[] { QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.081"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.082"), QuizContentCatalog.Text(QuizContentCatalog.CompatibilityLanguage(vi), "ElementaryQuizGenerator.WrongText.083") })
-            .Where(text => !string.Equals(text, answer.Text, StringComparison.OrdinalIgnoreCase)).ToArray();
-        return likelihoodChoices[(delta - 1) % likelihoodChoices.Length];
+        var language = QuizContentCatalog.CompatibilityLanguage(vi);
+        if (EqualsWrongText(answer.Text, "góc nhọn") || EqualsWrongText(answer.Text, "góc vuông")
+            || EqualsWrongText(answer.Text, "góc tù") || EqualsWrongText(answer.Text, "góc bẹt")
+            || EqualsWrongText(answer.Text, "acute") || EqualsWrongText(answer.Text, "right")
+            || EqualsWrongText(answer.Text, "obtuse") || EqualsWrongText(answer.Text, "straight"))
+            return SelectWrongOption(answer.Text, delta, wrap: false,
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.073"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.074"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.075"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.076"));
+        if (EqualsWrongText(answer.Text, "song song") || EqualsWrongText(answer.Text, "vuông góc")
+            || EqualsWrongText(answer.Text, "cắt nhau nhưng không vuông góc")
+            || EqualsWrongText(answer.Text, "parallel") || EqualsWrongText(answer.Text, "perpendicular")
+            || EqualsWrongText(answer.Text, "intersecting but not perpendicular"))
+            return SelectWrongOption(answer.Text, delta, wrap: false,
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.077"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.078"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.079"),
+                QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.080"));
+        return SelectWrongOption(answer.Text, delta, wrap: true,
+            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.081"),
+            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.082"),
+            QuizContentCatalog.Text(language, "ElementaryQuizGenerator.WrongText.083"));
+    }
+
+    private static bool EqualsWrongText(string? actual, string expected)
+        => string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase);
+
+    private static string SelectWrongOption(string? current, int delta, bool wrap,
+        string first, string second, string third, string? fourth = null)
+    {
+        int count = (EqualsWrongText(current, first) ? 0 : 1)
+            + (EqualsWrongText(current, second) ? 0 : 1)
+            + (EqualsWrongText(current, third) ? 0 : 1)
+            + (fourth is null || EqualsWrongText(current, fourth) ? 0 : 1);
+        int index = wrap ? (delta - 1) % count : delta - 1;
+        if (index < 0 || index >= count) throw new ArgumentOutOfRangeException(nameof(delta));
+        if (!EqualsWrongText(current, first) && index-- == 0) return first;
+        if (!EqualsWrongText(current, second) && index-- == 0) return second;
+        if (!EqualsWrongText(current, third) && index-- == 0) return third;
+        if (fourth is not null && !EqualsWrongText(current, fourth) && index == 0) return fourth;
+        throw new InvalidOperationException("No matching wrong-answer option.");
     }
 }

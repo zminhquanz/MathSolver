@@ -5,6 +5,7 @@ internal static class PdfTestCommands
     internal static IReadOnlyDictionary<string, PdfTestCommand> All { get; } =
         new Dictionary<string, PdfTestCommand>(StringComparer.Ordinal)
         {
+            ["--pet-animals"] = new("Pet animals: C#/AI/PDF/Excel", PetAnimalWorksheetTests.Run),
             ["--community-themes"] = new("Toys/Healthcare/School", CommunityThemeWorksheetTests.Run),
             ["--mixed-groups"] = new("Mixed knowledge groups", MixedKnowledgeGroupsTests.Run),
             ["--food-themes"] = new("Food/drink/fruit themes", FoodThemeWorksheetTests.Run),
@@ -31,6 +32,7 @@ internal static class PdfTestCommands
             ["--percentage-whole-open"] = new("Percentage whole", PercentageWholeOpenWorksheetTests.Run),
             ["--fraction-remaining-open"] = new("Fraction remainder", FractionRemainingOpenWorksheetTests.Run),
             ["--fraction-whole-open"] = new("Fraction whole", FractionWholeOpenWorksheetTests.Run),
+            ["--fraction-themes"] = new("Bilingual fraction material themes", FractionThemeWorksheetTests.Run),
             ["--rectangle-area-open"] = new("Rectangle area", RectangleAreaOpenWorksheetTests.Run),
             ["--rectangle-perimeter-open"] = new("Rectangle perimeter", RectanglePerimeterOpenWorksheetTests.Run),
             ["--time-break-open"] = new("One-break", SameDayBreakWorksheetTests.Run),

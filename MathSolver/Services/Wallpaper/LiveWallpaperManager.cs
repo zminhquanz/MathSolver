@@ -4,7 +4,8 @@ public enum LiveWallpaperMode
 {
     MathAnimation = 0,
     Mp4 = 1,
-    MathAnimation2 = 2
+    MathAnimation2 = 2,
+    StaticSchoolImage = 4
 }
 
 /// <summary>
@@ -25,6 +26,7 @@ public static class LiveWallpaperManager
         "LiveWallpaper.ValidationVersion";
     private const string ModePreferenceKey =
         "LiveWallpaper.Mode";
+    private const int UnspecifiedMode = -1;
 
     private const int CurrentValidationVersion = 3;
 
@@ -110,7 +112,7 @@ public static class LiveWallpaperManager
         {
             int stored = Preferences.Default.Get(
                 ModePreferenceKey,
-                -1);
+                UnspecifiedMode);
 
             if (Enum.IsDefined(
                     typeof(LiveWallpaperMode),
@@ -119,36 +121,24 @@ public static class LiveWallpaperManager
                 return (LiveWallpaperMode)stored;
             }
 
-            // Preserve the behavior of installations that already had an MP4
-            // before the Math GraphicsView mode was introduced.
-            return HasWallpaper
+            // Older installs with an MP4 predate the mode preference.
+            // Retired selections fall back to the built-in Math animation.
+            return stored == UnspecifiedMode && HasWallpaper
                 ? LiveWallpaperMode.Mp4
                 : LiveWallpaperMode.MathAnimation;
         }
     }
 
-    public static bool IsEnabled
+    public static bool CanEnable => Mode switch
     {
-        get
-        {
-            if (!Preferences.Default.Get(
-                    EnabledPreferenceKey,
-                    false))
-            {
-                return false;
-            }
+        LiveWallpaperMode.MathAnimation or LiveWallpaperMode.MathAnimation2
+            or LiveWallpaperMode.StaticSchoolImage => true,
+        LiveWallpaperMode.Mp4 => IsHardwareH264Validated,
+        _ => false
+    };
 
-            return Mode switch
-            {
-                LiveWallpaperMode.MathAnimation => true,
-                LiveWallpaperMode.MathAnimation2 => true,
-                LiveWallpaperMode.Mp4 =>
-                    HasWallpaper &&
-                    IsHardwareH264Validated,
-                _ => false
-            };
-        }
-    }
+    public static bool IsEnabled =>
+        Preferences.Default.Get(EnabledPreferenceKey, false) && CanEnable;
 
     public static bool IsBuiltInAnimationEnabled =>
         IsEnabled &&
@@ -236,7 +226,7 @@ public static class LiveWallpaperManager
                     ? CurrentValidationVersion
                     : 0);
 
-            if (isOptimized &&
+            if (isOptimized && Mode == LiveWallpaperMode.Mp4 &&
                 !LiveWallpaperFrameAnalysis.HasCurrentProfile)
             {
                 ScheduleFrameAnalysis(inspection.Duration);
@@ -340,15 +330,7 @@ public static class LiveWallpaperManager
 
     public static void SetEnabled(bool enabled)
     {
-        bool canEnable =
-            Mode == LiveWallpaperMode.MathAnimation ||
-            Mode == LiveWallpaperMode.MathAnimation2 ||
-            (Mode == LiveWallpaperMode.Mp4 &&
-             HasWallpaper &&
-             IsHardwareH264Validated);
-
-        bool normalized =
-            enabled && canEnable;
+        bool normalized = enabled && CanEnable;
 
         if (Preferences.Default.Get(
                 EnabledPreferenceKey,

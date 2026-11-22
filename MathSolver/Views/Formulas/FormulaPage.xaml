@@ -21,7 +21,7 @@
         <Grid x:Name="FormulaTabNavigation" Grid.Row="0" HorizontalOptions="{OnPlatform Android=Fill, Default=Center}" MaximumWidthRequest="1280"
               Margin="{OnPlatform Android='0', WinUI='20,12,20,8', Default='20,12,20,8'}">
         <Border x:Name="FormulaNavigationFrame" Padding="{OnPlatform Android=0, Default=8}" StrokeThickness="{OnPlatform Android=0, Default=1}"
-                BackgroundColor="{DynamicResource WallpaperSurfaceColor}" Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
+                BackgroundColor="{DynamicResource WallpaperNavigationSurfaceColor}" Stroke="{DynamicResource WallpaperPrimaryBorderBrush}">
         <Border.StrokeShape>
                     <RoundRectangle CornerRadius="{OnPlatform Android=0, Default=14}" />
                 </Border.StrokeShape>
@@ -51,8 +51,8 @@
 
                     controls:MathNavigationIcon.Key="Formula.Tabs.UnknownComponent"
                     Style="{StaticResource SolverSubTabButtonStyle}"
-                    BackgroundColor="{DynamicResource PrimaryColor}"
-                    TextColor="{DynamicResource OnPrimaryColor}"
+                    BackgroundColor="{DynamicResource WallpaperSelectionBackgroundColor}"
+                    TextColor="{DynamicResource WallpaperSelectionTextColor}"
                     Clicked="OnUnknownComponentTabClicked" />
 
                 <Button

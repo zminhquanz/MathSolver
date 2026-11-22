@@ -21,7 +21,7 @@ public sealed partial class ElementaryQuizGenerator
     {
         if (!IsDecimalSpatialSkill(type) || !Enum.IsDefined(tier)) throw new ArgumentException("InvalidDecimalSpatialSkill");
         var c = CreateDecimalSpatialSkill(type, language, tier, contextId);
-        return CompleteQuestion(mode, c, [], c.ChoiceTexts?.ToArray());
+        return CompleteQuestion(mode, c, [], c.ChoiceTexts);
     }
 
     private ElementaryQuizContract CreateDecimalSpatialSkill(ElementaryQuizType type, AppLanguage language, CurriculumTier tier, string contextId = "")

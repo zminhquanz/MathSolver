@@ -20,7 +20,8 @@ public enum CalculationSimdMode
     ArmNeon,
     ArmSve,
     ArmSme,
-    Auto
+    Auto,
+    ArmSve2
 }
 
 public enum PowerNttSseIsa
@@ -115,12 +116,20 @@ public static class CalculationAccelerationManager
         IsArmNeonManagedAvailable;
 #endif
 
-    // SVE/SVE2 and SME/SME2 remain hardware-information-only on Android.
-    // The benchmark intentionally exposes only the stable managed NEON path.
+#if ANDROID && NET11_0_OR_GREATER && MATHSOLVER_ANDROID_RELEASE && !DEBUG
+    // The Android app targets CoreCLR. The SVE kernels use 128-bit vectors.
+    public static bool IsArmSveManagedAvailable =>
+        IsAndroidNeonExecutionAllowed && MatrixEngine.IsSveSupported;
+
+    public static bool IsArmSve2ManagedAvailable =>
+        IsAndroidNeonExecutionAllowed && MatrixEngine.IsSve2Supported;
+#else
     public static bool IsArmSveManagedAvailable => false;
     public static bool IsArmSve2ManagedAvailable => false;
-    public static bool IsArmSveAvailable => false;
-    public static bool IsArmSve2Available => false;
+#endif
+
+    public static bool IsArmSveAvailable => IsArmSveManagedAvailable;
+    public static bool IsArmSve2Available => IsArmSve2ManagedAvailable;
 
     // .NET 10 chưa expose System.Runtime.Intrinsics.Arm.Sme/Sme2.
     // CPU capability vẫn được Hardware Information phát hiện riêng qua HWCAP.
@@ -159,6 +168,16 @@ public static class CalculationAccelerationManager
             {
                 modes.Add(
                     CalculationSimdMode.ArmNeon);
+            }
+
+            if (IsArmSveAvailable)
+            {
+                modes.Add(CalculationSimdMode.ArmSve);
+            }
+
+            if (IsArmSve2Available)
+            {
+                modes.Add(CalculationSimdMode.ArmSve2);
             }
 #else
             if (IsAvx512Available)
@@ -213,6 +232,11 @@ public static class CalculationAccelerationManager
         get
         {
             if (!UseSimd) return MatrixBackend.Scalar;
+            switch (SelectedSimdMode)
+            {
+                case CalculationSimdMode.ArmSve when IsArmSveManagedAvailable: return MatrixBackend.Sve;
+                case CalculationSimdMode.ArmSve2 when IsArmSve2ManagedAvailable: return MatrixBackend.Sve2;
+            }
             return EffectiveSimdMode switch
             {
                 CalculationSimdMode.ArmNeon when MatrixEngine.IsNeonSupported => MatrixBackend.Neon,
@@ -277,12 +301,13 @@ public static class CalculationAccelerationManager
         Avx512F.IsSupported && Vector512.IsHardwareAccelerated;
 
     /// <summary>
-    /// Direct ARM64 AdvSimd or optimized hybrid Vector128 for Android NTT/CRT
-    /// through exponent 100M.
+    /// Direct ARM64 AdvSimd or optimized hybrid Vector128 for Auto and explicit
+    /// NEON in Android NTT/CRT through exponent 100M.
     /// </summary>
     public static bool UsePowerNttNeon =>
 #if ANDROID
-        UseSimd && EffectiveSimdMode == CalculationSimdMode.ArmNeon &&
+        UseSimd &&
+        (SelectedSimdMode is CalculationSimdMode.Auto or CalculationSimdMode.ArmNeon) &&
         IsPowerNttAccelerationAvailable;
 #else
         false;
@@ -291,6 +316,20 @@ public static class CalculationAccelerationManager
     // The 1M result is close enough to Scalar that the short-power gate stays.
     public static bool UsePowerNttNeonForExponent(int exponent) =>
         exponent > 1_000_000 && UsePowerNttNeon;
+
+    internal static CalculationSimdMode? EnabledPowerNttSveMode
+    {
+        get
+        {
+            if (!UseSimd) return null;
+            CalculationSimdMode mode = SelectedSimdMode;
+            return mode is CalculationSimdMode.ArmSve or CalculationSimdMode.ArmSve2 ? mode : null;
+        }
+    }
+
+    /// <summary>Captures the explicitly enabled Android SVE mode for large-power NTT/CRT.</summary>
+    public static CalculationSimdMode? GetPowerNttSveMode(int exponent) =>
+        exponent > 1_000_000 ? EnabledPowerNttSveMode : null;
 
     /// <summary>
     /// True when the Android Pow NTT backend uses portable Vector128 with
@@ -360,8 +399,14 @@ public static class CalculationAccelerationManager
         }
     }
 
+    /// <summary>Effective mode for general SIMD workloads. Power and matrix calculations have their own SVE policy.</summary>
     public static CalculationSimdMode EffectiveSimdMode =>
-        SelectedSimdMode == CalculationSimdMode.Auto ? GetBestAvailableMode() : SelectedSimdMode;
+        SelectedSimdMode switch
+        {
+            CalculationSimdMode.Auto => GetBestAvailableMode(),
+            CalculationSimdMode.ArmSve or CalculationSimdMode.ArmSve2 => CalculationSimdMode.ArmNeon,
+            var mode => mode
+        };
 
     public static bool AllowAvx => UseSimd &&
         EffectiveSimdMode is CalculationSimdMode.AvxAvx2 or CalculationSimdMode.Avx512;
@@ -383,10 +428,6 @@ public static class CalculationAccelerationManager
 
             CalculationSimdMode.ArmNeon =>
                 128,
-
-            CalculationSimdMode.ArmSve =>
-                Vector<byte>.Count *
-                8,
 
             _ =>
                 Vector<byte>.Count *
@@ -452,7 +493,9 @@ public static class CalculationAccelerationManager
                 IsArmNeonAvailable,
 
             CalculationSimdMode.ArmSve =>
-                false,
+                IsArmSveAvailable,
+            CalculationSimdMode.ArmSve2 =>
+                IsArmSve2Available,
 
             CalculationSimdMode.ArmSme =>
                 IsArmSmeRuntimeAvailable,
@@ -489,7 +532,10 @@ public static class CalculationAccelerationManager
                 "NEON/AdvSIMD",
 
             CalculationSimdMode.ArmSve =>
-                "SVE/SVE2",
+                "SVE",
+
+            CalculationSimdMode.ArmSve2 =>
+                "SVE2",
 
             CalculationSimdMode.ArmSme =>
                 "SME/SME2",
@@ -579,7 +625,7 @@ public static class CalculationAccelerationManager
     private static CalculationSimdMode GetBestAvailableMode()
     {
 #if ANDROID
-        // Android benchmark intentionally uses only NEON/AdvSIMD.
+        // Automatic selection uses NEON/AdvSIMD on Android.
         if (IsArmNeonAvailable)
         {
             return CalculationSimdMode.ArmNeon;

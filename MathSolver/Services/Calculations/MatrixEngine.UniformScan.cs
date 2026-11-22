@@ -45,6 +45,8 @@ public static partial class MatrixEngine
         if (!Enum.IsDefined(maximumBackend)) throw new ArgumentOutOfRangeException(nameof(maximumBackend));
         if (token.IsCancellationRequested) return null;
         MatrixBackend backend = ResolveBackend(maximumBackend);
+        // Keep input scans on the existing ARM64 comparator. Arithmetic uses the requested backend.
+        if (backend is MatrixBackend.Sve or MatrixBackend.Sve2) backend = MatrixBackend.Neon;
         const int chunkSize = 65536;
         int chunks = (length + chunkSize - 1) / chunkSize;
         int workers = length >= MatrixLimits.ParallelThresholdCells

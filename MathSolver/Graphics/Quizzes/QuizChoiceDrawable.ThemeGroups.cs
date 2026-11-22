@@ -25,10 +25,89 @@ internal sealed partial class QuizChoiceDrawable
         {
             case "knowledge-objects":
             case "knowledge-animals":
-            case "knowledge-school-supplies":
             case "knowledge-money":
             case "knowledge-packaging":
                 return DrawPresentation(c);
+            case "knowledge-school-supplies":
+                // Notebook and pencil for school supplies.
+                var book = new PathF();
+                book.MoveTo(11, 27);
+                book.CurveTo(23, 21, 35, 22, 47, 28);
+                book.CurveTo(58, 22, 67, 22, 78, 26);
+                book.LineTo(78, 76);
+                book.CurveTo(66, 71, 57, 72, 47, 79);
+                book.CurveTo(35, 72, 23, 72, 11, 76);
+                book.Close();
+                c.DrawPath(book);
+                Line(47, 28, 47, 79);
+                var pencil = new PathF();
+                pencil.MoveTo(83, 18);
+                pencil.LineTo(90, 21);
+                pencil.LineTo(85, 71);
+                pencil.LineTo(79, 84);
+                pencil.LineTo(77, 70);
+                pencil.Close();
+                c.DrawPath(pencil);
+                Line(79, 69, 85, 71);
+                break;
+            case "knowledge-school":
+                // School building with a peaked roof, two windows and a central doorway.
+                Path(new(12, 38), new(50, 12), new(88, 38));
+                c.DrawRectangle(19, 39, 62, 47);
+                c.DrawRectangle(28, 47, 13, 15);
+                c.DrawRectangle(59, 47, 13, 15);
+                c.DrawRectangle(44, 66, 12, 20);
+                Line(47, 24, 53, 24);
+                Line(50, 21, 50, 27);
+                break;
+            case "knowledge-toys":
+                // Teddy bear: a distinct toy silhouette without decorative clutter.
+                var bearHead = new PathF();
+                bearHead.MoveTo(28, 31);
+                bearHead.CurveTo(17, 32, 15, 18, 23, 13);
+                bearHead.CurveTo(31, 7, 42, 15, 38, 23);
+                bearHead.CurveTo(46, 19, 54, 19, 62, 23);
+                bearHead.CurveTo(58, 15, 69, 7, 77, 13);
+                bearHead.CurveTo(85, 18, 83, 32, 72, 31);
+                bearHead.CurveTo(79, 43, 71, 56, 60, 59);
+                bearHead.CurveTo(53, 62, 47, 62, 40, 59);
+                bearHead.CurveTo(29, 56, 21, 43, 28, 31);
+                c.DrawPath(bearHead);
+                var bearBody = new PathF();
+                bearBody.MoveTo(34, 57);
+                bearBody.CurveTo(25, 55, 17, 64, 19, 73);
+                bearBody.CurveTo(21, 81, 31, 79, 35, 74);
+                bearBody.LineTo(35, 80);
+                bearBody.CurveTo(35, 89, 45, 89, 50, 85);
+                bearBody.CurveTo(55, 89, 65, 89, 65, 80);
+                bearBody.LineTo(65, 74);
+                bearBody.CurveTo(69, 79, 79, 81, 81, 73);
+                bearBody.CurveTo(83, 64, 75, 55, 66, 57);
+                c.DrawPath(bearBody);
+                c.FillEllipse(40, 37, 4, 4);
+                c.FillEllipse(56, 37, 4, 4);
+                var nose = new PathF();
+                nose.MoveTo(46, 47);
+                nose.LineTo(54, 47);
+                nose.LineTo(50, 51);
+                nose.Close();
+                c.DrawPath(nose);
+                Line(50, 51, 50, 55);
+                break;
+            case "knowledge-healthcare":
+                // First-aid kit and cross, distinct from the packing boxes category.
+                c.DrawRoundedRectangle(11, 33, 78, 49, 7);
+                var kitHandle = new PathF();
+                kitHandle.MoveTo(35, 33);
+                kitHandle.LineTo(35, 25);
+                kitHandle.CurveTo(35, 20, 39, 17, 44, 17);
+                kitHandle.LineTo(56, 17);
+                kitHandle.CurveTo(61, 17, 65, 20, 65, 25);
+                kitHandle.LineTo(65, 33);
+                c.DrawPath(kitHandle);
+                Line(50, 46, 50, 69);
+                Line(38, 57.5f, 62, 57.5f);
+                break;
             case "mixed":
                 var rising = new PathF(); rising.MoveTo(12, 78); rising.LineTo(27, 78);
                 rising.CurveTo(45, 78, 55, 22, 73, 22); rising.LineTo(88, 22); c.DrawPath(rising);

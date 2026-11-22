@@ -233,7 +233,8 @@ public sealed partial class QuestionBankStore(string databasePath) : IQuestionBa
         string filter = "COALESCE(ProblemType,0)=0 AND Operation=? AND Stars=? AND Language=? AND " + (profile is null
             ? "(Version IN (1,2,3,4) OR (Version=10 AND COALESCE(KnowledgeGroup,0)=0))" : profile.Group == QuestionKnowledgeGroup.Objects
                 ? "Version IN (1,2,3,4,5,10) AND COALESCE(KnowledgeGroup,0)=?" : profile.Group == QuestionKnowledgeGroup.Measurement
-                    ? "Version=5 AND KnowledgeGroup IN (2,3,4,7)" : "Version IN (5,10) AND KnowledgeGroup=?");
+                    ? "Version=5 AND KnowledgeGroup IN (2,3,4,7)"
+                    : "Version IN (5,10) AND KnowledgeGroup=?");
         if (expandedOnly) filter += " AND Version=10";
         object[] args = profile is null ? [(int)operation, (int)tier, (int)language]
             : profile.Group == QuestionKnowledgeGroup.Measurement ? [(int)operation, (int)tier, (int)language]

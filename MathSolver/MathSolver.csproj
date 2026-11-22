@@ -122,6 +122,29 @@
     <MauiImage Include="Resources\Images\calculate.svg;Resources\Images\quiz.svg;Resources\Images\function.svg;Resources\Images\grid_on.svg" />
     <Content Include="$(WindowsArtworkPackPath)" Link="mathsolver-artwork.pack" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
+  <!-- Android Release retains only native Shell and PopupMenu drawables. SVG
+       sources still pass through MAUI Resizetizer for high-quality PNG aliases
+       inside the archive; remaining generated rasters are pruned before AAPT. -->
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);MATHSOLVER_ANDROID_ARTWORK_PACK</DefineConstants>
+    <AndroidArtworkPackPath>$(MSBuildProjectDirectory)\obj\artwork\$(Configuration)\$(TargetFramework)\mathsolver-artwork.pack</AndroidArtworkPackPath>
+  </PropertyGroup>
+  <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+    <AndroidArtworkSource Include="Resources\Images\*.png;Resources\Images\*.svg" />
+    <MauiImage Remove="Resources\Images\*.png" />
+    <MauiAsset Include="$(AndroidArtworkPackPath)" LogicalName="mathsolver-artwork.pack" />
+  </ItemGroup>
+  <Target Name="PackAndroidArtwork" AfterTargets="_ResizetizeInjectPlatformItems"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'"
+          Inputs="@(AndroidArtworkSource);$(_ResizetizerStampFile);$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1"
+          Outputs="$(AndroidArtworkPackPath)">
+    <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(AndroidArtworkPackPath)'))" />
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\pack-windows-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -OutputFile &quot;$(AndroidArtworkPackPath)&quot; -AndroidSvgRasterDirectory &quot;$(_MauiIntermediateImagesFullPath)drawable-xxxhdpi&quot;" />
+  </Target>
+  <Target Name="PruneAndroidArtwork" AfterTargets="PackAndroidArtwork"
+          Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
+    <Exec Command="powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File &quot;$(MSBuildProjectDirectory)\..\tools\artwork\prune-android-artwork.ps1&quot; -SourceDirectory &quot;$(MSBuildProjectDirectory)\Resources\Images&quot; -ResizetizerDirectory &quot;$(_MauiIntermediateImagesFullPath).&quot;" />
+  </Target>
   <!-- Windows App SDK self-contained mode adds every WinUI .mui culture as a
        loose file. Use its supported exclusion item before it creates output
        items, retaining all en-* and vi-* resources and every native DLL. -->

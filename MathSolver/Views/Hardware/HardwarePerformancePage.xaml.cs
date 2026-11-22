@@ -16,7 +16,6 @@ using MathSolver.Platforms.Windows;
 #if ANDROID
 using MathSolver.Platforms.Android;
 using System.Runtime.Intrinsics.Arm;
-#pragma warning disable SYSLIB5003
 #endif
 
 namespace MathSolver.Views;
@@ -533,16 +532,22 @@ public partial class HardwarePerformancePage : ContentPage
 
         string neonBackend =
             CalculationAccelerationManager.IsArmNeonAdvSimdAvailable
-                ? ".NET AdvSimd (Mono JIT)"
-                : CalculationAccelerationManager.IsArmNeonManagedAvailable
-                    ? ".NET Vector128 (ARM64 Mono JIT)"
-                    : (useEnglish
-                        ? "NEON hardware detected; managed JIT backend unavailable"
-                        : "Đã phát hiện NEON; backend managed JIT chưa khả dụng");
+                ? ".NET AdvSimd"
+                : ".NET Vector128 (ARM64)";
 
+        string benchmark = useEnglish
+            ? $"General benchmark: NEON/AdvSIMD ({neonBackend})"
+            : $"Benchmark tổng quát: NEON/AdvSIMD ({neonBackend})";
+
+        if (!CalculationAccelerationManager.IsArmSveAvailable)
+        {
+            return benchmark;
+        }
+
+        string sveModes = CalculationAccelerationManager.IsArmSve2Available ? "SVE, SVE2" : "SVE";
         return useEnglish
-            ? $"Benchmark: NEON/AdvSIMD only • {neonBackend} • SVE/SVE2 and SME/SME2: hardware information only"
-            : $"Benchmark: chỉ NEON/AdvSIMD • {neonBackend} • SVE/SVE2 và SME/SME2: chỉ hiển thị thông tin phần cứng";
+            ? $"{benchmark} • Matrix and large-power NTT/CRT options: {sveModes}"
+            : $"{benchmark} • Tùy chọn ma trận và NTT/CRT cho lũy thừa lớn: {sveModes}";
     }
 #endif
 
@@ -690,12 +695,18 @@ public partial class HardwarePerformancePage : ContentPage
                         ? LocalizationKeys.Hardware.AccelerationOn
                         : LocalizationKeys.Hardware.AccelerationOff);
 
+        CalculationSimdMode? sveMode = CalculationAccelerationManager.EnabledPowerNttSveMode;
+        bool usePowerNttSimd = sveMode.HasValue ||
+            CalculationAccelerationManager.UsePowerNttAvx2 ||
+            CalculationAccelerationManager.UsePowerNttSse ||
+            CalculationAccelerationManager.UsePowerNttNeon;
+
         string nttAccelerationStatus =
             LocalizationService.TranslateKey(
                 !CalculationAccelerationManager
                     .IsPowerNttAccelerationAvailable
                     ? LocalizationKeys.Hardware.NttAccelerationUnavailable
-                    : CalculationAccelerationManager.UsePowerNttAvx2 || CalculationAccelerationManager.UsePowerNttSse || CalculationAccelerationManager.UsePowerNttNeon
+                    : usePowerNttSimd
                         ? LocalizationKeys.Hardware.NttAccelerationOn
                         : LocalizationKeys.Hardware.NttAccelerationOff);
 
@@ -717,13 +728,16 @@ public partial class HardwarePerformancePage : ContentPage
 
         string nttBackendStatus =
 #if ANDROID
-            !useSimd || selectedMode != CalculationSimdMode.ArmNeon
-                ? LocalizationService.TranslateKey("Hardware.NttBackendNeonOff")
-                : CalculationAccelerationManager.IsPowerNttPortableNeonAvailable
-                    ? LocalizationService.TranslateKey("Hardware.NttBackendNeonPortable")
-                    : CalculationAccelerationManager.UsePowerNttNeon
-                        ? LocalizationService.TranslateKey("Hardware.NttBackendNeonDirect")
-                        : LocalizationService.TranslateKey("Hardware.NttBackendNeonUnavailable");
+            sveMode is { } mode
+                ? CalculationAccelerationManager.GetModeDisplayName(mode) +
+                    (IsVietnamese ? " (128-bit) cho số mũ >1M" : " (128-bit) for exponents >1M")
+                : !useSimd || selectedMode != CalculationSimdMode.ArmNeon
+                    ? LocalizationService.TranslateKey("Hardware.NttBackendNeonOff")
+                    : CalculationAccelerationManager.IsPowerNttPortableNeonAvailable
+                        ? LocalizationService.TranslateKey("Hardware.NttBackendNeonPortable")
+                        : CalculationAccelerationManager.UsePowerNttNeon
+                            ? LocalizationService.TranslateKey("Hardware.NttBackendNeonDirect")
+                            : LocalizationService.TranslateKey("Hardware.NttBackendNeonUnavailable");
 #else
             CalculationAccelerationManager.UsePowerNttAvx2
                 ? CalculationAccelerationManager.AllowAvx512
@@ -737,6 +751,8 @@ public partial class HardwarePerformancePage : ContentPage
         string matrixBackendStatus = CalculationAccelerationManager.EffectiveMatrixBackend switch
         {
             MatrixBackend.Neon => MatrixEngine.NeonBackendName,
+            MatrixBackend.Sve => "SVE (128-bit)",
+            MatrixBackend.Sve2 => "SVE2 (128-bit)",
             MatrixBackend.Avx512 => "AVX-512F (512-bit)",
             MatrixBackend.Avx2 => "AVX2 (256-bit)",
             MatrixBackend.Sse2 => "SSE2 (128-bit)",
@@ -6388,8 +6404,4 @@ public partial class HardwarePerformancePage : ContentPage
                 true;
         }
     }
-#if ANDROID
-#pragma warning restore SYSLIB5003
-#endif
-
 }

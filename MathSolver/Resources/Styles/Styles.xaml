@@ -553,10 +553,8 @@
     </Style>
 
     <Style x:Key="ThemeMenuChevronContainerStyle" TargetType="Border">
-        <Setter Property="WidthRequest" Value="28" />
-        <Setter Property="HeightRequest" Value="28" />
-        <Setter Property="MinimumWidthRequest" Value="{DynamicResource Density.ControlWidth}" />
-        <Setter Property="MinimumHeightRequest" Value="{DynamicResource Density.ControlHeight}" />
+        <Setter Property="WidthRequest" Value="24" />
+        <Setter Property="HeightRequest" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="VerticalOptions" Value="Center" />
@@ -567,8 +565,8 @@
     </Style>
 
     <Style x:Key="ThemeMenuChevronStyle" TargetType="Label">
-        <Setter Property="WidthRequest" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
-        <Setter Property="HeightRequest" Value="{OnPlatform Android=24, WinUI=28, Default=28}" />
+        <Setter Property="WidthRequest" Value="24" />
+        <Setter Property="HeightRequest" Value="24" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="FontSize" Value="20" />
         <Setter Property="FontAttributes" Value="Bold" />

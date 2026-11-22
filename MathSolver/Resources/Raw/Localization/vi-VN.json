@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Settings.Wallpaper.Title": "Hình nền",
+    "Settings.Wallpaper.Hint": "Chọn tranh tĩnh, hoạt ảnh toán học hoặc video MP4 cho các tab học toán.",
+    "Settings.Wallpaper.Enable": "Bật hình nền",
+    "Settings.Wallpaper.Type": "Kiểu hình nền",
+    "Settings.Wallpaper.SchoolStill": "Nhất Quỷ Nhì Ma, Thứ Ba Học Trò",
+    "Settings.Wallpaper.SchoolStillHint": "Tranh màu nước tĩnh hiển thị trên tab học toán đang mở.",
     "AiBank.ProcessedQuestionsEmpty": "Chưa có đề đã xử lý. Chọn model và dạng toán để bắt đầu tạo đề.",
     "Quiz.CheckAnswer": "Kiểm tra",
     "Quiz.RegenerateQuestionCompact": "Tạo lại câu",

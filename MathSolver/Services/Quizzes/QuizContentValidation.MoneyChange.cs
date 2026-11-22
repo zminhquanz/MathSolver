@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using System.Text.Json;
 using MathSolver.Models;
 
@@ -6,6 +5,19 @@ namespace MathSolver.Services;
 
 public static partial class QuizContentValidation
 {
+    private static readonly string[] MoneyChangeRequiredFields =
+        ["Buyer", "Item", "Items", "PriceFact", "CountFact", "PaidFact", "Question", "CostLead", "ChangeLead"];
+
+    private static readonly (string Field, string[] Expected)[] MoneyChangePlaceholderFields =
+    [
+        ("PriceFact", ["{v1}", "{f0}", "{v3}"]),
+        ("CountFact", ["{v0}", "{f1}", "{v2}"]),
+        ("PaidFact", ["{v0}", "{f2}", "{v3}"]),
+        ("Question", ["{v0}", "{v3}"]),
+        ("CostLead", ["{v2}"]),
+        ("ChangeLead", ["{v0}"])
+    ];
+
     private static void CheckMoneyChangeLists(QuizContentPack pack)
     {
         if(!pack.Lists.TryGetValue(MoneyChangePilot.ListName,out var rows))return;
@@ -18,7 +30,7 @@ public static partial class QuizContentValidation
             if(RequiredString(row,"Relation")!=MoneyChangePilot.Relation||RequiredString(row,"PriceRole")!="unit-price"
                 ||RequiredString(row,"CountRole")!="purchase-count"||RequiredString(row,"PaidRole")!="cash-tendered"
                 ||RequiredString(row,"TargetRole")!="change")Fail("Changed money-change roles.");
-            foreach(string field in new[]{"Buyer","Item","Items","PriceFact","CountFact","PaidFact","Question","CostLead","ChangeLead"})_=RequiredString(row,field);
+            foreach(string field in MoneyChangeRequiredFields)_=RequiredString(row,field);
             if(RequiredString(row,"MoneyUnit")!=(pack.Culture=="vi-VN"?"đồng":"dong"))Fail("Changed money-change currency.");
             int min=row.GetProperty("MinimumPrice").GetInt32(),max=row.GetProperty("MaximumPrice").GetInt32();
             if(min<1000||max>50000||min>max||min%1000!=0||max%1000!=0||row.GetProperty("MaximumCount").GetInt32() is <2 or >8)
@@ -28,10 +40,8 @@ public static partial class QuizContentValidation
             catch(JsonException){Fail("Invalid money-change context fields.");return;}
             if(context is null||!QuestionBank.MoneyChangeOpenMeaning.ProvesReference(context,
                 pack.Culture=="vi-VN"?AppLanguage.Vietnamese:AppLanguage.English))Fail("Changed money-change reference meaning.");
-            foreach(var (field,expected) in new (string,string[])[]{("PriceFact",["{v1}","{f0}","{v3}"]),
-                ("CountFact",["{v0}","{f1}","{v2}"]),("PaidFact",["{v0}","{f2}","{v3}"]),
-                ("Question",["{v0}","{v3}"]),("CostLead",["{v2}"]),("ChangeLead",["{v0}"])})
-                if(!Regex.Matches(RequiredString(row,field),@"\{[^{}]+\}").Select(m=>m.Value).Order().SequenceEqual(expected.Order()))
+            foreach(var (field,expected) in MoneyChangePlaceholderFields)
+                if(!HasExactPlaceholderSlots(RequiredString(row,field),expected))
                     Fail("Changed money-change slots: "+field);
         }
     }

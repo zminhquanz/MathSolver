@@ -6,13 +6,14 @@ using Microsoft.Maui.Dispatching;
 namespace MathSolver.Controls;
 
 /// <summary>
-/// Shared animated-background host for the four learning tabs. Both the built-in
-/// GraphicsView animation and validated hardware-decoded H.264 MP4 keep running
-/// while the owning tab is active. All native/drawing resources are allocated lazily
-/// and are released when the background or owning tab is inactive.
+/// Shared wallpaper host for the learning tabs. The active owner loads the
+/// selected still image, animation or video and releases it on deactivation.
 /// </summary>
 public sealed class LiveWallpaperView : Grid
 {
+    private const string SchoolLandscapeAsset = "Wallpapers/school_days_watercolor.png";
+    private const string SchoolPortraitAsset = "Wallpapers/school_days_watercolor_portrait.png";
+
     private static readonly TimeSpan AnimationInterval =
         TimeSpan.FromMilliseconds(1000d / 24d);
 
@@ -30,6 +31,8 @@ public sealed class LiveWallpaperView : Grid
 
     private ITimeDrivenDrawable? _mathDrawable;
     private GraphicsView? _mathAnimationView;
+    private Image? _staticWallpaperView;
+    private string? _staticWallpaperAsset;
     private BoxView? _readabilityScrim;
     private MediaElement? _mediaElement;
     private IDispatcherTimer? _animationTimer;
@@ -57,8 +60,7 @@ public sealed class LiveWallpaperView : Grid
         ZIndex = -100;
 #endif
 
-        // No GraphicsView, drawable, timer, MediaElement, or scrim is created
-        // here. With wallpaper disabled the control stays almost allocation-free.
+        // Allocate wallpaper resources only while an enabled owner is active.
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
 
@@ -78,7 +80,7 @@ public sealed class LiveWallpaperView : Grid
         _refreshGeneration++;
 
         ReleasePlaybackOwnership();
-        ReleaseAllAnimatedResources(immediateMediaRelease: true);
+        ReleaseWallpaperResources();
     }
 
     private void OnLoaded(object? sender, EventArgs e)
@@ -118,7 +120,7 @@ public sealed class LiveWallpaperView : Grid
         _mediaReleaseGeneration++;
 
         ReleasePlaybackOwnership();
-        ReleaseAllAnimatedResources(immediateMediaRelease: true);
+        ReleaseWallpaperResources();
     }
 
     private void OnWallpaperSettingsChanged(
@@ -148,7 +150,7 @@ public sealed class LiveWallpaperView : Grid
                 // transient native surface while the window is minimized. This
                 // lowers minimized RAM and avoids Windows invalidating an old
                 // MediaPlayer surface behind our back.
-                ReleaseAllAnimatedResources(immediateMediaRelease: true);
+                ReleaseWallpaperResources();
             });
     }
 
@@ -213,7 +215,7 @@ public sealed class LiveWallpaperView : Grid
             _isHostSuspended)
         {
             ReleasePlaybackOwnership();
-            ReleaseAllAnimatedResources(immediateMediaRelease: true);
+            ReleaseWallpaperResources();
             return;
         }
 
@@ -225,9 +227,6 @@ public sealed class LiveWallpaperView : Grid
 
         if (mode != LiveWallpaperMode.Mp4)
         {
-            // Built-in animations continue while this tab is active.
-            // At 24 FPS their ambient drawing overhead is
-            // very small and they do not allocate a native media decoder.
             StopAdaptiveContrast();
             AppThemeManager.ResetLiveWallpaperAdaptiveContrast(
                 refreshVisualResources: false);
@@ -237,7 +236,14 @@ public sealed class LiveWallpaperView : Grid
             // on a short delay to keep Picker mode switching re-entrancy safe.
             ReleaseSource();
             ScheduleMediaElementRelease();
-            StartMathAnimation(mode);
+            if (mode == LiveWallpaperMode.StaticSchoolImage)
+            {
+                EnsureStaticWallpaper();
+            }
+            else
+            {
+                StartMathAnimation(mode);
+            }
             return;
         }
 
@@ -245,7 +251,7 @@ public sealed class LiveWallpaperView : Grid
         if (!OperatingSystem.IsAndroidVersionAtLeast(26))
         {
             ReleasePlaybackOwnership();
-            ReleaseAllAnimatedResources(immediateMediaRelease: true);
+            ReleaseWallpaperResources();
             return;
         }
 #endif
@@ -290,16 +296,16 @@ public sealed class LiveWallpaperView : Grid
 
     private void RefreshVisibility()
     {
-        bool shouldShow =
-            LiveWallpaperManager.IsEnabled;
-        bool showMath =
-            shouldShow &&
-            LiveWallpaperManager.Mode !=
-                LiveWallpaperMode.Mp4;
-        bool showMp4 =
-            shouldShow &&
-            LiveWallpaperManager.Mode ==
-                LiveWallpaperMode.Mp4;
+        bool shouldShow = LiveWallpaperManager.IsEnabled;
+        LiveWallpaperMode mode = LiveWallpaperManager.Mode;
+        bool showMath = shouldShow &&
+            mode is LiveWallpaperMode.MathAnimation or LiveWallpaperMode.MathAnimation2;
+        bool showMp4 = shouldShow && mode == LiveWallpaperMode.Mp4;
+
+        if (!shouldShow || mode != LiveWallpaperMode.StaticSchoolImage)
+        {
+            ReleaseStaticWallpaper();
+        }
 
         IsVisible = shouldShow;
 
@@ -394,24 +400,78 @@ public sealed class LiveWallpaperView : Grid
         _refreshGeneration++;
         _mediaReleaseGeneration++;
         _ownsPlayback = false;
-        ReleaseAllAnimatedResources(immediateMediaRelease: true);
+        ReleaseWallpaperResources();
     }
 
-    private void ReleaseAllAnimatedResources(bool immediateMediaRelease)
+    private void ReleaseWallpaperResources()
     {
+        ReleaseStaticWallpaper();
         ReleaseMathAnimationResources();
         StopAdaptiveContrast();
         ReleaseScrim();
+        ReleaseMediaElement();
+    }
 
-        if (immediateMediaRelease)
+    private void EnsureStaticWallpaper()
+    {
+        if (_staticWallpaperView is not null)
         {
-            ReleaseMediaElement();
+            return;
         }
-        else
+
+        _staticWallpaperView = new Image
         {
-            ReleaseSource();
-            ScheduleMediaElementRelease();
+            Aspect = Aspect.AspectFill,
+            InputTransparent = true,
+            ZIndex = 0
+        };
+
+        Children.Add(_staticWallpaperView);
+        SizeChanged += UpdateStaticWallpaperSource;
+        UpdateStaticWallpaperSource(this, EventArgs.Empty);
+    }
+
+    private void UpdateStaticWallpaperSource(object? sender, EventArgs e)
+    {
+        if (_staticWallpaperView is not { } image || Width <= 0 || Height <= 0)
+        {
+            return;
         }
+
+        string asset = Height > Width * 1.15 ? SchoolPortraitAsset : SchoolLandscapeAsset;
+        if (_staticWallpaperAsset == asset)
+        {
+            return;
+        }
+
+        _staticWallpaperAsset = asset;
+        image.Source = ImageSource.FromStream(async cancellationToken =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Stream stream = await FileSystem.OpenAppPackageFileAsync(asset).ConfigureAwait(false);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                stream.Dispose();
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            return stream;
+        });
+    }
+
+    private void ReleaseStaticWallpaper()
+    {
+        if (_staticWallpaperView is not { } image)
+        {
+            return;
+        }
+
+        SizeChanged -= UpdateStaticWallpaperSource;
+        _staticWallpaperView = null;
+        _staticWallpaperAsset = null;
+        image.Source = null;
+        Children.Remove(image);
+        image.Handler?.DisconnectHandler();
     }
 
     private GraphicsView EnsureMathAnimationView(

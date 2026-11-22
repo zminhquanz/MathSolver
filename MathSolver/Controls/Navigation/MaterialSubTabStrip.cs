@@ -59,9 +59,9 @@ public sealed class MaterialSubTabStrip : ContentView
     public MaterialSubTabStrip()
     {
         SetDynamicResource(AccentColorProperty, "PrimaryColor");
-        SetDynamicResource(LabelColorProperty, "TextSecondaryColor");
-        SetDynamicResource(SelectedLabelColorProperty, "TextPrimaryColor");
-        SetDynamicResource(SurfaceColorProperty, "SurfaceColor");
+        SetDynamicResource(LabelColorProperty, "WallpaperTextSecondaryColor");
+        SetDynamicResource(SelectedLabelColorProperty, "WallpaperTextPrimaryColor");
+        SetDynamicResource(SurfaceColorProperty, "WallpaperNavigationSurfaceColor");
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }

@@ -11,6 +11,18 @@
     Shell.NavBarIsVisible="True"
     BackgroundColor="{DynamicResource PageBackgroundColor}">
 
+    <ContentPage.Resources>
+        <!-- Keep section glyphs optically aligned with the first 18pt title line. -->
+        <Style x:Key="SettingsSectionIconStyle" TargetType="controls:ThemedSvgPathIcon">
+            <Setter Property="WidthRequest" Value="18" />
+            <Setter Property="HeightRequest" Value="18" />
+            <Setter Property="HorizontalOptions" Value="Center" />
+            <Setter Property="VerticalOptions" Value="Start" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+            <Setter Property="Opacity" Value="0.86" />
+        </Style>
+    </ContentPage.Resources>
+
     <!-- Ẩn nút Back mặc định của Shell/Windows NavigationView. -->
     <Shell.BackButtonBehavior>
         <BackButtonBehavior
@@ -84,14 +96,18 @@
             MaximumWidthRequest="900">
 
                 <Border x:Name="IllustrationMotionCard" Style="{StaticResource ThemeCardStyle}">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Grid ColumnDefinitions="24,*,Auto" ColumnSpacing="12">
+                        <controls:ThemedSvgPathIcon Grid.Column="0"
+                            Data="{x:Static controls:SettingsDestinationIconPaths.Motion}"
+                            Style="{StaticResource SettingsSectionIconStyle}"
+                            VerticalOptions="Center" Margin="0" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="4" VerticalOptions="Center">
                             <Label Text="{localization:Translate Settings.IllustrationMotion.Title}" FontSize="16"
                                    FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
                             <Label Text="{localization:Translate Settings.IllustrationMotion.Hint}" FontSize="14"
                                    LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />
                         </VerticalStackLayout>
-                        <Switch x:Name="IllustrationMotionSwitch" Grid.Column="1" MinimumHeightRequest="48"
+                        <Switch x:Name="IllustrationMotionSwitch" Grid.Column="2" MinimumHeightRequest="48"
                                 VerticalOptions="Center"
                                 SemanticProperties.Description="{localization:Translate Settings.IllustrationMotion.Title}"
                                 Toggled="OnIllustrationMotionToggled" />
@@ -99,10 +115,17 @@
                 </Border>
                 <Border x:Name="DensitySettingsCard" Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="{DynamicResource Density.Spacing}">
-                        <Label Text="{localization:Translate Settings.Density.Title}"
-                               FontSize="19" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
-                        <Label Text="{localization:Translate Settings.Density.Help}"
-                               FontSize="14" TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Density}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="{localization:Translate Settings.Density.Title}"
+                                       FontSize="18" FontAttributes="Bold" TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="{localization:Translate Settings.Density.Help}"
+                                       FontSize="13" LineBreakMode="WordWrap" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
                         <Grid x:Name="DensityChoices" ColumnDefinitions="*" RowDefinitions="Auto,Auto,Auto"
                               ColumnSpacing="10" RowSpacing="8" SizeChanged="OnDensityChoicesSizeChanged">
                             <Button x:Name="AutomaticDensityButton" CommandParameter="{x:Static services:DisplayDensityMode.Automatic}"
@@ -119,16 +142,17 @@
 
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="12">
-                        <Label
-                        Text="Phong cách hiển thị"
-                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                        Text="Theo hệ thống sẽ tự chuyển sáng hoặc tối theo thiết bị."
-                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Theme}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Phong cách hiển thị" FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="Theo hệ thống sẽ tự chuyển sáng hoặc tối theo thiết bị."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Grid
                         ColumnDefinitions="*,*,*"
@@ -187,17 +211,19 @@
                 </Border>
 
                 <Border x:Name="AccentColorCard" Style="{StaticResource ThemeCardStyle}">
-                    <VerticalStackLayout Spacing="{OnPlatform Android=10, WinUI=14, Default=14}">
-                        <Label
-                        Text="Màu chủ đề"
-                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                        Text="Chọn màu có sẵn, nhập mã HEX hoặc điều chỉnh ba kênh RGB."
-                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Palette}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Màu chủ đề" FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="AccentColorDescriptionLabel"
+                                       Text="Chọn màu có sẵn hoặc nhập mã HEX. Tinh chỉnh RGB trong tùy chọn nâng cao."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <!-- WinUI: center the preset color group as one balanced row. -->
                         <Grid
@@ -427,6 +453,7 @@
                                 <Entry
                                 x:Name="HexColorEntry"
                                 Placeholder="#6D28D9"
+                                SemanticProperties.Description="Mã màu HEX"
                                 MaxLength="7"
                                 Keyboard="Text"
                                 TextColor="{DynamicResource TextPrimaryColor}"
@@ -450,7 +477,14 @@
                         FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
                         TextColor="{DynamicResource DangerColor}" />
 
-                        <Grid
+                        <Button
+                            x:Name="RgbAdvancedButton"
+                            Text="Tinh chỉnh RGB  ▾"
+                            Style="{StaticResource ThemeSecondaryButtonStyle}"
+                            HorizontalOptions="Start"
+                            Clicked="OnRgbAdvancedClicked" />
+
+                        <Grid x:Name="RgbAdvancedGrid" IsVisible="False"
                         RowDefinitions="Auto,Auto,Auto"
                         ColumnDefinitions="Auto,*,Auto"
                         RowSpacing="12"
@@ -575,18 +609,20 @@
                 <!-- HÌNH NỀN ĐỘNG -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">
-                        <Label
-                            x:Name="LiveWallpaperSectionTitleLabel"
-                            Text="Hình nền động"
-                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                            x:Name="LiveWallpaperSectionDescriptionLabel"
-                            Text="Chọn animation toán học nhẹ của Math Solver hoặc video MP4 H.264 của bạn."
-                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Video}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label
+                                    Text="{localization:Translate Settings.Wallpaper.Title}"
+                                    FontSize="18" FontAttributes="Bold"
+                                    TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label
+                                    Text="{localization:Translate Settings.Wallpaper.Hint}"
+                                    FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Grid
                             ColumnDefinitions="*,Auto"
@@ -596,8 +632,7 @@
                                 Spacing="2"
                                 VerticalOptions="Center">
                                 <Label
-                                    x:Name="LiveWallpaperEnabledTitleLabel"
-                                    Text="Bật hình nền động"
+                                    Text="{localization:Translate Settings.Wallpaper.Enable}"
                                     FontSize="16"
                                     FontAttributes="Bold"
                                     TextColor="{DynamicResource TextPrimaryColor}" />
@@ -616,8 +651,7 @@
                         </Grid>
 
                         <Label
-                            x:Name="LiveWallpaperModeTitleLabel"
-                            Text="Kiểu hình nền động"
+                            Text="{localization:Translate Settings.Wallpaper.Type}"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
@@ -699,11 +733,13 @@
                                     <RoundRectangle CornerRadius="11" />
                                 </Border.StrokeShape>
                                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
-                                    <Label
+                                    <controls:ThemedSvgPathIcon
                                         Grid.Column="0"
-                                        Text="🎞️"
-                                        FontSize="20"
-                                        VerticalTextAlignment="Center" />
+                                        Data="{x:Static controls:SettingsDestinationIconPaths.Video}"
+                                        WidthRequest="22"
+                                        HeightRequest="22"
+                                        HorizontalOptions="Center"
+                                        VerticalOptions="Center" />
                                     <VerticalStackLayout Grid.Column="1" Spacing="2">
                                         <Label
                                             x:Name="LiveWallpaperFileTitleLabel"
@@ -777,17 +813,18 @@
                 <!-- TÙY CHỈNH PHÔNG CHỮ -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">
-
-                        <Label
-                        Text="Phông chữ"
-                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                        Text="Chọn phông chữ dùng cho toàn bộ giao diện Math Solver."
-                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Typography}"
+                                Style="{StaticResource SettingsSectionIconStyle}"
+                                WidthRequest="16" HeightRequest="16" Margin="0,5,0,0" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Phông chữ" FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="Chọn phông chữ dùng cho toàn bộ giao diện Math Solver."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Border
                         x:Name="FontPickerFrame"
@@ -872,16 +909,17 @@
 
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="12">
-                        <Label
-                        Text="Ngôn ngữ"
-                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                        Text="Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải."
-                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Language}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label Text="Ngôn ngữ" FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label Text="Chọn ngôn ngữ dùng cho toàn bộ giao diện và lời giải."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Border
                             x:Name="LanguagePickerFrame"
@@ -931,18 +969,19 @@
                 <!-- HIỂN THỊ KẾT QUẢ -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="13">
-                        <Label
-                            x:Name="ResultDisplaySectionTitleLabel"
-                            Text="Hiển thị kết quả"
-                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                            x:Name="ResultDisplaySectionDescriptionLabel"
-                            Text="Tùy chỉnh cách Math Solver trình bày các kết quả có nhiều chữ số."
-                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Result}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label x:Name="ResultDisplaySectionTitleLabel" Text="Hiển thị kết quả"
+                                       FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="ResultDisplaySectionDescriptionLabel"
+                                       Text="Tùy chỉnh cách Math Solver trình bày các kết quả có nhiều chữ số."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Border
                             Padding="14"
@@ -953,15 +992,11 @@
                                 <RoundRectangle CornerRadius="12" />
                             </Border.StrokeShape>
 
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                                <Label
-                                    Grid.Column="0"
-                                    Text="123"
-                                    FontSize="16"
-                                    FontAttributes="Bold"
-                                    HorizontalTextAlignment="Center"
-                                    VerticalTextAlignment="Center"
-                                    TextColor="{DynamicResource PrimaryColor}" />
+                            <Grid ColumnDefinitions="24,*,Auto" ColumnSpacing="14">
+                                <controls:ThemedSvgPathIcon Grid.Column="0"
+                                    Data="{x:Static controls:SettingsDestinationIconPaths.Result}"
+                                    WidthRequest="18" HeightRequest="18" VerticalOptions="Center"
+                                    HorizontalOptions="Center" Opacity="0.86" />
 
                                 <VerticalStackLayout
                                     Grid.Column="1"
@@ -992,18 +1027,19 @@
                 <!-- CHẾ ĐỘ NHÀ PHÁT TRIỂN -->
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="14">
-                        <Label
-                            x:Name="DeveloperSectionTitleLabel"
-                            Text="Chế độ nhà phát triển"
-                            FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                            FontAttributes="Bold"
-                            TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                            x:Name="DeveloperSectionDescriptionLabel"
-                            Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán."
-                            FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                            TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Developer}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label x:Name="DeveloperSectionTitleLabel" Text="Chế độ nhà phát triển"
+                                       FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="DeveloperSectionDescriptionLabel"
+                                       Text="Bật các dữ liệu chẩn đoán dùng để kiểm tra thuật toán."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Border
                             Padding="14"
@@ -1015,15 +1051,11 @@
                             </Border.StrokeShape>
 
                             <VerticalStackLayout Spacing="12">
-                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="14">
-                                    <Label
-                                        Grid.Column="0"
-                                        Text="&lt;/&gt;"
-                                        FontSize="16"
-                                        FontAttributes="Bold"
-                                        HorizontalTextAlignment="Center"
-                                        VerticalTextAlignment="Center"
-                                        TextColor="{DynamicResource PrimaryColor}" />
+                                <Grid ColumnDefinitions="24,*,Auto" ColumnSpacing="14">
+                                    <controls:ThemedSvgPathIcon Grid.Column="0"
+                                        Data="{x:Static controls:SettingsDestinationIconPaths.Developer}"
+                                        WidthRequest="18" HeightRequest="18" VerticalOptions="Center"
+                                        HorizontalOptions="Center" Opacity="0.86" />
 
                                     <VerticalStackLayout Grid.Column="1" Spacing="3" VerticalOptions="Center">
                                         <Label
@@ -1114,18 +1146,19 @@
 
                 <Border Style="{StaticResource ThemeCardStyle}">
                     <VerticalStackLayout Spacing="10">
-                        <Label
-                        x:Name="ResetSectionTitleLabel"
-                        Text="Khôi phục mặc định"
-                        FontSize="{OnPlatform Android=20, WinUI=19, Default=19}"
-                        FontAttributes="Bold"
-                        TextColor="{DynamicResource TextPrimaryColor}" />
-
-                        <Label
-                        x:Name="ResetSectionDescriptionLabel"
-                        Text="Đặt lại giao diện, hiển thị kết quả và chế độ nhà phát triển về mặc định."
-                        FontSize="{OnPlatform Android=14, WinUI=13, Default=13}"
-                        TextColor="{DynamicResource TextSecondaryColor}" />
+                        <Grid ColumnDefinitions="24,*" ColumnSpacing="12">
+                            <controls:ThemedSvgPathIcon Grid.Column="0"
+                                Data="{x:Static controls:SettingsDestinationIconPaths.Reset}"
+                                Style="{StaticResource SettingsSectionIconStyle}" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="4">
+                                <Label x:Name="ResetSectionTitleLabel" Text="Khôi phục mặc định"
+                                       FontSize="18" FontAttributes="Bold"
+                                       TextColor="{DynamicResource TextPrimaryColor}" />
+                                <Label x:Name="ResetSectionDescriptionLabel"
+                                       Text="Đặt lại giao diện, hiển thị kết quả và chế độ nhà phát triển về mặc định."
+                                       FontSize="13" TextColor="{DynamicResource TextSecondaryColor}" />
+                            </VerticalStackLayout>
+                        </Grid>
 
                         <Button
                         x:Name="ResetSettingsButton"

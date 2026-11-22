@@ -1,5 +1,6 @@
 using MathSolver.Services;
 using MathSolver.Services.Core;
+using System.Text;
 using System.Text.Json.Serialization;
 
 namespace MathSolver.Models;
@@ -74,6 +75,11 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
     QuizVisualData? Visual = null, string? PresentedText = null,
     IReadOnlyList<string>? ChoiceTexts = null)
 {
+    // A thread-local single-entry pool avoids synchronization and keeps builders
+    // private to the current formatting call, including nested calls.
+    [ThreadStatic]
+    private static StringBuilder? s_cachedAnswerBuilder;
+
     public string? StoryContextId { get; init; }
     public ProbabilityQuizScenario? ProbabilityScenario { get; init; }
     public DataChartQuestionContract? DataChart { get; init; }
@@ -134,8 +140,32 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         return $"{left} {symbol} {right}";
     }
 
-    public string AnswerText => string.Join("; ", Answers.Select(answer =>
-        (Answers.Count > 1 ? answer.Label + ": " : "") + FormatAnswer(answer)));
+    public string AnswerText
+    {
+        get
+        {
+            StringBuilder builder = s_cachedAnswerBuilder ?? new StringBuilder(128);
+            s_cachedAnswerBuilder = null;
+            try
+            {
+                for (int index = 0; index < Answers.Count; index++)
+                {
+                    if (index > 0) builder.Append("; ");
+                    ElementaryAnswer answer = Answers[index];
+                    if (Answers.Count > 1) builder.Append(answer.Label).Append(": ");
+                    builder.Append(answer.DisplayValue ?? answer.Text ?? answer.Value.ToString());
+                    if (answer.Unit.Length > 0) builder.Append(' ').Append(answer.Unit);
+                }
+                return builder.ToString();
+            }
+            finally
+            {
+                builder.Clear();
+                // Discard large transient buffers instead of retaining them on a worker.
+                if (builder.Capacity <= 1024) s_cachedAnswerBuilder = builder;
+            }
+        }
+    }
     public static string FormatAnswer(ElementaryAnswer answer) =>
         (answer.DisplayValue ?? answer.Text ?? answer.Value.ToString()) + (answer.Unit.Length == 0 ? "" : " " + answer.Unit);
 }

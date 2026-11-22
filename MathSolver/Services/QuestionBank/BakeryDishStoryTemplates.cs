@@ -98,10 +98,26 @@ internal static class BakeryDishStoryTemplates
             _ => throw new InvalidDataException($"Unknown bakery story: {family}/{suffix}")
         };
 
+        string? alternateQuestion = (family, suffix, vi) switch
+        {
+            ("Fraction", "total", true) => "Tính tổng số {unit} mà {name} đã bán trong hai lần?",
+            ("Fraction", "remaining", true) => "Số {unit} bán trong buổi sáng nhiều hơn buổi chiều bao nhiêu?",
+            ("Fraction", "groups", true) => "Số {unit} khách đặt mua là bao nhiêu?",
+            ("Fraction", "share", true) => "Tính số {unit} mà {name} đã chuẩn bị ban đầu?",
+            ("Fraction", "total", false) => "What is the total number of {unit} sold by {name} across both sales?",
+            ("Fraction", "remaining", false) => "What is the difference in {unit} sold between morning and afternoon?",
+            ("Fraction", "groups", false) => "What quantity of {unit} do the customers order?",
+            ("Fraction", "share", false) => "What was the initial amount of {unit} prepared by {name}?",
+            _ => null
+        };
+        var questions = alternateQuestion is null
+            ? new[] { clauses.Question }
+            : new[] { clauses.Question, alternateQuestion };
+
         var example = new BasicQuestionDraft(clauses.GivenA, clauses.GivenB,
             clauses.Question, clauses.SolutionLead, unitId);
         var prose = new ReviewedQuestionProse([clauses.GivenA], [clauses.GivenB],
-            [clauses.Question], [clauses.SolutionLead], unitId);
+            questions, [clauses.SolutionLead], unitId);
         return new QuizStoryTemplate(id, family, [example], prose);
     }
 }

@@ -147,11 +147,10 @@ public partial class FormulaPage
             AllFormulaTypesButton.MinimumWidthRequest = controlSize;
             FormulaNavigationFrame.Padding = Thickness.Zero;
             FormulaNavigationFrame.StrokeThickness = 0;
-            FormulaNavigationFrame.SetDynamicResource(Border.BackgroundColorProperty, "SurfaceColor");
             AllFormulaTypesButton.BackgroundColor = Colors.Transparent;
             AllFormulaTypesButton.BorderWidth = 0;
             AllFormulaTypesButton.CornerRadius = (int)(controlSize / 2);
-            AllFormulaTypesButton.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+            AllFormulaTypesButton.SetDynamicResource(Button.TextColorProperty, "WallpaperTextPrimaryColor");
 #else
             FormulaNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(8);
             FormulaNavigationFrame.StrokeThickness = stacked ? 0 : 1;

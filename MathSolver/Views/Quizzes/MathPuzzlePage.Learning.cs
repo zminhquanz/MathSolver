@@ -25,6 +25,7 @@ public partial class MathPuzzlePage
             _learningGroups = QuestionLearningProfile.Groups(includeMixed: true);
             if (_learningGroup is QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Length or QuestionKnowledgeGroup.Transport)
                 _learningGroup = QuestionKnowledgeGroup.Measurement;
+            _learningGroup = QuestionLearningProfile.SelectionGroup(_learningGroup);
             if (!_learningGroups.Contains(_learningGroup)) _learningGroup = QuestionKnowledgeGroup.Objects;
             LearningGroupPicker.ItemsSource = _learningGroups.Select(g => L("Group." + g)).ToArray();
             IllustratedQuizPicker.SetKeys(LearningGroupPicker, _learningGroups.Select(g => "Learning.Group." + g));

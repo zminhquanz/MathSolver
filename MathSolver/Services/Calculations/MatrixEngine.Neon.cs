@@ -86,11 +86,16 @@ public static partial class MatrixEngine
         return i;
     }
 
-    internal static bool CanAccumulateNeonInInt64(long[] a, int aCount, long[] b, int bCount, int depth)
+    internal static bool CanAccumulateNeonInInt64(long[] a, int aCount, long[] b, int bCount, int depth) =>
+        CanAccumulateArmInInt64(a, aCount, b, bCount, depth, out _);
+
+    private static bool CanAccumulateArmInInt64(long[] a, int aCount, long[] b, int bCount, int depth,
+        out bool inputsFitInt32)
     {
         ulong maxA = 0, maxB = 0;
         for (int i = 0; i < aCount; i++) maxA = Math.Max(maxA, Magnitude(a[i]));
         for (int i = 0; i < bCount; i++) maxB = Math.Max(maxB, Magnitude(b[i]));
+        inputsFitInt32 = maxA <= int.MaxValue && maxB <= int.MaxValue;
         return (UInt128)maxA * maxB <= (ulong)long.MaxValue / (uint)depth;
     }
 

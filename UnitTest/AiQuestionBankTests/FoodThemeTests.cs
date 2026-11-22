@@ -90,6 +90,127 @@ internal static class FoodThemeTests
         FoodThemeCatalogue.Subjects.Select(s => new { Group=s.Group.ToString(), s.Unit, s.ArtworkId, s.FractionVietnamese, s.FractionEnglish, s.FractionArtworkId }),
         new System.Text.Json.JsonSerializerOptions { WriteIndented=true, Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }));
     private static void Check(bool ok, string why) { if (!ok) throw new Exception(why); }
+    internal static IEnumerable<BasicQuestionContract> FruitGardenBoundaryCases(AppLanguage language)
+    {
+        var profile = new QuestionLearningProfile(QuestionKnowledgeGroup.Fruit);
+        foreach (var fruit in FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Fruit))
+        foreach (var action in new[] { "plant", "harvest" })
+        foreach (var (left, right) in new[]
+        {
+            (99, 99), (99, 100), (100, 100), (100, 101),
+            (101, 100), (101, 101), (101, 99)
+        })
+        {
+            var contract = AppliedQuestionCatalogue.Create(profile, ArithmeticOperation.Add,
+                CurriculumTier.ThreeStars, language, new Random(31),
+                $"theme-fruit-{fruit.Unit.Id}-{action}-total");
+            string first = language == AppLanguage.Vietnamese ? "An" : "Alex";
+            string second = language == AppLanguage.Vietnamese ? "Bình" : "Sam";
+            string firstVenue = left <= 100 ? language == AppLanguage.Vietnamese ? "khu vườn" : "garden"
+                : language == AppLanguage.Vietnamese ? "nông trại" : "farm";
+            string secondVenue = right <= 100 ? language == AppLanguage.Vietnamese ? "khu vườn" : "garden"
+                : language == AppLanguage.Vietnamese ? "nông trại" : "farm";
+            yield return contract with
+            {
+                Left = left,
+                Right = right,
+                Subject = language == AppLanguage.Vietnamese ? $"{firstVenue} của {first}" : $"{first}'s {firstVenue}",
+                OtherSubject = language == AppLanguage.Vietnamese ? $"{secondVenue} của {second}" : $"{second}'s {secondVenue}"
+            };
+        }
+    }
+    private static void CheckFruitGardenScenes()
+    {
+        var fruitSubjects = FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Fruit).ToArray();
+        var profile = new QuestionLearningProfile(QuestionKnowledgeGroup.Fruit);
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var fruit in fruitSubjects)
+        foreach (var action in new[] { "plant", "harvest" })
+        foreach (var tier in new[] { CurriculumTier.TwoStars, CurriculumTier.ThreeStars, CurriculumTier.FourStars })
+        foreach (int seed in Enumerable.Range(0, 12))
+        {
+            var generated = AppliedQuestionCatalogue.Create(profile, ArithmeticOperation.Add,
+                tier, language, new Random(seed), $"theme-fruit-{fruit.Unit.Id}-{action}-total");
+            string firstVenue = generated.Left <= 100
+                ? language == AppLanguage.Vietnamese ? "khu vườn của " : "'s garden"
+                : language == AppLanguage.Vietnamese ? "nông trại của " : "'s farm";
+            string secondVenue = generated.Right <= 100
+                ? language == AppLanguage.Vietnamese ? "khu vườn của " : "'s garden"
+                : language == AppLanguage.Vietnamese ? "nông trại của " : "'s farm";
+            Check(generated.IsValid && generated.Answer == generated.Left + generated.Right
+                && generated.Subject.Contains(firstVenue, StringComparison.OrdinalIgnoreCase)
+                && generated.OtherSubject.Contains(secondVenue, StringComparison.OrdinalIgnoreCase),
+                $"Generated C# fruit scene misplaced an owner: {generated.SceneId}/{tier}/{seed}"
+                    + $" ({generated.Left}, {generated.Right})");
+            string pair = language == AppLanguage.Vietnamese
+                ? generated.Left <= 100 && generated.Right <= 100 ? "cả hai khu vườn"
+                    : generated.Left > 100 && generated.Right > 100 ? "cả hai nông trại"
+                    : generated.Left <= 100 ? "cả khu vườn và nông trại" : "cả nông trại và khu vườn"
+                : generated.Left <= 100 && generated.Right <= 100 ? "both gardens"
+                    : generated.Left > 100 && generated.Right > 100 ? "both farms"
+                    : generated.Left <= 100 ? "the garden and the farm" : "the farm and the garden";
+            var draft = AppliedQuestionCatalogue.Draft(generated);
+            Check(draft.Question.Contains(pair, StringComparison.OrdinalIgnoreCase)
+                && BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), generated).IsValid,
+                $"Generated C# fruit question lost its venue or failed AI validation: {generated.SceneId}/{tier}/{seed}");
+        }
+
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var contract in FruitGardenBoundaryCases(language))
+        {
+            Check(contract.IsValid && contract.Answer == contract.Left + contract.Right,
+                "Invalid C# fruit garden boundary facts: " + contract.SceneId);
+            var draft = AppliedQuestionCatalogue.Draft(contract);
+            string pair = language == AppLanguage.Vietnamese
+                ? contract.Left <= 100 && contract.Right <= 100 ? "cả hai khu vườn"
+                    : contract.Left > 100 && contract.Right > 100 ? "cả hai nông trại"
+                    : contract.Left <= 100 ? "cả khu vườn và nông trại" : "cả nông trại và khu vườn"
+                : contract.Left <= 100 && contract.Right <= 100 ? "both gardens"
+                    : contract.Left > 100 && contract.Right > 100 ? "both farms"
+                    : contract.Left <= 100 ? "the garden and the farm" : "the farm and the garden";
+            string action = contract.SceneId.EndsWith("-plant-total", StringComparison.Ordinal)
+                ? language == AppLanguage.Vietnamese ? "trồng được" : "planted"
+                : language == AppLanguage.Vietnamese ? "thu hoạch được" : "harvested";
+            Check(draft.Question.Contains(pair, StringComparison.OrdinalIgnoreCase)
+                && draft.GivenA.Contains(action, StringComparison.OrdinalIgnoreCase)
+                && draft.GivenB.Contains(action, StringComparison.OrdinalIgnoreCase),
+                "Fruit garden prose lost its pair or action: " + contract.SceneId);
+            Check(AppliedQuestionCatalogue.Render(draft.GivenA, contract).Contains(contract.Subject, StringComparison.OrdinalIgnoreCase)
+                && AppliedQuestionCatalogue.Render(draft.GivenB, contract).Contains(contract.OtherSubject, StringComparison.OrdinalIgnoreCase),
+                "Fruit garden prose lost an individual location: " + contract.SceneId
+                    + " / A=" + AppliedQuestionCatalogue.Render(draft.GivenA, contract)
+                    + " / B=" + AppliedQuestionCatalogue.Render(draft.GivenB, contract)
+                    + " / actors=" + contract.Subject + " & " + contract.OtherSubject);
+            var fruit = fruitSubjects.Single(s => s.Unit.Id == AppliedQuestionCatalogue.Find(contract.SceneId)!.UnitId);
+            string expectedUnit = !contract.SceneId.EndsWith("-plant-total", StringComparison.Ordinal)
+                ? fruit.Unit.Item(language)
+                : QuizContentCatalog.LoadList<FruitGardenPlantUnit>("FruitGardenPlantUnits")
+                    .Where(plant => plant.UnitId == fruit.Unit.Id)
+                    .Select(plant => language == AppLanguage.Vietnamese ? plant.Vietnamese : plant.English)
+                    .Single();
+            Check(contract.Unit == expectedUnit,
+                "Fruit planting and harvesting must use the proper unit: " + contract.SceneId);
+            Check(BasicQuestionPrompt.Build(contract).Contains(pair, StringComparison.OrdinalIgnoreCase),
+                "AI prompt lost the correct two-location question: " + contract.SceneId);
+            Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), contract).IsValid,
+                "C# fruit draft failed AI validation: " + contract.SceneId);
+
+            string wrongPair = language == AppLanguage.Vietnamese
+                ? pair == "cả hai khu vườn" ? "cả hai nông trại" : "cả hai khu vườn"
+                : pair == "both gardens" ? "both farms" : "both gardens";
+            string wrongQuestion = draft.Question.Replace(pair, wrongPair, StringComparison.OrdinalIgnoreCase);
+            Check(wrongQuestion != draft.Question
+                && !AppliedQuestionCatalogue.Validate(
+                    QuestionBankStore.SerializeDraft(draft with { Question = wrongQuestion }), contract).IsValid,
+                "AI accepted an incorrect fruit garden/farm combination: " + contract.SceneId);
+            Check(!AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft with
+            {
+                GivenB = draft.GivenB.Replace(action,
+                    language == AppLanguage.Vietnamese ? action == "trồng được" ? "thu hoạch được" : "trồng được"
+                        : action == "planted" ? "harvested" : "planted", StringComparison.OrdinalIgnoreCase)
+            }), contract).IsValid, "AI accepted different planting/harvesting actions: " + contract.SceneId);
+        }
+    }
     private static void CheckAllFoodVenueKinds()
     {
         foreach (var language in Enum.GetValues<AppLanguage>())
@@ -163,9 +284,9 @@ internal static class FoodThemeTests
             ? FindXQuestionCatalogue.Find(contract.SceneId)!.SourceScene.Operation
             : contract.Operation;
         bool vi = contract.Language == AppLanguage.Vietnamese;
-        string first = vi ? "quán nước thứ nhất" : "the first drink shop";
-        string second = vi ? "quán nước thứ hai" : "the second drink shop";
-        string pair = vi ? "cả hai quán nước" : "both drink shops";
+        var (first, second, pair) = FoodThemePrompt.DrinkShopActors(
+            FoodThemeCatalogue.IsCoffeeDrinkContract(contract),
+            FoodThemeCatalogue.IsMilkTeaDrinkContract(contract), contract.Language);
         Check(contract.Subject.Equals(first, StringComparison.OrdinalIgnoreCase),
             "Drink venue must be the first drink shop: " + contract.SceneId + "/" + contract.Subject);
         if (contract.Version != FractionQuestionCatalogue.Version)
@@ -189,7 +310,7 @@ internal static class FoodThemeTests
                 "Drink AI reference question must name both beverage shops: " + contract.SceneId);
         }
         string prompt = BasicQuestionPrompt.Build(contract);
-        Check(prompt.Contains(vi ? "quán nước" : "drink shop", StringComparison.OrdinalIgnoreCase),
+        Check(prompt.Contains(vi ? first[..first.LastIndexOf(' ')] : first[4..], StringComparison.OrdinalIgnoreCase),
             "Drink AI prompt lost shop vocabulary: " + contract.SceneId);
     }
 
@@ -226,6 +347,48 @@ internal static class FoodThemeTests
                 "AI must reject generic stores in drink questions");
             Check(!AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(draft with { Question = invalid }), contract).IsValid,
                 "Drink AI validation accepted a generic store");
+            var coffeeSubject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == "ca-phe-sua-da");
+            var coffee = FoodThemeInterchangeTests.Contract(coffeeSubject, ArithmeticOperation.Add,
+                language, BankQuestionFamily.Arithmetic) with { Left = 5, Right = 10 };
+            var coffeeDraft = AppliedQuestionCatalogue.Draft(coffee);
+            CheckDrinkShopVenue(coffee, coffeeDraft);
+            Check(coffee.Answer == 15 && AppliedQuestionCatalogue.Validate(
+                QuestionBankStore.SerializeDraft(coffeeDraft), coffee).IsValid,
+                "Coffee shop question changed answer or failed validation");
+            string wrongCoffeeVenue = coffeeDraft.Question.Replace(
+                vi ? "cả hai quán cà phê" : "both coffee shops",
+                vi ? "cả hai quán nước" : "both drink shops", StringComparison.OrdinalIgnoreCase);
+            Check(wrongCoffeeVenue != coffeeDraft.Question
+                && !FoodThemePrompt.CombinedQuestionNamesVenue(wrongCoffeeVenue, coffee)
+                && !AppliedQuestionCatalogue.Validate(
+                    QuestionBankStore.SerializeDraft(coffeeDraft with { Question = wrongCoffeeVenue }), coffee).IsValid,
+                "Coffee shop AI question must reject the drink shop venue");
+            foreach (string milkTeaId in FoodThemeInterchangeTests.MilkTeaIds)
+            {
+                var milkTeaSubject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == milkTeaId);
+                var milkTea = FoodThemeInterchangeTests.Contract(milkTeaSubject, ArithmeticOperation.Add,
+                    language, BankQuestionFamily.Arithmetic) with { Left = 5, Right = 10 };
+                var milkTeaDraft = AppliedQuestionCatalogue.Draft(milkTea);
+                CheckDrinkShopVenue(milkTea, milkTeaDraft);
+                string milkTeaStory = milkTeaDraft.ToWordProblem(milkTea).ProblemText;
+                string expected = vi
+                    ? $"Hỏi cả hai quán trà sữa bán được tổng cộng bao nhiêu {milkTea.Unit}?"
+                    : $"How many {milkTea.Unit} did both milk tea shops sell altogether?";
+                Check(milkTeaStory.Contains($"{milkTea.Subject} {(vi ? "bán được" : "sold")} 5 {milkTea.Unit}", StringComparison.OrdinalIgnoreCase)
+                    && milkTeaStory.Contains($"{milkTea.OtherSubject} {(vi ? "bán được" : "sold")} 10 {milkTea.Unit}", StringComparison.OrdinalIgnoreCase)
+                    && milkTeaStory.Contains(expected, StringComparison.OrdinalIgnoreCase)
+                    && milkTea.Answer == 15
+                    && AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(milkTeaDraft), milkTea).IsValid,
+                    "Milk tea arithmetic/AI example drifted: " + milkTeaId + "/" + milkTeaStory);
+                string wrongVenue = milkTeaDraft.Question.Replace(
+                    vi ? "cả hai quán trà sữa" : "both milk tea shops",
+                    vi ? "cả hai quán nước" : "both drink shops", StringComparison.OrdinalIgnoreCase);
+                Check(wrongVenue != milkTeaDraft.Question
+                    && !FoodThemePrompt.CombinedQuestionNamesVenue(wrongVenue, milkTea)
+                    && !AppliedQuestionCatalogue.Validate(QuestionBankStore.SerializeDraft(
+                        milkTeaDraft with { Question = wrongVenue }), milkTea).IsValid,
+                    "Milk tea AI accepted generic drink shop venue: " + milkTeaId);
+            }
         }
     }
     private static void CheckDessertShopAiValidation()
@@ -468,11 +631,17 @@ internal static class FoodThemeTests
             ("apple-pies", "apple_pie"), ("flans", "flan")
         };
         int verified = 0;
-        foreach (var (id, artwork) in dishes.Concat(AdditionalPreparedDishes.Select(d => (d.UnitId, d.ArtworkId))))
+        foreach (var (id, artwork) in dishes.Concat(AdditionalPreparedDishes.Select(d => (d.UnitId, d.ArtworkId)))
+            .Concat(FoodThemeInterchangeTests.JapaneseFoodIds.Select(id =>
+                (UnitId: id, ArtworkId: id == "shabu-shabu" ? "shabu_shabu" : id))))
         {
             var subject = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == id);
             Check(subject.Group == QuestionKnowledgeGroup.Food && subject.ArtworkId == artwork,
                 "Incorrect food group or image mapping: " + id);
+            if (FoodThemeInterchangeTests.JapaneseFoodIds.Contains(id))
+                Check(!FoodThemeCatalogue.IsBakeryFood(id) && FoodThemeCatalogue.DessertShopKind(id) is null
+                    && FoodThemeCatalogue.NewRestaurantDishes.Contains(subject),
+                    "Japanese prepared dish must be served by a restaurant/eatery/diner: " + id);
             if (id is "banh-chung" or "banh-gio" or "banh-day" or "banh-bao-thit-trung-cut" or "banh-tet")
                 Check(FoodThemeCatalogue.IsBakeryFood(id),
                     "Traditional takeaway cake must belong to a bakery/cake shop: " + id);
@@ -500,6 +669,7 @@ internal static class FoodThemeTests
         CheckAdditionalPreparedDishes();
         CheckAllFoodVenueKinds();
         CheckAiCombinedVenueValidation();
+        CheckFruitGardenScenes();
         CheckDrinkShopAiValidation();
         CheckDessertShopAiValidation();
         Check(!FoodThemeCatalogue.IsBakeryFood("hamburgers"),
@@ -517,6 +687,32 @@ internal static class FoodThemeTests
             var matched = QuizStoryArtwork.Select(true,false,[subject.Unit.Item(language)]);
             Check(matched == $"quiz_story_{subject.ArtworkId}.png", $"Exact counted subject picture: {subject.Unit.Id}/{language}: expected {subject.ArtworkId}, got {matched ?? "<none>"} for '{subject.Unit.Item(language)}'");
         }
+        var waterBottle = FoodThemeCatalogue.Subjects.Single(s => s.Unit.Id == "water-bottles");
+        Check(waterBottle.Group == QuestionKnowledgeGroup.Drinks && waterBottle.ArtworkId == "water_bottle",
+            "Countable drinking-water bottles need their own Drinks scene and illustration");
+        foreach (var language in Enum.GetValues<AppLanguage>())
+        foreach (var operation in Enum.GetValues<ArithmeticOperation>())
+        foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.Fraction, BankQuestionFamily.FindX })
+        {
+            var contract = FoodThemeInterchangeTests.Contract(waterBottle, operation, language, family);
+            var draft = BasicQuestionTemplates.Example(contract);
+            CheckArtwork(contract, draft, "water_bottle");
+            Check(BasicQuestionPrompt.Build(contract).Contains(contract.Unit, StringComparison.Ordinal),
+                $"Water-bottle AI prompt lost its countable unit: {family}/{operation}/{language}");
+            Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(draft), contract).IsValid,
+                $"Invalid water-bottle AI example: {family}/{operation}/{language}");
+        }
+        foreach (var unit in new[] { "chai nước", "chai nước lọc", "chai nước suối", "bottle of water", "bottles of water", "bottle of drinking water" })
+            Check(QuizStoryArtwork.Select(true, false, [unit]) == "quiz_story_water_bottle.png",
+                $"Drinking-water bottle artwork: {unit}");
+        Check(QuizStoryArtwork.Select(true, false, [], artworkId: "water-bottles") == "quiz_story_water_bottle.png",
+            "Explicit authored water-bottles scene artwork");
+        foreach (var unit in new[] { "lít nước", "litres of water", "liters of water", "lít nước lọc", "litres of drinking water" })
+            Check(QuizStoryArtwork.Select(true, false, [unit]) == "quiz_story_water.png",
+                $"Volume-of-water droplet artwork: {unit}");
+        foreach (var unit in new[] { "chai nhựa", "plastic bottle", "plastic bottles" })
+            Check(QuizStoryArtwork.Select(true, false, [unit]) == "quiz_story_plastic_bottle.png",
+                $"Empty plastic-bottle recycling artwork: {unit}");
         foreach (var (name, value) in new[] { ("Food",12),("Drinks",13),("Fruit",14) })
         {
             Check(Enum.TryParse<QuestionKnowledgeGroup>(name, out var group) && (int)group == value, "Missing stable knowledge group: " + name);

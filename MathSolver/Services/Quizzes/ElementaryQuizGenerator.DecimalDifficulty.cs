@@ -10,7 +10,7 @@ public sealed partial class ElementaryQuizGenerator
         if (!Enum.IsDefined(tier) || !DecimalStoryTypes.Contains(type))
             throw new ArgumentException("InvalidDecimalArithmeticProfile");
         var contract = CreateDecimalDifficulty(type, language, tier, wordProblems);
-        return CompleteQuestion(mode, contract, [], contract.ChoiceTexts?.ToArray());
+        return CompleteQuestion(mode, contract, [], contract.ChoiceTexts);
     }
 
     private ElementaryQuizContract CreateDecimalDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier,

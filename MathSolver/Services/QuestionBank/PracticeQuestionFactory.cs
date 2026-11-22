@@ -6,6 +6,13 @@ namespace MathSolver.Services.QuestionBank;
 /// <summary>Shared by interactive practice and printable sets. Uses C# and stored prose, never inference.</summary>
 public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practice, Random? random = null)
 {
+    private static readonly ArithmeticOperation[] Operations = Enum.GetValues<ArithmeticOperation>();
+    private static readonly QuestionLearningProfile[] KnowledgeProfiles =
+        QuestionLearningProfile.Groups().Select(group => new QuestionLearningProfile(group)).ToArray();
+    private static readonly IDecimalGenerationStrategy AppliedDecimal = new AppliedDecimalStrategy();
+    private static readonly IDecimalGenerationStrategy NumericDecimal = new DecimalArithmeticStrategy(false);
+    private static readonly IDecimalGenerationStrategy StoryDecimal = new DecimalArithmeticStrategy(true);
+
     private readonly Random _groupRandom = random ?? Random.Shared;
     private readonly ArithmeticQuizGenerator _arithmetic = new(new BasicArithmeticEngine());
     private readonly FractionQuizGenerator _fraction = new(new FractionCalculationEngine());
@@ -26,23 +33,24 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
         if (request.Kind == QuizProblemKind.Arithmetic && !request.IsComparison && learning is not null
             && (request.ArithmeticOperation is not { } operation || !learning.Allows(operation)))
         {
-            var allowed = Enum.GetValues<ArithmeticOperation>().Where(learning.Allows).ToArray();
-            request = request with { ArithmeticOperation = allowed[Random.Shared.Next(allowed.Length)] };
+            Span<ArithmeticOperation> allowed = stackalloc ArithmeticOperation[Operations.Length];
+            int count = 0;
+            foreach (var candidate in Operations)
+                if (learning.Allows(candidate)) allowed[count++] = candidate;
+            if (count == 0) throw new InvalidOperationException("No allowed arithmetic operation for this learning profile.");
+            request = request with { ArithmeticOperation = allowed[Random.Shared.Next(count)] };
         }
-        var question = request.Kind switch
+        // Only decimals currently need interchangeable generation algorithms:
+        // numeric drill, contextual arithmetic, and applied rounding/comparison.
+        var decimalStrategy = SelectDecimalStrategy(request, format);
+        var question = decimalStrategy is not null
+            ? decimalStrategy.Generate(_elementary, request, mode, language, curriculum.Tier)
+            : request.Kind switch
         {
-            // The other applied types already have C# stories/diagrams. Retain
-            // their context rotation and specialized area-measurement contracts.
-            QuizProblemKind.Decimal when request.ElementaryType is (ElementaryQuizType.DecimalRound or ElementaryQuizType.DecimalCompare)
-                && format != PracticeQuestionFormat.Numeric
-                => _elementary.GenerateAppliedNarrative(mode, request.ElementaryType.Value, language, curriculum.Tier),
             _ when request.IsComparison => _elementary.GenerateComparison(mode, request.Kind, language, curriculum.Tier),
             QuizProblemKind.Measurement when ElementaryQuizGenerator.SupportsMeasurementPractice(request.ElementaryType)
                 && format == PracticeQuestionFormat.Numeric
                 => _elementary.GenerateMeasurementPractice(mode, request.ElementaryType!.Value, language, curriculum.Tier),
-            QuizProblemKind.Decimal when request.ElementaryType is (ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
-                or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide) && format != PracticeQuestionFormat.Mixed
-                => _elementary.GenerateDecimalArithmetic(mode, request.ElementaryType.Value, language, curriculum.Tier, format == PracticeQuestionFormat.WordProblem),
             _ when ElementaryQuizGenerator.Supports(request.Kind) => _elementary.Generate(mode, request.Kind, request.ElementaryType, language, curriculum.Tier),
             QuizProblemKind.Expression => _expression.Generate(mode, request.ExpressionType, curriculum.Tier),
             QuizProblemKind.Geometry => _geometry.GenerateAlgorithm(mode, language, request.GeometryShape, curriculum, request.GeometryMeasurement),
@@ -73,18 +81,21 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             };
             if (mixedOperation is { } selected)
             {
-                var eligible = QuestionLearningProfile.Groups().Where(group =>
+                Span<int> eligible = stackalloc int[KnowledgeProfiles.Length];
+                int count = 0;
+                for (int i = 0; i < KnowledgeProfiles.Length; i++)
                 {
-                    var profile = new QuestionLearningProfile(group);
-                    return request.Kind switch
+                    var profile = KnowledgeProfiles[i];
+                    bool available = request.Kind switch
                     {
                         QuizProblemKind.FindX => FindXQuestionCatalogue.Available(profile, selected, curriculum.Tier).Any(),
                         QuizProblemKind.Fraction => FractionQuestionCatalogue.Available(profile, selected, curriculum.Tier).Any(),
                         _ => AppliedQuestionCatalogue.Available(profile, selected, curriculum.Tier).Any()
                     };
-                }).ToArray();
-                if (eligible.Length == 0) throw new InvalidOperationException("No supported knowledge group for this question.");
-                learning = new(eligible[_groupRandom.Next(eligible.Length)]);
+                    if (available) eligible[count++] = i;
+                }
+                if (count == 0) throw new InvalidOperationException("No supported knowledge group for this question.");
+                learning = KnowledgeProfiles[eligible[_groupRandom.Next(count)]];
             }
         }
         if (request.Kind == QuizProblemKind.Arithmetic && !request.IsComparison)
@@ -105,5 +116,39 @@ public sealed class PracticeQuestionFactory(BasicPracticeQuestionProvider practi
             question = await practice.SelectReasoningAsync(question, curriculum.Tier, language, cancellation);
         cancellation.ThrowIfCancellationRequested();
         return question;
+    }
+
+    private static IDecimalGenerationStrategy? SelectDecimalStrategy(QuizProblemRequest request, PracticeQuestionFormat format)
+    {
+        if (request.Kind != QuizProblemKind.Decimal) return null;
+        if (request.ElementaryType is ElementaryQuizType.DecimalRound or ElementaryQuizType.DecimalCompare
+            && format != PracticeQuestionFormat.Numeric)
+            return AppliedDecimal;
+        if (request.IsComparison) return null;
+        if (request.ElementaryType is ElementaryQuizType.DecimalAdd or ElementaryQuizType.DecimalSubtract
+            or ElementaryQuizType.DecimalMultiply or ElementaryQuizType.DecimalDivide
+            && format != PracticeQuestionFormat.Mixed)
+            return format == PracticeQuestionFormat.WordProblem ? StoryDecimal : NumericDecimal;
+        return null;
+    }
+
+    private interface IDecimalGenerationStrategy
+    {
+        ArithmeticQuizQuestion Generate(ElementaryQuizGenerator generator, QuizProblemRequest request,
+            ArithmeticQuizMode mode, AppLanguage language, CurriculumTier tier);
+    }
+
+    private sealed class AppliedDecimalStrategy : IDecimalGenerationStrategy
+    {
+        public ArithmeticQuizQuestion Generate(ElementaryQuizGenerator generator, QuizProblemRequest request,
+            ArithmeticQuizMode mode, AppLanguage language, CurriculumTier tier)
+            => generator.GenerateAppliedNarrative(mode, request.ElementaryType!.Value, language, tier);
+    }
+
+    private sealed class DecimalArithmeticStrategy(bool wordProblem) : IDecimalGenerationStrategy
+    {
+        public ArithmeticQuizQuestion Generate(ElementaryQuizGenerator generator, QuizProblemRequest request,
+            ArithmeticQuizMode mode, AppLanguage language, CurriculumTier tier)
+            => generator.GenerateDecimalArithmetic(mode, request.ElementaryType!.Value, language, tier, wordProblem);
     }
 }

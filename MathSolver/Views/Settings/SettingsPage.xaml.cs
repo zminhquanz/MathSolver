@@ -5,6 +5,7 @@ namespace MathSolver.Views;
 public partial class SettingsPage : ContentPage
 {
     private bool _updatingControls;
+    private bool _rgbAdvancedExpanded;
     private bool _updatingFontSelection;
     private bool _updatingLanguageSelection;
     private bool _hasPlayedEntryAnimation;
@@ -151,12 +152,7 @@ public partial class SettingsPage : ContentPage
         QueueThemeForegroundRepair();
 #endif
 
-        if (LiveWallpaperManager.HasWallpaper &&
-            (!LiveWallpaperManager.IsHardwareH264Validated ||
-             !LiveWallpaperFrameAnalysis.HasCurrentProfile))
-        {
-            _ = ValidateExistingLiveWallpaperAsync();
-        }
+        ValidateSelectedVideoWallpaper();
 
         if (!_hasPlayedEntryAnimation)
         {
@@ -669,6 +665,21 @@ public partial class SettingsPage : ContentPage
         ApplyHexColor(HexColorEntry.Text);
     }
 
+    private void OnRgbAdvancedClicked(object? sender, EventArgs e)
+    {
+        _rgbAdvancedExpanded = !_rgbAdvancedExpanded;
+        RgbAdvancedGrid.IsVisible = _rgbAdvancedExpanded;
+        UpdateRgbAdvancedButtonLabel();
+    }
+
+    private void UpdateRgbAdvancedButtonLabel()
+    {
+        bool useEnglish = AppLanguageManager.CurrentLanguage == AppLanguage.English;
+        RgbAdvancedButton.Text = _rgbAdvancedExpanded
+            ? (useEnglish ? "Hide RGB controls  ▴" : "Thu gọn RGB  ▴")
+            : (useEnglish ? "Fine-tune RGB  ▾" : "Tinh chỉnh RGB  ▾");
+    }
+
     private void OnRgbValueChanged(object? sender, ValueChangedEventArgs e)
     {
         if (_updatingControls)
@@ -760,6 +771,17 @@ public partial class SettingsPage : ContentPage
 #endif
     }
 
+    private void ValidateSelectedVideoWallpaper()
+    {
+        if (LiveWallpaperManager.Mode == LiveWallpaperMode.Mp4 &&
+            LiveWallpaperManager.HasWallpaper &&
+            (!LiveWallpaperManager.IsHardwareH264Validated ||
+             !LiveWallpaperFrameAnalysis.HasCurrentProfile))
+        {
+            _ = ValidateExistingLiveWallpaperAsync();
+        }
+    }
+
     private async Task ValidateExistingLiveWallpaperAsync()
     {
         await LiveWallpaperManager.EnsureOptimizedWallpaperAsync();
@@ -805,11 +827,13 @@ public partial class SettingsPage : ContentPage
                 0 => LiveWallpaperMode.MathAnimation,
                 1 => LiveWallpaperMode.MathAnimation2,
                 2 => LiveWallpaperMode.Mp4,
+                3 => LiveWallpaperMode.StaticSchoolImage,
                 _ => LiveWallpaperMode.MathAnimation
             };
 
         LiveWallpaperManager.SetMode(selectedMode);
         UpdateLiveWallpaperSettings();
+        ValidateSelectedVideoWallpaper();
 
 #if WINDOWS
         // Changing the selected item causes WinUI ComboBox to realize a new
@@ -944,13 +968,14 @@ public partial class SettingsPage : ContentPage
         _updatingLiveWallpaperModePicker = true;
         try
         {
-            if (LiveWallpaperModePicker.Items.Count >= 3)
+            if (LiveWallpaperModePicker.Items.Count >= 4)
             {
                 LiveWallpaperModePicker.SelectedIndex = mode switch
                 {
                     LiveWallpaperMode.MathAnimation => 0,
                     LiveWallpaperMode.MathAnimation2 => 1,
                     LiveWallpaperMode.Mp4 => 2,
+                    LiveWallpaperMode.StaticSchoolImage => 3,
                     _ => 0
                 };
             }
@@ -960,17 +985,11 @@ public partial class SettingsPage : ContentPage
             _updatingLiveWallpaperModePicker = false;
         }
 
-        bool canEnable =
-            mode == LiveWallpaperMode.MathAnimation ||
-            mode == LiveWallpaperMode.MathAnimation2 ||
-            (hasWallpaper &&
-             LiveWallpaperManager.IsHardwareH264Validated);
-
         _updatingLiveWallpaperSwitch = true;
         try
         {
             LiveWallpaperSwitch.IsEnabled =
-                canEnable && !_isImportingLiveWallpaper;
+                LiveWallpaperManager.CanEnable && !_isImportingLiveWallpaper;
             LiveWallpaperSwitch.IsToggled =
                 LiveWallpaperManager.IsEnabled;
         }
@@ -980,7 +999,7 @@ public partial class SettingsPage : ContentPage
         }
 
         MathAnimationInfoBorder.IsVisible =
-            mode != LiveWallpaperMode.Mp4;
+            mode is LiveWallpaperMode.MathAnimation or LiveWallpaperMode.MathAnimation2;
         Mp4WallpaperOptionsLayout.IsVisible =
             mode == LiveWallpaperMode.Mp4;
 
@@ -1058,6 +1077,11 @@ public partial class SettingsPage : ContentPage
                     ? "The neural-math GraphicsView animation keeps running while the tab is active and stops only when the tab is inactive."
                     : "Animation neural-math bằng GraphicsView chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
         }
+        else if (mode == LiveWallpaperMode.StaticSchoolImage)
+        {
+            LiveWallpaperEnabledSummaryLabel.Text =
+                LocalizationService.TranslateKey("Settings.Wallpaper.SchoolStillHint");
+        }
         else
         {
             MathAnimationTitleLabel.Text =
@@ -1096,6 +1120,11 @@ public partial class SettingsPage : ContentPage
         bool useEnglish =
             AppLanguageManager.CurrentLanguage ==
             AppLanguage.English;
+
+        UpdateRgbAdvancedButtonLabel();
+        AccentColorDescriptionLabel.Text = useEnglish
+            ? "Choose a preset or enter a HEX color. Fine-tune RGB in advanced options."
+            : "Chọn màu có sẵn hoặc nhập mã HEX. Tinh chỉnh RGB trong tùy chọn nâng cao.";
 
 #if ANDROID
         DynamicColorTitleLabel.Text =
@@ -1140,31 +1169,6 @@ public partial class SettingsPage : ContentPage
                 ? "Appearance, result display, and developer tools"
                 : "Giao diện, kết quả hiển thị và công cụ nhà phát triển";
 
-        LiveWallpaperSectionTitleLabel.Text =
-            useEnglish
-                ? "Animated wallpaper"
-                : "Hình nền động";
-
-        LiveWallpaperSectionDescriptionLabel.Text =
-            useEnglish
-                ? "Choose Math Solver's lightweight math animation or your own H.264 MP4 for the main learning tabs."
-                : "Chọn animation toán học nhẹ của Math Solver hoặc video MP4 H.264 của bạn cho các tab học toán.";
-
-        LiveWallpaperEnabledTitleLabel.Text =
-            useEnglish
-                ? "Enable animated wallpaper"
-                : "Bật hình nền động";
-
-        LiveWallpaperEnabledSummaryLabel.Text =
-            useEnglish
-                ? "Backgrounds stop on inactive tabs; both the Math animation and validated hardware H.264 keep running while the tab is active."
-                : "Hình nền chạy khi tab đang hoạt động và dừng khi tab không hoạt động.";
-
-        LiveWallpaperModeTitleLabel.Text =
-            useEnglish
-                ? "Animated background type"
-                : "Kiểu hình nền động";
-
         _updatingLiveWallpaperModePicker = true;
         try
         {
@@ -1173,6 +1177,7 @@ public partial class SettingsPage : ContentPage
                 LiveWallpaperMode.MathAnimation => 0,
                 LiveWallpaperMode.MathAnimation2 => 1,
                 LiveWallpaperMode.Mp4 => 2,
+                LiveWallpaperMode.StaticSchoolImage => 3,
                 _ => 0
             };
 
@@ -1189,6 +1194,8 @@ public partial class SettingsPage : ContentPage
                 useEnglish
                     ? "MP4 live wallpaper"
                     : "Live Wallpaper MP4");
+            LiveWallpaperModePicker.Items.Add(
+                LocalizationService.TranslateKey("Settings.Wallpaper.SchoolStill"));
             LiveWallpaperModePicker.SelectedIndex = selectedMode;
         }
         finally

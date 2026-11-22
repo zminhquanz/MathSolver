@@ -23,6 +23,14 @@ internal static class FoodThemeWorksheetTests
                 var c=fraction?FractionQuestionCatalogue.Create(profile,ArithmeticOperation.Add,tier,language,new(31),"fraction-"+id)
                     :AppliedQuestionCatalogue.Create(profile,ArithmeticOperation.Add,tier,language,new(37),id);
                 var d=BasicQuestionTemplates.Example(c);var q=c.ToPracticeQuestion(d.ToWordProblem(c),mode,new(11));
+                if(subject.Unit.Id=="water-bottles")
+                {
+                    var word=d.ToWordProblem(c);
+                    Check(word.StoryArtworkId=="water_bottle"
+                        && QuizStoryArtwork.Select(true,false,[word.AnswerUnit],
+                            itemUnit:word.ItemUnit,artworkId:word.StoryArtworkId)=="quiz_story_water_bottle.png",
+                        "PDF water-bottle worksheet lost its distinct countable illustration");
+                }
                 if(fraction)
                 {
                     Check(q.ExactAnswer==FractionQuestionCatalogue.Answer(c),"PDF exact fraction changed");
@@ -31,6 +39,14 @@ internal static class FoodThemeWorksheetTests
                 }
                 else Check(new ArithmeticQuizValidator(new BasicArithmeticEngine()).Validate(q).IsValid,"Theme PDF integer invalid");
                 var printed=QuizWorksheetBuilder.Format(q,language);Check(!printed.Prompt.Contains('{')&&!printed.Answer.Contains('{'),"Unbound theme PDF slots");
+                if(language==AppLanguage.Vietnamese && subject.Unit.Id=="op-la")
+                {
+                    Check(printed.Prompt.Contains("phần trứng ốp-la",StringComparison.Ordinal),
+                        "PDF question contains corrupted Vietnamese food unit");
+                    if(mode!=ArithmeticQuizMode.TrueFalse)
+                        Check(printed.Answer.Contains("phần trứng ốp-la",StringComparison.Ordinal),
+                            "PDF answer contains corrupted Vietnamese food unit");
+                }
                 if(subject.Group==QuestionKnowledgeGroup.Food)
                 {
                     if(FoodThemeCatalogue.DessertShopKind(subject.Unit.Id) is { } dessert)
@@ -71,9 +87,9 @@ internal static class FoodThemeWorksheetTests
                 if(subject.Group==QuestionKnowledgeGroup.Drinks)
                 {
                     bool vi=language==AppLanguage.Vietnamese;
-                    string first=vi?"quán nước thứ nhất":"the first drink shop";
-                    string second=vi?"quán nước thứ hai":"the second drink shop";
-                    string both=vi?"cả hai quán nước":"both drink shops";
+                    var (first,second,both)=FoodThemePrompt.DrinkShopActors(
+                        FoodThemeCatalogue.IsCoffeeDrinkContract(c),
+                        FoodThemeCatalogue.IsMilkTeaDrinkContract(c),language);
                     Check(c.Subject.Equals(first,StringComparison.OrdinalIgnoreCase),"PDF drink contract lost drink shop: "+c.SceneId);
                     Check(printed.Prompt.Contains(first,StringComparison.OrdinalIgnoreCase),"PDF drink story missing first shop: "+c.SceneId);
                     if(!fraction)
@@ -89,6 +105,53 @@ internal static class FoodThemeWorksheetTests
                 }
                 if(mode==ArithmeticQuizMode.TrueFalse)Check(printed.Answer==(q.PresentedEquationIsCorrect==true?printed.Options[0]:printed.Options[1]),"Truth key changed");
                 items.Add(printed);traces.Add(new{language,mode,subject.Group,subject.Unit.Id,Fraction=fraction,printed.Prompt,printed.Answer});count++;
+            }
+            foreach (var fruit in FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Fruit))
+            foreach (var action in new[] { "plant", "harvest" })
+            foreach (var (left, right) in new[] { (100, 100), (100, 101), (101, 100), (101, 101) })
+            {
+                var contract = AppliedQuestionCatalogue.Create(new QuestionLearningProfile(QuestionKnowledgeGroup.Fruit),
+                    ArithmeticOperation.Add, CurriculumTier.ThreeStars, language, new Random(31),
+                    $"theme-fruit-{fruit.Unit.Id}-{action}-total");
+                string firstVenue = left <= 100 ? language == AppLanguage.Vietnamese ? "khu vườn" : "garden"
+                    : language == AppLanguage.Vietnamese ? "nông trại" : "farm";
+                string secondVenue = right <= 100 ? language == AppLanguage.Vietnamese ? "khu vườn" : "garden"
+                    : language == AppLanguage.Vietnamese ? "nông trại" : "farm";
+                contract = contract with
+                {
+                    Left = left,
+                    Right = right,
+                    Subject = language == AppLanguage.Vietnamese ? $"{firstVenue} của An" : $"Alex's {firstVenue}",
+                    OtherSubject = language == AppLanguage.Vietnamese ? $"{secondVenue} của Bình" : $"Sam's {secondVenue}"
+                };
+                Check(contract.IsValid && contract.Answer == left + right, "Invalid fruit garden facts in PDF");
+                var draft = BasicQuestionTemplates.Example(contract);
+                var question = contract.ToPracticeQuestion(draft.ToWordProblem(contract), mode, new Random(11));
+                Check(new ArithmeticQuizValidator(new BasicArithmeticEngine()).Validate(question).IsValid,
+                    "Fruit garden PDF question failed arithmetic validation");
+                var printed = QuizWorksheetBuilder.Format(question, language);
+                string both = language == AppLanguage.Vietnamese
+                    ? left <= 100 && right <= 100 ? "cả hai khu vườn"
+                        : left > 100 && right > 100 ? "cả hai nông trại"
+                        : left <= 100 ? "cả khu vườn và nông trại" : "cả nông trại và khu vườn"
+                    : left <= 100 && right <= 100 ? "both gardens"
+                        : left > 100 && right > 100 ? "both farms"
+                        : left <= 100 ? "the garden and the farm" : "the farm and the garden";
+                string verb = action == "plant" ? language == AppLanguage.Vietnamese ? "trồng được" : "planted"
+                    : language == AppLanguage.Vietnamese ? "thu hoạch được" : "harvested";
+                Check(printed.Prompt.Contains(both, StringComparison.OrdinalIgnoreCase)
+                    && printed.Prompt.Contains(contract.Subject, StringComparison.OrdinalIgnoreCase)
+                    && printed.Prompt.Contains(contract.OtherSubject, StringComparison.OrdinalIgnoreCase)
+                    && printed.Prompt.Contains(verb, StringComparison.OrdinalIgnoreCase)
+                    && printed.Prompt.Contains($"{left} {contract.Unit}", StringComparison.OrdinalIgnoreCase)
+                    && printed.Prompt.Contains($"{right} {contract.Unit}", StringComparison.OrdinalIgnoreCase),
+                    "Fruit garden PDF changed the venue, action or numbers: " + contract.SceneId);
+                Check(!printed.Prompt.Contains('{') && !printed.Answer.Contains('{'),
+                    "Fruit garden PDF contains unresolved placeholders");
+                items.Add(printed);
+                traces.Add(new { language, mode, Group = QuestionKnowledgeGroup.Fruit,
+                    fruit.Unit.Id, Action = action, Left = left, Right = right, printed.Prompt, printed.Answer });
+                count++;
             }
             string title=language==AppLanguage.Vietnamese?"Thức ăn · Nước uống · Trái cây":"Food · Drinks · Fruit";
             int batch=0;
@@ -109,6 +172,7 @@ internal static class FoodThemeWorksheetTests
         File.WriteAllText(Path.Combine(directory,"food-theme-pdf-cases.json"),JsonSerializer.Serialize(traces,new JsonSerializerOptions{WriteIndented=true,Encoder=System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping}));
         Console.WriteLine($"PASS food theme PDF: {count} exact subject/fraction/mode/VI-EN fixtures, {pdfs} app-generated worksheets/keys, embedded text, frozen facts and native math diagrams.");
         PreparedDishVenueWorksheetTests.Run(directory);
+        JapaneseDishWorksheetTests.Run(directory);
         KoreanDishWorksheetTests.Run(directory);
         VietnameseDishWorksheetTests.Run(directory);
         return Task.CompletedTask;

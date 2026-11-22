@@ -42,179 +42,8 @@ public static partial class QuizContentValidation
         CheckPracticeArithmeticLists(pack);
         CheckNumberNameLists(pack);
         CheckAreaMeasurementLists(pack);
-        foreach (string key in new[] { "ProportionQuizGenerator.Templates", "ProportionQuizGenerator.Templates.Extensions" })
-        if (pack.Lists.TryGetValue(key, out var proportionTemplates))
-        {
-            var texts = pack.Texts.ToDictionary(t => t.Id, StringComparer.Ordinal);
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var row in proportionTemplates.EnumerateArray())
-            {
-                if (!row.TryGetProperty("NarrativeId", out _)) continue; // Legacy positional language packs.
-                string id = RequiredString(row, "NarrativeId");
-                if (!ids.Add(id) || !id.StartsWith("ProportionQuizGenerator.Narrative.", StringComparison.Ordinal)
-                    || !texts.TryGetValue(id, out var source)) Fail("Invalid proportion narrative ID: " + id);
-                var entry = texts[id];
-                if (entry.Variables.Length != 3) Fail("Proportion requires three named roles: " + id);
-                string named = RequiredString(row, "Template");
-                for (int i = 0; i < 3; i++) named = named.Replace("{" + i + "}", "{" + entry.Variables[i] + "}");
-                if (named != entry.Text) Fail("Named proportion template changed positional facts: " + id);
-            }
-        }
-        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.DecimalContextsList, out var decimalContexts))
-        {
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            if (decimalContexts.GetArrayLength() == 0) Fail("Empty decimal story contexts.");
-            var decimalRows = decimalContexts.EnumerateArray().AsEnumerable().Concat(
-                pack.Lists.TryGetValue(ElementaryQuizGenerator.DecimalContextsList + ".Extensions", out var decimalExtra)
-                    ? decimalExtra.EnumerateArray().AsEnumerable() : []);
-            foreach (var row in decimalRows)
-            {
-                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate decimal story context.");
-                _ = RequiredString(row, "Item");
-                string unit = RequiredString(row, "Unit"), small = RequiredString(row, "SmallUnit");
-                int factor = row.GetProperty("ConversionFactor").GetInt32();
-                if (!((unit == "kg" && small == "g" && factor == 1000)
-                    || (unit == "m" && small == "cm" && factor == 100)
-                    || (unit is "l" or "litres" && small == "ml" && factor == 1000))
-                    || row.GetProperty("MaximumQuantity").GetInt32() < 100)
-                    Fail("Invalid decimal story dimension or capacity.");
-                if (row.TryGetProperty("Activity", out var activity))
-                {
-                    string activityId = RequiredString(row, "Activity");
-                    _ = RequiredString(row, "GroupUnit");
-                    if (activityId != RequiredString(row, "Id") || !row.TryGetProperty("GroupMaximum", out var limit)
-                        || !limit.TryGetDecimal(out decimal maximum) || maximum < 1
-                        || maximum * 5 + 1 > row.GetProperty("MaximumQuantity").GetInt32())
-                        Fail("Invalid decimal activity or per-group capacity.");
-                    foreach (string clause in ElementaryQuizGenerator.DecimalActivityClauses)
-                        if (!pack.Texts.Any(text => text.Id == "ElementaryQuizGenerator.DecimalStories.Activity." + activityId + "." + clause))
-                            Fail("Incomplete decimal activity wording: " + activityId);
-                }
-            }
-        }
-        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList, out var measurementContexts))
-        {
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            var categories = new HashSet<string>(StringComparer.Ordinal);
-            foreach (var row in measurementContexts.EnumerateArray().Concat(
-                pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList + ".Extensions", out var measuredExtra)
-                    ? measuredExtra.EnumerateArray().AsEnumerable() : []))
-            {
-                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate measurement story context.");
-                _ = RequiredString(row, "Subject");
-                string category = RequiredString(row, "Category");
-                if (category is not ("mass" or "capacity" or "length")) Fail("Invalid measurement story dimension.");
-                categories.Add(category);
-                if (row.TryGetProperty("Activity", out _))
-                {
-                    string activity = RequiredString(row, "Activity");
-                    if (activity != RequiredString(row, "Id") || row.GetProperty("MaximumQuantity").GetInt32() < 20)
-                        Fail("Invalid measurement activity limits.");
-                    for (int clause = 1; clause <= 10; clause++)
-                        if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.MeasurementStories.Activity." + activity + "." + clause.ToString("000")))
-                            Fail("Incomplete measurement activity: " + activity);
-                }
-            }
-            if (categories.Count != 3) Fail("Missing measurement story dimension.");
-        }
-        foreach (string key in new[] { "ElementaryQuizGenerator.PackingStories", "ElementaryQuizGenerator.PackingStories.Extensions" })
-        if (pack.Lists.TryGetValue(key, out var packing))
-        foreach (var row in packing.EnumerateArray())
-        {
-            if (!row.TryGetProperty("Activity", out _)) continue;
-            string id = RequiredString(row, "Id");
-            int capacity = row.GetProperty("Capacity").GetInt32(), size = row.GetProperty("MaximumSize").GetInt32();
-            if (RequiredString(row, "Activity") != id || size < 5 || capacity < size * 2 - 1)
-                Fail("Invalid packing activity capacity.");
-            foreach (int clause in Enumerable.Range(1, 11).Concat([18, 19]))
-                if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.ContextStories.CreateRemainderStory.Activity." + id + "." + clause.ToString("000")))
-                    Fail("Incomplete packing activity: " + id);
-        }
-        if (pack.Lists.TryGetValue("TimeActivityContexts", out var timeActivities))
-        {
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            if (timeActivities.GetArrayLength() == 0 || !timeActivities.EnumerateArray().Any(row => row.GetProperty("MinimumStar").GetInt32() == 1))
-                Fail("Time activities need at least one introductory context.");
-            foreach (var row in timeActivities.EnumerateArray())
-            {
-                string id = RequiredString(row, "Id");
-                int minimum = row.GetProperty("MinimumStar").GetInt32(), first = row.GetProperty("StartHourMinimum").GetInt32(), last = row.GetProperty("StartHourMaximum").GetInt32();
-                if (!ids.Add(id) || minimum is < 1 or > 5 || first < 0 || last > 23 || first > last
-                    || last > 20 && minimum < 3 || row.GetProperty("MaximumHours").GetInt32() is < 1 or > 3)
-                    Fail("Invalid time activity range.");
-                foreach (string clause in ElementaryQuizGenerator.TimeActivityClauses)
-                    if (!pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.Activity." + id + "." + clause))
-                        Fail("Incomplete time activity: " + id);
-            }
-        }
-        foreach (string listName in ReviewedNarrativePhrasings.ListNames)
-        if (pack.Lists.TryGetValue(listName, out var phrasings))
-        {
-            var texts = pack.Texts.ToDictionary(text => text.Id, StringComparer.Ordinal);
-            var ids = new HashSet<string>(StringComparer.Ordinal);
-            if (phrasings.GetArrayLength() == 0) Fail("Empty reviewed narrative list.");
-            foreach (var row in phrasings.EnumerateArray())
-            {
-                string id = RequiredString(row, "Id");
-                string prefix = listName == ElementaryQuizGenerator.AppliedNarrativeList ? "AppliedNarrative."
-                    : listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
-                    : listName == ReviewedNarrativePhrasings.DecimalSpatialListName ? "DecimalSpatial."
-                    : listName == ReviewedNarrativePhrasings.TimeFractionListName ? "TimeFraction."
-                    : listName == ReviewedNarrativePhrasings.TwoNumbersListName ? "ElementaryQuizGenerator."
-                    : listName == ReviewedNarrativePhrasings.AverageListName ? "AverageQuizGenerator."
-                    : listName == ReviewedNarrativePhrasings.PercentageListName ? "PercentageQuizGenerator."
-                    : listName == ReviewedNarrativePhrasings.GeometryListName ? "GeometryQuizGenerator.Difficulty."
-                    : listName == ReviewedNarrativePhrasings.DataListName ? "ElementaryQuizGenerator.DataDifficulty."
-                    : listName == ReviewedNarrativePhrasings.MapScaleListName ? "ElementaryQuizGenerator.NewSkills.CreateMapScale."
-                    : listName == ReviewedNarrativePhrasings.ProbabilityListName ? "ElementaryQuizGenerator.Probability"
-                    : listName == ReviewedNarrativePhrasings.ProportionListName ? "ProportionQuizGenerator.Narrative."
-                    : listName == ReviewedNarrativePhrasings.DecimalListName ? "ElementaryQuizGenerator.DecimalStories."
-                    : listName == ReviewedNarrativePhrasings.MeasurementListName ? "ElementaryQuizGenerator.MeasurementStories."
-                    : listName == ReviewedNarrativePhrasings.RemainderListName ? "ElementaryQuizGenerator.ContextStories.CreateRemainderStory."
-                    : listName == ReviewedNarrativePhrasings.TimeListName ? "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty."
-                    : listName == ReviewedNarrativePhrasings.FractionQuantityListName ? "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty."
-                    : "ElementaryQuizGenerator.MultiStep.CreateMultiStep.";
-                if (!ids.Add(id) || !id.StartsWith(prefix, StringComparison.Ordinal)
-                    || !texts.TryGetValue(id, out var source)) Fail("Unknown or duplicate reviewed narrative: " + id);
-                string[] parts = Regex.Split(texts[id].Text.Trim(), @"(?<=[.!?])\s+");
-                var choiceGroups = new List<JsonElement> { RequiredArray(row, "Alternatives") };
-                if (row.TryGetProperty("AlternativesByUnit", out var byUnit))
-                {
-                    if (byUnit.ValueKind != JsonValueKind.Object) Fail("Invalid unit phrasing map: " + id);
-                    var units = new HashSet<string>(StringComparer.Ordinal);
-                    foreach (var entry in byUnit.EnumerateObject())
-                    {
-                        if (string.IsNullOrWhiteSpace(entry.Name) || !units.Add(entry.Name)
-                            || entry.Value.ValueKind != JsonValueKind.Array || entry.Value.GetArrayLength() == 0)
-                            Fail("Invalid unit phrasing choices: " + id);
-                        choiceGroups.Add(entry.Value);
-                    }
-                }
-                foreach (var choices in choiceGroups)
-                {
-                    // Different units may share an equivalent sentence, but each
-                    // unit's own alternatives must still be distinct.
-                    var distinct = new HashSet<string>(StringComparer.Ordinal) { texts[id].Text.Trim() };
-                    foreach (var choice in choices.EnumerateArray())
-                    {
-                        if (choice.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(choice.GetString())) Fail("Empty reviewed phrasing: " + id);
-                        string text = choice.GetString()!;
-                        string[] alternative = Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
-                        if (!distinct.Add(text.Trim()) || text.Any(char.IsControl) || text.Length > 700
-                            || alternative.Length != parts.Length || (listName == ReviewedNarrativePhrasings.ProbabilityListName
-                                ? !Regex.Matches(Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", ""), @"\d+").Select(m => m.Value)
-                                    .SequenceEqual(Regex.Matches(Regex.Replace(texts[id].Text, @"\{[A-Za-z0-9_.-]+\}", ""), @"\d+").Select(m => m.Value))
-                                : Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", "").Any(char.IsDigit)))
-                            Fail("Invalid reviewed phrasing: " + id);
-                        for (int i = 0; i < parts.Length; i++)
-                            if (!Placeholder().Matches(parts[i]).Select(m => m.Value)
-                                    .SequenceEqual(Placeholder().Matches(alternative[i]).Select(m => m.Value))
-                                || parts[i].EndsWith('?') != alternative[i].EndsWith('?'))
-                                Fail("Changed ordered roles or target: " + id);
-                    }
-                }
-            }
-        }
+        CheckContextActivityLists(pack);
+        CheckReviewedNarrativeLists(pack);
         if (pack.Lists.TryGetValue("Foundation.NumberNames", out var numberNames))
         {
             var values = new HashSet<int>();
@@ -275,59 +104,7 @@ public static partial class QuizContentValidation
                 }
             }
         }
-        if (pack.Lists.TryGetValue("FractionQuantityContexts", out var fractions))
-        {
-            var contextIds = new HashSet<string>(StringComparer.Ordinal);
-            var fractionRows = fractions.EnumerateArray().AsEnumerable().Concat(
-                pack.Lists.TryGetValue("FractionQuantityContexts.Extensions", out var fractionExtra)
-                    ? fractionExtra.EnumerateArray().AsEnumerable() : []).ToArray();
-            foreach (var context in fractionRows)
-            {
-                string contextId = RequiredString(context, "ContextId");
-                if (!Regex.IsMatch(contextId, @"^[a-z][a-z0-9-]*$") || !contextIds.Add(contextId))
-                    Fail("Invalid or duplicate fraction context ID: " + contextId);
-                if (RequiredString(context, "Quantity") is not ("Count" or "Mass" or "Distance" or "Capacity"))
-                    Fail("Unsupported fraction quantity: " + contextId);
-                foreach (string field in new[] { "Unit", "PartLabel", "WholeLabel" }) _ = RequiredString(context, field);
-                foreach (string field in new[] { "PartProblemTemplate", "WholeProblemTemplate" })
-                {
-                    string template = RequiredString(context, field);
-                    if (!Slots(template).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
-                    string alternativesField = field.Replace("Template", "Alternatives", StringComparison.Ordinal);
-                    var alternatives = RequiredArray(context, alternativesField);
-                    if (alternatives.GetArrayLength() < 2) Fail("Fraction quantity facts need reviewed alternatives.");
-                    var seen = new HashSet<string>(StringComparer.Ordinal) { template.Trim() };
-                    string[] original = Regex.Split(template.Trim(), @"(?<=[.!?])\s+");
-                    foreach (var alternative in alternatives.EnumerateArray())
-                    {
-                        if (alternative.ValueKind != JsonValueKind.String) Fail("Invalid fraction quantity phrasing.");
-                        string text = alternative.GetString()!;
-                        string[] parts = Regex.Split(text.Trim(), @"(?<=[.!?])\s+");
-                        if (!seen.Add(text.Trim()) || text.Any(char.IsControl) || text.Length > 700 || parts.Length != original.Length
-                            || Regex.Replace(text, @"\{[01]\}", "").Any(char.IsDigit)) Fail("Invalid fraction quantity phrasing.");
-                        for (int i = 0; i < parts.Length; i++)
-                            if (!Placeholder().Matches(parts[i]).Select(m => m.Value).SequenceEqual(Placeholder().Matches(original[i]).Select(m => m.Value))
-                                || parts[i].EndsWith('?') != original[i].EndsWith('?')) Fail("Changed fraction quantity roles or target.");
-                    }
-                }
-                CheckCapacity(context);
-            }
-            if (pack.Lists.TryGetValue(FractionQuantityActivityCatalog.ListName, out var activities))
-            {
-                var activityIds = new HashSet<string>(StringComparer.Ordinal);
-                foreach (var activity in activities.EnumerateArray())
-                {
-                    if (!activityIds.Add(RequiredString(activity, "ContextId"))) Fail("Duplicate fraction activity.");
-                    foreach (string field in new[] { "PartSource", "WholeSource", "InitialAction", "PartAction" })
-                    {
-                        string text = RequiredString(activity, field);
-                        if (Slots(text).Count != 0 || text.Any(char.IsDigit) || text.Any(char.IsControl))
-                            Fail("Fraction activity cannot supply numerical facts.");
-                    }
-                }
-                if (!activityIds.SetEquals(contextIds)) Fail("Missing or unknown fraction activity.");
-            }
-        }
+        CheckFractionQuantityContextLists(pack);
         if (pack.Lists.TryGetValue("DataChartContexts", out var charts))
         {
             var contextIds = new HashSet<string>(StringComparer.Ordinal);
@@ -357,6 +134,395 @@ public static partial class QuizContentValidation
                     || !pack.Texts.Any(t => t.Id == "ElementaryQuizGenerator.NewSkills.CreateMapScale.Context." + id))
                     Fail("Invalid map scale context or limits.");
             }
+        }
+    }
+
+    private static readonly (string Template, string Alternatives)[] FractionQuantityTextFields =
+    [
+        ("PartProblemTemplate", "PartProblemAlternatives"),
+        ("WholeProblemTemplate", "WholeProblemAlternatives")
+    ];
+
+    // Ignore only the two positional fact placeholders, as the original regex did.
+    private static bool HasFractionQuantityDigits(ReadOnlySpan<char> text)
+    {
+        for (int i = 0; i < text.Length; i++)
+        {
+            if (i + 2 < text.Length && text[i] == '{'
+                && text[i + 1] is '0' or '1' && text[i + 2] == '}')
+            {
+                i += 2;
+                continue;
+            }
+            if (char.IsDigit(text[i])) return true;
+        }
+        return false;
+    }
+
+    private static void CheckFractionQuantityContextLists(QuizContentPack pack)
+    {
+        if (pack.Lists.TryGetValue("FractionQuantityContexts", out var fractions))
+        {
+            var contextIds = new HashSet<string>(StringComparer.Ordinal);
+            var fractionRows = fractions.EnumerateArray().AsEnumerable().Concat(
+                pack.Lists.TryGetValue("FractionQuantityContexts.Extensions", out var fractionExtra)
+                    ? fractionExtra.EnumerateArray().AsEnumerable() : []);
+            foreach (var context in fractionRows)
+            {
+                string contextId = RequiredString(context, "ContextId");
+                if (!Regex.IsMatch(contextId, @"^[a-z][a-z0-9-]*$") || !contextIds.Add(contextId))
+                    Fail("Invalid or duplicate fraction context ID: " + contextId);
+                if (RequiredString(context, "Quantity") is not ("Count" or "Mass" or "Distance" or "Capacity"))
+                    Fail("Unsupported fraction quantity: " + contextId);
+                foreach (string field in new[] { "Unit", "PartLabel", "WholeLabel" }) _ = RequiredString(context, field);
+                foreach (var (field, alternativesField) in FractionQuantityTextFields)
+                {
+                    string template = RequiredString(context, field);
+                    if (!Slots(template).SetEquals(["0", "1"])) Fail("Fraction quantity templates require exactly {0} and {1}.");
+                    var alternatives = RequiredArray(context, alternativesField);
+                    if (alternatives.GetArrayLength() < 2) Fail("Fraction quantity facts need reviewed alternatives.");
+                    var seen = new HashSet<string>(StringComparer.Ordinal) { template.Trim() };
+                    foreach (var alternative in alternatives.EnumerateArray())
+                    {
+                        if (alternative.ValueKind != JsonValueKind.String) Fail("Invalid fraction quantity phrasing.");
+                        string text = alternative.GetString()!;
+                        if (!seen.Add(text.Trim()) || ContainsControlCharacters(text) || text.Length > 700
+                            || HasFractionQuantityDigits(text)) Fail("Invalid fraction quantity phrasing.");
+                        if (!SameReviewedSentences(template, text)) Fail("Changed fraction quantity roles or target.");
+                    }
+                }
+                CheckCapacity(context);
+            }
+            if (pack.Lists.TryGetValue(FractionQuantityActivityCatalog.ListName, out var activities))
+            {
+                var activityIds = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var activity in activities.EnumerateArray())
+                {
+                    if (!activityIds.Add(RequiredString(activity, "ContextId"))) Fail("Duplicate fraction activity.");
+                    foreach (string field in new[] { "PartSource", "WholeSource", "InitialAction", "PartAction" })
+                    {
+                        string text = RequiredString(activity, field);
+                        if (Slots(text).Count != 0 || text.Any(char.IsDigit) || text.Any(char.IsControl))
+                            Fail("Fraction activity cannot supply numerical facts.");
+                    }
+                }
+                if (!activityIds.SetEquals(contextIds)) Fail("Missing or unknown fraction activity.");
+            }
+        }
+    }
+
+    private static void CheckContextActivityLists(QuizContentPack pack)
+    {
+        var textIds = new HashSet<string>(pack.Texts.Count, StringComparer.Ordinal);
+        var proportionTexts = new Dictionary<string, QuizContentText>(64, StringComparer.Ordinal);
+        foreach (var text in pack.Texts)
+        {
+            if (!textIds.Add(text.Id)) Fail("Duplicate content text ID: " + text.Id);
+            if (text.Id.StartsWith("ProportionQuizGenerator.Narrative.", StringComparison.Ordinal))
+                proportionTexts.Add(text.Id, text);
+        }
+
+        foreach (string key in new[] { "ProportionQuizGenerator.Templates", "ProportionQuizGenerator.Templates.Extensions" })
+        if (pack.Lists.TryGetValue(key, out var proportionTemplates))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in proportionTemplates.EnumerateArray())
+            {
+                if (!row.TryGetProperty("NarrativeId", out _)) continue; // Legacy positional language packs.
+                string id = RequiredString(row, "NarrativeId");
+                if (!ids.Add(id) || !id.StartsWith("ProportionQuizGenerator.Narrative.", StringComparison.Ordinal)
+                    || !proportionTexts.ContainsKey(id)) Fail("Invalid proportion narrative ID: " + id);
+                var entry = proportionTexts[id];
+                if (entry.Variables.Length != 3) Fail("Proportion requires three named roles: " + id);
+                string named = RequiredString(row, "Template");
+                for (int i = 0; i < 3; i++) named = named.Replace("{" + i + "}", "{" + entry.Variables[i] + "}");
+                if (named != entry.Text) Fail("Named proportion template changed positional facts: " + id);
+            }
+        }
+        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.DecimalContextsList, out var decimalContexts))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (decimalContexts.GetArrayLength() == 0) Fail("Empty decimal story contexts.");
+            var decimalRows = decimalContexts.EnumerateArray().AsEnumerable().Concat(
+                pack.Lists.TryGetValue(ElementaryQuizGenerator.DecimalContextsList + ".Extensions", out var decimalExtra)
+                    ? decimalExtra.EnumerateArray().AsEnumerable() : []);
+            foreach (var row in decimalRows)
+            {
+                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate decimal story context.");
+                _ = RequiredString(row, "Item");
+                string unit = RequiredString(row, "Unit"), small = RequiredString(row, "SmallUnit");
+                int factor = row.GetProperty("ConversionFactor").GetInt32();
+                if (!((unit == "kg" && small == "g" && factor == 1000)
+                    || (unit == "m" && small == "cm" && factor == 100)
+                    || (unit is "l" or "litres" && small == "ml" && factor == 1000))
+                    || row.GetProperty("MaximumQuantity").GetInt32() < 100)
+                    Fail("Invalid decimal story dimension or capacity.");
+                if (row.TryGetProperty("Activity", out var activity))
+                {
+                    string activityId = RequiredString(row, "Activity");
+                    _ = RequiredString(row, "GroupUnit");
+                    if (activityId != RequiredString(row, "Id") || !row.TryGetProperty("GroupMaximum", out var limit)
+                        || !limit.TryGetDecimal(out decimal maximum) || maximum < 1
+                        || maximum * 5 + 1 > row.GetProperty("MaximumQuantity").GetInt32())
+                        Fail("Invalid decimal activity or per-group capacity.");
+                    foreach (string clause in ElementaryQuizGenerator.DecimalActivityClauses)
+                        if (!textIds.Contains("ElementaryQuizGenerator.DecimalStories.Activity." + activityId + "." + clause))
+                            Fail("Incomplete decimal activity wording: " + activityId);
+                }
+            }
+        }
+        if (pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList, out var measurementContexts))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var categories = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var row in measurementContexts.EnumerateArray().Concat(
+                pack.Lists.TryGetValue(ElementaryQuizGenerator.MeasurementContextsList + ".Extensions", out var measuredExtra)
+                    ? measuredExtra.EnumerateArray().AsEnumerable() : []))
+            {
+                if (!ids.Add(RequiredString(row, "Id"))) Fail("Duplicate measurement story context.");
+                _ = RequiredString(row, "Subject");
+                string category = RequiredString(row, "Category");
+                if (category is not ("mass" or "capacity" or "length")) Fail("Invalid measurement story dimension.");
+                categories.Add(category);
+                if (row.TryGetProperty("Activity", out _))
+                {
+                    string activity = RequiredString(row, "Activity");
+                    if (activity != RequiredString(row, "Id") || row.GetProperty("MaximumQuantity").GetInt32() < 20)
+                        Fail("Invalid measurement activity limits.");
+                    for (int clause = 1; clause <= 10; clause++)
+                        if (!textIds.Contains("ElementaryQuizGenerator.MeasurementStories.Activity." + activity + "." + clause.ToString("000")))
+                            Fail("Incomplete measurement activity: " + activity);
+                }
+            }
+            if (categories.Count != 3) Fail("Missing measurement story dimension.");
+        }
+        foreach (string key in new[] { "ElementaryQuizGenerator.PackingStories", "ElementaryQuizGenerator.PackingStories.Extensions" })
+        if (pack.Lists.TryGetValue(key, out var packing))
+        foreach (var row in packing.EnumerateArray())
+        {
+            if (!row.TryGetProperty("Activity", out _)) continue;
+            string id = RequiredString(row, "Id");
+            int capacity = row.GetProperty("Capacity").GetInt32(), size = row.GetProperty("MaximumSize").GetInt32();
+            if (RequiredString(row, "Activity") != id || size < 5 || capacity < size * 2 - 1)
+                Fail("Invalid packing activity capacity.");
+            foreach (int clause in Enumerable.Range(1, 11).Concat([18, 19]))
+                if (!textIds.Contains("ElementaryQuizGenerator.ContextStories.CreateRemainderStory.Activity." + id + "." + clause.ToString("000")))
+                    Fail("Incomplete packing activity: " + id);
+        }
+        if (pack.Lists.TryGetValue("TimeActivityContexts", out var timeActivities))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (timeActivities.GetArrayLength() == 0 || !timeActivities.EnumerateArray().Any(row => row.GetProperty("MinimumStar").GetInt32() == 1))
+                Fail("Time activities need at least one introductory context.");
+            foreach (var row in timeActivities.EnumerateArray())
+            {
+                string id = RequiredString(row, "Id");
+                int minimum = row.GetProperty("MinimumStar").GetInt32(), first = row.GetProperty("StartHourMinimum").GetInt32(), last = row.GetProperty("StartHourMaximum").GetInt32();
+                if (!ids.Add(id) || minimum is < 1 or > 5 || first < 0 || last > 23 || first > last
+                    || last > 20 && minimum < 3 || row.GetProperty("MaximumHours").GetInt32() is < 1 or > 3)
+                    Fail("Invalid time activity range.");
+                foreach (string clause in ElementaryQuizGenerator.TimeActivityClauses)
+                    if (!textIds.Contains("ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty.Activity." + id + "." + clause))
+                        Fail("Incomplete time activity: " + id);
+            }
+        }
+    }
+
+    private static void CheckReviewedNarrativeLists(QuizContentPack pack)
+    {
+        var texts = pack.Texts.ToDictionary(text => text.Id, StringComparer.Ordinal);
+        foreach (string listName in ReviewedNarrativePhrasings.ListNames)
+        if (pack.Lists.TryGetValue(listName, out var phrasings))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            if (phrasings.GetArrayLength() == 0) Fail("Empty reviewed narrative list.");
+            foreach (var row in phrasings.EnumerateArray())
+            {
+                string id = RequiredString(row, "Id");
+                string prefix = listName == ElementaryQuizGenerator.AppliedNarrativeList ? "AppliedNarrative."
+                    : listName == ReviewedNarrativePhrasings.MotionListName ? "MotionQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.DecimalSpatialListName ? "DecimalSpatial."
+                    : listName == ReviewedNarrativePhrasings.TimeFractionListName ? "TimeFraction."
+                    : listName == ReviewedNarrativePhrasings.TwoNumbersListName ? "ElementaryQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.AverageListName ? "AverageQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.PercentageListName ? "PercentageQuizGenerator."
+                    : listName == ReviewedNarrativePhrasings.GeometryListName ? "GeometryQuizGenerator.Difficulty."
+                    : listName == ReviewedNarrativePhrasings.DataListName ? "ElementaryQuizGenerator.DataDifficulty."
+                    : listName == ReviewedNarrativePhrasings.MapScaleListName ? "ElementaryQuizGenerator.NewSkills.CreateMapScale."
+                    : listName == ReviewedNarrativePhrasings.ProbabilityListName ? "ElementaryQuizGenerator.Probability"
+                    : listName == ReviewedNarrativePhrasings.ProportionListName ? "ProportionQuizGenerator.Narrative."
+                    : listName == ReviewedNarrativePhrasings.DecimalListName ? "ElementaryQuizGenerator.DecimalStories."
+                    : listName == ReviewedNarrativePhrasings.MeasurementListName ? "ElementaryQuizGenerator.MeasurementStories."
+                    : listName == ReviewedNarrativePhrasings.RemainderListName ? "ElementaryQuizGenerator.ContextStories.CreateRemainderStory."
+                    : listName == ReviewedNarrativePhrasings.TimeListName ? "ElementaryQuizGenerator.TimeDifficulty.CreateTimeDifficulty."
+                    : listName == ReviewedNarrativePhrasings.FractionQuantityListName ? "ElementaryQuizGenerator.FractionDifficulty.CreateFractionDifficulty."
+                    : "ElementaryQuizGenerator.MultiStep.CreateMultiStep.";
+                if (!ids.Add(id) || !id.StartsWith(prefix, StringComparison.Ordinal)
+                    || !texts.ContainsKey(id)) Fail("Unknown or duplicate reviewed narrative: " + id);
+                string originalText = texts[id].Text;
+                string originalTrimmed = originalText.Trim();
+                bool probability = listName == ReviewedNarrativePhrasings.ProbabilityListName;
+                var distinct = new HashSet<string>(StringComparer.Ordinal);
+                CheckReviewedChoices(RequiredArray(row, "Alternatives"), originalText, originalTrimmed, id, probability, distinct);
+                if (row.TryGetProperty("AlternativesByUnit", out var byUnit))
+                {
+                    if (byUnit.ValueKind != JsonValueKind.Object) Fail("Invalid unit phrasing map: " + id);
+                    var units = new HashSet<string>(StringComparer.Ordinal);
+                    foreach (var entry in byUnit.EnumerateObject())
+                    {
+                        if (string.IsNullOrWhiteSpace(entry.Name) || !units.Add(entry.Name)
+                            || entry.Value.ValueKind != JsonValueKind.Array || entry.Value.GetArrayLength() == 0)
+                            Fail("Invalid unit phrasing choices: " + id);
+                        // Each unit has its own uniqueness constraint; reuse the local set.
+                        CheckReviewedChoices(entry.Value, originalText, originalTrimmed, id, probability, distinct);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void CheckReviewedChoices(JsonElement choices, string original, string originalTrimmed,
+        string id, bool probability, HashSet<string> distinct)
+    {
+        distinct.Clear();
+        distinct.Add(originalTrimmed);
+        foreach (var choice in choices.EnumerateArray())
+        {
+            if (choice.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(choice.GetString()))
+                Fail("Empty reviewed phrasing: " + id);
+            string text = choice.GetString()!;
+            if (!distinct.Add(text.Trim()) || ContainsControlCharacters(text) || text.Length > 700
+                || (probability ? !SameReviewedNumbers(original, text) : HasVisibleDigits(text)))
+                Fail("Invalid reviewed phrasing: " + id);
+            if (!SameReviewedSentences(original.AsSpan(), text.AsSpan()))
+                Fail("Changed ordered roles or target: " + id);
+        }
+    }
+
+    private static bool ContainsControlCharacters(ReadOnlySpan<char> text)
+    {
+        foreach (char character in text)
+            if (char.IsControl(character)) return true;
+        return false;
+    }
+
+    // Regex.Split(original.Trim(), @"(?<=[.!?])\s+") without temporary arrays or strings.
+    private static bool SameReviewedSentences(ReadOnlySpan<char> original, ReadOnlySpan<char> alternative)
+    {
+        original = original.Trim();
+        alternative = alternative.Trim();
+        while (true)
+        {
+            bool originalHasMore = NextReviewedSentence(ref original, out var originalSentence);
+            bool alternativeHasMore = NextReviewedSentence(ref alternative, out var alternativeSentence);
+            if (originalSentence.EndsWith('?') != alternativeSentence.EndsWith('?')
+                || !SameReviewedSlots(originalSentence, alternativeSentence)) return false;
+            if (originalHasMore != alternativeHasMore) return false;
+            if (!originalHasMore) return true;
+        }
+    }
+
+    private static bool NextReviewedSentence(ref ReadOnlySpan<char> remaining, out ReadOnlySpan<char> sentence)
+    {
+        for (int index = 1; index < remaining.Length; index++)
+        {
+            if (remaining[index - 1] is not ('.' or '!' or '?') || !char.IsWhiteSpace(remaining[index]))
+                continue;
+            int next = index + 1;
+            while (next < remaining.Length && char.IsWhiteSpace(remaining[next])) next++;
+            sentence = remaining[..index];
+            remaining = remaining[next..];
+            return true;
+        }
+        sentence = remaining;
+        remaining = default;
+        return false;
+    }
+
+    private static bool SameReviewedSlots(ReadOnlySpan<char> original, ReadOnlySpan<char> alternative)
+    {
+        var originalMatches = Placeholder().EnumerateMatches(original);
+        var alternativeMatches = Placeholder().EnumerateMatches(alternative);
+        while (true)
+        {
+            bool originalHasMatch = originalMatches.MoveNext();
+            bool alternativeHasMatch = alternativeMatches.MoveNext();
+            if (originalHasMatch != alternativeHasMatch) return false;
+            if (!originalHasMatch) return true;
+            var first = originalMatches.Current;
+            var second = alternativeMatches.Current;
+            if (!original.Slice(first.Index, first.Length).SequenceEqual(alternative.Slice(second.Index, second.Length)))
+                return false;
+        }
+    }
+
+    // Scans the characters visible after Regex.Replace(text, @"\{[A-Za-z0-9_.-]+\}", "").
+    private static bool NextUnmaskedCharacter(ReadOnlySpan<char> text, ref int index, out char character)
+    {
+        while (index < text.Length)
+        {
+            if (text[index] == '{')
+            {
+                int end = index + 1;
+                while (end < text.Length && IsReviewedSlotCharacter(text[end])) end++;
+                if (end > index + 1 && end < text.Length && text[end] == '}')
+                {
+                    index = end + 1;
+                    continue;
+                }
+            }
+            character = text[index++];
+            return true;
+        }
+        character = default;
+        return false;
+    }
+
+    private static bool IsReviewedSlotCharacter(char character) =>
+        character is >= 'a' and <= 'z' or >= 'A' and <= 'Z' or >= '0' and <= '9' or '_' or '.' or '-';
+
+    private static bool HasVisibleDigits(ReadOnlySpan<char> text)
+    {
+        int index = 0;
+        while (NextUnmaskedCharacter(text, ref index, out char character))
+            if (char.IsDigit(character)) return true;
+        return false;
+    }
+
+    // The separator token distinguishes "12" from "1 2", including when a slot is removed between digits.
+    private static int NextReviewedNumberToken(ReadOnlySpan<char> text, ref int index, ref bool inNumber)
+    {
+        while (NextUnmaskedCharacter(text, ref index, out char character))
+        {
+            if (char.IsDigit(character))
+            {
+                inNumber = true;
+                return character;
+            }
+            if (inNumber)
+            {
+                inNumber = false;
+                return -2;
+            }
+        }
+        if (inNumber)
+        {
+            inNumber = false;
+            return -2;
+        }
+        return -1;
+    }
+
+    private static bool SameReviewedNumbers(ReadOnlySpan<char> original, ReadOnlySpan<char> alternative)
+    {
+        int originalIndex = 0, alternativeIndex = 0;
+        bool originalInNumber = false, alternativeInNumber = false;
+        while (true)
+        {
+            int first = NextReviewedNumberToken(original, ref originalIndex, ref originalInNumber);
+            int second = NextReviewedNumberToken(alternative, ref alternativeIndex, ref alternativeInNumber);
+            if (first != second) return false;
+            if (first == -1) return true;
         }
     }
 

@@ -7,6 +7,37 @@ namespace MathSolver.Services;
 /// <summary>Bind presentation identities to exact source List keys, not rendered/AI prose or bare units.</summary>
 internal static partial class QuizStoryArtworkCatalogue
 {
+    internal static string? SchoolArtwork(string unitId) => unitId switch
+    {
+        "books" => "books", "notebooks" => "notebook", "pages" => "reading_page",
+        "balls" => "ball", "chairs" => "chair", "students" => "student",
+        "seedlings" => "seedling", "bottles" => "plastic_bottle",
+        "paper-flowers" => "paper_flower", "pencils" => "pencil",
+        "rulers" => "ruler", "erasers" => "eraser",
+        "fountain-pens" => "fountain_pen", "felt-tip-pens" => "colored_markers",
+        "compasses" => "compass", "pencil-cases" => "pencil_case",
+        "school-bags" => "satchel", "school-desks" => "desk",
+        "chalk-sticks" => "chalk_stick", "drawing-sheets" => "drawing_sheet",
+        "crayons" => "crayon", "glue-sticks" => "glue_stick",
+        "scissors" => "scissors", "calculators" => "calculator",
+        "bookmarks" => "bookmark",
+        _ => null
+    };
+
+    internal static string? PetArtwork(string unitId) => unitId switch
+    {
+        "pomeranians" => "pomeranian", "hamsters" => "hamster",
+        "guinea-pigs" => "guinea_pig", "dwarf-rabbits" => "dwarf_rabbit",
+        "parrots" => "parrot", "budgerigars" => "budgerigar",
+        "cockatiels" => "cockatiel", "lovebirds" => "lovebird",
+        "pigeons" => "pigeon", "canaries" => "canary",
+        "zebra-finches" => "zebra_finch", "flowerhorns" => "flowerhorn",
+        "arowanas" => "arowana", "guppies" => "guppy",
+        "goldfish" => "goldfish", "mollies" => "molly",
+        "platies" => "platy", "swordtails" => "swordtail",
+        _ => null
+    };
+
     /// <summary>Match an authored scene's group and exact subject, never guessed prose or a shared unit.</summary>
     internal static string? AppliedSceneArtwork(AppliedQuestionScene? scene)
     {
@@ -22,9 +53,10 @@ internal static partial class QuizStoryArtworkCatalogue
                 _ => null
             };
         if (scene.Group == QuestionKnowledgeGroup.Toys)
-            return scene.UnitId switch { "marbles" => "marble", "balls" => "ball", _ => null };
+            return ToyThemeCatalogue.Find(scene.UnitId)?.ArtworkId
+                ?? (scene.UnitId switch { "marbles" => "marble", "balls" => "ball", _ => null });
         if (scene.Group == QuestionKnowledgeGroup.School)
-            return scene.UnitId == "students" ? "student" : null;
+            return SchoolArtwork(scene.UnitId);
         if (scene.Group == QuestionKnowledgeGroup.SchoolSupplies)
             return scene.UnitId switch
             {
@@ -47,14 +79,14 @@ internal static partial class QuizStoryArtworkCatalogue
                 _ => null
             };
         if (scene.Group == QuestionKnowledgeGroup.Animals)
-            return scene.UnitId switch
+            return PetArtwork(scene.UnitId) ?? (scene.UnitId switch
             {
                 "chickens" => "chicken", "ducks" => "duck", "birds" => "bird", "fish" => "fish",
                 "cows" => "cow", "horses" => "horse", "deer" => "deer", "dogs" => "dog",
                 "cats" => "cat", "pigs" => "pig",
                 "rabbits" => "rabbit", "turtles" => "turtle", "tortoises" => "tortoise", "geese" => "goose",
                 _ => null
-            };
+            });
         return FoodThemeCatalogue.IsTheme(scene.Group)
             ? FoodThemeCatalogue.Subjects.FirstOrDefault(subject =>
                 subject.Group == scene.Group && subject.Unit.Id == scene.UnitId)?.ArtworkId

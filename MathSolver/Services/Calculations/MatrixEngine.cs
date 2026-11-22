@@ -93,12 +93,28 @@ public static partial class MatrixEngine
     public static bool IsNeonSupported => RuntimeInformation.ProcessArchitecture == Architecture.Arm64
         && (AdvSimd.Arm64.IsSupported || Vector128.IsHardwareAccelerated);
 
+#if ANDROID && NET11_0_OR_GREATER
+#pragma warning disable SYSLIB5003 // .NET 11 SVE intrinsics are experimental.
+    public static bool IsSveSupported => AdvSimd.Arm64.IsSupported && Sve.IsSupported && Sve.Count8BitElements() == 16;
+    public static bool IsSve2Supported => IsSveSupported && Sve2.IsSupported;
+#pragma warning restore SYSLIB5003
+#else
+    public static bool IsSveSupported => false;
+    public static bool IsSve2Supported => false;
+#endif
+
     public static string NeonBackendName => AdvSimd.Arm64.IsSupported
         ? "NEON (AdvSIMD, 128-bit)" : "NEON (Vector128 hybrid, 128-bit)";
 
     internal static MatrixBackend ResolveBackend(MatrixBackend cap)
     {
         if (cap == MatrixBackend.Scalar) return MatrixBackend.Scalar;
+        if (cap == MatrixBackend.Sve2 && IsSve2Supported) return MatrixBackend.Sve2;
+        if (cap is MatrixBackend.Sve or MatrixBackend.Sve2)
+        {
+            if (IsSveSupported) return MatrixBackend.Sve;
+            return IsNeonSupported ? MatrixBackend.Neon : MatrixBackend.Scalar;
+        }
         if ((cap is MatrixBackend.Auto or MatrixBackend.Neon) && IsNeonSupported) return MatrixBackend.Neon;
         if (cap == MatrixBackend.Neon) return MatrixBackend.Scalar;
         if ((cap is MatrixBackend.Auto or MatrixBackend.Avx512) && Avx512F.IsSupported) return MatrixBackend.Avx512;
@@ -127,6 +143,10 @@ public static partial class MatrixEngine
             int index = start;
             switch (backend)
             {
+#if ANDROID && NET11_0_OR_GREATER
+                case MatrixBackend.Sve:
+                case MatrixBackend.Sve2: index = ElementwiseSve(left, right, values, start, end, subtract); break;
+#endif
                 case MatrixBackend.Neon: index = ElementwiseNeon(left, right, values, start, end, subtract); break;
                 case MatrixBackend.Sse2: index = Elementwise128(left, right, values, start, end, subtract); break;
                 case MatrixBackend.Avx2: index = Elementwise256(left, right, values, start, end, subtract); break;

@@ -59,7 +59,7 @@ public sealed partial class ElementaryQuizGenerator
             }
             else contract = CreateMeasurementDifficulty(type, language, tier);
             contract = contract with { StoryContextId = "applied-" + type };
-            return CompleteQuestion(mode, contract, [], contract.ChoiceTexts?.ToArray());
+            return CompleteQuestion(mode, contract, [], contract.ChoiceTexts);
         }
         finally { _appliedNarrative = previous; }
     }

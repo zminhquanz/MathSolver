@@ -38,47 +38,7 @@ public sealed record QuestionUnit(string Id, string Vietnamese, string Singular,
 /// <summary>Countable objects with compatible containers. The model chooses an ID, never a new dimension.</summary>
 public static class QuestionUnits
 {
-    public static IReadOnlyList<QuestionUnit> All { get; } = Array.AsReadOnly(new QuestionUnit[]
-    {
-        // Stable unit IDs are shared by authored/AI scenes and Excel round-trips.
-        new("paracetamol-boxes", "hộp thuốc paracetamol", "box of paracetamol", "boxes of paracetamol", "thùng", "carton", "cartons"),
-        new("vitamin-c-boxes", "hộp vitamin C", "box of vitamin C", "boxes of vitamin C", "thùng", "carton", "cartons"),
-        new("cough-syrup-bottles", "chai siro ho", "bottle of cough syrup", "bottles of cough syrup", "thùng", "carton", "cartons"),
-        new("medical-bandage-rolls", "cuộn băng y tế", "roll of medical bandage", "rolls of medical bandage", "hộp", "box", "boxes"),
-        new("medical-gauze-packs", "gói gạc y tế", "pack of medical gauze", "packs of medical gauze", "hộp", "box", "boxes"),
-        new("teachers", "giáo viên", "teacher", "teachers", "tổ", "team", "teams"),
-        new("erasers", "cục gôm", "eraser", "erasers", "hộp", "box", "boxes"),
-        new("footwear-pairs", "đôi giày dép", "pair of shoes or sandals", "pairs of shoes or sandals", "kệ", "shelf", "shelves"),
-        new("clothing-sets", "bộ quần áo", "set of clothes", "sets of clothes", "tủ", "wardrobe", "wardrobes"),
-        new("toothbrushes", "bàn chải đánh răng", "toothbrush", "toothbrushes", "hộp", "box", "boxes"),
-        new("combs", "chiếc lược", "comb", "combs", "hộp", "box", "boxes"),
-        new("serving-bowls", "cái tô", "serving bowl", "serving bowls", "thùng", "carton", "cartons"),
-        new("rice-bowls", "cái chén", "rice bowl", "rice bowls", "thùng", "carton", "cartons"),
-        new("plates", "cái đĩa", "plate", "plates", "chồng", "stack", "stacks"),
-        new("spoons", "cái muỗng", "spoon", "spoons", "khay", "tray", "trays"),
-        new("forks", "cái nĩa", "fork", "forks", "khay", "tray", "trays"),
-        new("chopstick-pairs", "đôi đũa", "pair of chopsticks", "pairs of chopsticks", "ống", "holder", "holders"),
-        new("drinking-glasses", "cái ly", "drinking glass", "drinking glasses", "khay", "tray", "trays"),
-        new("books", "quyển sách", "book", "books", "thùng", "box", "boxes"),
-        new("notebooks", "quyển vở", "notebook", "notebooks", "gói", "pack", "packs"),
-        new("pencils", "bút chì", "pencil", "pencils", "hộp", "box", "boxes"),
-        new("fountain-pens", "cây bút mực", "fountain pen", "fountain pens", "hộp", "box", "boxes"),
-        new("ink-bottles", "bình mực", "ink bottle", "ink bottles", "khay", "tray", "trays"),
-        new("pencil-cases", "hộp bút", "pencil case", "pencil cases", "thùng", "carton", "cartons"),
-        new("compasses", "chiếc compa", "drawing compass", "drawing compasses", "hộp", "box", "boxes"),
-        new("rulers", "cây thước kẻ", "ruler", "rulers", "hộp", "box", "boxes"),
-        new("color-markers", "cây bút dạ quang", "colored marker", "colored markers", "hộp", "box", "boxes"),
-        new("satchels", "chiếc cặp táp", "school satchel", "school satchels", "thùng", "carton", "cartons"),
-        new("candies", "viên kẹo", "sweet", "sweets", "túi", "bag", "bags"),
-        new("apples", "quả táo", "apple", "apples", "giỏ", "basket", "baskets"),
-        new("oranges", "quả cam", "orange", "oranges", "giỏ", "basket", "baskets"),
-        new("flowers", "bông hoa", "flower", "flowers", "bó", "bunch", "bunches"),
-        new("cards", "tấm thiệp", "card", "cards", "hộp", "box", "boxes"),
-        new("balls", "quả bóng", "ball", "balls", "túi", "bag", "bags"),
-        new("marbles", "viên bi", "marble", "marbles", "túi", "bag", "bags"),
-        new("stickers", "nhãn dán", "sticker", "stickers", "gói", "pack", "packs"),
-        new("cakes", "chiếc bánh kem", "cream cake", "cream cakes", "hộp", "box", "boxes")
-    });
+    public static IReadOnlyList<QuestionUnit> All { get; } = Array.AsReadOnly(QuizContentCatalog.LoadList<QuestionUnit>("QuestionUnits").Concat(ToyThemeCatalogue.Subjects.Select(subject => subject.Unit)).Concat(PetAnimalThemeCatalogue.Subjects.Select(subject => subject.Unit)).ToArray());
     public static QuestionUnit? Find(string? id) => All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Id == id);
     public static QuestionUnit? Find(BasicQuestionContract c) => (c.Version is AdditionQuestionCatalogue.Version or ArithmeticQuestionCatalogue.Version
         ? All.Concat(AdditionQuestionCatalogue.ExtraUnits) : All).FirstOrDefault(u =>

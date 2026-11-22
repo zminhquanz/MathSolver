@@ -3,7 +3,7 @@ using System.Runtime.CompilerServices;
 namespace MathSolver.Numerics;
 
 internal enum NttKernelPhase { Forward, Inverse, Pointwise, Crt, Carry, Twiddle }
-internal enum NttKernelIsa { Scalar, Sse, Neon, Avx2, Avx512 }
+internal enum NttKernelIsa { Scalar, Sse, Neon, Avx2, Avx512, Sve, Sve2 }
 /// <summary>Executed range/kernel batches, not operation counts or elapsed time.
 /// Different kernel shapes can emit different numbers of batches for identical work.</summary>
 internal sealed record NttKernelUsage(NttKernelPhase Phase, NttKernelIsa Isa, long Calls);
@@ -11,7 +11,7 @@ internal sealed record NttKernelUsage(NttKernelPhase Phase, NttKernelIsa Isa, lo
 /// <summary>One counter array per executing thread; no atomics in arithmetic loops.</summary>
 internal sealed class NttKernelCounter : IDisposable
 {
-    internal const int IsaCount = (int)NttKernelIsa.Avx512 + 1;
+    internal const int IsaCount = (int)NttKernelIsa.Sve2 + 1;
     private const int CounterCount = ((int)NttKernelPhase.Twiddle + 1) * IsaCount;
     private readonly ThreadLocal<long[]> _threads = new(() => new long[CounterCount], trackAllValues: true);
     private IReadOnlyList<NttKernelUsage>? _frozen;

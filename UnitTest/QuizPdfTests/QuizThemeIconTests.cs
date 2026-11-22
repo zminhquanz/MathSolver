@@ -23,11 +23,14 @@ internal static class QuizThemeIconTests
             {
                 ["Mixed"] = "mixed", ["Objects"] = "knowledge-objects", ["Animals"] = "knowledge-animals",
                 ["SchoolSupplies"] = "knowledge-school-supplies", ["Food"] = "food", ["Drinks"] = "drinks", ["Fruit"] = "fruit",
-                ["Toys"] = "knowledge-objects", ["Healthcare"] = "knowledge-packaging", ["School"] = "knowledge-school-supplies",
+                ["Toys"] = "knowledge-toys", ["Healthcare"] = "knowledge-healthcare",
                 ["Money"] = "knowledge-money", ["Time"] = "clock", ["Measurement"] = "measurement", ["Geometry"] = "geometry",
                 ["Packaging"] = "knowledge-packaging", ["Production"] = "knowledge-production", ["Data"] = "data-table", ["Motion"] = "motion"
             };
             Require(groups.Length == expectedMapping.Count && groups.All(g => expectedMapping.TryGetValue(g.Key["Learning.Group.".Length..], out var id) && g.IllustrationId == id), "Stable group key→ID mapping");
+            Require(groups.Where(g => g.Key is "Learning.Group.Toys" or "Learning.Group.Healthcare" or "Learning.Group.SchoolSupplies")
+                .Select(g => g.IllustrationId).Distinct(StringComparer.Ordinal).Count() == 3,
+                "Toys, Healthcare and School use distinct subject illustrations");
             var aliases = QuizChoiceCatalog.Definitions.Values.Where(x => !x.Key.StartsWith("Learning.Group.", StringComparison.Ordinal)
                 && groups.Any(g => g.IllustrationId == x.IllustrationId)).ToArray();
             var streams = aliases.ToDictionary(x => x.Key, x => Capture(x.IllustrationId, 54, false).Trace.ToArray());
@@ -40,7 +43,7 @@ internal static class QuizThemeIconTests
                 return 0;
             }
             var original = JsonSerializer.Deserialize<Dictionary<string, string[]>>(File.ReadAllText(baseline))!;
-            Require(aliases.Length == 10 && groups.Length == 18, "Expected 18 theme choices/10 shared aliases");
+            Require(aliases.Length == 10 && groups.Length == 17, "Expected 17 theme choices/10 shared aliases");
             foreach (var alias in streams) Require(original[alias.Key].SequenceEqual(alias.Value), "Non-group changed: " + alias.Key);
             Directory.CreateDirectory(Path.Combine(output, "vectors"));
             var metrics = new List<object>();

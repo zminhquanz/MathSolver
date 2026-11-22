@@ -25,9 +25,14 @@ public partial class SettingsPage
                 ? string.Format(System.Globalization.CultureInfo.CurrentCulture,
                     LocalizationService.TranslateKey("Settings.Density.Selected"), caption) : caption);
         }
-        string effective = LocalizationService.TranslateKey("Settings.Density." + DisplayDensityManager.EffectiveMode);
-        DensityEffectiveLabel.Text = string.Format(System.Globalization.CultureInfo.CurrentCulture,
-            LocalizationService.TranslateKey("Settings.Density.Effective"), effective);
+        bool isAutomatic = DisplayDensityManager.RequestedMode == DisplayDensityMode.Automatic;
+        DensityEffectiveLabel.IsVisible = isAutomatic;
+        if (isAutomatic)
+        {
+            string effective = LocalizationService.TranslateKey("Settings.Density." + DisplayDensityManager.EffectiveMode);
+            DensityEffectiveLabel.Text = string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                LocalizationService.TranslateKey("Settings.Density.Effective"), effective);
+        }
         OnDensityChoicesSizeChanged(this, EventArgs.Empty);
     }
 

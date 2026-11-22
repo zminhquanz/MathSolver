@@ -15717,9 +15717,9 @@
       "Text": "Fruit of one kind; count, share and compare quantities.",
       "Variables": []
     },
-    {"Id":"Choice.Group.Animals","Text":"Animals and poultry; counts, pens and comparisons.","Variables":[]},
-    {"Id":"Choice.Group.SchoolSupplies","Text":"Books, notebooks, pens, ink bottles, pencil cases, compasses, rulers, school satchels and erasers.","Variables":[]},
-    {"Id":"Choice.Group.SchoolSupplies.Summary","Text":"Books, notebooks, pens and school supplies; count and calculate.","Variables":[]},
+    {"Id":"Choice.Group.Animals","Text":"Animals, pets, companion birds and ornamental fish; counts, enclosures and aquariums.","Variables":[]},
+    {"Id":"Choice.Group.SchoolSupplies","Text":"Books, notebooks, pens, rulers, compasses, school bags, erasers and other classroom supplies.","Variables":[]},
+    {"Id":"Choice.Group.SchoolSupplies.Summary","Text":"Count and calculate quantities of school supplies.","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.UnitA","Text":"kg of chicken feed","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.UnitB","Text":"kg of chicken feed","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.ResultUnit","Text":"kg of chicken feed","Variables":[]},
@@ -16442,7 +16442,8 @@
       {"Id":"Fraction.fraction-community-school-Divide.ResultUnit","Text":"m² of teaching paper","Variables":[]},
       {"Id":"Choice.Group.Toys","Text":"Marbles, balls and toy-making paper.","Variables":[]},
       {"Id":"Choice.Group.Healthcare","Text":"Paracetamol boxes, vitamin C, cough syrup bottles, bandages and gauze; counting and stock management.","Variables":[]},
-      {"Id":"Choice.Group.School","Text":"Students, teachers and school activities.","Variables":[]}
+      {"Id":"Choice.Group.School","Text":"Students, teachers, libraries, classrooms, sports, clubs, donations and gardening.","Variables":[]},
+      {"Id":"Choice.Group.School.Summary","Text":"Count and calculate through school activities.","Variables":[]}
     ],
   "Lists": {
     "MapScaleOpen.Contexts": [

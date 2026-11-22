@@ -15746,9 +15746,9 @@
       "Text": "Trái cây cùng loại; đếm, chia phần và so sánh số lượng.",
       "Variables": []
     },
-    {"Id":"Choice.Group.Animals","Text":"Đàn gà, vật nuôi; số con, số chuồng và so sánh đàn.","Variables":[]},
-    {"Id":"Choice.Group.SchoolSupplies","Text":"Sách, vở, bút mực, bình mực, hộp bút, compa, thước kẻ, cặp táp và cục gôm (cục tẩy); các phép toán cơ bản.","Variables":[]},
-    {"Id":"Choice.Group.SchoolSupplies.Summary","Text":"Sách, vở, bút và dụng cụ học tập; đếm và tính toán.","Variables":[]},
+    {"Id":"Choice.Group.Animals","Text":"Động vật nuôi, thú cưng, chim cảnh, cá cảnh; số con, chuồng và bể nuôi.","Variables":[]},
+    {"Id":"Choice.Group.SchoolSupplies","Text":"Sách, vở, bút, thước, compa, cặp, cục gôm (cục tẩy) và các dụng cụ học tập.","Variables":[]},
+    {"Id":"Choice.Group.SchoolSupplies.Summary","Text":"Đếm và tính toán đồ dùng học tập.","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.UnitA","Text":"kg thức ăn cho gà","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.UnitB","Text":"kg thức ăn cho gà","Variables":[]},
     {"Id":"Fraction.fraction-animals-feed-Add.ResultUnit","Text":"kg thức ăn cho gà","Variables":[]},
@@ -15775,37 +15775,37 @@
     {"Id":"Fraction.fraction-school-supplies-Divide.ResultUnit","Text":"m² giấy màu","Variables":[]},
     {
       "Id": "Fraction.fraction-theme-food-com-tam-total.UnitA",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-total.UnitB",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-total.ResultUnit",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-remaining.UnitA",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-remaining.UnitB",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-remaining.ResultUnit",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-groups.UnitA",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
@@ -15815,12 +15815,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-groups.ResultUnit",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-share.UnitA",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
@@ -15830,42 +15830,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-com-tam-share.ResultUnit",
-      "Text": "su?t c?m t?m",
+      "Text": "suất cơm tấm",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-total.UnitA",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-total.UnitB",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-total.ResultUnit",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-remaining.UnitA",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-remaining.UnitB",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-remaining.ResultUnit",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-groups.UnitA",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
@@ -15875,12 +15875,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-groups.ResultUnit",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-share.UnitA",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
@@ -15890,42 +15890,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-op-la-share.ResultUnit",
-      "Text": "ph?n tr?ng ?p-la",
+      "Text": "phần trứng ốp-la",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-total.UnitA",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-total.UnitB",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-total.ResultUnit",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-remaining.UnitA",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-remaining.UnitB",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-remaining.ResultUnit",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-groups.UnitA",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
@@ -15935,12 +15935,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-groups.ResultUnit",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-share.UnitA",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
@@ -15950,42 +15950,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-thit-kho-trung-share.ResultUnit",
-      "Text": "ph?n th?t kho tr?ng",
+      "Text": "phần thịt kho trứng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-total.UnitA",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-total.UnitB",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-total.ResultUnit",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-remaining.UnitA",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-remaining.UnitB",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-remaining.ResultUnit",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-groups.UnitA",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
@@ -15995,12 +15995,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-groups.ResultUnit",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-share.UnitA",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
@@ -16010,42 +16010,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-xeo-share.ResultUnit",
-      "Text": "chi?c b?nh x?o",
+      "Text": "chiếc bánh xèo",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-total.UnitA",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-total.UnitB",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-total.ResultUnit",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-remaining.UnitA",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-remaining.UnitB",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-remaining.ResultUnit",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-groups.UnitA",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
@@ -16055,12 +16055,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-groups.ResultUnit",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-share.UnitA",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
@@ -16070,42 +16070,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-thit-nuong-cha-gio-share.ResultUnit",
-      "Text": "t? b?n th?t n??ng ch? gi?",
+      "Text": "tô bún thịt nướng chả giò",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-total.UnitA",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-total.UnitB",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-total.ResultUnit",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-remaining.UnitA",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-remaining.UnitB",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-remaining.ResultUnit",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-groups.UnitA",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
@@ -16115,12 +16115,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-groups.ResultUnit",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-share.UnitA",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
@@ -16130,42 +16130,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-hu-tieu-nam-vang-share.ResultUnit",
-      "Text": "t? h? ti?u Nam Vang",
+      "Text": "tô hủ tiếu Nam Vang",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-total.UnitA",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-total.UnitB",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-total.ResultUnit",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-remaining.UnitA",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-remaining.UnitB",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-remaining.ResultUnit",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-groups.UnitA",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
@@ -16175,12 +16175,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-groups.ResultUnit",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-share.UnitA",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
@@ -16190,42 +16190,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-mi-quang-share.ResultUnit",
-      "Text": "t? m? Qu?ng",
+      "Text": "tô mì Quảng",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-total.UnitA",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-total.UnitB",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-total.ResultUnit",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-remaining.UnitA",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-remaining.UnitB",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-remaining.ResultUnit",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-groups.UnitA",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
@@ -16235,12 +16235,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-groups.ResultUnit",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-share.UnitA",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
@@ -16250,42 +16250,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-bun-bo-hue-share.ResultUnit",
-      "Text": "t? b?n b? Hu?",
+      "Text": "tô bún bò Huế",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-total.UnitA",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-total.UnitB",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-total.ResultUnit",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-remaining.UnitA",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-remaining.UnitB",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-remaining.ResultUnit",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-groups.UnitA",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
@@ -16295,12 +16295,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-groups.ResultUnit",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-share.UnitA",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
@@ -16310,42 +16310,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-banh-cuon-share.ResultUnit",
-      "Text": "??a b?nh cu?n",
+      "Text": "đĩa bánh cuốn",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-total.UnitA",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-total.UnitB",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-total.ResultUnit",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-remaining.UnitA",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-remaining.UnitB",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-remaining.ResultUnit",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-groups.UnitA",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
@@ -16355,12 +16355,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-groups.ResultUnit",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-share.UnitA",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
@@ -16370,42 +16370,42 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-kimchi-share.ResultUnit",
-      "Text": "??a kim chi",
+      "Text": "đĩa kim chi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-total.UnitA",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-total.UnitB",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-total.ResultUnit",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-remaining.UnitA",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-remaining.UnitB",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-remaining.ResultUnit",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-groups.UnitA",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
@@ -16415,12 +16415,12 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-groups.ResultUnit",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-share.UnitA",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
     {
@@ -16430,7 +16430,7 @@
     },
     {
       "Id": "Fraction.fraction-theme-food-sushi-share.ResultUnit",
-      "Text": "ph?n sushi",
+      "Text": "phần sushi",
       "Variables": []
     },
       {"Id":"Fraction.fraction-community-toys-Add.UnitA","Text":"m² giấy làm đồ chơi","Variables":[]},
@@ -16471,7 +16471,8 @@
       {"Id":"Fraction.fraction-community-school-Divide.ResultUnit","Text":"m² giấy dạy học","Variables":[]},
       {"Id":"Choice.Group.Toys","Text":"Viên bi, quả bóng và giấy làm đồ chơi.","Variables":[]},
       {"Id":"Choice.Group.Healthcare","Text":"Hộp thuốc paracetamol, vitamin C, chai siro ho, băng và gạc y tế; đếm và quản lý tồn kho.","Variables":[]},
-      {"Id":"Choice.Group.School","Text":"Học sinh, thầy cô và hoạt động trong trường học.","Variables":[]}
+      {"Id":"Choice.Group.School","Text":"Học sinh, giáo viên, thư viện, lớp học, thể thao, câu lạc bộ, quyên góp và trồng cây.","Variables":[]},
+      {"Id":"Choice.Group.School.Summary","Text":"Đếm và tính toán trong các hoạt động trường học.","Variables":[]}
     ],
   "Lists": {
     "MapScaleOpen.Contexts": [

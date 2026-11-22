@@ -14,8 +14,7 @@ public enum FindXUnknownRole { None, Addend, Minuend, Subtrahend, Factor, Divide
 public sealed record FindXQuestionScene(string Id, AppliedQuestionScene SourceScene, FindXUnknownRole Role,
     ArithmeticOperation EquationOperation, string KnownARole, string KnownBRole, string TargetRole)
 {
-    public QuestionKnowledgeGroup Group => SourceScene.Group is QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Length
-        or QuestionKnowledgeGroup.Transport ? QuestionKnowledgeGroup.Measurement : SourceScene.Group;
+    public QuestionKnowledgeGroup Group => SourceScene.Group;
     public int MinimumStars => SourceScene.MinimumStars;
     public int Capacity => SourceScene.Capacity;
     public bool RequiresExactDivision => SourceScene.Operation == ArithmeticOperation.Divide || EquationOperation == ArithmeticOperation.Divide;
@@ -99,7 +98,7 @@ public static class FindXQuestionCatalogue
     public static FindXQuestionScene? Find(string id) => All.FirstOrDefault(s => s.Id == id);
     public static IEnumerable<FindXQuestionScene> Available(QuestionLearningProfile profile, ArithmeticOperation operation,
         CurriculumTier tier, FindXUnknownRole role = FindXUnknownRole.None)
-        => All.Where(s => profile.IsValid && Enum.IsDefined(tier) && s.Group == profile.Group
+        => All.Where(s => profile.IsValid && Enum.IsDefined(tier) && profile.Includes(s.Group)
             && s.EquationOperation == operation && (int)tier >= s.MinimumStars
             && (role == FindXUnknownRole.None || s.Role == role));
 

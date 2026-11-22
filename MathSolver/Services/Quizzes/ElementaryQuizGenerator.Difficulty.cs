@@ -103,10 +103,23 @@ public sealed partial class ElementaryQuizGenerator
             };
     }
 
+    private static class TwoNumberContextCandidates
+    {
+        // The catalogue is immutable after loading. Preserve its original order
+        // so seeded question selection remains deterministic.
+        internal static readonly QuizStoryContext[] Standard = QuizStoryContextCatalog.All
+            .Where(context => context.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age")
+            .ToArray();
+
+        internal static readonly QuizStoryContext[] Expanded = QuizStoryContextCatalog.All
+            .Where(context => context.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age"
+                or "kitchen" or "livestock" or "agriculture" or "distribution" or "environment" or "decoration" or "water")
+            .ToArray();
+    }
+
     private ElementaryQuizContract CreateTwoNumberDifficulty(ElementaryQuizType type, AppLanguage language, CurriculumTier tier)
     {
-        var candidates = QuizStoryContextCatalog.All.Where(c => c.Id is "classroom" or "library" or "craft" or "community" or "events" or "family-age"
-            || (_expandNarratives && c.Id is "kitchen" or "livestock" or "agriculture" or "distribution" or "environment" or "decoration" or "water")).ToArray();
+        var candidates = _expandNarratives ? TwoNumberContextCandidates.Expanded : TwoNumberContextCandidates.Standard;
         var context = candidates[NextContextVariant(type, language, "two-number-story", candidates.Length)];
         if (context.Id == "family-age") return CreateAgeTwoNumbers(type, language, tier);
         var t = new DifficultyBuilder(QuizProblemKind.TwoNumbers, type, language, tier);

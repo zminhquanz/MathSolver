@@ -30,7 +30,7 @@ public sealed partial class ElementaryQuizGenerator
     {
         if (!IsTimeFractionExtension(type) || !Enum.IsDefined(tier)) throw new ArgumentException("InvalidTimeFractionProfile");
         var contract = CreateTimeFractionExtension(type, language, tier, contextId);
-        return CompleteQuestion(mode, contract, [], contract.ChoiceTexts?.ToArray());
+        return CompleteQuestion(mode, contract, [], contract.ChoiceTexts);
     }
 
     private ElementaryQuizContract CreateTimeFractionExtension(ElementaryQuizType type, AppLanguage language,

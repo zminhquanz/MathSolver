@@ -144,7 +144,7 @@ internal sealed partial class ParallelBigUnsigned
         Action<int, int>? progress, CancellationToken token,
         int maximumTransformLength = 0, bool forceLargeResult = false,
         bool cacheForward = true, bool? persistentScheduling = null,
-        bool allowNeonNtt = true)
+        bool allowNeonNtt = true, NttKernelIsa? sveIsa = null)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(exponent);
         if (maximumTransformLength == 0)
@@ -179,9 +179,9 @@ internal sealed partial class ParallelBigUnsigned
         int cachedHalf = Math.Max(2, Math.Min(largeSchedule ? 1 << 21 : 1 << 18, predictedTransform / 2));
         using var plans = new SharedNttTwiddlePlans(
             twiddlePool, avx2, avx512, cachedHalf,
-            useSseNtt: sse, useNeonNtt: neon);
+            useSseNtt: sse, useNeonNtt: neon, sveIsa: sveIsa);
         var diagnostics = new PowerDiagnosticsCollector();
-        diagnostics.ConfigureNttBackends(avx2, useSse: sse, useNeon: neon);
+        diagnostics.ConfigureNttBackends(avx2, useSse: sse, useNeon: plans.UseNeonNtt);
         BinaryMagnitude magnitude = new([5], 1);
         uint[] packedWords;
         using (var workers = new FixedWorkerTeam(workerCount, pool, plans, largeSchedule, diagnostics))
@@ -1235,7 +1235,7 @@ internal sealed partial class ParallelBigUnsigned
                                     second.AsSpan(start + from, to - from),
                                     scratch.AsSpan(from, to - from),
                                     true,
-                                    useAvx512Crt, useAvx2Crt, useSseCrt, useNeonCrt));
+                                    useAvx512Crt, useAvx2Crt, useSseCrt, useNeonCrt, workers.SveIsa));
                         diagnostics.CrtTicks += Stopwatch.GetTimestamp() - stamp;
                         stamp = Stopwatch.GetTimestamp();
                         carry = NormalizeBinaryTiles(

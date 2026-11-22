@@ -323,6 +323,8 @@ public partial class PowerRootView
         NttKernelIsa.Avx2 => "AVX2 (256-bit)",
         NttKernelIsa.Sse => "SSE (128-bit)",
         NttKernelIsa.Neon => "NEON (128-bit)",
+        NttKernelIsa.Sve => "SVE (128-bit)",
+        NttKernelIsa.Sve2 => "SVE2 (128-bit)",
         _ => "Scalar"
     };
 }

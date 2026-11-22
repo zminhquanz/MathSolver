@@ -146,7 +146,8 @@ public sealed record BasicQuestionContract(
         if (Version == ReasoningStoryCatalogue.Version) return ReasoningStoryCatalogue.Fresh(this, random);
         if (Version == FractionQuestionCatalogue.Version)
         {
-            var fraction = FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language, random, SceneId);
+            var fraction = FractionQuestionCatalogue.Create(new(KnowledgeGroup), Operation, Tier, Language,
+                random, SceneId, FoodThemePrompt.VenueChoice(this));
             // A saved one-owner draft must retain its original actor slots on replay.
             return Structure == BasicQuestionStructure.Increase && fraction.Structure == BasicQuestionStructure.Combine
                 ? fraction with { Structure = Structure, OtherSubject = "" } : fraction;

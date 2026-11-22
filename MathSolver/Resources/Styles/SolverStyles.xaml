@@ -204,7 +204,7 @@
         <Setter Property="CornerRadius" Value="12" />
         <Setter Property="FontSize" Value="{OnPlatform Android=15, WinUI=16, Default=16}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="BackgroundColor" Value="{DynamicResource PrimaryColor}" />
+        <Setter Property="BackgroundColor" Value="{DynamicResource WallpaperActionBackgroundColor}" />
         <Setter Property="TextColor" Value="{DynamicResource OnPrimaryColor}" />
     </Style>
 

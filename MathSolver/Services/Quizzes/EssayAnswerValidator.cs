@@ -1312,9 +1312,12 @@ public sealed partial class EssayAnswerValidator
 
         if (ofIndex > 0)
         {
-            return string.Concat(
-                SingularizeEnglishWord(value[..ofIndex]),
-                value[ofIndex..]);
+            // Authored count units can pluralize both nouns, for example
+            // "small dishes of steamed rice cakes" versus
+            // "small dish of steamed rice cake".
+            string container = NormalizeEnglishUnitToSingular(value[..ofIndex]);
+            string contents = NormalizeEnglishUnitToSingular(value[(ofIndex + 4)..]);
+            return string.Concat(container, " of ", contents);
         }
 
         int lastSpace = value.LastIndexOf(' ');
@@ -1335,7 +1338,8 @@ public sealed partial class EssayAnswerValidator
         // to be "1 tree". Compare whole unit phrases in both number forms.
         // Match hyphenated authored nouns as the same word tokens used below.
         expectedUnit = expectedUnit.Replace('-', ' ');
-        if (!Regex.IsMatch(expectedUnit, @"\A[a-z]+(?: [a-z]+)*\z", RegexOptions.CultureInvariant)) return false;
+        // English catalogues also contain loanwords such as "crème caramel".
+        if (!Regex.IsMatch(expectedUnit, @"\A\p{L}+(?: \p{L}+)*\z", RegexOptions.CultureInvariant)) return false;
         string singular = NormalizeEnglishUnitToSingular(expectedUnit);
         int length = expectedUnit.Split(' ').Length;
         string[] words = Regex.Matches(solution, @"[\p{L}\p{N}]+", RegexOptions.CultureInvariant).Select(m => m.Value).ToArray();
@@ -1356,6 +1360,7 @@ public sealed partial class EssayAnswerValidator
                 "cookies" => "cookie",
                 "brownies" => "brownie",
                 "budgies" => "budgie",
+                "pies" => "pie",
                 "loaves" => "loaf",
                 "shelves" => "shelf",
                 _ => string.Empty

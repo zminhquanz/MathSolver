@@ -9,10 +9,7 @@ public static class ArithmeticQuestionCatalogue
     public const int Version = 4;
     // Reuse the bilingual actor/quantity profiles, not the addition-specific actions.
     // Visits, scores, measurements and random outcomes are deliberately not treated as packable stock.
-    private static readonly string[] SceneIds = ["family-gifts", "library", "school-supplies", "donations",
-        "recycling", "craft", "notebook-production", "book-distribution", "harvest", "garden", "shop-stock",
-        "school-furniture", "food-supplies", "bakery", "poultry", "fish-farm", "cattle", "crop-harvest",
-        "product-production", "construction-stock", "green-planting", "survey-responses"];
+    private static readonly IReadOnlyList<string> SceneIds = QuizContentCatalog.LoadList<string>("ArithmeticSceneIds");
     public static IReadOnlyList<AdditionScene> Scenes { get; } = Array.AsReadOnly(
         SceneIds.Select(id => AdditionQuestionCatalogue.Find(id)!).ToArray());
     public static AdditionScene? Find(string id) => Scenes.FirstOrDefault(s => s.Id == id);

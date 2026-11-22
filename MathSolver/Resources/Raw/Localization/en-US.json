@@ -6,6 +6,12 @@
   "author": "Math Solver",
   "appVersion": "0.2.0",
   "strings": {
+    "Settings.Wallpaper.Title": "Wallpaper",
+    "Settings.Wallpaper.Hint": "Choose a still illustration, a math animation, or an MP4 for the learning tabs.",
+    "Settings.Wallpaper.Enable": "Enable wallpaper",
+    "Settings.Wallpaper.Type": "Wallpaper type",
+    "Settings.Wallpaper.SchoolStill": "School Days (still image)",
+    "Settings.Wallpaper.SchoolStillHint": "The still watercolor appears on the active learning tab.",
     "AiBank.ProcessedQuestionsEmpty": "No processed questions yet. Choose a model and problem type to start generating.",
     "Quiz.CheckAnswer": "Check answer",
     "Quiz.RegenerateQuestionCompact": "Regenerate",

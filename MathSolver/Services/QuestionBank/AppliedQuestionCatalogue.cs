@@ -47,6 +47,44 @@ public static partial class AppliedQuestionCatalogue
         })
             scenes.Add(new($"theme-food-{dish.Unit.Id}-{suffix}", QuestionKnowledgeGroup.Food,
                 operation, 1, 10000, 99, dish.Unit.Id));
+        foreach (var drink in FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Drinks
+            && FoodThemeCatalogue.DrinkForScene($"theme-drinks-{s.Unit.Id}-total") is not null
+            && !scenes.Any(existing => existing.Id == $"theme-drinks-{s.Unit.Id}-total")))
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"theme-drinks-{drink.Unit.Id}-{suffix}", QuestionKnowledgeGroup.Drinks,
+                operation, 1, 10000, 99, drink.Unit.Id));
+        foreach (var fruit in FoodThemeCatalogue.Subjects.Where(s => s.Group == QuestionKnowledgeGroup.Fruit))
+        foreach (string action in new[] { "plant", "harvest" })
+            scenes.Add(new($"theme-fruit-{fruit.Unit.Id}-{action}-total", QuestionKnowledgeGroup.Fruit,
+                ArithmeticOperation.Add, 1, 10000, 99, fruit.Unit.Id));
+        foreach (var toy in ToyThemeCatalogue.Subjects)
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"theme-toys-{toy.Unit.Id}-{suffix}", QuestionKnowledgeGroup.Toys,
+                operation, 1, 10000, 99, toy.Unit.Id));
+        foreach (var subject in SchoolThemeCatalogue.Subjects)
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"theme-school-{subject.Id}-{suffix}", QuestionKnowledgeGroup.School,
+                operation, 1, subject.Capacity, subject.MaxFactor, subject.UnitId));
+        foreach (var animal in PetAnimalThemeCatalogue.Subjects)
+        foreach (var (suffix, operation) in new[]
+        {
+            ("total", ArithmeticOperation.Add), ("remaining", ArithmeticOperation.Subtract),
+            ("groups", ArithmeticOperation.Multiply), ("share", ArithmeticOperation.Divide)
+        })
+            scenes.Add(new($"theme-animal-{animal.Unit.Id}-{suffix}", QuestionKnowledgeGroup.Animals,
+                operation, 1, animal.Capacity, animal.MaxFactor, animal.Unit.Id));
         return scenes.AsReadOnly();
     }
 
@@ -58,8 +96,7 @@ public static partial class AppliedQuestionCatalogue
     // must select the specialized Animals/SchoolSupplies scenes instead.
     public static bool IsLegacySeparatedSubject(AppliedQuestionScene scene)
         => scene.Group == QuestionKnowledgeGroup.Objects && scene.UnitId is ("books" or "pencils" or "chickens");
-    private static readonly string[] SeparatedUnitIds =
-        ["books", "notebooks", "pencils", "chickens", "ducks", "birds", "fish", "cows"];
+    private static readonly IReadOnlyList<string> SeparatedUnitIds = QuizContentCatalog.LoadList<string>("AppliedSeparatedUnitIds");
     public static bool IsLegacySeparatedUnit(string? unit)
         => unit is not null && QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits)
             .Any(u => SeparatedUnitIds.Contains(u.Id) &&
@@ -138,10 +175,14 @@ public static partial class AppliedQuestionCatalogue
             ? QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.Create.012")
             : QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.Create.013");
         groupUnit = SceneGroupUnit(scene, language) ?? groupUnit;
+        // Composite pickers such as Measurement include Mass, Length and Transport.
+        // Persist the concrete scene group so it round-trips through the bank and
+        // FreshFacts without changing the selected picker category.
+        var contractGroup = scene.Group;
         return new(Version, operation, tier, language, a, b, subject, unit,
             groupUnit,
             scene.Structure,
-            other, profile.Group.ToString(), scene.Id, KnowledgeGroup: profile.Group);
+            other, contractGroup.ToString(), scene.Id, KnowledgeGroup: contractGroup);
     }
     private static int Capacity(AppliedQuestionScene s, AppLanguage language) => s.Group == QuestionKnowledgeGroup.Money
         && language == AppLanguage.English ? 300 : s.Capacity;
@@ -152,7 +193,8 @@ public static partial class AppliedQuestionCatalogue
                 ? new[] { 20000, 50000, 100000, 300000, 500000 }[(int)tier - 1]
                 : new[] { 10, 30, 100, 200, 300 }[(int)tier - 1], Capacity(s, language))
             : Math.Min(p.ArithmeticCeiling(tier), Capacity(s, language));
-    public static string AnswerUnit(AppliedQuestionScene s, AppLanguage language) => s.StoryContextId is { } id
+    public static string AnswerUnit(AppliedQuestionScene s, AppLanguage language) => FruitGardenStoryTemplates.Unit(s, language) is { } fruitUnit
+        ? fruitUnit : s.StoryContextId is { } id
         ? QuizStoryContextCatalog.Find(id).Unit(language) : s.UnitId == "currency"
         ? QuizContentCatalog.Text(language, "AppliedQuestionCatalogue.AnswerUnit.014")
         : ExpandedUnit(s.UnitId, language, false) ?? QuestionUnits.Find(s.UnitId)?.Item(language) ?? s.UnitId;
@@ -163,7 +205,8 @@ public static partial class AppliedQuestionCatalogue
         if (c.Structure == BasicQuestionStructure.CountGroups)
             return c.Answer.IsOne ? c.GroupUnit : PluralGroupUnit(c);
         if (c.Language == AppLanguage.English && c.Answer.IsOne)
-            return ExpandedUnit(Find(c.SceneId)!.UnitId, c.Language, true) ?? QuestionUnits.Find(Find(c.SceneId)!.UnitId)?.Item(c.Language, true) ?? (c.Unit == "dollars" ? "dollar" : c.Unit);
+            return FruitGardenStoryTemplates.Singular(c.Unit) ?? ExpandedUnit(Find(c.SceneId)!.UnitId, c.Language, true)
+                ?? QuestionUnits.Find(Find(c.SceneId)!.UnitId)?.Item(c.Language, true) ?? (c.Unit == "dollars" ? "dollar" : c.Unit);
         return c.Unit;
     }
     private static string PluralGroupUnit(BasicQuestionContract c)
@@ -335,7 +378,8 @@ public static partial class AppliedQuestionCatalogue
         string left = ((decimal)c.Left / s.Conversion).ToString("0.###", c.Language == AppLanguage.Vietnamese
             ? CultureInfo.GetCultureInfo("vi-VN") : CultureInfo.InvariantCulture);
         string Singular(string unit, decimal number) => c.Language != AppLanguage.English || number != 1 ? unit
-            : ExpandedSingular(unit) ?? QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Plural == unit)?.Singular
+            : FruitGardenStoryTemplates.Singular(unit) ?? ExpandedSingular(unit)
+            ?? QuestionUnits.All.Concat(AdditionQuestionCatalogue.ExtraUnits).FirstOrDefault(u => u.Plural == unit)?.Singular
             ?? unit switch { "books" => "book", "dollars" => "dollar", "notebooks" => "notebook", "hours" => "hour", "minutes" => "minute",
                 "trucks" => "truck", "journeys" => "journey", "bags" => "bag", "legs" => "leg",
                 "pencils" => "pencil", "cards" => "card", _ => unit };
@@ -358,6 +402,7 @@ public static partial class AppliedQuestionCatalogue
             text = Regex.Replace(text, @"\b1 (more |fewer |additional )?" + Regex.Escape(c.Unit) + @"\b",
                 m => "1 " + m.Groups[1].Value + Singular(c.Unit, 1));
         text = FoodThemePrompt.AlignCombinedQuestion(text, c);
+        text = FruitGardenStoryTemplates.AlignVenue(text, c);
         return Regex.Replace(text, @"(^|[.!?]\s+)(\p{Ll})", m => m.Groups[1].Value + m.Groups[2].Value.ToUpperInvariant());
     }
     public static string Prompt(BasicQuestionContract c, string? correction, BasicQuestionDraft? example = null)

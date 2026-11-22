@@ -288,7 +288,7 @@ internal sealed partial class ParallelBigUnsigned
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 ExecuteCachedTileNeon(values, modulus, twiddles, shoup, plan,
-                    tile * tileLength, tileLength, l2Length, l1Length, inverse);
+                    tile * tileLength, tileLength, l2Length, l1Length, inverse, workers.SveIsa);
             }
         });
     }
@@ -296,7 +296,7 @@ internal sealed partial class ParallelBigUnsigned
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void ExecuteCachedTileNeon(
         uint[] values, uint modulus, uint[] twiddles, uint[] shoup, NttTwiddlePlan plan,
-        int offset, int length, int l2Length, int l1Length, bool inverse)
+        int offset, int length, int l2Length, int l1Length, bool inverse, NttKernelIsa? sveIsa)
     {
         if (length == 2)
         {
@@ -317,7 +317,7 @@ internal sealed partial class ParallelBigUnsigned
         if (inverse && !leaf)
             for (int child = offset; child < offset + length; child += childLength)
                 ExecuteCachedTileNeon(values, modulus, twiddles, shoup, plan,
-                    child, childLength, l2Length, l1Length, inverse);
+                    child, childLength, l2Length, l1Length, inverse, sveIsa);
 
         for (int stage = inverse ? childLength * 2 : length;
              inverse ? stage <= length : stage > childLength;
@@ -325,6 +325,14 @@ internal sealed partial class ParallelBigUnsigned
         {
             int half = stage >> 1;
             int twiddleOffset = plan.GetOffset(half);
+#if ANDROID && NET11_0_OR_GREATER
+            if (sveIsa is { } isa)
+            {
+                ExecuteCachedGroupsSve(isa, values, modulus, twiddles, shoup,
+                    offset, offset + length, half, twiddleOffset, 0, half, inverse);
+                continue;
+            }
+#endif
             if (AdvSimd.Arm64.IsSupported)
                 ExecuteCachedGroupNeon(values, modulus, twiddles, shoup,
                     offset, half, twiddleOffset, inverse, offset + length);
@@ -336,7 +344,7 @@ internal sealed partial class ParallelBigUnsigned
         if (!inverse && !leaf)
             for (int child = offset; child < offset + length; child += childLength)
                 ExecuteCachedTileNeon(values, modulus, twiddles, shoup, plan,
-                    child, childLength, l2Length, l1Length, inverse);
+                    child, childLength, l2Length, l1Length, inverse, sveIsa);
         if (!inverse && leaf)
         {
             int quarterTurn = plan.GetOffset(2) + 1;
@@ -1162,6 +1170,15 @@ internal sealed partial class ParallelBigUnsigned
                         out int last);
 
                     int groupOffset = group * stageLength;
+#if ANDROID && NET11_0_OR_GREATER
+                    if (workers.SveIsa is { } isa)
+                    {
+                        ExecuteCachedGroupsSve(isa, values, modulus, twiddles, shoupTwiddles,
+                            groupOffset, groupOffset + stageLength, halfLength, twiddleOffset, first, last, inverse);
+                        cancellationToken.ThrowIfCancellationRequested();
+                        continue;
+                    }
+#endif
                     int i = first;
 
                     if (i + 3 < last) NttKernelExecution.Record((inverse ? NttKernelPhase.Inverse : NttKernelPhase.Forward), NttKernelIsa.Neon);
@@ -1393,6 +1410,18 @@ internal sealed partial class ParallelBigUnsigned
         FixedWorkerTeam workers,
         CancellationToken cancellationToken)
     {
+#if ANDROID && NET11_0_OR_GREATER
+        if (workers.SveIsa == NttKernelIsa.Sve2)
+        {
+            ExecutePointwiseProductSve<Sve2Ntt>(destination, left, right, length, modulus, workers, cancellationToken);
+            return;
+        }
+        if (workers.SveIsa == NttKernelIsa.Sve)
+        {
+            ExecutePointwiseProductSve<SveNtt>(destination, left, right, length, modulus, workers, cancellationToken);
+            return;
+        }
+#endif
         ExecuteVectorAlignedRanges(
             length,
             Vector128<uint>.Count,

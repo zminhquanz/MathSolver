@@ -5,6 +5,21 @@ namespace MathSolver.Controls;
 /// <summary>Shared SVG paths for settings menu destinations and their page headers.</summary>
 public static class SettingsDestinationIconPaths
 {
+    // Original vector artwork also ships as editable SVG masters in Resources/Images.
+    public const string Theme = "M18.6 15.8A8.4 8.4 0 0 1 8.2 5.4 8.5 8.5 0 1 0 18.6 15.8Z M17 2l.8 1.7L19.5 4l-1.7.8L17 6.5l-.8-1.7L14.5 4l1.7-.3Z";
+    public const string Palette = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10h1.2c2.15 0 3.15-2.75 1.35-4.05-.97-.71-.5-2.2.8-2.2h2.3C20.4 15.75 22 14.12 22 11.5 22 6.25 17.55 2 12 2ZM7 7.1a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Zm5-2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Zm5 2a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8ZM5.5 12a1.4 1.4 0 1 1 0 2.8 1.4 1.4 0 0 1 0-2.8Z";
+    public const string Close = "M6.4 5 12 10.6 17.6 5 19 6.4 13.4 12 19 17.6 17.6 19 12 13.4 6.4 19 5 17.6 10.6 12 5 6.4Z";
+    public const string Video = "M4 5h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm0 2v10h16V7H4Zm6 2 5 3-5 3V9Z";
+    // Small, solid 24x24 symbols for full Settings page headings. SVG masters are editable.
+    public const string Motion = "M2 5h7v2H2z M1 11h8v2H1z M2 17h7v2H2z M11 4.5 22 12 11 19.5z";
+    public const string Density = "M3 3h8v8H3z M13 3h8v8h-8z M3 13h8v8H3z M13 13h8v8h-8z";
+    // One connected silhouette and a counter cutout keep the crossbar seamless at 16px.
+    public const string Typography = "M12 4 20 20H17.4L15.8 16.7H8.2L6.6 20H4z M12 8.8 9.15 14.7h5.7z";
+    public const string Language = "M12 2a10 10 0 1 0 0 20a10 10 0 1 0 0-20z M4.3 11h3.1c.1-2 .4-3.8 1.1-5.3A8.1 8.1 0 0 0 4.3 11z M4.3 13a8.1 8.1 0 0 0 4.2 5.3c-.7-1.5-1-3.3-1.1-5.3z M9.4 11h5.2c-.2-2.6-1-4.8-2.6-6.7-1.6 1.9-2.4 4.1-2.6 6.7z M9.4 13c.2 2.6 1 4.8 2.6 6.7 1.6-1.9 2.4-4.1 2.6-6.7z M15.5 5.7c.7 1.5 1 3.3 1.1 5.3h3.1a8.1 8.1 0 0 0-4.2-5.3z M16.6 13c-.1 2-.4 3.8-1.1 5.3a8.1 8.1 0 0 0 4.2-5.3z";
+    public const string Result = "M4 3h16v3H4z M4 9h10v2H4z M4 14h16v2H4z M4 19h10v2H4z M17 10h2v3h-2z";
+    public const string Developer = "M8 6 2 12l6 6 1.5-1.5L5 12l4.5-4.5z M16 6l-1.5 1.5L19 12l-4.5 4.5L16 18l6-6z M13.1 3 9.1 21h2.1L15.2 3z";
+    public const string Reset = "M12 3a9 9 0 1 1-8.7 11.3l2.2-.5A6.8 6.8 0 1 0 7 7.7L10 11H2V3l3.5 3.5A8.9 8.9 0 0 1 12 3z";
+
     public static string DataManagement => Icons8LicensedPaths.For("Database") ?? OriginalDataManagement;
     private const string OriginalDataManagement = "M480-880C680-880 840-820 840-740C840-660 680-600 480-600C280-600 120-660 120-740C120-820 280-880 480-880Z M120-600C280-490 680-490 840-600V-440C840-360 680-300 480-300C280-300 120-360 120-440Z M120-300C280-190 680-190 840-300V-180C840-100 680-40 480-40C280-40 120-100 120-180Z";
 

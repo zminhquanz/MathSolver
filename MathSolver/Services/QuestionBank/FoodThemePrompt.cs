@@ -2,33 +2,22 @@ using MathSolver.Models;
 
 namespace MathSolver.Services.QuestionBank;
 
+internal sealed record FoodDishDescription(string Id, string Vi, string En);
+internal sealed record FoodVenueKind(string Vi, string En);
+internal sealed record FoodDessertShopTranslation(string Dessert, string EnglishShop);
+internal sealed record FoodDrinkShopActorPhrases(string Id, string ViFirst, string ViSecond, string ViBoth,
+    string EnFirst, string EnSecond, string EnBoth);
+internal sealed record FoodVenuePlural(string Singular, string Plural);
+
 internal static class FoodThemePrompt
 {
-    private static readonly string[] PairedDishIds = ["bot-chien", "spaghetti", "pizzas", "mixed-salad", "hot-dogs", "udon"];
-    private static readonly HashSet<string> KoreanDishIds = new(StringComparer.Ordinal)
-    {
-        "tteokbokki", "korean-corn-dog", "hotteok", "bungeoppang", "gyeranppang",
-        "sundae-gukbap", "andong-jjimdak", "kalguksu", "squid-sundae"
-    };
-    // Specificity guard: keep 13 Vietnamese prepared dishes distinct in AI prose.
-    // The full counted unit still comes from the deterministic C# contract.
-    private static readonly IReadOnlyDictionary<string, (string Vi, string En)> VietnameseDishDescriptions =
-        new Dictionary<string, (string, string)>(StringComparer.Ordinal)
-        {
-            ["com-suon-cay"] = ("cơm trắng với sườn heo nướng nguyên cây", "rice with whole grilled pork ribs"),
-            ["com-chien-hai-san"] = ("cơm chiên với hải sản như tôm, mực", "fried rice with seafood such as shrimp and squid"),
-            ["com-chien-duong-chau"] = ("cơm chiên Dương Châu với trứng, rau củ và thịt", "Yangzhou fried rice with egg, vegetables and meat"),
-            ["com-ga-xoi-mo"] = ("cơm với gà chiên da giòn bằng dầu nóng", "rice with crispy fried chicken"),
-            ["com-ga-sot-me"] = ("cơm với gà phủ sốt me chua ngọt", "rice with chicken in sweet-and-sour tamarind sauce"),
-            ["com-ga-sot-tieu-xanh"] = ("cơm với gà phủ sốt tiêu xanh", "rice with chicken in green peppercorn sauce"),
-            ["com-ga-mam-toi"] = ("cơm gà ăn cùng nước mắm pha tỏi", "chicken rice served with garlic fish sauce"),
-            ["canh-chua-ca-loc"] = ("canh chua có cá lóc và rau nấu canh chua", "sour soup with snakehead fish and vegetables"),
-            ["canh-kho-qua-nhoi-thit"] = ("canh khổ qua cắt khúc nhồi thịt", "soup of bitter melon pieces stuffed with pork"),
-            ["canh-bi-do-ham-xuong"] = ("canh bí đỏ hầm với xương heo", "pumpkin soup simmered with pork bones"),
-            ["canh-cua-rau-day-mong-toi"] = ("canh cua đồng với cả rau đay và mồng tơi", "field crab soup with both jute mallow and Malabar spinach"),
-            ["canh-rau-ngot-thit-bam"] = ("canh rau ngót nấu thịt heo băm", "sweet leaf soup with minced pork"),
-            ["ca-loc-kho-to"] = ("cá lóc kho trong tộ đất với nước kho sánh", "snakehead fish braised in a clay pot with a reduced sauce")
-        };
+    private static readonly IReadOnlyList<string> PairedDishIds = QuizContentCatalog.LoadList<string>("FoodPairedDishIds");
+    private static readonly IReadOnlyDictionary<string, FoodDishDescription> KoreanDishDescriptions =
+        QuizContentCatalog.LoadList<FoodDishDescription>("FoodKoreanDishDescriptions").ToDictionary(x => x.Id, StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, FoodDishDescription> VietnameseDishDescriptions =
+        QuizContentCatalog.LoadList<FoodDishDescription>("FoodVietnameseDishDescriptions").ToDictionary(x => x.Id, StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, FoodDishDescription> JapaneseDishDescriptions =
+        QuizContentCatalog.LoadList<FoodDishDescription>("FoodJapaneseDishDescriptions").ToDictionary(x => x.Id, StringComparer.Ordinal);
 
     internal static bool IsPairedFractionScene(string sceneId)
         => PairedDishIds.Any(id => sceneId == $"fraction-theme-food-{id}-total")
@@ -46,17 +35,15 @@ internal static class FoodThemePrompt
     }
 
     // A single venue kind is chosen per question and shared by both owners.
-    private static readonly (string Vi, string En)[] Bakeries =
-        [("tiệm bánh", "bakery"), ("cửa hàng bánh", "cake shop")];
-    private static readonly (string Vi, string En)[] Eateries =
-        [("quán ăn", "eatery"), ("nhà hàng", "restaurant"), ("tiệm ăn", "diner")];
+    private static readonly IReadOnlyList<FoodVenueKind> Bakeries = QuizContentCatalog.LoadList<FoodVenueKind>("FoodBakeryVenues");
+    private static readonly IReadOnlyList<FoodVenueKind> Eateries = QuizContentCatalog.LoadList<FoodVenueKind>("FoodEateryVenues");
 
-    internal static int VenueCount(bool bakery) => bakery ? Bakeries.Length : Eateries.Length;
+    internal static int VenueCount(bool bakery) => bakery ? Bakeries.Count : Eateries.Count;
 
     internal static string Venue(bool bakery, int choice, AppLanguage language)
     {
         var kinds = bakery ? Bakeries : Eateries;
-        var kind = kinds[choice % kinds.Length];
+        var kind = kinds[choice % kinds.Count];
         return language == AppLanguage.Vietnamese ? kind.Vi : kind.En;
     }
 
@@ -65,31 +52,67 @@ internal static class FoodThemePrompt
             ? Venue(bakery, choice, language) + " của " + owner
             : owner + "'s " + Venue(bakery, choice, language);
 
+    // Preserve the venue in saved prose when refreshing numeric facts and owners.
+    // Switching it would also change the historical prose deduplication hash.
+    internal static int? VenueChoice(BasicQuestionContract contract)
+    {
+        if (contract.KnowledgeGroup != QuestionKnowledgeGroup.Food
+            || FoodThemeCatalogue.DessertShopKind(contract) is not null)
+            return null;
+
+        bool bakery = FoodThemeCatalogue.IsBakeryContract(contract);
+        for (int choice = 0; choice < VenueCount(bakery); choice++)
+        {
+            string venue = Venue(bakery, choice, contract.Language);
+            bool matches = contract.Language == AppLanguage.Vietnamese
+                ? contract.Subject.StartsWith(venue + " của ", StringComparison.Ordinal)
+                : contract.Subject.EndsWith("'s " + venue, StringComparison.Ordinal);
+            if (matches) return choice;
+        }
+        return null;
+    }
+
+    private static readonly IReadOnlyDictionary<string, string> DessertEnglishShops =
+        QuizContentCatalog.LoadList<FoodDessertShopTranslation>("FoodDessertShopTranslations")
+            .ToDictionary(entry => entry.Dessert, entry => entry.EnglishShop, StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, FoodDrinkShopActorPhrases> DrinkShopPhrases =
+        QuizContentCatalog.LoadList<FoodDrinkShopActorPhrases>("FoodDrinkShopActorPhrases")
+            .ToDictionary(entry => entry.Id, StringComparer.Ordinal);
+    private static readonly IReadOnlyDictionary<string, string> VenuePlurals =
+        QuizContentCatalog.LoadList<FoodVenuePlural>("FoodVenuePlurals")
+            .ToDictionary(entry => entry.Singular, entry => entry.Plural, StringComparer.Ordinal);
+
     internal static (string First, string Second, string Both) DessertShopActors(string dessert, AppLanguage language)
     {
         if (language == AppLanguage.Vietnamese)
             return ($"quán {dessert} thứ nhất", $"quán {dessert} thứ hai", $"cả hai quán {dessert}");
 
-        string shop = dessert switch
-        {
-            "chè" => "dessert shop",
-            "kem" => "ice cream shop",
-            "sữa chua" => "yogurt shop",
-            _ => throw new ArgumentOutOfRangeException(nameof(dessert), dessert, "Unsupported dessert venue")
-        };
+        if (dessert is null || !DessertEnglishShops.TryGetValue(dessert, out string? shop))
+            throw new ArgumentOutOfRangeException(nameof(dessert), dessert, "Unsupported dessert venue");
         return ($"the first {shop}", $"the second {shop}", $"both {shop}s");
     }
 
-    private static string PluralVenue(string venue) => venue switch
+    internal static (string First, string Second, string Both) DrinkShopActors(bool coffee, AppLanguage language)
+        => DrinkShopActors(coffee, false, language);
+
+    internal static (string First, string Second, string Both) DrinkShopActors(bool coffee, bool milkTea, AppLanguage language)
     {
-        "bakery" => "bakeries", "cake shop" => "cake shops", "eatery" => "eateries",
-        "restaurant" => "restaurants", _ => "diners"
-    };
+        string kind = coffee ? "coffee" : milkTea ? "milk-tea" : "drinks";
+        var phrases = DrinkShopPhrases[kind];
+        return language == AppLanguage.Vietnamese
+            ? (phrases.ViFirst, phrases.ViSecond, phrases.ViBoth)
+            : (phrases.EnFirst, phrases.EnSecond, phrases.EnBoth);
+    }
+
+    private static string PluralVenue(string venue)
+        => VenuePlurals.TryGetValue(venue, out string? plural) ? plural : "diners";
 
     // AI drafts must keep the same venue in the question as in both C# owner facts.
     internal static bool CombinedQuestionNamesVenue(string questionTemplate, BasicQuestionContract c)
     {
         if (c.Version == FindXQuestionCatalogue.Version) c = FindXQuestionCatalogue.AsApplied(c);
+        if (FruitGardenStoryTemplates.IsGardenScene(c.SceneId))
+            return FruitGardenStoryTemplates.MatchesVenue(questionTemplate, c);
         if (FoodThemeCatalogue.DessertShopKind(c) is { } dessert)
         {
             if (c.Structure != BasicQuestionStructure.Combine) return true;
@@ -102,11 +125,12 @@ internal static class FoodThemePrompt
         if (c.KnowledgeGroup == QuestionKnowledgeGroup.Drinks)
         {
             if (c.Structure != BasicQuestionStructure.Combine) return true;
-            bool viDrink = c.Language == AppLanguage.Vietnamese;
-            return c.Subject.Equals(viDrink ? "quán nước thứ nhất" : "the first drink shop", StringComparison.OrdinalIgnoreCase)
-                && c.OtherSubject.Equals(viDrink ? "quán nước thứ hai" : "the second drink shop", StringComparison.OrdinalIgnoreCase)
-                && questionTemplate.Contains(viDrink ? "cả hai quán nước" : "both drink shops", StringComparison.OrdinalIgnoreCase)
-                && !questionTemplate.Contains(viDrink ? "cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
+            var shops = DrinkShopActors(FoodThemeCatalogue.IsCoffeeDrinkContract(c),
+                FoodThemeCatalogue.IsMilkTeaDrinkContract(c), c.Language);
+            return c.Subject.Equals(shops.First, StringComparison.OrdinalIgnoreCase)
+                && c.OtherSubject.Equals(shops.Second, StringComparison.OrdinalIgnoreCase)
+                && questionTemplate.Contains(shops.Both, StringComparison.OrdinalIgnoreCase)
+                && !questionTemplate.Contains(c.Language == AppLanguage.Vietnamese ? "cửa hàng" : "both shops", StringComparison.OrdinalIgnoreCase);
         }
         if (c.KnowledgeGroup != QuestionKnowledgeGroup.Food || c.Structure != BasicQuestionStructure.Combine)
             return true;
@@ -173,6 +197,8 @@ internal static class FoodThemePrompt
     internal static string Guidance(BasicQuestionContract c)
     {
         if(!FoodThemeCatalogue.IsTheme(c.KnowledgeGroup))return "";
+        if (FruitGardenStoryTemplates.IsGardenScene(c.SceneId))
+            return FruitGardenStoryTemplates.Guidance(c);
         bool vi=c.Language==AppLanguage.Vietnamese;
         if (FoodThemeCatalogue.DessertShopKind(c) is { } dessert)
         {
@@ -183,9 +209,14 @@ internal static class FoodThemePrompt
             return dessertGuidance + (vi ? "\nĐơn vị món C# đã chọn: " : "\nC# counted unit: ") + c.Unit + ".";
         }
         if (c.KnowledgeGroup == QuestionKnowledgeGroup.Drinks)
-            return vi
-                ? "\nĐề nước uống: {name} là 'quán nước thứ nhất', {other} là 'quán nước thứ hai'. Không dùng 'cửa hàng' hay chủ thể cá nhân để thay thế. Giữ nguyên {unit}, {unit_a}, {unit_b} theo C# và không lặp tên nước sau đơn vị. Với phép cộng số nguyên, cả hai quán nước bán hai lượng riêng, dùng 'bán được' trong hai dữ kiện và hỏi 'cả hai quán nước bán được tổng cộng bao nhiêu'. Với phân số cộng/trừ, so sánh hai lượng riêng của hai quán nước; hỏi tổng hoặc chênh lệch, giữ đúng đơn vị và phân số. Với phép nhân/chia giữ quan hệ nhóm hoặc phần-toàn phần của đề."
-                : "\nDrink problems: {name} is 'the first drink shop' and {other} is 'the second drink shop'. Never replace them with generic shops or individual people. Preserve the complete C# {unit}, {unit_a} and {unit_b} without repeating the drink name. For integer addition both drink shops sell separate amounts: use 'sold' in both facts and ask how many both drink shops sold altogether. For fraction addition/subtraction compare two separate amounts held at the shops and ask for the sum or difference. For multiplication/division preserve the group or part-to-whole relationship.";
+        {
+            var shops = DrinkShopActors(FoodThemeCatalogue.IsCoffeeDrinkContract(c),
+                FoodThemeCatalogue.IsMilkTeaDrinkContract(c), c.Language);
+            string drinkGuidance = vi
+                ? $"\nĐề nước uống: {{name}} là '{shops.First}', {{other}} là '{shops.Second}'. Không dùng cửa hàng, quán sai loại hay cá nhân để thay thế. Giữ nguyên {{unit}}, {{unit_a}}, {{unit_b}} theo C# và không lặp tên thức uống sau đơn vị. Với phép cộng số nguyên, hai quán bán lượng riêng, dùng 'bán được' trong hai dữ kiện và hỏi '{shops.Both} bán được tổng cộng bao nhiêu'. Với phân số cộng/trừ, so sánh hai lượng riêng và hỏi tổng hoặc chênh lệch. Với phép nhân/chia giữ quan hệ nhóm hoặc phần-toàn phần."
+                : $"\nDrink problems: {{name}} is '{shops.First}' and {{other}} is '{shops.Second}'. Do not replace them with generic shops, a different kind of shop, or people. Preserve the complete C# {{unit}}, {{unit_a}} and {{unit_b}} without repeating the drink name. For integer addition both shops sell separate amounts: use 'sold' in both facts and ask how many {shops.Both} sold altogether. For fraction addition/subtraction compare two separate amounts and ask for the sum or difference. For multiplication/division preserve the group or part-to-whole relationship.";
+            return drinkGuidance + (vi ? "\nĐơn vị thức uống C# đã chọn: " : "\nC# counted drink unit: ") + c.Unit + ".";
+        }
         var operation=c.Version==FindXQuestionCatalogue.Version?FindXQuestionCatalogue.Find(c.SceneId)!.SourceScene.Operation:c.Operation;
         string relation=operation switch
         {
@@ -202,21 +233,20 @@ internal static class FoodThemePrompt
                 _=>relation };
         string venueGuidance = FoodThemeCatalogue.IsBakeryContract(c)
             ? vi
-                ? " Bánh được làm hoặc bán tại tiệm bánh/cửa hàng bánh có chủ được nêu tên; bao gồm bánh chưng, bánh giò, bánh dày, bánh bao nhân thịt và trứng cút, bánh tét. Viết dữ kiện theo hoạt động chuẩn bị/bán bánh tại cửa hàng, không viết như món phục vụ trên bàn ăn; riêng bánh cuốn và bánh xèo là món phục vụ tại quán ăn/nhà hàng. {name} và {other} đã bao gồm tên tiệm và chủ tiệm; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng khay bánh để chia số bánh, không dùng bàn ăn hoặc nhóm chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của bánh."
-                : " Cakes, pastries and bakery items are made or sold at a named owner's bakery or cake shop, including banh chung, banh gio, banh day, pork-and-quail-egg steamed buns and banh tet. Describe preparing or selling the cakes in the shop, rather than serving restaurant meals at tables. Steamed rice rolls and Vietnamese sizzling pancakes remain restaurant dishes. {name} and {other} already include the bakery and owner; never add a duplicate owner. For whole-number multiplication/division, use trays rather than tables or generic groups. For fractions, retain the given part-to-whole relation."
+                ? " Bánh được làm hoặc bán tại tiệm bánh/cửa hàng bánh có chủ được nêu tên: bánh chưng, bánh giò, bánh dày, bánh bao thịt và trứng cút, bánh tét. Viết về chuẩn bị/bán bánh tại tiệm; bánh cuốn và bánh xèo phục vụ ở quán ăn. {name} và {other} đã gồm tên tiệm và chủ, không thêm chủ sở hữu. Nhân/chia số nguyên dùng khay bánh; phân số giữ đúng phần và toàn phần."
+                : " Cakes, pastries and bakery items are made or sold at a named owner's bakery or cake shop: banh chung, banh gio, banh day, pork-and-quail-egg buns and banh tet. Describe bakery preparation/sales; rice rolls and sizzling pancakes are restaurant dishes. {name} and {other} already include the venue and owner. For integer multiplication/division use trays; for fractions keep the part-to-whole relation."
             : c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             ? vi
-                ? " Tất cả món ăn đã chế biến được phục vụ hoặc bán tại quán ăn/nhà hàng/tiệm ăn có chủ được nêu tên; bao gồm bánh bèo, bánh khọt, bánh bột lọc, há cảo, bánh cuốn, bánh xèo, bột chiên, mì Ý, pizza, salad, hot dog và udon. {name} và {other} đã bao gồm tên quán và chủ quán; không thêm tiền tố chủ sở hữu. Với phép nhân/chia số nguyên, dùng bàn ăn để chia suất; không dùng 'nhóm' chung chung. Với phân số, giữ nguyên quan hệ lượng phần và lượng toàn phần của món đã làm."
-                : " All prepared dishes are served or sold at a named owner's eatery, restaurant or diner; including banh beo, banh khot, banh bot loc, steamed dumplings, steamed rice rolls, Vietnamese sizzling pancakes, bot chien, spaghetti, pizza, salad, hot dogs and udon. {name} and {other} already include the business and owner; do not add another owner prefix. For whole-number multiplication/division, distribute servings across tables, not generic groups. For fractions, retain the given part-to-whole relation of prepared dishes."
+                ? " Tất cả món ăn đã chế biến được phục vụ hoặc bán tại quán ăn/nhà hàng/tiệm ăn có chủ: bánh bèo, bánh khọt, bánh bột lọc, há cảo, bánh cuốn, bánh xèo, bột chiên, mì Ý, pizza, salad, hot dog và udon. {name} và {other} đã gồm quán và chủ, không lặp chủ sở hữu. Nhân/chia số nguyên dùng bàn ăn chia suất; phân số giữ đúng phần và toàn phần."
+                : " All prepared dishes are served or sold at the named owner's eatery, restaurant or diner: banh beo, banh khot, banh bot loc, steamed dumplings, steamed rice rolls, Vietnamese sizzling pancakes, bot chien, spaghetti, pizza, salad, hot dogs and udon. {name} and {other} already include the venue and owner; do not repeat either. For integer multiplication/division use tables for servings; for fractions preserve part-to-whole quantities."
             : "";
         string pairGuidance = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             && c.Structure == BasicQuestionStructure.Combine && !string.IsNullOrWhiteSpace(c.OtherSubject)
             ? vi
-                ? " Hai cửa hàng trong cùng một đề phải cùng loại địa điểm: hai tiệm bánh, hai cửa hàng bánh, hai quán ăn, hai nhà hàng hoặc hai tiệm ăn. "
-                    + "Hai chủ sở hữu đã được C# gán cùng loại: " + c.Subject + " và " + c.OtherSubject
-                    + ". Câu hỏi phải nói 'cả hai' kèm đúng tên loại địa điểm này, không dùng 'cơ sở' chung chung."
-                : " Both owners run the same kind of venue, already fixed by C#: " + c.Subject + " and " + c.OtherSubject
-                    + ". Ask about both bakeries, both cake shops, both eateries, both restaurants or both diners as appropriate; avoid generic businesses or places."
+                ? " Hai cửa hàng trong cùng một đề phải cùng loại địa điểm. Chủ sở hữu do C# chọn: " + c.Subject + " và " + c.OtherSubject
+                    + ". Hỏi 'cả hai' kèm đúng loại tiệm bánh/cửa hàng bánh/quán ăn/nhà hàng/tiệm ăn, không dùng 'cơ sở'."
+                : " Both owners run the same kind of venue, fixed by C#: " + c.Subject + " and " + c.OtherSubject
+                    + ". Ask about both matching bakeries, cake shops, eateries, restaurants or diners; avoid generic places."
             : "";
         string steakGuidance = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             && c.Unit.Contains("steak", StringComparison.OrdinalIgnoreCase)
@@ -224,13 +254,15 @@ internal static class FoodThemePrompt
                 ? " Mỗi đơn vị là một suất steak đã chế biến, không phải miếng thịt sống. Giữ đúng thịt bò/gà/cừu và đúng sốt theo đơn vị C# (tiêu, kem nấm, rượu vang đỏ, béarnaise, chimichurri, BBQ hoặc bơ tỏi thảo mộc); món không ghi sốt thì không tự thêm sốt."
                 : " Each unit is one prepared steak serving, not raw meat. Preserve the C# protein (beef, chicken or lamb) and its exact sauce (peppercorn, creamy mushroom, red wine, béarnaise, chimichurri, BBQ or garlic herb butter); do not invent sauce for a plain steak."
             : "";
-        string koreanGuidance = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
-            && FoodThemeCatalogue.Subjects.Any(s => KoreanDishIds.Contains(s.Unit.Id)
-                && (c.Unit == s.Unit.Vietnamese || c.Unit == s.Unit.Plural || c.Unit == s.Unit.Singular))
-            ? vi
-                ? " Giữ đúng danh tính món Hàn Quốc do đơn vị C# xác định: Tteokbokki là bánh gạo cay; Korean Corn Dog là xúc xích hoặc phô mai bọc bột chiên; Hotteok là bánh rán dẹt nhân ngọt; Bungeoppang là bánh hình cá; Gyeranppang là bánh mì trứng; Sundae Gukbap là súp cơm với dồi Hàn Quốc; Andong Jjimdak là gà om; Kalguksu là mì sợi cắt bằng dao; Squid Sundae là mực nhồi. Tuyệt đối không nhầm dồi trong Sundae Gukbap với mực nhồi Squid Sundae, không tự đổi món hoặc biến phần ăn chín thành nguyên liệu sống."
-                : " Preserve the exact Korean dish selected by C#: Tteokbokki is spicy rice cakes; Korean Corn Dog is a battered fried sausage or cheese snack; Hotteok is a sweet filled griddled pancake; Bungeoppang is a fish-shaped pastry; Gyeranppang is egg bread; Sundae Gukbap is Korean blood sausage rice soup; Andong Jjimdak is braised chicken; Kalguksu is knife-cut noodle soup; Squid Sundae is stuffed squid. Never confuse blood sausage in Sundae Gukbap with stuffed squid in Squid Sundae, rename the selected dish, or turn a prepared serving into raw ingredients."
-            : "";
+        var koreanDish = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
+            ? FoodThemeCatalogue.Subjects.FirstOrDefault(s => KoreanDishDescriptions.ContainsKey(s.Unit.Id)
+                && (c.Unit == s.Unit.Vietnamese || c.Unit == s.Unit.Singular || c.Unit == s.Unit.Plural))
+            : null;
+        string koreanGuidance = koreanDish is null ? "" : vi
+            ? " Giữ đúng món Hàn Quốc do C# chọn: " + KoreanDishDescriptions[koreanDish.Unit.Id].Vi
+                + ". Mỗi {unit} là một phần ăn đã chế biến. Không đổi món, biến thành nguyên liệu sống hoặc nhầm dồi Hàn Quốc trong Sundae Gukbap với mực nhồi Squid Sundae."
+            : " Preserve the Korean dish selected by C#: " + KoreanDishDescriptions[koreanDish.Unit.Id].En
+                + ". Each {unit} is a complete prepared serving. Never rename the dish, turn it into raw ingredients or confuse the blood sausage in Sundae Gukbap with the stuffed squid in Squid Sundae.";
         var vietnameseDish = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
             ? FoodThemeCatalogue.Subjects.FirstOrDefault(s => VietnameseDishDescriptions.ContainsKey(s.Unit.Id)
                 && (c.Unit == s.Unit.Vietnamese || c.Unit == s.Unit.Singular || c.Unit == s.Unit.Plural))
@@ -242,9 +274,18 @@ internal static class FoodThemePrompt
             : " Preserve the exact Vietnamese prepared dish selected by C#: "
                 + VietnameseDishDescriptions[vietnameseDish.Unit.Id].En
                 + ". Each {unit} is one complete prepared serving/plate/bowl, never a raw ingredient; do not change its sauce, main ingredients or cooking method.";
+        var japaneseDish = c.KnowledgeGroup == QuestionKnowledgeGroup.Food
+            ? FoodThemeCatalogue.Subjects.FirstOrDefault(s => JapaneseDishDescriptions.ContainsKey(s.Unit.Id)
+                && (c.Unit == s.Unit.Vietnamese || c.Unit == s.Unit.Singular || c.Unit == s.Unit.Plural))
+            : null;
+        string japaneseGuidance = japaneseDish is null ? "" : vi
+            ? " Giữ đúng món Nhật Bản do C# chọn: " + JapaneseDishDescriptions[japaneseDish.Unit.Id].Vi
+                + ". Đây là món/khẩu phần đã chế biến để bán tại quán ăn, nhà hàng hoặc tiệm ăn; không đổi thành nguyên liệu, tên món khác hoặc loại hình kinh doanh khác. Không tự chia nhỏ một phần thành từng miếng khi đếm."
+            : " Preserve the exact Japanese dish selected by C#: " + JapaneseDishDescriptions[japaneseDish.Unit.Id].En
+                + ". This is a complete prepared item/serving sold at an eatery, restaurant or diner; do not replace it with an ingredient, a different dish or a different venue type. Do not count pieces inside a serving as separate units.";
         return "\n"+(vi
             ?"Tên đầy đủ của đơn vị đếm do C# điền: "+c.Unit+". {unit}, {unit_a}, {unit_b} đã gồm cả tên vật và từ chỉ loại; không viết lặp tên món/quả/nước sau các biến đó. {name} và {other} là chủ thể sở hữu, không phải số lượng hay đồ vật. Không đổi món đã hoàn thành thành nguyên liệu. Mỗi dữ kiện chỉ là một câu mô tả, không chèn câu hỏi hoặc lời chỉ dẫn vào dữ kiện. "
             :"The complete counted unit supplied by C# is: "+c.Unit+". {unit}, {unit_a}, {unit_b} already include the object and its counter; never append the food, fruit, drink or group noun again after these slots. {name} and {other} identify owners, never amounts or items. Keep prepared food distinct from ingredients. Each fact is one declarative sentence; do not insert questions or author instructions inside facts. ")
-            +relation+venueGuidance+pairGuidance+steakGuidance+koreanGuidance+vietnameseDishesGuidance;
+            +relation+venueGuidance+pairGuidance+steakGuidance+koreanGuidance+vietnameseDishesGuidance+japaneseGuidance;
     }
 }

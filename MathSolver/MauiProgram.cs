@@ -71,6 +71,13 @@ namespace MathSolver
 #endif
 
 #if ANDROID
+            // Release APK artwork is served from the shared archive while the
+            // platform-native Shell and popup icons retain their resource IDs.
+#if MATHSOLVER_ANDROID_ARTWORK_PACK
+            builder.ConfigureImageSources(sources =>
+                sources.AddService<FileImageSource,
+                    MathSolver.Platforms.Android.PackedFileImageSourceService>());
+#endif
             ConfigureAndroidMaterial3Phase3(builder);
 #endif
 

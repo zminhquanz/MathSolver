@@ -168,8 +168,9 @@ public static partial class MatrixEngine
             for (int d = d0; d < Math.Min(depth, d0 + 8); d++)
             for (int j = j0; j < Math.Min(width, j0 + 8); j++)
                 workspace.Right[j * depth + d] = workspace.SourceRight[d * width + j];
-            bool boundedNeon = backend == MatrixBackend.Neon && CanAccumulateNeonInInt64(
-                workspace.Left, height * depth, workspace.Right, width * depth, depth);
+            bool inputsFitInt32 = false;
+            bool boundedArm = (backend is MatrixBackend.Neon or MatrixBackend.Sve or MatrixBackend.Sve2) && CanAccumulateArmInInt64(
+                workspace.Left, height * depth, workspace.Right, width * depth, depth, out inputsFitInt32);
             workspace.PackingTicks += Stopwatch.GetTimestamp() - start;
             workspace.PackedA += (long)height * depth;
             workspace.PackedB += (long)width * depth;
@@ -191,7 +192,11 @@ public static partial class MatrixEngine
                     int b0 = j * depth, b1 = b0 + depth;
                     int processed = backend switch
                     {
-                        MatrixBackend.Neon => DotNeonPair(workspace.Left, startA, workspace.Right, b0, b1, depth, boundedNeon, ref p0, ref p1),
+                        MatrixBackend.Neon => DotNeonPair(workspace.Left, startA, workspace.Right, b0, b1, depth, boundedArm, ref p0, ref p1),
+#if ANDROID && NET11_0_OR_GREATER
+                        MatrixBackend.Sve or MatrixBackend.Sve2 => DotSvePair(workspace.Left, startA, workspace.Right, b0, b1, depth,
+                            bounded: boundedArm, useSve2: backend == MatrixBackend.Sve2, fitsInt32: inputsFitInt32, ref p0, ref p1),
+#endif
                         MatrixBackend.Sse2 => DotPair128(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1),
                         MatrixBackend.Avx2 => DotPair256(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1),
                         _ => DotPair512(workspace.Left, startA, workspace.Right, b0, b1, depth, ref p0, ref p1)
@@ -213,9 +218,13 @@ public static partial class MatrixEngine
                     int processed = backend switch
                     {
                         MatrixBackend.Sse2 => Dot128(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
-                        MatrixBackend.Neon => boundedNeon
+                        MatrixBackend.Neon => boundedArm
                             ? DotNeonBounded(workspace.Left, startA, workspace.Right, startB, depth, ref partial)
                             : DotNeon(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
+#if ANDROID && NET11_0_OR_GREATER
+                        MatrixBackend.Sve or MatrixBackend.Sve2 => DotSve(workspace.Left, startA, workspace.Right, startB, depth,
+                            bounded: boundedArm, useSve2: backend == MatrixBackend.Sve2, fitsInt32: inputsFitInt32, ref partial),
+#endif
                         MatrixBackend.Avx2 => Dot256(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
                         MatrixBackend.Avx512 => Dot512(workspace.Left, startA, workspace.Right, startB, depth, ref partial),
                         _ => 0
@@ -244,6 +253,9 @@ public static partial class MatrixEngine
         int count = height * width;
         int processed = backend switch
         {
+#if ANDROID && NET11_0_OR_GREATER
+            MatrixBackend.Sve or MatrixBackend.Sve2 => ElementwiseSve(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
+#endif
             MatrixBackend.Neon => ElementwiseNeon(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             MatrixBackend.Sse2 => Elementwise128(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),
             MatrixBackend.Avx2 => Elementwise256(workspace.Left, workspace.Right, workspace.Wide, 0, count, subtract),

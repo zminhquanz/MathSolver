@@ -50,6 +50,20 @@ internal static class CheDessertStoryTemplates
                         : "How many {unit} did {name} prepare originally?"]
                 }
             };
+            // Every fraction scene needs distinct reviewed questions for repeat practice.
+            // Preserve the same requested quantity and unit across both phrasings.
+            string alternateQuestion = (contract.Operation, vi) switch
+            {
+                (ArithmeticOperation.Add, true) => "Cả hai quán chè có tất cả bao nhiêu {unit}?",
+                (ArithmeticOperation.Subtract, true) => "Lượng chè ở cả hai quán chè chênh lệch nhau bao nhiêu {unit}?",
+                (ArithmeticOperation.Multiply, true) => "Có bao nhiêu {unit} được dành cho khách đặt trước?",
+                (ArithmeticOperation.Divide, true) => "Ban đầu, {name} đã chuẩn bị tổng cộng bao nhiêu {unit}?",
+                (ArithmeticOperation.Add, false) => "What is the combined amount of {unit} at both dessert shops?",
+                (ArithmeticOperation.Subtract, false) => "What is the difference in {unit} between both dessert shops?",
+                (ArithmeticOperation.Multiply, false) => "What amount of {unit} is set aside for reservations?",
+                _ => "What was the original amount of {unit} prepared by {name}?"
+            };
+            prose = prose with { Questions = [.. prose.Questions, alternateQuestion] };
         }
         else
         {

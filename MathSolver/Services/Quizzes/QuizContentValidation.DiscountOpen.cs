@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using System.Text.Json;
 using MathSolver.Models;
 
@@ -6,6 +5,18 @@ namespace MathSolver.Services;
 
 public static partial class QuizContentValidation
 {
+    private static readonly string[] DiscountRequiredFields =
+        ["Product", "PriceFact", "DiscountFact", "Question", "DiscountLead", "PayableLead"];
+
+    private static readonly (string Field, string[] Expected)[] DiscountPlaceholderFields =
+    [
+        ("PriceFact", ["{v0}", "{f0}", "{v1}"]),
+        ("DiscountFact", ["{v0}", "{f1}"]),
+        ("Question", ["{v0}", "{v1}"]),
+        ("DiscountLead", ["{v0}"]),
+        ("PayableLead", ["{v0}"])
+    ];
+
     private static void CheckDiscountLists(QuizContentPack pack)
     {
         if(!pack.Lists.TryGetValue(DiscountOpenPilot.ListName,out var rows))return;
@@ -17,7 +28,7 @@ public static partial class QuizContentValidation
             if(!ids.Add(id)||id is not ("notebook" or "backpack"))Fail("Invalid discount context.");
             if(RequiredString(row,"Relation")!=DiscountOpenPilot.Relation||RequiredString(row,"PriceRole")!="original-price"
                 ||RequiredString(row,"RateRole")!="discount-percentage-of-original"||RequiredString(row,"TargetRole")!="payable-price")Fail("Changed discount roles.");
-            foreach(string field in new[]{"Product","PriceFact","DiscountFact","Question","DiscountLead","PayableLead"})_=RequiredString(row,field);
+            foreach(string field in DiscountRequiredFields)_=RequiredString(row,field);
             if(RequiredString(row,"MoneyUnit")!=(pack.Culture=="vi-VN"?"đồng":"dong"))Fail("Changed discount currency.");
             int min=row.GetProperty("MinimumPrice").GetInt32(),max=row.GetProperty("MaximumPrice").GetInt32();
             if(min<1000||max>500000||min>max||min%1000!=0||max%1000!=0)Fail("Invalid discount price bounds.");
@@ -26,10 +37,8 @@ public static partial class QuizContentValidation
             catch(JsonException){Fail("Invalid discount context fields.");return;}
             if(context is null||!QuestionBank.DiscountOpenMeaning.ProvesReference(context,
                 pack.Culture=="vi-VN"?AppLanguage.Vietnamese:AppLanguage.English))Fail("Changed discount reference meaning.");
-            foreach(var (field,expected) in new (string,string[])[]{("PriceFact",["{v0}","{f0}","{v1}"]),
-                ("DiscountFact",["{v0}","{f1}"]),("Question",["{v0}","{v1}"]),
-                ("DiscountLead",["{v0}"]),("PayableLead",["{v0}"])})
-                if(!Regex.Matches(RequiredString(row,field),@"\{[^{}]+\}").Select(m=>m.Value).Order().SequenceEqual(expected.Order()))
+            foreach(var (field,expected) in DiscountPlaceholderFields)
+                if(!HasExactPlaceholderSlots(RequiredString(row,field),expected))
                     Fail("Changed discount slots: "+field);
         }
     }

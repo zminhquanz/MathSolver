@@ -2,39 +2,33 @@ using MathSolver.Models;
 
 namespace MathSolver.Services.QuestionBank;
 
+internal sealed record AppliedExpandedUnit(string Id, string Vi, string En, string Singular);
+internal sealed record AppliedCountedActivityGroup(string Id, string Vi, string En);
+
 public static partial class AppliedQuestionCatalogue
 {
 
-    private static readonly IReadOnlyDictionary<string, (string Vi, string En, string Singular)> ExpandedUnits =
-        new Dictionary<string, (string, string, string)> {
-            ["years"] = ("tuổi", "years", "year"), ["minutes"] = ("phút", "minutes", "minute"),
-            ["litres"] = ("l", "litres", "litre"), ["packs"] = ("gói", "packs", "pack"),
-            ["products"] = ("sản phẩm", "products", "product"), ["visits"] = ("lượt tham gia", "visits", "visit"),
-            ["students"] = ("học sinh", "students", "student"), ["points"] = ("điểm", "points", "point"),
-            ["chickens"] = ("con gà", "chickens", "chicken"), ["pages"] = ("trang sách", "pages", "page"),
-            ["seedlings"] = ("cây con", "seedlings", "seedling"), ["bottles"] = ("chai nhựa", "plastic bottles", "plastic bottle"),
-            ["rolls"] = ("ổ bánh mì", "bread rolls", "bread roll"), ["mangoes"] = ("quả xoài", "mangoes", "mango"),
-            ["meals"] = ("suất ăn", "meals", "meal"), ["eggs"] = ("quả trứng", "eggs", "egg"),
-            ["paper-flowers"] = ("bông hoa giấy", "paper flowers", "paper flower"),
-            ["chairs"] = ("chiếc ghế", "chairs", "chair"), ["responses"] = ("phiếu trả lời", "responses", "response"),
-            ["gift-packs"] = ("gói quà", "gift packs", "gift pack"),
-            ["passenger-journeys"] = ("lượt khách", "passenger journeys", "passenger journey"),
-            ["litres-water"] = ("lít nước", "litres of water", "litre of water") };
+    private static readonly IReadOnlyDictionary<string, AppliedExpandedUnit> ExpandedUnits =
+        QuizContentCatalog.LoadList<AppliedExpandedUnit>("AppliedExpandedUnits")
+            .ToDictionary(unit => unit.Id, StringComparer.Ordinal);
     private static string? ExpandedUnit(string id, AppLanguage language, bool singular) => ExpandedUnits.TryGetValue(id, out var u)
         ? language == AppLanguage.Vietnamese ? u.Vi : singular ? u.Singular : u.En : null;
-    private static string? ExpandedSingular(string unit) => ExpandedUnits.Values.FirstOrDefault(u => u.En == unit).Singular;
+    private static string? ExpandedSingular(string unit) => ExpandedUnits.Values.FirstOrDefault(u => u.En == unit)?.Singular;
 
-    private static (string Vi, string En) CountedActivityGroup(string prefix) => prefix switch {
-        "classroom" => ("nhóm học sinh", "student group"), "poultry" => ("chuồng", "pen"),
-        "reading" => ("ngày đọc sách", "reading day"), "sports" => ("trận đấu", "match"),
-        "visits" => ("ngày mở cửa", "opening day"), "planting" => ("đội trồng cây", "planting team"),
-        "recycling" => ("đội thu gom", "recycling team"), "bakery" => ("lò bánh", "bakery"),
-        "harvest" => ("nông trại", "farm"), _ => ("nhóm", "group") };
-    private static readonly string[] CountedPrefixes = ["classroom", "poultry", "reading", "sports",
-        "visits", "planting", "recycling", "bakery", "harvest"];
+    private static readonly IReadOnlyDictionary<string, AppliedCountedActivityGroup> CountedActivityGroups =
+        QuizContentCatalog.LoadList<AppliedCountedActivityGroup>("AppliedCountedActivityGroups")
+            .ToDictionary(group => group.Id, StringComparer.Ordinal);
+    private static (string Vi, string En) CountedActivityGroup(string prefix)
+        => CountedActivityGroups.TryGetValue(prefix, out var group) ? (group.Vi, group.En) : ("nhóm", "group");
+    private static readonly IReadOnlyList<string> CountedPrefixes =
+        QuizContentCatalog.LoadList<AppliedCountedActivityGroup>("AppliedCountedActivityGroups").Select(group => group.Id).ToArray();
     private static string? CountedPrefix(AppliedQuestionScene s) => CountedPrefixes.FirstOrDefault(p => s.Id.StartsWith(p + "-", StringComparison.Ordinal));
     private static string? SceneGroupUnit(AppliedQuestionScene s, AppLanguage language)
     {
+        if (PetAnimalThemeCatalogue.FindScene(s.Id) is { } pet)
+            return PetAnimalThemeCatalogue.Group(pet, language);
+        if (SchoolThemeCatalogue.FindScene(s.Id) is { } school)
+            return SchoolThemeCatalogue.Group(school, language);
         if (s.Group is QuestionKnowledgeGroup.Toys or QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School)
             return QuestionUnits.Find(s.UnitId)?.Group(language, singular: true);
         if ((s.Group == QuestionKnowledgeGroup.Objects && s.Id.StartsWith("daily-", StringComparison.Ordinal))
@@ -63,6 +57,12 @@ public static partial class AppliedQuestionCatalogue
     {
         bool vi = lang == AppLanguage.Vietnamese;
         string unit = AnswerUnit(s, lang);
+        if (PetAnimalThemeCatalogue.FindScene(s.Id) is { } pet)
+            return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+                ? (unit, pet.Unit.Group(lang)) : (unit, unit);
+        if (SchoolThemeCatalogue.FindScene(s.Id) is { } school)
+            return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
+                ? (unit, vi ? school.ViGroup : PluralGroup(school.EnGroup)) : (unit, unit);
         if (FoodThemeCatalogue.DessertShopKind(s.UnitId) is not null) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
             ? (unit, vi ? "khay" : "trays") : (unit, unit);
         if (s.Group == QuestionKnowledgeGroup.Food) return s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide
@@ -106,7 +106,9 @@ public static partial class AppliedQuestionCatalogue
         return null;
     }
     private static string PluralGroup(string singular) => singular.EndsWith("bakery", StringComparison.Ordinal)
-        ? singular[..^1] + "ies" : singular.EndsWith("match", StringComparison.Ordinal) ? singular + "es" : singular + "s";
+        ? singular[..^1] + "ies" : singular.EndsWith("shelf", StringComparison.Ordinal) ? singular[..^1] + "ves"
+        : singular.EndsWith("box", StringComparison.Ordinal) || singular.EndsWith("match", StringComparison.Ordinal)
+            ? singular + "es" : singular + "s";
     public static AppliedArithmeticReasoning? Reasoning(BasicQuestionContract c)
     {
         var rule = c.SceneId switch { "garden-perimeter" => AppliedArithmeticRule.RectanglePerimeter,
@@ -117,6 +119,20 @@ public static partial class AppliedQuestionCatalogue
     private static bool HasDerivedAnswer(AppliedQuestionScene s) => s.Id is "garden-perimeter" or "packing-remainder" or "packing-minimum";
     private static (int, int)? ExpandedNumbers(AppliedQuestionScene s, CurriculumTier tier, int cap, int factor, Random random)
     {
+        if (PetAnimalThemeCatalogue.FindScene(s.Id) is { } pet
+            && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+        {
+            int groups = random.Next(2, Math.Min(factor, cap / 2) + 1);
+            int per = random.Next(1, Math.Min(pet.MaxPerGroup, cap / groups) + 1);
+            return s.Operation == ArithmeticOperation.Multiply ? (per, groups) : (per * groups, groups);
+        }
+        if (SchoolThemeCatalogue.FindScene(s.Id) is { } school
+            && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+        {
+            int groups = random.Next(2, Math.Min(factor, cap / 2) + 1);
+            int per = random.Next(1, Math.Min(school.MaxPerGroup, cap / groups) + 1);
+            return s.Operation == ArithmeticOperation.Multiply ? (per, groups) : (per * groups, groups);
+        }
         if (s.StoryContextId is not null && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide) {
             int count = random.Next(2, Math.Min(factor, cap / 2) + 1);
             int per = random.Next(1, Math.Max(2, cap / count + 1));
@@ -159,6 +175,12 @@ public static partial class AppliedQuestionCatalogue
     }
     private static bool ExpandedFactsValid(BasicQuestionContract c, AppliedQuestionScene s)
     {
+        if (PetAnimalThemeCatalogue.FindScene(s.Id) is { } pet
+            && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+            return (c.Operation == ArithmeticOperation.Divide ? c.Answer : c.Left) <= pet.MaxPerGroup;
+        if (SchoolThemeCatalogue.FindScene(s.Id) is { } school
+            && s.Operation is ArithmeticOperation.Multiply or ArithmeticOperation.Divide)
+            return (c.Operation == ArithmeticOperation.Divide ? c.Answer : c.Left) <= school.MaxPerGroup;
         if (s.StoryContextId is { } id) return c.Left <= QuizStoryContextCatalog.Find(id).MaximumPerPeriod;
         if (Reasoning(c) is { } r) return r.Matches(c.Expression) && (s.Id != "garden-perimeter" || c.Left >= c.Right);
         if (s.Id is "garden-area-groups" or "garden-side-share")
@@ -175,6 +197,34 @@ public static partial class AppliedQuestionCatalogue
     }
     private static void SetSceneActors(AppliedQuestionScene s, AppLanguage lang, int a, int b, Random random, ref string name, ref string other)
     {
+        if (FruitGardenStoryTemplates.IsGardenScene(s.Id))
+        {
+            string firstVenue = FruitGardenStoryTemplates.Venue(lang, a);
+            string secondVenue = FruitGardenStoryTemplates.Venue(lang, b);
+            name = lang == AppLanguage.Vietnamese ? $"{firstVenue} của {name}" : $"{name}'s {firstVenue}";
+            other = lang == AppLanguage.Vietnamese ? $"{secondVenue} của {other}" : $"{other}'s {secondVenue}";
+            return;
+        }
+        if (PetAnimalThemeCatalogue.FindScene(s.Id) is { } pet)
+        {
+            string venue = lang == AppLanguage.Vietnamese ? pet.ViVenue : pet.EnVenue;
+            name = lang == AppLanguage.Vietnamese ? venue + " thứ nhất" : "the first " + venue;
+            other = lang == AppLanguage.Vietnamese ? venue + " thứ hai" : "the second " + venue;
+            return;
+        }
+        if (SchoolThemeCatalogue.FindScene(s.Id) is { } school)
+        {
+            string schoolActor = lang == AppLanguage.Vietnamese ? school.ViActor : school.EnActor;
+            name = lang == AppLanguage.Vietnamese ? schoolActor + " thứ nhất" : "the first " + schoolActor;
+            other = lang == AppLanguage.Vietnamese ? schoolActor + " thứ hai" : "the second " + schoolActor;
+            return;
+        }
+        if (s.Group == QuestionKnowledgeGroup.Toys && ToyThemeCatalogue.Find(s.UnitId) is not null)
+        {
+            name = lang == AppLanguage.Vietnamese ? "cửa hàng đồ chơi thứ nhất" : "the first toy shop";
+            other = lang == AppLanguage.Vietnamese ? "cửa hàng đồ chơi thứ hai" : "the second toy shop";
+            return;
+        }
         if (s.Group is QuestionKnowledgeGroup.Healthcare or QuestionKnowledgeGroup.School)
         {
             string communityActor = s.Group == QuestionKnowledgeGroup.Healthcare
@@ -224,8 +274,10 @@ public static partial class AppliedQuestionCatalogue
         }
         if (s.Group == QuestionKnowledgeGroup.Drinks)
         {
-            name = lang == AppLanguage.Vietnamese ? "quán nước thứ nhất" : "the first drink shop";
-            other = lang == AppLanguage.Vietnamese ? "quán nước thứ hai" : "the second drink shop";
+            var shops = FoodThemePrompt.DrinkShopActors(FoodThemeCatalogue.IsCoffeeDrinkId(s.UnitId),
+                FoodThemeCatalogue.IsMilkTeaDrinkId(s.UnitId), lang);
+            name = shops.First;
+            other = shops.Second;
             return;
         }
         if (FoodThemeCatalogue.IsTheme(s.Group) && Math.Max(a,b)>100)

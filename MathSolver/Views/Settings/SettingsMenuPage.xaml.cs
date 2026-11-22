@@ -618,6 +618,9 @@ public partial class SettingsMenuPage : ContentView
         // Loaded/Unloaded của các MAUI vector control không đáng tin cậy trong
         // Popup khi đổi Light <-> Dark. Ép từng icon đọc lại theme hiện tại.
         OverlaySettingsIcon.RefreshThemeColor();
+        CloseMenuIcon.RefreshThemeColor();
+        ThemeMenuIcon.RefreshThemeColor();
+        AccentMenuIcon.RefreshThemeColor();
         FontMenuIcon.RefreshThemeColor();
         LanguageMenuIcon.RefreshThemeColor();
         DataMenuIcon.RefreshThemeColor();
@@ -712,24 +715,25 @@ public partial class SettingsMenuPage : ContentView
 
     private void UpdateState()
     {
+        bool useEnglish =
+            AppLanguageManager.CurrentLanguage ==
+            AppLanguage.English;
+
         ThemeSummaryLabel.Text =
             AppThemeManager.CurrentMode switch
             {
                 AppThemeMode.Light =>
-                    "Sáng",
+                    useEnglish ? "Light" : "Sáng",
 
                 AppThemeMode.Dark =>
-                    "Tối",
+                    useEnglish ? "Dark" : "Tối",
 
                 _ =>
-                    "Hệ thống"
+                    useEnglish ? "System" : "Hệ thống"
             };
 
         AccentSummaryLabel.Text =
             AppThemeManager.CurrentAccentHex;
-
-        AccentSummaryLabel.TextColor =
-            AppThemeManager.CurrentAccentColor;
 
         AppFontOption currentFont =
             AppFontCatalog.GetByKey(
@@ -745,9 +749,39 @@ public partial class SettingsMenuPage : ContentView
         LanguageSummaryLabel.Text =
             currentLanguage.LocalizedDisplayName;
 
-        bool useEnglish =
-            AppLanguageManager.CurrentLanguage ==
-            AppLanguage.English;
+        MenuHeaderTitleLabel.Text =
+            useEnglish ? "Settings" : "Cài đặt";
+
+        MenuHeaderSubtitleLabel.Text =
+            useEnglish ? "Quickly customize Math Solver" : "Tùy chỉnh nhanh Math Solver";
+
+        SemanticProperties.SetDescription(
+            CloseMenuButton,
+            useEnglish ? "Close settings" : "Đóng cài đặt");
+
+        ThemeMenuTitleLabel.Text =
+            useEnglish ? "Theme" : "Chủ đề";
+
+        AccentMenuTitleLabel.Text =
+            useEnglish ? "Accent color" : "Màu chủ đề";
+
+        FontMenuTitleLabel.Text =
+            useEnglish ? "Font" : "Phông chữ";
+
+        LanguageMenuTitleLabel.Text =
+            useEnglish ? "Language" : "Ngôn ngữ";
+
+        HardwareMenuTitleLabel.Text =
+            useEnglish ? "Hardware information" : "Thông tin phần cứng";
+
+        HardwareMenuSummaryLabel.Text =
+            useEnglish ? "Hardware and computing performance" : "Phần cứng và hiệu năng tính toán";
+
+        ResetMenuTitleLabel.Text =
+            useEnglish ? "Reset" : "Đặt lại";
+
+        ResetMenuSummaryLabel.Text =
+            useEnglish ? "Restore default settings" : "Khôi phục cài đặt mặc định";
 
         AboutMenuTitleLabel.Text =
             useEnglish
@@ -811,9 +845,12 @@ public partial class SettingsMenuPage : ContentView
         // the exact TapGestureRecognizer signature for Release XAML compilation.
         AppThemeManager.ResetToDefault();
         AppFontManager.ResetToDefault();
+        DisplayDensityManager.ResetToDefault();
         AppLanguageManager.ResetToDefault();
         DeveloperModeManager.ResetToDefault();
         ResultNumberDisplayMode.ResetToDefault();
+        LiveWallpaperManager.ResetToDefault();
+        IllustrationMotionSettings.SetEnabled(true);
 
 #if ANDROID
         // Dynamic Material You color is also part of the appearance reset.

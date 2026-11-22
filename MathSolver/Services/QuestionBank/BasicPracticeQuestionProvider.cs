@@ -90,7 +90,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         var c = saved.Contract;
         var validation = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validation.IsValid || c.Family != BankQuestionFamily.Fraction || c.Operation != operation
-            || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group) return BuiltIn();
+            || c.Tier != tier || c.Language != language || !profile.Includes(c.KnowledgeGroup)) return BuiltIn();
         var fresh = c.FreshFacts(_random);
         return fresh.ToPracticeQuestion(saved.Draft.ToWordProblem(fresh), generated.Mode, _random);
     }
@@ -118,7 +118,7 @@ public sealed class BasicPracticeQuestionProvider(IQuestionBankStore store, Rand
         var c = saved.Contract;
         var validated = QuestionBankStore.ValidateSavedQuestion(saved);
         if (!validated.IsValid || c.Family != BankQuestionFamily.FindX || c.Operation != operation
-            || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group) return BuiltIn();
+            || c.Tier != tier || c.Language != language || !profile.Includes(c.KnowledgeGroup)) return BuiltIn();
         var fresh = c.FreshFacts();
         return fresh.ToPracticeQuestion(saved.Draft.ToWordProblem(fresh), generated.Mode);
     }

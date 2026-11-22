@@ -89,29 +89,38 @@
 
                     <VerticalStackLayout Grid.Column="0" Spacing="1">
                         <Label
+                            x:Name="MenuHeaderTitleLabel"
                             Text="Cài đặt"
                             FontSize="20"
                             FontAttributes="Bold"
                             TextColor="{DynamicResource TextPrimaryColor}" />
 
                         <Label
+                            x:Name="MenuHeaderSubtitleLabel"
                             Text="Tùy chỉnh nhanh Math Solver"
                             IsVisible="{OnPlatform Android=False, WinUI=True, Default=True}"
                             FontSize="12"
                             TextColor="{DynamicResource TextSecondaryColor}" />
                     </VerticalStackLayout>
 
-                    <Button
-                        Grid.Column="1"
-                        Text="×"
-                        WidthRequest="40"
-                        HeightRequest="40"
-                        Padding="0"
-                        CornerRadius="20"
-                        FontSize="22"
-                        BackgroundColor="Transparent"
-                        TextColor="{DynamicResource TextPrimaryColor}"
-                        Clicked="OnCloseClicked" />
+                    <Grid Grid.Column="1" WidthRequest="44" HeightRequest="44">
+                        <Button
+                            x:Name="CloseMenuButton"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            Padding="0"
+                            CornerRadius="22"
+                            BackgroundColor="Transparent"
+                            SemanticProperties.Description="Đóng cài đặt"
+                            Clicked="OnCloseClicked" />
+                        <controls:ThemedSvgPathIcon
+                            x:Name="CloseMenuIcon"
+                            Data="{x:Static controls:SettingsDestinationIconPaths.Close}"
+                            WidthRequest="22"
+                            HeightRequest="22"
+                            HorizontalOptions="Center"
+                            VerticalOptions="Center" />
+                    </Grid>
                 </Grid>
 
                 <ScrollView Grid.Row="1">
@@ -125,38 +134,22 @@
 
                         <VerticalStackLayout Spacing="0">
                                 <Border Style="{StaticResource ThemeMenuRowStyle}">
-                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
-                                        <Grid
+                                    <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
+                                        <controls:ThemedSvgPathIcon
+                                            x:Name="ThemeMenuIcon"
                                             Grid.Column="0"
-                                            WidthRequest="28"
-                                            HeightRequest="28"
+                                            Data="{x:Static controls:SettingsDestinationIconPaths.Theme}"
+                                            WidthRequest="22"
+                                            HeightRequest="22"
+                                            Scale="0.833333"
                                             HorizontalOptions="Center"
-                                            VerticalOptions="Center">
-                                            <Label
-                                                Text="◐"
-                                                FontSize="18"
-                                                FontAttributes="Bold"
-                                                HorizontalTextAlignment="Center"
-                                                VerticalTextAlignment="Center"
-                                                TextColor="{DynamicResource TextPrimaryColor}" />
-                                        </Grid>
+                                            VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label x:Name="ThemeMenuTitleLabel" Text="Chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                            <Label x:Name="ThemeSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                        </VerticalStackLayout>
                                         <Label
-                                            Grid.Column="1"
-                                            Text="Chủ đề"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            VerticalOptions="Center"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
-                                        <Label
-                                            x:Name="ThemeSummaryLabel"
                                             Grid.Column="2"
-                                            FontSize="13"
-                                            VerticalOptions="Center"
-                                            HorizontalTextAlignment="End"
-                                            LineBreakMode="TailTruncation"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
-                                        <Label
-                                            Grid.Column="3"
                                             Text="›"
                                             Style="{StaticResource ThemeMenuChevronStyle}" />
                                         <Grid.GestureRecognizers>
@@ -168,36 +161,22 @@
                                 <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                                 <Border Style="{StaticResource ThemeMenuRowStyle}">
-                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
-                                        <Grid
+                                    <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
+                                        <controls:ThemedSvgPathIcon
+                                            x:Name="AccentMenuIcon"
                                             Grid.Column="0"
-                                            WidthRequest="28"
-                                            HeightRequest="28"
+                                            Data="{x:Static controls:SettingsDestinationIconPaths.Palette}"
+                                            WidthRequest="22"
+                                            HeightRequest="22"
+                                            Scale="0.833333"
                                             HorizontalOptions="Center"
-                                            VerticalOptions="Center">
-                                            <Label
-                                                Text="●"
-                                                FontSize="18"
-                                                HorizontalTextAlignment="Center"
-                                                VerticalTextAlignment="Center"
-                                                TextColor="{DynamicResource PrimaryColor}" />
-                                        </Grid>
+                                            VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label x:Name="AccentMenuTitleLabel" Text="Màu chủ đề" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                            <Label x:Name="AccentSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                        </VerticalStackLayout>
                                         <Label
-                                            Grid.Column="1"
-                                            Text="Màu chủ đề"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            VerticalOptions="Center"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
-                                        <Label
-                                            x:Name="AccentSummaryLabel"
                                             Grid.Column="2"
-                                            FontSize="13"
-                                            VerticalOptions="Center"
-                                            HorizontalTextAlignment="End"
-                                            LineBreakMode="TailTruncation" />
-                                        <Label
-                                            Grid.Column="3"
                                             Text="›"
                                             Style="{StaticResource ThemeMenuChevronStyle}" />
                                         <Grid.GestureRecognizers>
@@ -209,39 +188,22 @@
                                 <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                                 <Border Style="{StaticResource ThemeMenuRowStyle}">
-                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
-                                        <Grid
+                                    <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
+                                        <controls:ThemedSvgPathIcon
+                                            x:Name="FontMenuIcon"
                                             Grid.Column="0"
-                                            WidthRequest="28"
-                                            HeightRequest="28"
+                                            Data="M384-362h192l35 97q4 11 14 18t22 7q20 0 32.5-16.5T684-293L532-695q-5-11-15-18t-22-7h-30q-12 0-22 7t-15 18L276-293q-8 19 4 36t32 17q13 0 22.5-7t14.5-19l35-96Zm24-70 70-198h4l70 198H408ZM160-80q-33 0-56.5-23.5T80-160v-640q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v640q0 33-23.5 56.5T800-80H160Zm0-80h640v-640H160v640Zm0-640v640-640Z"
+                                            WidthRequest="22"
+                                            HeightRequest="22"
+                                            Scale="0.833333"
                                             HorizontalOptions="Center"
-                                            VerticalOptions="Center">
-                                            <controls:ThemedSvgPathIcon
-                                                x:Name="FontMenuIcon"
-                                                Data="M384-362h192l35 97q4 11 14 18t22 7q20 0 32.5-16.5T684-293L532-695q-5-11-15-18t-22-7h-30q-12 0-22 7t-15 18L276-293q-8 19 4 36t32 17q13 0 22.5-7t14.5-19l35-96Zm24-70 70-198h4l70 198H408ZM160-80q-33 0-56.5-23.5T80-160v-640q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v640q0 33-23.5 56.5T800-80H160Zm0-80h640v-640H160v640Zm0-640v640-640Z"
-                                                WidthRequest="18"
-                                                HeightRequest="18"
-                                                Scale="0.833333"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center" />
-                                        </Grid>
+                                            VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label x:Name="FontMenuTitleLabel" Text="Phông chữ" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                            <Label x:Name="FontSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                        </VerticalStackLayout>
                                         <Label
-                                            Grid.Column="1"
-                                            Text="Phông chữ"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            VerticalOptions="Center"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
-                                        <Label
-                                            x:Name="FontSummaryLabel"
                                             Grid.Column="2"
-                                            FontSize="13"
-                                            VerticalOptions="Center"
-                                            HorizontalTextAlignment="End"
-                                            LineBreakMode="TailTruncation"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
-                                        <Label
-                                            Grid.Column="3"
                                             Text="›"
                                             Style="{StaticResource ThemeMenuChevronStyle}" />
                                         <Grid.GestureRecognizers>
@@ -253,39 +215,22 @@
                                 <BoxView Margin="44,0,12,0" HeightRequest="1" BackgroundColor="{DynamicResource DividerColor}" />
 
                                 <Border Style="{StaticResource ThemeMenuRowStyle}">
-                                    <Grid ColumnDefinitions="34,*,Auto,Auto" ColumnSpacing="10">
-                                        <Grid
+                                    <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
+                                        <controls:ThemedSvgPathIcon
+                                            x:Name="LanguageMenuIcon"
                                             Grid.Column="0"
-                                            WidthRequest="28"
-                                            HeightRequest="28"
+                                            Data="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"
+                                            WidthRequest="22"
+                                            HeightRequest="22"
+                                            Scale="0.833333"
                                             HorizontalOptions="Center"
-                                            VerticalOptions="Center">
-                                            <controls:ThemedSvgPathIcon
-                                                x:Name="LanguageMenuIcon"
-                                                Data="M325-111.5q-73-31.5-127.5-86t-86-127.5Q80-398 80-480.5t31.5-155q31.5-72.5 86-127t127.5-86Q398-880 480.5-880t155 31.5q72.5 31.5 127 86t86 127Q880-563 880-480.5T848.5-325q-31.5 73-86 127.5t-127 86Q563-80 480.5-80T325-111.5ZM480-162q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-200 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z"
-                                                WidthRequest="18"
-                                                HeightRequest="18"
-                                                Scale="0.833333"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center" />
-                                        </Grid>
+                                            VerticalOptions="Center" />
+                                        <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
+                                            <Label x:Name="LanguageMenuTitleLabel" Text="Ngôn ngữ" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                            <Label x:Name="LanguageSummaryLabel" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                        </VerticalStackLayout>
                                         <Label
-                                            Grid.Column="1"
-                                            Text="Ngôn ngữ"
-                                            FontSize="15"
-                                            FontAttributes="Bold"
-                                            VerticalOptions="Center"
-                                            TextColor="{DynamicResource TextPrimaryColor}" />
-                                        <Label
-                                            x:Name="LanguageSummaryLabel"
                                             Grid.Column="2"
-                                            FontSize="13"
-                                            VerticalOptions="Center"
-                                            HorizontalTextAlignment="End"
-                                            LineBreakMode="TailTruncation"
-                                            TextColor="{DynamicResource TextSecondaryColor}" />
-                                        <Label
-                                            Grid.Column="3"
                                             Text="›"
                                             Style="{StaticResource ThemeMenuChevronStyle}" />
                                         <Grid.GestureRecognizers>
@@ -304,7 +249,7 @@
                             <Grid ColumnDefinitions="34,*,Auto" ColumnSpacing="10">
                                 <controls:ThemedSvgPathIcon x:Name="DataMenuIcon" Grid.Column="0"
                                     Data="{x:Static controls:SettingsDestinationIconPaths.DataManagement}"
-                                    WidthRequest="22" HeightRequest="22" HorizontalOptions="Center" VerticalOptions="Center" />
+                                    WidthRequest="22" HeightRequest="22" Scale="0.833333" HorizontalOptions="Center" VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
                                     <Label Text="{localization:Translate DataManagement.Title}" Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label Text="{localization:Translate DataManagement.MenuHint}" Style="{StaticResource ThemeMenuSummaryStyle}" />
@@ -323,9 +268,9 @@
                                     x:Name="HardwareMenuIcon"
                                     Grid.Column="0"
                                     Data="{x:Static controls:SettingsDestinationIconPaths.Hardware}"
-                                    WidthRequest="24"
-                                    Scale="0.666667"
-                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    Scale="0.833333"
+                                    HeightRequest="22"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
                                 <VerticalStackLayout
@@ -333,9 +278,11 @@
                                     Spacing="1"
                                     VerticalOptions="Center">
                                     <Label
+                                        x:Name="HardwareMenuTitleLabel"
                                         Text="Thông tin phần cứng"
                                         Style="{StaticResource ThemeMenuTitleStyle}" />
                                     <Label
+                                        x:Name="HardwareMenuSummaryLabel"
                                         Text="Phần cứng và hiệu năng tính toán"
                                         Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
@@ -362,9 +309,9 @@
                                     x:Name="AboutMenuIcon"
                                     Grid.Column="0"
                                     Data="{x:Static controls:SettingsDestinationIconPaths.About}"
-                                    WidthRequest="24"
+                                    WidthRequest="22"
                                     Scale="0.833333"
-                                    HeightRequest="24"
+                                    HeightRequest="22"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
 
@@ -408,14 +355,14 @@
                                     x:Name="ResetMenuIcon"
                                     Grid.Column="0"
                                     Data="M550-390h100q13 0 21.5 8.5T680-360q0 13-8.5 21.5T650-330H550q-13 0-21.5-8.5T520-360q0-13 8.5-21.5T550-390Zm30 240v-20h-30q-13 0-21.5-8.5T520-200q0-13 8.5-21.5T550-230h30v-20q0-13 8.5-21.5T610-280q13 0 21.5 8.5T640-250v100q0 13-8.5 21.5T610-120q-13 0-21.5-8.5T580-150Zm130-80h100q13 0 21.5 8.5T840-200q0 13-8.5 21.5T810-170H710q-13 0-21.5-8.5T680-200q0-13 8.5-21.5T710-230Zm10-80v-100q0-13 8.5-21.5T750-440q13 0 21.5 8.5T780-410v20h30q13 0 21.5 8.5T840-360q0 13-8.5 21.5T810-330h-30v20q0 13-8.5 21.5T750-280q-13 0-21.5-8.5T720-310ZM480-760q-117 0-198.5 81.5T200-480q0 72 32.5 132t87.5 98v-70q0-17 11.5-28.5T360-360q17 0 28.5 11.5T400-320v160q0 17-11.5 28.5T360-120H200q-17 0-28.5-11.5T160-160q0-17 11.5-28.5T200-200h54q-62-50-98-122.5T120-480q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-840q114 0 204 62.5T814-615q6 16 0 31t-22 21q-16 6-31.5 0T739-585q-31-78-100.5-126.5T480-760Z"
-                                    WidthRequest="24"
-                                    Scale="0.750000"
-                                    HeightRequest="24"
+                                    WidthRequest="22"
+                                    Scale="0.833333"
+                                    HeightRequest="22"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">
-                                    <Label Text="Đặt lại" Style="{StaticResource ThemeMenuTitleStyle}" />
-                                    <Label Text="Khôi phục cài đặt mặc định" Style="{StaticResource ThemeMenuSummaryStyle}" />
+                                    <Label x:Name="ResetMenuTitleLabel" Text="Đặt lại" Style="{StaticResource ThemeMenuTitleStyle}" />
+                                    <Label x:Name="ResetMenuSummaryLabel" Text="Khôi phục cài đặt mặc định" Style="{StaticResource ThemeMenuSummaryStyle}" />
                                 </VerticalStackLayout>
                                 <Grid.GestureRecognizers>
                                     <TapGestureRecognizer Tapped="OnResetTapped" />
@@ -430,9 +377,9 @@
                                     x:Name="AdvancedMenuIcon"
                                     Grid.Column="0"
                                     Data="{x:Static controls:SettingsDestinationIconPaths.Settings}"
-                                    WidthRequest="24"
+                                    WidthRequest="22"
                                     Scale="0.833333"
-                                    HeightRequest="24"
+                                    HeightRequest="22"
                                     HorizontalOptions="Center"
                                     VerticalOptions="Center" />
                                 <VerticalStackLayout Grid.Column="1" Spacing="1" VerticalOptions="Center">

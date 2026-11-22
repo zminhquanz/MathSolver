@@ -19,23 +19,25 @@ public sealed partial class QuestionBankStore
                 var scenes = FractionQuestionCatalogue.Available(profile, operation, tier).ToDictionary(s => s.Id);
                 var key = (operation, tier, language, profile.Group);
                 if (!_fractionHistory.TryGetValue(key, out var history)) _fractionHistory[key] = history = new();
+                int groupId = (int)profile.Group;
                 var buckets = db.Query<SelectionBucket>("SELECT SceneId,MAX(LastUsedUtc) AS LastUsedUtc FROM BasicQuestionBank "
                     + "WHERE ProblemType=2 AND Version=7 AND Operation=? AND Stars=? AND Language=? AND KnowledgeGroup=? GROUP BY SceneId",
-                    (int)operation, (int)tier, (int)language, (int)profile.Group);
+                    (int)operation, (int)tier, (int)language, groupId);
                 foreach (var bucket in buckets.Where(b => scenes.ContainsKey(b.SceneId))
                     .OrderBy(_ => Random.Shared.Next())
                     .OrderBy(b => history.Count(id => id == b.SceneId)).ThenBy(b => b.LastUsedUtc))
                 {
                     foreach (var row in db.Query<Row>("SELECT * FROM BasicQuestionBank WHERE ProblemType=2 AND Version=7 "
                         + "AND Operation=? AND Stars=? AND Language=? AND KnowledgeGroup=? AND SceneId=? ORDER BY UseCount,LastUsedUtc LIMIT 32",
-                        (int)operation, (int)tier, (int)language, (int)profile.Group, bucket.SceneId))
+                        (int)operation, (int)tier, (int)language, groupId, bucket.SceneId))
                     {
                         try
                         {
                             var c = JsonSerializer.Deserialize<BasicQuestionContract>(row.ContractJson, JsonOptions);
                             if (c is null || c.Family != BankQuestionFamily.Fraction || row.ProblemType != (int)c.Family
                                 || row.ProblemVariant != (int)c.UnknownRole || row.Version != c.Version || c.Operation != operation
-                                || c.Tier != tier || c.Language != language || c.KnowledgeGroup != profile.Group
+                                || c.Tier != tier || c.Language != language || !profile.Includes(c.KnowledgeGroup)
+                                || row.KnowledgeGroup != (int)c.KnowledgeGroup
                                 || c.SceneId != row.SceneId || c.TopicId != row.TopicId || row.Structure != (int)c.Structure || c.Grade != row.Grade) continue;
                             bool userAuthored = IsUserAuthored(db, row.Hash);
                             var validation = ValidateDraft(row.DraftJson, c, userAuthored);

@@ -44,7 +44,10 @@ internal static partial class FractionBankTests
                 var validation = BasicQuestionValidator.Validate(raw, c);
                 Check(validation.IsValid && validation.Contract == c, "Reviewed fraction prose rejected: " + tag + ": " + validation.ErrorCode);
                 foreach (var alternate in ReviewedQuestionProse.For(c)!.Stories())
-                    Check(BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(alternate), c).IsValid, "Reviewed alternative rejected: " + tag);
+                {
+                    var checkedAlternate = BasicQuestionValidator.Validate(QuestionBankStore.SerializeDraft(alternate), c);
+                    Check(checkedAlternate.IsValid, $"Reviewed alternative rejected: {tag}: {checkedAlternate.ErrorCode} {checkedAlternate.ErrorDetails} ({alternate.Question})");
+                }
                 foreach (var broken in new[] { draft with { GivenA = draft.GivenA + " 42" },
                     draft with { GivenB = draft.GivenB.Replace("{b}", "{a}") }, draft with { UnitId = "wrong" },
                     draft with { Question = draft.Question + " {a}" }, draft with { GivenA = draft.GivenB, GivenB = draft.GivenA } })
@@ -53,7 +56,8 @@ internal static partial class FractionBankTests
                 Check(!word.ProblemText.Contains('{') && char.IsUpper(word.ProblemText[0]) && word.AnswerUnit == c.Unit,
                     "Unrendered prose/case/dimension: " + tag);
                 Check(StreamingQuestionPreview.Render(raw, c) == word.ProblemText, "Streaming preview differs: " + tag);
-                Check(QuestionProseIdentity.Hash(c, draft) == QuestionProseIdentity.Hash(fresh, draft), "Random fractions changed prose identity.");
+                Check(QuestionProseIdentity.Hash(c, draft) == QuestionProseIdentity.Hash(fresh, draft),
+                    $"Random fractions changed prose identity: {tag}, original={c.Unit}/{c.Structure}/{c.Subject}/{c.GroupUnit}, refreshed={fresh.Unit}/{fresh.Structure}/{fresh.Subject}/{fresh.GroupUnit}");
                 string grammar = GgufQuestionRuntime.BuildGrammar(c);
                 Check(grammar.StartsWith("root ::=") && grammar.All(ch => ch <= 127), "Invalid native grammar.");
                 Check(ReviewedQuestionProse.For(c)!.Stories().Select(d => QuestionProseIdentity.Hash(c, d)).Distinct().Count() >= 2,

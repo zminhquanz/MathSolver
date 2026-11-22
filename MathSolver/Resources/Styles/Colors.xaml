@@ -64,6 +64,8 @@
     <Color x:Key="WallpaperSurfaceColor">#D9FFFFFF</Color>
     <Color x:Key="WallpaperSurfaceAltColor">#BFFFFFFF</Color>
     <Color x:Key="WallpaperInputBackgroundColor">#EBFFFFFF</Color>
+    <Color x:Key="WallpaperNavigationSurfaceColor">#FFFFFF</Color>
+    <Color x:Key="WallpaperActionBackgroundColor">#6D28D9</Color>
     <Color x:Key="WallpaperBorderColor">#BFD8E2EF</Color>
     <Color x:Key="WallpaperDividerColor">#99E2E8F0</Color>
     <Color x:Key="WallpaperPrimarySoftColor">#CCEDE9FE</Color>
@@ -123,6 +125,8 @@
     <SolidColorBrush x:Key="WallpaperSurfaceBrush" Color="#D9FFFFFF" />
     <SolidColorBrush x:Key="WallpaperSurfaceAltBrush" Color="#BFFFFFFF" />
     <SolidColorBrush x:Key="WallpaperInputBackgroundBrush" Color="#EBFFFFFF" />
+    <SolidColorBrush x:Key="WallpaperNavigationSurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="WallpaperActionBackgroundBrush" Color="#6D28D9" />
     <SolidColorBrush x:Key="WallpaperBorderBrush" Color="#BFD8E2EF" />
     <SolidColorBrush x:Key="WallpaperDividerBrush" Color="#99E2E8F0" />
     <SolidColorBrush x:Key="WallpaperPrimarySoftBrush" Color="#CCEDE9FE" />

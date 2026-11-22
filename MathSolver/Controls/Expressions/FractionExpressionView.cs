@@ -234,7 +234,7 @@ public sealed class FractionExpressionView : ContentView
             var singleLineLayout =
                 new HorizontalStackLayout
                 {
-                    Spacing = TokenSpacing,
+                    Spacing = Math.Min(TokenSpacing, MathFontSize * .24d),
                     VerticalOptions = LayoutOptions.Center,
                     HorizontalOptions = GetHorizontalLayoutOptions()
                 };
@@ -270,7 +270,7 @@ public sealed class FractionExpressionView : ContentView
             tokenView.Margin = new Thickness(
                 0,
                 0,
-                TokenSpacing,
+                Math.Min(TokenSpacing, MathFontSize * .24d),
                 Math.Min(4d, TokenSpacing));
             wrappingLayout.Children.Add(tokenView);
         }
@@ -290,7 +290,7 @@ public sealed class FractionExpressionView : ContentView
         }
         if (!WrapContent)
         {
-            var row = new HorizontalStackLayout { Spacing = TokenSpacing, VerticalOptions = LayoutOptions.Center,
+            var row = new HorizontalStackLayout { Spacing = Math.Min(TokenSpacing, MathFontSize * .24d), VerticalOptions = LayoutOptions.Center,
                 HorizontalOptions = GetHorizontalLayoutOptions() };
             foreach (var item in items) row.Children.Add(item);
             return row;
@@ -302,7 +302,7 @@ public sealed class FractionExpressionView : ContentView
         {
             var item = BoundWrappedMathItem(source);
             FlexLayout.SetShrink(item, 0);
-            item.Margin = new Thickness(0, 0, TokenSpacing, Math.Min(4, TokenSpacing));
+            item.Margin = new Thickness(0, 0, Math.Min(TokenSpacing, MathFontSize * .24d), Math.Min(4, TokenSpacing));
             wrap.Children.Add(item);
         }
         return wrap;
@@ -512,9 +512,8 @@ public sealed class FractionExpressionView : ContentView
         {
             Text = text,
             FontSize = MathFontSize,
-            // Leave room inside the native text bounds for bold glyph ink and
-            // fractional-pixel rounding, rather than clipping the final digit.
-            Padding = new Thickness(2, 0),
+            // Reserve ink space for numerals without widening every prose word.
+            Padding = new Thickness(text.Any(char.IsDigit) ? 2 : 0, 0),
             LineBreakMode = LineBreakMode.NoWrap,
             FontAttributes =
                 FontAttributes.Bold,

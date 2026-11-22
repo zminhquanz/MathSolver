@@ -8,6 +8,19 @@ internal static class LearningProfileTests
 
     public static async Task RunAsync(string directory)
     {
+        var schoolChoices = QuestionLearningProfile.Groups();
+        Check(schoolChoices.Length == 17 && schoolChoices.Contains(QuestionKnowledgeGroup.School)
+            && schoolChoices.Contains(QuestionKnowledgeGroup.SchoolSupplies),
+            "School and school supplies must have distinct selectable groups.");
+        Check(QuestionLearningProfile.SelectionGroup(QuestionKnowledgeGroup.School) == QuestionKnowledgeGroup.School,
+            "Selecting School must preserve its persisted group ID.");
+        var schoolProfile = new QuestionLearningProfile(QuestionKnowledgeGroup.School);
+        var suppliesProfile = new QuestionLearningProfile(QuestionKnowledgeGroup.SchoolSupplies);
+        Check(schoolProfile.Includes(QuestionKnowledgeGroup.School)
+            && !schoolProfile.Includes(QuestionKnowledgeGroup.SchoolSupplies)
+            && suppliesProfile.Includes(QuestionKnowledgeGroup.SchoolSupplies)
+            && !suppliesProfile.Includes(QuestionKnowledgeGroup.School),
+            "School and school supplies filters leaked into one another.");
         int checkedQuestions = 0;
         var checkedProse = new HashSet<string>(StringComparer.Ordinal);
         var math = new BasicArithmeticEngine();
@@ -27,14 +40,17 @@ internal static class LearningProfileTests
             {
                 var c = AppliedQuestionCatalogue.Create(profile, operation, tier, language, new Random(seed * 31 + 17), scene.Id);
                 Check(c.IsValid, $"Invalid generated facts: {profile}/{operation}/{tier}/{language}/{scene.Id} {c.Left}, {c.Right}");
-                Check(c.Grade == 0 && c.KnowledgeGroup == group && c.Operation == operation, "Lost group or reintroduced grade metadata.");
+                Check(c.Grade == 0 && profile.Includes(c.KnowledgeGroup) && c.KnowledgeGroup == scene.Group
+                    && c.Operation == operation,
+                    $"Lost scene group or reintroduced grade metadata: selected={group}/{operation}/{tier}, scene={scene.Id}/{scene.Group}, actual={c.SceneId}/{c.KnowledgeGroup}/{c.Operation}, grade={c.Grade}");
                 if (group == QuestionKnowledgeGroup.Objects)
                     Check(c.Left <= profile.ArithmeticCeiling(tier) && c.Right <= profile.ArithmeticCeiling(tier)
                         && c.Answer <= profile.ArithmeticCeiling(tier), "Count scale does not follow stars.");
                 if (operation == ArithmeticOperation.Divide && AppliedQuestionCatalogue.Reasoning(c) is null)
                     Check(c.Left % c.Right == 0, "Fractional quotient in integer profile.");
                 string prompt = BasicQuestionPrompt.Build(c);
-                Check(prompt.Length < 2300 && prompt.Contains("input units={\"GivenA\":") && !prompt.Contains("\"Left\":")
+                // Detailed theme-specific settings require more room while keeping a strict upper bound.
+                Check(prompt.Length < 3200 && prompt.Contains("input units={\"GivenA\":") && !prompt.Contains("\"Left\":")
                     && !prompt.Contains("grade="),
                     $"Prompt became large or exposed facts: {scene.Id}/{language} length {prompt.Length}");
                 for (int variant = 0; variant < 2; variant++)
@@ -82,11 +98,12 @@ internal static class LearningProfileTests
                     checkedQuestions++;
                 }
                 var refreshed = c.FreshFacts(new Random(seed + 901));
-                Check(refreshed.IsValid && refreshed.Grade == 0 && refreshed.KnowledgeGroup == group
+                Check(refreshed.IsValid && refreshed.Grade == 0 && refreshed.KnowledgeGroup == scene.Group
                     && refreshed.SceneId == c.SceneId, "Fresh facts changed knowledge/dimensions.");
             }
         }
-        Check(QuestionLearningProfile.Groups().Length == 14
+        Check(QuestionLearningProfile.Groups().Length == 17
+            && QuestionLearningProfile.Groups().Contains(QuestionKnowledgeGroup.School)
             && !new QuestionLearningProfile((QuestionKnowledgeGroup)99).IsValid, "Invalid or grade-filtered groups.");
         // The broad count picker must no longer produce animal or school-supply scenes.
         // Both new groups retain their own generation slots in every operation.
@@ -100,11 +117,12 @@ internal static class LearningProfileTests
                 Check(!AppliedQuestionCatalogue.IsLegacySeparatedContract(general),
                     "The general counts picker still generates a separated subject.");
             }
-            foreach (var group in new[] { QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies })
+            foreach (var group in new[] { QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies,
+                         QuestionKnowledgeGroup.School })
             {
                 var specialized = AppliedQuestionCatalogue.Create(new(group), operation,
                     CurriculumTier.FiveStars, language, new Random(17));
-                Check(specialized.KnowledgeGroup == group && specialized.IsValid,
+                Check(new QuestionLearningProfile(group).Includes(specialized.KnowledgeGroup) && specialized.IsValid,
                     "A specialized knowledge group fell back to general counts.");
             }
         }

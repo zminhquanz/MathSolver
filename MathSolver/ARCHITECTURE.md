@@ -386,23 +386,24 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
 
 
-## Live wallpaper glass surfaces (2026-08)
-- The four main learning tabs use adaptive `Wallpaper*` resource keys for cards, inputs, inactive sub-tabs and secondary actions.
-- Wallpaper OFF maps those keys exactly to the normal opaque palette; wallpaper ON maps them to translucent Light/Dark glass surfaces. Settings and Hardware stay opaque.
+## Wallpaper surfaces
+- The learning pages use `Wallpaper*` resource keys for cards, inputs, inner tab strips and actions. The top-level Shell navigation sits outside the page wallpaper viewport.
+- Wallpaper OFF maps the keys to the normal palette. Wallpaper ON applies translucent light or dark fills. The tint is applied to each background brush so text and icons keep their own opacity.
 - `LiveWallpaperScrimColor` is theme-aware and replaces the previous fixed `PageBackgroundColor` + 0.52 opacity overlay.
-- Primary actions stay solid accent for hierarchy. Secondary surfaces, soft semantic states and section cards become translucent while preserving readable text/input surfaces.
+- Primary solver actions use a translucent accent fill. Inputs and dense reading cards receive a stronger tint than tab strips. Foreground colors are checked against the composite of each role over the wallpaper scrim.
 - `LiveWallpaperManager` refreshes visual resources immediately after enable/import/remove.
 - WinUI model actions (`Select model`, `Open in File Explorer`, `Eject model`) explicitly re-resolve current palette colors after visual-state/theme transitions to avoid cached Light/Dark brushes.
 
-## Animated background modes (2026-08-22)
+## Wallpaper modes
 
-`LiveWallpaperManager` now supports two mutually exclusive animated-background modes for the four main learning tabs:
+`LiveWallpaperManager` stores one background mode for the shared learning-tab host.
 
 - `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It runs while the owning tab is active and stops when the tab is inactive or animated backgrounds are disabled.
-- Runtime memory is lifecycle-bound for both backends. `GraphicsView`, its drawable, and its 24 FPS timer are now created lazily and removed entirely when unused; `MediaElement` is created lazily only on an active MP4 page, its `Source` is detached as soon as that page becomes inactive, and the player object is retired after a short grace period when MP4 mode is no longer needed.
+- `MathAnimation2` uses the same lifecycle for its neural-network and geometry drawable.
+- `StaticSchoolImage` selects the wide or upright PNG from the app package. It uses the app theme's reading palette and a fixed scrim for the watercolor. The active host owns the image and clears its source when the mode or owner changes.
 - `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 3 forces older saved wallpapers to be rechecked against the duration rule and the Android decoded-pixel memory budget.
 
-The Settings UI exposes the mode with one Picker. MP4 controls are shown only for MP4 mode; the Choose MP4 and Remove wallpaper buttons use equal 50/50 columns on Windows and Android. Glass resources remain driven by `LiveWallpaperManager.IsEnabled`; the built-in math animation uses a lighter readability scrim than arbitrary user video.
+The Settings picker exposes all four choices. A stored mode value of `3` from the retired classroom animation resolves to `MathAnimation`. MP4 controls and validation are scoped to MP4 mode. The host creates the image, graphics timer or native player when needed and tears it down with the active owner.
 
 
 ### MP4 adaptive frame contrast

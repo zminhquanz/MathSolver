@@ -11,10 +11,14 @@ public sealed record QuestionLearningProfile(QuestionKnowledgeGroup Group)
     public static QuestionKnowledgeGroup[] Groups(bool includeMixed = false) => includeMixed
         ? [QuestionKnowledgeGroup.Mixed, .. Groups()]
         : [QuestionKnowledgeGroup.Objects, QuestionKnowledgeGroup.Animals, QuestionKnowledgeGroup.SchoolSupplies,
-        QuestionKnowledgeGroup.Toys, QuestionKnowledgeGroup.Healthcare, QuestionKnowledgeGroup.School,
+        QuestionKnowledgeGroup.School,
+        QuestionKnowledgeGroup.Toys, QuestionKnowledgeGroup.Healthcare,
         QuestionKnowledgeGroup.Food, QuestionKnowledgeGroup.Drinks, QuestionKnowledgeGroup.Fruit, QuestionKnowledgeGroup.Money,
         QuestionKnowledgeGroup.Time, QuestionKnowledgeGroup.Measurement, QuestionKnowledgeGroup.Geometry,
         QuestionKnowledgeGroup.Packaging, QuestionKnowledgeGroup.Production, QuestionKnowledgeGroup.Data, QuestionKnowledgeGroup.Motion];
+    // Preserve the persisted group identity when restoring a saved selection.
+    public static QuestionKnowledgeGroup SelectionGroup(QuestionKnowledgeGroup group)
+        => group;
     public bool Includes(QuestionKnowledgeGroup group) => group == Group || Group == QuestionKnowledgeGroup.Measurement
         && group is QuestionKnowledgeGroup.Mass or QuestionKnowledgeGroup.Length or QuestionKnowledgeGroup.Transport;
     public int ArithmeticCeiling(CurriculumTier tier) => tier switch

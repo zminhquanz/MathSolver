@@ -1879,6 +1879,12 @@
     "right": "Giá trị vế phải của phương trình, ví dụ: 4."
   },
   "entries": [
+    {"key":"Settings.Wallpaper.Title","source":"Hình nền","mode":"exact"},
+    {"key":"Settings.Wallpaper.Hint","source":"Chọn tranh tĩnh, hoạt ảnh toán học hoặc video MP4 cho các tab học toán.","mode":"exact"},
+    {"key":"Settings.Wallpaper.Enable","source":"Bật hình nền","mode":"exact"},
+    {"key":"Settings.Wallpaper.Type","source":"Kiểu hình nền","mode":"exact"},
+    {"key":"Settings.Wallpaper.SchoolStill","source":"Nhất Quỷ Nhì Ma, Thứ Ba Học Trò","mode":"exact"},
+    {"key":"Settings.Wallpaper.SchoolStillHint","source":"Tranh màu nước tĩnh hiển thị trên tab học toán đang mở.","mode":"exact"},
     {
       "key": "AiBank.ProcessedQuestionsEmpty",
       "source": "Chưa có đề đã xử lý. Chọn model và dạng toán để bắt đầu tạo đề.",

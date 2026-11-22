@@ -148,6 +148,8 @@ public sealed partial class MatrixView
     private static string MatrixBackendLabel(MatrixBackend backend) => backend switch
     {
         MatrixBackend.Neon => MatrixEngine.NeonBackendName,
+        MatrixBackend.Sve => "SVE · 128-bit",
+        MatrixBackend.Sve2 => "SVE2 · 128-bit",
         MatrixBackend.Sse2 => "SSE2 · 128-bit", MatrixBackend.Avx2 => "AVX2 · 256-bit",
         MatrixBackend.Avx512 => "AVX-512F · 512-bit", _ => "Scalar"
     };

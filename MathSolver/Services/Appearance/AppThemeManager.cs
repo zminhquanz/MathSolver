@@ -1038,12 +1038,12 @@ public static class AppThemeManager
         bool enabled = LiveWallpaperManager.IsEnabled;
         if (!enabled) _liveWallpaperUseLightText = null;
         ApplyWallpaperReadingPalette(resources, palette, effectiveTheme, enabled,
-            LiveWallpaperManager.Mode != LiveWallpaperMode.Mp4, _liveWallpaperUseLightText);
+            LiveWallpaperManager.Mode, _liveWallpaperUseLightText);
     }
 
     private static void ApplyWallpaperReadingPalette(
         ResourceDictionary resources, ThemePalette palette, AppTheme effectiveTheme,
-        bool wallpaperEnabled, bool builtInAnimation, bool? useLightText)
+        bool wallpaperEnabled, LiveWallpaperMode mode, bool? useLightText)
     {
         if (!wallpaperEnabled)
         {
@@ -1066,6 +1066,8 @@ public static class AppThemeManager
             SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", palette.Surface);
             SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", palette.SurfaceAlt);
             SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", palette.InputBackground);
+            SetColorAndBrush(resources, "WallpaperNavigationSurfaceColor", "WallpaperNavigationSurfaceBrush", palette.Surface);
+            SetColorAndBrush(resources, "WallpaperActionBackgroundColor", "WallpaperActionBackgroundBrush", palette.Accent);
             SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", palette.Border);
             SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", palette.Divider);
             SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", palette.AccentSoft);
@@ -1092,7 +1094,7 @@ public static class AppThemeManager
         // frame-brightness timeline without changing the app-wide theme.
         bool darkGlass;
 
-        if (builtInAnimation ||
+        if (mode != LiveWallpaperMode.Mp4 ||
             useLightText is null)
         {
             darkGlass = themeIsDark;
@@ -1130,12 +1132,31 @@ public static class AppThemeManager
             ? Color.FromArgb("#F1F5F9")
             : Color.FromArgb("#1F2937");
 
-        // Reading regions deliberately block moving wallpaper. The decoration
-        // stays visible in the page margins rather than through digits/tables.
-        Color surfaceStrong = surfaceBase;
-        Color surface = surfaceBase;
-        Color surfaceAlt = surfaceAltBase;
-        Color input = inputBase;
+        Color surfaceStrong = WithAlpha(surfaceBase, darkGlass ? .80 : .78);
+        Color surface = WithAlpha(surfaceBase, darkGlass ? .64 : .58);
+        Color surfaceAlt = WithAlpha(surfaceAltBase, darkGlass ? .59 : .48);
+        Color input = WithAlpha(inputBase, darkGlass ? .76 : .70);
+        Color navigation = WithAlpha(surfaceBase, darkGlass ? .62 : .46);
+
+        // Opposite-polarity frames provide the worst contrast for the reading text.
+        Color scrim = mode switch
+        {
+            LiveWallpaperMode.StaticSchoolImage => darkGlass
+                ? new Color(0.015f, 0.027f, 0.055f, 0.60f)
+                : new Color(1f, 1f, 1f, 0.25f),
+            LiveWallpaperMode.Mp4 => darkGlass
+                ? new Color(0.015f, 0.027f, 0.055f, 0.28f)
+                : new Color(1f, 1f, 1f, 0.22f),
+            _ => darkGlass
+                ? new Color(0.015f, 0.027f, 0.055f, 0.18f)
+                : new Color(1f, 1f, 1f, 0.12f)
+        };
+        Color darkestBackdrop = CompositeOver(scrim, Colors.Black);
+        Color brightestBackdrop = CompositeOver(scrim, Colors.White);
+        Color readingBackdrop = darkGlass ? brightestBackdrop : darkestBackdrop;
+
+        Color actionBackdrop = palette.OnAccent.Red > .5f ? brightestBackdrop : darkestBackdrop;
+        Color action = WallpaperActionFill(palette.Accent, palette.OnAccent, actionBackdrop);
 
         // On bright MP4 frames the app can still be in Dark theme. Do not use
         // the dark-theme soft palette directly for in-content chips/actions,
@@ -1162,29 +1183,35 @@ public static class AppThemeManager
             ? Mix(surfaceBase, palette.Info, 0.12)
             : Mix(palette.Info, Colors.White, 0.88);
 
-        Color selectedBackground = darkGlass
-            ? palette.Accent
-            : accentSoftBase;
-        Color selectedBorder = darkGlass
-            ? WithAlpha(palette.Accent, 0.96)
-            : WithAlpha(accentBorderBase, 0.96);
-        Color selectedText = darkGlass
-            ? palette.OnAccent
-            : Colors.Black;
+        double tintAlpha = darkGlass ? .72 : .64;
+        Color accentSoft = WithAlpha(accentSoftBase, tintAlpha);
+        Color successSoft = WithAlpha(successSoftBase, tintAlpha);
+        Color warningSoft = WithAlpha(warningSoftBase, tintAlpha);
+        Color dangerSoft = WithAlpha(dangerSoftBase, tintAlpha);
+        Color infoSoft = WithAlpha(infoSoftBase, tintAlpha);
+        Color selectedBackground = accentSoft;
+        Color selectedBorder = WithAlpha(darkGlass ? palette.Accent : accentBorderBase, .90);
+        Color selectedText = textPrimary;
 
-        Color dangerActionBackground = dangerSoftBase;
+        Color dangerActionBackground = dangerSoft;
         Color dangerActionBorder = darkGlass
             ? WithAlpha(dangerBorderBase, 0.92)
             : WithAlpha(dangerBorderBase, 0.96);
         Color dangerActionText = darkGlass
             ? EnsureVisibleOnSurface(
                 palette.Danger,
-                dangerActionBackground,
+                CompositeOver(dangerActionBackground, readingBackdrop),
                 preferLighter: true)
             : EnsureVisibleOnSurface(
                 palette.Danger,
-                dangerActionBackground,
+                CompositeOver(dangerActionBackground, readingBackdrop),
                 preferLighter: false);
+
+        Color[] readingSurfaces = [surfaceStrong, surface, surfaceAlt, input, navigation,
+            accentSoft, successSoft, warningSoft, dangerSoft, infoSoft];
+        Color[] worstReadingSurfaces = readingSurfaces
+            .Select(fill => CompositeOver(fill, readingBackdrop))
+            .ToArray();
 
         // Apply polarity-critical tokens first. If a WinUI target is still
         // completing a native transition and rejects a later surface update, the
@@ -1198,34 +1225,40 @@ public static class AppThemeManager
         SetColorAndBrush(resources, "WallpaperSurfaceColor", "WallpaperSurfaceBrush", surface);
         SetColorAndBrush(resources, "WallpaperSurfaceAltColor", "WallpaperSurfaceAltBrush", surfaceAlt);
         SetColorAndBrush(resources, "WallpaperInputBackgroundColor", "WallpaperInputBackgroundBrush", input);
+        SetColorAndBrush(resources, "WallpaperNavigationSurfaceColor", "WallpaperNavigationSurfaceBrush", navigation);
+        SetColorAndBrush(resources, "WallpaperActionBackgroundColor", "WallpaperActionBackgroundBrush", action);
         SetColorAndBrush(resources, "WallpaperBorderColor", "WallpaperBorderBrush", WithAlpha(borderBase, darkGlass ? 0.46 : 0.42));
         SetColorAndBrush(resources, "WallpaperDividerColor", "WallpaperDividerBrush", WithAlpha(dividerBase, darkGlass ? 0.34 : 0.38));
-        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", accentSoftBase);
-        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(accentBorderBase, 0.92));
-        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", successSoftBase);
-        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", warningSoftBase);
-        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", dangerSoftBase);
-        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", infoSoftBase);
-        SetReadableContentText(resources, palette, surface, surfaceAlt, input, accentSoftBase,
-            successSoftBase, warningSoftBase, dangerSoftBase, infoSoftBase);
+        SetColorAndBrush(resources, "WallpaperPrimarySoftColor", "WallpaperPrimarySoftBrush", accentSoft);
+        SetColorAndBrush(resources, "WallpaperPrimaryBorderColor", "WallpaperPrimaryBorderBrush", WithAlpha(accentBorderBase, .64));
+        SetColorAndBrush(resources, "WallpaperSuccessSoftColor", "WallpaperSuccessSoftBrush", successSoft);
+        SetColorAndBrush(resources, "WallpaperWarningSoftColor", "WallpaperWarningSoftBrush", warningSoft);
+        SetColorAndBrush(resources, "WallpaperDangerSoftColor", "WallpaperDangerSoftBrush", dangerSoft);
+        SetColorAndBrush(resources, "WallpaperInfoSoftColor", "WallpaperInfoSoftBrush", infoSoft);
+        SetReadableContentText(resources, palette, worstReadingSurfaces);
         SetColorAndBrush(resources, "WallpaperSelectionBackgroundColor", "WallpaperSelectionBackgroundBrush", selectedBackground);
         SetColorAndBrush(resources, "WallpaperSelectionBorderColor", "WallpaperSelectionBorderBrush", selectedBorder);
         SetColorAndBrush(resources, "WallpaperDangerActionBackgroundColor", "WallpaperDangerActionBackgroundBrush", dangerActionBackground);
         SetColorAndBrush(resources, "WallpaperDangerActionBorderColor", "WallpaperDangerActionBorderBrush", dangerActionBorder);
 
-        // The built-in animation already uses restrained theme colors, so it
-        // only needs a light veil. MP4 uses a veil matched to the current frame
-        // polarity. Runtime only changes resources when hysteresis crosses a
-        // threshold, avoiding flicker and per-frame layout churn.
-        Color scrim = builtInAnimation
-            ? (darkGlass
-                ? new Color(0.015f, 0.027f, 0.055f, 0.18f)
-                : new Color(1f, 1f, 1f, 0.12f))
-            : (darkGlass
-                ? new Color(0.015f, 0.027f, 0.055f, 0.28f)
-                : new Color(1f, 1f, 1f, 0.22f));
-
         SetColorAndBrush(resources, "LiveWallpaperScrimColor", "LiveWallpaperScrimBrush", scrim);
+    }
+
+    private static Color CompositeOver(Color fill, Color backdrop) => Mix(backdrop, fill, fill.Alpha);
+
+    private static Color WallpaperActionFill(Color accent, Color ink, Color backdrop)
+    {
+        const double opacity = .82;
+        Color target = ink.Red > .5f ? Colors.Black : Colors.White;
+        for (int step = 0; step < 20; step++)
+        {
+            Color fill = WithAlpha(Mix(accent, target, step / 20d), opacity);
+            // Leave room for the existing pointer and press feedback.
+            if (GetContrastRatio(ink, CompositeOver(fill, backdrop)) >= 5.1)
+                return fill;
+        }
+
+        return WithAlpha(target, opacity);
     }
 
     private static ReadableRgb ToReadableRgb(Color color) => new(color.Red, color.Green, color.Blue);

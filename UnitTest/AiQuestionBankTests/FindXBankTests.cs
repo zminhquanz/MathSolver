@@ -36,12 +36,19 @@ internal static class FindXBankTests
                 Check(!BasicQuestionValidator.Validate("{}", c with { UnknownRole = FindXUnknownRole.None }).IsValid, "Forged unknown role passed.");
                 Check(!BasicQuestionValidator.Validate("{}", c with { Right = 0 }).IsValid, "Zero divisor/factor passed.");
                 var fresh = c.FreshFacts(new Random(seed + 412));
-                Check(fresh.IsValid && fresh.SceneId == c.SceneId && fresh.UnknownRole == c.UnknownRole && fresh.KnowledgeGroup == group,
+                Check(fresh.IsValid && fresh.SceneId == c.SceneId && fresh.UnknownRole == c.UnknownRole && new QuestionLearningProfile(group).Includes(fresh.KnowledgeGroup),
                     "Fresh facts changed scene/role/profile: " + tag);
                 string prompt = BasicQuestionPrompt.Build(c), grammar = GgufQuestionRuntime.BuildGrammar(c);
                 bool actorIsSelectedContext = scene.SourceScene.StoryContextId is not null &&
                     AppliedQuestionCatalogue.Draft(FindXQuestionCatalogue.AsApplied(c)).GivenA.Contains(c.Subject, StringComparison.Ordinal);
-                Check(prompt.Length < 2800 && (!prompt.Contains(c.Subject) || actorIsSelectedContext) && !prompt.Contains("Unit catalogue:"), "Bloated/exposed prompt: " + tag);
+                // Food/drink prompts intentionally name the fixed shops or paired owners in their
+                // theme guidance; only unexpected actor exposure should fail this budget check.
+                bool actorIsBoundByTheme = c.KnowledgeGroup is QuestionKnowledgeGroup.Food or QuestionKnowledgeGroup.Drinks
+                    && FoodThemePrompt.Guidance(c).Contains(c.Subject, StringComparison.Ordinal);
+                Check(prompt.Length < 2800 && (!prompt.Contains(c.Subject) || actorIsSelectedContext || actorIsBoundByTheme)
+                    && !prompt.Contains("Unit catalogue:"),
+                    $"Bloated/exposed prompt: {tag}; length={prompt.Length}; subjectExposed={prompt.Contains(c.Subject)}; " +
+                    $"selectedContext={actorIsSelectedContext}; themeBound={actorIsBoundByTheme}; unitCatalogue={prompt.Contains("Unit catalogue:")}");
                 Check(grammar.StartsWith("root ::=") && grammar.All(ch => ch <= 127), "Invalid grammar: " + tag);
                 foreach (int variant in new[] { 0, 1 })
                 {
@@ -92,6 +99,31 @@ internal static class FindXBankTests
         foreach (var _ in roleScenes)
             Check(seenScenes.Add(cycle.Next(new(QuestionKnowledgeGroup.Objects), ArithmeticOperation.Subtract,
                 CurriculumTier.FiveStars, AppLanguage.Vietnamese, FindXUnknownRole.Minuend).SceneId), "Explicit-role cycle repeated a setting.");
+        // Measurement is a composite picker. Both current concrete-group rows and
+        // historical Measurement-group rows must remain valid and selectable.
+        foreach (var concreteGroup in new[] { QuestionKnowledgeGroup.Mass, QuestionKnowledgeGroup.Length, QuestionKnowledgeGroup.Transport })
+        {
+            var scene = FindXQuestionCatalogue.All.First(s => s.SourceScene.Group == concreteGroup);
+            var contract = FindXQuestionCatalogue.Create(new(QuestionKnowledgeGroup.Measurement), scene.EquationOperation,
+                CurriculumTier.FiveStars, AppLanguage.Vietnamese, new Random(41), sceneId: scene.Id);
+            Check(contract.IsValid && contract.KnowledgeGroup == concreteGroup,
+                $"Measurement Find X lost its concrete group: {concreteGroup}");
+            var historical = contract with { KnowledgeGroup = QuestionKnowledgeGroup.Measurement,
+                TopicId = nameof(QuestionKnowledgeGroup.Measurement) };
+            Check(historical.IsValid && historical.FreshFacts(new Random(43)).IsValid,
+                $"Historical Measurement Find X failed validation: {concreteGroup}");
+            foreach (var (name, saved) in new[] { ("current", contract), ("historical", historical) })
+            {
+                var measurementStore = new QuestionBankStore(Path.Combine(directory, $"findx-measurement-{concreteGroup}-{name}.db3"));
+                var draft = FindXQuestionCatalogue.Draft(saved);
+                Check(await measurementStore.InsertAsync(new(saved, draft, QuestionBankStore.SerializeDraft(draft), "test", DateTime.UtcNow)),
+                    $"Measurement Find X insertion failed: {concreteGroup}/{name}");
+                var retrieved = await measurementStore.TakeFindXAsync(scene.EquationOperation, CurriculumTier.FiveStars,
+                    AppLanguage.Vietnamese, new(QuestionKnowledgeGroup.Measurement));
+                Check(retrieved?.Contract.IsValid == true && retrieved.Contract.SceneId == scene.Id,
+                    $"Measurement Find X lookup lost {concreteGroup}/{name}");
+            }
+        }
         string path = Path.Combine(directory, "findx.db3");
         var store = new QuestionBankStore(path);
         var records = new List<ValidatedBankQuestion>();

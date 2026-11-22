@@ -129,7 +129,8 @@ internal sealed class QuizWorksheetSettingsView : ContentView
             if (!_stars.Items.SequenceEqual(difficultyLabels)) _stars.ItemsSource = difficultyLabels;
             IllustratedQuizPicker.SetTextOptions(_stars);
             if (_stars.SelectedIndex != (int)Settings.Tier - 1) _stars.SelectedIndex = (int)Settings.Tier - 1;
-            Choices(_group, _groups.Select(g => "Learning.Group." + g), Math.Max(0, Array.IndexOf(_groups, Settings.Group)));
+            Choices(_group, _groups.Select(g => "Learning.Group." + g),
+                Math.Max(0, Array.IndexOf(_groups, QuestionLearningProfile.SelectionGroup(Settings.Group))));
             _formatField.IsVisible = Settings.CanChooseFormat; _groupField.IsVisible = Settings.CanChooseGroup;
             if (Settings.FormatPrefix.Length > 0)
             {
@@ -164,7 +165,7 @@ internal sealed class QuizWorksheetSettingsView : ContentView
         var parts = new List<string> { IllustratedQuizPicker.DifficultyLabels()[(int)Settings.Tier - 1],
             T(_catalog.Options[Settings.ProblemIndex].LocalizationKey) };
         if (Settings.CanChooseFormat) parts.Add(T(Settings.UsesWords ? "FractionBank.WordProblems" : Settings.FormatPrefix + ".Numeric"));
-        if (Settings.CanChooseGroup) parts.Add(T("Learning.Group." + Settings.Group));
+        if (Settings.CanChooseGroup) parts.Add(T("Learning.Group." + QuestionLearningProfile.SelectionGroup(Settings.Group)));
         if (_subtypeField.IsVisible && _subtype.SelectedIndex >= 0) parts.Add(_subtype.Items[_subtype.SelectedIndex]);
         if (_measurementField.IsVisible && _measurement.SelectedIndex > 0) parts.Add(_measurement.Items[_measurement.SelectedIndex]);
         return string.Join(" · ", parts);

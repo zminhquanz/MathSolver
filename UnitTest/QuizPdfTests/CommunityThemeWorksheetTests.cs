@@ -18,7 +18,27 @@ internal static class CommunityThemeWorksheetTests
         Check(legacy.IsValid, "Pre-existing club-arrivals/student contract became invalid");
         var legacyDraft = BasicQuestionTemplates.Example(legacy);
         records.Add(new(legacy, legacyDraft, QuestionBankStore.SerializeDraft(legacyDraft), "legacy-students", DateTime.UtcNow));
-        foreach (string name in new[] { "Toys", "Healthcare", "School" })
+        var addedSchoolItems = new Dictionary<string, string>
+        {
+            ["pencil-stock"] = "pencils", ["ruler-stock"] = "rulers", ["eraser-stock"] = "erasers",
+            ["fountain-pens"] = "fountain-pens", ["art-markers"] = "felt-tip-pens",
+            ["geometry-compasses"] = "compasses", ["pencil-cases"] = "pencil-cases",
+            ["schoolbags"] = "school-bags", ["desks"] = "school-desks", ["chalk"] = "chalk-sticks",
+            ["drawing-paper"] = "drawing-sheets", ["crayons"] = "crayons",
+            ["glue-sticks"] = "glue-sticks", ["scissors"] = "scissors",
+            ["calculators"] = "calculators", ["bookmarks"] = "bookmarks"
+        };
+        foreach (var (id, unitId) in addedSchoolItems)
+        {
+            Check(QuestionUnits.Find(unitId) is not null, "School object has no bilingual unit: " + unitId);
+            foreach (var suffix in new[] { "total", "remaining", "groups", "share" })
+            {
+                var scene = AppliedQuestionCatalogue.Find($"theme-school-{id}-{suffix}");
+                Check(scene?.Group == QuestionKnowledgeGroup.School && scene.UnitId == unitId,
+                    "School object is missing its C# arithmetic scene: " + id + "/" + suffix);
+            }
+        }
+        foreach (string name in new[] { "Toys", "Healthcare", "SchoolSupplies", "School" })
         {
             Check(Enum.TryParse<QuestionKnowledgeGroup>(name, out var group) && QuestionLearningProfile.Groups().Contains(group), "Missing selectable group: " + name);
             foreach (var language in Enum.GetValues<AppLanguage>())
@@ -27,6 +47,7 @@ internal static class CommunityThemeWorksheetTests
                 Check(!string.IsNullOrWhiteSpace(choice.Description), "Missing group description");
                 var printed = new List<QuizPrintItem>();
                 var representative = new Dictionary<(BankQuestionFamily, ArithmeticOperation), QuizPrintItem>();
+                var newSchoolPdfItems = new List<QuizPrintItem>();
                 foreach (var tier in Enum.GetValues<CurriculumTier>())
                 foreach (var op in Enum.GetValues<ArithmeticOperation>())
                 {
@@ -45,22 +66,32 @@ internal static class CommunityThemeWorksheetTests
                         var contract = FindXQuestionCatalogue.Create(profile, op, tier, language, new(29), sceneId: scene.Id);
                         Verify(contract, FindXQuestionCatalogue.Draft(contract));
                     }
-                    var fraction = FractionQuestionCatalogue.Create(profile, op, tier, language, new(31));
-                    Verify(fraction, FractionQuestionCatalogue.Draft(fraction));
+                    foreach (var scene in FractionQuestionCatalogue.Available(profile, op, tier))
+                    {
+                        var fraction = FractionQuestionCatalogue.Create(profile, op, tier, language, new(31), scene.Id);
+                        Verify(fraction, FractionQuestionCatalogue.Draft(fraction));
+                    }
                 }
-                var sample = representative.Values.ToArray();
-                var sheet = new QuizWorksheet("community", name, "", language, CurriculumTier.ThreeStars,
+                var sample = representative.Values.Concat(newSchoolPdfItems).ToArray();
+                string title = name switch
+                {
+                    "SchoolSupplies" => language == AppLanguage.Vietnamese ? "Đồ dùng học tập" : "School supplies",
+                    "School" => language == AppLanguage.Vietnamese ? "Trường học" : "School",
+                    _ => name
+                };
+                var sheet = new QuizWorksheet("community", title, "", language, CurriculumTier.ThreeStars,
                     ArithmeticQuizMode.Essay, Array.AsReadOnly(sample));
                 foreach (bool answers in new[] { false, true })
                 {
                     byte[] pdf = QuizPdfWriter.Write(sheet, answers); PdfAssertions.HasEmbeddedText(pdf);
                     string embedded = PdfTestReader.ExtractText(pdf);
-                    Check(embedded.Contains(name) && !embedded.Contains("{unit") && !embedded.Contains("{name}"), "PDF lost title or contains unresolved fields");
+                    Check(embedded.Contains(title) && !embedded.Contains("{unit") && !embedded.Contains("{name}"), "PDF lost title or contains unresolved fields");
                     File.WriteAllBytes(Path.Combine(directory, $"{name}-{language}-{answers}.pdf"), pdf); pdfs++;
                 }
                 foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.FindX, BankQuestionFamily.Fraction })
                 {
-                    var c = records.Last(r => r.Contract.KnowledgeGroup == group && r.Contract.Language == language && r.Contract.Family == family).Contract;
+                    var c = records.Last(r => new QuestionLearningProfile(group).Includes(r.Contract.KnowledgeGroup)
+                        && r.Contract.Language == language && r.Contract.Family == family).Contract;
                     using var template = new MemoryStream();
                     QuestionAuthoringWorkbook.Write(template, c, name, language); template.Position = 0;
                     Check(QuestionBankWorkbook.Read(template).Count == 0, "Example imported without explicit selection");
@@ -91,7 +122,8 @@ internal static class CommunityThemeWorksheetTests
                         var open = c with { OpenProse = true };
                         Check(BasicQuestionValidator.Validate(raw, open).IsValid, "Creative AI route rejected the source: " + c.SceneId);
                         string theme = language == AppLanguage.Vietnamese
-                            ? name switch { "Toys" => "Đồ chơi", "Healthcare" => "Y tế", _ => "Trường học" } : name;
+                            ? name switch { "Toys" => "Đồ chơi", "Healthcare" => "Y tế", _ => "Trường học" }
+                            : name is "SchoolSupplies" or "School" ? "School:" : name;
                         Check(BasicQuestionPrompt.Build(open).Contains(theme, StringComparison.Ordinal), "Creative AI prompt lost theme");
                     }
                     Check(!BasicQuestionValidator.Validate(raw, c with { KnowledgeGroup = QuestionKnowledgeGroup.Food }).IsValid,
@@ -107,6 +139,10 @@ internal static class CommunityThemeWorksheetTests
                                 "Creative healthcare stock contract accepted unrelated dosing advice");
                     }
                     string prompt = BasicQuestionPrompt.Build(c);
+                    if (name == "School" && c.Family == BankQuestionFamily.Arithmetic
+                        && c.SceneId.StartsWith("theme-school-", StringComparison.Ordinal))
+                        Check(prompt.Contains(language == AppLanguage.Vietnamese ? "Tình huống cụ thể" : "Selected school setting",
+                            StringComparison.Ordinal), "AI prompt lost selected school context: " + c.SceneId);
                     string expectedUnit = c.Family == BankQuestionFamily.Fraction
                         ? language == AppLanguage.Vietnamese ? FractionQuestionCatalogue.Find(c.SceneId)!.ResultUnit
                             : FractionQuestionCatalogue.Find(c.SceneId)!.EnResultUnit : c.Unit;
@@ -122,7 +158,9 @@ internal static class CommunityThemeWorksheetTests
                     if (source?.UnitId == "marbles") Check(artwork == "quiz_story_marble.png", "Existing marble PNG not routed");
                     if (name == "Healthcare")
                     {
-                        string? expected = source?.UnitId switch
+                        string? expected = c.Family == BankQuestionFamily.Fraction
+                            ? QuizStoryArtworkCatalogue.FractionArtwork(c.SceneId)
+                            : source?.UnitId switch
                         {
                             "paracetamol-boxes" => "medical_paracetamol_box",
                             "vitamin-c-boxes" => "medical_vitamin_c_box",
@@ -139,6 +177,11 @@ internal static class CommunityThemeWorksheetTests
                     var output = QuizWorksheetBuilder.Format(question, language);
                     Check(!string.IsNullOrWhiteSpace(output.Prompt) && !string.IsNullOrWhiteSpace(output.Answer), "Empty PDF question");
                     printed.Add(output);
+                    if (name == "School" && c.Family == BankQuestionFamily.Arithmetic
+                        && c.Tier == CurriculumTier.ThreeStars
+                        && (c.SceneId.StartsWith("theme-school-bookmarks-", StringComparison.Ordinal)
+                            || c.SceneId.StartsWith("theme-school-chalk-", StringComparison.Ordinal)))
+                        newSchoolPdfItems.Add(output);
                     representative.TryAdd((c.Family, c.Operation), output);
                     foreach (var mode in Enum.GetValues<ArithmeticQuizMode>())
                     {
@@ -152,18 +195,57 @@ internal static class CommunityThemeWorksheetTests
                 }
             }
         }
-        using var backup = new MemoryStream(); QuestionBankWorkbook.WriteBackup(backup, records); backup.Position = 0;
+        // Exercise every scene above, then keep the workbook fixture below the documented 40 MiB
+        // uncompressed import guard while covering each group, family, operation, tier and language.
+        var workbookCases = records.Take(1).Concat(records.Skip(1)
+            .GroupBy(r => (r.Contract.KnowledgeGroup, r.Contract.Family, r.Contract.Operation,
+                r.Contract.Tier, r.Contract.Language)).Select(g => g.First())).ToArray();
+        Check(workbookCases.Any(r => r.Contract.KnowledgeGroup == QuestionKnowledgeGroup.SchoolSupplies)
+            && workbookCases.Any(r => r.Contract.KnowledgeGroup == QuestionKnowledgeGroup.School),
+            "Excel fixtures must preserve both school group IDs");
+        using var backup = new MemoryStream(); QuestionBankWorkbook.WriteBackup(backup, workbookCases); backup.Position = 0;
         var read = QuestionBankWorkbook.Read(backup);
-        Check(read.Count == records.Count && read.All(r => r.Question is not null), "Excel lost records");
-        for (int i = 0; i < read.Count; i++) Check(read[i].Question!.Contract == records[i].Contract
-            && read[i].Question!.Draft == records[i].Draft, "Excel changed contract/draft");
+        Check(read.Count == workbookCases.Length && read.All(r => r.Question is not null), "Excel lost records");
+        for (int i = 0; i < read.Count; i++) Check(read[i].Question!.Contract == workbookCases[i].Contract
+            && read[i].Question!.Draft == workbookCases[i].Draft, "Excel changed contract/draft");
         var store = new QuestionBankStore(Path.Combine(directory, "community.db3")); backup.Position = 0;
         var imported = await store.ImportExcelAsync(backup);
         Check(imported.Rejected == 0 && imported.Inserted > 0, "SQLite rejected community groups");
         using var exported = new MemoryStream(); await store.ExportExcelAsync(exported); exported.Position = 0;
         var again = QuestionBankWorkbook.Read(exported);
         Check(again.Count == imported.Inserted && again.All(r => r.Question is not null), "SQLite re-export lost questions");
+        // Existing rows for both school themes remain retrievable under their own selection.
+        foreach (var family in new[] { BankQuestionFamily.Arithmetic, BankQuestionFamily.FindX, BankQuestionFamily.Fraction })
+        {
+            var groups = workbookCases.Where(r => r.Contract.Family == family
+                && r.Contract.Operation == ArithmeticOperation.Add
+                && r.Contract.Tier == CurriculumTier.ThreeStars
+                && r.Contract.Language == AppLanguage.English
+                && r.Contract.KnowledgeGroup is QuestionKnowledgeGroup.SchoolSupplies or QuestionKnowledgeGroup.School)
+                .GroupBy(r => r.Contract.KnowledgeGroup).Select(g => g.First()).ToArray();
+            Check(groups.Select(r => r.Contract.KnowledgeGroup).ToHashSet().SetEquals(
+                [QuestionKnowledgeGroup.SchoolSupplies, QuestionKnowledgeGroup.School]),
+                "Missing school contract for " + family);
+            var schoolStore = new QuestionBankStore(Path.Combine(directory, "school-separated-" + family + ".db3"));
+            foreach (var row in groups)
+                Check(await schoolStore.InsertAsync(row), "Failed to seed school family " + family);
+            foreach (var group in new[] { QuestionKnowledgeGroup.SchoolSupplies, QuestionKnowledgeGroup.School })
+            {
+                var profile = new QuestionLearningProfile(group);
+                var question = family switch
+                {
+                    BankQuestionFamily.FindX => await schoolStore.TakeFindXAsync(ArithmeticOperation.Add,
+                        CurriculumTier.ThreeStars, AppLanguage.English, profile),
+                    BankQuestionFamily.Fraction => await schoolStore.TakeFractionAsync(ArithmeticOperation.Add,
+                        CurriculumTier.ThreeStars, AppLanguage.English, profile),
+                    _ => await schoolStore.TakeForProfileAsync(ArithmeticOperation.Add,
+                        CurriculumTier.ThreeStars, AppLanguage.English, profile)
+                };
+                Check(question?.Contract.KnowledgeGroup == group,
+                    $"Saved {family} selection returned the wrong school group for {group}");
+            }
+        }
         File.WriteAllBytes(Path.Combine(directory, "community-backup.xlsx"), backup.ToArray());
-        Console.WriteLine($"PASS community themes: {cases} VI/EN scene/tier/operation/family contracts, {presentations} presentations, {pdfs} PDFs, {templates} authoring templates, Excel/SQLite roundtrips.");
+        Console.WriteLine($"PASS community themes: {cases} VI/EN scene/tier/operation/family contracts, {presentations} presentations, {pdfs} PDFs, {templates} authoring templates, {workbookCases.Length} Excel/SQLite rows, separate school retrieval.");
     }
 }

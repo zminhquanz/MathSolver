@@ -640,6 +640,20 @@ internal sealed partial class ParallelBigUnsigned
         }
     }
 
+    internal static NttKernelIsa? GetArmSveIsaForPower(int exponent)
+    {
+#if ANDROID && NET11_0_OR_GREATER
+        return CalculationAccelerationManager.GetPowerNttSveMode(exponent) switch
+        {
+            CalculationSimdMode.ArmSve => NttKernelIsa.Sve,
+            CalculationSimdMode.ArmSve2 => NttKernelIsa.Sve2,
+            _ => null
+        };
+#else
+        return null;
+#endif
+    }
+
     public static ParallelPowerResult Pow(
         ulong baseValue,
         int exponent,
@@ -698,6 +712,7 @@ internal sealed partial class ParallelBigUnsigned
         // need identical immutable twiddle tables. Keep exactly one Pow-scoped
         // plan per modulus and let every worker team share it instead of each
         // branch owning another 64 MiB-class pair of forward/inverse tables.
+        var sveIsa = exponent <= LegacyMaximumExponent ? GetArmSveIsaForPower(exponent) : null;
         using var sharedNttTwiddlePlans =
             new SharedNttTwiddlePlans(
                 nttTwiddleBufferPool,
@@ -705,7 +720,8 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx512Ntt,
                 useSseNtt: exponent <= LegacyMaximumExponent && CalculationAccelerationManager.UsePowerNttSse,
                 useNeonNtt: exponent <= LegacyMaximumExponent &&
-                    CalculationAccelerationManager.UsePowerNttNeonForExponent(exponent));
+                    CalculationAccelerationManager.UsePowerNttNeonForExponent(exponent),
+                sveIsa: sveIsa);
 
         if (TryCreateExponentSplit(
                 exponent,
@@ -826,6 +842,7 @@ internal sealed partial class ParallelBigUnsigned
         // cache-local butterflies, global cached/uncached tails, pointwise
         // products and CRT all remain on the 128-bit NEON backend.  AVX2/SSE
         // are mutually exclusive with this flag by platform/dispatch policy.
+        var sveIsa = GetArmSveIsaForPower(exponent);
         bool useNeonNtt =
             !useAvx2Ntt &&
             !useSseNtt &&
@@ -915,7 +932,7 @@ internal sealed partial class ParallelBigUnsigned
         diagnostics.ConfigureNttBackends(
             useAvx2Ntt,
             useSse: useSseNtt,
-            useNeon: useNeonNtt);
+            useNeon: useNeonNtt || sveIsa.HasValue);
 
         // Three retained 2^26 uint buffers preserve the measured ~6 GB class
         // forward-cache behavior. Four simultaneously leased buffers is the
@@ -936,7 +953,8 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx2Ntt,
                 useAvx512Ntt: false,
                 useSseNtt: useSseNtt,
-                useNeonNtt: useNeonNtt);
+                useNeonNtt: useNeonNtt,
+                sveIsa: sveIsa);
 
         ParallelBigUnsigned magnitude;
 
@@ -4100,7 +4118,8 @@ internal sealed partial class ParallelBigUnsigned
                                 useAvx512Crt,
                                 useAvx2Crt,
                                 useSseCrt,
-                                useNeonCrt);
+                                useNeonCrt,
+                                workers.SveIsa);
                         };
 
                     ExecuteVectorAlignedRanges(
@@ -4376,7 +4395,8 @@ internal sealed partial class ParallelBigUnsigned
                         useAvx512Crt,
                         useAvx2Crt,
                         useSseCrt,
-                        useNeonCrt);
+                        useNeonCrt,
+                        workers.SveIsa);
                 });
 
             crtTicks +=
@@ -10934,7 +10954,8 @@ internal sealed partial class ParallelBigUnsigned
         bool useAvx512Crt,
         bool useAvx2Crt,
         bool useSseCrt,
-        bool useNeonCrt)
+        bool useNeonCrt,
+        NttKernelIsa? sveIsa = null)
     {
         int count =
             firstSpan.Length;
@@ -11193,10 +11214,16 @@ internal sealed partial class ParallelBigUnsigned
             offset == 0 &&
             count >= Vector128<uint>.Count)
         {
-            offset = ReconstructCrtRangeNeon(
-                firstSpan,
-                secondSpan,
-                scratchSpan);
+#if ANDROID && NET11_0_OR_GREATER
+            offset = sveIsa switch
+            {
+                NttKernelIsa.Sve => ReconstructCrtRangeSve<SveNtt>(firstSpan, secondSpan, scratchSpan),
+                NttKernelIsa.Sve2 => ReconstructCrtRangeSve<Sve2Ntt>(firstSpan, secondSpan, scratchSpan),
+                _ => ReconstructCrtRangeNeon(firstSpan, secondSpan, scratchSpan)
+            };
+#else
+            offset = ReconstructCrtRangeNeon(firstSpan, secondSpan, scratchSpan);
+#endif
         }
 
         // <=10M vector tail: pad the one global residual to the active SIMD
@@ -11229,7 +11256,8 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx512Crt,
                 useAvx2Crt,
                 useSseCrt,
-                useNeonCrt);
+                useNeonCrt,
+                sveIsa);
 
             crtScratch.Slice(0, remaining).CopyTo(scratchSpan.Slice(offset, remaining));
             offset = count;
@@ -31508,7 +31536,8 @@ internal sealed partial class ParallelBigUnsigned
             bool useAvx512Ntt = false,
             int maximumCachedHalfLength = 0,
             bool useSseNtt = false,
-            bool useNeonNtt = false)
+            bool useNeonNtt = false,
+            NttKernelIsa? sveIsa = null)
         {
             _bufferPool =
                 bufferPool ??
@@ -31523,13 +31552,17 @@ internal sealed partial class ParallelBigUnsigned
                 useAvx512Ntt;
             _maximumCachedHalfLength = maximumCachedHalfLength;
             _useSseNtt = useSseNtt && !useAvx2Ntt && Sse2.IsSupported;
-            _useNeonNtt = useNeonNtt && !useAvx2Ntt &&
+            // SVE uses the same radix hierarchy and Shoup tables. Stages with
+            // specialized NEON kernels remain available on the same ARM64 CPU.
+            _useNeonNtt = (useNeonNtt || sveIsa.HasValue) && !useAvx2Ntt &&
                 (System.Runtime.Intrinsics.Arm.AdvSimd.Arm64.IsSupported ||
                  (RuntimeInformation.ProcessArchitecture == Architecture.Arm64 && Vector128.IsHardwareAccelerated));
+            SveIsa = _useNeonNtt ? sveIsa : null;
         }
 
         public bool UseSseNtt => _useSseNtt;
         public bool UseNeonNtt => _useNeonNtt;
+        public NttKernelIsa? SveIsa { get; }
 
         public bool UseAvx2Ntt =>
             _useAvx2Ntt;
@@ -32120,6 +32153,7 @@ internal sealed partial class ParallelBigUnsigned
 
         public bool UseSseNtt => _sharedNttTwiddlePlans.UseSseNtt;
         public bool UseNeonNtt => _sharedNttTwiddlePlans.UseNeonNtt;
+        public NttKernelIsa? SveIsa => _sharedNttTwiddlePlans.SveIsa;
 
         public bool UseAvx2Ntt =>
             _sharedNttTwiddlePlans.UseAvx2Ntt;

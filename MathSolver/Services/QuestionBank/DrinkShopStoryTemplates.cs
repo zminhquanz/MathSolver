@@ -12,6 +12,9 @@ internal static class DrinkShopStoryTemplates
     {
         bool vi = contract.Language == AppLanguage.Vietnamese;
         bool fraction = contract.Version == FractionQuestionCatalogue.Version;
+        string shops = FoodThemePrompt.DrinkShopActors(
+            FoodThemeCatalogue.IsCoffeeDrinkContract(contract),
+            FoodThemeCatalogue.IsMilkTeaDrinkContract(contract), contract.Language).Both;
         var prose = source.Prose;
 
         if (fraction)
@@ -22,15 +25,15 @@ internal static class DrinkShopStoryTemplates
                 {
                     GivenA = [vi ? "{name} có {a} {unit_a}," : "{name} has {a} {unit_a},"],
                     GivenB = [vi ? "{other} có {b} {unit_b}." : "{other} has {b} {unit_b}."],
-                    Questions = [vi ? "Hỏi cả hai quán nước có tổng cộng bao nhiêu {unit}?"
-                        : "How much {unit} do both drink shops have altogether?"]
+                    Questions = [vi ? $"Hỏi {shops} có tổng cộng bao nhiêu {{unit}}?"
+                        : $"How much {{unit}} do {shops} have altogether?"]
                 },
                 ArithmeticOperation.Subtract => prose with
                 {
                     GivenA = [vi ? "{name} có {a} {unit_a}," : "{name} has {a} {unit_a},"],
                     GivenB = [vi ? "{other} có {b} {unit_b}." : "{other} has {b} {unit_b}."],
-                    Questions = [vi ? "Hỏi thể tích nước của cả hai quán nước chênh lệch bao nhiêu {unit}?"
-                        : "By how much {unit} do the amounts at both drink shops differ?"]
+                    Questions = [vi ? $"Hỏi lượng thức uống của {shops} chênh lệch bao nhiêu {{unit}}?"
+                        : $"By how much {{unit}} do the amounts at {shops} differ?"]
                 },
                 ArithmeticOperation.Multiply => prose with
                 {
@@ -54,8 +57,8 @@ internal static class DrinkShopStoryTemplates
                         : "{name} sold {a} {unit},"],
                     GivenB = [vi ? "{other} bán được {b} {unit}."
                         : "{other} sold {b} {unit}."],
-                    Questions = [vi ? "Hỏi cả hai quán nước bán được tổng cộng bao nhiêu {unit}?"
-                        : "How many {unit} did both drink shops sell altogether?"]
+                    Questions = [vi ? $"Hỏi {shops} bán được tổng cộng bao nhiêu {{unit}}?"
+                        : $"How many {{unit}} did {shops} sell altogether?"]
                 },
                 ArithmeticOperation.Multiply => prose with
                 {

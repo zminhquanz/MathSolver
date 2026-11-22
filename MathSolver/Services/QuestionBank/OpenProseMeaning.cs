@@ -5,8 +5,8 @@ namespace MathSolver.Services.QuestionBank;
 /// <summary>Proof rules for a limited set of equivalent transformations, not a general language judge.</summary>
 internal static class OpenProseMeaning
 {
-    private static readonly string[] VietnameseOpenings = ["Trong buổi chuẩn bị đồ dùng", "Trong lần kiểm kê", "Theo ghi chép", "Trong buổi học", "Trong hoạt động này", "Để chuẩn bị cho buổi học"];
-    private static readonly string[] EnglishOpenings = ["During the activity", "In the inventory", "According to the records", "For the class activity", "While checking supplies"];
+    private static readonly IReadOnlyList<string> VietnameseOpenings = QuizContentCatalog.LoadList<string>("OpenProseVietnameseOpenings");
+    private static readonly IReadOnlyList<string> EnglishOpenings = QuizContentCatalog.LoadList<string>("OpenProseEnglishOpenings");
     internal static string Normalize(string text, AppLanguage language)
     {
         foreach (string opening in language == AppLanguage.Vietnamese ? VietnameseOpenings : EnglishOpenings)

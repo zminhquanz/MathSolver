@@ -5,6 +5,10 @@ namespace MathSolver.Services;
 
 public static partial class QuizContentValidation
 {
+    private static readonly string[] PracticeListKeys =
+        ["PracticeArithmeticContexts", "PracticeMoneyItems", "PracticeArithmeticTemplates"];
+    private static readonly string[] PurchaseStepRoles = ["batch", "unit"];
+
     private static readonly IReadOnlyDictionary<string, string[]> PracticeVariables = new Dictionary<string, string[]>
     {
         ["count-add"] = ["actor", "a", "b", "unit"],
@@ -31,12 +35,15 @@ public static partial class QuizContentValidation
         ["budget-subtract-two"] = ["actor", "items", "a", "price", "unit"],
         ["budget-subtract-batches"] = ["actor", "items", "count", "a", "price", "unit"]
     };
+    private static readonly int MaxPracticeRoleCount = PracticeVariables.Values.Max(static roles => roles.Length);
 
     private static void CheckPracticeArithmeticLists(QuizContentPack pack)
     {
         if (!pack.Lists.ContainsKey("PracticeArithmeticContexts") && !pack.Lists.ContainsKey("PracticeMoneyItems")
             && !pack.Lists.ContainsKey("PracticeArithmeticTemplates")) return;
-        foreach (string key in new[] { "PracticeArithmeticContexts", "PracticeMoneyItems", "PracticeArithmeticTemplates" })
+        Span<int> baselineCounts = stackalloc int[MaxPracticeRoleCount];
+        Span<int> alternativeCounts = stackalloc int[MaxPracticeRoleCount];
+        foreach (string key in PracticeListKeys)
         {
             if (!pack.Lists.TryGetValue(key, out var list) || list.ValueKind != JsonValueKind.Array || list.GetArrayLength() == 0)
                 throw new InvalidDataException("Missing practice list: " + key);
@@ -69,9 +76,9 @@ public static partial class QuizContentValidation
                 else
                 {
                     string problem = RequiredString(row, "Problem"); _ = RequiredString(row, "Lead");
-                    var variables = Regex.Matches(problem, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
-                        .Select(m => m.Groups[1].Value).ToHashSet();
-                    if (!PracticeVariables.TryGetValue(id, out var expected) || !variables.SetEquals(expected))
+                    if (!PracticeVariables.TryGetValue(id, out var expected))
+                        throw new InvalidDataException("Invalid practice template roles: " + id);
+                    if (!CountPracticeRoles(problem, expected, baselineCounts[..expected.Length]))
                         throw new InvalidDataException("Invalid practice template roles: " + id);
                     if (row.TryGetProperty("AlternativeProblems", out var alternatives))
                     {
@@ -80,13 +87,14 @@ public static partial class QuizContentValidation
                         foreach (var alternative in alternatives.EnumerateArray())
                         {
                             string text = alternative.GetString() ?? "";
-                            var roles = Regex.Matches(text, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
-                                .Select(m => m.Groups[1].Value).ToArray();
-                            var baseline = Regex.Matches(problem, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
-                                .Select(m => m.Groups[1].Value).ToArray();
-                            static bool IsFact(string role) => role is not ("actor" or "unit" or "group" or "item" or "items");
-                            if (!roles.ToHashSet().SetEquals(expected) || !roles.Where(IsFact).Order().SequenceEqual(baseline.Where(IsFact).Order())
-                                || !text.EndsWith('?') || !text.Contains(". ") || text.Length > 1200)
+                            bool valid = CountPracticeRoles(text, expected, alternativeCounts[..expected.Length]);
+                            for (int index = 0; valid && index < expected.Length; index++)
+                            {
+                                if (expected[index] is not ("actor" or "unit" or "group" or "item" or "items")
+                                    && baselineCounts[index] != alternativeCounts[index])
+                                    valid = false;
+                            }
+                            if (!valid || !text.EndsWith('?') || !text.Contains(". ") || text.Length > 1200)
                                 throw new InvalidDataException("Reviewed alternative changed roles: " + id);
                         }
                     }
@@ -94,9 +102,7 @@ public static partial class QuizContentValidation
                     if (id == "money-add")
                     {
                         string lead = RequiredString(row, "FirstLead");
-                        var leadRoles = Regex.Matches(lead, @"\{([^{}]+)\}", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100))
-                            .Select(m => m.Groups[1].Value).ToHashSet();
-                        if (!leadRoles.SetEquals(new[] { "batch", "unit" }))
+                        if (!CountPracticeRoles(lead, PurchaseStepRoles, alternativeCounts[..PurchaseStepRoles.Length]))
                             throw new InvalidDataException("Invalid purchase-step roles: " + id);
                     }
                 }
@@ -105,4 +111,26 @@ public static partial class QuizContentValidation
                 throw new InvalidDataException("Incomplete practice arithmetic templates.");
         }
     }
+
+    // Regex captures are inspected directly. Each expected role must occur, and fact counts
+    // can be compared between the base and alternative templates without temporary strings.
+    private static bool CountPracticeRoles(ReadOnlySpan<char> text, ReadOnlySpan<string> expected, Span<int> counts)
+    {
+        counts.Clear();
+        foreach (var match in PracticePlaceholderPattern().EnumerateMatches(text))
+        {
+            ReadOnlySpan<char> role = text.Slice(match.Index + 1, match.Length - 2);
+            int index = 0;
+            for (; index < expected.Length; index++)
+                if (role.SequenceEqual(expected[index])) break;
+            if (index == expected.Length) return false;
+            counts[index]++;
+        }
+        foreach (int count in counts)
+            if (count == 0) return false;
+        return true;
+    }
+
+    [GeneratedRegex(@"\{([^{}]+)\}", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 100)]
+    private static partial Regex PracticePlaceholderPattern();
 }

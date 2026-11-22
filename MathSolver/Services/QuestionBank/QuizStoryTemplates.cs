@@ -35,6 +35,51 @@ internal static class QuizStoryTemplates
             return contract.KnowledgeGroup == QuestionKnowledgeGroup.Drinks
                 ? DrinkShopStoryTemplates.Create(template, contract) : template;
 
+        if (family == "Fraction" && FractionThemeCatalogue.FindScene(contract.SceneId) is { } material)
+            return FractionThemeStoryTemplates.Create(material, contract);
+
+        if (family == "Applied" && contract.KnowledgeGroup == QuestionKnowledgeGroup.Animals
+            && PetAnimalThemeCatalogue.FindScene(contract.SceneId) is { } pet)
+            return PetAnimalStoryTemplates.Create(pet, contract);
+
+        if (family == "Applied" && contract.KnowledgeGroup == QuestionKnowledgeGroup.School
+            && SchoolThemeCatalogue.FindScene(contract.SceneId) is { } school)
+            return SchoolStoryTemplates.Create(school, contract);
+
+        if (family == "Applied" && FruitGardenStoryTemplates.IsGardenScene(contract.SceneId))
+            return FruitGardenStoryTemplates.Create(contract);
+
+        if (contract.KnowledgeGroup == QuestionKnowledgeGroup.Toys
+            && contract.SceneId.StartsWith("theme-toys-", StringComparison.Ordinal)
+            && ToyThemeCatalogue.Find(AppliedQuestionCatalogue.Find(contract.SceneId)?.UnitId ?? "") is { } toy)
+        {
+            string suffix = contract.SceneId[("theme-toys-".Length + toy.Unit.Id.Length)..];
+            string referenceSuffix = suffix.TrimStart('-') == "remaining" ? "left" : suffix.TrimStart('-');
+            if (stories.TryGetValue((family, "community-toys-marbles-" + referenceSuffix), out var toyReference))
+                return ToyShopStoryTemplates.Create(toyReference with
+                {
+                    Id = contract.SceneId,
+                    Prose = toyReference.Prose with { UnitId = toy.Unit.Id }
+                }, contract);
+        }
+
+        // Newly registered drinks reuse the reviewed orange-juice numeric structure.
+        // Their own unit, wording and venue are bound to the new scene at runtime.
+        if (FoodThemeCatalogue.DrinkForScene(contract.SceneId) is { } drink)
+        {
+            string prefix = family == "Fraction" ? "fraction-theme-drinks-" : "theme-drinks-";
+            string suffix = contract.SceneId[(prefix.Length + drink.Unit.Id.Length)..];
+            if (stories.TryGetValue((family, prefix + "orange-juice-glasses" + suffix), out var reference))
+            {
+                string unitId = family == "Fraction" ? contract.SceneId : drink.Unit.Id;
+                return DrinkShopStoryTemplates.Create(reference with
+                {
+                    Id = contract.SceneId,
+                    Prose = reference.Prose with { UnitId = unitId }
+                }, contract);
+            }
+        }
+
         // Restaurant dishes share generated scenes; bakery products use selling/packing prose.
         var traditionalDish = FoodThemeCatalogue.RestaurantDishForScene(contract.SceneId);
         if (traditionalDish is not null)
@@ -58,8 +103,11 @@ internal static class QuizStoryTemplates
                         prose = prose with {
                             GivenA = [vi ? "{name} phục vụ {a} {unit_a}," : "{name} serves {a} {unit_a},"],
                             GivenB = [vi ? "{other} phục vụ {b} {unit_b}." : "{other} serves {b} {unit_b}."],
-                            Questions = [vi ? "Hỏi cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?"
-                                : "How many {unit} do the two businesses serve altogether?"]
+                            Questions = vi
+                                ? ["Hỏi cả hai cơ sở phục vụ tổng cộng bao nhiêu {unit}?",
+                                    "Cả hai cơ sở đã phục vụ tổng cộng bao nhiêu {unit}?"]
+                                : ["How many {unit} do the two businesses serve altogether?",
+                                    "Altogether, how many {unit} are served by the two businesses?"]
                         };
                     prose = prose with { Questions = prose.Questions.Select(q => FoodThemePrompt.AlignCombinedQuestion(q, contract)).ToArray() };
                     var examples = family == "Fraction" ? prose.Stories().Take(1).ToArray()

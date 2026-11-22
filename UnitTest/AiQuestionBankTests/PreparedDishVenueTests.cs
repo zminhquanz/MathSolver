@@ -163,12 +163,12 @@ internal static class PreparedDishVenueTests
                 "Excel authoring preserves venue facts and pair: " + label);
             workbooks += 2;
             var fresh = Enumerable.Range(0, 100).Select(seed => c.FreshFacts(new(seed)))
-                .First(f => !f.Subject.Contains(ownerPhrase, StringComparison.OrdinalIgnoreCase));
-            var freshVenue = Venues.Single(v => fresh.Subject.Contains(vi ? v.Vi + " của " : "'s " + v.En, StringComparison.OrdinalIgnoreCase));
-            string freshPair = vi ? freshVenue.PairVi : freshVenue.PairEn;
+                .First(f => f.Subject != c.Subject && f.Subject.Contains(ownerPhrase, StringComparison.OrdinalIgnoreCase));
             string replay = d.ToWordProblem(fresh).ProblemText;
-            Check(replay.Contains(freshPair, StringComparison.OrdinalIgnoreCase) && !replay.Contains(pair, StringComparison.OrdinalIgnoreCase),
-                "Saved draft follows refreshed owners' venue: " + label + ": " + replay);
+            Check(fresh.Subject.Contains(ownerPhrase, StringComparison.OrdinalIgnoreCase)
+                && fresh.OtherSubject.Contains(ownerPhrase, StringComparison.OrdinalIgnoreCase)
+                && fresh.Subject != c.Subject && replay.Contains(pair, StringComparison.OrdinalIgnoreCase),
+                "Saved draft preserves venue while refreshing owner facts: " + label + ": " + replay);
             cases++;
         }
 

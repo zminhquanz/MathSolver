@@ -117,11 +117,10 @@ public partial class CalculationPage
             AllCalculationTypesButton.MinimumWidthRequest = controlSize;
             CalculationNavigationFrame.Padding = Thickness.Zero;
             CalculationNavigationFrame.StrokeThickness = 0;
-            CalculationNavigationFrame.SetDynamicResource(Border.BackgroundColorProperty, "SurfaceColor");
             AllCalculationTypesButton.BackgroundColor = Colors.Transparent;
             AllCalculationTypesButton.BorderWidth = 0;
             AllCalculationTypesButton.CornerRadius = (int)(controlSize / 2);
-            AllCalculationTypesButton.SetDynamicResource(Button.TextColorProperty, "TextPrimaryColor");
+            AllCalculationTypesButton.SetDynamicResource(Button.TextColorProperty, "WallpaperTextPrimaryColor");
 #else
             CalculationNavigationFrame.Padding = stacked ? Thickness.Zero : new Thickness(8);
             CalculationNavigationFrame.StrokeThickness = stacked ? 0 : 1;

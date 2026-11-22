@@ -1,4 +1,5 @@
 using System.Text;
+using MathSolver.Services.QuestionBank;
 
 namespace MathSolver.Services;
 
@@ -38,11 +39,24 @@ internal static class QuizStoryArtwork
         new("compasses", "compass", ["compa", "chiếc compa", "drawing compass", "drawing compasses"]),
         new("rulers", "ruler", ["thước kẻ", "cây thước kẻ", "ruler", "rulers"]),
         new("satchels", "satchel", ["cặp táp", "chiếc cặp táp", "school satchel", "school satchels"]),
+        new("pages", "reading_page", ["trang sách", "trang", "page", "pages"]),
+        new("chalk-sticks", "chalk_stick", ["viên phấn", "phấn viết bảng", "piece of chalk", "pieces of chalk"]),
+        new("drawing-sheets", "drawing_sheet", ["tờ giấy vẽ", "giấy vẽ", "drawing sheet", "drawing sheets"]),
+        new("crayons", "crayon", ["bút sáp màu", "cây bút sáp màu", "crayon", "crayons"]),
+        new("glue-sticks", "glue_stick", ["thỏi keo khô", "keo khô", "glue stick", "glue sticks"]),
+        new("scissors", "scissors", ["chiếc kéo", "kéo thủ công", "pair of scissors", "pairs of scissors"]),
+        new("calculators", "calculator", ["máy tính cầm tay", "calculator", "calculators"]),
+        new("bookmarks", "bookmark", ["thẻ đánh dấu trang", "dấu trang", "bookmark", "bookmarks"]),
+        new("felt-tip-pens", "colored_markers", ["bút dạ màu", "bút lông màu", "felt-tip pen", "felt-tip pens"]),
+        new("school-bags", "satchel", ["cặp sách", "cặp đi học", "school bag", "school bags"]),
+        new("school-desks", "desk", ["bàn học", "bàn học sinh", "school desk", "school desks"]),
         new("candies", "candy", ["kẹo", "viên kẹo", "sweet", "sweets", "candy", "candies"]),
         new("apples", "apple", ["quả táo", "apple", "apples"]),
         new("oranges", "orange", ["quả cam", "orange", "oranges"]),
         new("flowers", "flower", ["bông hoa", "flower", "flowers"]),
         new("cards", "card", ["tấm thiệp", "card", "cards"]),
+        .. ToyThemeCatalogue.Subjects.Select(subject => new ObjectArtwork("theme-" + subject.Unit.Id,
+            subject.ArtworkId, [subject.Unit.Vietnamese, subject.Unit.Singular, subject.Unit.Plural])),
         new("balls", "ball", ["quả bóng", "ball", "balls"]),
         new("stickers", "sticker", ["nhãn dán", "sticker", "stickers"]),
         new("cakes", "cake", ["chiếc bánh kem", "cream cake", "cream cakes", "chiếc bánh", "cake", "cakes"]),
@@ -73,13 +87,17 @@ internal static class QuizStoryArtwork
         new("shirts", "shirt", ["chiếc áo", "shirt", "shirts"]),
         new("backpacks", "backpack", ["ba lô", "backpack", "backpacks"]),
         new("birds", "bird", ["con chim", "bird", "birds"]),
+        .. PetAnimalThemeCatalogue.Subjects.Select(subject => new ObjectArtwork(
+            subject.Unit.Id, QuizStoryArtworkCatalogue.PetArtwork(subject.Unit.Id)!,
+            [subject.Unit.Vietnamese, subject.Unit.Singular, subject.Unit.Plural])),
         new("chickens", "chicken", ["con gà", "chicken", "chickens"]),
         new("ducks", "duck", ["con vịt", "duck", "ducks"]),
         new("fish", "fish", ["con cá", "fish"]),
         new("cows", "cow", ["con bò", "cow", "cows"]),
         new("fabric", "fabric", ["vải", "mét vải", "fabric", "meters of fabric", "metres of fabric"]),
         new("ribbon", "ribbon", ["ruy băng", "m ruy băng", "ribbon", "m of ribbon"]),
-        new("water", "water", ["nước", "lít nước", "water", "liters of water", "litres of water"]),
+        new("water", "water", ["nước", "lít nước", "lít nước lọc", "water", "liters of water", "litres of water", "litres of drinking water"]),
+        new("water-bottles", "water_bottle", ["chai nước", "chai nước lọc", "chai nước suối", "bottle of water", "bottles of water", "bottle of drinking water", "bottles of drinking water"]),
         new("flour", "flour", ["bột mì", "flour"]),
         new("vegetables", "vegetables", ["rau", "rau thu hoạch", "kg rau", "vegetables", "harvested vegetables", "kg of vegetables"]),
         new("honey", "honey", ["mật ong", "lít mật ong", "honey", "liters of honey", "litres of honey"]),
@@ -141,6 +159,12 @@ internal static class QuizStoryArtwork
         new("theme-tea-cups", "tea", ["tách trà", "cup of tea", "cups of tea"]),
         new("theme-lemon-tea-glasses", "lemon_tea", ["ly trà chanh", "glass of lemon tea", "glasses of lemon tea"]),
         new("theme-milkshakes", "milkshake", ["ly sữa lắc", "glass of milkshake", "glasses of milkshake"]),
+        .. MathSolver.Services.QuestionBank.FoodThemeCatalogue.Subjects
+            .Where(d => d.Group == MathSolver.Models.QuestionKnowledgeGroup.Drinks
+                && d.Unit.Id is not ("drinking-water" or "milk-glasses" or "milk-cartons"
+                    or "orange-juice-glasses" or "tea-cups" or "lemon-tea-glasses" or "milkshakes"))
+            .Select(d => new ObjectArtwork("theme-" + d.Unit.Id, d.ArtworkId,
+                [d.Unit.Vietnamese, d.Unit.Singular, d.Unit.Plural])),
         new("theme-apples", "apple", ["quả táo", "apple", "apples"]),
         new("theme-oranges", "orange", ["quả cam", "orange", "oranges"]),
         new("theme-mangoes", "mango", ["quả xoài", "mango", "mangoes"]),
@@ -148,6 +172,12 @@ internal static class QuizStoryArtwork
         new("theme-dragon-fruit", "dragon_fruit", ["quả thanh long", "dragon fruit", "dragon fruits"]),
         new("theme-strawberries", "strawberry", ["quả dâu tây", "strawberry", "strawberries"]),
         new("theme-pears", "pear", ["quả lê", "pear", "pears"]),
+        .. MathSolver.Services.QuestionBank.FoodThemeCatalogue.Subjects
+            .Where(d => d.Group == MathSolver.Models.QuestionKnowledgeGroup.Fruit
+                && d.Unit.Id is not ("apples" or "oranges" or "mangoes" or "bananas"
+                    or "dragon-fruit" or "strawberries" or "pears"))
+            .Select(d => new ObjectArtwork("theme-" + d.Unit.Id, d.ArtworkId,
+                [d.Unit.Vietnamese, d.Unit.Singular, d.Unit.Plural])),
         new("horses", "horse", ["con ngựa", "horse", "horses"]),
         new("deer", "deer", ["con nai", "deer"]),
         new("dogs", "dog", ["con chó", "dog", "dogs"]),
