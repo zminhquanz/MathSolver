@@ -37,4 +37,13 @@ foreach ($file in Get-ChildItem -LiteralPath $OutputDirectory -Filter '*.png' -F
         $removed++
     }
 }
+
+# Incremental clean removes the old loose wallpaper files, but can leave their empty directory.
+$legacyWallpapers = Get-Item -LiteralPath (Join-Path $output 'Wallpapers') -Force -ErrorAction SilentlyContinue
+if ($legacyWallpapers -is [System.IO.DirectoryInfo] -and
+    -not ($legacyWallpapers.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -and
+    -not (Get-ChildItem -LiteralPath $legacyWallpapers.FullName -Force | Select-Object -First 1)) {
+    [System.IO.Directory]::Delete($legacyWallpapers.FullName)
+}
+
 Write-Host "Pruned $removed legacy loose artwork PNGs from $OutputDirectory"

@@ -7,7 +7,7 @@ entire PDFsharp NuGet package. The upstream 6.2.4 package bundles
 
 The official package is downloaded at an exact version with `PackageDownload`.
 Only `PdfSharp.dll`, `PdfSharp.Shared.dll` and `PdfSharp.System.dll` are referenced
-and copied to the app. Their external logging dependency is explicitly declared.
+and copied to the app. The .NET 11 shared framework provides logging abstractions.
 There are no private copies of upstream binaries or edits to the NuGet cache.
 The build rejects reintroduced signing/PKCS references. PDF creation, font
 embedding, drawing and PDF parsing remain available.
