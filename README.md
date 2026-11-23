@@ -53,6 +53,10 @@ calculations, and local language models.
   <a href="https://github.com/SciSharp/LLamaSharp"><img src="https://raw.githubusercontent.com/SciSharp/LLamaSharp/master/Assets/LLamaSharpLogo.png" alt="LLamaSharp" height="28"></a>
   &nbsp;&nbsp;
   <a href="https://github.com/ARM-software/kleidiai"><img src="https://www.arm.com/-/media/global/solutions/artificial-intelligence/ai%20software%20kleidi/arm-kleidi-libraries-horizontal.svg" alt="Arm Kleidi Libraries (KleidiAI)" height="28"></a>
+  &nbsp;&nbsp;
+  <a href="https://developer.nvidia.com/cuda-zone"><img src="https://docs.nvidia.com/cuda/_static/Logo_and_CUDA.png" alt="NVIDIA CUDA" height="28"></a>
+  &nbsp;&nbsp;
+  <a href="https://www.vulkan.org/"><img src="https://www.vulkan.org/user/themes/vulkan/images/logo/vulkan-logo.svg" alt="Vulkan" height="28"></a>
 </p>
 
 ## Build from source
