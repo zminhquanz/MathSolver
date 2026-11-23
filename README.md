@@ -105,7 +105,17 @@ for the project layout, Android APK signing and build cleanup.
 - For code changes, see the [test guide](UnitTest/README.md).
 - To help translate the app, follow the [translation guide](TRANSLATING.md).
 
-You can support Math Solver with an optional tip on [Ko-fi](https://ko-fi.com/quanvu96).
+You can support Math Solver with an optional tip via [Ko-fi](https://ko-fi.com/quanvu96)
+or [PayPal](https://paypal.me/quanvu2011).
+
+<details>
+<summary>Ủng hộ qua Timo (Việt Nam)</summary>
+
+<p>
+  <a href="docs/assets/donations/timo-qr.jpg"><img src="docs/assets/donations/timo-qr.jpg" width="220" alt="Mã QR Timo để ủng hộ Math Solver"></a>
+</p>
+
+</details>
 
 ## License
 
