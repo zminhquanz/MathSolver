@@ -15,6 +15,13 @@ tables work offline.
 Get the **Android ARM64 APK** or the **Windows x64 ZIP** from the
 [latest GitHub release](https://github.com/zminhquanz/MathSolver/releases/latest).
 
+## Screenshots
+
+<p>
+  <a href="docs/assets/screenshots/windows-equation.jpg"><img src="docs/assets/screenshots/windows-equation.jpg" width="48%" alt="Math Solver for Windows showing the discriminant, roots and worked steps for a quadratic equation"></a>
+  <a href="docs/assets/screenshots/windows-math-puzzles.jpg"><img src="docs/assets/screenshots/windows-math-puzzles.jpg" width="48%" alt="Math Puzzles for Windows showing an illustrated true-or-false word problem"></a>
+</p>
+
 ## Features
 
 - **Solve Math.** Work through arithmetic, fractions, Find X, averages, powers
@@ -60,6 +67,20 @@ calculations, and local language models.
   <a href="https://www.vulkan.org/"><img src="docs/assets/technology/vulkan.svg" alt="Vulkan" width="132" align="middle"></a>
 </p>
 
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[".NET MAUI UI"]
+    UI --> Math["C# math engines · SIMD"]
+    UI --> Quiz["C# quizzes · grading"]
+    UI --> AI["Local GGUF inference"]
+    AI -->|C# validation| Bank[("SQLite question bank")]
+    Bank -. Optional templates .-> Quiz
+```
+
+See the [architecture reference](MathSolver/ARCHITECTURE.md) for implementation details.
+
 ## Build from source
 
 Install the .NET 11 SDK specified in [global.json](global.json) and the MAUI
@@ -81,8 +102,7 @@ for the project layout, Android APK signing and build cleanup.
 
 ## Contributing
 
-- For code changes, see the [architecture reference](MathSolver/ARCHITECTURE.md)
-  and [test guide](UnitTest/README.md).
+- For code changes, see the [test guide](UnitTest/README.md).
 - To help translate the app, follow the [translation guide](TRANSLATING.md).
 
 You can support Math Solver with an optional tip on [Ko-fi](https://ko-fi.com/quanvu96).
