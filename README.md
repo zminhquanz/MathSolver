@@ -49,14 +49,15 @@ calculations, and local language models.
   through NVIDIA CUDA or Vulkan, with CPU fallback. See the [Android AI backend
   notes](MathSolver/Platforms/Android/Native/llama/README.md).
 
+<!-- CUDA badge source: https://commons.wikimedia.org/wiki/File:Nvidia_CUDA_Logo.jpg -->
 <p>
-  <a href="https://github.com/SciSharp/LLamaSharp"><img src="https://raw.githubusercontent.com/SciSharp/LLamaSharp/master/Assets/LLamaSharpLogo.png" alt="LLamaSharp" height="28"></a>
-  &nbsp;&nbsp;
-  <a href="https://github.com/ARM-software/kleidiai"><img src="https://www.arm.com/-/media/global/solutions/artificial-intelligence/ai%20software%20kleidi/arm-kleidi-libraries-horizontal.svg" alt="Arm Kleidi Libraries (KleidiAI)" height="28"></a>
-  &nbsp;&nbsp;
-  <a href="https://developer.nvidia.com/cuda-zone"><img src="https://docs.nvidia.com/cuda/_static/Logo_and_CUDA.png" alt="NVIDIA CUDA" height="28"></a>
-  &nbsp;&nbsp;
-  <a href="https://www.vulkan.org/"><img src="https://www.vulkan.org/user/themes/vulkan/images/logo/vulkan-logo.svg" alt="Vulkan" height="28"></a>
+  <a href="https://github.com/SciSharp/LLamaSharp"><img src="docs/assets/technology/llamasharp.png" alt="LLamaSharp" width="210" align="middle"></a>
+  &ensp;
+  <a href="https://developer.nvidia.com/cuda-zone"><img src="docs/assets/technology/nvidia-cuda.jpg" alt="NVIDIA CUDA" width="100" align="middle"></a>
+  &ensp;
+  <a href="https://github.com/ARM-software/kleidiai"><img src="docs/assets/technology/arm-kleidi-libraries.svg" alt="Arm Kleidi Libraries (KleidiAI)" width="164" align="middle"></a>
+  &ensp;
+  <a href="https://www.vulkan.org/"><img src="docs/assets/technology/vulkan.svg" alt="Vulkan" width="132" align="middle"></a>
 </p>
 
 ## Build from source
