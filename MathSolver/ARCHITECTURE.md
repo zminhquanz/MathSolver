@@ -1,417 +1,133 @@
-> The previous AI practice source and AI hardware benchmark remain removed.
-> Optional AI question-bank enrichment is isolated in Services/QuestionBank.
-> Version 2 stores reusable prose/solution templates with typed C# structures and unit IDs;
-> practice regenerates numeric facts and actors. Version 1 fixed-fact records remain readable.
-> New addition uses version 3: separate relationship/topic/setting roles, realistic quantity domains,
-> scene-aware prompt/grammar/validation and balanced SQLite selection. Other operations retain version 2.
-> [Template format, validation and name attribution](Services/QuestionBank/README.md).
-> Basic arithmetic practice randomly mixes fresh C# questions and matching SQLite questions (50/50), retaining C# as the fallback. C# owns math, curriculum and grading.
-
 # Math Solver Architecture Reference
 
-[Folder structure and class groups](FOLDER_STRUCTURE.md)
-
-## Overview
-
-Math Solver is a cross-platform .NET MAUI desktop application providing arbitrary-precision arithmetic, scientific solvers, and educational math tools. The codebase is organized into layers: Numerics (core algorithms), Services (orchestration & utilities), Views (UI components), Models (data structures), and Platform-specific adapters for Windows/iOS/Android.
-
----
+Math Solver shares its C# calculation and practice engines across Android and
+Windows. [AppShell](AppShell.xaml) hosts the .NET MAUI pages for solving, practice,
+formulas and multiplication tables.
 
 ## Core Numerics Engine
 
-### Arbitrary-Precision Integers — `Numerics/BigIntegers/ParallelBigUnsigned.cs`
-
-The heart of the application's computation engine:
-
-Its partial implementation is grouped by responsibility: `ParallelBigUnsigned_Binary.cs`
-handles binary import/powers, `ParallelBigUnsigned_Schoolbook.cs` handles small
-products, `ParallelBigUnsigned_Reconstruction.cs` handles CRT/carry/segment
-accumulation, and `ParallelBigUnsigned_NttKernels.cs` holds residual NTT,
-inverse-fusion, pointwise and final-inverse helpers. SSE and NEON backends and
-twiddle/Shoup preparation retain separate files because they have distinct
-platform or measurement boundaries.
-
-- **Base**: Digits are stored in base 10,000 so TXT export never needs a giant binary-to-decimal division tree.
-- **Multiplication**: Large products use two exact NTTs and CRT; butterfly work inside every transform is shared by the configured logical-processor worker budget.
-- **Bit-shift shortcut**: `|a| = 2^k` powers use `BigInteger.One << (k * n)` — single-threaded, exact result. Binary BigInteger intermediate results are imported into the same base-10,000 representation before TXT export. A 1,024-limb leaf is exactly 4,096 decimal digits, matching the export block size and keeping each leaf conversion small.
-- **TXT preparation**: For results requiring TXT export (`>= 100_001` digits), phase 3 prepares the reusable base-10,000 magnitude through the same `ParallelBigUnsigned.Pow(|a|, n, workers, ...)` NTT/CRT pipeline used by normal parallel powers.
-- **TXT export**: Unified through `ParallelBigUnsigned.WriteDecimalBlocks()`. Decimal formatting uses AVX2 on Windows/x86 when available, NEON/AdvSIMD on Android ARM64, and scalar fallback otherwise. Both SIMD paths are controlled by the shared Hardware acceleration switch.
-
-The old giant `BigInteger` binary-to-decimal `DivRem` import is no longer used by the bit-shift calculation path.
-
-### Extended-Precision Floating Point — `Numerics/FloatingPoint/QuadDouble.cs` / `OctoDouble.cs` / `DoubleDouble.cs`
-
-Three non-IEEE floating-point types that expand precision beyond IEEE 754:
-
-| Type | Significant Bits | Typical Use |
-|------|------------------|-------------|
-| `DoubleDouble` | ~106 bits (32 digits) | Basic extended arithmetic, fallback paths |
-| `QuadDouble` | ~212 bits (64 digits) | Root, linear-equation and geometry calculations |
-| `OctoDouble` | ~424 bits (128 digits) | Quadratic roots and other solvers that require extra guard digits |
-
-All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding error in a separate component. Constants like `Pi`, `Sqrt(3)` are pre-parsed from string literals at static initialization.
-
-`QuadraticEquationEngine` computes the discriminant exactly with `BigInteger`,
-then uses `OctoDouble` for its square root and the real roots.
-
----
-
-## Memory & Lifetime Management
-
-### Physical RAM eligibility for large NTT powers
-
-`Services/Performance/PhysicalMemoryInfo.cs` reads installed physical RAM on
-Windows (SMBIOS via `GetPhysicallyInstalledSystemMemory`). Android reads the
-bootloader's `ro.boot.ddr_size` when it is exposed as a valid byte count and
-uses kernel-visible `ActivityManager.MemoryInfo.TotalMem` as a conservative
-lower bound otherwise. Android's `AdvertisedMem` is not used: the tested
-12-GiB device reported 16 GB there, while its bootloader reported 12 GiB;
-the production helper selected the bootloader value in a Release+AOT device
-probe.
-iOS/MacCatalyst use `NSProcessInfo.PhysicalMemory`. `AvailMem`, swap, zram,
-free memory and GC budgets do not contribute to this hardware threshold;
-an unavailable reading stays unknown.
-
-`NttPowerMemoryGuard` allows exponents through 10,000,000 without a RAM query.
-Exponents 10,000,001 through 100,000,000 require at least 12 decimal GB
-(`12,000,000,000` bytes) of installed/advertised RAM; lower or unknown RAM
-rejects the request with a message. A 12-GB device is not rejected merely
-because system reservations reduce kernel-visible RAM below 12 GiB.
-The guard runs before allocating NTT workspaces, independently of SIMD and worker
-count, including NTT preparation for TXT export. Power-of-ten parallel arithmetic
-checks the original input exponent, not its internal `k * exponent` transform.
-Pure BigInteger/bit-shift computation does not use this NTT policy.
-This is an eligibility rule, not a free-memory budget or segmentation planner.
-
-Validation: `dotnet run --project tests/PowerOfTenValidation -c Release -- memory-guard`
-checks RAM/exponent boundaries and unknown readings without allocating huge powers.
-
-### NTT Buffer Pool
-
-Large NTT value workspaces (`uint[]`) were previously allocated with `new uint[transformLength]` for every modulus pass, wasting RAM and GC pressure. The architecture now:
-
-- Creates one `NttBufferPool` per complete `Pow()` operation.
-- P1/P2 branches and the final combine share this pool — buffers are rented/returned deterministically via `try/finally`.
-- **Policy**: cache at most two workspaces matching the maximum live transform length; release smaller cached buffers immediately when a larger one is requested.
-- On reuse, overwrite the compact limb prefix and clear only the stale zero-padding tail instead of clearing the whole array.
-- Return the right-transform workspace before inverse DIT begins (making that lifetime boundary structural, not dependent on nullable locals).
-
-### Twiddle Table Pool
-
-Fresh NTT/twiddle arrays use uninitialized allocation (`GC.AllocateUninitializedArray`) because every element is guaranteed to be overwritten before its ready flag is published. Split branches may return twiddle tables to a local pool and the final-combine team can reuse up to four arrays; the whole pool is then released before `Pow()` returns.
-
-### Large-Result GC Cleanup
-
-For large prepared base-10,000 results (estimated workspace >= 512 MiB), a blocking Gen2 sweep runs only after the displayed calculation stopwatch has stopped. LOH compaction is deliberately disabled so the live final magnitude is not copied merely to reclaim dead workspaces.
-
-### CRT Streaming
-
-Removes full `ulong[coefficientCount]` materialization. CRT is reconstructed in bounded blocks, carry consumes each block immediately. The compact P1 residue array is overwritten by the normalized base-10,000 limbs (in place). P2 inverse workspace is read directly — no compact P2 residue array is created.
-
-### Final Inverse Split-Range ILP
-
-The final inverse-DIT prefix kernel splits each worker's contiguous range at `validRightCount`, running two branch-free hot loops instead of testing a condition per butterfly. For large stages, both loops use four independent twiddle lanes advancing by `root^4` to remove the long dependency chain on `twiddle = twiddle * root % modulus`.
-
----
-
-## Threading Model
-
-### `Services/Performance/CalculationThreadingManager.cs`
-
-- Reads user preference for multithreading via `Preferences.Default.Get()`.
-- Exposes: `IsMultithreadingAvailable`, `LogicalProcessorCount`, `PhysicalCoreCount`, `RecommendedWorkerCount`, `MaxDegreeOfParallelism`.
-- Default: 1 worker if no hardware threading detected; otherwise all logical processors.
-
-### Worker Scheduling — `Numerics/BigIntegers/ParallelBigUnsigned.cs`
-
-- **Small SMT**: 8–19 thread CPUs (e.g., i7-8700) use 2,048-value L1 fused blocks to leave room for sibling threads in shared L1D.
-- **Medium Thread**: 20+ threads use 4,096-value (16 KiB) fused blocks.
-- **Large SMT**: 24+ thread CPUs (e.g., HX 370) keep the proven 8,192-value (32 KiB) block.
-
-- Second cache-blocking level keeps several L1-sized fused blocks inside one L2-resident tile sized per logical-thread class so two SMT siblings do not consume the whole private L2 with values plus the largest twiddle stage.
-
-- Third-level-cache tile removes more full-array sweeps before work reaches the L2 tile. Tile is conservative enough that all active SMT workers can retain useful L3 residency simultaneously.
-
----
-
-## SIMD Acceleration
-
-**SSE fallback (2026-09-15):** the legacy <=10M NTT path now uses four-lane SSE2 cache-local butterflies when SSE is selected, or Auto has no AVX2 backend. SSE4.1 specializes Shoup reduction when supported. Global stages, pointwise, final inverse normalization and CRT/carry retain Scalar in this fallback. The >10M and binary-power backends have not opted into SSE. See [implementation and measured results](SSE_NTT_SUB10M_NOTES.md).
-
-### `Services/Performance/CalculationAccelerationManager.cs`
-
-Detects hardware capabilities and exposes:
-
-| Mode | Hardware Requirement |
-|------|---------------------|
-| `Portable` | Any vector unit with count > 1 |
-| `Sse` | SSE2 + AVX (x86) |
-| `AvxAvx2` | AVX/AVX-512 support |
-| `Avx512` | AVX-512 + hardware acceleration |
-
-**Usage policy**: the proven in-place DIF/DIT scalar kernel remains the exact fallback. For powers `<= 10,000,000`, Windows x86/x64 can optionally dispatch cached butterfly work to an AVX2 256-bit kernel when the shared **Hardware acceleration** switch is enabled and `Avx2.IsSupported` is true. The AVX2 path keeps the existing uint32 layout, L1/L2/L3 cache blocking and fused DIF/DIT traversal; cached twiddles gain uint32 Shoup companions so eight residue lanes can perform exact modular twiddle multiplication without scalar `%` in the vector body. Small tails and uncached/global edge stages retain the proven scalar arithmetic. Turning Hardware acceleration off does not allocate Shoup companion tables and follows the original scalar scheduling/arithmetic path. The memory-bounded `>10M` PersistentStatic engine deliberately remains scalar until the <=10M AVX2 experiment is benchmarked and accepted. SIMD production paths for Parabola evaluation and decimal TXT formatting remain unchanged. Benchmark SIMD mode selection does not select the production NTT backend; only the Hardware acceleration switch plus actual CPU capability does.
-
-**Experimental AVX-512 NTT Phase 4**: on Windows x86/x64 CPUs with `Avx512F` and hardware-accelerated `Vector512`, the same Hardware acceleration gate widens the accepted <=10M cached L3 bridge/single-stage path, L3 bounded stage-pairs, L2 bounded stage-pairs, and now the larger Forward L1 bounded stage-pairs to 16 uint32 lanes. Forward L1 pairs with stage length 32/16 and the fused radix-4/radix-2 tail remain on the accepted AVX2/scalar-Shoup path; all Inverse L1 kernels remain AVX2 so the Phase-4 A/B test is Forward-only. `PowMemoryBounded()` (>10M) explicitly disables this AVX-512 experiment and remains on the accepted AVX2 large-mode path.
-
----
-
-## UI Architecture
-
-### Shell & Navigation — `AppShell.cs` / `CalculationPage.cs`
-
-```
-App
- └── AppShell
-      ├── MainTabBar  (Calculation, Settings, Hardware Performance, About)
-      │   ├── CalculationPage
-      │   │   ├── Basic tab (Add/Subtract/Multiply/Divide)
-      │   │   ├── Power/Root tab → PowerRootView
-      │   │   ├── QuadraticEquation tab → QuadraticEquationView
-      │   │   ├── Fraction tab → FractionView / FractionCalculator
-      │   │   ├── Geometry tab → GeometryCalculatorView
-      │   │   └── Long Division tab → LongDivisionCalculator + Drawable
-      │   ├── MathPuzzlePage
-      │   │   ├── Practice tab → ArithmeticQuizGenerator + ArithmeticQuizValidator
-      │   │   └── Learn tab → Basic arithmetic lesson content
-      │   └── SettingsPage (locale, theme, threading config)
-      └── AboutPage
-```
-
-`WindowStateManager` intercepts Windows X / Alt+F4 while calculations or TXT exports are active. Pressing Stop shows a Yes/No confirmation before cancelling the calculation token. Task completion sources coordinate with the OS close path.
-
-### Shared Basic Arithmetic & Quiz Validation
-
-`BasicArithmeticEngine` is the single source of truth for integer and decimal
-addition, subtraction, multiplication, and division. `CalculationPage` uses it
-for the Basic solver; `ArithmeticQuizGenerator` uses the same engine to create
-practice questions. Quiz questions are accepted only after
-`ArithmeticQuizValidator` recalculates the expression and verifies all shape
-invariants: exact division, correct answer key, true/false flag consistency,
-and four unique multiple-choice answers containing the correct answer once.
-
-### Mixed Proportion Selection
-
-The proportion selector offers mixed, direct and inverse in the C# generator. Mixed is a null `ProportionType` in the request; the existing generator
-chooses an allowed relationship before selecting its story template. Each
-generated contract still has a concrete direct/inverse type for its formula,
-formulas and grading. Fixed selections remain fixed. This skill-level mixed
-choice uses skill curriculum rules, independently of the global mixed pool.
-
-### Geometry Quiz Measurement Selection
-
-Geometry quizzes share a shape and measurement selection across Algorithm and
-C#. Plane shapes offer perimeter, area, or mixed; cubes and rectangular
-prisms offer volume, lateral surface area, total surface area, or mixed.
-Mixed shapes can be filtered by any supported measurement. Changing shape
-resets an incompatible measurement to mixed. The request carries the chosen
-measurement into the C# contract before C# generates a question.
-Lateral-area contracts use `4 × a²` for cubes and `2 × (a + b) × h` for prisms;
-the answer unit is squared, while volume uses cubed units. Global mixed mode
-continues to use curriculum rules and does not inherit hidden picker values.
-
-### Geometry calculator and formulas
-
-Solve Math and Formulas share the `GeometryFormulaItem` catalog for formulas,
-diagrams, symbols and shape metadata.
-
-- Plane shapes include square, rectangle, triangle, right triangle, equilateral
-  triangle, circle, trapezoid, isosceles trapezoid, right trapezoid, rhombus and
-  parallelogram. The calculator supports perimeter and area.
-- Solid shapes include cube, rectangular prism, sphere, cylinder and cone.
-  The available measurements depend on the shape and include base area, lateral
-  surface area, total surface area and volume.
-
-### Numeric Expressions
-
-`ExpressionQuizGenerator` owns the **Evaluate an expression**
-category. `ExpressionQuizContract` stores the complete expression and exact
-`ReducedFraction` answer instead of squeezing multiple operations into the
-legacy two-operand `IntegerArithmeticExpression`. Its four subtypes are integer
-and fraction expressions, each with or without brackets. Stars 1–5 set exactly
-3–7 operands; bracketed subtypes also have exactly 1–5 pairs. Each fraction is
-one operand. All four arithmetic operations are available at every expression
-tier, with exact division for integer expressions. Groups may be nested or
-separate; at one star, grouped addition is also accepted for grouping practice.
-At higher tiers, at least one group must affect the value.
-
-The generator and essay grader share `EssayCalculationEvaluator`, which uses
-exact rational arithmetic and matches `()`, `[]`, and `{}`. Numeric essays need
-only a calculation and answer. Their first equality member preserves the given
-expression (operator aliases and equivalent bracket symbols are accepted), and
-all subsequent equality members must have its value. Equivalent fraction
-answers need not already be reduced. The UI supports true/false, four choices
-and essay on Windows/Android with bilingual strings and wrapping fraction
-display. After grading it shows the calculation and answer.
-
-The category supports a Mixed subtype. A null ExpressionType samples the four
-subtypes, while each generated contract stores its concrete type. Global Mixed
-includes fraction expressions from four stars. Explicit selection offers all
-four subtypes at every star level.
-
-### Average & Percentage Word Problems
-
-`AverageQuizGenerator` and `PercentageQuizGenerator` create C# questions with
-numeric facts, subtype semantics, units, equations and exact answers. Average
-supports direct average, total to average, average to total, missing value,
-indirect data and two-group weighted average. Percentage supports percentage
-ratio, percentage value and whole from a known percentage value. Each family
-has a subtype picker and a mixed-subtype option.
-
-Indirect-data average essays support multiple calculations in the shared
-multiline work editor on both platforms. The
-`AverageIndirectData` contract keeps the first quantity and its increase/decrease
-relations. `EssayCombinedInputParser` preserves all equation lines for this
-subtype; other subtypes retain their existing input parsing.
-`AverageIndirectEssayValidator` tracks exact rational results and their linear
-derivation from those facts, so later steps can reuse earlier results. It checks
-all entered steps and accepts a merged calculation or any valid grouping,
-without matching the number of steps to the worked example. One solution
-sentence with a valid unit or subject is enough; intermediate units are optional,
-but written units are checked and the final calculation and answer require them.
-`EssayAnswerValidationResult.Steps` provides per-step errors for bilingual
-`EssayFeedbackFormatter` messages. `AverageIndirectSolutionFormatter` supplies
-a three-step worked example plus the answer for C# questions.
-
-### Math Puzzle Curriculum Layer — `Services/Quizzes/QuizCurriculumLayer.cs`
-
-Curriculum is intentionally scoped to **app-generated Math Puzzle content only**. It never constrains user-entered input in the Solve Math tab or the reusable math engines. The UI exposes five abstract star tiers (`★`..`★★★★★`) rather than country-specific grade labels.
-
-- **Mixed Mode has its own profile.** A tier first selects an allowed skill from a weighted pool, then the chosen generator receives `QuizCurriculumContext(IsMixedMode: true)`. Mixed rules can prefer smaller number ranges and simpler subtypes than the same star tier in a dedicated skill.
-- **Each skill has an independent progression.** Arithmetic, fractions, Find X and geometry use dedicated rules; proportion, motion, average and percentage expose tier-gated subtype sets. Fractions deliberately start at `★★★★`. Dedicated Arithmetic uses the normalized primary progression `★ = 0..9`, `★★ = 0..99`, `★★★ = 0..999`, `★★★★ = 0..9,999`, `★★★★★ = 0..99,999`; generated operands and answers are kept inside that tier range. Mixed Mode keeps its separate arithmetic ranges.
-- **C# owns the question contract.** Generators receive the curriculum context and create facts, relations and exact answers under the selected rules.
-- **Fixed-skill UI enforces availability.** Selecting a skill whose progression starts later automatically promotes the star tier to its minimum; lower star buttons are disabled for that skill. Unsupported operation/subtype selections are normalized before question generation.
-
-Flow:
-
-```text
-Mixed:  Star tier -> Mixed weighted pool -> Skill -> Skill curriculum -> C# generator -> validator
-Skill:  Star tier -------------------------> Skill curriculum -> C# generator -> validator
-```
-
-### Localization — `Services/Localization/LocalizationService.cs` / `TRANSLATING.md`
-
-Language packs are UTF-8 JSON files following `culture.json` format: metadata + strings + templates. Placeholders (`{field}`) are preserved in all template files for runtime interpolation.
-
-### Theming & Fonts — `Services/Appearance/AppThemeManager.cs` / `Services/Appearance/AppFontManager.cs`
-
-Theme toggles between light/dark and color schemes; applied via resource overrides and XAML stylesheets. Font catalog caches system fonts by weight/style per culture; `AppFontManager` applies the selected font family to all text elements.
-
----
-
-## Services Layer
-
-| Class | Responsibility |
-|-------|----------------|
-| `CalculationThreadingManager` | Hardware threading detection, user preference persistence, worker budget calculation |
-| `CalculationAccelerationManager` | SIMD feature detection, benchmark mode selection, hardware capability flags |
-| `FractionCalculator` | Arbitrary-precision fraction arithmetic (Add/Subtract/Multiply/Divide/CommonDenominator) — all operations return a normalized result |
-| `LongDivisionCalculator` | Decimal long division with step-by-step output; supports integer or decimal input |
-| `ResultClipboardService` | Copies formatted calculation results to clipboard |
-| `SelectionButtonStyler` | Consistent button styling across all views |
-
----
-
-## Power/Root Solver — `Views/Calculators/PowerRootView.xaml.cs`
-
-The most performance-critical UI component:
-
-- **Power mode**: Base ^ Exponent → uses `ParallelBigUnsigned.Pow()` with full worker budget.
-- **Root mode**: Root(n, d) → solves x^d = n via binary search over QuadDouble range; precision controlled by `MaxRootDecimalPlaces`.
-- **Cancellation**: `CancellationTokenSource` shared across the entire power operation and any active TXT export token. Cancellation is confirmed with a dialog before terminating worker teams.
-- **TXT export**: For results >= 100,001 digits, the engine prepares base-10,000 magnitude through the parallel NTT/CRT pipeline, then streams decimal blocks via `ParallelBigUnsigned.WriteDecimalBlocks()`. With Hardware acceleration enabled, formatting uses AVX2 on Windows/x86 or NEON/AdvSIMD on Android ARM64; disabling it forces scalar formatting. A progress bar shows the worker count during preparation.
-
-Key thresholds:
-- `MaxBaseInputDigits = 19` (fits in Int64 magnitude check)
-- `MaxExponent = 100,000,000`
-- `LegacyNttMaximumExponent = 10,000,000`: exponents at or below this keep the existing production NTT/CRT path unchanged.
-- `10,000,001..100,000,000`: `PowMemoryBounded()` keeps the public <=10M `Pow()` baseline unchanged, but large mode executes its <=10M seed/remainder and all later merges on one persistent physical worker pool. After HX 370 profiling showed that both fine-grained work stealing and coarse tail-help regressed the memory-bound NTT kernel, large mode now uses **persistent static scheduling**: every NTT/CRT generation gives each worker exactly one contiguous range and the complete worker team advances to the next `LargePowTaskGraph` node together. There is no butterfly-range stealing and no tail atomic cursor in the hot transform path. Full transforms above 2^26 are still decomposed into 2^25-limb segment pairs and reuse the existing exact two-prime uint32 DIF/DIT NTT/CRT arithmetic. A `MemoryBudgetGate` still caps transform leases at four while the pool retains at most three, keeping the measured large-mode RAM target around the ~6 GB class rather than trading scheduler activity for aggressive RAM growth.
-- Large-mode forward-cache v3 keeps the existing outer-segment spectrum cache and adds one bounded cross-outer carry for the 3-segment square: the final right segment spectra from pair `(1,2)` are reused by diagonal `(2,2)`. P1(left) is consumed/returned before P2(right) is rented, so the optimization remains at the existing three-transform-buffer peak. For the `999999999999999999^100,000,000` topology this raises the real saved-forward count from 98 to exactly 100 without recomputing spectra, changing segment size, or adding another 256 MiB transform buffer.
-- Stage completion is counted once per persistent worker generation. The coordinator cannot publish the next generation until all workers have fully exited the current static partition, preserving the `CountdownEvent` fix and eliminating queue/deque/tail-cursor races from the hot path.
-- Static range boundaries use 64-bit intermediates before casting valid endpoints back to `int`. Large NTT stages can contain tens of millions of butterfly items, so the scheduler never multiplies a worker index by `itemCount` in Int32. This preserves the partition-overflow fix and prevents negative/overlapping spans.
-- Workers remain alive through seed, remainder, merge tasks, segmented pair jobs, CRT and carry ranges. Between adjacent NTT generations they spin for only 16 short `SpinWait` iterations before parking; the previous 96-iteration window was intentionally reduced to avoid extra scheduler/cache pressure during memory-bound transforms. Stage dependency barriers remain exact.
-- Large transforms remain serialized at the graph level: one memory-heavy NTT consumes the worker team at a time instead of launching competing transforms that fight for cache and memory bandwidth. The worker pool is persistent, but the arithmetic kernel is static and locality-first. A forced Gen2 collection is still used only at large-mode phase boundaries to reclaim dead magnitudes while pooled NTT/twiddle resources remain owned.
-- Large-mode forward NTT reuse (2026-08-24): segmented multiplication keeps the current outer segment's already-transformed P1 and P2 spectra while it is paired with multiple right segments. Only the mutable right/product transform is rebuilt per pair; diagonal squares form the pointwise square directly from the cached spectrum. This removes repeated forward transforms without changing modulus arithmetic, DIF/DIT ordering, CRT, carry, segment size, or the <=10M production path. The large-mode NTT pool may retain three 2^26 uint32 buffers (two immutable cached spectra + one mutable product workspace); the legacy pool cap remains two. Non-square segmented products place the operand with fewer segments on the cached outer loop. Expected peak RAM rises only by one 2^26 uint32 buffer (~256 MiB) while forward-transform time drops substantially on repeated segment pairs.
-- Every exponent above 10,000,000 shows an explicit RAM/storage confirmation, including direct ±10^k zero generation and |a| = 2^k bit-shift shortcuts.
-- `ExportDigitThreshold = 19` enables TXT export for larger results.
-- `FullResultDigitThreshold = 18` keeps results of up to 18 digits in the full
-  result display.
+- [Calculations](Services/README.md#calculations) provides the solver engines.
+  Basic arithmetic and rational expression evaluation are also used in practice.
+  The calculator and formula reference share the [geometry catalog](Models/Formulas/GeometryFormulaItem.cs).
+- [MatrixEngine](Services/Calculations/MatrixEngine.cs) takes signed 64-bit
+  integers. It keeps addition and subtraction exact with 128-bit results and
+  uses wide accumulators and `BigInteger` results for multiplication. The work
+  plan checks memory before starting and can process large results in blocks.
+- [ParallelBigUnsigned](Numerics/BigIntegers/ParallelBigUnsigned.cs) uses exact
+  number-theoretic transforms (NTT) and Chinese remainder reconstruction (CRT)
+  for large integer products. Powers above 10 million that use NTT go through
+  a memory-bounded path with segmented transforms and a persistent worker team.
+- [Extended-precision types](Numerics/README.md#floatingpoint) support roots and
+  geometry. The quadratic solver computes the discriminant exactly with
+  `BigInteger` and uses `OctoDouble` for its square root and the real roots.
 
 ### Power and root input limits
 
-- Powers take an integer base from −10¹⁸ to 10¹⁸ and an exponent from 0 to
-  100,000,000. `0^0` is undefined.
-- Roots take a signed 128-bit radicand and a nonzero signed 32-bit degree.
-  A negative degree gives the reciprocal of the corresponding positive-degree
-  root. A negative radicand with an even degree can produce a complex result.
+Powers accept integer bases from −10¹⁸ to 10¹⁸ and exponents from 0 to
+100,000,000. `0^0` is undefined. Roots accept a signed 128-bit radicand and a
+nonzero signed 32-bit degree. A negative degree gives a reciprocal root. A
+negative radicand with an even degree can produce a complex result.
 
-### Temporary storage for large power results
+The calculator offers TXT export for powers with 19 or more digits. It streams
+large results in decimal blocks.
 
-`PowerRootView.Memory.cs` archives a completed power result if its managed
-numeric storage is at least 32 MiB. This happens after 60 seconds away from the
-power tab or when the app enters the background. The app finishes writing the
-private TXT file before releasing the in-memory number. The preview, solution
-and TXT export remain available, and later exports stream from that file.
+## SIMD Acceleration
 
-A failed or cancelled archive keeps the in-memory result. Clearing the result,
-starting a new calculation or closing the app normally removes the file.
-The first use of result storage in a new process prunes abandoned files older
-than seven days. These files are temporary and cannot restore a session.
+[CalculationAccelerationManager](Services/Performance/CalculationAccelerationManager.cs)
+combines the hardware acceleration switch, the selected mode and runtime
+support. Worker limits are managed separately by
+[CalculationThreadingManager](Services/Performance/CalculationThreadingManager.cs).
 
-Background cleanup also releases live-wallpaper resources. Active calculations
-and exports keep ownership of their data until they finish. Android handles
-supported `onTrimMemory` signals, and the archive path requests garbage
-collection only after releasing the large result.
+### Android ARM64
 
----
+For math kernels, SIMD execution requires an optimized Android Release build
+with CoreCLR, ARM64 NEON hardware and runtime intrinsics. **Auto** chooses
+**NEON (AdvSIMD)** when eligible. NEON uses direct `AdvSimd.Arm64` intrinsics
+when available, or an accelerated `Vector128` path with scalar work for parts
+of the kernel. **SVE** and **SVE2** appear as separate choices when CoreCLR
+exposes direct `AdvSimd.Arm64`, SVE intrinsics and a 128-bit SVE vector width.
+The SVE2 mode also requires SVE2 intrinsics.
 
-## Error Handling & Edge Cases
+| Workload | Backend and fallback |
+| --- | --- |
+| Integer matrices | Eligible matrices can use NEON, SVE or SVE2. At the engine level, a request for SVE2 can fall back to SVE, then NEON, then scalar. Uniformity scans use NEON when an SVE mode is selected. The engine uses scalar when any input dimension is below 16. |
+| Large integer powers | The Android NTT/CRT SIMD path is eligible for exponents above 1,000,000. Explicit SVE/SVE2 modes use supported kernels and retain NEON or scalar for other stages. At or below 1,000,000, Android NTT/CRT uses scalar. |
+| Parabola and TXT formatting | These paths use NEON where eligible, including when the selected calculation mode is SVE/SVE2. |
 
-| Scenario | Behavior |
-|----------|----------|
-| Division by zero (fractions) | Returns error with contextual message; no NaN produced |
-| Invalid input format | Entry-level validation in `IntegerInputFormatter`; error messages shown inline |
-| Overflow (Int128 range) | Input ranges are enforced via constants (`MaxIntegerInputDigits = 39`, `Min/MaxInt128InputValue`) |
-| Large results (>1 MiB workspace) | Triggered Gen2 GC sweep after stopwatch stops; LOH compaction disabled to avoid copying the live result |
+If a saved SIMD mode becomes unavailable, the app resolves it to the
+automatic choice. Debug builds, an ineligible runtime or a disabled
+acceleration switch leave Android math kernels on scalar execution.
+[Power diagnostics](Numerics/BigIntegers/NttKernelUsage.cs) record the
+instruction set actually used by phase.
 
----
+### Windows x86-64
+
+**Auto** prefers AVX-512, then AVX2, then SSE2 as supported by the runtime.
+`AVX/AVX2` is the shared mode label. Integer matrix and power kernels use
+AVX2 for 256-bit integer work, while AVX serves floating-point benchmarks.
+Individual stages can use narrower kernels or scalar code.
+
+## Practice and Local AI
+
+The [quiz curriculum](Services/Quizzes/QuizCurriculumLayer.cs) controls what
+appears in mixed or skill practice. C# generates the facts, computes answers
+and grades responses. Optional local inference uses LLamaSharp and llama.cpp
+to write templates for supported question types. C# validates the templates
+before SQLite storage. The practice engine can reuse matching templates
+without running inference. See the [question bank guide](Services/QuestionBank/README.md).
+
+Local inference has its own backend selection. Android ARM64 uses Arm
+KleidiAI on compatible CPUs and the baseline CPU backend elsewhere. On
+Windows, compatible GPUs can use CUDA or Vulkan, with CPU fallback. See the
+[Android native backend notes](Platforms/Android/Native/llama/README.md).
+
+## Memory & Lifetime Management
+
+- [NttPowerMemoryGuard](Services/Performance/NttPowerMemoryGuard.cs) requires
+  at least 12 GB of installed physical RAM for NTT powers above 10 million.
+  It checks capacity before workspace allocation. Matrix calculations have
+  a separate [memory guard](Services/Calculations/MatrixMemoryGuard.cs).
+- [Power result storage](Views/Calculators/PowerRootView.Memory.cs) writes
+  completed results occupying at least 32 MiB to a private TXT file after
+  60 seconds away from the power tab or when the app goes to the background.
+  It releases the in-memory result after the file is complete. A failed
+  archive keeps the data in memory. Export can stream the saved file, and
+  abandoned files older than seven days are pruned when storage opens.
+- [AppMemoryPolicy](Services/Memory/AppMemoryPolicy.cs) coordinates background
+  cleanup with page-owned results and wallpaper resources.
+
+## UI Architecture
+
+[Views](Views/README.md) implement the platform-adaptive pages.
+[Localization](../TRANSLATING.md) documents the Vietnamese and English packs
+and how to add translations. [Wallpaper](Services/Wallpaper/LiveWallpaperManager.cs)
+owns the background lifecycle. Imported H.264 MP4 wallpapers are capped at
+120 seconds, and Android limits decoded frames to 3,686,400 pixels.
 
 ## Build & Distribution
 
-See [Build from source](../README.md#build-from-source) for the Android and
-Windows build commands. `MathSolver.csproj` defines the conditional target
-frameworks for Android, Windows, iOS and Mac Catalyst.
+See [Build from source](../README.md#build-from-source) for the SDK and build
+commands. [MathSolver.csproj](MathSolver.csproj) defines the platform targets.
 
 ### Project layout
 
-```text
-MathSolver/
-├── Controls/           Reusable controls
-├── Graphics/           Diagrams, graphs and calculation drawables
-├── MarkupExtensions/   XAML markup extensions
-├── Models/             Data models and formula catalogs
-├── Numerics/           High-precision numeric types and algorithms
-├── Platforms/          Platform-specific code
-├── Resources/          Images, icons, fonts and styles
-├── Services/           Calculations, localization, settings and app services
-├── Views/              Pages and reusable views
-├── App.xaml            Application resources and startup
-├── AppShell.xaml       Shell navigation
-└── MauiProgram.cs      MAUI app configuration
-```
+| Directory | Responsibility |
+| --- | --- |
+| [Views](Views/README.md), [Controls](Controls/README.md), [Graphics](Graphics/README.md) | Pages, reusable controls and diagrams |
+| [Models](Models/README.md), [Services](Services/README.md), [Numerics](Numerics/README.md) | Data, application services and math algorithms |
+| `Platforms/`, `Resources/` | Platform-specific code and bundled assets |
 
 ### Android APK signing
 
-Android Debug and Release device builds use the SDK's development signing key
-by default. For a development-signed ARM64 Release APK, run this command.
+To build a development-signed ARM64 APK for device testing, run the following.
 
 ```powershell
 dotnet build MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 -t:SignAndroidPackage
 ```
 
-For distribution, select your release keystore in Visual Studio or pass the
-signing properties below. Set the password environment variables locally and
-keep the keystore and passwords out of the repository. Use the same signing key
-when updating an already distributed app.
+For distribution, use your release keystore in Visual Studio or run these
+commands with the password environment variables set locally. Use the same
+key for updates to an already distributed APK.
 
 ```powershell
 dotnet publish MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 `
@@ -424,547 +140,9 @@ dotnet publish MathSolver/MathSolver.csproj -f net11.0-android -c Release -r and
 
 ### Cleaning build artifacts
 
-If a rebuild still shows old resources or generated assets, run `dotnet clean`.
-If stale artifacts remain, close the running app, delete the project's `bin`
-and `obj` directories and rebuild.
-
-## Android Material You / Material 3 migration
-
-### Phase 2 (Android-only)
-
-- Windows/WinUI is a locked UI/UX baseline and is not redesigned by this phase.
-- Shell bottom navigation is rendered by MAUI Material 3 on Android and maps Math Solver's palette to Material surface/primary/on-surface-variant roles.
-- Calculation and Formula secondary tabs keep the shared MAUI page architecture, while Android uses 48dp MaterialButton state layers and an animated 3dp selection indicator.
-- Android alert/confirmation dialogs are routed through `MaterialDialogService`, which uses `MaterialAlertDialogBuilder`; non-Android platforms continue to call MAUI `DisplayAlertAsync`.
-- The Android settings overflow remains a compact native popup menu. Destructive reset now requires a Material confirmation and reports completion with a Snackbar.
-- Entry remains on the legacy handler on Android so the `EmojiCompatEnabled = false` numeric-format crash workaround is preserved.
-
-## Android Material You Phase 3 (2026-08-18)
-
-Android is now the platform-specific Material You surface while WinUI remains the stable Windows baseline.
-
-- `UseMaterial3=true` remains Android-only.
-- Optional Dynamic Color is off by default and available on Android 12+. Enabling it recreates only the Android activity so `DynamicColors.ApplyToActivityIfAvailable` can run before the view hierarchy is inflated.
-- `AndroidMaterialYouManager` mirrors Material semantic colors (`primary`, `surface`, surface containers, outline, error) into MAUI DynamicResources. Custom Math Solver accent colors remain active when Dynamic Color is off.
-- Android application chrome uses Material typography metrics, surface containers, subtle elevation, native ripple/state layers, and larger Material shape tokens.
-- Custom SGK/math renderers and `GraphicsView` content remain shared and are not Materialized.
-- WinUI values are preserved through `#if ANDROID` and `OnPlatform ... WinUI=<previous value>` branches.
-
-## Power calculation interaction lock (2026-08-21)
-
-Long-running power calculations reuse an AppShell native-tab lock. Once a power calculation starts, the Calculation tab remains selected while Formula, Multiplication Table, Math Puzzle, Settings, and every Calculation sub-tab button are disabled. Inside Power/Root, base/exponent inputs, Power/Root mode selection, Calculate/Clear, result actions, export, and diagnostics actions are disabled; the red Stop Calculation action remains available. The lock is released only after the calculation completes, fails, or cancellation has fully unwound.
-
-On Windows, the existing `WindowStateManager` close guard also owns X / Alt+F4 during an active power calculation. The confirmation text is localized as “Bạn có muốn dừng tính toán và thoát chương trình không?” / “Do you want to stop the calculation and exit the application?”. Choosing No leaves the calculation running. Choosing Yes requests cancellation, awaits the calculation completion source, and only then reissues the native window close. Root calculations are synchronous/short and do not install this long-running interaction lock.
-
-## Raw performance comparison charts (2026-08-21)
-
-The Hardware Information → Raw performance tab exposes its benchmark variants through one compact localized Picker instead of three stacked cards. Windows offers **Calculation performance**, **Single-thread / Multi-thread**, and **SIMD 128 / 256 / 512-bit**; Android keeps the applicable non-x86 choices.
-
-- **Single-thread / multi-thread comparison** runs the same four-type benchmark twice, once with one worker and once with the recommended multi-thread worker count. It keeps the current Hardware acceleration state fixed across both passes: when SIMD is enabled, Int32/Int64 and Float/Double all use the selected SIMD backend; when disabled, all four use Scalar. This isolates thread scaling without silently forcing integer work back to Scalar.
-- **Windows x86 SIMD comparison** remains a dedicated floating-point width comparison (Float + Double) so its historical chart stays directly comparable. The standard four-type benchmark, however, now vectorizes Int32/Int64 too whenever Hardware acceleration is enabled. Integer kernels use 128-bit SSE2, 256-bit AVX2, or 512-bit AVX-512F add/XOR ALU work matching the selected backend, with NEON/AdvSIMD on ARM and portable SIMD fallback where applicable. It runs each supported floating-point comparison tier — 128-bit SSE, 256-bit AVX/AVX2, and 512-bit AVX-512 — once single-threaded and once multi-threaded, for up to six passes. Unsupported tiers are never executed and are omitted from both the comparison chart and the score summary; the availability status shows a cross mark for unsupported tiers.
-- Both comparison charts use `Graphics/Benchmarks/BenchmarkVerticalChartDrawable.cs`; the Picker, raw benchmark controls are locked while a raw benchmark is running, and the existing cancellation/close guard is reused.
-- Benchmark buttons use red only while active and explicitly clear that local brush before restoring the theme `PrimaryColor`, preventing WinUI from leaving a completed/cancelled button red.
-- Human-facing ISA text is standardized as **AVX-512** (the internal enum remains `Avx512`).
-
-## Animated wallpaper (MP4)
-
-- Settings can import one user-selected MP4 into `FileSystem.AppDataDirectory/Wallpapers/live_wallpaper.mp4`; the original external path is never required after import.
-- The optimized wallpaper path accepts H.264 / AVC video only. New imports are inspected before replacing the current wallpaper; legacy wallpapers are validated once on first use after upgrade.
-- Windows playback stays on CommunityToolkit `MediaElement` -> WinUI `MediaPlayer` / Media Foundation, which uses the OS hardware-accelerated DXVA/D3D decode path when the GPU/driver/profile supports it. Android playback stays on `MediaElement` -> ExoPlayer / MediaCodec and requires an H.264 hardware decoder to be present. No FFmpeg/software decoder is added to Math Solver.
-- `LiveWallpaperView` is layered behind the four main learning tabs (Calculation, Math Puzzle, Formula, Multiplication Table), loops silently, hides playback controls and releases its media source whenever the owning tab disappears. Android keeps `TextureView` because the glass UI requires correct sibling Z-order/transparency.
-- A theme-aware `LiveWallpaperScrimColor` sits above the video for readability; Light uses a lighter veil and Dark uses a darker veil. Future wallpaper formats/intensity controls should extend this service/control boundary instead of duplicating player logic in pages.
-
-
-## Wallpaper surfaces
-- The learning pages use `Wallpaper*` resource keys for cards, inputs, inner tab strips and actions. The top-level Shell navigation sits outside the page wallpaper viewport.
-- Wallpaper OFF maps the keys to the normal palette. Wallpaper ON applies translucent light or dark fills. The tint is applied to each background brush so text and icons keep their own opacity.
-- `LiveWallpaperScrimColor` is theme-aware and replaces the previous fixed `PageBackgroundColor` + 0.52 opacity overlay.
-- Primary solver actions use a translucent accent fill. Inputs and dense reading cards receive a stronger tint than tab strips. Foreground colors are checked against the composite of each role over the wallpaper scrim.
-- `LiveWallpaperManager` refreshes visual resources immediately after enable/import/remove.
-- WinUI model actions (`Select model`, `Open in File Explorer`, `Eject model`) explicitly re-resolve current palette colors after visual-state/theme transitions to avoid cached Light/Dark brushes.
-
-## Wallpaper modes
-
-`LiveWallpaperManager` stores one background mode for the shared learning-tab host.
-
-- `MathAnimation`: built-in `GraphicsView` ambient math animation at 24 FPS. No external file, bitmap, shader, or media decoder is required. It runs while the owning tab is active and stops when the tab is inactive or animated backgrounds are disabled.
-- `MathAnimation2` uses the same lifecycle for its neural-network and geometry drawable.
-- `StaticSchoolImage` selects the wide or upright PNG from the app package. It uses the app theme's reading palette and a fixed scrim for the watercolor. The active host owns the image and clears its source when the mode or owner changes.
-- `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 3 forces older saved wallpapers to be rechecked against the duration rule and the Android decoded-pixel memory budget.
-
-On Android, `LiveWallpaperVideoInspector` limits each decoded MP4 frame to
-3,686,400 pixels, equivalent to 2560 × 1440.
-
-The Settings picker exposes all four choices. A stored mode value of `3` from the retired classroom animation resolves to `MathAnimation`. MP4 controls and validation are scoped to MP4 mode. The host creates the image, graphics timer or native player when needed and tears it down with the active owner.
-
-
-### MP4 adaptive frame contrast
-
-- MP4 import uses a two-stage fast-accept path: copy + H.264/duration/hardware validation is awaited, then the valid wallpaper is committed and the Settings UI updates immediately. Low-resolution luminance analysis is optional background work and must never block file acceptance. On WinUI, native metadata inspection starts in parallel with the OS-level file copy and the system H.264 codec query is cached after the first use.
-- Brightness analysis caps native thumbnail extraction at 16 samples per clip: short clips keep ~1-second resolution while longer clips increase the interval automatically (about 7.5 seconds for a 120-second clip). This keeps adaptive polarity useful while sharply reducing native decoder/thumbnail churn. Optional analysis is never allowed to overlap live MP4 playback; if playback starts, analysis is canceled/deferred until the player becomes inactive. Windows clears composition clip references and requests a post-analysis managed/native-wrapper cleanup; Android disposes MediaMetadataRetriever/bitmaps promptly.
-- The timeline is stored beside the private wallpaper file. Runtime playback does **not** decode a second video stream: `LiveWallpaperView` only reads `MediaElement.Position` every 500 ms and looks up the nearest precomputed luminance byte.
-- `AppThemeManager` uses hysteresis before switching polarity, preventing bright/dark text from flickering around a threshold. Only wallpaper-specific resources are updated: `WallpaperTextPrimary/Secondary`, glass surfaces, borders, and the readability scrim. The global app theme, Settings, and Hardware UI are not changed.
-- When MP4 is dark, the learning area uses light text + dark glass; on bright frames it uses dark text + light glass. Math Animation continues to follow the selected app Light/Dark theme.
-
-### Animated wallpaper runtime mode switching
-
-- Switching between the built-in `GraphicsView` math animation and H.264 MP4 is applied live without restarting the app.
-- `LiveWallpaperView` coalesces settings/policy refreshes to the next UI frame so WinUI Picker selection, MediaElement state changes, and the GraphicsView timer do not run re-entrantly.
-- A mode switch never tears down the native player synchronously while the Picker is closing. When leaving MP4 for Math Animation, the source is detached immediately and only the empty `MediaElement` shell gets a short 250 ms grace period so Picker switching stays re-entrancy-safe. Page inactivity/unload tears down the player immediately.
-- `AppThemeManager.RefreshVisualResources()` refreshes only wallpaper/glass/scrim resources. It must not reapply `UserAppTheme` or raise the global `ThemeChanged` event for a wallpaper-only setting change.
-
-### Windows minimize / restore wallpaper lifecycle (2026-08-22)
-
-- `WindowStateManager` now reports native minimize/restore transitions through `LiveWallpaperManager` without changing the user's enabled/mode preference.
-- On minimize, the active `LiveWallpaperView` releases transient `MediaElement`/GraphicsView resources and native handlers while preserving the active-page state. This reduces minimized RAM and avoids WinUI/Media Foundation retaining a composition surface that Windows may invalidate during a long minimize.
-- On restore/maximize, the active owner recreates the background after a short dispatcher delay. MP4 therefore receives a fresh `MediaElement` + H.264 surface/source instead of calling `Play()` on a reclaimed native surface; Math Animation recreates its GraphicsView/timer similarly. No Settings round-trip is required.
-
-### Live wallpaper memory ownership (2026-08-22)
-
-- Shell keeps multiple learning pages cached, but only **one** `LiveWallpaperView` may own an animated background at a time. Ownership is guarded by a static weak reference; a newly appearing tab immediately retires native resources held by a stale previous owner. This prevents multiple cached `MediaElement`/ExoPlayer/MediaPlayer decoders from accumulating.
-- Removing a MediaElement from the MAUI visual tree is not treated as sufficient cleanup. Math Solver first detaches `Source`, disables autoplay/loop, removes the view, then explicitly disconnects its MAUI handler so native decoder queues, surfaces and textures are released without waiting for GC. GraphicsView handlers are also disconnected when Math Animation is disabled/inactive.
-- Android MP4 wallpapers use a 1440p-class decoded-pixel cap (3,686,400 pixels). 4K clips are rejected on Android because their decoder surface pools are wasteful for an in-app background and can cause RAM pressure/UI jank even with hardware decode. Windows keeps its desktop resolution freedom.
-- Frame-profile generation and live MP4 playback are mutually exclusive decoder workloads. Adaptive metadata is deferred while the wallpaper is actively playing and resumes only when playback becomes inactive, avoiding a second decoder competing for RAM.
-
-### Adaptive wallpaper text polarity fine-tuning (2026-08)
-
-- Wallpaper-area neutral text must bind to `WallpaperTextPrimaryColor` / `WallpaperTextSecondaryColor`, never directly to the app-wide `TextPrimaryColor` / `TextSecondaryColor`. This includes shared solver hero/section styles and unselected buttons styled by `SelectionButtonStyler`.
-- MP4 adaptive contrast uses hard text polarity: dark frame/glass -> primary text is pure white and secondary text is near-white; bright frame/glass -> primary text is pure black and secondary text is near-black. Selected/primary actions continue to use `OnPrimaryColor` so accent buttons keep their intended contrast.
-- When animated backgrounds are disabled, the wallpaper text tokens map back to the ordinary app palette, so these bindings do not alter the static Light/Dark appearance.
-
-## Math Puzzle subtype expansion (2026-08-22)
-
-- Motion now has a second-level Picker used by the C# generator: Mixed, Basic single-object motion, same-direction catch-up, opposite-direction meeting, and river downstream/upstream motion. `QuizProblemRequest.MotionType` carries the requested `MotionQuizType?` into the existing `MotionQuizGenerator`; null preserves mixed random generation. The generator already owns all four mathematical contracts, and the C# generator owns the selected motion family.
-- Find X now has a second-level Picker used by the C# generator: Mixed, Sum, Difference, Product, and Quotient. `QuizProblemRequest.FindXOperation` carries the selected relationship through `QuizProblemTypeCatalog` into `FindXQuizGenerator`; Mixed keeps it null so C# chooses randomly.
-- Geometry has a second-level shape Picker used by the C# generator. Its visible choices are filtered by the selected Curriculum tier so an unavailable shape cannot be selected in the first place (for example `★` exposes only Mixed, Square and Rectangle; Trapezoid first appears at `★★★★`). This also avoids mutating the WinUI Picker items while its native selection flyout is closing, which previously could leave the flyout stuck open. `QuizProblemRequest.GeometryShape` still filters the C# geometry story-template catalog before the contract is generated, so C# cannot silently switch to a different shape.
-- Average and Percentage generators use broader C# context catalogs. Average problems rotate through notebooks/books/fruit mass/pen boxes, distribution contexts, names, indirect-data objects, and two-group contexts while preserving the same six mathematical contracts. Percentage problems rotate through books, trees, students, marbles, flowers, pens, oranges, and tickets, with concrete subset nouns for ratio/value/whole problems.
-
-### Live wallpaper static-restore resource safety
-
-- Wallpaper glass/scrim resource refreshes are coalesced and dispatched after a short UI-frame delay instead of mutating the application `ResourceDictionary` inline from Switch/Picker callbacks.
-- This allows `LiveWallpaperView` to disconnect `MediaElement`/`GraphicsView` native handlers before WinUI `DynamicResource` targets are repainted when animated wallpaper is disabled.
-- Transient WinUI `COMException` during native teardown is retried on the dispatcher and is never allowed to crash the app.
-- Existing `SolidColorBrush` instances are reused and only updated when their color actually changes, reducing allocations and resource churn during adaptive MP4 contrast transitions.
-
-### WinUI theme restore after live wallpaper teardown
-- When MP4/Math animated wallpaper is disabled or its backend is switched on Windows, `AppThemeManager` opens a short native-transition gate before mutating `Application.Resources`.
-- Full Light/Dark/accent palette application and wallpaper glass-token refreshes are generation-coalesced behind that gate, so `MediaElement.Handler.DisconnectHandler()` / Media Foundation teardown cannot race `DynamicResource` propagation.
-- Theme preferences are persisted immediately; only the visual resource mutation is deferred. Transient WinUI `COMException` is retried and never allowed to terminate the app.
-
-### Formula / Arithmetic Mean tab
-- `FormulaPage` now exposes a fifth sub-tab, `Average`, on Windows and Android.
-- `AverageFormulaView` is a study/reference view (not quiz state). It reuses the six `AverageQuizType` concepts already used by Math Puzzle: Direct, TotalToAverage, AverageToTotal, MissingValue, IndirectData, and TwoGroups.
-- The top interactive `GraphicsView` (`AverageDistributionDrawable`) visualizes arithmetic mean as conservation of the same total redistributed into equal shares. Users can adjust 2–5 integer values with sliders; the displayed fraction/mixed-number result updates immediately.
-- Formula cards provide a rule, formula, word-problem example, and worked solution in Vietnamese and English. The view uses wallpaper-aware `Wallpaper*` resources so it remains readable with static themes, Math Animation, and adaptive MP4 live wallpaper.
-
-### Power-of-two results beyond the .NET BigInteger bit ceiling (2026-08-24)
-
-- .NET 9+ caps `BigInteger` values at `Int32.MaxValue` significant bits. Therefore a shortcut such as `(2^36)^100,000,000 = 2^3,600,000,000` cannot be materialized as `BigInteger`, even though the mathematical bit-shift strategy itself is valid.
-- `PowerRootEngine` now treats `2^k` with `k <= Int32.MaxValue - 1` as the normal materialized `BigInteger` bit-shift path. Larger `k` uses an exact virtual representation (`sign + 2^k`) for calculation/result UI, so the calculation never attempts the guaranteed-overflow `BigInteger` allocation.
-- The virtual path still reports the exact decimal digit count/compact scientific preview and keeps the existing >10M RAM warning. It does not allocate an NTT workspace merely to show the result.
-- Full TXT export is intentionally deferred: if the user explicitly exports a virtual `2^k` result, the existing exact memory-bounded segmented/in-place NTT/CRT engine materializes base-10,000 limbs from the original `|base|^exponent`, streams them to TXT, then releases the temporary large workspace. This preserves exact export without creating an oversized `BigInteger`.
-- The production <=10M NTT/CRT path is unchanged.
-
-### AVX2 cache-resident stage-pair fusion experiment (<=10M)
-
-When Hardware acceleration is enabled on AVX2-capable x86/x64 CPUs, the <=10M NTT path keeps the original 24-logical-worker policy from the measured ~26.5 s AVX2 baseline, but reduces value-buffer traffic inside the existing L1/L2/L3 hierarchy. Adjacent DIF stages (`S` then `S/2`) and the matching DIT stages (`S` then `2S`) are fused inside each already-owned cache tile. Four quarter streams remain live in AVX2 registers across both stages, so the intermediate residues are not written and then reloaded between the paired stages. Scalar DIF/DIT, Hardware acceleration OFF, and the >10M PersistentStatic/100-cache path remain unchanged.
-
-
-## AVX2 <=10M cache-locality experiment (2026-08-25)
-
-The accepted AVX2 comparison baseline is the 24-logical-worker cache-resident stage-pair build (~25.3 s on the HX 370 test case). This experiment keeps that worker policy and does not touch the >10M PersistentStatic/100-forward-cache path.
-
-The next AVX2 pass reduces twiddle/Shoup traffic inside cache-resident regions by changing L1/L2/L3 local traversal from group-major to twiddle-major when a tile contains multiple independent groups. One 8-lane twiddle + Shoup block is loaded once and reused across all groups/parents in the resident tile. Global stages remain group-partitioned so value locality and worker occupancy are not traded away for twiddle reuse.
-
-Inside each L1 block, every stage from the block size down through length 8 is now consumed as an adjacent stage pair. The remaining DIF 4+2 and inverse DIT 2+4 stages use a fused radix-4 scalar tail, removing the final intermediate value round trip. This is deliberately AVX2-only; Hardware acceleration OFF retains the scalar DIF/DIT baseline unchanged.
-
-
-## AVX2 <=10M hybrid cache-resident pass (2026-08-25)
-
-The measured AVX2 baseline after tile-local twiddle/Shoup reuse and L1 multi-stage fusion is ~23.03 s on the HX 370 reference case. The remaining gap to the ~21.705 s scalar baseline is concentrated mostly in Forward DIF.
-
-This pass keeps AVX2 only where the existing L1/L2/L3 blocking guarantees cache residency. Global stages above the LLC boundary deliberately use the lower-traffic scalar cached DIF/DIT kernels, so they no longer stream the extra Shoup companion table through DRAM. The AVX2 cache-resident kernels still reuse twiddle/Shoup vectors tile-locally and keep the existing stage-pair/radix-4 fusion.
-
-AVX2 modular add/sub and the final Shoup correction now use unsigned `VPMINUD` selection. Because both NTT primes satisfy `2p < 2^32`, `min(sum, sum-p)` and `min(diff, diff+p)` are exact modulo-p reductions with uint32 wraparound. This replaces compare/xor/mask correction chains with add/sub/min sequences while preserving exact residues. The Shoup product remains exact and still reduces back below `p` before values leave the butterfly.
-
-Scalar Hardware-acceleration-OFF behavior and the >10M PersistentStatic/100-forward-cache engine remain unchanged.
-
-### <=10M AVX2 local-Shoup-only experiment
-
-The <=10M AVX2 kernel remains cache-resident only. `NttTwiddlePlan` now exposes a
-`MaximumShoupHalfLength` equal to half the selected L3 NTT tile. Cached global
-DIF/DIT stages still build/reuse the normal uint32 twiddle table, but they no
-longer generate or write Shoup companions that the scalar global kernel never
-reads. L1/L2/L3 stages keep the same Shoup layout and AVX2 arithmetic. This is a
-forward-setup/memory-traffic optimization only; transform mathematics, worker
-count, CRT/carry, and the >10M PersistentStatic path are unchanged.
-
-### <=10M AVX2 Forward-DIF radix-8 cache fusion experiment
-
-The <=10M hardware-accelerated NTT keeps the proven hybrid policy: global stages remain scalar to avoid Shoup/DRAM traffic, while AVX2 is confined to cache-resident L1/L2/L3 work.  Forward DIF now has an additional L1-local three-stage (radix-8 style) micro-kernel for stage triples with at most eight groups per fused block.  For stages S, S/2 and S/4 it keeps the four upper S-stage sums in YMM registers, writes only the four lower twiddled residues, completes the upper two child stages, then reloads the lower half once and completes the same child stages.  This reduces value-buffer traffic without requiring all eight value vectors plus seven twiddle/Shoup vectors to remain live simultaneously on AVX2's 16 architectural YMM registers.  When group count grows beyond eight, the engine returns to the existing twiddle-major stage-pair kernels because cross-group twiddle reuse becomes more valuable.  The inverse DIT path is intentionally unchanged so this experiment isolates the remaining Forward NTT bottleneck.
-
-### <=10M AVX2 hybrid: global Forward scalar stage-pair fusion
-
-The <=10M hardware-accelerated path keeps AVX2 restricted to cache-resident L1/L2/L3 work, but the RAM-sized Forward-DIF stages above the LLC boundary now avoid redundant whole-array sweeps as well.  When both global stages fit the bounded twiddle cache, cached stage-pair fusion can split one large group into independent quarter-stream segments, so the full worker team remains occupied even before group count reaches the worker budget.  For the earliest stages that are too large for the twiddle cache, a separate scalar segmented pair kernel fuses S and S/2 while maintaining only three per-segment twiddle recurrences: w^j, w^(j+S/4), and (w^2)^j.  This removes one value-buffer pass and one stage barrier per fused pair without allocating a DRAM-sized twiddle or Shoup companion stream.  Scalar-only <=10M and >10M PersistentStatic plans retain their previous global-stage policy; this experimental fusion is gated by the AVX2 hardware-acceleration plan.
-
-### <=10M AVX2 Forward local/cache profiling + L2 direct-dispatch experiment (2026-08-26)
-
-The `MathSolver_AVX2.zip` arithmetic/layout baseline remains the reference.  Forward diagnostics now split the cache-resident portion into L3-local, L2-local, and L1-fused critical-path buckets in addition to the existing global cached/uncached scalar buckets.  Timing is kept outside butterfly helpers: each fixed worker measures only cache-hierarchy phase boundaries and the profile reduces concurrent worker totals with `Max`, avoiding summed CPU-time inflation.  The remaining local/setup value is derived from total Forward time after subtracting the measured buckets.
-
-The first local/cache optimization is intentionally narrow: when the L3 hierarchy descends into an L2 tile, each worker keeps one Forward Shoup table reference and one `Avx2NttModContext` alive across all of its tiles and passes them directly into the existing L2/L1 AVX2 traversal instead of repeating AVX2 dispatch and rebuilding `Vector256(modulus)` for every tile.  The direct L2 cache-blocked path also reuses that same proven AVX2 tile traversal instead of falling through the legacy scalar L2 implementation when hardware acceleration is active.  The radix-8, stage-pair, radix-4, twiddle layout, global scalar stage-pair kernels, 24/24 worker policy, and >10M PersistentStatic/100-forward-cache engine are unchanged.  No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal` byref path is introduced.
-
-
-### <=10M AVX2 Forward global managed-byref + unroll-2 + dual-lane revisit (2026-08-26)
-
-This experiment is layered on top of the accepted Local/cache ContextHoist build rather than replacing it.  The cache-resident L3/L2/L1 AVX2 traversal and its detailed Forward profile are kept unchanged.  Only the two global Forward scalar stage-pair kernels are revisited so their contribution remains separately visible in the existing `Global cached scalar stages` and `Global uncached scalar stages` buckets.
-
-The cached global scalar pair now consumes two adjacent butterflies per loop iteration.  Each butterfly forms ordinary managed `ref uint` aliases to its four residue slots and reuses those checked references for both the load and the final store.  The six cached twiddles for the pair are loaded before the arithmetic to expose independent cache hits without keeping eight residue byrefs live at once.
-
-The uncached global scalar pair uses two independent even/odd twiddle recurrence lanes.  First-stage twiddles advance by `root^2`; second-stage twiddles advance by `root^4`.  The recurrence state is kept as uint32 residues and widens only for the exact uint64 modular product.  This shortens the serial recurrence dependency chain while retaining the existing segmented stage-pair memory topology and cancellation cadence.
-
-No new `Unsafe.Add`, unsafe block, pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced by this experiment.  The existing AVX2 baseline intrinsics remain untouched.  Hardware acceleration OFF, the 24/24 worker policy, global no-Shoup policy, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
-
-
-### <=10M AVX2 L1 small-stage packing + scalar-Shoup tail (2026-08-26)
-
-The accepted ~17.9 s HX 370 checkpoint still spends most Forward time inside the L1 fused tail.  The hot S=16/S=8 stage-pair is only four butterflies wide per group, so the old generic path could not fill a 256-bit vector and fell back to scalar `% modulus` arithmetic.  The Forward-only L1 path now packs two adjacent 16-value groups into the low/high 128-bit halves of one `Vector256<uint>`, duplicates the same four cached twiddle/Shoup lanes into both halves, and executes the existing eight-lane AVX2 Shoup butterfly once for both groups.  This keeps the small stage pair on the SIMD path without increasing the live YMM set beyond the existing stage-pair kernel.
-
-The final fused stages 4+2 remain scalar because each radix-4 group is tiny, but their one quarter-turn multiplication now uses the already-cached scalar Shoup companion instead of a variable 64-bit remainder.  Two independent radix-4 groups are consumed per loop iteration for modest ILP.  Global cached/uncached Forward kernels, 24/24 worker topology, Inverse DIT, CRT/carry, memory topology, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
-
-### <=10M AVX2 Inverse-DIT profiler-only checkpoint (2026-08-26)
-
-The accepted HX 370 production checkpoint remains the ~17.7-17.8 s build. This diagnostic variant adds **Inverse NTT profiling only** and deliberately leaves all Inverse arithmetic, twiddle recurrence, normalization, cache traversal, worker topology, and Forward kernels unchanged.
-
-Inverse diagnostics split the critical path into L3-local, L2-local, L1-fused, global cached scalar, global uncached scalar, final-prefix/normalization, and derived setup/other buckets. The 10M AVX2 L3 path uses phase-boundary timestamps around the existing L3 merge and around an exact copy of the existing L2-tile AVX2 traversal; no butterfly-level timing is inserted. Global cached/uncached and final-prefix measurements are coarse wrappers around the existing kernels.
-
-No scalar-Shoup normalization experiment, Inverse context-hoist experiment, or inverse radix-4 unroll is present in this build. No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced. Forward managed-byref/unroll-2/dual-lane, packed small-stage L1 optimization, 24/24 workers, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.
-
-### <=10M AVX2 inverse L1 packed 8+16 stage-pair experiment (2026-08-26)
-
-The 17.7–17.8 s checkpoint keeps Forward NTT unchanged and targets only the
-first Inverse DIT L1 stage-pair.  The 8+16 pair exposes four butterflies per
-16-value parent, too narrow for a single Vector256; the generic AVX2 parent
-kernel therefore fell through to scalar `uint64 % modulus` arithmetic for this
-pair.  Two adjacent parents are now packed into the low/high 128-bit halves of
-one Vector256 and processed with the existing cached Shoup AVX2 arithmetic.
-Twiddle/Shoup vectors are invariant across the complete L1 block, while output
-pairs are stored as soon as their second-stage multiply completes to keep YMM
-live ranges bounded.  No Inverse normalization, L2/L3 traversal, global stage,
-Forward kernel, worker topology, or >10M PersistentStatic policy is changed.
-No `Unsafe.Add` or pointer arithmetic is introduced.
-
-
-### <=10M AVX2 inverse cache stage-pair bounded-register schedule (2026-08-26)
-
-Starting from the accepted 17.6–17.7 s packed-8+16 checkpoint, the generic cache-resident Inverse DIT stage-pair keeps exactly the same AVX2 Shoup arithmetic, twiddle-major traversal, value loads/stores, and worker topology, but shortens the live range of value-side vectors inside each parent.  The first child pair is loaded and reduced before the second child pair is loaded; after the even parent merge completes, its two output vectors are stored immediately before the odd merge starts.  Six cached twiddle/Shoup vectors still remain invariant across the parent loop, but fewer temporary value vectors compete with them for the 16 architectural YMM registers.  No extra unrolling, no additional memory traffic, no new `Unsafe.Add`, and no pointer arithmetic are introduced.  Forward NTT, the packed Inverse 8+16 kernel, global stages, normalization, CRT/carry, 24/24 workers, and the >10M PersistentStatic/100-forward-cache engine remain unchanged.
-
-### <=10M AVX2 Forward L1 stage-pair/radix-4-only experiment (2026-08-26)
-
-The measured HX 370 checkpoint before this experiment is approximately 17.5-17.6 s for `999,999,999,999,999,999^10,000,000`.  Forward NTT remains the largest transform hot path.  To test a simpler L1 policy matching the successful inverse DIT structure, the Forward DIF L1 traversal no longer dispatches the radix-8/three-stage micro-kernel.  All cache-resident Forward stages from the L1 block boundary down through length 8 are consumed by the existing AVX2 stage-pair path (including the packed 16+8 specialization), followed by the existing fused radix-4/radix-2 scalar-Shoup tail.  The radix-8 implementation is retained but unreachable in this experiment for quick rollback.  L2/L3 traversal, global Forward managed-byref/unroll-2/dual-lane kernels, Inverse NTT bounded-register scheduling, worker topology, twiddle/Shoup layout, and the >10M PersistentStatic/100-forward-cache path are unchanged.
-
-
-### <=10M Inverse global cached scalar managed-byref/unroll-2 pass (2026-08-26)
-
-After the stage-pair/radix-4-only Forward L1 policy became the preferred stable checkpoint, the next low-risk experiment targets only the cached global Inverse DIT stage-pair.  Two adjacent scalar butterflies are consumed per loop iteration, but each butterfly is completed before the next begins.  Four managed `ref uint` aliases are reused for load/store within one butterfly, reducing repeated indexing/range-check pressure without `Unsafe.Add`, pointer arithmetic, or a global Shoup stream.  The arithmetic, twiddle order, cancellation cadence, worker topology, Forward kernels, cache-resident Inverse AVX2 kernels, and >10M PersistentStatic/100-forward-cache path are unchanged.
-
-### <=10M AVX2 Forward L1 stage-pair bounded-register schedule (2026-08-27)
-
-Starting from the preferred ~17.4-17.5 s checkpoint, this experiment changes only the cache-resident Forward DIF **L1** stage-pair schedule.  L2/L3 stage-pair traversal keeps the accepted twiddle-major kernel unchanged.  Inside an L1 stage-pair, the first quarter-pair is loaded/reduced before the second quarter-pair is opened; after the upper S/2 branch completes, its two outputs are stored immediately before the lower branch performs its second-stage Shoup multiply.  The six twiddle/Shoup vectors remain invariant across the L1 region, but the value-side live set is shortened so RyuJIT has more room within AVX2's 16 architectural YMM registers.
-
-The accepted packed 16+8 specialization is unchanged, as are the scalar-Shoup radix-4/radix-2 tail, Forward global managed-byref/unroll-2/dual-lane kernels, Inverse packed 8+16 and bounded-register kernels, Inverse global managed-byref/unroll-2 path, 24/24 worker topology, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine.  No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced.
-
-
-### <=10M AVX2 Forward L2 stage-pair bounded-register schedule (2026-08-27)
-
-Starting from the measured ~17.3 s HX 370 checkpoint, the next isolated experiment extends the already accepted Forward L1 bounded-register stage-pair schedule to the **L2-local** Forward DIF stage-pairs.  The L2 traversal still remains twiddle-major: the same three twiddle vectors plus three Shoup vectors are loaded once per eight butterfly lanes and reused across every group in the resident L2 tile.  Only the value-side schedule changes: one quarter-pair is completed before the next is opened, and the upper S/2 outputs are stored before the lower second-stage multiply, reducing peak live YMM state without changing arithmetic, stage fusion, twiddle order, or buffer traffic.
-
-The L3 Forward path deliberately remains on the previous accepted twiddle-major schedule so the L2 change can be benchmarked independently.  The Forward L1 stage-pair/radix-4-only policy, packed 16+8 specialization, global managed-byref/unroll-2/dual-lane path, all Inverse optimizations, 24/24 worker topology, CRT/carry, and the >10M PersistentStatic/100-forward-cache engine are unchanged.  No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced.
-
-
-### <=10M AVX2 Forward global cached scalar bounded-register twiddle schedule (2026-08-27)
-
-Starting from the accepted ~17.29 s HX 370 checkpoint, this isolated experiment leaves the successful Forward L1/L2 bounded-register AVX2 kernels and the legacy L3 policy unchanged and targets only the cached global scalar DIF stage-pair. The existing managed-byref/unroll-2 loop is retained, but the two butterflies no longer preload six twiddle scalars before beginning arithmetic. Each butterfly now loads its three cached twiddles, completes and stores its four residues, then opens the next butterfly. This shortens scalar twiddle/reference lifetimes while preserving the same unroll-2 index amortization, twiddle order, modular arithmetic, residue traffic, cancellation cadence, worker topology, and no-global-Shoup memory policy. The uncached global dual-lane recurrence is unchanged. No new `Unsafe.Add`, unsafe pointer arithmetic, or `MemoryMarshal.GetArrayDataReference` path is introduced.
-
-### <=10M Forward twiddle preparation profiler (2026-08-27)
-
-The accepted Forward global-cached bounded-register-twiddle checkpoint is kept unchanged. This diagnostic build only separates twiddle setup from butterfly execution so the previous `Local setup/other` residual can be interpreted correctly. Forward profiling now records (1) cached-global twiddle-table preparation that occurs before the timed global butterfly kernel, including the number of stage tables requested, and (2) fused L3/L2/L1 forward+inverse twiddle/Shoup preparation before cache-resident execution. The remaining local residual is reported as dispatch/barrier/other. Timers remain at stage/phase boundaries only; no butterfly arithmetic, traversal, worker topology, memory layout, or >10M PersistentStatic path is changed.
-
-
-### <=10M AVX2 Forward 2×L3 bridge experiment
-
-The accepted <=10M topology still uses the same fixed worker counts and the accepted Forward L1/L2 bounded-register kernels; L3 itself remains on the previous twiddle-major schedule because L3 bounded-register regressed. The otherwise-unpaired DIF stage at exactly `2 * L3TileLength` is now fused with the complete L3 -> L2 -> L1 tail. One worker owns each 2×L3 parent, executes the parent stage with the existing cached AVX2/Shoup group kernel, then immediately completes both independent L3 children. This removes one separate whole-transform dispatch/barrier and is intended to turn the former Forward local `Dispatch/barrier/other` residual into useful cache-resident work without changing worker topology, global Shoup policy, or >10M PersistentStatic behavior.
-
-- Correctness guard: the bridge half-length is L3, but Shoup companions are intentionally generated only through L3/2. The bridge therefore uses the exact cached scalar DIF group and only its L3 descendants enter AVX2/Shoup; this prevents reading uninitialized Shoup companion slots while retaining the fused parent traversal/barrier reduction.
-
-
-### Forward L3 bounded-register retest on the Bridge baseline
-
-The correctness-fixed 2×L3 bridge remains unchanged: the bridge stage itself stays on the exact cached scalar DIF path because the Shoup companion cache intentionally begins below that boundary. This experiment changes only cache-resident Forward L3 stage-pairs beneath the bridge and in the standalone L3 tail. They now use the same bounded-register value-side schedule already accepted for L1/L2, while retaining the existing twiddle-major traversal, AVX2/Shoup arithmetic, worker topology, bridge ownership, global cached/uncached kernels, and memory policy. The retest is motivated by the slower Core i7-8700, where run-to-run scheduler/boost noise is lower and small L3 differences are easier to distinguish than on the heterogeneous HX 370. No new Unsafe.Add, unsafe pointer arithmetic, or MemoryMarshal path is introduced.
-
-### <=10M Inverse global cached bounded-register scalar pass (2026-08-27)
-
-- Keeps the existing managed-byref + unroll-2 global cached Inverse DIT stage-pair path.
-- Each unrolled butterfly now loads only its own three cached twiddles, completes, and stores before the next butterfly is opened.
-- The scalar inverse stage-pair helper completes the even second-stage merge and stores its two outputs before opening the odd merge, reducing simultaneous modular-multiply live state.
-- Arithmetic, twiddle order, worker topology, memory topology, and global Shoup policy are unchanged.
-- No new `Unsafe.Add`, pointer arithmetic, unsafe block, or `MemoryMarshal.GetArrayDataReference` use is introduced.
-
-## 2026-08-28 – Combined Inverse L1 Profiler + 2×L3 Bridge
-Combines the Inverse L1 substage profiler with the Inverse 2×L3 bridge experiment on top of the accepted Combined i7 checkpoint. The bridge remains scalar/cached at 2×L3 while descendants use the existing AVX2/Shoup kernels.
-
-### <=10M AVX-512 Phase 5 — Inverse L1 bounded stage-pairs (2026-09-04)
-
-Starting from the accepted Phase-4 checkpoint, the larger cache-resident Inverse DIT L1 stage-pairs now reuse the existing 16-lane AVX-512 twiddle-major stage-pair kernel already validated in L3/L2. The small packed `8+16` pair remains AVX2; only `stageLength >= 32` is widened, which guarantees at least 16 independent `halfLength` lanes for the AVX-512 helper. The fused length-2/length-4 tail, L2 final single stage, global stages, CRT/carry, 24-worker topology, twiddle/Shoup layout, buffer pools, and >10M AVX2-only policy are unchanged. No additional large workspace is allocated.
-
-### <=10M AVX-512 Phase 8 — CRT constant-Shoup reconstruction (2026-09-04)
-
-Starting again from the accepted Phase-5 checkpoint (Phase 6/7 are not carried forward), the two-prime CRT reconstruction now has an optional AVX-512DQ path. `FirstModulusInverseInSecond` is invariant for every coefficient, so one exact 32-bit Shoup companion is computed once and reused across sixteen residues per iteration. P1 residues are reduced into P2 with branch-free AVX-512 reductions, the CRT difference uses the existing AVX-512 modular subtraction, and the constant inverse multiply reuses the exact 16-lane Shoup helper. The resulting multipliers are widened in two eight-lane halves and combined with P1 using `VPMULLQ`, writing directly into the existing bounded CRT scratch. The carry normalization pass, NTT L3/L2/L1 kernels, global NTT stages, worker topology, primes, buffer pools, and memory layout are unchanged. The path is gated by `workers.UseAvx512Ntt && Avx512DQ.IsSupported`; CPUs without AVX-512DQ and all >10M `PowMemoryBounded()` work retain the Phase-5 scalar CRT path. No coefficient-sized companion table or new persistent workspace is introduced.
-
-### <=10M AVX-512 Phase 10 — residual local single-stage widening (2026-09-04)
-
-Starting from the accepted Phase-8 checkpoint, the only additional AVX-512 work is the residual/unpaired cache-resident single stage at the L2 boundary. Forward DIF and Inverse DIT dispatch this stage to the existing 16-lane cached AVX-512 single-stage helper when `halfLength >= 16`; otherwise they retain the accepted AVX2 implementation. The rare alternate-topology Inverse L1 residual single stage follows the same guard. Phase-9 pointwise Barrett is not carried forward. Global stages, packed small L1 kernels, radix tails, CRT Phase-8 constant-Shoup, 24-worker topology, memory layout, and the >10M AVX2-only path remain unchanged.
-
-AVX-512 IFMA52 is tracked separately as a future modular-arithmetic experiment. The current .NET 10 application uses only public managed intrinsics; no native shim, unsafe instruction emission, or unsupported IFMA API is introduced by Phase 10.
-
-## AVX-512 NTT Phase 11 (experimental)
-
-Phase 11 keeps the accepted Phase-10 <=10M architecture and widens only the
-packed smallest L1 stage-pairs by packing four independent 16-value
-blocks/parents into one Vector512. The arithmetic remains the current 31-bit
-Shoup representation; no IFMA/52-bit representation is introduced. AVX2
-remains the exact fallback and >10M remains AVX-512-disabled.
-
-### <=10M AVX-512 Phase 14 — Forward dual-group ILP without cross-lane fusion (2026-09-04)
-
-Starting from the accepted Phase-11 checkpoint, the generic Forward DIF AVX-512 bounded stage-pair keeps two independent resident groups in flight at once while reusing the same six twiddle/Shoup vectors. The groups never share or permute lanes: there is no VPSHUFD/VPERMI2D and no additional value-buffer traffic. The purpose is to expose two independent Shoup dependency chains to Zen 5 while using the larger ZMM register file only for instruction-level parallelism. Odd residual groups execute the exact Phase-11 bounded schedule; one-group regions are unchanged. Inverse NTT, packed small-L1 kernels, CRT Phase-8 path, global/pointwise paths, worker topology, memory layout, AVX2 fallback, and >10M AVX2-only policy are unchanged.
-
-### <=10M AVX-512 Phase 15 — Forward dual-group Shoup software pipeline (2026-09-04)
-
-Starting from accepted Phase 14, corresponding Shoup multiplications for the two resident Forward DIF groups are explicitly software-pipelined inside one AVX-512 helper. The helper issues the two independent VPMULUDQ product/quotient chains before consuming either result and shares the shifted odd twiddle/Shoup constants. Lane layout and value-buffer traffic remain unchanged; no cross-lane permutation, new workspace, IFMA/52-bit emulation, or global-path change is introduced. The AVX2 implementation and dispatch remain exactly the Phase-14 fallback, and >10M remains AVX-512-disabled.
-
-### <=10M AVX-512 Phase 16 — Inverse Shoup software pipeline (2026-09-05)
-
-Starting from accepted Phase 15, the generic cache-resident Inverse DIT AVX-512 stage-pair now software-pipelines the two independent Shoup chains already present inside one parent. The first DIT stage reuses the same-twiddle paired AVX-512 helper for `value1` and `value3`; the second DIT stage uses a new different-twiddle paired AVX-512 helper for `firstSum1` and `firstDifference1`. Corresponding VPMULUDQ product/quotient chains are issued before either result is consumed, while parent layout, lane layout and value-buffer traffic remain unchanged. The experiment does not batch multiple parents, add cross-lane permutations, or alter the packed small-L1 `8+16` path. Forward Phase 15 is retained unchanged. AVX2 helpers/dispatch remain the exact fallback, >10M remains AVX-512-disabled, and no new workspace, IFMA/52-bit emulation, pointer arithmetic, unsafe block, or `Unsafe.Add` is introduced.
-
-### <=10M AVX-512 Phase 17 — bounded Inverse dual-parent ILP (2026-09-05)
-
-Starting from the accepted Phase-16 Inverse Shoup software-pipeline, sufficiently large Inverse DIT stage-pairs (`stageLength >= 128`) may keep two adjacent parents in flight. Four same-twiddle first-stage Shoup chains and four two-row second-stage Shoup chains are opened together, then each parent is retired promptly. The smallest 32+64 pair, one-parent regions, and odd residual parents use the exact Phase-16 schedule. No cross-lane permutation, extra coefficient buffer, AVX2 dispatch change, or >10M AVX-512 enablement is introduced.
-
-### <=10M AVX-512 Phase 18 — Global dual-lane constant-modulus retune (2026-09-05)
-
-Starting from Phase 17, the Forward global-uncached fused DIF stage-pair keeps the existing scalar two-lane `root^2/root^4` recurrence and the same worker segmentation, but AVX-512-enabled <=10M teams now dispatch through the already-existing `FirstModulus`/`SecondModulus` specialized helpers for all eligible global-uncached pairs. This exposes the fixed NTT primes to RyuJIT so runtime-modulus divisions can be strength-reduced without adding a global Shoup stream, vector micro-cache, extra value pass, or workspace. AVX2 fallback, >10M policy, local AVX-512 kernels, CRT, pointwise, primes and RAM layout remain unchanged.
-
-### <=10M AVX-512 Phase 19 — Forward L3 sibling-pair ILP retest (2026-09-05)
-
-Starting from accepted Phase 18, the Forward 2xL3 bridge traversal now lets the AVX-512 path execute the top L3 stage-pair across both bridge children in one region. The two children are independent groups with identical twiddle rows, so the existing Phase-15 dual-group Shoup software-pipeline can keep both sibling groups in flight and reuse the same six twiddle/Shoup ZMM vectors. After consuming `L3 + L3/2`, each child resumes at `L3/4`; the AVX2 fallback retains the exact Phase-18 per-child schedule. No cross-lane permutation, extra value-buffer pass, workspace, global-path change, Inverse change, >10M AVX-512 enablement, or IFMA/52-bit dependency is introduced.
-
-
-### <=10M AVX-512 Phase 21 — Forward L3 sibling early-retire ILP (2026-09-06)
-
-Starting from accepted Phase 19 and explicitly excluding rejected Phase 20, the exact two-sibling top-L3 AVX-512 region keeps Phase-19 first-stage dual-group Shoup software-pipelining but retires sibling A completely before running sibling B's second-stage Shoup multiplies. This shortens peak ZMM lifetimes without changing lane layout or memory traffic. The specialization is limited to the 2xL3 bridge shape; AVX2 fallback, Inverse Phase 17, Global Forward Phase 18, CRT/pointwise, worker topology, RAM policy and >10M AVX-512-off behavior are unchanged.
-
-### <=10M AVX-512 Phase 26 — Pointwise dual-vector-sized constant-modulus ILP (2026-09-06)
-
-Starting directly from accepted Phase 21, all Phase 22–25 Barrett/Montgomery/IFMA experiments are excluded. Pointwise multiplication/squaring keeps the exact Phase-21 UInt64 `% modulus` arithmetic, but the AVX-512 <=10M path specializes the two production primes as compile-time constants and schedules two independent 16-residue windows (32 coefficients) together. Each paired lane opens two independent multiply/remainder chains before either is retired, while diagonal squares use a one-source specialization. The experiment adds no Barrett/Montgomery reducer, mask correction, IFMA, 52-bit layout, Shoup companion stream, coefficient-sized buffer, pointer path or AVX2 change. CPU paths without the <=10M AVX-512 gate execute the literal Phase-21 scalar pointwise loop.
-
-### Hardware Information — CPU instruction extension reporting (2026-09-06)
-
-Phase 26 remains the accepted <=10M AVX-512 NTT/CRT compute checkpoint. This UI-only follow-up expands the Hardware Information instruction row from the small benchmark-oriented SIMD subset to a CPU-Z-like CPUID capability list on x86/x64: SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2, SSE4A, x86-64, AES, AVX, AVX2, AVX-VNNI, AVX-512, FMA3 and SHA when supported. MMX is deliberately omitted as legacy. Android ARM capability discovery and all calculation/benchmark dispatch remain unchanged.
-
-### <=10M AVX-512 Phase 27 — AVX-512F prime-structured pointwise reduction (2026-09-06)
-
-Starting from the accepted Phase-26 checkpoint, the first extension-isolated arithmetic retest uses AVX-512F only. The Phase-26 two-Vector512 pointwise window is retained, but full 16-lane blocks replace scalar UInt64 `% prime` with exact VPMULUDQ reduction specialized to the two production NTT primes (`15*2^27+1` and `7*2^26+1`). The quotient is derived by exact small-constant division of the high product chunk and can only be exact or one high, so one borrow-based `+p` correction finishes the residue. No AVX-512DQ, generic Barrett high64 reconstruction, Montgomery domain, floating reciprocal, masking experiment from Phase 22–25, IFMA/52-bit representation, new buffer, AVX2 dispatch change, or >10M AVX-512 enablement is introduced. Hardware Information CPU-extension reporting from the latest Phase-26 source is retained unchanged.
-
-### <=10M AVX-512 Phase 28 — DQ-assisted prime pointwise reduction (2026-09-06)
-
-Starting from accepted Phase 27, the dual-vector pointwise schedule and prime-specialized AVX-512F quotient reducers are retained.  The only new arithmetic is the final exact quotient-times-modulus product: when `Avx512DQ.IsSupported`, the qword quotient lanes use `VPMULLQ`/`Avx512DQ.MultiplyLow`; otherwise the exact Phase-27 `VPMULUDQ` path remains.  Since `q*p < p^2 < 2^62` for both NTT primes, low64 is the full product.  This phase does not widen product formation to qword lanes and does not introduce IFMA, Montgomery/Barrett representation changes, additional buffers, AVX2 changes or >10M AVX-512 enablement.
-
-### <=10M AVX-512 Phase 29 — CRT DQ low/high dual-chain ILP (2026-09-06)
-
-Starting from accepted Phase 28, the AVX-512DQ CRT reconstruction keeps the existing constant-Shoup multiplier but schedules the low and high eight-qword reconstruction halves together: both widened multiplier halves issue their independent `VPMULLQ` operations before either result is consumed. This exposes two independent DQ dependency chains while keeping memory traffic, scratch usage, residue representation, pointwise Phase-28 path, NTT kernels, AVX2 fallback and >10M AVX-512-off policy unchanged.
-
-### <=10M AVX-512 Phase 30 — VL 256-bit CRT quad-chain reconstruction (2026-09-06)
-
-Starting from accepted Phase 29, the CRT residue reduction, constant-Shoup multiplier, 512-bit widening, scratch layout and worker partition remain unchanged. On CPUs where `Avx512DQ.VL.IsSupported`, each widened eight-qword CRT half is split into two four-qword YMM halves and the final `multiplier * FirstModulus` reconstruction uses four independent `Avx512DQ.VL.MultiplyLow` / 256-bit `VPMULLQ` chains before add/store retirement. This isolates AVX-512VL as a width/scheduling experiment while retaining the exact Phase-29 512-bit DQ path as fallback. Pointwise Phase 28/27 arithmetic, Forward/Inverse NTT kernels, AVX2 fallback, memory topology and >10M AVX-512-off policy are unchanged.
-
-### >10M AVX2 Forward L1 exact-low32 Shoup experiment (2026-09-08)
-
-Starting from the accepted >10M Inverse-L1 low32 checkpoint (~243.891 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this isolated experiment applies the same exact low-dword Shoup observation to the generic **Forward L1 fused DIF stage-pairs** only. The 4096+2048, 1024+512, 256+128 and 64+32 pairs keep the existing bounded-register, twiddle-major traversal and memory traffic, while their vector modular products use VPMULLD for the low `x*w` and `q*p` terms and VPMULUDQ only for the high32 Shoup quotient. A dedicated two-value same-twiddle low32 helper preserves the accepted second-stage dual-chain software pipeline.
-
-The packed Forward 16+8 specialization, radix-4/radix-2 tail, all L2/L3/global kernels, scheduler, CRT/carry and segmentation remain unchanged. Dispatch is gated by the >10M persistent-static worker topology, so the <=10M AVX2 fallback and the <=10M AVX-512 path remain on their accepted kernels.
-
-### >10M AVX2 Inverse L1 pass 2 — same-twiddle first-stage Low32 Shoup ILP (2026-09-08)
-
-Starting from the accepted large-mode AVX2 checkpoint that combines Inverse-L1 Low32 Shoup and Forward-L1 Low32 Shoup (~240.168 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this isolated pass changes only the generic **Inverse L1 fused DIT stage-pairs**. The two independent first-stage right-hand products inside one parent use the already-existing `MultiplyShoupPairSameTwiddleLow32Avx2` helper because both products share the same first-stage twiddle/Shoup vector. Their two high32 quotient chains are issued together and the odd-lane Shoup vector is derived once, while the left operands are deliberately loaded only after the paired multiply returns to keep the AVX2 live-register set bounded.
-
-The different-twiddle second-stage products remain on the accepted sequential Low32/early-store schedule; no second parent is opened and no extra unroll, cross-lane permutation, temporary buffer or workspace is introduced. The packed Inverse 8+16 path, radix-4 tail, Forward L1 Low32 checkpoint, L2/L3/global NTT, CRT/carry, scheduler, primes, segmentation, <=10M AVX2 fallback and <=10M AVX-512 path are unchanged.
-
-### >10M AVX2 Inverse global 24T balance + pair/dual-lane pass (2026-09-08)
-
-Starting from the accepted HX-370 large-mode checkpoint (~230.469 s for `999,999,999,999,999,999^100,000,000`), this experiment changes only the measured N=2^26 Inverse global stages on the persistent 24-worker AVX2 path. The cached `S=2^20 + 2^21` fused pair now uses worker-aligned parent slicing (32 parents × 3 slices = 96 work items); the cached `S=2^22` single stage uses 16 groups × 3 slices = 48 work items instead of the imbalanced 32-item ceil split and runs a managed-byref two-butterfly scalar pair kernel without allocating a global Shoup companion stream. The three non-final uncached stages `S=2^23`, `S=2^24`, and `S=2^25` reuse the existing exact dual-lane root² recurrence with the natural 8×3, 4×6, and 2×12 24-item partitions. Existing Coffee-Lake 12T specializations, <=10M behavior, Forward NTT, local L1/L2/L3 kernels, CRT/carry, memory layout, primes, and AVX-512 policy are unchanged.
-
-
-### >10M AVX2 L1 small-pair Low32 pass (2026-09-08)
-
-Starting from the accepted HX 370 large-mode checkpoint (~222.645 s at exponent 100,000,000), the existing large-mode Low32 gate now also covers the two packed L1 stage-pairs that were deliberately left on the older full-product Shoup kernel. Forward S=16/S=8 keeps its two-group Vector256 packing and switches its first-stage modular products plus paired second-stage products to Low32/VPMULLD. Inverse S=8/S=16 keeps its two-parent Vector256 packing, pairs the two same-twiddle first-stage products with the proven Low32 pair pipeline, and retires the two different-twiddle second-stage merges sequentially with Low32. Generic L1, global 24T scheduling, L2/L3, CRT/carry, worker topology, and <=10M/AVX-512 dispatch are unchanged.
-
-
-### >10M AVX2 L2 pass 1 — Inverse Low32 + same-twiddle pair pipeline (2026-09-08)
-
-Starting from the accepted large-mode `L1PackedLow32` checkpoint (~215 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), this pass leaves the completed L1 work unchanged and moves only the two cache-resident Inverse L2 DIT stage-pairs to the already-proven exact Low32 Shoup path. On the 64K-value HX-370 L2 tile those pairs are `8192+16384` and `32768+65536`. The existing twiddle-major traversal and bounded live-register schedule are preserved, while first-stage products that share one twiddle/Shoup vector use the same paired Low32 pipeline already accepted for Inverse L1. Forward L2, all L3/global stages, CRT/carry, scheduler, RAM topology, <=10M AVX2 fallback and <=10M AVX-512 path are unchanged.
-
-
-### >10M AVX-512 Phase 1 — Inverse L1 generic Low32 PairPipeline (2026-09-08)
-
-Starting from the accepted large-mode AVX2 checkpoint `InverseL2_Low32PairPipeline` (~208.81 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), the first >10M AVX-512 experiment widens only the generic Inverse L1 DIT stage-pairs (`32+64`, `128+256`, `512+1024`, `2048+4096`). The packed `8+16` pair remains on the accepted AVX2 Low32 specialization. The new sixteen-lane kernel preserves the winning one-parent twiddle-major schedule, uses AVX-512F `VPMULLD` for exact low32 `x*w` and `q*p`, retains `VPMULUDQ` only for the high32 Shoup quotient, and pipelines both same-twiddle first-stage products plus both different-twiddle second-stage products. SharedNttTwiddlePlans keeps its general large-mode AVX-512 flag off, so L2/L3/global NTT, Forward NTT, pointwise, CRT/carry, worker topology and memory layout remain exactly the accepted AVX2 checkpoint. CPUs without AVX-512F automatically execute the 208.81 s-class AVX2 path.
-
-### >10M AVX-512 Phase 2 — bounded Inverse L1 dual-parent Low32 ILP (2026-09-08)
-
-Starting from the accepted/no-regression large-mode AVX-512 Phase 1 (~208.965 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), the generic Inverse L1 exact-Low32 Vector512 kernel now opens two adjacent parents together for `stageLength >= 128` when the 4096-value resident block contains at least two parents. Four same-twiddle first-stage Shoup chains and four two-twiddle second-stage chains are issued through dedicated Low32 AVX-512F helpers. The smallest `32+64` pair and all one-parent/odd residual cases keep the exact Phase-1 PairPipeline; `2048+4096` naturally remains one-parent. Packed `8+16`, accepted AVX2 Inverse L2, global 24T tuning, Forward NTT, L3, CRT/carry, scheduler, memory layout and primes are unchanged. CPUs without AVX-512F retain the accepted AVX2 large-mode fallback.
-
-### >10M AVX-512 Phase 3 — Inverse L2 exact-Low32 stage-pairs (2026-09-08)
-
-Starting from accepted/no-regression Phase 2 (~208.872 s on Ryzen AI 9 HX 370), the two cache-resident Inverse L2 DIT stage-pairs (`8192+16384` and `32768+65536` on the 64K tile) now reuse the Phase-2 16-lane exact-Low32 AVX-512F helper. The first pair naturally uses bounded dual-parent ILP because four parents reside in the tile; the final pair naturally falls back to the one-parent PairPipeline. Inverse L1 Phase 2, packed L1, Forward NTT, L3/global NTT, CRT/carry, scheduler, memory layout and the AVX2 208.81 s fallback remain unchanged. The shared large-mode AVX-512 plan flag stays off; a separate persistent-static hardware gate isolates only Inverse L2.
-
-### >10M AVX-512 Phase 4 — Forward L1 generic exact-Low32 dual-group ILP (2026-09-08)
-
-Starting from accepted Phase 3 (~204.747 s on Ryzen AI 9 HX 370 for `999,999,999,999,999,999^100,000,000`), only the four generic cache-resident Forward L1 DIF stage-pairs (`4096+2048`, `1024+512`, `256+128`, `64+32`) are widened to a dedicated 16-lane exact-Low32 AVX-512F kernel. The kernel preserves the accepted Phase-15 twiddle-major bounded dual-group schedule: adjacent groups reuse the same six twiddle/Shoup vectors and issue paired same-twiddle Shoup chains before retirement, but the arithmetic now uses `VPMULLD` for exact low32 `x*w` and `q*p` while retaining `VPMULUDQ` only for high32 of `x*shoup`.
-
-The packed Forward `16+8` pair deliberately remains on the accepted AVX2 Low32 specialization, avoiding under-filled/small-shape ZMM work. Inverse L1 Phase 2, Inverse L2 Phase 3, global 24T tuning, Forward L2/L3/global kernels, CRT/carry, scheduler, memory layout and primes remain unchanged. Shared-plan large-mode AVX-512 remains disabled; a separate persistent-static hardware gate isolates only generic Forward L1, while CPUs without AVX-512F execute the accepted AVX2 fallback.
-
-### >10M AVX-512 Phase 5A — Forward cached-global exact-Low32, isolated (2026-09-08)
-
-Starting from accepted Phase 4 (~203.205 s on Ryzen AI 9 HX 370 for the 100M exponent benchmark), only the two measured cached Forward-DIF global stage-pairs at `S=2^22 + 2^21` and `S=2^20 + 2^19` are opened to AVX-512F. The accepted 24-thread worker-aligned segmented traversal is retained exactly; only each slice's arithmetic changes to sixteen-lane exact Low32 Shoup (`VPMULLD` for low products and `VPMULUDQ` only for `high32(x*shoup)`). Global Shoup rows are populated lazily into the already-rented Pow-scoped companion buffer and published independently of the plain twiddle rows. Forward uncached-global recurrence, all Inverse-global code, local L1/L2/L3, CRT/carry, worker topology, memory layout, and <=10M dispatch remain unchanged. This phase is intentionally cached-global-only so any gain or regression is attributable to the wide cached Forward kernel rather than a second global experiment.
-
-### >10M AVX-512 Phase 6 — Inverse L1 four-stage register residency (2026-09-08)
-
-Starting from accepted Phase 5A (~201.379 s), the production 4096-value large-mode Inverse-L1 generic stages are reorganized from four independent stage-pair value-buffer passes into two four-stage register-resident super-passes (`32+64 -> 128+256` and `512+1024 -> 2048+4096`). Four child parents remain resident as sixteen ZMM value vectors; the next pair consumes one position class at a time and writes only final outputs, eliminating the intermediate store/reload boundary. Twiddle/Shoup constants are deliberately short-lived/reloaded from the cache-resident tables so the 32-register AVX-512 file is used primarily for value residency rather than constant hoarding. Packed 8+16, radix-4 tail, Inverse L2 Phase 3, Forward L1 Phase 4, Forward cached-global Phase 5A, all other global paths, L3/bridge, CRT/carry, workers, memory layout and <=10M fallback remain unchanged.
-
-### <=10M AVX-512 radix-4 (2026-09-09)
-
-The existing local AVX-512 L2/L3 traversal now also runs Forward DIF `4+2` and Inverse DIT `2+4` through sixteen-group radix-4 kernels. Four contiguous ZMM loads cover 64 residues; lane-local uint/ulong unpacks transpose the groups into four vectors, reuse the existing canonical modular add/subtract and full-product Shoup arithmetic, then transpose the results back before storing. The kernels require AVX-512F only, allocate no scratch arrays, and use the scalar Shoup kernels for residual groups shorter than 64 residues. Dispatch shares the existing `useAvx512LocalStagePair` gate; smaller transforms using the L1-only fallback and the separate >10M engine keep their existing radix-4 behavior. The standalone [radix-4 validation harness](../tests/Radix4Validation/README.md) covers independent modular DFT comparisons, scalar equivalence, lane/guard boundaries, full powers, and kernel timing.
-
-### <=10M AVX-512 global NTT and normalization (2026-09-09)
-
-The shared <=10M AVX-512 gate now also enables Phase-6 inverse L1 register residency for 4096-value blocks, cached global DIF/DIT single stages and pairs with lazily published Shoup companions, and uncached global stages with sixteen independent twiddle recurrence lanes. Final inverse-prefix normalization uses the same recurrence, while large CRT blocks reuse the existing parallel tile-carry reconciliation. A bridge boundary guard preserves the final inverse normalization when one worker can cover a complete 2xL3 transform. The measured 24-worker HX-370 result for the 18-digit base raised to 10M decreased from 4.969 s to 2.130 s, with identical result hashes. This is the checkpoint for the subsequent [algorithm review](AVX512_SUB10M_REVIEW_NOTES.md); the separate >10M performance gates retain their existing policies.
-
-### <=10M AVX-512 exponentiation schedule and inverse fusion review (2026-09-09)
-
-AVX-512 power branches now use left-to-right binary exponentiation: each set bit multiplies the growing result by the original UInt64 base through a bounded-width schoolbook product, avoiding large result-by-factor NTTs. Existing exponent splitting and square dispatch remain in use. Cached inverse stage pairs can use the existing segmented AVX-512 kernel even with fewer parents than workers, and the final inverse vector kernel folds normalization into its twiddle recurrence to save one Shoup product when both outputs are live. On HX 370 with 24 workers, alternating measurements of the 18-digit base raised to 9,999,999 decreased from 2.202 s at `c0e946e` to 1.653 s, with identical hashes. Additional local Low32 dispatch changes and removing exponent splitting were measured and rejected. See [algorithm comparisons and validation](AVX512_SUB10M_REVIEW_NOTES.md).
-
-## Curriculum Layer – Mixed vs Skill Mode (2026-09-12)
-
-Curriculum chỉ áp dụng trong tab Toán đố và được các generator C# sử dụng.
-
-- **Hỗn hợp các dạng (top-level Mixed):** số sao quyết định pool skill được phép xuất hiện. Ví dụ các skill nâng cao như Phân số/Tỉ lệ/Chuyển động chỉ được đưa vào pool ở mốc phù hợp. Sau khi chọn skill, generator C# tạo dữ kiện, đề bài và đáp án.
-- **Đã chọn một skill cụ thể:** luôn cho phép đủ ★..★★★★★ và toàn bộ subtype của skill. Không thêm/xóa/disable Picker item theo sao. Điều này tránh re-entrant `SelectionChanged`/native flyout trên WinUI.
-- **Hỗn hợp bên trong skill:** Phép tính và Phân số hỗ trợ lựa chọn `Hỗn hợp các dạng`, truyền operation = `null` để generator random `+ - × ÷`. Find X và các Picker subtype khác giữ lựa chọn Hỗn hợp tương tự.
-- **Giới hạn dữ kiện a/b cho Cơ bản, Phân số, Tìm X:** ★ `0..9`, ★★ `0..99`, ★★★ `0..999`, ★★★★ `0..9,999`, ★★★★★ `0..99,999`. Đây là giới hạn **dữ kiện/toán hạng**, không phải giới hạn kết quả; tổng/tích/vế kết quả có thể vượt số chữ số của tier.
-- **WinUI stability:** đổi số sao không rebuild bất kỳ subtype Picker nào; chọn một subtype cũng không clear/repopulate Picker ngay trong `SelectedIndexChanged`.
-
-### Curriculum operand-scale + result auto-scroll follow-up (2026-09-13)
-
-- Với Cơ bản, Phân số và Tìm X ở Skill Mode, toán hạng/dữ kiện chính `a` luôn nằm đúng bucket của tier hiện tại: ★ đơn vị, ★★ chục, ★★★ trăm, ★★★★ nghìn, ★★★★★ chục nghìn.
-- Toán hạng/dữ kiện thứ hai `b` không bị ép cùng bucket với `a`: generator chọn ngẫu nhiên một bucket từ ★ đến tier hiện tại rồi sinh `b` trong bucket đó. Vì vậy ★★★★★ có thể tạo dạng `18,258 ÷ 2`, `43,721 + 85`, hoặc phân số có vế thứ hai nhỏ hơn nhiều. Cộng/trừ/chia vẫn giữ các ràng buộc toán học; phép nhân còn bị chặn để tích nằm trong `Int32`.
-- Generator C# áp dụng quy tắc bucket `a/b` khi sinh dữ kiện. Ngữ cảnh đề bài được chọn theo độ lớn của dữ kiện để số lượng lớn phù hợp với kho, nhà máy, trung tâm phân phối hoặc bồn chứa.
-- `FractionExpressionView` tách dấu câu cuối token trước khi parse phân số, nhờ đó tử/mẫu `BigInteger` luôn được format grouping đúng (`24,508,967,912`) và dấu chấm cuối câu không bị hiểu nhầm là dấu thập phân của mẫu số.
-- `CalculationAutoScroll` chỉ cuộn đến kết quả sau khi người dùng bấm Tính toán ở tab Giải toán (cả các tab con). Lũy thừa có thêm một lần cuộn khi hiện tiến trình. Tab Toán đố có một ngoại lệ riêng: bấm Xem sơ đồ sẽ chờ bố cục ổn định rồi cuộn với `ScrollToPosition.Start` đến sơ đồ, kể cả khi sơ đồ đã nằm trong vùng nhìn thấy (`MakeVisible` sẽ bỏ qua trường hợp này). Không cuộn khi ẩn sơ đồ hoặc tự cập nhật đề. Mở JSON & Log, các phần mở rộng khác, thay đổi dữ liệu nhập hoặc cập nhật định dạng không tự cuộn. Yêu cầu cuộn bị hủy nếu trang rời màn hình trong lúc chờ.
-
-### Mixed curriculum milestone correction (2026-09-13)
-
-Top-level **Hỗn hợp các dạng** now follows the intended elementary progression without changing Skill Mode availability:
-
-- ★: no Geometry yet.
-- ★★: Geometry begins.
-- ★★★★: Average begins.
-- ★★★★★: Direct/Inverse Proportion, Percentage, and Motion begin.
-- Skill Mode remains independent: choosing Geometry/Average/Proportion/Motion directly still keeps ★..★★★★★ available; the milestone gate applies only to the top-level Mixed pool.
-
-The matching mixed-only subtype guards were aligned with the same milestones, so a direct internal request cannot accidentally generate Proportion or Motion below ★★★★★, or Geometry at ★.
-
-## Curriculum audit against Vietnamese primary mathematics (CTGDPT 2018)
-
-The five stars remain Math Solver's abstract difficulty axis, but **global Mixed** uses them as grade-like curriculum milestones. Dedicated Skill Mode remains user-driven and never removes UI choices.
-
-- ★: arithmetic addition/subtraction and simple Find X with +/−.
-- ★★: arithmetic adds multiplication/division constrained to tables 2 and 5; Find X remains +/−. Geometry enters global Mixed only as triangle perimeter, matching the early perimeter strand without opening later area formulas.
-- ★★★: four arithmetic operations; multiplication/division use one-digit table factors 2..9; Find X includes ×/÷; Geometry includes square/rectangle perimeter+area and triangle perimeter. Fraction arithmetic is still excluded because grade 3 mainly introduces “one part of” rather than full fraction operations.
-- ★★★★: fraction arithmetic enters global Mixed with intentionally small numerators/denominators; average enters; Geometry adds parallelogram/rhombus while triangle remains perimeter-only.
-- ★★★★★: percentage, proportion, motion and the full supported geometry set enter. Global Mixed motion uses the core speed-distance-time form; advanced chasing/meeting/river variants remain available when Motion is selected directly. Percentage Mixed uses ratio and percentage-of-a-number; reverse-whole remains available in dedicated Percentage mode.
-
-All C# questions use these curriculum restrictions before they are displayed.
-
-### Audit bổ sung: Geometry ★★
-
-- Mixed ★ không sinh Geometry vì generator hiện tại là bài tính toán, trong khi mốc đầu chủ yếu là nhận dạng hình trực quan.
-- Mixed ★★ bắt đầu Geometry bằng **chu vi tam giác**. Đây là dạng generator hiện tại biểu diễn đúng với mạch làm quen chu vi ở Toán 2; chưa mở sớm diện tích hình vuông/chữ nhật.
-- Mixed ★★★ mới mở chu vi/diện tích hình vuông, hình chữ nhật và giữ chu vi tam giác.
-- Skill Mode vẫn không lọc Picker/subtype theo sao để tránh thay đổi collection native WinUI trong lúc tương tác; khi người dùng chủ động chọn một dạng cụ thể, sao tiếp tục đóng vai trò scale dữ kiện.
-
-## Elementary quiz groups and shared multi-step grading
-
-`ElementaryQuizGenerator` and `ElementaryQuizContract` extend both quiz sources
-with nine groups / 41 skills: two numbers, measurement, time, remainders, decimals,
-fraction skills, data charts, likelihood and visual geometry. `ElementaryEssayValidator`
-and `StepDerivationTracker` check exact derived quantities and independently labeled
-answers without enforcing a worked-example step count. Indirect averages adapt to
-this same grader. `ElementaryQuizDrawable` renders immutable quiz data on both
-platforms. [Scope, UI behavior and validation](ELEMENTARY_QUIZ_EXPANSION.md).
-
-`QuizDiagramBuilder` extends the shared quiz presentation with labeled geometry,
-two-number bars, motion arrows, fraction bars and indirect-average relations.
-Only task-given facts enter ungraded diagrams; answer values and worked
-explanations are gated by grading. `MathPuzzlePage.Diagrams.cs` handles optional
-visibility, responsive placement and modal zoom while preserving quiz state.
-[Diagram behavior and validation](QUIZ_DIAGRAMS.md).
-
-## Single-thread BigInteger power
-
-SingleThreadBigIntegerPower uses runtime BigInteger arithmetic in both hardware-acceleration modes. It retains bounded square batching, exponent windows, progress and cancellation. The custom AVX2 prefix and AVX2/AVX-512 limb32 square backends have been removed from the application, along with their hardware-information status and dispatch flags.
-
-Historical prototypes and benchmark fixtures remain under tests/LegacySingleThreadSimd and the single-thread audit projects; they are not compiled into the app. The [divide-and-conquer report](SINGLE_THREAD_DIVIDE_CONQUER_REPORT.md), [limb32 report](SINGLE_THREAD_LIMB32_REPORT.md) and [regression report](SINGLE_THREAD_LIMB32_REGRESSION.md) describe retired experiments. NTT/CRT, decimal export and parabola SIMD remain independent.
-
-
-## x86 SSE NTT/CRT large-mode fallback (>10M)
-
-- The memory-bounded power path (10,000,001..100,000,000 exponent) now enables the managed 128-bit x86 backend whenever hardware acceleration is enabled, the effective mode is SSE-family, and AVX2 is not selected/available.
-- ISA preference is detected as SSE4.2 -> SSE4.1 -> SSSE3 -> SSE3 -> SSE2. SSE4.1 supplies PMULLD/PMINUD for packed Shoup reduction; SSSE3 supplies PSHUFB odd-lane extraction. SSE3 and SSE4.2 correctly reuse the nearest useful integer core because those revisions add no NTT-specific packed integer primitive.
-- Cache-resident Forward/Inverse NTT butterflies (L3/L2/L1 hierarchy) use the 128-bit Shoup kernel in large mode. Uncached RAM/global recurrence remains scalar to avoid adding a second DRAM twiddle/Shoup stream before benchmark evidence supports it.
-- CRT reconstruction is vectorized four coefficients at a time with SSE2-compatible exact 32x32->64 arithmetic, using the same constant Shoup inverse; SSE4.1/SSSE3 are consumed automatically where useful. Scalar remains the exact vector tail and non-SSE fallback.
-- No unsafe pointers are used; managed byrefs/Vector128 intrinsics only. AVX2/AVX-512 and the existing >10M persistent-worker/memory-budget policy are unchanged.
-
-
-## AVX2 CRT reconstruction backend (2026-09-16)
-
-- Two-prime CRT now has an explicit AVX2 backend instead of falling from AVX2 NTT to scalar reconstruction on AVX2-only x86 systems. Dispatch is **AVX-512DQ -> AVX2 -> SSE2+ -> Scalar**.
-- The AVX2 kernel reconstructs eight coefficients per loop. It reuses the accepted constant-inverse Shoup multiply (`MultiplyShoupAvx2`), reduces P1 residues into P2 with four unsigned conditional subtracts, and performs exact 32x32->64 `VPMULUDQ` reconstruction for even/odd lanes.
-- Even/odd qword chains are restored to coefficient order with AVX2 unpack + `VPERM2I128`, then written with two 256-bit stores. No coefficient-sized side table, unsafe block, or pointer arithmetic is introduced.
-- The same AVX2 CRT backend is used by legacy decimal NTT, memory-bounded >10M segmented NTT/CRT, and binary-power CRT whenever AVX2 is the active NTT backend. AVX-512 CRT remains preferred when its existing gate is active; SSE and scalar remain fallbacks/tails.
-
-### >10M AVX2/SSE global-tail SIMD completion (2026-09-16)
-
-The >10M NTT/CRT path no longer drops AVX2 or the x86 128-bit SSE family back to scalar arithmetic for non-final global stages. Cached global stages use the existing Shoup companion tables with Vector256 (AVX2) or Vector128 (SSE2 through SSE4.2) butterflies. Uncached global stages keep O(1) twiddle state and use exact constant-prime modular multiplication based on the two NTT prime forms (15*2^27+1 and 7*2^26+1), avoiding transform-sized global twiddle/Shoup streams. AVX2 processes 8 uint32 lanes per iteration; SSE processes 4 lanes. The final inverse normalization/prefix remains the dedicated final-prefix path rather than part of the global-tail bucket. Dispatch order remains AVX-512 -> AVX2 -> SSE -> scalar.
-
-
-## Android ARM64 NEON large NTT/CRT (100M)
-
-The memory-bounded >10M path contains 128-bit NEON kernels for cache-local
-L1/L2/L3 stages, global cached/uncached stages, pointwise multiplication and
-CRT reconstruction. The existing segmented scheduling, memory budget and
-exact normalization remain unchanged. The same backend is present in the
-<=10M path.
-
-Android Release enables NEON for power NTT/CRT above exponent 1M when the
-runtime exposes direct `AdvSimd.Arm64` or accelerated `Vector128`. On the
-tested ARM64 Mono runtime, direct AdvSimd reports unavailable even though
-Vector128 is available. The original portable high32 partial-product sequence
-and vector base-10,000 carry were much slower than Scalar. The hybrid path
-keeps Vector128 NTT butterflies but uses four exact scalar 32x32-to-64 high
-products per vector and Scalar carry/segment accumulation. Release+AOT
-whole-power tests on the device measured 39.751 s vs 48.429 s at 10M with an
-18-digit base (and 19.002 s vs 22.446 s with a 9-digit base),
-12.157 s vs 13.643 s at 20M, and 5.154 s vs 5.694 s at 100M for hybrid vs
-Scalar, with matching output hashes. Exponents through 1M remain Scalar.
-The >10M physical-RAM admission rule remains in effect; the benchmark bypasses
-it only inside an isolated test APK. See
-[`tests/AndroidNttBenchmark/RESULTS_20260929.md`](../tests/AndroidNttBenchmark/RESULTS_20260929.md).
+Run `dotnet clean` if a rebuild shows stale generated resources. If necessary,
+close the app, remove the project's `bin` and `obj` directories and rebuild.
+
+The [test guide](../UnitTest/README.md) covers verification. The
+[previous architecture notes](https://github.com/zminhquanz/MathSolver/blob/a0d6d853ef851e8f31935c1e0224105d75e33102/MathSolver/ARCHITECTURE.md)
+preserve kernel experiments and historical benchmarks.
