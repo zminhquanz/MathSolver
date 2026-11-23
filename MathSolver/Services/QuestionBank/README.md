@@ -1,5 +1,40 @@
 # Local AI question templates
 
+## Generating questions with a local model
+
+Open **Math Puzzles → Add questions with AI**. Choose a local GGUF file or
+download a Gemma 4 E2B/E4B Q4_0 model from Google's Hugging Face repositories.
+The app checks download metadata and the GGUF header before keeping the file.
+If a repository requires authorization, download the GGUF through your browser
+and select it from the app.
+
+Windows can reference an external model file directly and open its folder in
+Explorer. Android imports a model into app-private storage and can export it
+through the system document picker. Ejecting a model clears the selection and
+unloads its weights. The model file remains available for future use.
+
+Generate one template or a batch of up to 100. C# selects the mathematical
+structure, setting and units. The model writes wording with placeholders, and
+C# validates the roles and solution before saving. Each item has up to three
+attempts. Save valid previews individually or enable automatic saving. A
+failed save leaves the preview available for another attempt. Starting a new
+job replaces the previous in-memory previews, so save any manual drafts first.
+**View JSON & logs** is available when **Settings → Developer mode** is enabled.
+
+Selecting a file checks its header without loading its weights. Generation
+memory-maps the weights with memory locking disabled. A batch shares one weight
+load. Each attempt uses a context sized for its prompt with up to 700 output
+tokens and a 2,048-token context cap. The runtime rejects prompts that exceed
+the cap and releases its contexts and weights when the job ends. The file
+selection stays available for the next job. The OS can retain reclaimable file
+cache pages after unloading. See the [hardware backends](../../../README.md#technology)
+and [Android native runtime notes](../../Platforms/Android/Native/llama/README.md).
+
+Switching tabs or leaving the AI page keeps the job running. Backgrounding or
+locking Android cancels the job and preserves records already committed to
+SQLite. See [SQLite inquiry and Excel interchange](#sqlite-inquiry-and-excel-interchange)
+to manage the saved bank.
+
 ## Stopping an AI job
 
 The generation worker treats its own stop checkpoints as normal `Stopped` results instead of calling `ThrowIfCancellationRequested`. A runtime that finishes normally after cancellation can return its final buffered text; the worker preserves that text without validating or saving the interrupted draft. Cancellation exceptions supplied by runtime/store APIs remain handled. Both paths mark unfinished items consistently and release the runtime once before publishing the terminal job state. Completed previews, saved questions and successfully queued reviews retain their state; cleanup failures remain failures.
@@ -66,6 +101,77 @@ The practice engine owns arithmetic, random operands, answer choices and grading
 - **Fractions → Fraction practice:** Numeric exercises / Word problems.
 
 Each family remembers its own style while switching families during the page session. The shared picker, knowledge-group selector and collapsed settings summary update in Vietnamese and English on Windows and Android. Arithmetic/fraction comparison uses its existing generator and hides these selectors. Word mode reuses the existing validated banks, fresh C# facts, star policies and prose deduplication; no database migration or additional model loading is needed.
+
+## Practice difficulty and grading
+
+The five stars describe progression within each family. `QuizDifficultyPolicy`
+uses the star level to select relationships as well as number ranges. A fixed
+subtype keeps its defining relationship. Mixed practice chooses from the
+subtypes eligible for its current family and tier.
+
+### Proportion, motion, averages, percentages and visual geometry
+
+| Level | Progression |
+| --- | --- |
+| 1 star | Whole-number scale factors, matching motion units, averages of two quantities, 50%, familiar polygons and direct side or area formulas. |
+| 2 stars | More scale factors, finding speed or time, averages of three quantities, familiar percentages such as 25% and perimeter-based missing sides. |
+| 3 stars | Unit rates, relative motion, missing average values, a broader percentage set, rotated polygons and L/T area decomposition. |
+| 4 stars | Rational unit rates, minutes-to-hours conversions, indirect or weighted averages, combining two quantities before a percentage calculation, concave outlines and frame areas. |
+| 5 stars | Quarter-based unit rates, inverse proportion with an extra quantity or a changed deadline, rest-time deduction plus conversion, combining three quantities before a percentage calculation, inferring a side from a perimeter and partial length, and areas with two openings or a rectangle and triangle. |
+
+Visual geometry rotates through side-counting shapes, missing-side scenarios
+and composite-area layouts. Angle recognition introduces all four angle types,
+rotations and decimal measures close to 90°. Parallel and perpendicular
+practice advances from two lines to searches among three to five. A pair
+question can have no valid pair, and the grader accepts reversed line names.
+
+### Geometry measurements
+
+Skill Mode keeps the chosen shape and measurement, such as perimeter, area,
+volume, lateral surface area or total surface area.
+
+| Level | Geometry measurement progression |
+| --- | --- |
+| 1 star | Apply the selected formula to supplied dimensions. |
+| 2 stars | Infer one dimension first, such as a side from a perimeter or a radius from a diameter. |
+| 3 stars | Find an intermediate quantity before inferring a dimension, or combine three consecutive segments. |
+| 4 stars | Combine linked dimensions or sum and difference relations before applying the formula. |
+| 5 stars | Combine those relations with conversion into the formula's length unit. |
+
+The diagram marks unknown dimensions with `?` until the solution is revealed.
+The supplied facts determine the dimensions. Circle problems use π = 3.14 and
+dimensions that yield whole-number answers.
+
+### Two-number problems, data, time, conversions, probability and fractions
+
+| Family | 1–2 stars | 3 stars | 4 stars | 5 stars |
+| --- | --- | --- | --- | --- |
+| Sum–difference, sum–ratio, difference–ratio | Use direct relations, then infer a sum or difference from its double. | Recover the required sum or difference from two quantities. | Undo a change or infer a difference after a transfer. | Undo two changes and infer the original difference or a missing ratio component. |
+| Tables and bar charts | Read quantities and account for a later addition. | Infer a missing category from a total or another category. | Combine chart data with a ratio. | Recover a total from two batches and use sum–difference, or combine two category relationships. |
+| Pie charts | Read a percentage and convert it into a quantity. | Infer the missing percentage first. | Recover the total from the other categories' combined quantity. | Recover the total from two category counts and percentages, then find the missing category. |
+| Time | Read clocks, convert intervals or cross an hour or month boundary. | Combine intervals, deduct rest, cross midnight or include an intervening month. | Carry minutes into hours, deduct rest or account for leap February. | Combine active sessions and convert units, find a changed interval or deduct paused days from a multi-month leap-year interval. |
+| Unit conversion | Convert directly or in reverse, then combine mixed units. | Convert before adding. | Convert, add and subtract. | Convert the result back to the larger unit. Area and volume use squared and cubed factors. |
+| Likelihood | Classify an event and its complement. | Consider two independent trials with replacement when applicable. | Consider two cards drawn without replacement. | Update the set before drawing without replacement. |
+| Experimental fractions | Use recorded results and their complement. | Aggregate two batches of trials. | Infer one batch's successes from failures. | Aggregate three batches and exclude explicitly invalid failed records. |
+| Fraction skills | Use familiar fractions, reduction, mixed numbers and a supplied common denominator. | Infer a quantity, combine fractions or find the least common denominator. | Infer fraction components or a remaining quantity, or combine unlike denominators. | Combine successive fractions, infer both numerator and denominator, or combine addition and subtraction before writing a mixed number. |
+
+Decimal practice keeps two operands for direct calculations. Difficulty
+progresses from tenths to carrying or borrowing, unequal precision, thousandths
+and multistep conversion stories. Rounding progresses from whole numbers to
+tenths and hundredths. Multi-step word problems use explicit givens, intermediate
+steps and units, with inverse relationships and missing groups at higher stars.
+
+### Written responses
+
+On Android and Windows, use one text box for the solution sentence,
+calculations and final answer. Put calculations on separate lines and finish
+with `Answer: …` or `Đáp số: …`, including the required unit. Numeric questions
+can omit the solution sentence.
+
+The grader accepts equivalent work that merges, splits or reorders calculations.
+It checks each equality, intermediate arithmetic and final units separately.
+Fraction tasks retain their required final form. Hidden values in tables and
+charts remain marked `?` until grading.
 
 ## Two-number, average, percentage and multi-step templates (version 8)
 

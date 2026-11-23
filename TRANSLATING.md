@@ -3,8 +3,10 @@
 Math Solver language packs are UTF-8 JSON files. Translators do not need to
 edit C# or XAML.
 
-For the complete spreadsheet workflow, including terminal setup, examples, and
-troubleshooting, start with [Translating Math Solver in the main README](../README.md#translating-math-solver).
+Start with the [blank translation worksheet](translations/translation-template.csv)
+for a new language or the [English worksheet](translations/en-US.csv) as a
+reference. The developer instructions below cover exports, validation and app
+integration.
 
 ## Recommended: translate in a spreadsheet
 
@@ -86,10 +88,9 @@ python tools/localization.py import --input translations/en-US-updated.csv --cul
 By default all rows require a non-empty translation. Use `--allow-partial` to omit
 missing/empty translations and let the app fall back to Vietnamese. Unknown or
 duplicate keys, changed source, pending reviews and placeholder mismatches always
-block export. Validation completes before the output file is opened. The CLI
-checks culture-code syntax; the app's importer additionally validates the culture
-with .NET `CultureInfo`. Import the generated JSON in the app for final validation
-and check text layout on the target device before bundling it.
+block the import. Validation completes before the output file is opened. See
+[Check the language in the app](#check-the-language-in-the-app) for the on-device
+review.
 
 The JSON format consumed by the app and the XAML localization keys are unchanged.
 Metadata lives once in `catalog.json`:
@@ -111,6 +112,40 @@ Run workflow checks:
 
 ```powershell
 python -m unittest discover -s tools -p "test_localization.py"
+```
+
+## Check the language in the app
+
+The language picker exposes the built-in Vietnamese and English packs. Developers
+can load a generated JSON pack through `LocalizationService.ImportLanguagePackAsync`.
+The Python CLI checks culture-code syntax, and the app validates the culture
+with .NET `CultureInfo`.
+
+On a target device, check for clipped labels, readable layouts, correct
+mathematical terms and correctly substituted placeholders. To bundle an approved
+pack, place the JSON in `MathSolver/Resources/Raw/Localization`, update
+`manifest.json` and expose the language in the picker. A developer-initiated
+local import can be tested before updating the manifest.
+
+## Troubleshooting
+
+| Message or symptom | What to do |
+| --- | --- |
+| `python` is unrecognized | Check your installation or run `py -3 --version` on Windows. Use `py -3` in the examples if it selects Python 3.9 or newer. |
+| Cannot open `tools/localization.py` | Run it from the repository root. |
+| Changed CSV headers or an invalid row | Keep all original columns in their original order and save a UTF-8 CSV with a comma delimiter. |
+| Duplicate or unknown key | Restore the original key and section. Remove accidental duplicate rows. |
+| Missing rows or empty translations | Complete the worksheet or explicitly use `--allow-partial`. |
+| Source changed | Refresh with `export --previous` and review the affected rows. |
+| Review required | Compare the wording, update the translation as needed and set its status to `translated`. |
+| Placeholder mismatch | Restore each complete placeholder, including modifiers and format specifiers. |
+| Invalid status | Use `untranslated`, `translated` or `needs-review` as written. |
+| Garbled accents or altered numbers | Reopen the original CSV as UTF-8 with every column set to Text. |
+
+```powershell
+python tools/localization.py --help
+python tools/localization.py export --help
+python tools/localization.py import --help
 ```
 
 ## Create a language pack
@@ -216,11 +251,7 @@ calculation message.
 
 ## Submitting a translation
 
-A translator may:
-
-- Import the JSON file locally in Math Solver
-- Attach it to a GitHub issue
-- Submit it through a pull request under `Resources/Raw/Localization`
-
-Add the new language to `manifest.json` only when it will be bundled with the
-application.
+Attach the translated worksheet or JSON pack to a GitHub issue with the language
+name and translator credit, or submit the pack under
+`MathSolver/Resources/Raw/Localization` in a pull request. See
+[Check the language in the app](#check-the-language-in-the-app) for bundling.

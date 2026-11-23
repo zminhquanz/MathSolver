@@ -2,563 +2,92 @@
 
 <p align="center">
   <img src="MathSolver/Resources/Images/mathsolver_logo.svg"
-       alt="Math Solver App Icon"
+       alt="Math Solver app icon"
        width="150">
 </p>
 
-<p align="center">
-  <a href="https://ko-fi.com/quanvu96">
-    <img src="https://img.shields.io/badge/Support_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
-         alt="Support Math Solver on Ko-fi">
-  </a>
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/License-GPL_v3-blue.svg"
-         alt="GNU GPL v3 License">
-  </a>
-</p>
+Math Solver helps you solve math problems step by step and practice what you
+learn. The calculators, practice questions, formula reference and multiplication
+tables work offline.
 
-Math Solver is a mathematics learning and problem-solving application built with .NET MAUI. It combines worked calculations, practice questions, formula references, and hardware tools in a responsive interface. Core mathematics features work offline.
+## Download
 
-## Current Release
-
-The current release is **Math Solver v0.2.0** for **Android** and **Windows**. Download the available builds from [GitHub Releases](https://github.com/zminhquanz/MathSolver/releases/latest).
-
-| Platform | v0.2.0 build and scope |
-| --- | --- |
-| Android | ARM64 APK; the project sets Android 7.0 (API 24) as its minimum version. Includes the core calculators, quizzes, formula references, tables, settings, and hardware benchmarks. |
-| Windows | Windows x64 build; the project sets Windows 10 version 1809 (build 17763) as its minimum version. Includes the core features and CPU arithmetic benchmarks. |
-
-The project also contains iOS and Mac Catalyst targets, but this release announcement covers Android and Windows only.
+Get the **Android ARM64 APK** or the **Windows x64 ZIP** from the
+[latest GitHub release](https://github.com/zminhquanz/MathSolver/releases/latest).
 
 ## Features
 
-### Solve Math
-
-The **Solve Math** tab provides seven tools:
-
-| Tool | What it does |
-| --- | --- |
-| Basic arithmetic | Adds, subtracts, multiplies, and divides integers or decimals; evaluates expressions with operator precedence and brackets; shows calculation steps and long division. |
-| Average | Calculates the arithmetic mean of a list of integers or decimals and explains the sum and division. |
-| Powers and roots | Calculates integer powers with large-number strategies, previews long results, and exports large results to TXT; calculates roots, including supported complex results for negative radicands. |
-| Fractions | Adds, subtracts, multiplies, divides, simplifies, and finds common denominators with worked steps. |
-| Find x | Solves for an unknown component of addition, subtraction, multiplication, or division. |
-| Equations | Solves linear and quadratic equations, explains the result, and draws the corresponding line or parabola. |
-| Geometry | Calculates measurements for plane and solid shapes with formulas and diagrams. |
-
-Results can be copied to the clipboard. Settings include an option to show long numeric results in full instead of the default compact display.
-
-The powers and roots tool accepts these input ranges:
-
-- Powers: an integer base from -1,000,000,000,000,000,000 to 1,000,000,000,000,000,000 and an exponent from 0 to 100,000,000. `0^0` is undefined.
-- Roots: a radicand that fits in a signed 128-bit integer and a root degree from -2,147,483,648 to 2,147,483,647, excluding zero. A negative degree gives the reciprocal of the corresponding positive-degree root. A negative radicand with an even degree can produce a complex result.
-
-### Geometry Calculator
-
-The geometry calculator reuses a shared `GeometryFormulaItem` catalog so that formulas, diagrams, symbols, and shape metadata remain consistent across the **Solve Math** and **Formulas** tabs.
-
-Supported plane shapes include:
-
-- Square
-- Rectangle
-- Triangle
-- Right triangle
-- Equilateral triangle
-- Circle
-- Trapezoid
-- Isosceles trapezoid
-- Right trapezoid
-- Rhombus
-- Parallelogram
-
-Supported solid shapes include:
-
-- Cube
-- Rectangular prism
-- Sphere
-- Cylinder
-- Cone
-
-The calculator can determine values such as:
-
-- Perimeter
-- Area
-- Base area
-- Lateral surface area
-- Total surface area
-- Volume
-
-### Equations and Numeric Precision
-
-The equation tool supports both linear and quadratic modes. Quadratic calculations use a custom Double-Double numeric structure for approximately 32 significant digits of precision. This improves the calculation of:
-
-- Discriminant
-- Square root of the discriminant
-- Real roots
-- Parabola vertex
-- Parabola sampling points
-
-The codebase also uses higher-precision and big-integer types where appropriate for other calculations. Precision and supported input ranges depend on the tool.
-
-### Math Puzzles
-
-The **Math Puzzles** tab generates practice questions for basic arithmetic, fractions, geometry, finding x, direct or inverse proportion, motion, averages, and percentages. Choose a specific type or a mixed set, then choose a difficulty from one to five stars. Answer using true/false, multiple choice, or a written response; the app checks the answer and shows a solution.
-
-Basic arithmetic practice and AI supplementation offer **Knowledge group** and **1–5-star difficulty**, without selecting or filtering by school grade. The nine groups are quantities/comparison, money/transactions, time/age, measurement, practical geometry, grouping/packing, production/simple rates, data/averages and motion. All four operations use the same selected context and C# facts for built-in prose and AI templates. Stars control number ranges, carrying/borrowing, inverse relations, conversion and selected derived questions, including rectangular perimeter, division remainders and minimum packs. Context caps quantities, prices, loads, daily durations and dimensions. Data questions show a small factual table in practice and AI preview. SQLite matches group, operation, stars and language; the measurement group also reads legacy mass/length/transport rows. Historical grade metadata remains readable but does not constrain selection or fresh operands. Numeric exercises and word problems remain mixed; model inference stays outside practice. See the [group and star policy](MathSolver/Services/QuestionBank/README.md#knowledge-groups-and-star-difficulty-version-5).
-
-Questions are available offline through C# on both Android and Windows. Basic arithmetic practice independently chooses its source at random: 50% uses C# and 50% looks for a validated template in the local SQLite bank with matching operation, stars and language. The C# branch also independently mixes 50% original two-random-operand exercises with 50% reviewed word-problem patterns. If no suitable bank question can be read, this same C# choice is served immediately. Numeric exercises retain their original operands, answer choices and grading. C# and bank stories share mathematical roles, realistic context capacities, fresh C# operands/actors, and the same answer/choice/grading engine. Built-in patterns rotate relationships, settings and wording without running model inference or inserting rows into the user's bank. Legacy version 1 questions retain their original facts and numbers. Comparison and other mathematical families continue to use their existing C# generators.
-
-The shared one-step catalogue covers additive increase/combining/comparisons/original stock, subtractive remaining stock/differences/missing amounts/smaller amounts/one part from a total, equal-group multiplication, and division by equal sharing/counting groups/multiplicative comparison/finding a factor. Finding a factor produces an answer in `lần` or `times`; counting groups produces a container/group unit; equal sharing produces an object unit. The new relationships use the same role checks and selected-context prompt examples for C# and AI. See the [shared catalogue](MathSolver/Services/QuestionBank/README.md#shared-one-step-practice-catalogue).
-
-**Find X** now uses the same nine groups for C# practice and optional AI supplementation.
-Structured situations bind known-fact roles, the requested quantity, units, real-world
-number limits and an unknown addend/minuend/subtrahend/factor/dividend/divisor. C# generates
-fresh facts, solves the equation and checks the answer by substitution. AI receives only
-one selected situation and a short placeholder example; supported wording is validated
-before saving. Numeric exercises remain mixed with stories, and SQLite templates retain
-their scene/role when C# generates new numbers. See the [Find-X contract and Excel format](MathSolver/Services/QuestionBank/README.md#find-x-situations-version-6).
-
-**Add questions with AI** opens a separate screen from the Math Puzzles page. The initial version supports addition, subtraction, multiplication and exact division, with a fixed operation, one to five stars, and Vietnamese or English text. Mixed selection belongs to C# practice and is not available in AI generation.
-New addition templates separate mathematical relationships from topics and actor/activity roles. They cover 29 settings, including school, food, animals, agriculture, trade, traffic counts, building materials, environment, survey responses and experiment outcome counts. C# selects a compatible setting, scale and unit before generating operands, then sends AI only that selection and one short role example. Relationships/topics/settings rotate during generation and SQLite selection. One star covers increase and combining, two stars adds finding a larger amount, and three through five stars also allow initial-amount recovery and inverse additive comparison, with the existing C# operand progression bounded by the setting. New subtraction, multiplication and division templates use 22 compatible stock/grouping settings with scale-specific actors and object/group units. Subtraction preserves available stock and introduces borrowing; multiplication bounds both factors and total stock; division constructs exact multiples and distinguishes objects per group from the number of groups. Their primary operands keep the same five digit buckets, and higher stars unlock missing-part, difference and multiplicative-comparison roles. Existing versions 1–3 remain readable. Vietnamese actors draw from 100 male and 100 female given-name entries, with separately selected family roles; English actors use their own name pool. Grade and star difficulty are not treated as interchangeable; money, measurements, probability calculations and multistep stories require additional C# fact/step contracts.
-
-Choose a local GGUF model or explicitly download Gemma 4 E2B/E4B Q4_0 from Google's Hugging Face repositories. Downloads stream to a partial file, check the available repository size/checksum and GGUF header, then publish the complete file. Generation runs locally; Hugging Face is used only to download model files, without an account token in the app. If a repository requires access, download its GGUF file through your browser and choose that file in the app. Windows can select an external file directly and open the selected model's folder in Explorer (or the app model folder when none is selected). Android imports selected files into app-private storage; the folder action lists these files and lets you export one through the system document picker. Eject clears the model selection and unloads any resident weights without deleting the model file.
-
-Selecting or downloading a model checks its file header without loading its weights. Generation loads CPU weights through memory mapping with memory locking disabled; it creates no separate vision/audio projector or embedding context. All required language-model weights still participate in inference. A batch shares one weight load, while each attempt uses an independent context sized from the actual chat prompt, with a 700-token output allowance and a maximum of 2,048 total tokens. Oversized prompts fail explicitly rather than dropping instructions or facts. Contexts and native weights are disposed on completion, errors or cancellation. The file selection remains available for automatic loading on the next job; this saves idle RAM at the cost of loading again. The operating system may retain reclaimable file-cache pages after disposal.
-
-Generate one template or a batch of 1–100 using an app-owned worker. C# chooses the mathematical structure, setting and compatible unit; AI writes three prose clauses and a solution lead with placeholders. Numbers and actor values are absent from the model prompt. JSON grammar constrains fields, placeholders and unit IDs; C# checks their roles, operation relationships, requested quantity and prose solution. Validation is bounded to the supported one-step structures; it is not a general natural-language proof system. See the [template format and name attribution](MathSolver/Services/QuestionBank/README.md).
-
-Each item has at most three attempts. Repeated invalid output stops the batch so the user can start again. Valid questions can be inserted automatically or reviewed and inserted individually. Storage validates again and ignores duplicates. A failed save preserves the valid preview for another insertion attempt. Preview is read-only; JSON, prompt and validation/storage diagnostics are available through **View JSON & logs** only when **Settings → Developer mode** is enabled. Turning that setting off hides and collapses the diagnostics card. A selected valid question can be shared as text. Starting a new generation replaces the previous run's in-memory previews and diagnostics; save any wanted manual drafts first.
-
-The SQLite inquiry panel sits between diagnostics and generation settings. It accepts one SELECT, INSERT, UPDATE or DELETE statement, including WITH and SQL comments. Results appear in a scrollable table with fixed column headers, row numbers and alternating row colors; tap a cell to inspect or copy its value. Writes report affected rows and commit in a transaction; errors, cancellation or timeouts roll back the write. **Import question data** and **Export question data** exchange the entire saved bank as Excel `.xlsx`, independently of model loading and the current preview. Export an empty bank to get a template; importing validates mathematical facts and prose, skips invalid/duplicate rows, and recalculates answers in C#. Imports commit in one transaction; cancellation or a database failure rolls back that batch. See [SQLite and Excel instructions](MathSolver/Services/QuestionBank/README.md) for columns, examples and limits.
-
-Going back or switching app tabs leaves generation running. Android Home/lock/background cancels work; already committed SQLite rows remain. This implementation is not an Android foreground service or a persistent scheduler after the process is killed. The LLamaSharp 0.27.0 Android native package currently produces page-size warnings: its libraries are not certified here for Android devices requiring 16 KB pages. The normal C# puzzle engine remains available independently of the model. See [question bank checks](UnitTest/AiQuestionBankTests/README.md) for deterministic tests and an optional real-model functional check; no hardware AI benchmark is restored.
-
-Probability practice includes ten contexts for classifying events and ten for experimental fractions, including colored objects, dice, numbered cards, spinners, coins, and target games. Each subtype cycles through shuffled contexts before repeating, with separate progress for each language. Questions vary the event, counts, colors, and wording. Classification distinguishes certain, impossible, and possible but not certain; experimental fractions use recorded trials and may ask about the event or its complement, including zero/all observed successes. The algorithm generates these scenarios and answers in C#.
-
-Visual geometry practice rotates through ten side-counting shapes, nine missing-side scenarios, and eight composite-area layouts, with a separate shuffled rotation for each language and star level. Counting includes convex and concave polygons with varied orientations. Missing sides use areas, perimeters, or known total/partial lengths. Composite areas include adjoining rectangles, a square and rectangle, L/T shapes, a rectangular frame, a board with two openings, and a rectangle joined to a right triangle. The algorithm uses the C# facts, polygon drawings, units, and answers. Unknown dimensions remain marked with a question mark; the diagrams are illustrative rather than a basis for measuring lengths.
-
-Difficulty for **proportion, motion, averages, percentages, and visual geometry** now changes the mathematical structure as well as the numbers. The algorithm uses `QuizDifficultyPolicy`; narration does not own mathematical difficulty. A fixed subtype remains available at all five levels. Selecting Mixed inside a family chooses relations appropriate to the star level, while the existing whole-curriculum Mixed pool still determines which families are eligible.
-
-The [shared situation catalogue](MathSolver/Services/Quizzes/QuizStoryContextCatalog.cs) contains 19 bilingual settings with activities, quantity dimensions, periods and realistic capacities. Two-number stories now use shelves, teams, seating sections and ages; age ratios apply to the stated time and never transfer ages between people. Averages and charts reuse the same settings, while percentages add budgets, quality inspection, work progress and surveys. Time and conversion questions describe actual activities; packing distinguishes full containers from the minimum needed, including reserved capacity at five stars. Decimal practice mixes direct calculations with measurement stories. Fraction-part/whole stories and new geometry settings keep bounded quantities and C# drawings. Reduction, common denominators, mixed-number transformations, expressions and visual identification retain their existing practice models; probability retains its separate event catalogue.
-
-**Decimal depth and multi-step practice:** direct decimal calculations retain two operands, with no extra story requirements. One star uses straightforward tenths; two adds carrying/borrowing and fractional quotients; three aligns unequal decimal precision and infers quantities; four adds precision and a further story adjustment; five combines thousandths, conversion and intermediate quantities. Rounding progresses from whole numbers to tenths/hundredths, including carry across the integer boundary. Stories and numeric practice remain available at every level. The new **Multi-step word problems** family includes combining/removing quantities, equal groups, remaining stock and equal sharing, with explicitly recorded givens, intermediate steps, units and bounded contexts. Higher stars add inverse relationships and unavailable groups rather than forcing unrealistic stock sizes.
-
-**Map scale** is under Measurement, **Read a pictograph** under Data, and **Recognize a shape** under Visual Geometry. Maps cover actual/drawing lengths and combined legs in different units; pictographs display a key and bounded symbol counts; recognition covers seven plane shapes and four solids. All three answer modes share the same C# data. Whole-curriculum Mixed now resolves an explicit permitted elementary subtype before generation (for example, no pie-chart or volume-conversion subtype at low stars). A fixed subtype remains available from one to five stars; these are practice difficulty levels, not grade selections.
-
-AI supplementation still supports **arithmetic, Find X and fractions**. Its new arithmetic/Find-X settings reuse these context identities and capacities, with a prompt for one selected situation and grammar/validation derived from the same reviewed clauses. Other families use their typed C# generators; this does not enable AI generation of every puzzle family. Existing SQLite records and the nine knowledge-group selections remain compatible.
-
-| Level | Progression within the supported families |
-| --- | --- |
-| 1 star | Whole-number scale factors, motion with matching units, averages of two supplied quantities, 50%, familiar polygons, and direct side/area formulas. |
-| 2 stars | More scale factors, finding speed or time, averages of three quantities, familiar percentages such as 25%, and perimeter-based missing sides. |
-| 3 stars | Unit-rate reasoning, relative-motion problems, missing average values, a broader percentage set, rotated polygons, and L/T area decomposition. |
-| 4 stars | Rational unit rates, minutes-to-hours conversions, indirect or weighted averages, combining two quantities before a percentage calculation, concave outlines, and frame areas. |
-| 5 stars | Quarter-based unit rates, inverse proportions asking for additional quantities or a changed deadline, rest-time deduction plus conversion, combining three quantities before percentages, a side inferred from both perimeter and a partial length, and two-opening or rectangle/triangle areas. |
-
-This is a progression within each family, not a claim that every 1-star subtype has the same absolute difficulty. A deliberately selected advanced subtype retains its essential relations at lower levels. Test scores stay within 1-10 and motion speeds retain their subject-specific realistic ranges; larger numbers alone do not determine difficulty. Answers, units, and flexible grading of equivalent calculations remain owned by C#.
-
-Geometry measurement practice also has five reasoning levels for every supported plane and solid shape. The chosen shape and measurement (perimeter, area, volume, lateral area, or total area) stay selected in Skill Mode.
-
-| Level | Geometry measurement progression |
-| --- | --- |
-| 1 star | Apply the selected formula to supplied dimensions. |
-| 2 stars | Infer a dimension first, for example a side from a perimeter, a radius from a diameter, or a length from two consecutive segments. |
-| 3 stars | Calculate intermediate quantities before the final measurement, such as half a perimeter and then a missing length, or combine three consecutive segments. |
-| 4 stars | Combine linked dimensions or sum/difference relations before applying the formula. |
-| 5 stars | Combine those relations with conversion of a given length into the formula's length unit. |
-
-C# keeps supplied facts separate from solved dimensions. The algorithm owns these facts, reasoning steps, and exact answers. Written-answer graders check calculations and answer units, including equivalent written length-unit names. Unknown dimensions stay marked `?` until the solution is revealed. Triangle, trapezoid, and rhombus dimensions are generated with consistent geometric relationships. Circle questions retain the elementary convention of π = 3.14 and dimensions that produce whole-number answers.
-
-Written geometry work may merge, split, or reorder calculations, including fractional intermediate results. Every written equality is checked, along with the final calculation unit and answer unit; a correct final answer does not hide an incorrect earlier equality. The existing whole-curriculum Mixed eligibility rules remain in place.
-
-**Two-number problems, tables/charts, time, unit conversion, probability, and fraction skills** also have five reasoning levels. C# owns the givens, intermediate relations, units, and answers. Increasing stars introduces indirect facts and additional relationships; it does not just increase the size of the numbers.
-
-| Family | 1–2 stars | 3 stars | 4 stars | 5 stars |
-| --- | --- | --- | --- | --- |
-| Sum–difference, sum–ratio, difference–ratio | Direct relations, then infer a sum/difference from its double. | Recover the required sum/difference from two quantities. | Undo a change; infer a difference after a transfer between both numbers. | Undo two changes and infer either the original difference or a missing ratio component. |
-| Tables and bar charts | Read/calculate quantities, then account for a later addition. | Infer a missing category from a total or another category. | Combine chart data with a ratio or multiplicative relation. | Recover a total from two batches and use sum–difference, or combine two category relationships. |
-| Pie charts | Read a percentage, then convert it into a quantity. | Infer the missing percentage before calculating the quantity. | Recover the total from the other categories' combined quantity. | Recover the total from two known category counts and percentages, then calculate the missing category. |
-| Time | Read clocks, convert intervals, or cross an hour/month boundary. | Combine intervals, deduct rest, cross midnight, or include a full intervening month. | Carry clock minutes into hours, deduct rest, or account for leap February. | Combine active sessions, convert back to hours, calculate a changed clock interval, or deduct paused days from a multi-month leap-year interval. |
-| Unit conversion | Direct/reverse conversion; combine mixed units. | Convert before adding quantities. | Convert, add, and subtract. | Convert the remaining quantity back into the larger unit. Area and volume use squared/cubed conversion factors. |
-| Likelihood | Classify an event, then its complement. | Consider two independent trials with replacement when applicable. | Consider two outcome cards drawn without replacement. | Update the outcome-card set before drawing without replacement. |
-| Experimental fractions | Use recorded results, then their complement. | Aggregate two batches of recorded trials. | Infer one batch's successes from failures. | Aggregate three batches and exclude explicitly invalid failed records. |
-| Fraction skills | Familiar fractions, reduction, mixed numbers, and a supplied common denominator. | Infer a quantity, combine fractions, or find the least common denominator. | Infer fraction components or a remaining quantity, or combine unlike denominators. | Combine successive fractions, infer both numerator and denominator, or combine addition/subtraction before writing a mixed number. |
-
-Hidden table/bar-chart values are marked `?` until grading; unknown bar heights are placeholders rather than clues to their values. Pie-chart percentage labels follow the same rule. Written work can merge, split, or reorder valid calculations and reuse intermediate results. Intermediate units may differ from the final answer unit; arithmetic and units are checked separately. Fraction tasks retain their required final form, including lowest terms, a specified common denominator, or a reduced mixed number.
-
-Angle recognition starts with clear acute/right examples, adds all four angle types and rotated drawings, then uses displayed decimal measures close to 90° at the higher levels. The displayed measure is authoritative; the figure is illustrative. Parallel/perpendicular practice progresses from two-line relationships to searches among three, four, and five lines. Pair questions have at most one valid pair, can include a no-pair answer, and accept reversed line names.
-
-Written responses use one input box for the solution sentence, calculation, and final answer on both platforms. Put calculations on their own lines and finish with `Answer: …` (or `Đáp số: …` in Vietnamese), including the required unit. The app checks each part separately; numeric questions retain their existing exemptions from requiring a solution sentence.
-
-Calculator sub-tabs and the proportion, motion, average, and measurement formula views are created when first opened. Their views then remain available to preserve inputs and results.
-
-Completed power results occupying at least **32 MiB** of managed numeric storage are written to a private temporary TXT file after **60 seconds** away from the power tab, or when the app enters the background. The full file is completed before the in-memory number is released. The preview, solution, and TXT export remain available; later exports stream the retained file without reloading the number. A failed or canceled archive keeps the in-memory result. Clearing the result, starting a new calculation, or closing the app normally removes its temporary file. Temporary files left after an interrupted app session are pruned after seven days when result storage is first used in a new process. These files do not restore a session after the app process exits.
-
-Background cleanup releases live-wallpaper resources, while active calculations and exports finish before their recoverable data is considered for cleanup. Android also handles the system's supported `onTrimMemory` background signals, following the [Android memory lifecycle guidance](https://developer.android.com/topic/performance/memory/manage-app-memory). Garbage collection is requested only after a large number has been released, rather than on every tab switch.
-
-### Formula Reference
-
-The **Formulas** tab includes:
-
-- Rules for finding unknown components in addition, subtraction, multiplication, and division
-- Detailed examples and verification steps
-- Direct, inverse, and compound proportion, with interactive diagrams
-- Motion and average formulas with worked examples
-- A measurement reference and converter for length, mass, time, area, volume, capacity, speed, and temperature
-- Plane geometry formulas
-- Solid geometry formulas
-- Reusable diagrams and symbol descriptions
-
-The unit converter groups thousands with commas and uses a dot for the decimal part in its results, regardless of the selected app language (for example, `1,000 m` or `1,000 kg`).
-
-### Multiplication Tables
-
-The **Multiplication Tables** tab provides:
-
-- Multiplication and division tables, selectable in the 1–10 and 11–20 ranges
-- Responsive layouts for desktop and mobile screens
-
-### Hardware and Performance
-
-Open **Settings → Hardware information** to inspect device, CPU, memory, runtime, and supported instruction-set information. The page includes benchmarks for Int32, Int64, Float, and Double, with controls for SIMD acceleration and multithreading. Android has ARM/NEON-specific benchmark paths; Windows exposes supported x86 SIMD comparisons.
-
-## User Interface
-
-Math Solver includes:
-
-- Responsive layouts for desktop, laptop, tablet, and phone screens; Android sub-tabs also support swipe navigation
-- System, light, and dark themes; Material You dynamic colors are available on Android 12 and later
-- Preset or custom accent colors, including HEX and RGB controls
-- Font customization
-- Vietnamese and English built-in localization
-- Optional school-days watercolor, animated mathematics backgrounds, or an imported H.264 MP4 wallpaper
-- Animated tab transitions
-- Reusable vector and `GraphicsView` illustrations
-- Adaptive card layouts based on the available screen width
-- Settings for full-length numeric results and developer diagnostics
-
-Choose the wallpaper type in **Settings → Wallpaper**. The watercolor is bundled for offline use and adapts to wide or upright viewports. Imported MP4 wallpaper clips require a compatible H.264 decoder and can be up to 120 seconds long. On Android, the video is limited to 3,686,400 pixels (equivalent to 2560 × 1440).
-
-## Offline Operation
-
-Calculators, algorithm-generated math puzzles, formulas, and multiplication tables work offline. Opening external links and obtaining a release build require a network connection.
+- **Solve Math.** Work through arithmetic, fractions, Find X, averages, powers
+  and roots, and matrix calculations. Plot linear and quadratic equations,
+  use diagrams to solve plane and solid geometry problems, and export large
+  power results as TXT.
+- **Math Puzzles.** Pick a topic or a mixed set, choose a difficulty from one
+  to five stars, and answer true/false, multiple-choice or written questions.
+  The app grades your work and shows the solution. A local AI model can
+  optionally add question templates. See the [question bank guide](MathSolver/Services/QuestionBank/README.md).
+- **Formulas and tables.** Look up formulas with worked examples, convert
+  between units, and browse multiplication and division tables up to 20.
+- **Interface and device tools.** Use the app in Vietnamese or English,
+  customize its theme, fonts and wallpaper, and inspect CPU and memory
+  information or run CPU benchmarks in **Settings → Hardware information**.
 
 ## Technology
 
-- C#
-- .NET 11 and .NET MAUI 11
-- XAML
+Math Solver is built with C#, .NET 11, .NET MAUI 11, and XAML. The current
+source includes hardware acceleration for large integer powers, matrix
+calculations, and local language models.
 
-## Project Structure
+- **Windows x86-64.** Power and matrix calculations can use SSE2, AVX2, and
+  AVX-512 on compatible CPUs. The app labels its AVX2 mode **AVX/AVX2** because
+  it also uses AVX for floating-point benchmarks.
+- **Android ARM64.** Power and matrix calculations can use NEON (AdvSIMD).
+  Compatible Android Release builds also offer SVE and SVE2 for selected
+  operations on devices that expose 128-bit SVE vectors.
+- **Local AI inference.** LLamaSharp and llama.cpp run GGUF models on the
+  device. Android uses Arm KleidiAI on compatible ARM64 CPUs and a baseline
+  CPU backend elsewhere. Windows can offload model layers to a compatible GPU
+  through NVIDIA CUDA or Vulkan, with CPU fallback. See the [Android AI backend
+  notes](MathSolver/Platforms/Android/Native/llama/README.md).
 
-```text
-MathSolver/
-├── Controls/             Custom reusable controls
-├── Graphics/             Shape, graph, and calculation drawables
-├── MarkupExtensions/     Markup Extensions
-├── Models/               Shared models and formula catalogs
-├── Numerics/             High-precision numeric structures
-├── Platforms/            Platforms support
-├── Resources/            Images, icons, fonts, styles, and app resources
-├── Services/             Localization, settings, and application services
-├── Views/                Pages and reusable content views
-├── App.xaml
-├── App.xaml.cs
-├── AppShell.xaml
-├── AppShell.xaml.cs
-└── MauiProgram.cs
-```
+<p>
+  <a href="https://github.com/SciSharp/LLamaSharp"><img src="https://raw.githubusercontent.com/SciSharp/LLamaSharp/master/Assets/LLamaSharpLogo.png" alt="LLamaSharp" height="28"></a>
+  &nbsp;&nbsp;
+  <a href="https://github.com/ARM-software/kleidiai"><img src="https://www.arm.com/-/media/global/solutions/artificial-intelligence/ai%20software%20kleidi/arm-kleidi-libraries-horizontal.svg" alt="Arm Kleidi Libraries (KleidiAI)" height="28"></a>
+</p>
 
-## Getting Started
+## Build from source
 
-### Requirements
+Install the .NET 11 SDK specified in [global.json](global.json) and the MAUI
+workload for your target. For Android, install the Android SDK and use an
+emulator or device. Build the Windows target on Windows.
 
-Install the .NET 11 SDK (11.0.100 or a later 11.0 feature band) and the .NET MAUI 11 workloads. The SDK version is configured in `global.json`. For Windows development, use Visual Studio with the .NET MAUI development tools installed. Android development also requires the Android SDK and an emulator or physical device.
-
-Android builds use CoreCLR and require Android 7.0 (API 24) or later, as required by .NET 11. The app uses CommunityToolkit.Maui 17.0.0 and CommunityToolkit.Maui.MediaElement 12.0.0.
-
-### Clone the Repository
-
-```bash
+```sh
 git clone https://github.com/zminhquanz/MathSolver.git
 cd MathSolver
 ```
 
-### Restore Dependencies
-
-```bash
-dotnet restore
-```
-
-### Build
-
-```bash
-dotnet build MathSolver/MathSolver.csproj -f net11.0-android
-```
-
-On Windows, build the Windows target with:
-
-```powershell
-dotnet build MathSolver/MathSolver.csproj -f net11.0-windows10.0.19041.0
-```
-
-You can also open the solution in Visual Studio, select **Windows Machine** or an Android target, and run the application. Android Debug and Release device builds use the SDK's development signing key by default; no `MathSolver.keystore` file is required. Release APK builds target Android ARM64.
-
-To build a development-signed Release ARM64 APK for testing on a device:
-
-```powershell
-dotnet build MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 -t:SignAndroidPackage
-```
-
-For distribution, explicitly select your existing release keystore in Visual Studio's signing settings or supply the signing properties below. Set the two password environment variables locally first; keep passwords and private keys out of the repository.
-
-```powershell
-dotnet publish MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 `
-  -p:AndroidKeyStore=true `
-  -p:AndroidSigningKeyStore="C:/private/MathSolver.keystore" `
-  -p:AndroidSigningKeyAlias=mathsolver `
-  -p:AndroidSigningStorePass=env:MATHSOLVER_STORE_PASSWORD `
-  -p:AndroidSigningKeyPass=env:MATHSOLVER_KEY_PASSWORD
-```
-
-Use the same release key when updating an already distributed app. Development-signed APKs are for local testing, not store distribution. See Microsoft's [Android signing properties](https://learn.microsoft.com/en-us/dotnet/android/building-apps/build-properties#androidkeystore).
-
-## Translating Math Solver
-
-The translation workflow is **export a CSV → translate the spreadsheet → validate and generate a JSON language pack → integrate the pack into the app**. Translators only need a spreadsheet editor. Developers run the Python tool and manage the language packs.
-
-The app matches translations using stable keys such as `Formula.Tabs.UnknownComponent`. Translators do not need to understand these keys or the app's code: they read the original text and its context, then enter a translation. The tool preserves the mapping automatically, even if spreadsheet rows are reordered.
-
-### Files and Requirements
-
-| File | Purpose |
+| Target | Build command |
 | --- | --- |
-| [Blank translation worksheet](translations/translation-template.csv) | Start a new language; the translation column is empty |
-| [English worksheet](translations/en-US.csv) | Review existing English translations or use them as a reference |
-| [Localization tool](tools/localization.py) | Export, refresh, validate, and import worksheets |
-| [Localization catalog](MathSolver/Resources/Raw/Localization/catalog.json) | Shared context, descriptions, and placeholder explanations |
-| [Language pack reference](TRANSLATING.md) | JSON format, mathematical content rules, and submission details |
+| Android | `dotnet build MathSolver/MathSolver.csproj -f net11.0-android` |
+| Windows | `dotnet build MathSolver/MathSolver.csproj -f net11.0-windows10.0.26100.0` |
 
-Developers need **Python 3.9 or newer**. No additional Python packages or .NET build are needed to run the tool. Translators receiving a prepared CSV do not need Python.
+See [Build and distribution](MathSolver/ARCHITECTURE.md#build--distribution)
+for the project layout, Android APK signing and build cleanup.
 
-Run all commands below from the **repository root**, which contains this README and the `tools` directory. For example, in PowerShell:
+## Contributing
 
-```powershell
-cd D:\GitHub\MathSolver
-python --version
-```
+- For code changes, see the [architecture reference](MathSolver/ARCHITECTURE.md)
+  and [test guide](UnitTest/README.md).
+- To help translate the app, follow the [translation guide](TRANSLATING.md).
 
-Replace the path with your own checkout location. If Windows recognizes `py` instead of `python`, use `py -3` in place of `python` in the commands below and confirm it selects Python 3.9 or newer.
-
-The current source language is Vietnamese, as defined by `sourceCulture` in the catalog. Many context notes are also in Vietnamese. Translators should understand the source language or ask the developer for clarification; the tool does not automatically translate text or notes.
-
-### 1. Prepare a Worksheet
-
-For a **new language**, export a blank worksheet. This example uses French:
-
-```powershell
-python tools/localization.py export --output translations/fr-FR.csv
-```
-
-This creates a CSV containing the current source strings, context, and empty translation cells. The filename does not select a language inside the app; you specify the language metadata when generating the JSON in step 3.
-
-You can also copy the prepared [blank worksheet](translations/translation-template.csv) and rename the copy. Regenerate it after source text or catalog notes change:
-
-```powershell
-python tools/localization.py export --output translations/translation-template.csv
-```
-
-To **edit an existing language**, seed the worksheet from its JSON pack:
-
-```powershell
-python tools/localization.py export --pack MathSolver/Resources/Raw/Localization/en-US.json --output translations/en-US.csv
-```
-
-Use `--pack` when starting from an existing JSON. If a translator already has a worksheet in progress, use `--previous` as described in step 5 to preserve their work. Do not combine these options. Export commands replace their destination file, so choose a new filename when you need to retain an earlier version.
-
-### 2. Translate the Spreadsheet
-
-1. Open Excel and choose **Data → From Text/CSV**. Select the worksheet, use **UTF-8** encoding and a **comma** delimiter, and set the columns to **Text** before loading. If Excel offers **Transform Data**, use it to remove automatic type conversion and set all columns to Text. This preserves mathematical expressions, numbers, and identifiers.
-2. Read the `source`, `context`, `description`, `notes`, and `placeholders` columns.
-3. Enter your translation in `translation`. After checking it, set `status` to `translated`.
-4. Keep the other columns unchanged. You may reorder complete rows, but do not rename keys, change headers, reorder columns, or sort a single column independently.
-5. Save as **CSV UTF-8 (comma delimited)**. If you keep an Excel `.xlsx` working copy, export a CSV before sending it back; the tool reads CSV files only.
-6. Send the CSV to the developer with the language name and translator's name. Translators do not need to edit JSON or run terminal commands.
-
-| Column | How to use it |
-| --- | --- |
-| `context` | Screen, topic, or location where the text appears |
-| `source` | Original Vietnamese text; do not edit |
-| `description` | Explanation of what the text means |
-| `notes` | Translation instructions, such as keeping a tab label short |
-| `placeholders` | Variables that must be preserved, with explanations where available |
-| `screenshot` | Optional image path or URL supplied by the developer |
-| `references` | Source-code locations for developers; translators can ignore these |
-| `translation` | The text you translate into the target language |
-| `status` | `untranslated`, `translated`, or `needs-review` |
-| `previous_source` | Earlier wording for a source string that changed |
-| `section`, `key`, `source_hash` | Internal mapping and change-detection fields; do not edit |
-
-For example, `Formula.Tabs.UnknownComponent` has the source text **“𝑥  Tìm thành phần chưa biết”**. Its context explains that this is a tab on the Formulas page for finding unknown numbers in arithmetic. An English label could be **“𝑥  Find the unknown”**. Preserve the mathematical symbol and keep the label concise.
-
-Preserve complete placeholders such as `{0}`, `{value}`, and `{field|translate}`, including any format specifiers. You may move them within a sentence to match the target language's grammar. Ask the developer about unexplained placeholders instead of guessing their meaning.
-
-Some CSV cells have a leading apostrophe (`'`) to prevent spreadsheet formula evaluation. Preserve this escape prefix in the saved CSV; the importer removes one leading escape apostrophe. For new text starting with `=`, `+`, `-`, `@`, or a literal apostrophe, add an extra apostrophe in the saved CSV. For example, the desired text `= 12` is stored as `'= 12`. Excel may hide an apostrophe used as a text prefix, so check the saved CSV in a text editor if unsure.
-
-The note **“Cần bổ sung ngữ cảnh”** means **“More context is needed.”** Ask the developer for a description or screenshot before translating those entries. Group descriptions are broad guidance, and source references are best-effort. Screenshots are not currently bundled with the worksheets.
-
-### 3. Validate and Generate a Language Pack
-
-After receiving the completed French worksheet, run:
-
-```powershell
-python tools/localization.py import --input translations/fr-FR.csv --culture fr-FR --language-name French --native-name Français --author "Translator name" --output translations/fr-FR.json
-```
-
-| Option | Meaning |
-| --- | --- |
-| `--input` | The translated CSV file |
-| `--culture` | Target culture code, such as `fr-FR`, `en-US`, or `ja-JP` |
-| `--language-name` | Language name in English, such as `French` |
-| `--native-name` | Language name as written in that language, such as `Français` |
-| `--author` | Optional translator credit; quote names containing spaces |
-| `--output` | Destination JSON file; replaced if it already exists and validation succeeds |
-
-By default, every expected row must have a non-empty translation. The tool checks keys, source changes, pending reviews, and placeholders before opening the output file. If validation fails, fix the reported rows and run the command again. An existing output file is left unchanged on validation failure.
-
-For a **partially translated** pack, add `--allow-partial`:
-
-```powershell
-python tools/localization.py import --input translations/fr-FR.csv --culture fr-FR --language-name French --native-name Français --author "Translator name" --allow-partial --output translations/fr-FR.json
-```
-
-Missing rows and empty translations are omitted from the JSON, allowing the app to fall back to Vietnamese. This option does not bypass duplicate or unknown keys, source changes, pending reviews, or placeholder errors. A blank translation is never considered complete, even if its status says `translated`.
-
-For an edited English worksheet, use the corresponding language metadata:
-
-```powershell
-python tools/localization.py import --input translations/en-US.csv --culture en-US --language-name English --native-name English --author "Translator name" --output translations/en-US.json
-```
-
-### 4. Check the Language in the App
-
-The current language picker exposes the two built-in languages, Vietnamese and English. There is no user-facing JSON import control in v0.2.0. The app has a `LocalizationService.ImportLanguagePackAsync` API for developer integration, while the Python `import` command only creates the JSON file.
-
-The Python tool checks culture-code syntax. The app additionally validates it with .NET `CultureInfo`. Check the translated screens for clipped labels, readability, correct mathematical terminology, and messages containing placeholders. These visual and language checks require review in the app.
-
-To bundle an approved language with the application, place its JSON under `MathSolver/Resources/Raw/Localization`, add it to `manifest.json`, and expose it in the language selection UI. Developer-initiated local imports do not require a manifest change. See the [language pack reference](TRANSLATING.md) for submission details.
-
-### 5. Update an In-Progress Translation After Source Changes
-
-When the app's source wording or translation notes change, refresh the translator's latest CSV:
-
-```powershell
-python tools/localization.py export --previous translations/fr-FR.csv --output translations/fr-FR-updated.csv
-```
-
-The tool matches rows by `(section, key)`, preserves existing translations, and adds newly introduced strings with empty translations. Changed source text receives the status `needs-review`; its earlier wording appears in `previous_source`. Repeated refreshes retain pending reviews.
-
-The translator should compare the new `source` with `previous_source`, revise or confirm the translation, and set `status` to `translated`. Do not edit `source` or `source_hash` to dismiss a review. Then generate the JSON from the updated worksheet:
-
-```powershell
-python tools/localization.py import --input translations/fr-FR-updated.csv --culture fr-FR --language-name French --native-name Français --author "Translator name" --output translations/fr-FR.json
-```
-
-For the next update, pass the latest reviewed worksheet to `--previous`. Existing JSON packs do not record source revisions, so exporting again with `--pack` cannot replace this review workflow.
-
-If refresh reports removed or unknown keys, archive the old worksheet, confirm those keys were removed from the app, remove those rows from a working copy, and refresh again. The tool stops rather than silently dropping those translations.
-
-### Troubleshooting
-
-| Message or symptom | What to do |
-| --- | --- |
-| `python` is not recognized | Check your Python installation or try `py -3 --version` on Windows |
-| Cannot open `tools/localization.py` | Run the command from the repository root |
-| CSV headers were changed / invalid CSV row | Preserve all original columns in their original order; save UTF-8 CSV with commas, not semicolons |
-| Duplicate CSV key / unknown key | Restore the original key and section, and remove accidental duplicate rows |
-| Missing rows / empty translation | Complete the worksheet, or deliberately use `--allow-partial` |
-| Source changed | Refresh with `export --previous`, then review the affected rows |
-| Review required | Check the new source text, update the translation, and set its status to `translated` |
-| Placeholder mismatch | Restore the exact source placeholders, including modifiers and format specifiers |
-| Invalid status | Use exactly `untranslated`, `translated`, or `needs-review`; do not translate these labels |
-| Garbled accents or altered numbers | Re-import the original CSV as UTF-8 with every column set to Text |
-
-Show available command options:
-
-```powershell
-python tools/localization.py --help
-python tools/localization.py export --help
-python tools/localization.py import --help
-```
-
-Developers can run the workflow checks with:
-
-```powershell
-python -m unittest discover -s tools -p "test_localization.py"
-```
-
-For instructions on adding per-string context, placeholder explanations, and screenshot references, see [Developer metadata guidance](TRANSLATING.md#developer-export-refresh-validate-and-import).
-
-## Cleaning Build Artifacts
-
-After replacing resources, XAML files, icons, or generated assets, remove the old build output before rebuilding:
-
-```bash
-dotnet clean
-```
-
-You may also delete the `bin` and `obj` folders, then rebuild the solution.
-
-## Design Goals
-
-Math Solver is developed with the following goals:
-
-- Keep core mathematics features available offline
-- Present calculations clearly instead of showing only final answers
-- Preserve user input accurately
-- Use appropriate numeric types for each calculation
-- Share formulas and diagrams between learning and solving tools
-- Maintain a clean and responsive interface across different screen sizes
-- Avoid unnecessary subscriptions, advertisements, and online dependencies
-
-## Educational Notice
-
-Math Solver is intended to support learning, checking results, and understanding calculation steps. It should not replace independent practice or the guidance of a teacher.
-
-## Support the Project
-
-Math Solver is free to use, and all core features remain available without payment. Donations are completely optional and do not unlock additional features, subscriptions, or extra software rights.
-
-If Math Solver is useful to you and you would like to support its continued development, you can leave a one-time tip on Ko-fi:
-
-<p align="center">
-  <a href="https://ko-fi.com/quanvu96">
-    <img src="https://img.shields.io/badge/Support_Math_Solver_on-Ko--fi-FF5E5B?logo=ko-fi&logoColor=white"
-         alt="Support Math Solver on Ko-fi">
-  </a>
-</p>
-
-Thank you for supporting the development, testing, documentation, and continued improvement of Math Solver.
+You can support Math Solver with an optional tip on [Ko-fi](https://ko-fi.com/quanvu96).
 
 ## License
 
-The Math Solver source code is free software licensed under the
-[GNU General Public License version 3](LICENSE)
-
-You may use, study, modify, and redistribute the GPL-covered source code.
-If you distribute a modified version or a compiled binary based on Math Solver,
-you must also make the complete corresponding source code available under the
-same GNU GPL v3 license.
-
+The source code is licensed under the [GNU General Public License v3](LICENSE).
 Copyright © 2026 Quan Vu.
 
-The **Math Solver** name, application icon, logo, screenshots, and original
-branding assets are not licensed for independent reuse or for branding modified
-distributions. Forks and modified distributions must use their own name and
-branding unless separate written permission is granted by the project author.
-This branding restriction does not limit the rights granted for the
-GPL-covered source code.
-
-## Status
-
-The application is under active development. Additional formulas, geometry problems, calculation explanations, platform improvements, and interface refinements may be added over time.
+Independent reuse of the Math Solver name, app icon, logo, screenshots or other
+original branding requires written permission from the project author.
+Forks and modified distributions must use their own name and branding unless
+the author grants written permission.

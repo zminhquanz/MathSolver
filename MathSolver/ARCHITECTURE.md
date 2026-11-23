@@ -46,10 +46,13 @@ Three non-IEEE floating-point types that expand precision beyond IEEE 754:
 | Type | Significant Bits | Typical Use |
 |------|------------------|-------------|
 | `DoubleDouble` | ~106 bits (32 digits) | Basic extended arithmetic, fallback paths |
-| `QuadDouble` | ~212 bits (64 digits) | Standard solver precision for power/root, quadratic, geometry |
-| `OctoDouble` | ~424 bits (128 digits) | Specialized high-precision solvers where extra guard digits matter |
+| `QuadDouble` | ~212 bits (64 digits) | Root, linear-equation and geometry calculations |
+| `OctoDouble` | ~424 bits (128 digits) | Quadratic roots and other solvers that require extra guard digits |
 
 All three use fused-multiply-add (`Math.FusedMultiplyAdd`) to capture rounding error in a separate component. Constants like `Pi`, `Sqrt(3)` are pre-parsed from string literals at static initialization.
+
+`QuadraticEquationEngine` computes the discriminant exactly with `BigInteger`,
+then uses `OctoDouble` for its square root and the real roots.
 
 ---
 
@@ -206,6 +209,18 @@ Lateral-area contracts use `4 × a²` for cubes and `2 × (a + b) × h` for pris
 the answer unit is squared, while volume uses cubed units. Global mixed mode
 continues to use curriculum rules and does not inherit hidden picker values.
 
+### Geometry calculator and formulas
+
+Solve Math and Formulas share the `GeometryFormulaItem` catalog for formulas,
+diagrams, symbols and shape metadata.
+
+- Plane shapes include square, rectangle, triangle, right triangle, equilateral
+  triangle, circle, trapezoid, isosceles trapezoid, right trapezoid, rhombus and
+  parallelogram. The calculator supports perimeter and area.
+- Solid shapes include cube, rectangular prism, sphere, cylinder and cone.
+  The available measurements depend on the shape and include base area, lateral
+  surface area, total surface area and volume.
+
 ### Numeric Expressions
 
 `ExpressionQuizGenerator` owns the **Evaluate an expression**
@@ -296,7 +311,7 @@ Theme toggles between light/dark and color schemes; applied via resource overrid
 
 ---
 
-## Power/Root Solver — `Views/PowerRootView.cs`
+## Power/Root Solver — `Views/Calculators/PowerRootView.xaml.cs`
 
 The most performance-critical UI component:
 
@@ -317,8 +332,35 @@ Key thresholds:
 - Large transforms remain serialized at the graph level: one memory-heavy NTT consumes the worker team at a time instead of launching competing transforms that fight for cache and memory bandwidth. The worker pool is persistent, but the arithmetic kernel is static and locality-first. A forced Gen2 collection is still used only at large-mode phase boundaries to reclaim dead magnitudes while pooled NTT/twiddle resources remain owned.
 - Large-mode forward NTT reuse (2026-08-24): segmented multiplication keeps the current outer segment's already-transformed P1 and P2 spectra while it is paired with multiple right segments. Only the mutable right/product transform is rebuilt per pair; diagonal squares form the pointwise square directly from the cached spectrum. This removes repeated forward transforms without changing modulus arithmetic, DIF/DIT ordering, CRT, carry, segment size, or the <=10M production path. The large-mode NTT pool may retain three 2^26 uint32 buffers (two immutable cached spectra + one mutable product workspace); the legacy pool cap remains two. Non-square segmented products place the operand with fewer segments on the cached outer loop. Expected peak RAM rises only by one 2^26 uint32 buffer (~256 MiB) while forward-transform time drops substantially on repeated segment pairs.
 - Every exponent above 10,000,000 shows an explicit RAM/storage confirmation, including direct ±10^k zero generation and |a| = 2^k bit-shift shortcuts.
-- `ExportDigitThreshold = 100_001` → triggers parallel preparation
-- `FullResultDigitThreshold = 18` → below this, results are cached and displayed immediately without export
+- `ExportDigitThreshold = 19` enables TXT export for larger results.
+- `FullResultDigitThreshold = 18` keeps results of up to 18 digits in the full
+  result display.
+
+### Power and root input limits
+
+- Powers take an integer base from −10¹⁸ to 10¹⁸ and an exponent from 0 to
+  100,000,000. `0^0` is undefined.
+- Roots take a signed 128-bit radicand and a nonzero signed 32-bit degree.
+  A negative degree gives the reciprocal of the corresponding positive-degree
+  root. A negative radicand with an even degree can produce a complex result.
+
+### Temporary storage for large power results
+
+`PowerRootView.Memory.cs` archives a completed power result if its managed
+numeric storage is at least 32 MiB. This happens after 60 seconds away from the
+power tab or when the app enters the background. The app finishes writing the
+private TXT file before releasing the in-memory number. The preview, solution
+and TXT export remain available, and later exports stream from that file.
+
+A failed or cancelled archive keeps the in-memory result. Clearing the result,
+starting a new calculation or closing the app normally removes the file.
+The first use of result storage in a new process prunes abandoned files older
+than seven days. These files are temporary and cannot restore a session.
+
+Background cleanup also releases live-wallpaper resources. Active calculations
+and exports keep ownership of their data until they finish. Android handles
+supported `onTrimMemory` signals, and the archive path requests garbage
+collection only after releasing the large result.
 
 ---
 
@@ -335,9 +377,56 @@ Key thresholds:
 
 ## Build & Distribution
 
-- **SDK**: .NET MAUI (`Microsoft.Net.Sdk`) targeting Windows 10+, iOS, Android.
-- **Platforms**: Single project with conditional `TargetFrameworks` and platform-specific adapters (`Platforms/Windows`, `Platforms/iOS`, `Platforms/MacCatalyst`, `Platforms/Android`).
-- **Output type**: Native executable; no additional runtime dependencies beyond the .NET SDK.
+See [Build from source](../README.md#build-from-source) for the Android and
+Windows build commands. `MathSolver.csproj` defines the conditional target
+frameworks for Android, Windows, iOS and Mac Catalyst.
+
+### Project layout
+
+```text
+MathSolver/
+├── Controls/           Reusable controls
+├── Graphics/           Diagrams, graphs and calculation drawables
+├── MarkupExtensions/   XAML markup extensions
+├── Models/             Data models and formula catalogs
+├── Numerics/           High-precision numeric types and algorithms
+├── Platforms/          Platform-specific code
+├── Resources/          Images, icons, fonts and styles
+├── Services/           Calculations, localization, settings and app services
+├── Views/              Pages and reusable views
+├── App.xaml            Application resources and startup
+├── AppShell.xaml       Shell navigation
+└── MauiProgram.cs      MAUI app configuration
+```
+
+### Android APK signing
+
+Android Debug and Release device builds use the SDK's development signing key
+by default. For a development-signed ARM64 Release APK, run this command.
+
+```powershell
+dotnet build MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 -t:SignAndroidPackage
+```
+
+For distribution, select your release keystore in Visual Studio or pass the
+signing properties below. Set the password environment variables locally and
+keep the keystore and passwords out of the repository. Use the same signing key
+when updating an already distributed app.
+
+```powershell
+dotnet publish MathSolver/MathSolver.csproj -f net11.0-android -c Release -r android-arm64 `
+  -p:AndroidKeyStore=true `
+  -p:AndroidSigningKeyStore="C:/private/MathSolver.keystore" `
+  -p:AndroidSigningKeyAlias=mathsolver `
+  -p:AndroidSigningStorePass=env:MATHSOLVER_STORE_PASSWORD `
+  -p:AndroidSigningKeyPass=env:MATHSOLVER_KEY_PASSWORD
+```
+
+### Cleaning build artifacts
+
+If a rebuild still shows old resources or generated assets, run `dotnet clean`.
+If stale artifacts remain, close the running app, delete the project's `bin`
+and `obj` directories and rebuild.
 
 ## Android Material You / Material 3 migration
 
@@ -402,6 +491,9 @@ The Hardware Information → Raw performance tab exposes its benchmark variants 
 - `MathAnimation2` uses the same lifecycle for its neural-network and geometry drawable.
 - `StaticSchoolImage` selects the wide or upright PNG from the app package. It uses the app theme's reading palette and a fixed scrim for the watercolor. The active host owns the image and clears its source when the mode or owner changes.
 - `Mp4`: user-selected MP4 copied to app data. The video stream must be H.264/AVC, must have a compatible hardware-preferred decoding path, and must not exceed 120 seconds. Validation policy version 3 forces older saved wallpapers to be rechecked against the duration rule and the Android decoded-pixel memory budget.
+
+On Android, `LiveWallpaperVideoInspector` limits each decoded MP4 frame to
+3,686,400 pixels, equivalent to 2560 × 1440.
 
 The Settings picker exposes all four choices. A stored mode value of `3` from the retired classroom animation resolves to `MathAnimation`. MP4 controls and validation are scoped to MP4 mode. The host creates the image, graphics timer or native player when needed and tears it down with the active owner.
 
