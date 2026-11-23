@@ -13,7 +13,12 @@ namespace MathSolver.Views;
 
 internal sealed class QuizPdfPage : ContentPage
 {
-    private sealed record PreviewRow(int Number, QuizPrintItem Item);
+    private sealed record PreviewRow(int Number, QuizPrintItem Item)
+    {
+        // WinUI uses the item's ToString for automation properties. Avoid
+        // recursively formatting the full question model and its getters.
+        public override string ToString() => $"{Number}. {Item.Prompt}";
+    }
     private readonly PracticeQuestionFactory _factory;
     private readonly QuizWorksheetSettingsView _settingsForm;
     private readonly Label _selectionSummary = new() { LineBreakMode = LineBreakMode.WordWrap };

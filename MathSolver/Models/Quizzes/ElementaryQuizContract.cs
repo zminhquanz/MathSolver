@@ -140,6 +140,12 @@ public sealed record ElementaryQuizContract(QuizProblemKind Kind, ElementaryQuiz
         return $"{left} {symbol} {right}";
     }
 
+    // Record-generated ToString evaluates every public property, including
+    // ComparisonOperands on exercises that do not contain comparison facts.
+    // MAUI CollectionView may call ToString for accessibility during preview.
+    public override string ToString() =>
+        $"{nameof(ElementaryQuizContract)} {{ Kind = {Kind}, Type = {Type}, ProblemText = {ProblemText} }}";
+
     public string AnswerText
     {
         get
