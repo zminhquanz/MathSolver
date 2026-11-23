@@ -109,6 +109,15 @@ owns the background lifecycle. Imported H.264 MP4 wallpapers are capped at
 See [Build from source](../README.md#build-from-source) for the SDK and build
 commands. [MathSolver.csproj](MathSolver.csproj) defines the platform targets.
 
+### Windows portable Release
+
+The Windows Release build places its portable output in `portable/` under the
+SDK build directory. Publishing writes the same layout to the publish directory.
+Open the top-level `MathSolver.exe` and keep the `app/` directory beside it.
+The runtime, WinUI resources and native AI dependencies live in `app/` with
+their required relative paths. The Windows icon is embedded in the executable,
+and the in-app splash uses the logo stored in `mathsolver-artwork.pack`.
+
 ### Project layout
 
 | Directory | Responsibility |

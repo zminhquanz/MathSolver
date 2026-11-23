@@ -1,0 +1,54 @@
+<Project>
+  <!-- Keep the ICO as input to the PE compiler. The loose images are used by
+       MSIX visual elements, while this build uses the executable's icon. -->
+  <Target Name="OmitUnpackagedWindowsBrandingCopies" AfterTargets="_ResizetizeInjectPlatformItems">
+    <ItemGroup>
+      <_MathSolverGeneratedAppIcons Include="@(_ResizetizerCollectedImages)"
+          Condition="$([System.String]::Copy('%(_ResizetizerCollectedImages.Filename)').StartsWith('appicon'))" />
+      <ContentWithTargetPath Remove="@(_MathSolverGeneratedAppIcons)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompileWindowsPortableLauncher"
+      DependsOnTargets="ResizetizeImages"
+      Inputs="$(MSBuildThisFileDirectory)WindowsPortableLauncher.cs;$(ApplicationIcon);$(MSBuildThisFileFullPath)"
+      Outputs="$(IntermediateOutputPath)portable\MathSolver.exe"
+      Condition="'$(DesignTimeBuild)' != 'true'">
+    <Error Condition="'$(ApplicationIcon)' == '' or !Exists('$(ApplicationIcon)')"
+        Text="The Windows portable launcher requires the generated Math Solver application icon." />
+    <MakeDir Directories="$(IntermediateOutputPath)portable" />
+    <Exec Command="&quot;$(SystemRoot)\Microsoft.NET\Framework\v4.0.30319\csc.exe&quot; /nologo /optimize+ /target:winexe /win32icon:&quot;$(ApplicationIcon)&quot; /out:&quot;$(IntermediateOutputPath)portable\MathSolver.exe&quot; &quot;$(MSBuildThisFileDirectory)WindowsPortableLauncher.cs&quot;" />
+  </Target>
+
+  <Target Name="CopyWindowsPortableBuildLauncher"
+      AfterTargets="CopyFilesToOutputDirectory"
+      DependsOnTargets="CompileWindowsPortableLauncher"
+      Condition="'$(_MathSolverWindowsBuildRoot)' != '' and '$(DesignTimeBuild)' != 'true'">
+    <Copy SourceFiles="$(IntermediateOutputPath)portable\MathSolver.exe"
+        DestinationFiles="$(_MathSolverWindowsBuildRoot)MathSolver.exe"
+        SkipUnchangedFiles="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_MathSolverWindowsBuildRoot)MathSolver.exe;$(IntermediateOutputPath)portable\MathSolver.exe" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CleanWindowsPortableBuildLauncher" AfterTargets="Clean"
+      Condition="'$(_MathSolverWindowsBuildRoot)' != ''">
+    <Delete Files="$(_MathSolverWindowsBuildRoot)MathSolver.exe" />
+  </Target>
+
+  <Target Name="ArrangeWindowsPortablePublish"
+      AfterTargets="ComputeFilesToPublish"
+      DependsOnTargets="CompileWindowsPortableLauncher"
+      Condition="'$(DesignTimeBuild)' != 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish>
+        <RelativePath>app\%(ResolvedFileToPublish.RelativePath)</RelativePath>
+      </ResolvedFileToPublish>
+      <ResolvedFileToPublish Include="$(IntermediateOutputPath)portable\MathSolver.exe">
+        <RelativePath>MathSolver.exe</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

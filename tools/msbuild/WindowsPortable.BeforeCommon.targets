@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="$(_MathSolverWinUIBeforeCommonTargets)" Condition="'$(_MathSolverWinUIBeforeCommonTargets)' != ''" />
+
+  <!-- Use a fresh distribution directory beside any older flat output.
+       Keep TargetPath pointing to the real app for Visual Studio and dotnet run. -->
+  <PropertyGroup Condition="'$(OutDir)' == ''">
+    <_MathSolverWindowsBuildRoot>$([MSBuild]::EnsureTrailingSlash('$(OutputPath)'))portable\</_MathSolverWindowsBuildRoot>
+    <OutDir>$(_MathSolverWindowsBuildRoot)app\</OutDir>
+  </PropertyGroup>
+</Project>

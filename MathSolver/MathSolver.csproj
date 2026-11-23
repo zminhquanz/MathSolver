@@ -89,13 +89,20 @@
     <RuntimeIdentifier>$(RuntimeIdentifierOverride)</RuntimeIdentifier>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release' and '$(WindowsPackageType)' == 'None' and '$(PublishSingleFile)' != 'true'">
+    <_MathSolverWindowsPortableRelease>true</_MathSolverWindowsPortableRelease>
+    <_MathSolverWinUIBeforeCommonTargets>$(CustomBeforeMicrosoftCommonTargets)</_MathSolverWinUIBeforeCommonTargets>
+    <CustomBeforeMicrosoftCommonTargets>$(MSBuildProjectDirectory)\..\tools\msbuild\WindowsPortable.BeforeCommon.targets</CustomBeforeMicrosoftCommonTargets>
+  </PropertyGroup>
+  <Import Project="../tools/msbuild/WindowsPortable.targets" Condition="'$(_MathSolverWindowsPortableRelease)' == 'true'" />
+
   <ItemGroup>
     <!-- SVG sources; MAUI generates platform PNG/ICO assets at build time. -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\Images\mathsolver_logo_light.svg" Color="#2563EB">
       <ForegroundScale Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">0.65</ForegroundScale>
       <ForegroundScale Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'android'">0.9</ForegroundScale>
     </MauiIcon>
-    <MauiSplashScreen Include="Resources\Splash\mathsolver_splash.svg" BaseSize="128,128" Color="#2563EB" />
+    <MauiSplashScreen Include="Resources\Splash\mathsolver_splash.svg" BaseSize="128,128" Color="#2563EB" Condition="'$(_MathSolverWindowsPortableRelease)' != 'true'" />
     <MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\ai_guide_stationery.png" BaseSize="192,128" Resize="True" />
     <MauiImage Update="Resources\Images\quiz_story_*.png" BaseSize="240,160" Resize="True" />
@@ -106,8 +113,8 @@
     <EmbeddedResource Include="Resources\Fonts\OpenSans-SemiBold.ttf" LogicalName="QuizPdf.Bold.ttf" />
     <MauiAsset Include="Resources\Raw\**" Exclude="Resources\Raw\QuizContent\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
-  <!-- WinUI Release loads artwork from a single optimized archive. Shell
-       navigation icons and OS-owned app/splash assets remain native resources. -->
+  <!-- WinUI Release loads app artwork, including the in-app splash logo,
+       from a single archive. Shell navigation icons remain native resources. -->
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows' and '$(Configuration)' == 'Release'">
     <DefineConstants>$(DefineConstants);MATHSOLVER_WINDOWS_ARTWORK_PACK</DefineConstants>
     <!-- Retain English/Vietnamese managed satellite assemblies on Windows Release.
