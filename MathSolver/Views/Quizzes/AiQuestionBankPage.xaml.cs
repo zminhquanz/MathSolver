@@ -46,10 +46,9 @@ public partial class AiQuestionBankPage : ContentPage
         IllustratedQuizPicker.Attach(StarsPicker, "Choice.SelectDifficulty");
         IllustratedQuizPicker.Attach(LanguagePicker, "Choice.SelectLanguage");
 #if ANDROID
-        // These stock pickers also sit inside our own outlined input frames.
-        AndroidPickerVisualHelper.Attach(BatchModePicker);
-        AndroidPickerVisualHelper.Attach(QuestionPicker);
-        AndroidPickerVisualHelper.Attach(DownloadModelPicker);
+        IllustratedQuizPicker.AttachText(BatchModePicker, () => T("GenerationMode"));
+        IllustratedQuizPicker.AttachText(QuestionPicker, () => T("ProcessedQuestions"));
+        IllustratedQuizPicker.AttachText(DownloadModelPicker, () => T("ChooseModel"));
 #endif
 
         LocalizationService.ExcludeSubtreeFromLegacyTracking(this);
@@ -82,7 +81,10 @@ public partial class AiQuestionBankPage : ContentPage
             || IllustratedQuizPicker.IsChoosing(FindXRolePicker)
             || IllustratedQuizPicker.IsChoosing(LearningGroupPicker)
             || IllustratedQuizPicker.IsChoosing(StarsPicker)
-            || IllustratedQuizPicker.IsChoosing(LanguagePicker);
+            || IllustratedQuizPicker.IsChoosing(LanguagePicker)
+            || IllustratedQuizPicker.IsChoosing(BatchModePicker)
+            || IllustratedQuizPicker.IsChoosing(QuestionPicker)
+            || IllustratedQuizPicker.IsChoosing(DownloadModelPicker);
         if (options is not null && !choosing)
         {
             _learningGroup = options.Profile?.Group ?? QuestionKnowledgeGroup.Objects;

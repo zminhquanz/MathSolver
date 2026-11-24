@@ -97,6 +97,9 @@ public partial class MathPuzzlePage : ContentPage
 
         IllustratedQuizPicker.Attach(OperationPicker, "Choice.SelectProblem");
         IllustratedQuizPicker.Attach(LearningGroupPicker, "Choice.SelectGroup");
+#if ANDROID
+        IllustratedQuizPicker.AttachText(PracticeFormatPicker, () => PracticeFormatTitleLabel.Text);
+#endif
         foreach (var picker in IllustratedSubtypePickers)
             IllustratedQuizPicker.Attach(picker, "Choice.SelectSubtype");
 
@@ -167,6 +170,7 @@ public partial class MathPuzzlePage : ContentPage
         if (_openingAiQuestionBank || _diagramPreviewOpen || SettingsMenuPage.IsTransparentOverlayActive
             || IllustratedQuizPicker.IsChoosing(OperationPicker)
             || IllustratedQuizPicker.IsChoosing(LearningGroupPicker)
+            || IllustratedQuizPicker.IsChoosing(PracticeFormatPicker)
             || IllustratedSubtypePickers.Any(IllustratedQuizPicker.IsChoosing))
         {
             base.OnDisappearing();

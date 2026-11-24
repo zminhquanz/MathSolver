@@ -33,9 +33,6 @@ public partial class MathPuzzlePage
         }
         finally { _updatingLearning = false; }
         RefreshPracticeFormatPicker(GetSelectedFixedProblemRequest()?.Kind);
-#if ANDROID
-        AndroidPickerVisualHelper.Attach(PracticeFormatPicker);
-#endif
     }
     private bool UsesWordProblems(QuizProblemKind? kind) => kind switch
     {

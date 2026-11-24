@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 using MathSolver.Services;
 using Microsoft.Maui.Controls.Shapes;
@@ -17,16 +18,23 @@ public sealed class IllustratedQuizPicker : ContentView
     private readonly Label _title;
     private readonly QuizChoiceIllustration _illustration;
     private readonly string _captionKey;
+    private readonly Func<string>? _textCaption;
     private string[] _keys = [];
     private bool _opening;
     private bool _themeSubscribed;
     private int _themeRefreshGeneration;
 
-    private IllustratedQuizPicker(Picker picker, string captionKey, Border? frame)
+    private IllustratedQuizPicker(Picker picker, string captionKey, Border? frame, Func<string>? textCaption)
     {
         _picker = picker;
         _captionKey = captionKey;
+        _textCaption = textCaption;
         DisplayDensityManager.BindControl(this);
+        if (_textCaption is not null)
+        {
+            RemoveDynamicResource(MinimumHeightRequestProperty);
+            MinimumHeightRequest = 48;
+        }
         _open = ChoiceButton(drawFocusBorder: false);
         Action? refreshFrameFocus = null;
         // Focus belongs to the field's single outer outline, not a second inner
@@ -78,6 +86,8 @@ public sealed class IllustratedQuizPicker : ContentView
         Content = layout;
         _open.Clicked += OnOpenClicked;
         picker.PropertyChanged += OnPickerChanged;
+        if (_textCaption is not null && picker.Items is INotifyCollectionChanged items)
+            items.CollectionChanged += (_, _) => UpdateSelection();
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
         UpdateSelection();
@@ -85,6 +95,7 @@ public sealed class IllustratedQuizPicker : ContentView
 
     private void OnLoaded(object? sender, EventArgs e)
     {
+        if (_textCaption is not null) UpdateSelection();
         if (!_themeSubscribed)
         {
             AppThemeManager.ThemeChanged += OnThemeChanged;
@@ -128,7 +139,12 @@ public sealed class IllustratedQuizPicker : ContentView
 #endif
     }
 
-    public static void Attach(Picker picker, string captionKey)
+    public static void Attach(Picker picker, string captionKey) => AttachCore(picker, captionKey, null);
+
+    /// <summary>Text-only fields use the same outline and chooser with the current Picker items.</summary>
+    public static void AttachText(Picker picker, Func<string> caption) => AttachCore(picker, "", caption);
+
+    private static void AttachCore(Picker picker, string captionKey, Func<string>? textCaption)
     {
         if (Instances.TryGetValue(picker, out _)) return;
         var parent = picker.Parent;
@@ -141,7 +157,7 @@ public sealed class IllustratedQuizPicker : ContentView
             frame.SetDynamicResource(BackgroundColorProperty, "InputBackgroundColor");
             frame.SetDynamicResource(Border.StrokeProperty, "BorderBrush");
         }
-        var replacement = new IllustratedQuizPicker(picker, captionKey, frame);
+        var replacement = new IllustratedQuizPicker(picker, captionKey, frame, textCaption);
         if (parent is Grid grid)
         {
             // These picker hosts contain only the picker and a decorative native chevron.
@@ -187,7 +203,11 @@ public sealed class IllustratedQuizPicker : ContentView
     {
         if (e.PropertyName is nameof(Picker.SelectedIndex) or nameof(Picker.SelectedItem)
             or nameof(Picker.ItemsSource) or nameof(Picker.IsEnabled)) UpdateSelection();
+        else if (_textCaption is not null && e.PropertyName is nameof(Picker.Opacity)
+            or nameof(Picker.IsVisible) or nameof(Picker.AutomationId) or nameof(Picker.Title)) UpdateSelection();
     }
+
+    private string Caption() => _textCaption?.Invoke() ?? Text(_captionKey);
 
     private void UpdateSelection()
     {
@@ -195,8 +215,15 @@ public sealed class IllustratedQuizPicker : ContentView
         // This keeps translated model names (such as GeometryFormulaItem.Name)
         // instead of displaying the object's CLR type name.
         int index = _picker.SelectedIndex;
-        _title.Text = index >= 0 && index < _picker.Items.Count ? _picker.Items[index] : Text(_captionKey);
-        _open.IsEnabled = _picker.IsEnabled;
+        _title.Text = index >= 0 && index < _picker.Items.Count ? _picker.Items[index] : Caption();
+        _open.IsEnabled = _picker.IsEnabled && !_opening && (_textCaption is null || _picker.Items.Count > 0);
+        if (_textCaption is not null)
+        {
+            IsVisible = _picker.IsVisible;
+            Opacity = _picker.Opacity;
+            if (_open.AutomationId is null && !string.IsNullOrEmpty(_picker.AutomationId))
+                _open.AutomationId = _picker.AutomationId;
+        }
         _title.Opacity = _illustration.Opacity = _picker.IsEnabled ? 1 : 0.5;
         string description = "";
         _illustration.IsVisible = index >= 0 && index < _keys.Length && !string.IsNullOrEmpty(_keys[index]);
@@ -208,26 +235,35 @@ public sealed class IllustratedQuizPicker : ContentView
             _illustration.IllustrationId = option.IllustrationId;
             description = option.Description;
         }
-        SemanticProperties.SetDescription(_open, Text(_captionKey) + ": " + _title.Text);
+        SemanticProperties.SetDescription(_open, Caption() + ": " + _title.Text);
         SemanticProperties.SetHint(_open, description);
     }
 
     private async void OnOpenClicked(object? sender, EventArgs e)
     {
-        if (_opening || !IsEnabled || !_picker.IsEnabled || _keys.Length == 0) return;
+        int count = _textCaption is null ? Math.Min(_keys.Length, _picker.Items.Count) : _picker.Items.Count;
+        if (_opening || !IsEnabled || !_picker.IsEnabled || count == 0) return;
         _opening = true;
         _open.IsEnabled = false;
         QuizChoicePage? page = null;
         try
         {
             // Freeze options for this dialog. Original indexes survive filtering and resizing.
-            var choices = _keys.Select((key, index) => string.IsNullOrEmpty(key)
+            var keys = _textCaption is null ? _keys.Take(count) : Enumerable.Repeat("", count);
+            var choices = keys.Select((key, index) => string.IsNullOrEmpty(key)
                 ? new QuizChoiceOption(index, "", _picker.Items[index], "", "", index == _picker.SelectedIndex)
                 : QuizChoiceCatalog.Create(index, key, _picker.Items[index],
                     AppLanguageManager.CurrentLanguage, index == _picker.SelectedIndex)).ToArray();
-            page = new QuizChoicePage(Text(_captionKey), choices);
+            var sourceItems = _textCaption is not null && _picker.ItemsSource is { } source
+                ? source.Cast<object?>().ToArray() : null;
+            page = new QuizChoicePage(Caption(), choices, textOnly: _textCaption is not null);
             int? selected = await page.ChooseAsync(Navigation);
-            if (selected.HasValue && IsEnabled && _picker.IsEnabled) _picker.SelectedIndex = selected.Value;
+            if (selected is int index && IsEnabled && _picker.IsEnabled && index >= 0
+                && index < _picker.Items.Count && index < choices.Length
+                && (_textCaption is null || (choices[index].Title == _picker.Items[index]
+                    && (sourceItems is null || (_picker.ItemsSource is { } current && index < current.Count
+                        && index < sourceItems.Length && Equals(sourceItems[index], current[index]))))))
+                _picker.SelectedIndex = index;
         }
         finally
         {
@@ -295,6 +331,7 @@ internal sealed class QuizChoicePage : ContentPage
     private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
 #endif
     private readonly IReadOnlyList<QuizChoiceOption> _choices;
+    private readonly bool _textOnly;
     private readonly TaskCompletionSource<int?> _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly CollectionView _list;
     private readonly SearchBar _search;
@@ -345,9 +382,10 @@ internal sealed class QuizChoicePage : ContentPage
     private Microsoft.UI.Xaml.Input.KeyEventHandler? _keyHandler;
 #endif
 
-    public QuizChoicePage(string title, IReadOnlyList<QuizChoiceOption> choices)
+    public QuizChoicePage(string title, IReadOnlyList<QuizChoiceOption> choices, bool textOnly = false)
     {
         _choices = choices;
+        _textOnly = textOnly;
         Title = title;
         SafeAreaEdges = Microsoft.Maui.SafeAreaEdges.All;
         HideSoftInputOnTapped = true;
@@ -391,7 +429,7 @@ internal sealed class QuizChoicePage : ContentPage
         _searchRow.Add(_compactClose, 1);
         _searchRow.SizeChanged += (_, _) => Resize();
         _list = new CollectionView { SelectionMode = SelectionMode.None, ItemsLayout = _itemsLayout,
-            ItemSizingStrategy = GridSizingStrategy,
+            ItemSizingStrategy = textOnly ? ItemSizingStrategy.MeasureAllItems : GridSizingStrategy,
             VerticalScrollBarVisibility = ScrollBarVisibility.Default,
             ItemTemplate = new DataTemplate(CreateChoiceCard),
             EmptyView = new Label { Text = IllustratedQuizPicker.Text(themeChoices ? "Choice.EmptyThemes" : "Choice.Empty"), FontSize = 16,
@@ -470,7 +508,7 @@ internal sealed class QuizChoicePage : ContentPage
             var layout = QuizChoiceLayout.Calculate(_root.Width, viewportHeight, _choices.Count,
                 ResponsiveLayoutPolicy.TextScale, ScrollbarGutter,
                 _searchRow.Height > 0 ? (_header.IsVisible ? Math.Max(48, _header.Height) : 0) + _searchRow.Height : 0,
-                forceSingleColumn: DeviceInfo.Idiom == DeviceIdiom.Phone);
+                forceSingleColumn: _textOnly || DeviceInfo.Idiom == DeviceIdiom.Phone);
             _card.WidthRequest = layout.Width;
             _card.HeightRequest = layout.Height;
             _card.Padding = layout.Padding;

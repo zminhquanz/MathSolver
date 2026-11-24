@@ -36,6 +36,9 @@ internal readonly record struct MatrixPresentation(
 
 internal static class MatrixPresentationPolicy
 {
+    internal static bool UseTwoRowPhoneToolbar(double width, double textScale)
+        => width < 400 * Math.Max(1, textScale);
+
     internal static MatrixPresentation Resolve(MatrixPresentationInput input)
     {
         bool details = input.DetailsRequested && !input.SelectionChanged;

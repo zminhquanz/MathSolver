@@ -15,6 +15,9 @@ public sealed partial class MatrixView
     private EmojiActionButton _phoneSetup = null!;
     private bool _phoneEntryWorkspace;
 #if ANDROID
+    private Grid _phoneToolbar = null!;
+    private Grid _phoneMatrixTabs = null!;
+    private bool _phoneToolbarCompact;
     private EmojiActionButton _phoneRangeToggle = null!;
     private EmojiActionButton _phoneExpandToggle = null!;
     private Button _phoneNavigationAction = null!;
@@ -35,6 +38,11 @@ public sealed partial class MatrixView
         heading.ColumnDefinitions.Add(new(GridLength.Auto));
         heading.Add(_phoneSetup, 4);
 #if ANDROID
+        _phoneToolbar = heading;
+        _phoneMatrixTabs = (Grid)heading.Children[0];
+        heading.RowDefinitions.Add(new(GridLength.Auto));
+        heading.RowDefinitions.Add(new(new GridLength(0)));
+        heading.SizeChanged += (_, _) => RefreshPhoneToolbar();
         _phoneRangeToggle = (EmojiActionButton)MirrorAction("RangeSelection.Start", "▧", _rangeSelectionToggle);
         _phoneRangeToggle.AutomationId = "MatrixPhoneSelectRange";
         _phoneRangeToggle.FontSize = 13;
@@ -80,6 +88,29 @@ public sealed partial class MatrixView
         if (_phoneEntryWorkspace != phone)
         {
             _phoneEntryWorkspace = phone;
+#if ANDROID
+            foreach (EmojiActionButton tab in _matrices)
+            {
+                if (phone)
+                {
+                    tab.RemoveDynamicResource(Button.PaddingProperty);
+                    tab.RemoveDynamicResource(MinimumHeightRequestProperty);
+                    tab.Padding = new Thickness(4, 6);
+                    tab.VectorIconKey = null;
+                    tab.MinimumHeightRequest = 48;
+                }
+                else
+                {
+                    DisplayDensityManager.BindControl(tab);
+                    tab.VectorIconKey = "Matrix" + "ABC"[Array.IndexOf(_matrices, tab)];
+                }
+            }
+            if (!phone)
+            {
+                DisplayDensityManager.BindControl(_moreToolsToggle);
+                DisplayDensityManager.BindControl(_phoneSetup);
+            }
+#endif
             if (phone)
             {
                 _matrixMain.RemoveDynamicResource(Grid.PaddingProperty);
@@ -108,6 +139,7 @@ public sealed partial class MatrixView
         RefreshPhoneInputActions(phone);
         _expandTable.IsVisible = !phone;
         _phoneRangeToggle.IsVisible = phone;
+        RefreshPhoneToolbar();
         if (phone && IsPhoneLandscape) _cellInfo.IsVisible = false;
         string expandKey = _tableExpanded ? "Workspace.RestoreTable" : "Workspace.ExpandTable";
         _phoneExpandToggle.VectorIconKey = expandKey;
@@ -141,6 +173,34 @@ public sealed partial class MatrixView
     }
 
 #if ANDROID
+    private void RefreshPhoneToolbar()
+    {
+        if (_phoneRangeToggle is null) return;
+        bool compact = _phoneEntryWorkspace && MatrixPresentationPolicy.UseTwoRowPhoneToolbar(
+            _phoneToolbar.Width, ResponsiveLayoutPolicy.TextScale);
+        if (_phoneToolbarCompact != compact)
+        {
+            _phoneToolbarCompact = compact;
+            _phoneToolbar.RowDefinitions[1].Height = compact ? GridLength.Auto : new GridLength(0);
+            _phoneToolbar.RowSpacing = compact ? 6 : 0;
+            Grid.SetColumnSpan(_phoneMatrixTabs, compact ? 5 : 1);
+            Grid.SetRow(_phoneRangeToggle, compact ? 1 : 0);
+            Grid.SetColumn(_phoneRangeToggle, compact ? 0 : 1);
+            Grid.SetRow(_moreToolsToggle, compact ? 1 : 0);
+            Grid.SetRow(_phoneSetup, compact ? 1 : 0);
+            _phoneRangeToggle.WidthRequest = compact ? -1 : 104;
+        }
+        if (!_phoneEntryWorkspace) return;
+        foreach (var button in new[] { (Button)_moreToolsToggle, _phoneSetup })
+        {
+            button.RemoveDynamicResource(Button.PaddingProperty);
+            button.RemoveDynamicResource(MinimumHeightRequestProperty);
+            button.Padding = Thickness.Zero;
+            button.WidthRequest = Math.Max(48, DisplayDensityManager.Metrics.ControlHeight);
+            button.MinimumHeightRequest = 48;
+        }
+    }
+
     private void BuildPhoneInputActions(Border bar, VerticalStackLayout content, Grid normalActions)
     {
         _phoneActionBar = bar;

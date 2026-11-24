@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Controls;
 
 namespace MathSolver.Views;
 
@@ -53,9 +54,9 @@ public partial class MeasurementFormulaView : ContentView
             OnCultureChanged;
 
 #if ANDROID
-        AndroidPickerVisualHelper.Attach(CategoryPicker);
-        AndroidPickerVisualHelper.Attach(FromUnitPicker);
-        AndroidPickerVisualHelper.Attach(ToUnitPicker);
+        IllustratedQuizPicker.AttachText(CategoryPicker, () => LocalizationService.TranslateKey("Formula.Measurement.CategoryLabel"));
+        IllustratedQuizPicker.AttachText(FromUnitPicker, () => LocalizationService.TranslateKey("Formula.Measurement.FromLabel"));
+        IllustratedQuizPicker.AttachText(ToUnitPicker, () => LocalizationService.TranslateKey("Formula.Measurement.ToLabel"));
 #endif
 
         RefreshLocalization();

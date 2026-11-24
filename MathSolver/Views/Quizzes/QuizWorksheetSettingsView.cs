@@ -52,18 +52,7 @@ internal sealed class QuizWorksheetSettingsView : ContentView
             picker.HorizontalOptions = picker.VerticalOptions = LayoutOptions.Fill;
             picker.SetDynamicResource(Picker.TextColorProperty, "WallpaperTextPrimaryColor");
 #if ANDROID
-            var host = new Grid();
-            frame.Content = host; host.Add(picker);
-            var arrow = new Microsoft.Maui.Controls.Shapes.Polyline
-            {
-                Points = new PointCollection { new(1, 1), new(6, 6), new(11, 1) },
-                StrokeThickness = 1.5, WidthRequest = 12, HeightRequest = 7, Margin = new Thickness(0, 0, 18, 0),
-                HorizontalOptions = LayoutOptions.End, VerticalOptions = LayoutOptions.Center, InputTransparent = true
-            };
-            arrow.SetDynamicResource(Microsoft.Maui.Controls.Shapes.Shape.StrokeProperty, "WallpaperTextSecondaryBrush");
-            AutomationProperties.SetIsInAccessibleTree(arrow, false);
-            host.Add(arrow);
-            AndroidPickerVisualHelper.Attach(picker);
+            IllustratedQuizPicker.AttachText(picker, () => heading.Text);
 #endif
         }
         return field;

@@ -1,4 +1,5 @@
 using MathSolver.Services;
+using MathSolver.Controls;
 
 namespace MathSolver.Views;
 
@@ -97,19 +98,22 @@ public partial class SettingsPage : ContentPage
 
 #if ANDROID
     /// <summary>
-    /// Keep the Android Settings Picker fields visually distinct from their
-    /// cards while retaining the stock .NET MAUI Material 3 Picker behavior.
+    /// Share the single outlined choice field used by the practice workspace.
     /// </summary>
     private void ApplyAndroidCompactControlSurfaces()
     {
-        AndroidPickerVisualHelper.Attach(
-            FontPicker);
+        IllustratedQuizPicker.AttachText(FontPicker,
+            () => LocalizationService.TranslateKey("legacy.exact.phong.chu.409e6270"));
+        IllustratedQuizPicker.AttachText(LanguagePicker,
+            () => LocalizationService.TranslateKey("Settings.Language"));
+        IllustratedQuizPicker.AttachText(LiveWallpaperModePicker,
+            () => LocalizationService.TranslateKey("Settings.Wallpaper.Type"));
 
-        AndroidPickerVisualHelper.Attach(
-            LanguagePicker);
-
-        AndroidPickerVisualHelper.Attach(
-            LiveWallpaperModePicker);
+        RgbAdvancedButton.SetDynamicResource(Button.BackgroundColorProperty, "PrimarySoftColor");
+        RgbAdvancedButton.SetDynamicResource(Button.TextColorProperty, "PrimaryColor");
+        RgbAdvancedButton.SetDynamicResource(Button.BorderColorProperty, "PrimaryBorderColor");
+        RgbAdvancedButton.BorderWidth = 1;
+        RgbAdvancedButton.MinimumHeightRequest = 48;
 
         ResetSettingsButton.SetDynamicResource(
             VisualElement.BackgroundColorProperty,

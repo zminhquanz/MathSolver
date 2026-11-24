@@ -1,4 +1,5 @@
 using MathSolver.Graphics;
+using MathSolver.Controls;
 using MathSolver.Services;
 using MathSolver.Services.Core;
 using MathSolver.Services.Localization;
@@ -139,10 +140,9 @@ public partial class HardwarePerformancePage : ContentPage
 
 
 #if ANDROID
-        AndroidPickerVisualHelper.Attach(
-            SimdModePicker);
-        AndroidPickerVisualHelper.Attach(
-            BenchmarkTestPicker);
+        IllustratedQuizPicker.AttachText(SimdModePicker,
+            () => LocalizationService.TranslateKey("legacy.exact.tap.lenh.simd.benchmark.06948649"));
+        IllustratedQuizPicker.AttachText(BenchmarkTestPicker, () => BenchmarkTestPickerLabel.Text);
 #endif
 
         Shell.SetTabBarIsVisible(
