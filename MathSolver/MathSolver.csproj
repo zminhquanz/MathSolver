@@ -75,7 +75,9 @@
 
   <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android' and '$(Configuration)' == 'Release'">
     <AndroidPackageFormat>apk</AndroidPackageFormat>
-    <RuntimeIdentifiers>android-arm64</RuntimeIdentifiers>
+    <!-- ARM64 for physical devices and x64 for Android emulators. The artwork archive is shared by both inner builds. -->
+    <RuntimeIdentifiers>android-arm64;android-x64</RuntimeIdentifiers>
+    <_AndroidBuildRuntimeIdentifiersInParallel>false</_AndroidBuildRuntimeIdentifiersInParallel>
   </PropertyGroup>
 
   <!-- .NET 11 Android requires CoreCLR in both Debug and Release.
@@ -144,12 +146,7 @@
   </ItemGroup>
   <PropertyGroup>
     <_ArtworkPackSourceList>$(MSBuildProjectDirectory)\obj\artwork\$(Configuration)\$(TargetFramework)\sources.txt</_ArtworkPackSourceList>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net11.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net11.0-android|AnyCPU'">
-    <AndroidKeyStore>True</AndroidKeyStore>
+    <AndroidSigningKeyStore>mathsolver.keystore</AndroidSigningKeyStore>
   </PropertyGroup>
   <Target Name="TrackArtworkPackSources">
     <MakeDir Directories="$([System.IO.Path]::GetDirectoryName('$(_ArtworkPackSourceList)'))" />

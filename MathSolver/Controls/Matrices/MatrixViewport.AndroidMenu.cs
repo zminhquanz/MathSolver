@@ -44,6 +44,7 @@ public sealed partial class MatrixViewport
                 {
                     if (!CanUseInput) return;
                     if (e.Item?.ItemId == global::Android.Resource.Id.Copy) RequestCopy();
+                    else if (e.Item?.ItemId == global::Android.Resource.Id.Paste) RequestPaste();
                     else if (e.Item?.ItemId == global::Android.Resource.Id.SelectAll) SelectAll();
                 };
                 popup.DismissEvent += (_, _) =>
@@ -53,12 +54,15 @@ public sealed partial class MatrixViewport
         });
     }
 
-    private static void AddSelectionMenuItems(global::Android.Views.IMenu menu)
+    private void AddSelectionMenuItems(global::Android.Views.IMenu menu)
     {
         using var copy = new Java.Lang.String(LocalizationService.TranslateKey("Matrix.Workspace.Copy"));
+        using var paste = new Java.Lang.String(LocalizationService.TranslateKey("Matrix.Workspace.Paste"));
         using var all = new Java.Lang.String(LocalizationService.TranslateKey("Matrix.SelectAll"));
         menu.Add(0, global::Android.Resource.Id.Copy, 0, copy);
-        menu.Add(0, global::Android.Resource.Id.SelectAll, 1, all);
+        if (CanEdit?.Invoke() != false)
+            menu.Add(0, global::Android.Resource.Id.Paste, 1, paste);
+        menu.Add(0, global::Android.Resource.Id.SelectAll, 2, all);
     }
 
     private void CloseSelectionMenu()
@@ -78,7 +82,7 @@ public sealed partial class MatrixViewport
         public override bool OnCreateActionMode(global::Android.Views.ActionMode? mode, global::Android.Views.IMenu? menu)
         {
             if (menu is null || !owner.CanUseInput) return false;
-            AddSelectionMenuItems(menu);
+            owner.AddSelectionMenuItems(menu);
             return true;
         }
         public override bool OnPrepareActionMode(global::Android.Views.ActionMode? mode, global::Android.Views.IMenu? menu) => false;
@@ -87,6 +91,8 @@ public sealed partial class MatrixViewport
             if (!owner.CanUseInput) { mode?.Finish(); return false; }
             if (item?.ItemId == global::Android.Resource.Id.Copy)
             { mode?.Finish(); owner.RequestCopy(); return true; }
+            if (item?.ItemId == global::Android.Resource.Id.Paste)
+            { mode?.Finish(); owner.RequestPaste(); return true; }
             if (item?.ItemId == global::Android.Resource.Id.SelectAll)
             { owner.SelectAll(); mode?.InvalidateContentRect(); return true; }
             return false;

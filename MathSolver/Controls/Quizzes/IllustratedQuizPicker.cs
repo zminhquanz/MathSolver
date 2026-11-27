@@ -18,13 +18,13 @@ public sealed class IllustratedQuizPicker : ContentView
     private readonly Label _title;
     private readonly QuizChoiceIllustration _illustration;
     private readonly string _captionKey;
-    private readonly Func<string>? _textCaption;
+    private readonly Func<string?>? _textCaption;
     private string[] _keys = [];
     private bool _opening;
     private bool _themeSubscribed;
     private int _themeRefreshGeneration;
 
-    private IllustratedQuizPicker(Picker picker, string captionKey, Border? frame, Func<string>? textCaption)
+    private IllustratedQuizPicker(Picker picker, string captionKey, Border? frame, Func<string?>? textCaption)
     {
         _picker = picker;
         _captionKey = captionKey;
@@ -142,9 +142,9 @@ public sealed class IllustratedQuizPicker : ContentView
     public static void Attach(Picker picker, string captionKey) => AttachCore(picker, captionKey, null);
 
     /// <summary>Text-only fields use the same outline and chooser with the current Picker items.</summary>
-    public static void AttachText(Picker picker, Func<string> caption) => AttachCore(picker, "", caption);
+    public static void AttachText(Picker picker, Func<string?> caption) => AttachCore(picker, "", caption);
 
-    private static void AttachCore(Picker picker, string captionKey, Func<string>? textCaption)
+    private static void AttachCore(Picker picker, string captionKey, Func<string?>? textCaption)
     {
         if (Instances.TryGetValue(picker, out _)) return;
         var parent = picker.Parent;
@@ -207,7 +207,15 @@ public sealed class IllustratedQuizPicker : ContentView
             or nameof(Picker.IsVisible) or nameof(Picker.AutomationId) or nameof(Picker.Title)) UpdateSelection();
     }
 
-    private string Caption() => _textCaption?.Invoke() ?? Text(_captionKey);
+    private string Caption()
+    {
+        // Text-only pickers can attach before their label has been localized.
+        // They have no quiz catalogue key, even when the caption is still null.
+        if (_textCaption is not null)
+            return _textCaption() ?? _picker.Title ?? string.Empty;
+
+        return Text(_captionKey);
+    }
 
     private void UpdateSelection()
     {
@@ -326,6 +334,9 @@ internal sealed class QuizChoicePage : ContentPage
     // Choice cards update HeightRequest after the dialog has measured, so each
     // realized Windows card must be remeasured rather than reuse that cache.
     private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureAllItems;
+#elif ANDROID
+    private const double ScrollbarGutter = 12;
+    private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
 #else
     private const double ScrollbarGutter = 0;
     private const ItemSizingStrategy GridSizingStrategy = ItemSizingStrategy.MeasureFirstItem;
@@ -437,6 +448,9 @@ internal sealed class QuizChoicePage : ContentPage
 #if WINDOWS
         _list.HandlerChanged += (_, _) => ApplyWindowsLayout();
         _list.Loaded += (_, _) => ApplyWindowsLayout();
+#elif ANDROID
+        _list.HandlerChanged += (_, _) => ApplyAndroidScrollbarGutter();
+        _list.Loaded += (_, _) => ApplyAndroidScrollbarGutter();
 #endif
         var body = new Grid { RowDefinitions = new() { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star) }, RowSpacing = 12 };
         body.Add(_header);
@@ -525,10 +539,27 @@ internal sealed class QuizChoicePage : ContentPage
             _list.ItemSizingStrategy = layout.UseList ? ItemSizingStrategy.MeasureAllItems : GridSizingStrategy;
 #if WINDOWS
             ApplyWindowsLayout();
+#elif ANDROID
+            ApplyAndroidScrollbarGutter();
 #endif
         }
         finally { _resizing = false; }
     }
+
+#if ANDROID
+    private void ApplyAndroidScrollbarGutter()
+    {
+        if (_dismissed || _list.Handler?.PlatformView is not Android.Views.View nativeList) return;
+
+        // Keep the scrollbar at the outer edge while the RecyclerView lays out
+        // its choice cards within the padded content area.
+        nativeList.ScrollBarStyle = Android.Views.ScrollbarStyles.OutsideOverlay;
+        double density = nativeList.Resources?.DisplayMetrics?.Density ?? 1;
+        int rightPadding = Math.Max(nativeList.PaddingRight, (int)Math.Ceiling(ScrollbarGutter * density));
+        if (nativeList.PaddingRight != rightPadding)
+            nativeList.SetPadding(nativeList.PaddingLeft, nativeList.PaddingTop, rightPadding, nativeList.PaddingBottom);
+    }
+#endif
 
 #if WINDOWS
     private void ApplyWindowsLayout()
